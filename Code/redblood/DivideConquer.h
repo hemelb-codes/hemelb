@@ -28,7 +28,9 @@ namespace hemelb
       template<class T>
       struct DnCBase
       {
+          //! Key of the divide and conquer mapping
           typedef LatticeVector key_type;
+          //! Comparison of two divide and conquer keys
           struct CompareKeys
           {
               bool operator()(key_type const &a, key_type const &b) const
@@ -54,6 +56,7 @@ namespace hemelb
                 return a.z < b.z;
               }
           };
+          //! Base type for Divide and Conquer class
           typedef std::multimap<key_type, T, CompareKeys> type;
       };
       static_assert(std::is_pod<DnCBase<int>>::value, "Can be a struct");

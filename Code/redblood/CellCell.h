@@ -29,24 +29,22 @@ namespace hemelb
 {
   namespace redblood
   {
-    namespace {
-      template <class STENCIL>
-      void spreadForce(LatticePosition const &node, geometry::LatticeData &latticeData,
-                       LatticeForceVector const &force)
-      {
-        proc_t procid;
-        site_t siteid;
-        InterpolationIterator<STENCIL> spreader = interpolationIterator<STENCIL>(node);
-
-        for (; spreader; ++spreader)
-        {
-          if (latticeData.GetContiguousSiteId(*spreader, procid, siteid))
-          {
-            latticeData.GetSite(siteid).AddToForce(force * spreader.weight());
-          }
-        }
-      }
-    }
+    //! Names for each border
+    enum class Borders : unsigned int
+    {
+      NONE = 0,
+      TOP = 1,
+      BOTTOM = 2,
+      NORTH = 4,
+      SOUTH = 8,
+      WEST = 16,
+      EAST = 32,
+      LAST = 64
+    };
+    //! Converts border enum to actual lattice direction
+    template<class T> util::Vector3D<T> direction(Borders border);
+    //! Converts border enum to actual lattice direction
+    template<class T> util::Vector3D<T> direction(size_t border);
     // References a node of a mesh in the divide-and-conquer box
     class CellReference
     {
@@ -57,62 +55,6 @@ namespace hemelb
         site_t nodeIndex;
         //! Whether the node is near the border of the cube;
         int isNearBorder;
-
-        //! Names for each border
-        enum Borders
-        {
-          NONE = 0,
-          TOP = 1,
-          BOTTOM = 2,
-          NORTH = 4,
-          SOUTH = 8,
-          WEST = 16,
-          EAST = 32,
-          LAST = 64
-        };
-
-        static LatticeVector idirections(Borders border)
-        {
-          switch (border)
-          {
-            case TOP:
-              return LatticeVector(1, 0, 0);
-
-            case BOTTOM:
-              return LatticeVector(-1, 0, 0);
-
-            case NORTH:
-              return LatticeVector(0, 1, 0);
-
-            case SOUTH:
-              return LatticeVector(0, -1, 0);
-
-            case WEST:
-              return LatticeVector(0, 0, -1);
-
-            case EAST:
-              return LatticeVector(0, 0, 1);
-
-            default:
-              return LatticeVector(0, 0, 0);
-          };
-          return LatticeVector(0, 0, 0);
-        }
-        static LatticePosition directions(Borders border)
-        {
-          return LatticePosition(idirections(border));
-        }
-
-        static LatticeVector idirections(size_t border)
-        {
-          assert(border == TOP or border == BOTTOM or border == NORTH or border == SOUTH
-              or border == EAST or border == WEST);
-          return idirections(Borders(border));
-        }
-        static LatticePosition directions(size_t border)
-        {
-          return LatticePosition(idirections(border));
-        }
     };
 
     //! Organizes nodes in cells in boxes
@@ -297,7 +239,7 @@ namespace hemelb
         //! Maximum distance for which to report pair
         LatticeDistance maxdist;
         //! Current box we are working on
-        CellReference::Borders box;
+        Borders box;
         //! Iterator for main item
         value_type currents;
         //! range for iteration over second item
@@ -309,8 +251,27 @@ namespace hemelb
         bool nextDist();
     };
 
-    //! Computes cell <-> cell interactions and spread to grid
-    //! Given a partition of the cells' nodes and node <-> node interaction
+    namespace {
+      //! Spread force from given vertices to lattice-sites
+      template <class STENCIL>
+      void spreadForce(LatticePosition const &vertex, geometry::LatticeData &latticeData,
+                       LatticeForceVector const &force)
+      {
+        proc_t procid;
+        site_t siteid;
+        InterpolationIterator<STENCIL> spreader = interpolationIterator<STENCIL>(vertex);
+
+        for (; spreader; ++spreader)
+        {
+          if (latticeData.GetContiguousSiteId(*spreader, procid, siteid))
+          {
+            latticeData.GetSite(siteid).AddToForce(force * spreader.weight());
+          }
+        }
+      }
+    }
+    //! \brief Computes cell <-> cell interactions and spread to grid
+    //! \details Given a partition of the cells' nodes and node <-> node interaction
     //! functional, computes the short-range that can occur between cells that are
     //! too close to one another. The interaction forces are computed and spread to
     //! the lattice.
@@ -327,6 +288,28 @@ namespace hemelb
         spreadForce<STENCIL>(*range->first, latticeData, force);
         spreadForce<STENCIL>(*range->second, latticeData, -force);
       }
+    }
+
+    template<class T> util::Vector3D<T> direction(Borders border)
+    {
+      switch (border)
+      {
+        case Borders::TOP:    return util::Vector3D<T>(1, 0, 0);
+        case Borders::BOTTOM: return util::Vector3D<T>(-1, 0, 0);
+        case Borders::NORTH:  return util::Vector3D<T>(0, 1, 0);
+        case Borders::SOUTH:  return util::Vector3D<T>(0, -1, 0);
+        case Borders::WEST:   return util::Vector3D<T>(0, 0, -1);
+        case Borders::EAST:   return util::Vector3D<T>(0, 0, 1);
+        default:     return util::Vector3D<T>(0, 0, 0);
+      };
+      return LatticeVector(0, 0, 0);
+    }
+    template<class T> util::Vector3D<T> direction(size_t border)
+    {
+      Borders const b(static_cast<Borders>(border));
+      assert(b == Borders::TOP or Borders(b) == Borders::BOTTOM or b == Borders::NORTH or
+          b == Borders::SOUTH or b == Borders::EAST or b == Borders::WEST);
+      return direction<T>(b);
     }
   }
 } // hemelb::redblood

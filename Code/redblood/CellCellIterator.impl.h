@@ -122,9 +122,9 @@ class HEMELB_ITERATOR
       return GetCellReference().isNearBorder;
     }
     //! True if close to given boundary
-    bool IsNearBorder(CellReference::Borders border) const
+    bool IsNearBorder(Borders border) const
     {
-      return GetNearBorder() bitand border;
+      return GetNearBorder() bitand int(border);
     }
     //! True if close to any boundary
     bool IsNearBorder() const
