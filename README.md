@@ -21,7 +21,7 @@ in the folder.  *Alternatively*, the jobs can be updated from a Heme repository 
     # found here, originally: https://ucl-ccs.slack.com/services/B0BT7QA10
     > echo "token from slack integration" > /path/to/heme/source/ucl-ccs-slack-token
     # create/update jobs
-    > jenkins-jobs --conf /path/to/configfile.ini update /path/to/heme-repo/.jenkins-rsd [some-job-heme]
+    > jenkins-jobs --conf /path/to/configfile.ini update /path/to/heme-repo/ [some-job-heme]
 
 The configuration file tells jenkins-job-builder where to find and how to authenticate with the
 jenkins server. It goes something like this:
