@@ -92,6 +92,7 @@ namespace hemelb
       }
   }
 }
+
 //! Simple debug macro to print stuff to the log
 #define HEMELB_CAPTURE(VARIABLE) hemelb::log::capture(#VARIABLE " := %s", VARIABLE)
 //! Simple debug macro to print stuff to the log
