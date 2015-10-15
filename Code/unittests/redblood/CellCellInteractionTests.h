@@ -78,17 +78,17 @@ namespace hemelb
 
         for (size_t d(1); d < (1 << 6); d <<= 1)
         {
-          LatticePosition const disp = CellReference::directions(d) * 0.6;
+          LatticePosition const disp = direction<LatticePosition::value_type>(d) * 0.6;
           int const nearness = figureNearness(dnc, key, center + disp, 2.0);
           CPPUNIT_ASSERT(nearness == d);
         }
 
-        LatticePosition const mult = CellReference::directions(CellReference::TOP) * 0.6
-            + CellReference::directions(CellReference::NORTH) * 0.6
-            + CellReference::directions(CellReference::EAST) * 0.6;
+        LatticePosition const mult =
+            direction<LatticePosition::value_type>(Borders::TOP) * 0.6
+            + direction<LatticePosition::value_type>(Borders::NORTH) * 0.6
+            + direction<LatticePosition::value_type>(Borders::EAST) * 0.6;
         int const actual = figureNearness(dnc, key, center + mult, 2.0);
-        int const expected = CellReference::TOP bitor CellReference::NORTH
-            bitor CellReference::EAST;
+        int const expected = int(Borders::TOP) bitor int(Borders::NORTH) bitor int(Borders::EAST);
         CPPUNIT_ASSERT(actual == expected);
       }
 
@@ -105,7 +105,7 @@ namespace hemelb
         vertices.push_back(center + LatticePosition(offhalo, 0, 0) * cutoff);
         vertices.push_back(center + LatticePosition(2, offhalo + 3.0, -2) * cutoff);
         vertices.push_back(center + LatticePosition(1, 0, 0) * cutoff
-            + CellReference::directions(CellReference::NORTH) * inhalo * cutoff);
+            + direction<LatticePosition::value_type>(Borders::NORTH) * inhalo * cutoff);
 
         CellContainer cells;
         std::shared_ptr<Cell> intel(new Cell(Mesh(MeshData())));
@@ -152,7 +152,7 @@ namespace hemelb
         CPPUNIT_ASSERT(haloed.first->first == LatticeVector(1, 0, 0));
         CPPUNIT_ASSERT(haloed.first->second.nodeIndex == 3);
         CPPUNIT_ASSERT(haloed.first->second.cellIterator == cells.begin());
-        CPPUNIT_ASSERT(haloed.first->second.isNearBorder == CellReference::NORTH);
+        CPPUNIT_ASSERT(haloed.first->second.isNearBorder == int(Borders::NORTH));
       }
 
       void checkCell(DivideConquerCells const &dnc, LatticeVector const &key,
@@ -269,10 +269,10 @@ namespace hemelb
         CPPUNIT_ASSERT_EQUAL(std::distance(dnc(newbox).first, dnc(newbox).second), 1l);
         CPPUNIT_ASSERT(helpers::is_zero(*dnc(newbox).first - inhalo));
         CPPUNIT_ASSERT(dnc(newbox).first.IsNearBorder());
-        CPPUNIT_ASSERT(dnc(newbox).first.IsNearBorder(CellReference::TOP));
-        CPPUNIT_ASSERT(not dnc(newbox).first.IsNearBorder(CellReference::BOTTOM));
+        CPPUNIT_ASSERT(dnc(newbox).first.IsNearBorder(Borders::TOP));
+        CPPUNIT_ASSERT(not dnc(newbox).first.IsNearBorder(Borders::BOTTOM));
         CPPUNIT_ASSERT_EQUAL(dnc(newbox).first.GetNearBorder(),
-                             (CellReference::TOP bitor CellReference::EAST));
+            (int(Borders::TOP) bitor int(Borders::EAST)));
       }
 
       void CellCellInteractionTests::testPairIteratorNoPairs()
