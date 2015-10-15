@@ -127,6 +127,20 @@ namespace hemelb
           static const hid_t NATIVE;
       };
       const hid_t Types<unsigned int>::NATIVE = H5T_NATIVE_UINT;
+
+      template<>
+      struct Types<char *>
+      {
+          static const hid_t NATIVE;
+      };
+      const hid_t Types<char *>::NATIVE = H5T_C_S1;
+
+      template<>
+      struct Types<std::string>
+      {
+          static const hid_t NATIVE;
+      };
+      const hid_t Types<std::string>::NATIVE = H5T_C_S1;
     }
   }
 }
