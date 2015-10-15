@@ -34,6 +34,22 @@ namespace hemelb
         public:
           H5Error(const std::string &, herr_t, const std::string &, unsigned int);
 
+          const std::string & GetFunction() {
+            return function;
+          }
+
+          hid_t GetError() {
+            return error;
+          }
+
+          const std::string & GetFile() {
+            return file;
+          }
+
+          unsigned int GetLine() {
+            return line;
+          }
+
         private:
           const std::string & function;
           const herr_t error;
