@@ -18,6 +18,18 @@
             #     env/bin/jenkins-jobs --conf jenkins.conf .jenkins-rsd
             # fi
 
+    scm:
+        - git:
+            url: git@github.com:UCL-CCS/hemelb-dev.git
+            browser: githubweb
+            branches:
+                - test_jobs
+            browser-url: https://github.com/UCL-CCS/hemelb-dev
+            submodule:
+                recursive: true
+            wipe-workspace: true
+            refspec: +refs/heads/*:refs/remotes/origin/*
+
     publishers:
         - trigger:
             project: hemelb-jobs-publisher
