@@ -79,7 +79,7 @@ namespace details
           site.AddToForce(forces[vertexIn] * weight);
           LatticePosition const vertex(cell->GetVertices()[vertexIn]);
 
-          for (size_t i(1); i < LATTICE::NUMVECTORS; ++i)
+          for (Direction i(1); i < LATTICE::NUMVECTORS; ++i)
           {
             LatticeDistance const distance = site.GetWallDistance < LATTICE > (i);
 
