@@ -59,17 +59,26 @@ class NodeClassifier(object):
                 self(cn, min_level)
                 
     def _ClassifyComplexNode(self, node):
-        if np.any(np.equal(node.children, None)):
+        know_child_state = np.zeros(node.shape, dtype=bool)
+        for ijk, child in np.ndenumerate(node.children):
+            if child is not None and hasattr(child, "fluid_count"):
+                know_child_state[ijk] = True
+                
+        if not np.all(know_child_state):
             # Got to infer state of some children
             
             # Get the relative index of one we know.
-            found = False
-            for ijk, child in np.ndenumerate(node.children):
-                if child is not None:
-                    found = True
-                    break
-                continue
-            assert found, "Know nothing about node's children!"
+            inds = know_child_state.nonzero()
+            ijk = (inds[0][0], inds[1][0], inds[2][0])
+            
+#             found = False
+#             for ijk, child in np.ndenumerate(node.children):
+#                 if child is not None:
+#                     if hasattr(child, "fluid_count"):
+#                         found = True
+#                         break
+#                 continue
+#             assert found, "Know nothing about node's children!"
             # Get the index, within the child node, of the cell that
             # is closest to the centre of the current node.
             corner_ijk = tuple(x^1 for x in ijk)
@@ -89,7 +98,7 @@ class NodeClassifier(object):
                 pass
             
             for ijk in np.ndindex(*node.shape):
-                if node.children[ijk] is None:
+                if not know_child_state[ijk]:
                     halfsize = 2**(node.levels - 1)
                     offset = node.offset + halfsize * np.array(ijk)
                     node.children[ijk] = UnknownNodeClass(node.levels - 1, offset)
