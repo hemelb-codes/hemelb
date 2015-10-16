@@ -21,7 +21,7 @@ def test_square():
     finder = HitFinder(points, triangles, normals)
     
     finder(tri_node)
-    m = 0
+    n = 0
     for vox in tri_node.IterDepthFirst(0,0):
         
         for i_vec, hits in vox.intersections.iteritems():
@@ -43,9 +43,9 @@ def test_square():
                 assert hits[i][1] != opp_hits[n-1-i][1], "The normal flags must be opposite"
                 assert hits[i][2] == opp_hits[n-1-i][2], "Must hit the same triangle"
             
-        m += 1
+        n += 1
         continue
-    assert m == 13
+    assert n == 13
 
 
 def test_rectangle():
