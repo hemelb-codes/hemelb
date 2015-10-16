@@ -28,7 +28,7 @@ def GetSphereNumpy():
         tridata.shape = (surf.GetNumberOfPolys(), 4)
         assert np.all(tridata[:,0]==3), "Non triangle in surface!"
         triangles = tridata[:, 1:]
-        points = vtk.util.numpy_support.vtk_to_numpy(surf.GetPoints().GetData())
+        points = vtk.util.numpy_support.vtk_to_numpy(surf.GetPoints().GetData()).astype(float)
         normals = surf.GetCellData().GetNormals()
         normals = vtk.util.numpy_support.vtk_to_numpy(normals)
         _np_sphere = (points, triangles, normals)

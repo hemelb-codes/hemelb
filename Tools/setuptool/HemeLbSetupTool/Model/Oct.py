@@ -54,7 +54,7 @@ class Node(NodeBase):
             abs_level = level
             rel_level = self.levels - level
             abs_index = index
-            rel_index = index >> abs_level
+            rel_index = (index - self.offset) >> abs_level
             pass
         
         if rel_level == 0:

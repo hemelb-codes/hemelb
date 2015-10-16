@@ -1,9 +1,63 @@
 import numpy as np
-from Neighbours import neighbours
+from itertools import chain        
 
-np.seterr(divide='ignore')
+from CGAL.CGAL_Kernel import Point_3, Segment_3
+from CGAL.CGAL_AABB_tree import AABB_tree_Polyhedron_3_Facet_handle
+from CGAL.CGAL_Polyhedron_3 import Polyhedron_3
 
-import pdb
+from Neighbours import neighbours, inverses, norm2
+
+class Face(object):
+    def __init__(self, size, norm):
+        self.iter_dims = []
+        for i, n in enumerate(norm):
+            if n == 0:
+                self.iter_dims.append(i)
+            else:
+                self.norm_dim = i
+                
+        self.normal = np.array(norm, dtype=int)
+        self.size = size
+        self.name = {+1: '+', -1: '-'}[norm[self.norm_dim]] 
+        for iter_dim in self.iter_dims:
+            self.name += {0: 'x', 1: 'y', 2: 'z'}[iter_dim]
+        
+        self.coord = {+1: -1, -1: size}[norm[self.norm_dim]]
+        return
+     
+    def dot(self, vec):
+        return np.sum(self.normal * vec)
+            
+    def __iter__(self):
+        return self.Iter()
+    
+    def Iter(self, *prev_faces):
+        limits =[ [-1, self.size+1],
+                  [-1, self.size+1],
+                  [-1, self.size+1] ]
+        for f in prev_faces:
+            i, val = {
+                      -1: (0, 0),
+                      self.size: (1, self.size)
+                      }[f.coord]
+            limits[f.norm_dim][i] = val
+            continue
+        limits[self.norm_dim] = (self.coord, self.coord+1)
+        
+        for i in xrange(*limits[0]):
+            for j in xrange(*limits[1]):
+                for k in xrange(*limits[2]):
+                    yield np.array((i,j,k), dtype=int)
+
+class FaceGroup(object):
+    def __init__(self, *faces):
+        self.faces = faces
+    def __iter__(self):
+        face_iterators = [self.faces[i].Iter(*self.faces[:i])
+                          for i in xrange(len(self.faces))]
+        return chain(*face_iterators)
+    pass
+
 class HitFinder(object):
     """This class's job is to take a triangle node (from TriangleSorter) and 
     add all the intersections between the triangles and its contained voxels. 
@@ -17,102 +71,100 @@ class HitFinder(object):
         self.triangles = triangles
         self.points = points
         self.normals = normals
-        self.a = points[triangles[:,0]]
-        self.b = points[triangles[:,1]]
-        self.ab = self.b - self.a
-        self.c = points[triangles[:,2]]
-        self.ac = self.c - self.a
-
-        return
         
-    def __call__(self, tri_node):
-        triIds = tri_node.triIds
-        del tri_node.triIds
-        aLocal = self.a[triIds]
-        nLocal = self.normals[triIds]
-        aDOTn = np.sum(aLocal * nLocal, 1)
-
-        size = 2**tri_node.levels
-
-        pGrid = np.mgrid[:size,:size,:size]
-        pGrid = pGrid.reshape((3, size**3)).transpose()
-        pGrid += tri_node.offset
-        pDOTn = np.tensordot(pGrid, nLocal, [[1], [1]])
+        pts = self.CGALpoints = np.empty(len(points), dtype=object) 
+        for i, p in enumerate(points):
+            pts[i] = Point_3(*p)
+        # Supply number of vertices, half-edges and facets
+        surf = self.CGAL_surface = Polyhedron_3(len(points),
+                                                3*len(triangles),
+                                                len(triangles))
         
-        total_hits = 0
-        
-        for iDisp, disp in enumerate(neighbours):
-            # Need to figure out if the line from pGrid[i] to qGrid[i]  = p + disp intersects the surface
-            # First, does it intersect the plane defined by a and the normal?
-            # Equation of the plane is r.n = a.n
-            # Equation of the line is r = p + t(q-p) (where 0<t<1)
-            # So the value of t for intersection is:
-            #    t = (a.n - p.n) / ((q - p).n)
-            dispDOTn = np.dot(nLocal, disp)
-            t = (aDOTn[np.newaxis, :] - pDOTn) / dispDOTn[np.newaxis,:]
-            intersects_plane = np.logical_and(t>0, t<1)
-            intersectIds = intersects_plane.nonzero()
-
-            # Now, put t back into the equation for the plane
-            intersection = pGrid[intersectIds[0]] + np.outer(t[intersectIds][:,np.newaxis], disp)
-            # Make relative to a
-            intersection -= aLocal[intersectIds[1]]
-            # Project to 2D by dropping the axis the triangle is most normal to.
-            ignored_axis = (nLocal**2).argmax(axis=1)[intersectIds[1]]
-            mask = np.ones_like(intersection, dtype=bool)
-            mask[(np.arange(len(intersection)), ignored_axis)] = False
-            AR = intersection[mask]
-            AR.shape = (len(intersection), 2)
-            AB = self.ab[triIds][intersectIds[1]][mask]
-            AB.shape = AR.shape
-            AC = self.ac[triIds][intersectIds[1]][mask]
-            AC.shape = AR.shape
-            # Is this within the triangle?
-            # Find x & y s.t. x AB + y AC = AR
-            # I.e.
-            # /AB0 AC0\ /X\ = /AR0\
-            # \AB1 AC1/ \Y/   \AR1/
-            # If x > 0 and y > 0 and x+y < 1 it is inside.
-            # Solutions are:
-            # /X\ = ________1________ / AC1 -AC0\ /AR0\
-            # \Y/   AB0.AC1 - AC0.AB1 \-AB1  AB0/ \AR1/
-            det = (AB[:,0] * AC[:,1] - AC[:,0] * AB[:, 1]) 
-            x = AC[:,1] * AR[:, 0] - AC[:,0] * AR[:,1]
-            x /= det
-            y = AB[:,0]*AR[:,1] - AB[:,1]*AR[:,0]
-            y /= det
-            inside_tri = np.logical_and(np.logical_and(x >= 0.0, y >= 0.0),
-                                        x + y <= 1.0)
-            # True for those hits where the direction p -> q is outward (for that triangle).
-            hit_is_outward = dispDOTn[intersectIds[1][inside_tri]] > 0.0
-
-            hit_pt_ids = intersectIds[0][inside_tri]
-            hit_tri_loc_ids = intersectIds[1][inside_tri]
-            hit_tri_ids = triIds[hit_tri_loc_ids]
-            nHits = len(hit_pt_ids)
-            total_hits += nHits
+        for i, tri in enumerate(triangles):
+            half_edge = surf.make_triangle(pts[tri[0]],
+                                           pts[tri[1]],
+                                           pts[tri[2]])
+            facet = half_edge.facet()
+            facet.set_id(i)
             
-            for iHit in xrange(nHits):
-                start_coord = np.array(np.unravel_index(hit_pt_ids[iHit], (size,size,size)))
-                voxel_node = tri_node.GetNode(tri_node.levels, start_coord, create=True, relative=True)
-                assert np.all(voxel_node.offset - tri_node.offset == start_coord)
-                try:
-                    intersections = voxel_node.intersections
-                except AttributeError:
-                    intersections = voxel_node.intersections = {}
-                    pass
-
-                # A hit is a tuple (t, outward_flag, tri_ID)
-                new_hit = (t[hit_pt_ids[iHit], hit_tri_loc_ids[iHit]],
-                             hit_is_outward[iHit],
-                              hit_tri_ids[iHit])
-                try:
-                    hits = intersections[iDisp]
-                    hits.append(new_hit)
-                except KeyError:
-                    intersections[iDisp] = [new_hit]
+        self.aabb_tree = AABB_tree_Polyhedron_3_Facet_handle(self.CGAL_surface.facets())
+        return
+    
+    def __call__(self, tri_node):
+        size = 2**tri_node.levels
+        faces = []
+        for d in xrange(3):
+            for pm_one in (+1, -1):
+                n = np.zeros(3, dtype=int)
+                n[d] = pm_one
+                faces.append(Face(size, n))
+                
+        for i_vec, vec in enumerate(neighbours):
+            if inverses[i_vec] < i_vec:
+                continue
+            fg = FaceGroup(*[f for f in faces if f.dot(vec) > 0])
+            for ijk in fg:
+                i = 1
+                node_coord = ijk + i*vec
+                while np.all(np.logical_and(node_coord>=0, node_coord<size)): 
+                    i += 1
+                    node_coord = ijk + i*vec
+                    continue
+                if i > 1:
+                    start = ijk + tri_node.offset
+                    end = node_coord + tri_node.offset
+                    self._DoRay(tri_node, i_vec, start, end)
                     pass
                 continue
             continue
-        return total_hits
+        return
+    
+    def _DoRay(self, tri_node, i_vec, startIjk, endIjk):
+        start = Point_3(*startIjk) #*[float(x) for x in (startIjk + tri_node.offset)])
+        end = Point_3(*endIjk)
+        ray = Segment_3(start, end)
+        intersections = []
+        self.aabb_tree.all_intersections(ray, intersections)
+        vec = neighbours[i_vec]
+        for pair in intersections:
+            CGAL_ip = pair.first.get_Point_3()
+            r_hit = np.array((CGAL_ip.x(), CGAL_ip.y(), CGAL_ip.z()))
+            dr = r_hit - startIjk
+            alongness = np.sum(dr*vec) / norm2[i_vec]
+            
+            vox1 = int(alongness)*vec + startIjk
+            t1 = alongness - int(alongness)
+            triId = pair.second.id()
+            out12 = np.sum(self.normals[triId] * vec) >= 0.0
+            # A hit is a tuple (t, outward_flag, tri_ID)
+            # Need to deal with the case where vox is outside this node's ROI
+            if not np.all(vox1 == startIjk):
+                self.add_hit(tri_node, vox1, i_vec,
+                        (t1, out12, triId))
+            vox2 = vox1 + vec
+            # And the same for vox2
+            if not np.all(vox2 == endIjk):
+                self.add_hit(tri_node, vox2, inverses[i_vec],
+                        (1.0 - t1, not out12, triId))
+            
+            continue
+        return
+    
+    @staticmethod
+    def add_hit(tri_node, ijk, i_vec, new_hit):
+        vox = tri_node.GetNode(0, ijk, create=True)
+        try:
+            intersections = vox.intersections
+        except AttributeError:
+            intersections = vox.intersections = {}
+            pass
+        # A hit is a tuple (t, outward_flag, tri_ID)
+        try:
+            hits = intersections[i_vec]
+            hits.append(new_hit)
+        except KeyError:
+            intersections[i_vec] = [new_hit]
+            pass
+        return
+    pass
     
