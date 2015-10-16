@@ -41,7 +41,8 @@ namespace hemelb
     //! \param[in] haloLenght the meaning of close
     template<class T>
     size_t figureNearness(
-        DivideConquer<T> &dnc, LatticePosition const &vertex, LatticeDistance const &haloLength);
+        DivideConquer<T> const &dnc,
+        LatticePosition const &vertex, LatticeDistance const &haloLength);
 
     //! \brief Iterates only over nearest borders
     class BorderBoxIterator
@@ -108,7 +109,7 @@ namespace hemelb
     }
 
     template<class T>
-    size_t figureNearness(DivideConquer<T> &dnc, LatticeVector const &key,
+    size_t figureNearness(DivideConquer<T> const &dnc, LatticeVector const &key,
                        LatticePosition const &vertex, LatticeDistance const &haloLength)
     {
       if (haloLength + haloLength > dnc.GetBoxSize())
@@ -134,7 +135,8 @@ namespace hemelb
     }
     template<class T>
     size_t figureNearness(
-        DivideConquer<T> &dnc, LatticePosition const &vertex, LatticeDistance const &haloLength)
+        DivideConquer<T> const &dnc,
+        LatticePosition const &vertex, LatticeDistance const &haloLength)
     {
       return figureNearness<T>(dnc, dnc.DowngradeKey(vertex), vertex, haloLength);
     }
