@@ -56,6 +56,20 @@ class UniformNode(NodeBase):
             return self
         raise ValueError("Should never try to get a subnode of a uniform block!")
     
+    def IterDepthFirst(self, *levels):
+        if len(levels) == 0:
+            bot_level = 0
+            top_level = self.levels
+        elif len(levels) == 1:
+            bot_level = levels[0]
+            top_level = self.levels
+        elif len(levels) == 2:
+            bot_level, top_level = levels
+        else:
+            raise ValueError("Max two arguments!")
+        if bot_level <= self.levels and top_level >= self.levels:
+            yield self
+            
     pass
 
 class SolidNode(UniformNode):
