@@ -25,7 +25,7 @@ namespace hemelb
       {
         if (haloLength + haloLength > dnc.GetBoxSize())
         {
-          return 0;
+          return static_cast<size_t>(Borders::CENTER);
         }
 
         size_t result = 0;
@@ -40,7 +40,7 @@ namespace hemelb
           }
         }
 
-        return result;
+        return result bitor static_cast<size_t>(Borders::CENTER);
       }
 
       template<class T>
@@ -161,12 +161,10 @@ namespace hemelb
 
     bool DivideConquerCells::pair_range::doBox()
     {
-      LatticeVector const key(box == static_cast<size_t>(Borders::NONE) ?
-        currents.first.GetKey() :
-        currents.first.GetKey() + direction<LatticeVector::value_type>(box));
+      LatticeVector const key(currents.first.GetKey() + *box_iterator);
       DivideConquerCells::const_range const boxits = owner(key);
 
-      if (box == static_cast<size_t>(Borders::NONE))
+      if (box_iterator->x == 0 and box_iterator->y == 0 and box_iterator->z ==0)
       {
         currents.second = currents.first;
         ++currents.second;
@@ -198,46 +196,29 @@ namespace hemelb
         }
       }
 
-      // If reaches here, then should check which box we are currently doing
-      if (currents.first.GetNearBorder())
+      // If reaches here, then go to next box
+      for(++box_iterator; box_iterator; ++box_iterator)
       {
-        if (box != static_cast<size_t>(Borders::NONE))
+        if(doBox())
         {
-          box <<= 1;
-        }
-        else
-        {
-          box = 1;
-        }
-
-        while (box < static_cast<size_t>(Borders::LAST))
-        {
-          if (doBox())
-          {
-            return true;
-          }
-
-          box <<= 1;
+          return true;
         }
       }
 
-      // If reaches here, then should increment main iterator and start with same
-      // box
+      // If reaches here, then should increment main iterator and start with same box
       if (++currents.first == ends.first)
       {
         return false;
       }
 
-      box = static_cast<size_t>(Borders::NONE);
-      return doBox() ?
-        true :
-        operator++();
+      box_iterator = BorderBoxIterator(currents.first.GetNearBorder());
+      return doBox() ? true : operator++();
     }
 
     DivideConquerCells::pair_range::pair_range(DivideConquerCells const &owner,
                                                iterator const &begin, iterator const &end,
                                                LatticeDistance maxdist) :
-        maxdist(maxdist), box(static_cast<size_t>(Borders::NONE)),
+        maxdist(maxdist), box_iterator(begin.GetNearBorder()),
         currents(begin, end), ends(end, end), owner(owner)
     {
       // No throw garantee. Makes iterator invalid instead.

@@ -129,7 +129,7 @@ class HEMELB_ITERATOR
     //! True if close to any boundary
     bool IsNearBorder() const
     {
-      return GetNearBorder() != 0;
+      return GetNearBorder() != static_cast<size_t>(Borders::CENTER);
     }
 
     //! Returns shared pointer to cell pointed to by this object

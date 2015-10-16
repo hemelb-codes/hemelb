@@ -223,8 +223,8 @@ namespace hemelb
       protected:
         //! Maximum distance for which to report pair
         LatticeDistance maxdist;
-        //! Current box we are working on
-        size_t box;
+        //! Iterates over boxes we want to see
+        BorderBoxIterator box_iterator;
         //! Iterator for main item
         value_type currents;
         //! range for iteration over second item
