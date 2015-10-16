@@ -20,35 +20,11 @@ namespace hemelb
     namespace
     {
       template<class T>
-      size_t figureNearness(DivideConquer<T> &dnc, LatticeVector const &key,
-                         LatticePosition const &vertex, LatticeDistance const &haloLength)
-      {
-        if (haloLength + haloLength > dnc.GetBoxSize())
-        {
-          return static_cast<size_t>(Borders::CENTER);
-        }
-
-        size_t result = 0;
-
-        for (size_t d(1); d < (1 << 6); d <<= 1)
-        {
-          LatticePosition const translated(direction<LatticePosition::value_type>(d) * haloLength);
-
-          if (not (key == dnc.DowngradeKey(vertex + translated)))
-          {
-            result |= d;
-          }
-        }
-
-        return result bitor static_cast<size_t>(Borders::CENTER);
-      }
-
-      template<class T>
       CellReference initCellRef(DivideConquer<T> &dnc, CellContainer::const_iterator cellid,
-                                site_t nodeid, LatticeVector const &key,
+                                site_t nodeid, 
                                 LatticePosition const &vertex, LatticeDistance const &haloLength)
       {
-        return {cellid, nodeid, figureNearness(dnc, key, vertex, haloLength)};
+        return {cellid, nodeid, figureNearness(dnc, vertex, haloLength)};
       }
 
       void initializeCells(DivideConquer<CellReference> &dnc, MeshData::Vertices const &vertices,
@@ -63,7 +39,7 @@ namespace hemelb
         for (site_t i(0); i_first != i_end; ++i_first, ++i)
         {
           key_type const key = dnc.DowngradeKey(*i_first);
-          dnc.insert(key, initCellRef(dnc, cellid, i, key, *i_first, haloLength));
+          dnc.insert(key, initCellRef(dnc, cellid, i, *i_first, haloLength));
         }
       }
 
@@ -125,7 +101,7 @@ namespace hemelb
       for (; i_first != i_end;)
       {
         key_type const key = base_type::DowngradeKey(*i_first);
-        i_first.GetCellReference().nearBorder = figureNearness(*this, key, *i_first, haloLength);
+        i_first.GetCellReference().nearBorder = figureNearness(*this, *i_first, haloLength);
 
         if (not (key == i_first.GetKey()))
         {

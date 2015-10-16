@@ -67,10 +67,10 @@ namespace hemelb
             * cutoff;
 
         CPPUNIT_ASSERT_EQUAL(
-            (size_t)Borders::CENTER, figureNearness(dnc, key, position, cutoff * 0.501));
+            (size_t)Borders::CENTER, figureNearness(dnc, position, cutoff * 0.501));
         CPPUNIT_ASSERT_EQUAL(
             (size_t)Borders::CENTER bitor (size_t)Borders::TOP,
-            figureNearness(dnc, key, position, cutoff * 0.499)
+            figureNearness(dnc, position, cutoff * 0.499)
         );
       }
 
@@ -80,12 +80,12 @@ namespace hemelb
         LatticeVector const key(0, 1, -2);
         LatticePosition const center = (LatticePosition(key) + LatticePosition(0.5, 0.5, 0.5))
             * dnc.GetBoxSize();
-        CPPUNIT_ASSERT(figureNearness(dnc, key, center, 2.0) == (size_t)Borders::CENTER);
+        CPPUNIT_ASSERT(figureNearness(dnc, center, 2.0) == (size_t)Borders::CENTER);
 
         for (size_t d(1); d < (1 << 6); d <<= 1)
         {
           LatticePosition const disp = direction<LatticePosition::value_type>(d) * 0.6;
-          size_t const nearness = figureNearness(dnc, key, center + disp, 2.0);
+          size_t const nearness = figureNearness(dnc, center + disp, 2.0);
           CPPUNIT_ASSERT(nearness == (d bitor (size_t)Borders::CENTER));
         }
 
@@ -93,7 +93,7 @@ namespace hemelb
             direction<LatticePosition::value_type>(Borders::TOP) * 0.6
             + direction<LatticePosition::value_type>(Borders::NORTH) * 0.6
             + direction<LatticePosition::value_type>(Borders::EAST) * 0.6;
-        size_t const actual = figureNearness(dnc, key, center + mult, 2.0);
+        size_t const actual = figureNearness(dnc, center + mult, 2.0);
         size_t const expected =
           size_t(Borders::TOP) bitor size_t(Borders::NORTH) bitor size_t(Borders::EAST)
           bitor size_t(Borders::CENTER);
