@@ -1,0 +1,74 @@
+//
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+//
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+//
+
+#ifndef HEMELB_UNITTESTS_REDBLOOD_WALL_NODE_DNC_TESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_WALL_NODE_DNC_TESTS_H
+
+#include <cppunit/TestFixture.h>
+#include <cppunit/extensions/HelperMacros.h>
+#include "unittests/FourCubeLatticeData.h"
+#include "unittests/helpers/HasCommsTestFixture.h"
+#include "redblood/WallCellPairIterator.h"
+#include "lb/lattices/D3Q15.h"
+
+namespace hemelb
+{
+  namespace unittests
+  {
+    namespace redblood
+    {
+      class WallNodeDnCTests : public helpers::HasCommsTestFixture
+      {
+          CPPUNIT_TEST_SUITE (WallNodeDnCTests);
+          CPPUNIT_TEST (testWallNodeDnC);
+          CPPUNIT_TEST_SUITE_END();
+
+          LatticeDistance const cutoff = 3.0;
+          LatticeDistance const halo = 0.5;
+          typedef lb::lattices::D3Q15 Lattice;
+
+        public:
+          void setUp()
+          {
+            latticeData.reset(FourCubeLatticeData::Create(Comms(), 27+2));
+          }
+          void testWallNodeDnC()
+          {
+            auto const dnc = createWallNodeDnC<Lattice>(*latticeData, cutoff, halo);
+
+            // Checking the middle of the world first: No wall nodes
+            auto const center = dnc.equal_range(LatticePosition(13, 13, 13));
+            CPPUNIT_ASSERT(center.first == center.second);
+
+            // Checking that upper side has 3*3*5 wall sites,
+            // 3*3 because that's the size of a DnC box
+            // 5 because there are five possible directions in D3Q15 pointing towards the wall
+            auto upper = dnc.equal_range(LatticePosition(0, 3.5 * 3, 3.5 * 3));
+            CPPUNIT_ASSERT_EQUAL(45l, std::distance(upper.first, upper.second));
+            for(; upper.first != upper.second; ++upper.first)
+            {
+              CPPUNIT_ASSERT(upper.first->second.nearBorder bitand size_t(Borders::CENTER));
+              CPPUNIT_ASSERT_EQUAL(
+                  (upper.first->second.nearBorder bitand size_t(Borders::BOTTOM)) != 0,
+                  upper.first->second.node.x < halo
+              );
+            }
+          }
+
+        private:
+          std::unique_ptr<geometry::LatticeData> latticeData;
+      };
+
+
+      CPPUNIT_TEST_SUITE_REGISTRATION (WallNodeDnCTests);
+    }
+  }
+}
+
+#endif  // ONCE
