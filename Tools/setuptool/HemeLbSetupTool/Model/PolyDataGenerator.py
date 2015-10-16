@@ -12,8 +12,6 @@ from NodeClassifier import NodeClassifier
 
 import pdb
 
-np.seterr(divide='ignore')
-
 # class PolyDataGenerator(GeometryGenerator):
 class PolyDataGenerator(object):
 

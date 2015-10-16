@@ -3,7 +3,7 @@ from .HitFinder import HitFinder
 from .TriangleSorter import TrianglesToTree
 from .test_TriangleSorter import mk_trivial, mk_trivial2
 from .Neighbours import neighbours, inverses
-from TestResources.sphere import GetSphereNumpy, InsidePerfectSphere
+from TestResources.sphere import GetSphereNumpy, InsideSphere
 
 def approx_eq(x, y, tol):
     return np.all(np.abs(np.subtract(x,y)) < tol)
@@ -36,12 +36,12 @@ def test_square():
             
             # Sort them based on the t, the distance along the link
             hits.sort(key=lambda x: x[0])
-            opp_hits.sort(key=lambda x: x[0])
+            opp_hits.sort(key=lambda x: -x[0])
             n = len(hits)
             for i in xrange(n):
-                assert approx_eq(hits[i][0] + opp_hits[n-1-i][0], 1.0, 1e-8), "The lengths along the vector must sum to 1"
-                assert hits[i][1] != opp_hits[n-1-i][1], "The normal flags must be opposite"
-                assert hits[i][2] == opp_hits[n-1-i][2], "Must hit the same triangle"
+                assert approx_eq(hits[i][0] + opp_hits[i][0], 1.0, 1e-8), "The lengths along the vector must sum to 1"
+                assert hits[i][1] != opp_hits[i][1], "The normal flags must be opposite"
+                assert hits[i][2] == opp_hits[i][2], "Must hit the same triangle"
             
         n += 1
         continue
@@ -87,20 +87,29 @@ def test_rectangle():
     
 def test_sphere():
     levels = 5
+    size = 2**levels
     tri_level = 3
     points, triangles, normals = GetSphereNumpy()
     tree = TrianglesToTree(levels, tri_level, points, triangles)
     
-    for vox in tree.IterDepthFirst(0,0):
-        vox_inside = InsidePerfectSphere(vox.offset)
-        
-        for i_vec, hits in vox.intersections.iteritems():
-            assert len(hits) == 1
-            hit = hits[0]
-            vec = neighbours[i_vec]
-            neigh_offset = vox.offset + vec
-            neigh_inside = InsidePerfectSphere(neigh_offset)
-            
-            assert vox_inside != neigh_inside, "All hits must cross the surface once"
-            assert hit[1] == vox_inside, "Hits starting inside must have the normal pointing out"
-            
+    finder = HitFinder(points, triangles, normals)
+    for tn in tree.IterDepthFirst(tri_level, tri_level):
+        finder(tn)
+    
+    inside = InsideSphere(np.mgrid[:size,:size,:size].transpose((1,2,3,0)))
+    
+    for ijk, fluid in np.ndenumerate(inside):
+        for i_vec, vec in enumerate(neighbours):
+            neigh_ijk = ijk+vec
+            if np.any(neigh_ijk < 0) or np.any(neigh_ijk >= size):
+                continue
+            if inside[tuple(neigh_ijk)] != fluid:
+                # There ought to be a hit here!
+                try:
+                    node = tree.GetNode(0, np.array(ijk))
+                    hits = node.intersections[i_vec]
+                    hits.sort(key=lambda h: h[0])
+                    assert hits[0][1] == fluid
+                except:
+                    from nose.tools import set_trace
+                    set_trace()

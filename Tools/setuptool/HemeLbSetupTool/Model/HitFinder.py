@@ -1,6 +1,8 @@
 import numpy as np
 from Neighbours import neighbours
 
+np.seterr(divide='ignore')
+
 import pdb
 class HitFinder(object):
     """This class's job is to take a triangle node (from TriangleSorter) and 
@@ -106,31 +108,7 @@ class HitFinder(object):
                               hit_tri_ids[iHit])
                 try:
                     hits = intersections[iDisp]
-                    # We have previous hits for this link.
-                    # Need to look for edge hits and merge them.
-                    # We're just going to ignore the second if there is one.
-                    merged = False
-                    for iOldHit, h in enumerate(hits):
-                        if abs(new_hit[0] - h[0]) < 1e-9:
-                            # They are merge candidates
-                            #old_id = h[2]
-                            #new_id = hit_tri_ids[iHit]
-                            if new_hit[1] == h[1]:
-                                # Same sense, can merge these hits.
-                                if h[0] > new_hit[0]:
-                                    # New one closer, replace the old
-                                    hits[iOldHit] = new_hit
-                                merged = True
-                                break
-                            else:
-                                #Let's hope this doesn't happen
-                                pdb.set_trace()
-                                pass
-                            pass
-                        continue
-                    
-                    if not merged:
-                        hits.append(new_hit)
+                    hits.append(new_hit)
                 except KeyError:
                     intersections[iDisp] = [new_hit]
                     pass
