@@ -18,7 +18,7 @@ from ..Bindings.WxMappers import WxWidgetMapper, \
      WxWidgetEnabledMapper, NonObservingWxWidgetMapper, \
      WxListCtrlMapper, WxListCtrlSelectionMapper
 from ..Bindings.Translators import NoneToValueTranslator, \
-     FloatTranslator, QuickTranslator, Translator
+     FloatTranslator, QuickTranslator, Translator, Constraint
 from ..Bindings.Bindings import WxActionBinding
 
 from ..Model.Profile import Profile
@@ -199,7 +199,7 @@ class IoletsDetailPanel(wx.Panel):
         controller.BindValue(
             'Iolets.Selection.Radius',
             WxWidgetMapper(self.radiusField, 'Value', wx.EVT_TEXT,
-                           translator=FloatTranslator())
+                           translator=Constraint(lambda x: x > 0.0, inner=FloatTranslator()))
             )
         
         self.placeButton = wx.Button(self, label='Place')
