@@ -78,7 +78,7 @@ class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, Objec
     def ChooseSaveFile(self, ignored=None):
         dialog = wx.FileDialog(None,
                                style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT,
-                               wildcard='*.pro')
+                               wildcard='*.pr2')
         
         if dialog.ShowModal() == wx.ID_OK:
             try:
