@@ -11,9 +11,12 @@
 #define HEMELB_REDBLOOD_WALL_CELL_PAIR_ITERATOR_H
 
 #include <assert.h>
+#include <tuple>
+#include <iterator>
 #include "units.h"
 #include "redblood/DivideConquer.h"
 #include "redblood/CellCell.h"
+#include "redblood/Borders.h"
 #include "geometry/LatticeData.h"
 
 namespace hemelb
@@ -34,6 +37,110 @@ namespace hemelb
     //! \brief The items of the divide and conquer box contain the location of the wall-node (not
     //! the location of the associated fluid site) as well as how close the node is to neighboring
     //! boxes.
+    template<class LATTICE>
+      DivideConquer<WallNode> createWallNodeDnC(
+        geometry::LatticeData const&latticeData, LatticeDistance boxSize,
+        LatticeDistance interactionDistance);
+
+    //! Iterates over pairs of wall-node, cell-node which are within a given distance
+    class WallCellPairIterator
+    {
+      public:
+        //! Underlying type of the dereferenced object
+        struct value_type
+        {
+          LatticePosition const &cellNode;
+          LatticePosition const &wallNode;
+        };
+        typedef std::unique_ptr<WallCellPairIterator::value_type> pointer;
+        typedef WallCellPairIterator::value_type const& reference;
+        typedef std::ptrdiff_t difference_type;
+        typedef std::input_iterator_tag iterator_category;
+        //! Tag to initialize a begining-of-range iterator
+        struct Begin
+        {
+        };
+        //! Tag to initialize an end-of-range iterator
+        struct End
+        {
+        };
+        //! Creates an iterator of Wall and Cell nodes
+        WallCellPairIterator(
+            DivideConquerCells const& cellNodes, DivideConquer<WallNode> const &wallNodes,
+            LatticeDistance cutoff, WallCellPairIterator::Begin const &)
+          : WallCellPairIterator(
+              cellNodes, wallNodes, cutoff, cellNodes.end(), cellNodes.end(), wallNodes.begin())
+        {
+        }
+        WallCellPairIterator(
+            DivideConquerCells const& cellNodes, DivideConquer<WallNode> const &wallNodes,
+            LatticeDistance cutoff)
+          : WallCellPairIterator(cellNodes, wallNodes, cutoff, Begin())
+        {
+        }
+        //! Creates an iterator of Wall and Cell nodes
+        WallCellPairIterator(
+            DivideConquerCells const& cellNodes, DivideConquer<WallNode> const &wallNodes,
+            LatticeDistance cutoff, WallCellPairIterator::End const &)
+          : WallCellPairIterator(
+              cellNodes, wallNodes, cutoff, cellNodes.end(), cellNodes.end(), wallNodes.end())
+        {
+        }
+        //! Positions of the wall and cell nodes
+        value_type operator*() const
+        {
+          assert(static_cast<bool>(*this));
+          return {*firstCellNode, firstWallNode->second.node};
+        }
+        //! Do not use. Only exists to model an InputIterator
+        pointer operator->() const
+        {
+          assert(static_cast<bool>(*this));
+          return pointer{new value_type{*firstCellNode, firstWallNode->second.node}};
+        }
+
+        bool operator++();
+        value_type operator++(int)
+        {
+          assert(static_cast<bool>(*this));
+          auto const result = operator*();
+          operator++();
+          return result;
+        }
+
+        operator bool() const
+        {
+          return firstWallNode != wallNodes.end() and isValid();
+        }
+
+      protected:
+        //! Reference to node vertices via divide and conquer boxes
+        DivideConquerCells const& cellNodes;
+        //! wall node iterator
+        DivideConquer<WallNode> const& wallNodes;
+        //! cell node iterator
+        DivideConquerCells::const_iterator firstCellNode;
+        //! cell node iterator
+        DivideConquerCells::const_iterator lastCellNode;
+        //! wall node iterator
+        DivideConquer<WallNode>::const_iterator firstWallNode;
+        //! iterates over difference boxes around current wall node
+        BorderBoxIterator box_iterator;
+        //! Maximum interaction distance
+        LatticeDistance cutoff;
+
+        //! Whether current pair is within range
+        bool isValid() const;
+
+        //! Creates an iterator of Wall and Cell nodes
+        WallCellPairIterator(
+            DivideConquerCells const& cellNodes, DivideConquer<WallNode> const &wallNodes,
+            LatticeDistance cutoff,
+            DivideConquerCells::const_iterator const &firstCellNode,
+            DivideConquerCells::const_iterator const &lastCellNode,
+            DivideConquer<WallNode>::const_iterator const &firstWallNode);
+    };
+
     template<class LATTICE>
       DivideConquer<WallNode> createWallNodeDnC(
         geometry::LatticeData const&latticeData, LatticeDistance boxSize,
@@ -65,6 +172,53 @@ namespace hemelb
         }
         return result;
       }
+
+    //! \brief Creates an object that std::begin and std::end can act on
+    //! \details This makes it possible to use ranged for loops as well as iterate in more
+    //! tradditional manner:
+    //! \code{.cpp}
+    //!   auto const last = std::end(iterate(cellDnC, wallDnC, interactionDistance));
+    //!   auto first = std::begin(iterate(cellDnC, wallDnC, interactionDistance));
+    //!   for(; first != last; ++first)
+    //!     std::cout << first->wallNode << " " << first->cellNode << "\n";
+    //| \endcode
+    //! or
+    //! \code{.cpp}
+    //!   for(auto const nodes: iterate(cellDnC, wallDnC, interactionDistance))
+    //!     std::cout << nodes.wallNode << " " << nodes.cellNode << "\n";
+    //| \endcode
+    std::tuple<
+       DivideConquerCells const&,
+       DivideConquer<hemelb::redblood::WallNode> const&,
+       hemelb::LatticeDistance
+     > iterate(
+       hemelb::redblood::DivideConquerCells const& cellDnC,
+       hemelb::redblood::DivideConquer<hemelb::redblood::WallNode> const& wallDnC,
+       hemelb::LatticeDistance const & cutoff
+     );
   }
 }
+
+namespace std
+{
+  //! Overload so we can work with for-range loop
+  hemelb::redblood::WallCellPairIterator begin(
+    tuple<
+      hemelb::redblood::DivideConquerCells const&,
+      hemelb::redblood::DivideConquer<hemelb::redblood::WallNode> const&,
+      hemelb::LatticeDistance
+    > args
+  );
+
+  //! Overload so we can work with for-range loop
+  hemelb::redblood::WallCellPairIterator end(
+    tuple<
+      hemelb::redblood::DivideConquerCells const&,
+      hemelb::redblood::DivideConquer<hemelb::redblood::WallNode> const&,
+      hemelb::LatticeDistance
+    > args
+  );
+
+} // std
+
 #endif
