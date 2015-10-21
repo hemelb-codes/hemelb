@@ -79,6 +79,16 @@
       <halo units="LB" value="1.05" />
       <boxsize units="LB" value="3" />
     </controller>
+    <cell2Cell>
+      <intensity units="Nm" value="2e-19" />
+      <cutoffdistance units="LB" value="1.0" />
+      <exponent value="2"/>
+    </cell2Cell>
+    <cell2Wall>
+      <intensity units="Nm" value="2e-19" />
+      <cutoffdistance units="LB" value="1.0" />
+      <exponent value="2"/>
+    </cell2Wall>
     <cells>
       <cell name="default">
         <moduli>
@@ -88,11 +98,6 @@
           <dilation units="LB" value="0.75" />
           <strain units="N/m" value="5e-6" />
         </moduli>
-        <interaction>
-          <intensity units="Nm" value="2e-19" />
-          <cutoffdistance units="LB" value="1.0" />
-          <exponent value="2"/>
-        </interaction>
         <shape mesh_path="red_blood_cell.txt" />
         <scale units="m" value="6e-06" />
       </cell>

@@ -86,8 +86,8 @@ namespace hemelb
       {
         CellContainer cells;
         CellArmy<Traits> army(*latDat, cells, cutoff, halo);
-        army.cell2Cell.cutoff = 0.5;
-        army.cell2Cell.intensity = 1.0;
+        army.SetCell2Cell(/* intensity */1e0, /* cutoff */0.5);
+        army.SetCell2Wall(/* intensity */1e0, /* cutoff */0.5);
         army.Cell2FluidInteractions();
       }
 
@@ -103,8 +103,8 @@ namespace hemelb
         helpers::ZeroOutForces(latDat);
 
         CellArmy<Traits> army(*latDat, cells, cutoff, halo);
-        army.cell2Cell.cutoff = 0.5;
-        army.cell2Cell.intensity = 1.0;
+        army.SetCell2Cell(/* intensity */1e0, /* cutoff */0.5);
+        army.SetCell2Wall(/* intensity */1e0, /* cutoff */0.5);
         army.Cell2FluidInteractions();
 
         CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>( (*cells.begin()))->nbcalls == 1);

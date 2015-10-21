@@ -360,7 +360,6 @@ namespace hemelb
       std::unique_ptr<Cell> cell(new Cell(mesh_data->vertices, Mesh(mesh_data), scale, name));
       *cell *= scale;
       cell->moduli = readModuli(cellNode, converter);
-      cell->nodeWall = readNode2NodeForce(cellNode, converter);
 
       std::unique_ptr<CellBase> cellbase(static_cast<CellBase*>(cell.release()));
       return cellbase;

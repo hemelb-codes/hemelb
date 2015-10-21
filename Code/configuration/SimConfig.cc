@@ -256,6 +256,10 @@ namespace hemelb
       rbcMeshes.reset(redblood::readTemplateCells(topNode, GetUnitConverter()).release());
       rbcinserter = redblood::readRBCInserters(topNode, GetUnitConverter(), *rbcMeshes);
       rbcOutlets = redblood::readRBCOutlets(topNode, GetUnitConverter());
+      cell2Cell = redblood::readNode2NodeForce(
+          controllerNode.GetChildOrNull("cell2Cell"), GetUnitConverter());
+      cell2Wall = redblood::readNode2NodeForce(
+          controllerNode.GetChildOrNull("cell2Wall"), GetUnitConverter());
       return true;
     }
 

@@ -20,6 +20,7 @@
 #include "redblood/Cell.h"
 #include "redblood/Mesh.h"
 #include "redblood/RBCInserter.h"
+#include "redblood/Node2Node.h"
 
 namespace hemelb
 {
@@ -86,6 +87,14 @@ namespace hemelb
         std::shared_ptr<std::vector<redblood::FlowExtension>> GetRBCOutlets() const
         {
           return rbcOutlets;
+        }
+        redblood::Node2NodeForce const & GetCell2Cell() const
+        {
+          return cell2Cell;
+        }
+        redblood::Node2NodeForce const & GetCell2Wall() const
+        {
+          return cell2Wall;
         }
         lb::StressTypes GetStressType() const
         {
@@ -343,6 +352,8 @@ namespace hemelb
         LatticeDistance boxSize, halo;
         std::shared_ptr<redblood::TemplateCellContainer> rbcMeshes;
         std::shared_ptr<std::vector<redblood::FlowExtension>> rbcOutlets;
+        redblood::Node2NodeForce cell2Cell;
+        redblood::Node2NodeForce cell2Wall;
 
       protected:
         // These have to contain pointers because there are multiple derived types that might be

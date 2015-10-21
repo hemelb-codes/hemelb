@@ -219,10 +219,11 @@ namespace hemelb
     {
       hemelb::redblood::CellContainer cells;
       typedef hemelb::redblood::CellController<Traits> Controller;
-      auto const controller = std::make_shared<Controller>(*latticeData,
-                                                           cells,
-                                                           simConfig->GetBoxSize(),
-                                                           simConfig->GetHalo());
+      auto const controller = std::make_shared<Controller>(
+         *latticeData, cells,
+         simConfig->GetBoxSize(), simConfig->GetHalo(),
+         simConfig->GetCell2Cell(), simConfig->GetCell2Wall()
+      );
       controller->SetCellInsertion(simConfig->GetInserter());
       controller->SetOutlets(*simConfig->GetRBCOutlets());
       cellController = std::static_pointer_cast<hemelb::net::IteratedAction>(controller);
