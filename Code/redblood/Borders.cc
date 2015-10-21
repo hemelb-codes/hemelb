@@ -46,11 +46,11 @@ namespace hemelb
     }
 
 
-    void BorderBoxIterator::operator++()
+    BorderBoxIterator& BorderBoxIterator::operator++()
     {
       if(not isValid)
       {
-        return;
+        return *this;
       }
       bool const hasCycled = true;
       auto increment = [this, hasCycled](value_type::value_type &x)
@@ -70,6 +70,7 @@ namespace hemelb
         isValid = cycled1 ? increment(current[2]) != hasCycled: true;
       }
       while(isValid and not wannaSee(current));
+      return *this;
     }
   }
 } // namespace hemelb::redblood

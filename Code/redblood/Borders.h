@@ -72,7 +72,7 @@ namespace hemelb
           return isValid;
         }
         //! Go to next position
-        void operator++();
+        BorderBoxIterator& operator++();
 
       protected:
         //! Current direction;
