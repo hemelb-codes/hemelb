@@ -10,9 +10,12 @@
 #ifndef HEMELB_UNITTESTS_REDBLOOD_WALL_NODE_DNC_TESTS_H
 #define HEMELB_UNITTESTS_REDBLOOD_WALL_NODE_DNC_TESTS_H
 
+#include <iterator>
 #include <cppunit/TestFixture.h>
 #include "unittests/FourCubeLatticeData.h"
 #include "unittests/helpers/HasCommsTestFixture.h"
+#include "unittests/helpers/SiteIterator.h"
+#include "unittests/helpers/LatticeDataAccess.h"
 #include "redblood/WallCellPairIterator.h"
 #include "lb/lattices/D3Q15.h"
 
@@ -29,6 +32,7 @@ namespace hemelb
           CPPUNIT_TEST (testTwoCellNodes);
           CPPUNIT_TEST (testHaloAndNeighboringBoxes);
           CPPUNIT_TEST (testAllWallNodesFound);
+          CPPUNIT_TEST (testInteractionPassedOnToFluid<hemelb::redblood::stencil::FourPoint>);
           CPPUNIT_TEST_SUITE_END();
 
           LatticeDistance const cutoff = 3.0;
@@ -40,9 +44,8 @@ namespace hemelb
           void setUp()
           {
             latticeData.reset(FourCubeLatticeData::Create(Comms(), 27+2));
-            for(site_t i(0); i < latticeData->GetLocalFluidSiteCount(); ++i)
+            for(auto const site: std::cref(*latticeData))
             {
-              auto const site = latticeData->GetSite(i);
               if(not site.IsWall())
               {
                 continue;
@@ -51,7 +54,7 @@ namespace hemelb
               {
                 if(site.HasWall(d))
                 {
-                  latticeData->SetBoundaryDistance(i, d, 0.5);
+                  latticeData->SetBoundaryDistance(site.GetIndex(), d, 0.5);
                 }
               }
             }
@@ -163,9 +166,8 @@ namespace hemelb
             }
 
             // Loop over all nodes, check whether they are in range, check they are in list
-            for(site_t i(0); i < latticeData->GetLocalFluidSiteCount(); ++i)
+            for(auto const site: std::cref(*latticeData))
             {
-              auto const site = latticeData->GetSite(i);
               if(not site.IsWall())
               {
                 continue;
@@ -203,6 +205,45 @@ namespace hemelb
             {
               testAllWallNodesFound(Dimensionless(i)/Dimensionless(2*N) + 3.0);
               testAllWallNodesFound(Dimensionless(i)/Dimensionless(2*N) + 0.0);
+            }
+          }
+
+          template<class STENCIL> void testInteractionPassedOnToFluid(Dimensionless where)
+          {
+            using namespace hemelb::redblood;
+            auto const wallDnC = createWallNodeDnC<Lattice>(*latticeData, cutoff, halo);
+            auto const cell = std::make_shared<Cell>(tetrahedron());
+            LatticePosition const node(0.6, where * cutoff, where * cutoff);
+            *cell *= 3;
+            *cell += 100;
+            cell->GetVertices()[0] = node;
+            DivideConquerCells const cellDnC({cell}, cutoff, interactionDistance);
+
+            // Set forces to zero
+            helpers::ZeroOutForces(static_cast<geometry::LatticeData*>(latticeData.get()));
+
+            // Finds pairs, computes interaction, spread forces to lattice
+            addCell2WallInteractions<STENCIL>(
+                DivideConquerCells({cell}, cutoff, halo),
+                wallDnC,
+                Node2NodeForce(1.0, interactionDistance),
+               *static_cast<geometry::LatticeData*>(latticeData.get())
+            );
+
+            for(auto const site: std::cref(*latticeData))
+            {
+              auto const d = LatticePosition(site.GetGlobalSiteCoords()) - node;
+              CPPUNIT_ASSERT_EQUAL(
+                  STENCIL::stencil(d) > 1e-12, site.GetForce().GetMagnitude() > 1e-12);
+            }
+          }
+
+          template<class STENCIL> void testInteractionPassedOnToFluid()
+          {
+            size_t const N = 10;
+            for(size_t i(0); i <= N; ++i)
+            {
+              testInteractionPassedOnToFluid<STENCIL>(Dimensionless(i)/Dimensionless(2*N) + 3.0);
             }
           }
 
