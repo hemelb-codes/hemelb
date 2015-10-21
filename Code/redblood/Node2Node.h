@@ -10,6 +10,7 @@
 #ifndef HEMELB_REDBLOOD_NODE2NODE_H
 #define HEMELB_REDBLOOD_NODE2NODE_H
 
+#include <cassert>
 #include "units.h"
 
 namespace hemelb
@@ -32,8 +33,11 @@ namespace hemelb
       }
 
       LatticeDistance const deltaX = 1;
-      return -intensity
-          * (std::pow(deltaX / distance, exponent) - std::pow(deltaX / cutoffDistance, exponent));
+      auto const d_to_pow = std::pow(deltaX / distance, exponent);
+      auto const d_to_pow0 = std::pow(deltaX / cutoffDistance, exponent);
+      assert(not std::isnan(d_to_pow));
+      assert(not std::isinf(d_to_pow));
+      return - intensity * (d_to_pow - d_to_pow0);
     }
 
     // Repulsive force between two nodes
@@ -43,7 +47,9 @@ namespace hemelb
                                              size_t exponent = 2)
     {
       LatticeDistance const d = distance.GetMagnitude();
-      return distance * (node2NodeForce(d, intensity, cutoffDistance, exponent) / d);
+      assert(d > 1e-12); // can't determine direction of the force
+      auto const magnitude = node2NodeForce(d, intensity, cutoffDistance, exponent);
+      return distance * (magnitude / d);
     }
 
     // Repulsive force felt by A from interaction with B
