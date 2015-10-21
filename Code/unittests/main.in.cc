@@ -17,7 +17,6 @@
 #include <stdexcept>
 #include <unistd.h>
 
-#include "unittests/helpers/helpers.h"
 #include "debug/Debugger.h"
 #include "unittests/@HEMELB_UNITTEST_INCLUDE@"
 
