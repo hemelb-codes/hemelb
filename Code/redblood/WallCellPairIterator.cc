@@ -17,33 +17,37 @@ namespace hemelb
   {
     bool WallCellPairIterator::operator++()
     {
-      if(firstWallNode == wallNodes.end())
+      do
       {
-        return false;
+        if(firstWallNode == wallNodes.end())
+        {
+          return false;
+        }
+        if(firstCellNode != lastCellNode)
+        {
+          ++firstCellNode;
+        }
+        else if(++box_iterator)
+        {
+          std::tie(firstCellNode, lastCellNode)
+            = cellNodes(firstWallNode->second.node + *box_iterator);
+        }
+        else if(++firstWallNode != wallNodes.end())
+        {
+          box_iterator = BorderBoxIterator(firstWallNode->second.nearBorder);
+          // should always at least include cell of firstWallNode
+          assert(static_cast<bool>(box_iterator));
+          std::tie(firstCellNode, lastCellNode)
+            = cellNodes(firstWallNode->second.node + *box_iterator);
+        }
+        else
+        {
+          // reached end of loop
+          return false;
+        }
       }
-      if(firstCellNode != lastCellNode)
-      {
-        ++firstCellNode;
-      }
-      else if(++box_iterator)
-      {
-        std::tie(firstCellNode, lastCellNode)
-          = cellNodes(firstWallNode->second.node + *box_iterator);
-      }
-      else if(++firstWallNode != wallNodes.end())
-      {
-        box_iterator = BorderBoxIterator(firstWallNode->second.nearBorder);
-        // should always at least include cell of firstWallNode
-        assert(static_cast<bool>(box_iterator));
-        std::tie(firstCellNode, lastCellNode)
-          = cellNodes(firstWallNode->second.node + *box_iterator);
-      }
-      else
-      {
-        // reached end of loop
-        return false;
-      }
-      return isValid() ? true: operator++();
+      while(not isValid());
+      return true;
     }
 
     bool WallCellPairIterator::isValid() const
