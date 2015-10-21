@@ -100,10 +100,11 @@ namespace hemelb
         }
 
         bool operator++();
-        value_type operator++(int)
+        WallCellPairIterator operator++(int)
         {
           assert(static_cast<bool>(*this));
-          auto const result = operator*();
+          WallCellPairIterator result(
+              cellNodes, wallNodes, cutoff, firstCellNode, lastCellNode, firstWallNode);
           operator++();
           return result;
         }
