@@ -36,7 +36,9 @@
 									<listOptionValue builtIn="false" value="HEMELB_WALL_BOUNDARY=SIMPLEBOUNCEBACK"/>
 									<listOptionValue builtIn="false" value="HEMELB_KERNEL=LBGK"/>
 									<listOptionValue builtIn="false" value="HEMELB_STENCIL=FourPoint"/>
+									<listOptionValue builtIn="false" value="HEMELB_REVISION_NUMBER=0.1"/>
 								</option>
+								<option id="gnu.cpp.compiler.option.preprocessor.undef.1439579485" name="Undefined symbols (-U)" superClass="gnu.cpp.compiler.option.preprocessor.undef" valueType="undefDefinedSymbols"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.70459761" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.2001070575" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base">
@@ -44,8 +46,9 @@
 									<listOptionValue builtIn="false" value="../../dependencies/include"/>
 									<listOptionValue builtIn="false" value="../../dependencies/include/ctemplate"/>
 								</option>
-								<option id="gnu.c.compiler.option.preprocessor.def.symbols.867528242" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.867528242" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="HEMELB_STENCIL=FourPoint"/>
+									<listOptionValue builtIn="false" value="HEMELB_REVISION_NUMBER=0.1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1768676556" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>

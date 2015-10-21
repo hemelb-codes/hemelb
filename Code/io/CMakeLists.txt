@@ -8,6 +8,7 @@ add_library(hemelb_io
 	writers/Writer.cc
 	formats/geometry.cc
 	xml/XmlAbstractionLayer.cc
+    h5md/H5MD.cc
     hdf5/H5Error.cc
 	)
 target_link_libraries(hemelb_io

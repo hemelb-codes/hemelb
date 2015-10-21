@@ -1,7 +1,8 @@
-#ifndef HEMELB_IO_H5MD_H5MDEXCEPTION_H
-#define HEMELB_IO_H5MD_H5MDEXCEPTION_H
+#ifndef HEMELB_IO_H5MD_H5MDERROR_H
+#define HEMELB_IO_H5MD_H5MDERROR_H
 
-#include "Exception.h"
+#include <exception>
+#include <string>
 
 namespace hemelb
 {
@@ -10,17 +11,26 @@ namespace hemelb
     namespace h5md
     {
 
-      class H5MDException : public ::hemelb::Exception {
+      class H5MDError : public std::exception
+      {
         public:
-          H5MDException() {}
-          H5MDException(const std::string & what) : reason(what) {}
-          const std::string & what() { return reason; }
+          H5MDError()
+          {
+          }
+          H5MDError(const std::string & what) :
+              wat(what)
+          {
+          }
+          virtual const char * what() const noexcept
+          {
+            return wat.c_str();
+          }
         private:
-          std::string reason;
+          std::string wat;
       };
 
     }
   }
 }
 
-#endif  // HEMELB_IO_H5MD_H5MDEXCEPTION_H
+#endif  // HEMELB_IO_H5MD_H5MDERROR_H
