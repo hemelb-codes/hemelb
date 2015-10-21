@@ -37,9 +37,25 @@ namespace hemelb
           void setUp()
           {
             latticeData.reset(FourCubeLatticeData::Create(Comms(), 27+2));
+            for(site_t i(0); i < latticeData->GetLocalFluidSiteCount(); ++i)
+            {
+              auto const site = latticeData->GetSite(i);
+              if(not site.IsWall())
+              {
+                continue;
+              }
+              for(Direction d(0); d < Lattice::NUMVECTORS; ++d)
+              {
+                if(site.HasWall(d))
+                {
+                  latticeData->SetBoundaryDistance(i, d, 0.5);
+                }
+              }
+            }
           }
           void testWallNodeDnC()
           {
+            using namespace hemelb::redblood;
             auto const dnc = createWallNodeDnC<Lattice>(*latticeData, cutoff, halo);
 
             // Checking the middle of the world first: No wall nodes
@@ -62,7 +78,7 @@ namespace hemelb
           }
 
         private:
-          std::unique_ptr<geometry::LatticeData> latticeData;
+          std::unique_ptr<unittests::FourCubeLatticeData> latticeData;
       };
 
 
