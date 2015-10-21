@@ -26,15 +26,7 @@ namespace hemelb
     {
       public:
         typedef TRAITS Traits;
-#       ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
-        CellController(geometry::LatticeData &_latDat, CellContainer const &cells,
-                       LatticeDistance boxsize = 10.0, LatticeDistance halo = 2.0) :
-            CellArmy<TRAITS>(_latDat, cells, boxsize, halo)
-        {
-        }
-#       else
         using CellArmy<TRAITS>::CellArmy;
-#       endif
 
         void RequestComms() override
         {

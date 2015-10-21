@@ -135,9 +135,6 @@ namespace hemelb
                                    1.8);
 
         auto const cell = std::make_shared<Cell>(tetrahedron());
-        cell->nodeWall.cutoff = 0.6;
-        cell->nodeWall.intensity = 1e0;
-        cell->nodeWall.exponent = 2;
         *cell *= 5e0;
         auto const fader0 =
             std::make_shared<FaderCell>(cell, std::vector<FlowExtension> { inlet, outlet });
@@ -159,7 +156,6 @@ namespace hemelb
         CPPUNIT_ASSERT(range.is_valid());
         CPPUNIT_ASSERT(not (++range));
       }
-
 
       CPPUNIT_TEST_SUITE_REGISTRATION (FaderCellTests);
     }
