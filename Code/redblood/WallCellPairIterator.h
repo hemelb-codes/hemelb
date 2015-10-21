@@ -197,6 +197,19 @@ namespace hemelb
        hemelb::redblood::DivideConquer<hemelb::redblood::WallNode> const& wallDnC,
        hemelb::LatticeDistance const & cutoff
      );
+
+    //! \brief Computes cell <-> cell interactions and spread to grid
+    //! \details Given a partition of the cells' nodes and node <-> node interaction
+    //! functional, computes the short-range that can occur between cells that are
+    //! too close to one another. The interaction forces are computed and spread to
+    //! the lattice.
+    template <class STENCIL>
+    void addCell2WallInteractions(
+        DivideConquerCells const &cellDnC,
+        DivideConquer<WallNode> const &wallDnC,
+        Node2NodeForce const &functional,
+        geometry::LatticeData &latticeData
+    );
   }
 }
 
@@ -219,7 +232,29 @@ namespace std
       hemelb::LatticeDistance
     > args
   );
-
 } // std
+
+
+namespace hemelb
+{
+  namespace redblood
+  {
+    // implementation must happen after begin and end have been declared
+    template <class STENCIL>
+    void addCell2WallInteractions(
+        DivideConquerCells const &cellDnC,
+        DivideConquer<WallNode> const &wallDnC,
+        Node2NodeForce const &functional,
+        geometry::LatticeData &latticeData
+    )
+    {
+      for(auto const nodes: iterate(cellDnC, wallDnC, functional.cutoff))
+      {
+        auto const force = functional(nodes.cellNode, nodes.wallNode);
+        spreadForce<STENCIL>(nodes.cellNode, latticeData, force);
+      }
+    }
+  }
+}
 
 #endif
