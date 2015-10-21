@@ -58,16 +58,8 @@ namespace hemelb
       std::fill(forces.begin(), forces.end(), LatticeForceVector(0, 0, 0));
       auto const energy = cell->Energy(forces);
 
-      if (cell->HasWallForces())
-      {
-        typedef details::SpreadForcesAndWallForces<LATTICE> Spreader;
-        details::spreadForce2Grid<Spreader, STENCIL>(cell, Spreader(cell, forces, latticeData));
-      }
-      else
-      {
-        typedef details::SpreadForces Spreader;
-        details::spreadForce2Grid<Spreader, STENCIL>(cell, Spreader(forces, latticeData));
-      }
+      typedef details::SpreadForces Spreader;
+      details::spreadForce2Grid<Spreader, STENCIL>(cell, Spreader(forces, latticeData));
       return energy;
     }
 

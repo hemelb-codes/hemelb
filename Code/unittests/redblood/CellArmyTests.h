@@ -49,11 +49,6 @@ namespace hemelb
             ++nbcalls;
             return 0;
           }
-          virtual LatticeForceVector WallInteractionForce(
-              LatticePosition const &vertex, LatticePosition const &wall) const override
-          {
-            return 0;
-          }
       };
 
       class CellArmyTests : public helpers::FourCubeBasedTestFixture

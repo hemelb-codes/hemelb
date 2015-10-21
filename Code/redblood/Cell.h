@@ -126,16 +126,6 @@ namespace hemelb
         {
           return operator()(in);
         }
-        //! Interaction between wall and a node
-        virtual LatticeForceVector WallInteractionForce(LatticePosition const &vertex,
-                                                        LatticePosition const &wall) const
-        {
-          return LatticeForceVector(0, 0, 0);
-        }
-        virtual bool HasWallForces() const
-        {
-          return false;
-        }
 
         //! Scale mesh around barycenter
         void operator*=(Dimensionless const &);
@@ -247,8 +237,6 @@ namespace hemelb
                 0;
             }
         } moduli;
-        //! Node-wall interaction
-        Node2NodeForce nodeWall;
 
 #       ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
         Cell(MeshData::Vertices &&verticesIn, Mesh const &origMesh, LatticeDistance scale = 1e0,
@@ -285,8 +273,7 @@ namespace hemelb
 #       endif
         //! Copy constructor
         //! Copy refers to the same template mesh
-        Cell(Cell const &cell) :
-            CellBase(cell), moduli(cell.moduli), nodeWall(cell.nodeWall)
+        Cell(Cell const &cell) : CellBase(cell), moduli(cell.moduli)
         {
         }
 
@@ -294,16 +281,6 @@ namespace hemelb
         virtual LatticeEnergy operator()() const override;
         //! Facet bending energy
         virtual LatticeEnergy operator()(std::vector<LatticeForceVector> &in) const override;
-        //! Node-Wall interaction
-        virtual LatticeForceVector WallInteractionForce(LatticePosition const &vertex,
-                                                        LatticePosition const &wall) const override
-        {
-          return nodeWall(vertex, wall);
-        }
-        virtual bool HasWallForces() const override
-        {
-          return true;
-        }
 
         //! Clones: shallow copy reference mesh, deep-copy everything else
         std::unique_ptr<Cell> clone() const

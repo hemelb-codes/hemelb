@@ -89,12 +89,6 @@ namespace hemelb
         virtual LatticeEnergy operator()() const override;
         //! Facet bending energy
         virtual LatticeEnergy operator()(std::vector<LatticeForceVector> &in) const override;
-        //! Node-Wall interaction
-        virtual LatticeForceVector WallInteractionForce(LatticePosition const &vertex,
-                                                        LatticePosition const &wall) const override
-        {
-          return wrappee->WallInteractionForce(vertex, wall);
-        }
 
         std::shared_ptr<std::vector<FlowExtension> const> GetIOlets() const
         {
