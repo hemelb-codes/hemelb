@@ -13,6 +13,7 @@
 #include "lb/streamers/SimpleCollideAndStream.h"
 #include "lb/collisions/Normal.h"
 #include "lb/BuildSystemInterface.h"
+#include "redblood/stencil.h"
 
 namespace hemelb
 {

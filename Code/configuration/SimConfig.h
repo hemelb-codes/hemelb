@@ -20,7 +20,6 @@
 #include "redblood/Cell.h"
 #include "redblood/Mesh.h"
 #include "redblood/RBCInserter.h"
-#include "redblood/stencil.h"
 
 namespace hemelb
 {
