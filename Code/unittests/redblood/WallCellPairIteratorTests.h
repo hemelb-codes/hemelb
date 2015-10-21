@@ -28,6 +28,7 @@ namespace hemelb
       class WallCellPairIteratorTests : public helpers::HasCommsTestFixture
       {
           CPPUNIT_TEST_SUITE (WallCellPairIteratorTests);
+          CPPUNIT_TEST (testNoWall);
           CPPUNIT_TEST (testOneCellNode);
           CPPUNIT_TEST (testTwoCellNodes);
           CPPUNIT_TEST (testHaloAndNeighboringBoxes);
@@ -86,6 +87,22 @@ namespace hemelb
                   std::end(iterate(cellDnC, wallDnC, 0.05))
                 )
             );
+          }
+
+          void testNoWall()
+          {
+            using namespace hemelb::redblood;
+            DivideConquer<WallNode> const wallDnC(3e0);
+            auto const cell = std::make_shared<Cell>(tetrahedron());
+            *cell *= 3;
+            *cell += 100;
+            cell->GetVertices()[0] = LatticePosition(0.5, 3.5 * cutoff, 3.5 * cutoff);
+            DivideConquerCells const cellDnC({cell}, cutoff, interactionDistance);
+
+            auto const last_iterator = std::end(iterate(cellDnC, wallDnC, interactionDistance));
+            auto const first_iterator = std::begin(iterate(cellDnC, wallDnC, interactionDistance));
+            CPPUNIT_ASSERT(first_iterator == last_iterator);
+            CPPUNIT_ASSERT_EQUAL(std::ptrdiff_t(0), std::distance(first_iterator, last_iterator));
           }
 
           void testTwoCellNodes()
