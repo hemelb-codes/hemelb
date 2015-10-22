@@ -67,7 +67,15 @@ namespace hemelb
             * cutoff;
 
         CPPUNIT_ASSERT_EQUAL(
-            (size_t)Borders::CENTER, figureNearness(dnc, position, cutoff * 0.501));
+          static_cast<size_t>(Borders::CENTER)
+          bitor static_cast<size_t>(Borders::NORTH)
+          bitor static_cast<size_t>(Borders::SOUTH)
+          bitor static_cast<size_t>(Borders::EAST)
+          bitor static_cast<size_t>(Borders::WEST)
+          bitor static_cast<size_t>(Borders::TOP)
+          bitor static_cast<size_t>(Borders::BOTTOM),
+          figureNearness(dnc, position, cutoff * 1.001)
+        );
         CPPUNIT_ASSERT_EQUAL(
             (size_t)Borders::CENTER bitor (size_t)Borders::TOP,
             figureNearness(dnc, position, cutoff * 0.499)

@@ -112,7 +112,17 @@ namespace hemelb
     size_t figureNearness(DivideConquer<T> const &dnc, LatticeVector const &key,
                        LatticePosition const &vertex, LatticeDistance const &haloLength)
     {
-      if (haloLength + haloLength > dnc.GetBoxSize())
+      if (haloLength > dnc.GetBoxSize())
+      {
+        return static_cast<size_t>(Borders::CENTER)
+          bitor static_cast<size_t>(Borders::NORTH)
+          bitor static_cast<size_t>(Borders::SOUTH)
+          bitor static_cast<size_t>(Borders::EAST)
+          bitor static_cast<size_t>(Borders::WEST)
+          bitor static_cast<size_t>(Borders::TOP)
+          bitor static_cast<size_t>(Borders::BOTTOM);
+      }
+      else if(haloLength < 1e-12)
       {
         return static_cast<size_t>(Borders::CENTER);
       }
