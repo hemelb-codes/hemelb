@@ -211,15 +211,6 @@ namespace hemelb
           return boxSize;
         }
 
-        /**
-         * Gets the halo for the RBC CellController.
-         * @return
-         */
-        LatticeDistance GetHalo() const
-        {
-          return halo;
-        }
-
       protected:
         /**
          * Create the unit converter - virtual so that mocks can override it.
@@ -349,7 +340,7 @@ namespace hemelb
          */
         bool hasRBCSection;
         std::function<void(redblood::CellInserter const&)> rbcinserter;
-        LatticeDistance boxSize, halo;
+        LatticeDistance boxSize;
         std::shared_ptr<redblood::TemplateCellContainer> rbcMeshes;
         std::shared_ptr<std::vector<redblood::FlowExtension>> rbcOutlets;
         redblood::Node2NodeForce cell2Cell;
