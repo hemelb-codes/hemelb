@@ -11,7 +11,9 @@
 #define HEMELB_REDBLOOD_NODE2NODE_H
 
 #include <cassert>
+#include "Exception.h"
 #include "units.h"
+#include "log/Logger.h"
 
 namespace hemelb
 {
@@ -35,8 +37,12 @@ namespace hemelb
       LatticeDistance const deltaX = 1;
       auto const d_to_pow = std::pow(deltaX / distance, exponent);
       auto const d_to_pow0 = std::pow(deltaX / cutoffDistance, exponent);
-      assert(not std::isnan(d_to_pow));
-      assert(not std::isinf(d_to_pow));
+      if(std::isnan(d_to_pow) or std::isinf(d_to_pow))
+      {
+        std::string const message = "*** node-node interaction is NaN or infinite";
+        log::Logger::Log<log::Critical, log::Singleton>(message);
+        throw Exception() << message;
+      }
       return - intensity * (d_to_pow - d_to_pow0);
     }
 
