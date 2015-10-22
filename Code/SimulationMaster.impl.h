@@ -221,7 +221,7 @@ namespace hemelb
       typedef hemelb::redblood::CellController<Traits> Controller;
       auto const controller = std::make_shared<Controller>(
          *latticeData, cells,
-         simConfig->GetBoxSize(), simConfig->GetHalo(),
+         simConfig->GetBoxSize(),
          simConfig->GetCell2Cell(), simConfig->GetCell2Wall()
       );
       controller->SetCellInsertion(simConfig->GetInserter());

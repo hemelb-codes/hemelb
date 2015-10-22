@@ -136,7 +136,7 @@ namespace hemelb
         }
 
       protected:
-        LatticeDistance const boxsize;
+        LatticeDistance boxsize;
     };
   }
 } // hemelb::redblood

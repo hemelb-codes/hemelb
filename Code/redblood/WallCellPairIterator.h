@@ -41,6 +41,18 @@ namespace hemelb
       DivideConquer<WallNode> createWallNodeDnC(
         geometry::LatticeData const&latticeData, LatticeDistance boxSize,
         LatticeDistance interactionDistance);
+    //! \brief Creates divide and conquer box of wall nodes
+    //! \brief This version is really to update the size or halo of the DnC
+    template<class LATTICE>
+      DivideConquer<WallNode> createWallNodeDnC(
+        std::vector<LatticePosition> const&, LatticeDistance boxSize,
+        LatticeDistance interactionDistance);
+    //! \brief Creates divide and conquer box of wall nodes
+    //! \brief This version is really to update the size or halo of the DnC
+    template<class LATTICE>
+      DivideConquer<WallNode> createWallNodeDnC(
+        DivideConquer<WallNode> const &, LatticeDistance boxSize,
+        LatticeDistance interactionDistance);
 
     //! Iterates over pairs of wall-node, cell-node which are within a given distance
     class WallCellPairIterator
@@ -170,6 +182,34 @@ namespace hemelb
             auto const nearness = figureNearness(result, wallnode, interactionDistance);
             result.insert(wallnode, {wallnode, nearness});
           }
+        }
+        return result;
+      }
+
+    template<class LATTICE>
+      DivideConquer<WallNode> createWallNodeDnC(
+        std::vector<LatticePosition> const& nodes, LatticeDistance boxSize,
+        LatticeDistance interactionDistance)
+      {
+        DivideConquer<WallNode> result(boxSize);
+        for(auto const node: nodes)
+        {
+          auto const nearness = figureNearness(result, node, interactionDistance);
+          result.insert(node, {node, nearness});
+        }
+        return result;
+      }
+
+    template<class LATTICE>
+      DivideConquer<WallNode> createWallNodeDnC(
+        DivideConquer<WallNode> const& nodes, LatticeDistance boxSize,
+        LatticeDistance interactionDistance)
+      {
+        DivideConquer<WallNode> result(boxSize);
+        for(auto const node: nodes)
+        {
+          auto const nearness = figureNearness(result, node.second.node, interactionDistance);
+          result.insert(node.second.node, {node.second.node, nearness});
         }
         return result;
       }

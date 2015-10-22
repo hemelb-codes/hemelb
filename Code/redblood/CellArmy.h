@@ -38,11 +38,11 @@ namespace hemelb
         typedef std::function<void(const CellContainer &)> CellChangeListener;
 
         CellArmy(geometry::LatticeData &_latDat, CellContainer const &cells,
-                 LatticeDistance boxsize = 10.0, LatticeDistance halo = 2.0,
+                 LatticeDistance boxsize = 10.0,
                  Node2NodeForce const &cell2Cell = {0e0, 1e0, 2},
                  Node2NodeForce const &cell2Wall = {0e0, 1e0, 2} ) :
-            latticeData(_latDat), cells(cells), cellDnC(cells, boxsize, halo),
-            wallDnC(createWallNodeDnC<Lattice>(_latDat, boxsize, halo)),
+            latticeData(_latDat), cells(cells), cellDnC(cells, boxsize, cell2Cell.cutoff + 1e-6),
+            wallDnC(createWallNodeDnC<Lattice>(_latDat, boxsize, cell2Wall.cutoff + 1e-6)),
             cell2Cell(cell2Cell), cell2Wall(cell2Wall)
         {
         }
@@ -135,12 +135,15 @@ namespace hemelb
         template<class ... ARGS> void SetCell2Cell(ARGS ... args)
         {
           cell2Cell = Node2NodeForce(std::forward<ARGS>(args)...);
+          cellDnC.SetBoxSizeAndHalo(cellDnC.GetBoxSize(), cell2Cell.cutoff + 1e-6);
         }
         //! \brief Sets cell to cell interaction forces
         //! \details Forwards arguments to Node2NodeForce constructor.
         template<class ... ARGS> void SetCell2Wall(ARGS ... args)
         {
           cell2Wall = Node2NodeForce(std::forward<ARGS>(args)...);
+          wallDnC = createWallNodeDnC<Lattice>(
+              wallDnC, wallDnC.GetBoxSize(), cell2Wall.cutoff + 1e-6);
         }
 
       protected:

@@ -162,6 +162,8 @@ namespace hemelb
         //! After vertices have moved, update mapping and whether it is near
         //! boundary
         void update();
+        //! recomputes using current cells
+        void SetBoxSizeAndHalo(LatticeDistance boxSize, LatticeDistance halo);
 
         //! Insert a new cell
         //! Returns true if the cell was inserted, false if it already existed.
@@ -172,7 +174,7 @@ namespace hemelb
 
       protected:
         //! Distance from border below which an object is in the halo
-        LatticeDistance const haloLength;
+        LatticeDistance haloLength;
         //! Container of cells
         CellContainer cells;
     };

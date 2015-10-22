@@ -43,8 +43,6 @@ namespace hemelb
         }
       }
 
-      // avoids a warning
-#     ifndef HEMELB_DOING_UNITTESTS
       void initializeCells(DivideConquer<CellReference> &dnc, CellContainer const &cells,
                            LatticeDistance haloLength)
       {
@@ -56,7 +54,6 @@ namespace hemelb
           initializeCells(dnc, (*i_first)->GetVertices(), i_first, haloLength);
         }
       }
-#     endif
 
       // Compare distance between vertices
       template<class T_FUNCTION>
@@ -114,6 +111,14 @@ namespace hemelb
           ++i_first;
         }
       }
+    }
+
+    void DivideConquerCells::SetBoxSizeAndHalo(LatticeDistance boxSize, LatticeDistance halo)
+    {
+      base_type::clear();
+      boxsize = boxSize;
+      haloLength = halo;
+      initializeCells(*this, cells, GetHaloLength());
     }
 
     DivideConquerCells::const_range DivideConquerCells::operator()(LatticeVector const &pos) const
