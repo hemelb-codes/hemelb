@@ -146,6 +146,7 @@ class PlacedIolet(Observable):
     Normal = property(GetNormal, SetNormal)
     
     def SetRadius(self, radius):
+        self._lastRadius = radius
         # Get into numpy vectors
         self.widget.GetCenter(self._c)
         self.widget.GetOrigin(self._o)
