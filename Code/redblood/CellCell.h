@@ -44,7 +44,7 @@ namespace hemelb
 
     //! Organizes nodes in cells in boxes
     //! The object is to easily check nodes that are within interaction distance
-    class DivideConquerCells : protected DivideConquer<CellReference>
+    class DivideConquerCells : public DivideConquer<CellReference>
     {
         //! Type of the base class
         typedef DivideConquer<CellReference> base_type;
@@ -266,7 +266,7 @@ namespace hemelb
     void addCell2CellInteractions(DivideConquerCells const &dnc, Node2NodeForce const &functional,
                                   geometry::LatticeData &latticeData)
     {
-      DivideConquerCells::pair_range range(dnc.pair_begin(functional.cutoff));
+      auto range = dnc.pair_begin(functional.cutoff);
 
       for (; range.is_valid(); ++range)
       {
