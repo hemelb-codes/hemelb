@@ -132,14 +132,14 @@ namespace hemelb
 
         //! \brief Sets cell to cell interaction forces
         //! \details Forwards arguments to Node2NodeForce constructor.
-        template<class ... ARGS> void SetCell2Cell(ARGS ... args)
+        template<class ... ARGS> void SetCell2Cell(ARGS && ... args)
         {
           cell2Cell = Node2NodeForce(std::forward<ARGS>(args)...);
           cellDnC.SetBoxSizeAndHalo(cellDnC.GetBoxSize(), cell2Cell.cutoff + 1e-6);
         }
         //! \brief Sets cell to cell interaction forces
         //! \details Forwards arguments to Node2NodeForce constructor.
-        template<class ... ARGS> void SetCell2Wall(ARGS ... args)
+        template<class ... ARGS> void SetCell2Wall(ARGS && ... args)
         {
           cell2Wall = Node2NodeForce(std::forward<ARGS>(args)...);
           wallDnC = createWallNodeDnC<Lattice>(
