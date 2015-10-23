@@ -58,7 +58,7 @@ namespace hemelb
                             const std::string& units, util::UnitConverter const &converter,
                             T default_)
       {
-        std::pair<T, std::string> const value_unit = GetNonDimensionalValue<T>(parent, elemname, units, default_);
+        auto const value_unit = GetNonDimensionalValue<T>(parent, elemname, units, default_);
         return value_unit.second == "LB" ?
           value_unit.first :
           converter.ConvertToLatticeUnits(value_unit.second, value_unit.first);
@@ -69,7 +69,7 @@ namespace hemelb
       T GetNonDimensionalValue(const io::xml::Element& parent, const std::string &elemname,
                             const std::string& units, util::UnitConverter const &converter)
       {
-        std::pair<T, std::string> const value_unit = GetNonDimensionalValue<T>(parent.GetChildOrThrow(elemname), units);
+        auto const value_unit = GetNonDimensionalValue<T>(parent.GetChildOrThrow(elemname), units);
         return value_unit.second == "LB" ?
           value_unit.first :
           converter.ConvertToLatticeUnits(value_unit.second, value_unit.first);
