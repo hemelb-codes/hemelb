@@ -26,7 +26,7 @@ namespace hemelb
 #include "redblood/GridAndCell.impl.h"
 
     //! Displacement of the cell nodes interpolated from lattice velocities
-    template<class KERNEL, class Stencil>
+    template<class KERNEL, class STENCIL>
     void velocitiesOnMesh(std::shared_ptr<CellBase const> cell, geometry::LatticeData const &latDat,
                           std::vector<LatticePosition> &displacements)
     {
@@ -36,7 +36,7 @@ namespace hemelb
                      displacements.begin(),
                      [&latDat](LatticePosition const &position)
                      {
-                       return interpolateVelocity<KERNEL, Stencil>(latDat, position);
+                       return interpolateVelocity<KERNEL, STENCIL>(latDat, position);
                      });
     }
 
@@ -49,7 +49,7 @@ namespace hemelb
     //! \param[inout] latticeData: the LB grid
     //! \param[inout] stencil: type of stencil to use when spreading forces
     //! \returns the energy (excluding node-wall interaction)
-    template<class LATTICE, class Stencil>
+    template<class LATTICE, class STENCIL>
     Dimensionless forcesOnGrid(std::shared_ptr<CellBase const> cell,
                                std::vector<LatticeForceVector> &forces,
                                geometry::LatticeData &latticeData)
@@ -61,12 +61,12 @@ namespace hemelb
       if (cell->HasWallForces())
       {
         typedef details::SpreadForcesAndWallForces<LATTICE> Spreader;
-        details::spreadForce2Grid<Spreader, Stencil>(cell, Spreader(cell, forces, latticeData));
+        details::spreadForce2Grid<Spreader, STENCIL>(cell, Spreader(cell, forces, latticeData));
       }
       else
       {
         typedef details::SpreadForces Spreader;
-        details::spreadForce2Grid<Spreader, Stencil>(cell, Spreader(forces, latticeData));
+        details::spreadForce2Grid<Spreader, STENCIL>(cell, Spreader(forces, latticeData));
       }
       return energy;
     }
@@ -76,12 +76,12 @@ namespace hemelb
     //! already have a loop over neighboring grid nodes. Assumption is that the
     //! interaction distance is smaller or equal to stencil.
     //! Returns the energy (excluding node-wall interaction)
-    template<class LATTICE, class Stencil>
+    template<class LATTICE, class STENCIL>
     Dimensionless forcesOnGrid(std::shared_ptr<CellBase const> cell,
                                geometry::LatticeData &latticeData)
     {
       std::vector<LatticeForceVector> forces(cell->GetNumberOfNodes(), 0);
-      return forcesOnGrid<LATTICE, Stencil>(cell, forces, latticeData);
+      return forcesOnGrid<LATTICE, STENCIL>(cell, forces, latticeData);
     }
   }
 } // hemelb::redblood

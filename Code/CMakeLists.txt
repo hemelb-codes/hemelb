@@ -91,16 +91,7 @@ endif()
 
 
 add_definitions(-DHEMELB_READING_GROUP_SIZE=${HEMELB_READING_GROUP_SIZE})
-add_definitions(-DHEMELB_LATTICE=${HEMELB_LATTICE})
-add_definitions(-DHEMELB_KERNEL=${HEMELB_KERNEL})
-add_definitions(-DHEMELB_WALL_BOUNDARY=${HEMELB_WALL_BOUNDARY})
-add_definitions(-DHEMELB_INLET_BOUNDARY=${HEMELB_INLET_BOUNDARY})
-add_definitions(-DHEMELB_OUTLET_BOUNDARY=${HEMELB_OUTLET_BOUNDARY})
-add_definitions(-DHEMELB_WALL_INLET_BOUNDARY=${HEMELB_WALL_INLET_BOUNDARY})
-add_definitions(-DHEMELB_WALL_OUTLET_BOUNDARY=${HEMELB_WALL_OUTLET_BOUNDARY})
 add_definitions(-DHEMELB_COMPUTE_ARCHITECTURE=${HEMELB_COMPUTE_ARCHITECTURE})
-add_definitions(-DHEMELB_LOG_LEVEL=${HEMELB_LOG_LEVEL})
-add_definitions(-DHEMELB_STENCIL=${HEMELB_STENCIL})
 
 if(HEMELB_VALIDATE_GEOMETRY)
   add_definitions(-DHEMELB_VALIDATE_GEOMETRY)
@@ -362,6 +353,7 @@ configure_file (
   "${PROJECT_SOURCE_DIR}/resources/path_parameters.h.in"
   "${PROJECT_BINARY_DIR}/resources/path_parameters.h"
   )
+configure_file("Traits.in.h" "${PROJECT_BINARY_DIR}/Traits.h")
  
 # add the binary tree to the search path for include files
 # so that we will find TutorialConfig.h

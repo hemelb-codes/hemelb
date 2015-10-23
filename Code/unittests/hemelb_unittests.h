@@ -20,7 +20,6 @@
 #ifdef HEMELB_BUILD_MULTISCALE
   #include "unittests/multiscale/mpwide/mpwide.h"
 #endif
-#include "unittests/redblood.h"
 #include "unittests/util/util.h"
 
 #include "unittests/helpers/HasCommsTestFixture.h"

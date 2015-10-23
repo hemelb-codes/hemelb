@@ -6,6 +6,7 @@
 #include "redblood/RBCInserter.h"
 #include "redblood/FlowExtension.h"
 #include "redblood/io.h"
+#include "Traits.h"
 
 namespace hemelb
 {
@@ -242,7 +243,7 @@ namespace hemelb
       moduli.surface = GetNonDimensionalValue(moduliNode, "surface", "LB", converter, 1e0);
       moduli.volume = GetNonDimensionalValue(moduliNode, "volume", "LB", converter, 1e0);
       moduli.dilation = GetNonDimensionalValue(moduliNode, "dilation", "LB", converter, 0.75);
-      if(not (1e0 >= moduli.dilation >= 0.5))
+      if(1e0 < moduli.dilation or moduli.dilation < 0.5)
       {
         log::Logger::Log<log::Critical, log::Singleton>(
             "Dilation moduli is outside the recommended range 1e0 >= m >= 0.5");
@@ -262,6 +263,13 @@ namespace hemelb
       auto const node = parent.GetChildOrNull("interaction");
       result.intensity = GetNonDimensionalValue(node, "intensity", "Nm", converter, result.intensity);
       result.cutoff = GetNonDimensionalValue(node, "cutoffdistance", "LB", converter, result.cutoff);
+      if(2e0 * result.cutoff > Dimensionless(Traits<>::Stencil::GetRange()))
+      {
+          log::Logger::Log<log::Warning, log::Singleton>(
+              "Input inconsistency: cell-cell and cell-wall interactions larger then stencil size\n"
+              "See issue #586."
+           );
+      }
       auto const exponentNode = node != node.Missing() ?
         node.GetChildOrNull("exponent") :
         node.Missing();

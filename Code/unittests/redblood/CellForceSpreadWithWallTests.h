@@ -25,13 +25,17 @@ namespace hemelb
       {
           CPPUNIT_TEST_SUITE (CellForceSpreadWithWallTests);
           CPPUNIT_TEST (testAPIAssumptions);
-          CPPUNIT_TEST (testNode2WallCutoff);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testNode2WallCutoff<stencil::FourPoint>);
+          CPPUNIT_TEST (testNode2WallCutoff<stencil::CosineApprox>);
+          CPPUNIT_TEST (testNode2WallCutoff<stencil::ThreePoint>);
+          CPPUNIT_TEST (testNode2WallCutoff<stencil::TwoPoint>);
+          CPPUNIT_TEST_SUITE_END();
           typedef lb::lattices::D3Q15 D3Q15;
           typedef lb::kernels::LBGK<D3Q15> Kernel;
 
         public:
           void testAPIAssumptions();
-          void testNode2WallCutoff();
+          template<class STENCIL> void testNode2WallCutoff();
 
         protected:
           int siteID(LatticeVector const &) const;
@@ -42,7 +46,7 @@ namespace hemelb
           }
           virtual size_t refinement() const
           {
-            return 3;
+            return 0;
           }
       };
 
@@ -88,7 +92,7 @@ namespace hemelb
         CPPUNIT_ASSERT(latDat->GetSite(siteID(right)).IsWall());
       }
 
-      void CellForceSpreadWithWallTests::testNode2WallCutoff()
+      template<class STENCIL> void CellForceSpreadWithWallTests::testNode2WallCutoff()
       {
         // Fluid sites next to wall
         LatticeVector const solid = GetSolidWall();
@@ -100,50 +104,51 @@ namespace hemelb
         helpers::ZeroOutForces(latDat);
         mesh.moduli = Cell::Moduli();
         mesh.nodeWall.intensity = 1.;
+        mesh += LatticePosition(10, 10, 10);
         // Min distance to wall, so we can check cutoff
         helpers::SetWallDistance(latDat, 0.3);
 
-        // Each test case comes with cutoff distance and mesh position
-        LatticeDistance const cutoffs[] = { 0.25, 0.35, 0.35, std::sqrt(0.2 * 0.2 + 2) + 0.1, -1, // Stops loop!!!
-            };
-        LatticePosition const positions[] = { wetwall.cast<LatticeDistance>(), wetwall.cast<
-            LatticeDistance>(),
-                                              wetwall.cast<LatticeDistance>()
-                                                  - LatticePosition(0, 0.2, 0),
-                                              wetwall.cast<LatticeDistance>()
-                                                  - LatticePosition(0, 0.2, 0) };
-        bool const expected[] = { true,
-                                  true,
-                                  true,
-                                  false,
-                                  true,
-                                  true,
-                                  true,
-                                  true,
-                                  true,
-                                  false,
-                                  false,
-                                  false, };
+        struct TestCase
+        {
+           LatticeDistance cutoff;
+           LatticePosition position;
+           bool atWall;
+           bool atLeft;
+           bool atRight;
+        };
+        std::vector<TestCase> const testcases
+        {
+          {0.25, wetwall.cast<LatticeDistance>(), false, false, false},
+          {0.35, wetwall.cast<LatticeDistance>(), true, false, false},
+          {0.35, wetwall.cast<LatticeDistance>() - LatticePosition(0, 0.2, 0), false, false, false},
+          {
+            std::sqrt(0.2 * 0.2 + 1e0*1e0) + 0.1,
+            wetwall.cast<LatticeDistance>() - LatticePosition(0, 0.2, 0),
+            true,
+            Dimensionless(STENCIL::GetRange()) * 0.5 > std::sqrt(0.2 * 0.2 + 1e0*1e0) + 0.1,
+            Dimensionless(STENCIL::GetRange()) * 0.5 > std::sqrt(0.2 * 0.2 + 1e0*1e0) + 0.1
+          },
+        };
 
         // Loop over test cases breaks on special marker (negative) cutoff
-        for (size_t i(1); cutoffs[i] > 0e0; ++i)
+        for (auto const &testcase: testcases)
         {
           helpers::ZeroOutForces(latDat);
-          mesh += positions[i] - mesh.GetVertices()[0];
-          mesh.nodeWall.cutoff = cutoffs[i];
+          mesh.GetVertices()[0] = testcase.position;
+          mesh.nodeWall.cutoff = testcase.cutoff;
 
-          forcesOnGrid < D3Q15, stencil::HEMELB_STENCIL > (std::shared_ptr<CellBase>(&mesh, [](CellBase*)
-          {}), *latDat);
+          // Shared pointer does not deallocate. It's a fake so we still use forcesOnGrid interface.
+          std::shared_ptr<CellBase> ptr_mesh(&mesh, [](CellBase*){});
+          forcesOnGrid < D3Q15, STENCIL > (ptr_mesh, *latDat);
 
-          bool const atWall = helpers::is_zero(latDat->GetSite(wetwall).GetForce());
-          bool const atLeft = helpers::is_zero(latDat->GetSite(left).GetForce());
-          bool const atRight = helpers::is_zero(latDat->GetSite(right).GetForce());
-          CPPUNIT_ASSERT(atWall == expected[3 * i]);
-          CPPUNIT_ASSERT(atLeft == expected[3 * i + 1]);
-          CPPUNIT_ASSERT(atRight == expected[3 * i + 2]);
+          bool const atWall = not helpers::is_zero(latDat->GetSite(wetwall).GetForce());
+          bool const atLeft = not helpers::is_zero(latDat->GetSite(left).GetForce());
+          bool const atRight = not helpers::is_zero(latDat->GetSite(right).GetForce());
+          CPPUNIT_ASSERT_EQUAL(testcase.atWall, atWall);
+          CPPUNIT_ASSERT_EQUAL(testcase.atRight, atRight);
+          CPPUNIT_ASSERT_EQUAL(testcase.atLeft, atLeft);
         }
       }
-
 
       CPPUNIT_TEST_SUITE_REGISTRATION (CellForceSpreadWithWallTests);
     }

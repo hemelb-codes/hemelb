@@ -13,7 +13,7 @@ namespace details
     //! Iterates over vertices of a mesh and the nearby nodes of a grid
     //! The functor argument is called with the current vertex index, the
     //! global site index triplet, and the associated interpolation weight.
-    template<class FUNCTOR, class Stencil>
+    template<class FUNCTOR, class STENCIL>
     void spreadForce2Grid(std::shared_ptr<CellBase const> cell, FUNCTOR functor)
     {
       typedef MeshData::Vertices::const_iterator const_iterator;
@@ -23,7 +23,7 @@ namespace details
 
       for (size_t i(0); i_vertex != i_end; ++i_vertex, ++i)
       {
-        InterpolationIterator<Stencil> spreader = interpolationIterator<Stencil>(*i_vertex);
+        InterpolationIterator<STENCIL> spreader = interpolationIterator<STENCIL>(*i_vertex);
 
         for (; spreader; ++spreader)
         {

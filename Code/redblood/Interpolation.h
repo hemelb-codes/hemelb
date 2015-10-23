@@ -40,12 +40,12 @@ namespace hemelb
     //! \brief Interpolates onto an off-lattice point
     //! \details Given an off-lattice point and a stencil, iterates over the
     //! points on the lattice which have non-zero weight.
-    template <class Stencil>
+    template <class STENCIL>
     class InterpolationIterator;
 
     //! Creates an interpolator for a given stencil
-    template <class Stencil>
-    InterpolationIterator<Stencil> interpolationIterator(LatticePosition const &in);
+    template <class STENCIL>
+    InterpolationIterator<STENCIL> interpolationIterator(LatticePosition const &in);
 
     //! \brief Iterates over lattice points surrounding a given coordinate
     //! \details Given a coordinate :math:`\Omega`, this object iterates over integer coordinates
@@ -68,6 +68,11 @@ namespace hemelb
         LatticeVector const &operator*() const
         {
           return current;
+        }
+        //! Returns current position
+        LatticeVector const *operator->() const
+        {
+          return &current;
         }
 
         //! Increments to next position on lattice
@@ -101,7 +106,7 @@ namespace hemelb
 
     //! \brief Iterates over lattice points close to a given coordinate
     //! \details Adds knowledge of weights for iteration
-    template <class Stencil>
+    template <class STENCIL>
     class InterpolationIterator : public IndexIterator
     {
       public:
@@ -136,48 +141,48 @@ namespace hemelb
 
       protected:
         //! Weight alongst x direction;
-        std::array<Dimensionless, Stencil::GetRange()> xWeight;
+        std::array<Dimensionless, STENCIL::GetRange()> xWeight;
         //! Weight alongst y direction;
-        std::array<Dimensionless, Stencil::GetRange()> yWeight;
+        std::array<Dimensionless, STENCIL::GetRange()> yWeight;
         //! Weight alongst z direction;
-        std::array<Dimensionless, Stencil::GetRange()> zWeight;
+        std::array<Dimensionless, STENCIL::GetRange()> zWeight;
 
         static LatticeVector minimumPosition(LatticePosition const &node, size_t range);
         static LatticeVector maximumPosition(LatticePosition const &node, size_t range);
     };
 
-    template <class Stencil>
-    LatticeVector InterpolationIterator<Stencil>::minimumPosition(LatticePosition const &node, size_t range)
+    template <class STENCIL>
+    LatticeVector InterpolationIterator<STENCIL>::minimumPosition(LatticePosition const &node, size_t range)
     {
       return LatticeVector(minimumPosImpl(node.x, range),
                            minimumPosImpl(node.y, range),
                            minimumPosImpl(node.z, range));
     }
-    template <class Stencil>
-    LatticeVector InterpolationIterator<Stencil>::maximumPosition(LatticePosition const &node, size_t range)
+    template <class STENCIL>
+    LatticeVector InterpolationIterator<STENCIL>::maximumPosition(LatticePosition const &node, size_t range)
     {
       return LatticeVector(maximumPosImpl(node.x, range),
                            maximumPosImpl(node.y, range),
                            maximumPosImpl(node.z, range));
     }
 
-    template <class Stencil>
-    InterpolationIterator<Stencil>::InterpolationIterator(LatticePosition const &node) :
+    template <class STENCIL>
+    InterpolationIterator<STENCIL>::InterpolationIterator(LatticePosition const &node) :
         IndexIterator(
-            minimumPosition(node, Stencil::GetRange()),
-            maximumPosition(node, Stencil::GetRange())
+            minimumPosition(node, STENCIL::GetRange()),
+            maximumPosition(node, STENCIL::GetRange())
         )
     {
-      for (LatticeVector::value_type i(0); i < LatticeVector::value_type(Stencil::GetRange()); ++i)
+      for (LatticeVector::value_type i(0); i < LatticeVector::value_type(STENCIL::GetRange()); ++i)
       {
-        xWeight[i] = Stencil::stencil(node[0] - Dimensionless(min[0] + i));
-        yWeight[i] = Stencil::stencil(node[1] - Dimensionless(min[1] + i));
-        zWeight[i] = Stencil::stencil(node[2] - Dimensionless(min[2] + i));
+        xWeight[i] = STENCIL::stencil(node[0] - Dimensionless(min[0] + i));
+        yWeight[i] = STENCIL::stencil(node[1] - Dimensionless(min[1] + i));
+        zWeight[i] = STENCIL::stencil(node[2] - Dimensionless(min[2] + i));
       }
     }
 
-    template<class GRID_FUNCTION, class Stencil>
-    LatticeVelocity interpolate(GRID_FUNCTION const &gridfunc, InterpolationIterator<Stencil> interpolator)
+    template<class GRID_FUNCTION, class STENCIL>
+    LatticeVelocity interpolate(GRID_FUNCTION const &gridfunc, InterpolationIterator<STENCIL> interpolator)
     {
       LatticeVelocity result(0, 0, 0);
 
@@ -188,23 +193,23 @@ namespace hemelb
 
       return result;
     }
-    template<class GRID_FUNCTION, class Stencil>
+    template<class GRID_FUNCTION, class STENCIL>
     LatticeVelocity interpolate(GRID_FUNCTION const &gridfunc, LatticePosition const &pos)
     {
-      return interpolate(gridfunc, interpolationIterator<Stencil>(pos));
+      return interpolate(gridfunc, interpolationIterator<STENCIL>(pos));
     }
-    template<class GRID_FUNCTION, class Stencil>
+    template<class GRID_FUNCTION, class STENCIL>
     LatticeVelocity interpolate(GRID_FUNCTION const &gridfunc, Dimensionless const &x,
                                  Dimensionless const &y, Dimensionless const &z)
     {
-      return interpolate<GRID_FUNCTION, Stencil>(gridfunc, LatticePosition(x, y, z));
+      return interpolate<GRID_FUNCTION, STENCIL>(gridfunc, LatticePosition(x, y, z));
     }
 
     // Creates an interpolator for a given stencil
-    template <class Stencil>
-    InterpolationIterator<Stencil> interpolationIterator(LatticePosition const &in)
+    template <class STENCIL>
+    InterpolationIterator<STENCIL> interpolationIterator(LatticePosition const &in)
     {
-      return InterpolationIterator<Stencil>(in);
+      return InterpolationIterator<STENCIL>(in);
     }
   }
 } // hemelb::redblood
