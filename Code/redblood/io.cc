@@ -252,15 +252,14 @@ namespace hemelb
       return moduli;
     }
 
-    Node2NodeForce readNode2NodeForce(io::xml::Element const& parent,
+    Node2NodeForce readNode2NodeForce(io::xml::Element const& node,
                                       util::UnitConverter const & converter)
     {
       Node2NodeForce result(1e0 / converter.ConvertToLatticeUnits("Nm", 1e0), 1, 2);
-      if (parent == parent.Missing())
+      if (node == node.Missing())
       {
         return result;
       }
-      auto const node = parent.GetChildOrNull("interaction");
       result.intensity = GetNonDimensionalValue(node, "intensity", "Nm", converter, result.intensity);
       result.cutoff = GetNonDimensionalValue(node, "cutoffdistance", "LB", converter, result.cutoff);
       if(2e0 * result.cutoff > Dimensionless(Traits<>::Stencil::GetRange()))

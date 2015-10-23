@@ -256,9 +256,9 @@ namespace hemelb
       rbcinserter = redblood::readRBCInserters(topNode, GetUnitConverter(), *rbcMeshes);
       rbcOutlets = redblood::readRBCOutlets(topNode, GetUnitConverter());
       cell2Cell = redblood::readNode2NodeForce(
-          controllerNode.GetChildOrNull("cell2Cell"), GetUnitConverter());
+          rbcNode.GetChildOrNull("cell2Cell"), GetUnitConverter());
       cell2Wall = redblood::readNode2NodeForce(
-          controllerNode.GetChildOrNull("cell2Wall"), GetUnitConverter());
+          rbcNode.GetChildOrNull("cell2Wall"), GetUnitConverter());
       if(boxSize < cell2Wall.cutoff)
       {
         throw Exception() << "Box-size < cell-wall interaction size: "
