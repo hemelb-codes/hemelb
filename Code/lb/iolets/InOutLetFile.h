@@ -36,7 +36,7 @@ namespace hemelb
           virtual InOutLet* Clone() const;
           virtual void Reset(SimulationState &state)
           {
-            CalculateTable(state.GetTotalTimeSteps());
+            CalculateTable(state.GetTotalTimeSteps(), state.GetTimeStepLength());
           }
 
           const std::string& GetFilePath()
@@ -62,7 +62,7 @@ namespace hemelb
           }
           virtual void Initialise(const util::UnitConverter* unitConverter);
         private:
-          void CalculateTable(LatticeTimeStep totalTimeSteps);
+          void CalculateTable(LatticeTimeStep totalTimeSteps, PhysicalTime timeStepLength);
           std::vector<LatticeDensity> densityTable;
           LatticeDensity densityMin;
           LatticeDensity densityMax;
