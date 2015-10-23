@@ -30,10 +30,23 @@ namespace hemelb
       {
           CPPUNIT_TEST_SUITE (InterpolationTests);
           CPPUNIT_TEST (testIndexIterator);
-          CPPUNIT_TEST (testOffLattice);
-          CPPUNIT_TEST (testOffLatticeZeroOutsideStencil);
-          CPPUNIT_TEST (testInterpolateLinearFunction);
-          CPPUNIT_TEST (testInterpolateQuadraticFunction);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testOffLattice<stencil::FourPoint>);
+          CPPUNIT_TEST (testOffLattice<stencil::CosineApprox>);
+          CPPUNIT_TEST (testOffLattice<stencil::ThreePoint>);
+          CPPUNIT_TEST (testOffLattice<stencil::TwoPoint>);
+          CPPUNIT_TEST (testOffLatticeZeroOutsideStencil<stencil::FourPoint>);
+          CPPUNIT_TEST (testOffLatticeZeroOutsideStencil<stencil::CosineApprox>);
+          CPPUNIT_TEST (testOffLatticeZeroOutsideStencil<stencil::ThreePoint>);
+          CPPUNIT_TEST (testOffLatticeZeroOutsideStencil<stencil::TwoPoint>);
+          CPPUNIT_TEST (testInterpolateLinearFunction<stencil::FourPoint>);
+          CPPUNIT_TEST (testInterpolateLinearFunction<stencil::CosineApprox>);
+          CPPUNIT_TEST (testInterpolateLinearFunction<stencil::ThreePoint>);
+          CPPUNIT_TEST (testInterpolateLinearFunction<stencil::TwoPoint>);
+          CPPUNIT_TEST (testInterpolateQuadraticFunction<stencil::FourPoint>);
+          CPPUNIT_TEST (testInterpolateQuadraticFunction<stencil::CosineApprox>);
+          CPPUNIT_TEST (testInterpolateQuadraticFunction<stencil::ThreePoint>);
+          CPPUNIT_TEST (testInterpolateQuadraticFunction<stencil::TwoPoint>);
+          CPPUNIT_TEST_SUITE_END();
 
           struct PlanarFunction
           {
@@ -98,93 +111,142 @@ namespace hemelb
             CPPUNIT_ASSERT(not iterator.IsValid());
           }
 
-          void testOffLattice()
+          std::vector<std::pair<LatticeVector, size_t>> offLatticeData(stencil::FourPoint const &)
+          {
+            return
+            {
+              {LatticeVector(55, 51, 14), 0}, {LatticeVector(55, 51, 15), 1},
+              {LatticeVector(55, 51, 16), 1}, {LatticeVector(55, 51, 17), 1},
+              {LatticeVector(55, 52, 14), 1}, {LatticeVector(56, 51, 14), 12},
+              {LatticeVector(58, 54, 17), 47}
+            };
+          }
+          std::vector<std::pair<LatticeVector, size_t>> offLatticeData(
+              stencil::CosineApprox const &)
+          {
+            return offLatticeData(stencil::FourPoint());
+          }
+          std::vector<std::pair<LatticeVector, size_t>> offLatticeData(stencil::ThreePoint const &)
+          {
+            return
+            {
+              {LatticeVector(56, 52, 14), 0}, {LatticeVector(56, 52, 15), 1},
+              {LatticeVector(56, 52, 16), 1}, {LatticeVector(56, 53, 14), 1},
+              {LatticeVector(57, 52, 14), 6}, {LatticeVector(58, 54, 16), 17}
+            };
+          }
+          std::vector<std::pair<LatticeVector, size_t>> offLatticeData(stencil::TwoPoint const &)
+          {
+            return
+            {
+              {LatticeVector(56, 52, 15), 0}, {LatticeVector(56, 52, 16), 1},
+              {LatticeVector(56, 53, 15), 1}, {LatticeVector(57, 52, 15), 2}, 
+              {LatticeVector(57, 53, 16), 3}
+            };
+          }
+          template<class STENCIL> void testOffLattice()
           {
             LatticePosition const pos(56.51, 52.9, 15.2);
-            InterpolationIterator<stencil::HEMELB_STENCIL> iterator(pos);
+            InterpolationIterator<STENCIL> iterator(pos);
 
-            LatticeVector vectors[] = { LatticeVector(55, 51, 14),
-                                        LatticeVector(55, 51, 15),
-                                        LatticeVector(55, 51, 16),
-                                        LatticeVector(55, 51, 17),
-                                        LatticeVector(55, 52, 14),
-                                        LatticeVector(56, 51, 14),
-                                        LatticeVector(58, 54, 17), };
-            size_t incs[] = { 0, 1, 1, 1, 1, 12, 47, 666 // break
-                };
+            // Expected point and number of times to increment iterator
+            auto const expected = offLatticeData(STENCIL());
 
             // Checks iteration goes through correct sequence
-            for (size_t i(0); incs[i] < 666; ++i)
+            for(auto const &item: expected)
             {
-              for (size_t j(0); j < incs[i]; ++j, ++iterator)
+              for (size_t j(0); j < item.second; ++j, ++iterator)
                 ;
 
-              CPPUNIT_ASSERT(helpers::is_zero(*iterator - vectors[i]));
-              CPPUNIT_ASSERT(helpers::is_zero(stencil::HEMELB_STENCIL::stencil(pos - vectors[i]) - iterator.weight()));
               CPPUNIT_ASSERT(iterator.IsValid());
+              CPPUNIT_ASSERT_EQUAL(item.first.x, iterator->x);
+              CPPUNIT_ASSERT_EQUAL(item.first.y, iterator->y);
+              CPPUNIT_ASSERT_EQUAL(item.first.z, iterator->z);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(
+                  iterator.weight(), STENCIL::stencil(pos - item.first), 1e-8);
             }
 
             ++iterator;
             CPPUNIT_ASSERT(not iterator.IsValid());
           }
 
-          void testOffLatticeZeroOutsideStencil()
+          std::vector<LatticeVector> outsidePoints(stencil::FourPoint const&) const {
+            return {
+              LatticeVector(57, 53, 13), LatticeVector(57, 53, 18), LatticeVector(57, 50, 17),
+              LatticeVector(57, 55, 17), LatticeVector(54, 53, 17), LatticeVector(59, 53, 17)
+            };
+          }
+          std::vector<LatticeVector> outsidePoints(stencil::CosineApprox const&) const {
+            return outsidePoints(stencil::FourPoint());
+          }
+          std::vector<LatticeVector> outsidePoints(stencil::ThreePoint const&) const {
+            return {
+              LatticeVector(56, 52, 13), LatticeVector(56, 52, 17), LatticeVector(56, 51, 16),
+              LatticeVector(56, 55, 16), LatticeVector(55, 52, 16), LatticeVector(59, 52, 16)
+            };
+          }
+          std::vector<LatticeVector> outsidePoints(stencil::TwoPoint const&) const {
+            return {
+              LatticeVector(56, 52, 14), LatticeVector(56, 52, 17), LatticeVector(56, 51, 15),
+              LatticeVector(56, 54, 16), LatticeVector(55, 52, 16), LatticeVector(58, 52, 16)
+            };
+          }
+          template<class STENCIL> void testOffLatticeZeroOutsideStencil()
           {
             LatticePosition const pos(56.51, 52.9, 15.2);
-            InterpolationIterator<stencil::HEMELB_STENCIL> iterator(pos);
-            // Checks that outside iteration box, weights are zero
-            LatticeVector zero_vecs[] = { LatticeVector(57, 53, 13),
-                                          LatticeVector(57, 53, 18),
-                                          LatticeVector(57, 50, 17),
-                                          LatticeVector(57, 55, 17),
-                                          LatticeVector(54, 53, 17),
-                                          LatticeVector(59, 53, 17) };
+            InterpolationIterator<STENCIL> iterator(pos);
 
-            for (size_t i(0); i < 6; ++i)
+            // Checks that outside iteration box, weights are zero
+            for (auto const& vec: outsidePoints(STENCIL()))
             {
               LatticeVector const dx(1, 0, 0), dy(0, 1, 0), dz(0, 0, 1);
-              CPPUNIT_ASSERT(helpers::is_zero(stencil::HEMELB_STENCIL::stencil(pos - zero_vecs[i])));
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, STENCIL::stencil(pos - vec), 1e-8);
               // checks we are one step outside the iteration box only.
               // this is really a test on the zero_vecs data, eg a test of the test.
-              size_t const one_non_zero = size_t(not helpers::is_zero(stencil::HEMELB_STENCIL::stencil(pos + dx
-                  - zero_vecs[i]))) + size_t(not helpers::is_zero(stencil::HEMELB_STENCIL::stencil(pos - dx - zero_vecs[i])))
-                  + size_t(not helpers::is_zero(stencil::HEMELB_STENCIL::stencil(pos + dy - zero_vecs[i])))
-                  + size_t(not helpers::is_zero(stencil::HEMELB_STENCIL::stencil(pos - dy - zero_vecs[i])))
-                  + size_t(not helpers::is_zero(stencil::HEMELB_STENCIL::stencil(pos + dz - zero_vecs[i])))
-                  + size_t(not helpers::is_zero(stencil::HEMELB_STENCIL::stencil(pos - dz - zero_vecs[i])));
-              CPPUNIT_ASSERT(one_non_zero == 1);
+              size_t const one_non_zero = 0
+                  + size_t(not helpers::is_zero(STENCIL::stencil(pos + dx - vec)))
+                  + size_t(not helpers::is_zero(STENCIL::stencil(pos - dx - vec)))
+                  + size_t(not helpers::is_zero(STENCIL::stencil(pos + dy - vec)))
+                  + size_t(not helpers::is_zero(STENCIL::stencil(pos - dy - vec)))
+                  + size_t(not helpers::is_zero(STENCIL::stencil(pos + dz - vec)))
+                  + size_t(not helpers::is_zero(STENCIL::stencil(pos - dz - vec)));
+              CPPUNIT_ASSERT_EQUAL(size_t(1), one_non_zero);
             }
           }
 
-          template<class FUNCTION>
-          void check(Dimensionless x, Dimensionless y, Dimensionless z, Dimensionless tolerance =
-                         1e-8)
+          template<class FUNCTION, class STENCIL>
+          void check(
+              Dimensionless x, Dimensionless y, Dimensionless z,
+              Dimensionless tolerance = 1e-8)
           {
             FUNCTION func;
             LatticePosition expected(func(x, y, z));
-            LatticePosition actual(interpolate<FUNCTION, stencil::HEMELB_STENCIL>(func, x, y, z));
-            CPPUNIT_ASSERT(helpers::is_zero(actual - expected, tolerance));
+            LatticePosition actual(interpolate<FUNCTION, STENCIL>(func, x, y, z));
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.x, actual.x, tolerance);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.y, actual.y, tolerance);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.z, actual.z, tolerance);
           }
 
           // Test interpolation when the point is on the grid
-          void testInterpolateLinearFunction()
+          template<class STENCIL> void testInterpolateLinearFunction()
           {
-            check<PlanarFunction>(0, 0, 0);
-            check<PlanarFunction>(0.1, 0.5, 0.6);
-            check<PlanarFunction>(-5.1, 0.5, 8.7);
-            check<PlanarFunction>(-5, 0, -1);
+            auto const tolerance = std::is_same<STENCIL, stencil::CosineApprox>::value ? 5e-2: 1e-8;
+            check<PlanarFunction, STENCIL>(0, 0, 0, tolerance);
+            check<PlanarFunction, STENCIL>(0.1, 0.5, 0.6, tolerance);
+            check<PlanarFunction, STENCIL>(-5.1, 0.5, 8.7, tolerance);
+            check<PlanarFunction, STENCIL>(-5, 0, -1, tolerance);
           }
 
-          void testInterpolateQuadraticFunction()
+          template<class STENCIL> void testInterpolateQuadraticFunction()
           {
             QuadraticFunction quad;
             // Error depends on variation on scale larger than stencil
             Dimensionless const tolerance( (quad(0, 0, 0) - quad(12, 12, 12)).GetMagnitude()
                 * 1e-2);
-            check<QuadraticFunction>(0, 0, 0, tolerance);
-            check<QuadraticFunction>(0.1, 0.5, 0.6, tolerance);
-            check<QuadraticFunction>(-5.1, 0.5, 8.7, tolerance);
-            check<QuadraticFunction>(-5, 0, -1, tolerance);
+            check<QuadraticFunction, STENCIL>(0, 0, 0, tolerance);
+            check<QuadraticFunction, STENCIL>(0.1, 0.5, 0.6, tolerance);
+            check<QuadraticFunction, STENCIL>(-5.1, 0.5, 8.7, tolerance);
+            check<QuadraticFunction, STENCIL>(-5, 0, -1, tolerance);
           }
       };
 
@@ -194,7 +256,6 @@ namespace hemelb
           typedef lb::kernels::LBGK<D3Q15> LBGK;
           typedef lb::kernels::GuoForcingLBGK<D3Q15> GuoForcingLBGK;
           CPPUNIT_TEST_SUITE (VelocityInterpolationTests);
-          // CPPUNIT_TEST(testLatticeDataFunctor);
           CPPUNIT_TEST (testVelocityDataFromLatticeWithForces);
           CPPUNIT_TEST (testVelocityDataFromLatticeWithoutForces);CPPUNIT_TEST_SUITE_END();
 

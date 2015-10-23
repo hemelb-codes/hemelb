@@ -10,6 +10,7 @@
 #ifndef HEMELB_LOG_LOGGER_H
 #define HEMELB_LOG_LOGGER_H
 
+#include <vector>
 #include <cstdarg>
 #include <sstream>
 #include <string>
@@ -73,51 +74,38 @@ namespace hemelb
         static double startTime;
     };
 
+    template<class T>
+       std::string __convert_to_string(T && value)
+       {
+         std::ostringstream sstr;
+         sstr << value;
+         return sstr.str();
+       }
 
+    template<class ... ARGS>
+      void capture(std::string message, ARGS &&... args)
+      {
+         hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>(
+             message,
+             __convert_to_string(std::forward<ARGS>(args)).c_str()...
+         );
+      }
   }
 }
-// Intel can't handle std::ostringstream() << x pattern
-#if !defined(__ICC)
+
 //! Simple debug macro to print stuff to the log
-#define HEMELB_CAPTURE(VARIABLE)                                        \
-  hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>(\
-    #VARIABLE " := %s",                                                 \
-    (std::ostringstream() << VARIABLE).str().c_str()                    \
-  )
+#define HEMELB_CAPTURE(VARIABLE) hemelb::log::capture(#VARIABLE " := %s", VARIABLE)
 //! Simple debug macro to print stuff to the log
-#define HEMELB_CAPTURE2(V0, V1)                                         \
-  hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>(\
-    #V0 " := %s " #V1 " := %s",                                         \
-    (std::ostringstream() << V0).str().c_str(),                         \
-    (std::ostringstream() << V1).str().c_str()                          \
-  )
+#define HEMELB_CAPTURE2(V0, V1) hemelb::log::capture(#V0 " := %s " #V1 " := %s", V0, V1)
 //! Simple debug macro to print stuff to the log
-#define HEMELB_CAPTURE3(V0, V1, V2)                                     \
-  hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>(\
-    #V0 " := %s " #V1 " := %s " #V2 " := %s",                           \
-    (std::ostringstream() << V0).str().c_str(),                         \
-    (std::ostringstream() << V1).str().c_str(),                         \
-    (std::ostringstream() << V2).str().c_str()                          \
-  )
+#define HEMELB_CAPTURE3(V0, V1, V2)     \
+  hemelb::log::capture(#V0 " := %s " #V1 " := %s " #V2 " := %s", V0, V1, V2)
 //! Simple debug macro to print stuff to the log
-#define HEMELB_CAPTURE4(V0, V1, V2, V3)                                 \
-  hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>(\
-    #V0 " := %s " #V1 " := %s " #V2 " := %s " #V3 ": = %s",            \
-    (std::ostringstream() << V0).str().c_str(),                         \
-    (std::ostringstream() << V1).str().c_str(),                         \
-    (std::ostringstream() << V2).str().c_str(),                         \
-    (std::ostringstream() << V3).str().c_str()                          \
-  )
+#define HEMELB_CAPTURE4(V0, V1, V2, V3) \
+  hemelb::log::capture(#V0 " := %s " #V1 " := %s " #V2 " := %s " #V3 ": = %s", V0, V1, V2, V3)
 //! Simple debug macro to print stuff to the log
-#define HEMELB_CAPTURE5(V0, V1, V2, V3, V4)                                \
-  hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>(   \
-    #V0 " := %s " #V1 " := %s " #V2 " := %s " #V3 " := %s " #V4 " := %s ", \
-    (std::ostringstream() << V0).str().c_str(),                            \
-    (std::ostringstream() << V1).str().c_str(),                            \
-    (std::ostringstream() << V2).str().c_str(),                            \
-    (std::ostringstream() << V3).str().c_str(),                            \
-    (std::ostringstream() << V4).str().c_str()                             \
-  )
-#endif
+#define HEMELB_CAPTURE5(V0, V1, V2, V3, V4) \
+  hemelb::log::capture(                     \
+    #V0 " := %s " #V1 " := %s " #V2 " := %s " #V3 ": = %s " #V4 ": = %s", V0, V1, V2, V3, V4)
 
 #endif /* HEMELB_LOG_LOGGER_H */

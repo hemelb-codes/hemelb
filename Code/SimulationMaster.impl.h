@@ -218,8 +218,7 @@ namespace hemelb
     if (simConfig->HasRBCSection())
     {
       hemelb::redblood::CellContainer cells;
-      typedef hemelb::redblood::CellController<typename Traits::Kernel,
-          hemelb::redblood::stencil::HEMELB_STENCIL> Controller;
+      typedef hemelb::redblood::CellController<Traits> Controller;
       auto const controller = std::make_shared<Controller>(*latticeData,
                                                            cells,
                                                            simConfig->GetBoxSize(),

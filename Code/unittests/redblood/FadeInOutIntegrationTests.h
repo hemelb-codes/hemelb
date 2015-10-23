@@ -27,7 +27,7 @@ namespace hemelb
           ;
 
           typedef Traits<>::Reinstantiate<lb::lattices::D3Q19, lb::GuoForcingLBGK>::Type Traits;
-          typedef hemelb::redblood::CellController<Traits::Kernel, stencil::HEMELB_STENCIL> CellControl;
+          typedef hemelb::redblood::CellController<Traits> CellControl;
           typedef SimulationMaster<Traits> MasterSim;
 
         public:
@@ -39,7 +39,7 @@ namespace hemelb
             CopyResourceToTempdir("red_blood_cell.txt");
 
             ModifyXMLInput(
-                "large_cylinder_rbc.xml", {"simulation", "steps", "value"}, 7100);
+                "large_cylinder_rbc.xml", {"simulation", "steps", "value"}, 22000);
             ModifyXMLInput(
                 "large_cylinder_rbc.xml", {"redbloodcells", "controller", "stencil"}, "two");
             ModifyXMLInput(
@@ -127,23 +127,23 @@ namespace hemelb
             controller->AddCellChangeListener(checkDidDropCell);
 
             // keep those lambdas inline to avoid unused function warning when commented out.
-            // controller->AddCellChangeListener(
-            //     []( const hemelb::redblood::CellContainer & cells)
-            //     {
-            //       static int iter = -1;
-            //       ++iter;
-            //       if(cells.empty())
-            //       {
-            //         return;
-            //       }
-            //       auto cell = *cells.begin();
-            //       auto const tag = cell->GetTag();
-            //       auto const b = cell->GetBarycenter();
-            //       auto const v = cell->GetVolume();
-            //       auto const e = (*cell)();
-            //       HEMELB_CAPTURE5(iter, tag, b, v, e);
-            //     }
-            // );
+            controller->AddCellChangeListener(
+                []( const hemelb::redblood::CellContainer & cells)
+                {
+                  static int iter = -1;
+                  ++iter;
+                  if(cells.empty())
+                  {
+                    return;
+                  }
+                  auto cell = *cells.begin();
+                  auto const tag = cell->GetTag();
+                  auto const b = cell->GetBarycenter();
+                  auto const v = cell->GetVolume();
+                  auto const e = (*cell)();
+                  HEMELB_CAPTURE5(iter, tag, b, v, e);
+                }
+            );
 
             // controller->AddCellChangeListener(
             //     [&converter](const hemelb::redblood::CellContainer &cells)
