@@ -333,16 +333,23 @@ namespace hemelb
         auto cells = TwoPancakeSamosas<>(cutoff);
 
         // Move one node closer  to the other
-        LatticePosition const n0 = (*cells.begin())->GetVertices()[0];
-        LatticePosition const n1 = (*std::next(cells.begin()))->GetVertices()[1];
-        (*std::next(cells.begin()))->GetVertices()[1] = (n1 - n0).GetNormalised() * 0.3 + n0;
+        auto const &firstCell = *cells.begin();
+        auto const &secondCell = *next(cells.begin());
+        LatticePosition const n0 = firstCell->GetVertices()[0];
+        LatticePosition const n1 = secondCell->GetVertices()[1];
+        secondCell->GetVertices()[1] = (n1 - n0).GetNormalised() * 0.3 + n0;
         DivideConquerCells dnc(cells, cutoff, halo);
 
         DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
         CPPUNIT_ASSERT(range.is_valid());
-        CPPUNIT_ASSERT(helpers::is_zero(*range->first - (*cells.begin())->GetVertices().front()));
-        CPPUNIT_ASSERT(helpers::is_zero(*range->second
-            - (*std::next(cells.begin()))->GetVertices()[1]));
+        auto const firstNode = range->first.GetCell() == firstCell ? *range->first: *range->second;
+        auto const secondNode = range->first.GetCell() == firstCell ? *range->second: *range->first;
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.x, n0.x, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.y, n0.y, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.z, n0.z, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.x, secondCell->GetVertices()[1].x, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.y, secondCell->GetVertices()[1].y, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.z, secondCell->GetVertices()[1].z, 1e-8);
         CPPUNIT_ASSERT(not ++range);
         CPPUNIT_ASSERT(not range.is_valid());
       }
@@ -356,8 +363,10 @@ namespace hemelb
         // Only one pair, and each in a separate box
         LatticePosition const n0(2 * cutoff - 0.1, 4.5 * cutoff, 4.5 * cutoff);
         LatticePosition const n1(2 * cutoff + 0.1, 4.5 * cutoff, 4.5 * cutoff);
-        (*cells.begin())->GetVertices().front() = n0;
-        (*std::next(cells.begin()))->GetVertices().front() = n1;
+        auto const &firstCell = *cells.begin();
+        auto const &secondCell = *next(cells.begin());
+        firstCell->GetVertices().front() = n0;
+        secondCell->GetVertices().front() = n1;
 
         DivideConquerCells dnc(cells, cutoff, halo);
         // Checks that fixture is what I think it is
@@ -369,8 +378,14 @@ namespace hemelb
         DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
         CPPUNIT_ASSERT(range.is_valid());
 
-        CPPUNIT_ASSERT(helpers::is_zero(*range->first - n0));
-        CPPUNIT_ASSERT(helpers::is_zero(*range->second - n1));
+        auto const firstNode = range->first.GetCell() == firstCell ? *range->first: *range->second;
+        auto const secondNode = range->first.GetCell() == firstCell ? *range->second: *range->first;
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.x, n0.x, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.y, n0.y, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.z, n0.z, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.x, n1.x, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.y, n1.y, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.z, n1.z, 1e-8);
         CPPUNIT_ASSERT(not ++range);
         CPPUNIT_ASSERT(not range.is_valid());
       }
@@ -384,8 +399,10 @@ namespace hemelb
         // Only one pair, and each in diagonally separate box
         LatticePosition const n0(2 * cutoff - 0.1, 4 * cutoff - 0.1, 8 * cutoff - 0.1);
         LatticePosition const n1(2 * cutoff + 0.1, 4 * cutoff + 0.1, 8 * cutoff + 0.1);
-        (*cells.begin())->GetVertices().front() = n0;
-        (*std::next(cells.begin()))->GetVertices().front() = n1;
+        auto const &firstCell = *cells.begin();
+        auto const &secondCell = *next(cells.begin());
+        firstCell->GetVertices().front() = n0;
+        secondCell->GetVertices().front() = n1;
 
         DivideConquerCells dnc(cells, cutoff, halo);
         // Checks that fixture is what I think it is
@@ -407,8 +424,14 @@ namespace hemelb
         DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
         CPPUNIT_ASSERT(range.is_valid());
 
-        CPPUNIT_ASSERT(helpers::is_zero(*range->first - n0));
-        CPPUNIT_ASSERT(helpers::is_zero(*range->second - n1));
+        auto const firstNode = range->first.GetCell() == firstCell ? *range->first: *range->second;
+        auto const secondNode = range->first.GetCell() == firstCell ? *range->second: *range->first;
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.x, n0.x, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.y, n0.y, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.z, n0.z, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.x, n1.x, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.y, n1.y, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.z, n1.z, 1e-8);
         CPPUNIT_ASSERT(not ++range);
         CPPUNIT_ASSERT(not range.is_valid());
       }
@@ -422,8 +445,10 @@ namespace hemelb
         // Only one pair, and each in a separate box
         LatticePosition const n0(2 * cutoff - 0.1, 4.5 * cutoff, 4.5 * cutoff);
         LatticePosition const n1(2 * cutoff + 0.1, 4.5 * cutoff, 4.5 * cutoff);
-        (*cells.begin())->GetVertices().front() = n0;
-        (*std::next(cells.begin()))->GetVertices().front() = n1;
+        auto const &firstCell = *cells.begin();
+        auto const &secondCell = *next(cells.begin());
+        firstCell->GetVertices().front() = n0;
+        secondCell->GetVertices().front() = n1;
 
         DivideConquerCells dnc(cells, cutoff, halo);
         // Checks that fixture is what I think it is
@@ -435,8 +460,14 @@ namespace hemelb
         DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
         CPPUNIT_ASSERT(range.is_valid());
 
-        CPPUNIT_ASSERT(helpers::is_zero(*range->first - n0));
-        CPPUNIT_ASSERT(helpers::is_zero(*range->second - n1));
+        auto const firstNode = range->first.GetCell() == firstCell ? *range->first: *range->second;
+        auto const secondNode = range->first.GetCell() == firstCell ? *range->second: *range->first;
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.x, n0.x, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.y, n0.y, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.z, n0.z, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.x, n1.x, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.y, n1.y, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.z, n1.z, 1e-8);
         CPPUNIT_ASSERT(not ++range);
         CPPUNIT_ASSERT(not range.is_valid());
       }

@@ -73,7 +73,7 @@ namespace hemelb
         };
         for (; first != end; ++first)
         {
-          if (goodCellPair(first) and goodDistance(first))
+          if (first != main and goodCellPair(first) and goodDistance(first))
           {
             return true;
           }
@@ -130,70 +130,55 @@ namespace hemelb
 
     bool DivideConquerCells::pair_range::nextDist()
     {
-      typedef decltype(owner.cells) Cells;
-      typedef Cells::const_reference Input;
-      auto strictly_less = Cells::key_compare();
-      auto cellOrdering = [&strictly_less](Input _a, Input _b)
-      {
-        return _a != _b and not strictly_less(_a, _b);
-      };
-      return nextDistance(cellOrdering, currents.second, ends.second, currents.first, maxdist);
+      return nextDistance(
+          decltype(owner.cells)::key_compare(),
+          currents.second, ends.second, currents.first, maxdist);
     }
 
     bool DivideConquerCells::pair_range::doBox()
     {
       LatticeVector const key(currents.first.GetKey() + *box_iterator);
-      DivideConquerCells::const_range const boxits = owner(key);
-
-      if (box_iterator->x == 0 and box_iterator->y == 0 and box_iterator->z ==0)
-      {
-        currents.second = currents.first;
-        ++currents.second;
-      }
-      else
-      {
-        currents.second = boxits.first;
-      }
-
-      ends.second = boxits.second;
+      std::tie(currents.second, ends.second) = owner(key);
       return nextDist();
     }
 
     bool DivideConquerCells::pair_range::operator++()
     {
-      if (not is_valid())
+      while(is_valid())
       {
-        return false;
-      }
-
-      // First try and finds next pair in current range
-      if (currents.second != ends.second)
-      {
-        ++currents.second;
-
-        if (nextDist())
+        // First try and finds next pair in current range
+        if (currents.second != ends.second)
         {
-          return true;
-        }
-      }
+          ++currents.second;
 
-      // If reaches here, then go to next box
-      for(++box_iterator; box_iterator; ++box_iterator)
-      {
+          if (nextDist())
+          {
+            return true;
+          }
+        }
+
+        // If reaches here, then go to next box
+        for(++box_iterator; box_iterator; ++box_iterator)
+        {
+          if(doBox())
+          {
+            return true;
+          }
+        }
+
+        // If reaches here, then should increment main iterator and start with same box
+        if (++currents.first == ends.first)
+        {
+          return false;
+        }
+
+        box_iterator = BorderBoxIterator(currents.first.GetNearBorder());
         if(doBox())
         {
           return true;
         }
       }
-
-      // If reaches here, then should increment main iterator and start with same box
-      if (++currents.first == ends.first)
-      {
-        return false;
-      }
-
-      box_iterator = BorderBoxIterator(currents.first.GetNearBorder());
-      return doBox() ? true : operator++();
+      return false;
     }
 
     DivideConquerCells::pair_range::pair_range(DivideConquerCells const &owner,
