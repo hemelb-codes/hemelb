@@ -31,19 +31,6 @@ namespace hemelb
             }
           }
 
-          HTRI & operator=(htri_t & t)
-          {
-            if (tri != t)
-            {
-              if (t < 0)
-              {
-                throw hdf5::H5Error();
-              }
-              tri = t;
-            }
-            return *this;
-          }
-
           operator bool() const
           {
             return tri;
