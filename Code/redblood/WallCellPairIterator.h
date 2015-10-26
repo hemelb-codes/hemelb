@@ -288,10 +288,11 @@ namespace hemelb
         geometry::LatticeData &latticeData
     )
     {
-      for(auto const nodes: iterate(cellDnC, wallDnC, functional.cutoff))
+        
+      for(WallCellPairIterator iter{cellDnC, wallDnC, functional.cutoff, WallCellPairIterator::Begin()}; iter; ++iter)
       {
-        auto const force = functional(nodes.cellNode, nodes.wallNode);
-        spreadForce<STENCIL>(nodes.cellNode, latticeData, force);
+        auto const force = functional(iter->cellNode, iter->wallNode);
+        spreadForce<STENCIL>(iter->cellNode, latticeData, force);
       }
     }
   }
