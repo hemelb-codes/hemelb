@@ -12,6 +12,8 @@
 
 #include <hdf5.h>
 
+#include "HTRI.h"
+
 #include "log/Logger.h"
 
 namespace hemelb
@@ -154,8 +156,8 @@ namespace hemelb
       void AttachAttribute(hid_t location, const std::string & name, const T * value, int rank,
                            const hsize_t * dims, const hsize_t * maxdims = nullptr, hid_t acpl = H5P_DEFAULT, hid_t aapl = H5P_DEFAULT)
       {
-        HID<> space(::H5Screate_simple(rank, dims, maxdims));
-        HID<> attribute(::H5Acreate(location, name.c_str(), Types<T>::NATIVE, space, acpl, aapl));
+        HID<H5Sclose> space(::H5Screate_simple(rank, dims, maxdims));
+        HID<H5Aclose> attribute(::H5Acreate(location, name.c_str(), Types<T>::NATIVE, space, acpl, aapl));
         if (::H5Awrite(attribute, Types<T>::NATIVE, value) < 0)
         {
           throw H5Error();
@@ -165,13 +167,13 @@ namespace hemelb
       void AttachAttribute(hid_t location, const std::string & name, const std::string & value,
                            hid_t acpl = H5P_DEFAULT, hid_t aapl = H5P_DEFAULT)
       {
-        HID<> space(::H5Screate(::H5S_SCALAR));
-        HID<> type(::H5Tcopy(Types<std::string>::NATIVE));
+        HID<H5Sclose> space(::H5Screate(::H5S_SCALAR));
+        HID<H5Tclose> type(::H5Tcopy(Types<std::string>::NATIVE));
         if (H5Tset_size(type, std::strlen(value.c_str()) + 1) < 0)
         {
           throw H5Error();
         }
-        HID<> attribute(::H5Acreate(location, name.c_str(), type, space, acpl, aapl));
+        HID<H5Aclose> attribute(::H5Acreate(location, name.c_str(), type, space, acpl, aapl));
         if (::H5Awrite(attribute, type, value.c_str()) < 0)
         {
           throw H5Error();
@@ -197,8 +199,8 @@ namespace hemelb
         }
 
         // Open the attribute and its dataspace
-        HID<> attr(::H5Aopen(location, name.c_str(), aapl));
-        HID<> space(::H5Aget_space(attr));
+        HID<H5Aclose> attr(::H5Aopen(location, name.c_str(), aapl));
+        HID<H5Sclose> space(::H5Aget_space(attr));
 
         // Check the ranks match
         int actual_rank = ::H5Sget_simple_extent_ndims(space);
@@ -224,7 +226,7 @@ namespace hemelb
 
         // Check the type classes match (the types themselves may not be
         // equal on different platforms but HDF5 is designed to manage this)
-        HID<> type(::H5Aget_type(attr));
+        HID<H5Tclose> type(::H5Aget_type(attr));
         if (::H5Tget_class(type) != ::H5Tget_class(Types<T>::NATIVE))
         {
           return false;
@@ -254,8 +256,8 @@ namespace hemelb
         }
 
         // Open the attribute and its dataspace
-        HID<> attr(::H5Aopen(location, name.c_str(), aapl));
-        HID<> space(::H5Aget_space(attr));
+        HID<H5Aclose> attr(::H5Aopen(location, name.c_str(), aapl));
+        HID<H5Sclose> space(::H5Aget_space(attr));
 
         // Check the ranks match (rank is 0 for strings)
         int rank = ::H5Sget_simple_extent_ndims(space);
@@ -270,7 +272,7 @@ namespace hemelb
 
         // Check the type classes match (the types themselves may not be
         // equal on different platforms but HDF5 is designed to manage this)
-        HID<> type(::H5Aget_type(attr));
+        HID<H5Tclose> type(::H5Aget_type(attr));
         if (::H5Tget_class(type) != ::H5Tget_class(Types<std::string>::NATIVE))
         {
           return false;
@@ -306,11 +308,11 @@ namespace hemelb
         }
 
         // Open the attribute
-        HID<> attribute(::H5Aopen(location, name.c_str(), aapl));
+        HID<H5Aclose> attribute(::H5Aopen(location, name.c_str(), aapl));
 
         // Check the type classes match (the types themselves may not be
         // equal on different platforms but HDF5 is designed to manage this)
-        HID<> type(::H5Aget_type(attribute));
+        HID<H5Tclose> type(::H5Aget_type(attribute));
         if (::H5Tget_class(type) != ::H5Tget_class(Types<std::string>::NATIVE))
         {
           return false;

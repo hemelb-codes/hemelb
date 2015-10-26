@@ -11,6 +11,7 @@
 #define HEMELB_IO_H5MD_H5MD_H
 
 #include <string>
+#include <memory>
 #include <hdf5.h>
 
 #include "io/hdf5/H5Error.h"
@@ -48,8 +49,10 @@ namespace hemelb
            *                    or group
            * \return an H5MD object.
            */
-          static H5MD Create(hid_t, const std::string &, const std::string &, const std::string &,
-                             const std::string & = "");
+          static std::shared_ptr<H5MD> Create(hid_t, const std::string &,
+                                              const std::string &,
+                                              const std::string &,
+                                              const std::string & = "");
 
           /*!
            * Opens an existing H5MD structure rooted at `location`.
@@ -59,7 +62,7 @@ namespace hemelb
            *                    valid H5MD location (see #IsH5MD)
            * \return an H5MD object.
            */
-          static H5MD Open(hid_t);
+          static std::shared_ptr<H5MD> Open(hid_t);
 
           /*!
            * Checks whether the location within an HDF5 file contains an H5MD
