@@ -24,29 +24,12 @@
 #include "redblood/Node2Node.h"
 #include "redblood/stencil.h"
 #include "redblood/Interpolation.h"
+#include "redblood/Borders.h"
 
 namespace hemelb
 {
   namespace redblood
   {
-    namespace {
-      template <class STENCIL>
-      void spreadForce(LatticePosition const &node, geometry::LatticeData &latticeData,
-                       LatticeForceVector const &force)
-      {
-        proc_t procid;
-        site_t siteid;
-        InterpolationIterator<STENCIL> spreader = interpolationIterator<STENCIL>(node);
-
-        for (; spreader; ++spreader)
-        {
-          if (latticeData.GetContiguousSiteId(*spreader, procid, siteid))
-          {
-            latticeData.GetSite(siteid).AddToForce(force * spreader.weight());
-          }
-        }
-      }
-    }
     // References a node of a mesh in the divide-and-conquer box
     class CellReference
     {
@@ -55,69 +38,13 @@ namespace hemelb
         CellContainer::const_iterator cellIterator;
         //! Index of node in mesh
         site_t nodeIndex;
-        //! Whether the node is near the border of the cube;
-        int isNearBorder;
-
-        //! Names for each border
-        enum Borders
-        {
-          NONE = 0,
-          TOP = 1,
-          BOTTOM = 2,
-          NORTH = 4,
-          SOUTH = 8,
-          WEST = 16,
-          EAST = 32,
-          LAST = 64
-        };
-
-        static LatticeVector idirections(Borders border)
-        {
-          switch (border)
-          {
-            case TOP:
-              return LatticeVector(1, 0, 0);
-
-            case BOTTOM:
-              return LatticeVector(-1, 0, 0);
-
-            case NORTH:
-              return LatticeVector(0, 1, 0);
-
-            case SOUTH:
-              return LatticeVector(0, -1, 0);
-
-            case WEST:
-              return LatticeVector(0, 0, -1);
-
-            case EAST:
-              return LatticeVector(0, 0, 1);
-
-            default:
-              return LatticeVector(0, 0, 0);
-          };
-          return LatticeVector(0, 0, 0);
-        }
-        static LatticePosition directions(Borders border)
-        {
-          return LatticePosition(idirections(border));
-        }
-
-        static LatticeVector idirections(size_t border)
-        {
-          assert(border == TOP or border == BOTTOM or border == NORTH or border == SOUTH
-              or border == EAST or border == WEST);
-          return idirections(Borders(border));
-        }
-        static LatticePosition directions(size_t border)
-        {
-          return LatticePosition(idirections(border));
-        }
+        //! Id of the nearest borders
+        size_t nearBorder;
     };
 
     //! Organizes nodes in cells in boxes
     //! The object is to easily check nodes that are within interaction distance
-    class DivideConquerCells : protected DivideConquer<CellReference>
+    class DivideConquerCells : public DivideConquer<CellReference>
     {
         //! Type of the base class
         typedef DivideConquer<CellReference> base_type;
@@ -235,6 +162,8 @@ namespace hemelb
         //! After vertices have moved, update mapping and whether it is near
         //! boundary
         void update();
+        //! recomputes using current cells
+        void SetBoxSizeAndHalo(LatticeDistance boxSize, LatticeDistance halo);
 
         //! Insert a new cell
         //! Returns true if the cell was inserted, false if it already existed.
@@ -245,7 +174,7 @@ namespace hemelb
 
       protected:
         //! Distance from border below which an object is in the halo
-        LatticeDistance const haloLength;
+        LatticeDistance haloLength;
         //! Container of cells
         CellContainer cells;
     };
@@ -296,8 +225,8 @@ namespace hemelb
       protected:
         //! Maximum distance for which to report pair
         LatticeDistance maxdist;
-        //! Current box we are working on
-        CellReference::Borders box;
+        //! Iterates over boxes we want to see
+        BorderBoxIterator box_iterator;
         //! Iterator for main item
         value_type currents;
         //! range for iteration over second item
@@ -309,8 +238,27 @@ namespace hemelb
         bool nextDist();
     };
 
-    //! Computes cell <-> cell interactions and spread to grid
-    //! Given a partition of the cells' nodes and node <-> node interaction
+    namespace {
+      //! Spread force from given vertices to lattice-sites
+      template <class STENCIL>
+      void spreadForce(LatticePosition const &vertex, geometry::LatticeData &latticeData,
+                       LatticeForceVector const &force)
+      {
+        proc_t procid;
+        site_t siteid;
+        InterpolationIterator<STENCIL> spreader = interpolationIterator<STENCIL>(vertex);
+
+        for (; spreader; ++spreader)
+        {
+          if (latticeData.GetContiguousSiteId(*spreader, procid, siteid))
+          {
+            latticeData.GetSite(siteid).AddToForce(force * spreader.weight());
+          }
+        }
+      }
+    }
+    //! \brief Computes cell <-> cell interactions and spread to grid
+    //! \details Given a partition of the cells' nodes and node <-> node interaction
     //! functional, computes the short-range that can occur between cells that are
     //! too close to one another. The interaction forces are computed and spread to
     //! the lattice.
@@ -318,7 +266,7 @@ namespace hemelb
     void addCell2CellInteractions(DivideConquerCells const &dnc, Node2NodeForce const &functional,
                                   geometry::LatticeData &latticeData)
     {
-      DivideConquerCells::pair_range range(dnc.pair_begin(functional.cutoff));
+      auto range = dnc.pair_begin(functional.cutoff);
 
       for (; range.is_valid(); ++range)
       {
@@ -328,6 +276,7 @@ namespace hemelb
         spreadForce<STENCIL>(*range->second, latticeData, -force);
       }
     }
+
   }
 } // hemelb::redblood
 

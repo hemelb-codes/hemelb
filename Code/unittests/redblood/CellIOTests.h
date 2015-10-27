@@ -90,9 +90,6 @@ namespace hemelb
             CPPUNIT_ASSERT_DOUBLES_EQUAL(converter->ConvertToLatticeUnits("N/m", 5e-6),
                                          cell->moduli.strain,
                                          1e-12);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(1e0, cell->nodeWall.intensity, 1e-12);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(1, cell->nodeWall.cutoff, 1e-12);
-            CPPUNIT_ASSERT_EQUAL(site_t(2), site_t(cell->nodeWall.exponent));
           }
 
           void testReadCellModuli()

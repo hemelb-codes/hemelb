@@ -250,12 +250,25 @@ namespace hemelb
         return false;
       }
       const io::xml::Element controllerNode = rbcNode.GetChildOrThrow("controller");
-      GetDimensionalValue(controllerNode.GetChildOrThrow("halo"), "LB", halo);
       GetDimensionalValue(controllerNode.GetChildOrThrow("boxsize"), "LB", boxSize);
 
       rbcMeshes.reset(redblood::readTemplateCells(topNode, GetUnitConverter()).release());
       rbcinserter = redblood::readRBCInserters(topNode, GetUnitConverter(), *rbcMeshes);
       rbcOutlets = redblood::readRBCOutlets(topNode, GetUnitConverter());
+      cell2Cell = redblood::readNode2NodeForce(
+          rbcNode.GetChildOrNull("cell2Cell"), GetUnitConverter());
+      cell2Wall = redblood::readNode2NodeForce(
+          rbcNode.GetChildOrNull("cell2Wall"), GetUnitConverter());
+      if(boxSize < cell2Wall.cutoff)
+      {
+        throw Exception() << "Box-size < cell-wall interaction size: "
+          "cell-wall interactions cannot be all accounted for.";
+      }
+      if(boxSize < cell2Cell.cutoff)
+      {
+        throw Exception() << "Box-size < cell-cell interaction size: "
+          "cell-cell interactions cannot be all accounted for.";
+      }
       return true;
     }
 
