@@ -22,6 +22,7 @@ option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
 option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" OFF)
 option(HEMELB_CALLGRIND "Compile unit tests that use callgrind" OFF)
+option(HEMELB_USE_VELOCITY_WEIGHTS_FILE "Use Velocity weights file" OFF)
 
 set(HEMELB_EXECUTABLE "hemelb"
   CACHE STRING "File name of executable to produce")
@@ -41,7 +42,8 @@ set(HEMELB_LATTICE "D3Q15"
 set(HEMELB_KERNEL "LBGK"
   CACHE STRING
   "Select the kernel to use
-  (LBGK,EntropicAnsumali,EntropicChik,MRT,NNCY,NNCYMOUSE,NNC,NNTPL,GuoForcingLBGK)")
+  (LBGK,EntropicAnsumali,EntropicChik,MRT,NNCY,NNCYMOUSE,NNC,NNTPL,GuoForcingLBGK)"
+)
 set(HEMELB_WALL_BOUNDARY "SIMPLEBOUNCEBACK"
   CACHE STRING "Select the boundary conditions to be used at the walls (BFL,GZS,SIMPLEBOUNCEBACK,JUNKYANG)")
 set(HEMELB_INLET_BOUNDARY "NASHZEROTHORDERPRESSUREIOLET"
@@ -49,7 +51,7 @@ set(HEMELB_INLET_BOUNDARY "NASHZEROTHORDERPRESSUREIOLET"
 set(HEMELB_OUTLET_BOUNDARY "NASHZEROTHORDERPRESSUREIOLET"
   CACHE STRING "Select the boundary conditions to be used at the outlets (NASHZEROTHORDERPRESSUREIOLET,LADDIOLET)")
 set(HEMELB_COMPUTE_ARCHITECTURE "AMDBULLDOZER"
-  CACHE STRING "Select the architecture of the machine being used (INTELSANDYBRIDGE,AMDBULLDOZER,NEUTRAL)")
+  CACHE STRING "Select the architecture of the machine being used (INTELSANDYBRIDGE,AMDBULLDOZER,NEUTRAL,ISBFILEVELOCITYINLET)")
 set(HEMELB_WALL_INLET_BOUNDARY "NASHZEROTHORDERPRESSURESBB"
   CACHE STRING "Select the boundary conditions to be used at corners between walls and inlets (NASHZEROTHORDERPRESSURESBB,NASHZEROTHORDERPRESSUREBFL,LADDIOLETSBB,LADDIOLETBFL)")
 set(HEMELB_WALL_OUTLET_BOUNDARY "NASHZEROTHORDERPRESSURESBB"
@@ -89,16 +91,7 @@ endif()
 
 
 add_definitions(-DHEMELB_READING_GROUP_SIZE=${HEMELB_READING_GROUP_SIZE})
-add_definitions(-DHEMELB_LATTICE=${HEMELB_LATTICE})
-add_definitions(-DHEMELB_KERNEL=${HEMELB_KERNEL})
-add_definitions(-DHEMELB_WALL_BOUNDARY=${HEMELB_WALL_BOUNDARY})
-add_definitions(-DHEMELB_INLET_BOUNDARY=${HEMELB_INLET_BOUNDARY})
-add_definitions(-DHEMELB_OUTLET_BOUNDARY=${HEMELB_OUTLET_BOUNDARY})
-add_definitions(-DHEMELB_WALL_INLET_BOUNDARY=${HEMELB_WALL_INLET_BOUNDARY})
-add_definitions(-DHEMELB_WALL_OUTLET_BOUNDARY=${HEMELB_WALL_OUTLET_BOUNDARY})
 add_definitions(-DHEMELB_COMPUTE_ARCHITECTURE=${HEMELB_COMPUTE_ARCHITECTURE})
-add_definitions(-DHEMELB_LOG_LEVEL=${HEMELB_LOG_LEVEL})
-add_definitions(-DHEMELB_STENCIL=${HEMELB_STENCIL})
 
 if(HEMELB_VALIDATE_GEOMETRY)
   add_definitions(-DHEMELB_VALIDATE_GEOMETRY)
@@ -131,6 +124,9 @@ if (HEMELB_CALLGRIND)
     add_definitions(-DHEMELB_CALLGRIND)
 endif()
 
+if (HEMELB_USE_VELOCITY_WEIGHTS_FILE)
+    add_definitions(-DHEMELB_USE_VELOCITY_WEIGHTS_FILE)
+endif()
 
 # Check for a serious compiler bug in GCC
 # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=50618
@@ -170,7 +166,9 @@ endif()
 
 #------Capture build environment -------------
 
-execute_process(COMMAND hg -R ${CMAKE_CURRENT_SOURCE_DIR}/../ id -i RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)
+find_package(Git REQUIRED)
+execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
+  RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)
 if (NOT rev_ok EQUAL 0)
   message("Could not get revision number from mercurial, looking for revision_info.txt")
   execute_process(COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/../revision_info.txt RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -300,8 +298,7 @@ link_directories(${HDF5_LIBRARY_DIRS})
 
 #------Parmetis  ------------
 find_package(Parmetis REQUIRED)
-include_directories(${PARMETIS_INCLUDE_DIR})
-MESSAGE(STATUS "Found Parmetis: ${PARMETIS_LIBRARY}")
+include_directories(${PARMETIS_INCLUDE_DIRS})
 
 #------TinyXML ----------------
 find_package(TinyXML REQUIRED)
@@ -357,6 +354,7 @@ configure_file (
   "${PROJECT_SOURCE_DIR}/resources/path_parameters.h.in"
   "${PROJECT_BINARY_DIR}/resources/path_parameters.h"
   )
+configure_file("Traits.in.h" "${PROJECT_BINARY_DIR}/Traits.h")
  
 # add the binary tree to the search path for include files
 # so that we will find TutorialConfig.h

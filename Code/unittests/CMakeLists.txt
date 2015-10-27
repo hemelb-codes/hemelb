@@ -1,25 +1,10 @@
 find_package(CPPUnit REQUIRED)
 include_directories(${CPPUNIT_INCLUDE_DIR})
 
-add_executable(unittests_hemelb main.cc)
-# A function to specify different tests using the same main.cc
-function(add_include_to_test target filename)
-  get_target_property(alldefs ${target} COMPILE_DEFINITIONS)
-  set(property HEMELB_UNITTEST_INCLUDE=\"unittests/${filename}\")
-  if(NOT "${alldefs}" MATCHES "${property}")
-    if(${alldefs})
-      set(alldefs "${alldefs} ${property}")
-    else()
-      set(alldefs "${property}")
-    endif()
-    set_target_properties(${target}
-       PROPERTIES
-       COMPILE_DEFINITIONS "${alldefs}"
-    )
-  endif()
-endfunction()
-
 macro(add_test_executable target includename)
+  set(HEMELB_UNITTEST_INCLUDE ${includename})
+  configure_file(main.in.cc "${CMAKE_CURRENT_BINARY_DIR}/${target}.cc")
+  add_executable(${target} "${CMAKE_CURRENT_BINARY_DIR}/${target}.cc")
   target_link_libraries(${target}
     ${heme_libraries}
     ${MPI_LIBRARIES}
@@ -34,15 +19,16 @@ macro(add_test_executable target includename)
     #Because on some systems CPPUNIT needs to be linked to libdl
     ${CMAKE_DL_LIBS}
   )
-  add_include_to_test(${target} ${includename})
   set_target_properties(${target} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
   INSTALL(TARGETS ${target} RUNTIME DESTINATION bin)
-  set(testdir "${PROJECT_BINARY_DIR}/test_results/")
+  set(testdir "${PROJECT_BINARY_DIR}/tests/")
   file(MAKE_DIRECTORY "${testdir}")
   add_test(NAME ${target} COMMAND ${target} -o ${testdir}/${target}.xml)
 endmacro()
 
 add_test_executable(unittests_hemelb hemelb_unittests.h)
+add_test_executable(unittests_redblood redblood.h)
+add_test_executable(unittests_redblood_integrations redblood_integrations.h)
 
 
 add_to_resources(resources/four_cube.gmy resources/four_cube.xml
@@ -60,4 +46,5 @@ add_to_resources(resources/four_cube.gmy resources/four_cube.xml
   resources/rbc_ico_1280.msh resources/rbc_ico_720.msh
   resources/fedosov1c.xml resources/fedosov1c.gmy
   resources/sad.msh
+  resources/velocity_inlet.txt.weights.txt
 )

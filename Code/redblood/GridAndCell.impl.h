@@ -13,7 +13,7 @@ namespace details
     //! Iterates over vertices of a mesh and the nearby nodes of a grid
     //! The functor argument is called with the current vertex index, the
     //! global site index triplet, and the associated interpolation weight.
-    template<class FUNCTOR, class Stencil>
+    template<class FUNCTOR, class STENCIL>
     void spreadForce2Grid(std::shared_ptr<CellBase const> cell, FUNCTOR functor)
     {
       typedef MeshData::Vertices::const_iterator const_iterator;
@@ -23,7 +23,7 @@ namespace details
 
       for (size_t i(0); i_vertex != i_end; ++i_vertex, ++i)
       {
-        InterpolationIterator<Stencil> spreader = interpolationIterator<Stencil>(*i_vertex);
+        InterpolationIterator<STENCIL> spreader = interpolationIterator<STENCIL>(*i_vertex);
 
         for (; spreader; ++spreader)
         {
@@ -53,53 +53,6 @@ namespace details
       protected:
         geometry::LatticeData &latticeData;
         std::vector<LatticeForceVector> const &forces;
-    };
-
-    template<class LATTICE>
-    class SpreadForcesAndWallForces : public SpreadForces
-    {
-      public:
-        SpreadForcesAndWallForces(std::shared_ptr<CellBase const> cell,
-                                  std::vector<LatticePosition> const &forces,
-                                  geometry::LatticeData &latticeData) :
-            SpreadForces(forces, latticeData), cell(cell)
-        {
-        }
-        void operator()(size_t vertexIn, LatticeVector const &siteIn, Dimensionless weight)
-        {
-          proc_t procid;
-          site_t siteid;
-
-          if (not latticeData.GetContiguousSiteId(siteIn, procid, siteid))
-          {
-            return;
-          }
-
-          geometry::Site < geometry::LatticeData > site(latticeData.GetSite(siteid));
-          site.AddToForce(forces[vertexIn] * weight);
-          LatticePosition const vertex(cell->GetVertices()[vertexIn]);
-
-          for (size_t i(1); i < LATTICE::NUMVECTORS; ++i)
-          {
-            LatticeDistance const distance = site.GetWallDistance < LATTICE > (i);
-
-            if (not site.HasWall(i))
-            {
-              continue;
-            }
-
-            // Direction of streaming from wall to this site
-            LatticePosition const direction = LatticePosition(LATTICE::CX[i],
-                                                              LATTICE::CY[i],
-                                                              LATTICE::CZ[i]);
-            LatticePosition const wallnode = LatticePosition(siteIn)
-                + direction.GetNormalised() * distance;
-            site.AddToForce(cell->WallInteractionForce(vertex, wallnode) * weight);
-          }
-        }
-
-      protected:
-        std::shared_ptr<CellBase const> cell;
     };
   }
 } // namespace details::anonymous

@@ -13,20 +13,22 @@
 #include "lb/streamers/SimpleCollideAndStream.h"
 #include "lb/collisions/Normal.h"
 #include "lb/BuildSystemInterface.h"
+#include "redblood/stencil.h"
 
 namespace hemelb
 {
   template
   <
-    typename LATTICE = lb::lattices::HEMELB_LATTICE,
-    template<class> class KERNEL = lb::HEMELB_KERNEL,
+    typename LATTICE = lb::lattices::@HEMELB_LATTICE@,
+    template<class> class KERNEL = lb::@HEMELB_KERNEL@,
     template<class> class COLLISION = lb::collisions::Normal,
     template<class> class STREAMER = lb::streamers::SimpleCollideAndStream,
-    template<class> class WALL_BOUNDARY = lb::HEMELB_WALL_BOUNDARY,
-    template<class> class INLET_BOUNDARY = lb::HEMELB_INLET_BOUNDARY,
-    template<class> class OUTLET_BOUNDARY = lb::HEMELB_OUTLET_BOUNDARY,
-    template<class> class WALL_INLET_BOUNDARY = lb::HEMELB_WALL_INLET_BOUNDARY,
-    template<class> class WALL_OUTLET_BOUNDARY = lb::HEMELB_WALL_OUTLET_BOUNDARY
+    template<class> class WALL_BOUNDARY = lb::@HEMELB_WALL_BOUNDARY@,
+    template<class> class INLET_BOUNDARY = lb::@HEMELB_INLET_BOUNDARY@,
+    template<class> class OUTLET_BOUNDARY = lb::@HEMELB_OUTLET_BOUNDARY@,
+    template<class> class WALL_INLET_BOUNDARY = lb::@HEMELB_WALL_INLET_BOUNDARY@,
+    template<class> class WALL_OUTLET_BOUNDARY = lb::@HEMELB_WALL_OUTLET_BOUNDARY@,
+    typename STENCIL = redblood::stencil::@HEMELB_STENCIL@
   > struct Traits
   {
     typedef LATTICE Lattice;
@@ -38,6 +40,7 @@ namespace hemelb
     typedef typename OUTLET_BOUNDARY<Collision>::Type OutletBoundary;
     typedef typename WALL_INLET_BOUNDARY<Collision>::Type WallInletBoundary;
     typedef typename WALL_OUTLET_BOUNDARY<Collision>::Type WallOutletBoundary;
+    typedef STENCIL Stencil;
 
     //! Fully reinstantiate, where defaults are curent choices.
     //! This is a convenience function to limit the amount of explicit resintantiation
@@ -50,7 +53,8 @@ namespace hemelb
       template<class> class NEW_INLET_BOUNDARY = INLET_BOUNDARY,
       template<class> class NEW_OUTLET_BOUNDARY = OUTLET_BOUNDARY,
       template<class> class NEW_WALL_INLET_BOUNDARY = WALL_INLET_BOUNDARY,
-      template<class> class NEW_WALL_OUTLET_BOUNDARY = WALL_OUTLET_BOUNDARY
+      template<class> class NEW_WALL_OUTLET_BOUNDARY = WALL_OUTLET_BOUNDARY,
+      typename NEW_STENCIL = STENCIL
     > struct Reinstantiate
     {
       typedef Traits
@@ -63,7 +67,8 @@ namespace hemelb
         NEW_INLET_BOUNDARY,
         NEW_OUTLET_BOUNDARY,
         NEW_WALL_INLET_BOUNDARY,
-        NEW_WALL_OUTLET_BOUNDARY
+        NEW_WALL_OUTLET_BOUNDARY,
+        NEW_STENCIL
       > Type;
     };
     //! Changes only kernel type
@@ -71,6 +76,17 @@ namespace hemelb
     template<template<class> class NEW_KERNEL> struct ChangeKernel
     {
       typedef typename Reinstantiate<LATTICE, NEW_KERNEL>::Type Type;
+    };
+    //! Changes only stencil type
+    //! This is a convenience function to limit the amount of explicit resintantiation
+    template<class NEW_STENCIL> struct ChangeStencil
+    {
+      typedef typename Reinstantiate<
+        LATTICE, KERNEL,
+        COLLISION, STREAMER,
+        WALL_BOUNDARY, INLET_BOUNDARY, OUTLET_BOUNDARY, WALL_INLET_BOUNDARY, WALL_OUTLET_BOUNDARY,
+        NEW_STENCIL
+      >::Type Type;
     };
   };
 }

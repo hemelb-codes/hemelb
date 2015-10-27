@@ -40,7 +40,8 @@ option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF) 
 option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" OFF)
 set(HEMELB_COMPUTE_ARCHITECTURE "AMDBULLDOZER"
-  CACHE STRING "Select the architecture of the machine being used (INTELSANDYBRIDGE,AMDBULLDOZER,NEUTRAL)")
+  CACHE STRING "Select the architecture of the machine being used (INTELSANDYBRIDGE,AMDBULLDOZER,NEUTRAL,ISBFILEVELOCITYINLET)")
+option(HEMELB_USE_VELOCITY_WEIGHTS_FILE "Use Velocity weights file" OFF)
 
 #------- Dependencies -----------
 
@@ -87,6 +88,8 @@ ExternalProject_Add(
 	-DHEMELB_IMAGES_TO_NULL=${HEMELB_IMAGES_TO_NULL}
         -DHEMELB_USE_SSE3=${HEMELB_USE_SSE3}
     -DHEMELB_COMPUTE_ARCHITECTURE=${HEMELB_COMPUTE_ARCHITECTURE}
+    -DHEMELB_USE_VELOCITY_WEIGHTS_FILE=${HEMELB_USE_VELOCITY_WEIGHTS_FILE}
+	BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 )
 
 foreach(dep cppunit parmetis tinyxml boost ctemplate zlib mpwide cookoff hdf5)

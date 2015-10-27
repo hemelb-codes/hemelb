@@ -13,6 +13,7 @@
 #include <cppunit/TestFixture.h>
 #include "unittests/redblood/Fixtures.h"
 #include "redblood/CellArmy.h"
+#include "Traits.h"
 
 namespace hemelb
 {
@@ -48,11 +49,6 @@ namespace hemelb
             ++nbcalls;
             return 0;
           }
-          virtual LatticeForceVector WallInteractionForce(LatticePosition const &vertex,
-                                                          LatticePosition const &wall) const
-          {
-            return 0;
-          }
       };
 
       class CellArmyTests : public helpers::FourCubeBasedTestFixture
@@ -68,7 +64,8 @@ namespace hemelb
           LatticeDistance const cutoff = 5.0;
           LatticeDistance const halo = 2.0;
           typedef lb::lattices::D3Q15 D3Q15;
-          typedef lb::kernels::GuoForcingLBGK<lb::lattices::D3Q15> Kernel;
+          typedef hemelb::Traits<>::Reinstantiate<D3Q15, lb::GuoForcingLBGK>::Type
+            ::ChangeStencil<stencil::FourPoint>::Type Traits;
 
         public:
           void testCell2Fluid();
@@ -88,10 +85,10 @@ namespace hemelb
       void CellArmyTests::testCell2FluidWithoutCells()
       {
         CellContainer cells;
-        redblood::CellArmy<Kernel> army(*latDat, cells, cutoff, halo);
-        army.cell2Cell.cutoff = 0.5;
-        army.cell2Cell.intensity = 1.0;
-        army.Cell2FluidInteractions<stencil::HEMELB_STENCIL>();
+        CellArmy<Traits> army(*latDat, cells, cutoff, halo);
+        army.SetCell2Cell(/* intensity */1e0, /* cutoff */0.5);
+        army.SetCell2Wall(/* intensity */1e0, /* cutoff */0.5);
+        army.Cell2FluidInteractions();
       }
 
       void CellArmyTests::testCell2Fluid()
@@ -105,10 +102,10 @@ namespace hemelb
         helpers::ZeroOutFOld(latDat);
         helpers::ZeroOutForces(latDat);
 
-        redblood::CellArmy<Kernel> army(*latDat, cells, cutoff, halo);
-        army.cell2Cell.cutoff = 0.5;
-        army.cell2Cell.intensity = 1.0;
-        army.Cell2FluidInteractions<stencil::HEMELB_STENCIL>();
+        CellArmy<Traits> army(*latDat, cells, cutoff, halo);
+        army.SetCell2Cell(/* intensity */1e0, /* cutoff */0.5);
+        army.SetCell2Wall(/* intensity */1e0, /* cutoff */0.5);
+        army.Cell2FluidInteractions();
 
         CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>( (*cells.begin()))->nbcalls == 1);
         CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>( (*std::next(cells.begin())))->nbcalls
@@ -124,7 +121,7 @@ namespace hemelb
         (*cells.begin())->GetVertices().front() = n0;
         (*std::next(cells.begin()))->GetVertices().front() = n1;
         army.updateDNC();
-        army.Cell2FluidInteractions<stencil::HEMELB_STENCIL>();
+        army.Cell2FluidInteractions();
 
         CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>( (*cells.begin()))->nbcalls == 2);
         CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>( (*std::next(cells.begin())))->nbcalls
@@ -139,7 +136,7 @@ namespace hemelb
         helpers::ZeroOutFOld(latDat);
         helpers::ZeroOutForces(latDat);
 
-        redblood::CellArmy<Kernel> army(*latDat, CellContainer(), cutoff, halo);
+        CellArmy<Traits> army(*latDat, CellContainer(), cutoff, halo);
         int called = 0;
         auto callback = [cell, &called](std::function<void(CellContainer::value_type)> inserter)
         {
@@ -170,8 +167,8 @@ namespace hemelb
                                                                                          latDat,
                                                                                          normal);
 
-        redblood::CellArmy<Kernel> army(*latDat, cells, cutoff, halo);
-        army.Fluid2CellInteractions<stencil::HEMELB_STENCIL>();
+        CellArmy<Traits> army(*latDat, cells, cutoff, halo);
+        army.Fluid2CellInteractions();
 
         for (size_t i(0); i < cells.size(); ++i)
         {
@@ -192,15 +189,14 @@ namespace hemelb
       {
         auto cell = std::make_shared<FakeCell>(tetrahedron());
         MeshData::Vertices::value_type barycentre;
-        typename CellArmy<Kernel>::CellChangeListener callback =
-            [&barycentre](const CellContainer & container)
-            {
-              barycentre = (*(container.begin()))->GetBarycenter();
-            };
+        CellArmy<Traits>::CellChangeListener callback = [&barycentre](const CellContainer & container)
+        {
+          barycentre = (*(container.begin()))->GetBarycenter();
+        };
 
         CellContainer intel;
         intel.insert(cell);
-        redblood::CellArmy<Kernel> army(*latDat, intel, cutoff, halo);
+        CellArmy<Traits> army(*latDat, intel, cutoff, halo);
         army.AddCellChangeListener(callback);
 
         army.NotifyCellChangeListeners();
@@ -221,7 +217,7 @@ namespace hemelb
 
         CellContainer intel;
         intel.insert(cell);
-        redblood::CellArmy<Kernel> army(*latDat, intel, cutoff, halo);
+        CellArmy<Traits> army(*latDat, intel, cutoff, halo);
         army.SetOutlets(std::vector<FlowExtension>(1, outlet));
 
         // Check status before attempting to remove cell that should *not* be removed

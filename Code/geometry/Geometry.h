@@ -123,6 +123,47 @@ namespace hemelb
           return blockSize;
         }
 
+        /* Find a site index, taking into account ALL lattice sites. */
+        site_t FindSiteIndexInBlock(site_t fluidSiteBlock, site_t fluidSitesToPass) const
+        {
+          site_t siteIndex = 0;
+          while (true)
+          {
+            // We keep going through the sites on the block until we've passed as many fluid
+            // sites as we need to.
+            if (Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor != BIG_NUMBER2)
+            {
+              fluidSitesToPass--;
+            }
+            if (fluidSitesToPass < 0)
+            {
+              break;
+            }
+            siteIndex++;
+          }
+          return siteIndex;
+        }
+
+        /* Find a site index, taking into account ONLY fluid sites. */
+        site_t FindFluidSiteIndexInBlock(site_t fluidSiteBlock, site_t neighbourSiteId) const
+        {
+          site_t SiteId = 0;
+          // Calculate the site's id over the whole geometry,
+          for (site_t neighSite = 0; neighSite < GetSitesPerBlock(); neighSite++)
+          {
+            if (neighSite == neighbourSiteId)
+            {
+              break;
+            }
+            else if (Blocks[fluidSiteBlock].Sites[neighSite].targetProcessor != BIG_NUMBER2)
+            {
+              SiteId++;
+            }
+          }
+
+          return SiteId;
+        }
+
       private:
         const util::Vector3D<site_t> dimensionsInBlocks; //! The count of blocks in each direction
         const site_t blockSize; //! Size of a block, in sites.

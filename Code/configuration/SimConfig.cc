@@ -14,9 +14,10 @@
 #include <cstdlib>
 
 #include "configuration/SimConfig.h"
+#include "reporting/BuildInfo.h"
 #include "log/Logger.h"
 #include "util/fileutils.h"
-#include "redblood/flowextension.h"
+#include "redblood/FlowExtension.h"
 #include "redblood/io.h"
 #include "redblood/Cell.h"
 
@@ -189,12 +190,10 @@ namespace hemelb
       const std::string& ioletTypeName = ioletEl.GetName();
       std::string hemeIoletBC;
 
-#define QUOTE_RAW(x) #x
-#define QUOTE_CONTENTS(x) QUOTE_RAW(x)
       if (ioletTypeName == "inlet")
-        hemeIoletBC = QUOTE_CONTENTS(HEMELB_INLET_BOUNDARY);
+        hemeIoletBC = reporting::inlet_boundary_condition;
       else if (ioletTypeName == "outlet")
-        hemeIoletBC = QUOTE_CONTENTS(HEMELB_OUTLET_BOUNDARY);
+        hemeIoletBC = reporting::outlet_boundary_condition;
       else
         throw Exception() << "Unexpected element name '" << ioletTypeName
             << "'. Expected 'inlet' or 'outlet'";
@@ -251,12 +250,25 @@ namespace hemelb
         return false;
       }
       const io::xml::Element controllerNode = rbcNode.GetChildOrThrow("controller");
-      GetDimensionalValue(controllerNode.GetChildOrThrow("halo"), "LB", halo);
       GetDimensionalValue(controllerNode.GetChildOrThrow("boxsize"), "LB", boxSize);
 
       rbcMeshes.reset(redblood::readTemplateCells(topNode, GetUnitConverter()).release());
       rbcinserter = redblood::readRBCInserters(topNode, GetUnitConverter(), *rbcMeshes);
       rbcOutlets = redblood::readRBCOutlets(topNode, GetUnitConverter());
+      cell2Cell = redblood::readNode2NodeForce(
+          rbcNode.GetChildOrNull("cell2Cell"), GetUnitConverter());
+      cell2Wall = redblood::readNode2NodeForce(
+          rbcNode.GetChildOrNull("cell2Wall"), GetUnitConverter());
+      if(boxSize < cell2Wall.cutoff)
+      {
+        throw Exception() << "Box-size < cell-wall interaction size: "
+          "cell-wall interactions cannot be all accounted for.";
+      }
+      if(boxSize < cell2Cell.cutoff)
+      {
+        throw Exception() << "Box-size < cell-cell interaction size: "
+          "cell-cell interactions cannot be all accounted for.";
+      }
       return true;
     }
 
@@ -649,8 +661,10 @@ namespace hemelb
 
       const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
-      const io::xml::Element pathEl = conditionEl.GetChildOrThrow("path");
-      newIolet->SetFilePath(pathEl.GetAttributeOrThrow("value"));
+      std::string velocityFilePath = conditionEl.GetChildOrThrow("path").GetAttributeOrThrow("value");
+
+      velocityFilePath = util::NormalizePathRelativeToPath(velocityFilePath, xmlFilePath);
+      newIolet->SetFilePath(velocityFilePath);
 
       const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
       newIolet->SetRadius(GetDimensionalValueInLatticeUnits < LatticeDistance > (radiusEl, "m"));

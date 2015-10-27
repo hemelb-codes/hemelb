@@ -17,6 +17,7 @@
 
 #include "redblood/Cell.h"
 #include "redblood/CellCell.h"
+#include "redblood/WallCellPairIterator.h"
 #include "redblood/GridAndCell.h"
 #include "redblood/FlowExtension.h"
 #include "geometry/LatticeData.h"
@@ -26,27 +27,30 @@ namespace hemelb
   namespace redblood
   {
     //! \brief Federates the cells together so we can apply ops simultaneously
-    template<class KERNEL> class CellArmy
+    //! \tparam TRAITS holds type of kernel and stencil
+    template<class TRAITS> class CellArmy
     {
       public:
+        typedef typename TRAITS::Lattice Lattice;
+        typedef typename TRAITS::Kernel Kernel;
+        typedef typename TRAITS::Stencil Stencil;
         //! Type of callback for listening to changes to cells
         typedef std::function<void(const CellContainer &)> CellChangeListener;
 
-        //! Interaction terms between cells
-        Node2NodeForce cell2Cell;
-
         CellArmy(geometry::LatticeData &_latDat, CellContainer const &cells,
-                 LatticeDistance boxsize = 10.0, LatticeDistance halo = 2.0) :
-            latticeData(_latDat), cells(cells), dnc(cells, boxsize, halo)
+                 LatticeDistance boxsize = 10.0,
+                 Node2NodeForce const &cell2Cell = {0e0, 1e0, 2},
+                 Node2NodeForce const &cell2Wall = {0e0, 1e0, 2} ) :
+            latticeData(_latDat), cells(cells), cellDnC(cells, boxsize, cell2Cell.cutoff + 1e-6),
+            wallDnC(createWallNodeDnC<Lattice>(_latDat, boxsize, cell2Wall.cutoff + 1e-6)),
+            cell2Cell(cell2Cell), cell2Wall(cell2Wall)
         {
         }
 
         //! Performs fluid to lattice interactions
-        template <class Stencil>
         void Fluid2CellInteractions();
 
         //! Performs lattice to fluid interactions
-        template <class Stencil>
         void Cell2FluidInteractions();
 
         CellContainer::size_type size()
@@ -58,7 +62,7 @@ namespace hemelb
         //! Updates divide and conquer
         void updateDNC()
         {
-          dnc.update();
+          cellDnC.update();
         }
         CellContainer const & GetCells() const
         {
@@ -66,7 +70,7 @@ namespace hemelb
         }
         DivideConquerCells const & GetDNC() const
         {
-          return dnc;
+          return cellDnC;
         }
 #   endif
 
@@ -122,8 +126,24 @@ namespace hemelb
               "Adding cell at (%f, %f, %f)",
               barycenter.x, barycenter.y, barycenter.z
           );
-          dnc.insert(cell);
+          cellDnC.insert(cell);
           cells.insert(cell);
+        }
+
+        //! \brief Sets cell to cell interaction forces
+        //! \details Forwards arguments to Node2NodeForce constructor.
+        template<class ... ARGS> void SetCell2Cell(ARGS && ... args)
+        {
+          cell2Cell = Node2NodeForce(std::forward<ARGS>(args)...);
+          cellDnC.SetBoxSizeAndHalo(cellDnC.GetBoxSize(), cell2Cell.cutoff + 1e-6);
+        }
+        //! \brief Sets cell to cell interaction forces
+        //! \details Forwards arguments to Node2NodeForce constructor.
+        template<class ... ARGS> void SetCell2Wall(ARGS && ... args)
+        {
+          cell2Wall = Node2NodeForce(std::forward<ARGS>(args)...);
+          wallDnC = createWallNodeDnC<Lattice>(
+              wallDnC, wallDnC.GetBoxSize(), cell2Wall.cutoff + 1e-6);
         }
 
       protected:
@@ -132,7 +152,9 @@ namespace hemelb
         //! Contains all cells
         CellContainer cells;
         //! Divide and conquer object
-        DivideConquerCells dnc;
+        DivideConquerCells cellDnC;
+        //! Divide and conquer object
+        DivideConquer<WallNode> wallDnC;
         //! A work array with forces/positions
         std::vector<LatticePosition> work;
         //! This function is called every lb turn
@@ -140,13 +162,16 @@ namespace hemelb
         std::function<void(CellInserter const&)> cellInsertionCallBack;
         //! Observers to be notified when cell positions change
         std::vector<CellChangeListener> cellChangeListeners;
-
         //! Remove cells if they reach these outlets
         std::vector<FlowExtension> outlets;
+        //! Interaction terms between cells
+        Node2NodeForce cell2Cell;
+        //! Interaction terms between cells
+        Node2NodeForce cell2Wall;
     };
 
-    template<class KERNEL> template <class Stencil>
-    void CellArmy<KERNEL>::Fluid2CellInteractions()
+    template<class TRAITS>
+    void CellArmy<TRAITS>::Fluid2CellInteractions()
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Fluid -> cell interations");
       std::vector<LatticePosition> & positions = work;
@@ -158,32 +183,29 @@ namespace hemelb
       {
         positions.resize( (*i_first)->GetVertices().size());
         std::fill(positions.begin(), positions.end(), origin);
-        velocitiesOnMesh<KERNEL, Stencil>(*i_first, latticeData, positions);
+        velocitiesOnMesh<Kernel, Stencil>(*i_first, latticeData, positions);
         (*i_first)->operator+=(positions);
       }
       // Positions have changed: update Divide and Conquer stuff
-      dnc.update();
+      cellDnC.update();
     }
 
-    template<class KERNEL> template <class Stencil>
-    void CellArmy<KERNEL>::Cell2FluidInteractions()
+    template<class TRAITS>
+    void CellArmy<TRAITS>::Cell2FluidInteractions()
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Cell -> fluid interations");
       latticeData.ResetForces();
-      std::vector<LatticeForceVector> &forces = work;
 
-      CellContainer::const_iterator i_first = cells.begin();
-      CellContainer::const_iterator const i_end = cells.end();
-      for (; i_first != i_end; ++i_first)
+      for (auto const &cell: cells)
       {
-        forcesOnGrid<typename KERNEL::LatticeType, Stencil>(*i_first, forces, latticeData);
+        forcesOnGrid<typename Kernel::LatticeType, Stencil>(cell, work, latticeData);
       }
-
-      addCell2CellInteractions<Stencil>(dnc, cell2Cell, latticeData);
+      addCell2CellInteractions<Stencil>(cellDnC, cell2Cell, latticeData);
+      addCell2WallInteractions<Stencil>(cellDnC, wallDnC, cell2Wall, latticeData);
     }
 
-    template<class KERNEL>
-    void CellArmy<KERNEL>::CellRemoval()
+    template<class TRAITS>
+    void CellArmy<TRAITS>::CellRemoval()
     {
       auto i_first = cells.cbegin();
       auto const i_end = cells.cend();
@@ -204,7 +226,7 @@ namespace hemelb
               "Removing cell at (%f, %f, %f)",
               barycenter.x, barycenter.y, barycenter.z
           );
-          dnc.remove(*i_current);
+          cellDnC.remove(*i_current);
           cells.erase(i_current);
         }
       }

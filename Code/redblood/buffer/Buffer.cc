@@ -85,7 +85,7 @@ namespace hemelb
       {
         // position with respect to cylinder updated by offset
         auto const z = (position + geometry->normal * offset).Dot(geometry->normal);
-        return z < geometry->length;
+        return z <= geometry->length;
       }
 
       void Buffer::fillBuffer(site_t n)

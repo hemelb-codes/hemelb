@@ -20,37 +20,11 @@ namespace hemelb
     namespace
     {
       template<class T>
-      int figureNearness(DivideConquer<T> &dnc, LatticeVector const &key,
-                         LatticePosition const &vertex, LatticeDistance const &haloLength)
-      {
-        if (haloLength + haloLength > dnc.GetBoxSize())
-        {
-          return 0;
-        }
-
-        int result = 0;
-
-        for (size_t d(1); d < (1 << 6); d <<= 1)
-        {
-          LatticePosition const translated(CellReference::directions(d) * haloLength);
-
-          if (not (key == dnc.DowngradeKey(vertex + translated)))
-          {
-            result |= d;
-          }
-        }
-
-        return result;
-      }
-
-      template<class T>
       CellReference initCellRef(DivideConquer<T> &dnc, CellContainer::const_iterator cellid,
-                                site_t nodeid, LatticeVector const &key,
+                                site_t nodeid, 
                                 LatticePosition const &vertex, LatticeDistance const &haloLength)
       {
-        int const isNearBorder = figureNearness(dnc, key, vertex, haloLength);
-        CellReference result = { cellid, nodeid, isNearBorder };
-        return result;
+        return {cellid, nodeid, figureNearness(dnc, vertex, haloLength)};
       }
 
       void initializeCells(DivideConquer<CellReference> &dnc, MeshData::Vertices const &vertices,
@@ -65,12 +39,10 @@ namespace hemelb
         for (site_t i(0); i_first != i_end; ++i_first, ++i)
         {
           key_type const key = dnc.DowngradeKey(*i_first);
-          dnc.insert(key, initCellRef(dnc, cellid, i, key, *i_first, haloLength));
+          dnc.insert(key, initCellRef(dnc, cellid, i, *i_first, haloLength));
         }
       }
 
-      // avoids a warning
-#     ifndef HEMELB_DOING_UNITTESTS
       void initializeCells(DivideConquer<CellReference> &dnc, CellContainer const &cells,
                            LatticeDistance haloLength)
       {
@@ -82,19 +54,18 @@ namespace hemelb
           initializeCells(dnc, (*i_first)->GetVertices(), i_first, haloLength);
         }
       }
-#     endif
 
       // Compare distance between vertices
       template<class T_FUNCTION>
-      bool nextDistance(T_FUNCTION const &strictlyLarger, DivideConquerCells::const_iterator &first,
+      bool nextDistance(T_FUNCTION const &cellOrdering, DivideConquerCells::const_iterator &first,
                         DivideConquerCells::const_iterator const &end,
                         DivideConquerCells::const_iterator const &main, LatticeDistance dist)
       {
         auto const mainCell = main.GetCell();
         typedef DivideConquerCells::const_iterator cit;
-        auto goodCellPair = [&mainCell, &strictlyLarger](cit const &i)
+        auto goodCellPair = [&mainCell, &cellOrdering](cit const &i)
         {
-          return strictlyLarger(i.GetCell(), mainCell);
+          return cellOrdering(i.GetCell(), mainCell);
         };
         auto goodDistance = [&main, &dist](cit const &i)
         {
@@ -102,7 +73,7 @@ namespace hemelb
         };
         for (; first != end; ++first)
         {
-          if (goodCellPair(first) and goodDistance(first))
+          if (first != main and goodCellPair(first) and goodDistance(first))
           {
             return true;
           }
@@ -127,7 +98,7 @@ namespace hemelb
       for (; i_first != i_end;)
       {
         key_type const key = base_type::DowngradeKey(*i_first);
-        i_first.GetCellReference().isNearBorder = figureNearness(*this, key, *i_first, haloLength);
+        i_first.GetCellReference().nearBorder = figureNearness(*this, *i_first, haloLength);
 
         if (not (key == i_first.GetKey()))
         {
@@ -142,6 +113,14 @@ namespace hemelb
       }
     }
 
+    void DivideConquerCells::SetBoxSizeAndHalo(LatticeDistance boxSize, LatticeDistance halo)
+    {
+      base_type::clear();
+      boxsize = boxSize;
+      haloLength = halo;
+      initializeCells(*this, cells, GetHaloLength());
+    }
+
     DivideConquerCells::const_range DivideConquerCells::operator()(LatticeVector const &pos) const
     {
       base_type::const_range const boxrange = base_type::equal_range(pos);
@@ -151,96 +130,62 @@ namespace hemelb
 
     bool DivideConquerCells::pair_range::nextDist()
     {
-      typedef decltype(owner.cells) Cells;
-      typedef Cells::const_reference Input;
-      auto strictly_less = Cells::key_compare();
-      auto strictlyLarger = [&strictly_less](Input _a, Input _b)
-      {
-        return _a != _b and not strictly_less(_a, _b);
-      };
-      return nextDistance(strictlyLarger, currents.second, ends.second, currents.first, maxdist);
+      return nextDistance(
+          decltype(owner.cells)::key_compare(),
+          currents.second, ends.second, currents.first, maxdist);
     }
 
     bool DivideConquerCells::pair_range::doBox()
     {
-      LatticeVector const key(box == CellReference::NONE ?
-        currents.first.GetKey() :
-        currents.first.GetKey() + CellReference::idirections(box));
-      DivideConquerCells::const_range const boxits = owner(key);
-
-      if (box == CellReference::NONE)
-      {
-        currents.second = currents.first;
-        ++currents.second;
-      }
-      else
-      {
-        currents.second = boxits.first;
-      }
-
-      ends.second = boxits.second;
+      LatticeVector const key(currents.first.GetKey() + *box_iterator);
+      std::tie(currents.second, ends.second) = owner(key);
       return nextDist();
     }
 
     bool DivideConquerCells::pair_range::operator++()
     {
-      if (not is_valid())
+      while(is_valid())
       {
-        return false;
-      }
+        // First try and finds next pair in current range
+        if (currents.second != ends.second)
+        {
+          ++currents.second;
 
-      // First try and finds next pair in current range
-      if (currents.second != ends.second)
-      {
-        ++currents.second;
+          if (nextDist())
+          {
+            return true;
+          }
+        }
 
-        if (nextDist())
+        // If reaches here, then go to next box
+        for(++box_iterator; box_iterator; ++box_iterator)
+        {
+          if(doBox())
+          {
+            return true;
+          }
+        }
+
+        // If reaches here, then should increment main iterator and start with same box
+        if (++currents.first == ends.first)
+        {
+          return false;
+        }
+
+        box_iterator = BorderBoxIterator(currents.first.GetNearBorder());
+        if(doBox())
         {
           return true;
         }
       }
-
-      // If reaches here, then should check which box we are currently doing
-      if (currents.first.GetNearBorder())
-      {
-        if (box)
-        {
-          box = CellReference::Borders(int(box) << 1);
-        }
-        else
-        {
-          box = CellReference::Borders(1);
-        }
-
-        while (box < CellReference::LAST)
-        {
-          if (doBox())
-          {
-            return true;
-          }
-
-          box = CellReference::Borders(int(box) << 1);
-        }
-      }
-
-      // If reaches here, then should increment main iterator and start with same
-      // box
-      if (++currents.first == ends.first)
-      {
-        return false;
-      }
-
-      box = CellReference::NONE;
-      return doBox() ?
-        true :
-        operator++();
+      return false;
     }
 
     DivideConquerCells::pair_range::pair_range(DivideConquerCells const &owner,
                                                iterator const &begin, iterator const &end,
                                                LatticeDistance maxdist) :
-        maxdist(maxdist), box(CellReference::NONE), currents(begin, end), ends(end, end),
-            owner(owner)
+        maxdist(maxdist), box_iterator(begin.GetNearBorder()),
+        currents(begin, end), ends(end, end), owner(owner)
     {
       // No throw garantee. Makes iterator invalid instead.
       try

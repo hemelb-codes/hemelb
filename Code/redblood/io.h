@@ -32,6 +32,9 @@ namespace hemelb
     //! Reads cells outlets from XML
     std::shared_ptr<std::vector<FlowExtension>> readRBCOutlets(io::xml::Element const&,
                                                                util::UnitConverter const&);
+    //! Reads cell-cell or cell-wall interaction
+    Node2NodeForce readNode2NodeForce(io::xml::Element const& parent,
+                                      util::UnitConverter const & converter);
 
     //! Checks cell average edge length against a range of stable values
     bool validateCellEdgeLengths(const CellBase&);

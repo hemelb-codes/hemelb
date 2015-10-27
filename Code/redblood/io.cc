@@ -6,6 +6,7 @@
 #include "redblood/RBCInserter.h"
 #include "redblood/FlowExtension.h"
 #include "redblood/io.h"
+#include "Traits.h"
 
 namespace hemelb
 {
@@ -57,7 +58,7 @@ namespace hemelb
                             const std::string& units, util::UnitConverter const &converter,
                             T default_)
       {
-        std::pair<T, std::string> const value_unit = GetNonDimensionalValue<T>(parent, elemname, units, default_);
+        auto const value_unit = GetNonDimensionalValue<T>(parent, elemname, units, default_);
         return value_unit.second == "LB" ?
           value_unit.first :
           converter.ConvertToLatticeUnits(value_unit.second, value_unit.first);
@@ -68,7 +69,7 @@ namespace hemelb
       T GetNonDimensionalValue(const io::xml::Element& parent, const std::string &elemname,
                             const std::string& units, util::UnitConverter const &converter)
       {
-        std::pair<T, std::string> const value_unit = GetNonDimensionalValue<T>(parent.GetChildOrThrow(elemname), units);
+        auto const value_unit = GetNonDimensionalValue<T>(parent.GetChildOrThrow(elemname), units);
         return value_unit.second == "LB" ?
           value_unit.first :
           converter.ConvertToLatticeUnits(value_unit.second, value_unit.first);
@@ -242,7 +243,7 @@ namespace hemelb
       moduli.surface = GetNonDimensionalValue(moduliNode, "surface", "LB", converter, 1e0);
       moduli.volume = GetNonDimensionalValue(moduliNode, "volume", "LB", converter, 1e0);
       moduli.dilation = GetNonDimensionalValue(moduliNode, "dilation", "LB", converter, 0.75);
-      if(not (1e0 >= moduli.dilation >= 0.5))
+      if(1e0 < moduli.dilation or moduli.dilation < 0.5)
       {
         log::Logger::Log<log::Critical, log::Singleton>(
             "Dilation moduli is outside the recommended range 1e0 >= m >= 0.5");
@@ -251,17 +252,24 @@ namespace hemelb
       return moduli;
     }
 
-    Node2NodeForce readNode2NodeForce(io::xml::Element const& parent,
+    Node2NodeForce readNode2NodeForce(io::xml::Element const& node,
                                       util::UnitConverter const & converter)
     {
       Node2NodeForce result(1e0 / converter.ConvertToLatticeUnits("Nm", 1e0), 1, 2);
-      if (parent == parent.Missing())
+      if (node == node.Missing())
       {
         return result;
       }
-      auto const node = parent.GetChildOrNull("interaction");
       result.intensity = GetNonDimensionalValue(node, "intensity", "Nm", converter, result.intensity);
       result.cutoff = GetNonDimensionalValue(node, "cutoffdistance", "LB", converter, result.cutoff);
+      if(2e0 * result.cutoff > Dimensionless(Traits<>::Stencil::GetRange()))
+      {
+          log::Logger::Log<log::Warning, log::Singleton>(
+              "Input inconsistency: cell-cell and cell-wall interactions larger then stencil size\n"
+              "See issue #586."
+           );
+          throw Exception() << "Cell-cell interaction longuer that stencil size permits";
+      }
       auto const exponentNode = node != node.Missing() ?
         node.GetChildOrNull("exponent") :
         node.Missing();
@@ -351,7 +359,6 @@ namespace hemelb
       std::unique_ptr<Cell> cell(new Cell(mesh_data->vertices, Mesh(mesh_data), scale, name));
       *cell *= scale;
       cell->moduli = readModuli(cellNode, converter);
-      cell->nodeWall = readNode2NodeForce(cellNode, converter);
 
       std::unique_ptr<CellBase> cellbase(static_cast<CellBase*>(cell.release()));
       return cellbase;

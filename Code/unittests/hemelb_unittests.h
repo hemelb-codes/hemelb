@@ -7,6 +7,7 @@
 // specifically made by you with University College London.
 // 
 
+#include "unittests/helpers/helpers.h"
 #include "unittests/lbtests/lbtests.h"
 #include "unittests/vistests/vistests.h"
 #include "unittests/io/io.h"
@@ -20,7 +21,6 @@
 #ifdef HEMELB_BUILD_MULTISCALE
   #include "unittests/multiscale/mpwide/mpwide.h"
 #endif
-#include "unittests/redblood.h"
 #include "unittests/util/util.h"
 
 #include "unittests/helpers/HasCommsTestFixture.h"

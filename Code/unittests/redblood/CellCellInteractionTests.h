@@ -36,6 +36,7 @@ namespace hemelb
           CPPUNIT_TEST (testPairIteratorSameMesh);
           CPPUNIT_TEST (testPairIteratorSinglePair);
           CPPUNIT_TEST (testPairIteratorOnePairPerBox);
+          CPPUNIT_TEST (testPairIteratorDiagonalBoxes);
           CPPUNIT_TEST (testPairIteratorBoxHalo);CPPUNIT_TEST_SUITE_END();
 
           LatticeDistance const cutoff = 5.0;
@@ -54,6 +55,7 @@ namespace hemelb
           void testPairIteratorSameMesh();
           void testPairIteratorSinglePair();
           void testPairIteratorOnePairPerBox();
+          void testPairIteratorDiagonalBoxes();
           void testPairIteratorBoxHalo();
       };
 
@@ -64,8 +66,20 @@ namespace hemelb
         LatticePosition const position = (LatticePosition(key) + LatticePosition(0.6, 0.5, 0.5))
             * cutoff;
 
-        CPPUNIT_ASSERT(not figureNearness(dnc, key, position, cutoff * 0.501));
-        CPPUNIT_ASSERT(figureNearness(dnc, key, position, cutoff * 0.499));
+        CPPUNIT_ASSERT_EQUAL(
+          static_cast<size_t>(Borders::CENTER)
+          bitor static_cast<size_t>(Borders::NORTH)
+          bitor static_cast<size_t>(Borders::SOUTH)
+          bitor static_cast<size_t>(Borders::EAST)
+          bitor static_cast<size_t>(Borders::WEST)
+          bitor static_cast<size_t>(Borders::TOP)
+          bitor static_cast<size_t>(Borders::BOTTOM),
+          figureNearness(dnc, position, cutoff * 1.001)
+        );
+        CPPUNIT_ASSERT_EQUAL(
+            (size_t)Borders::CENTER bitor (size_t)Borders::TOP,
+            figureNearness(dnc, position, cutoff * 0.499)
+        );
       }
 
       void CellCellInteractionTests::testBoxHalo()
@@ -74,21 +88,23 @@ namespace hemelb
         LatticeVector const key(0, 1, -2);
         LatticePosition const center = (LatticePosition(key) + LatticePosition(0.5, 0.5, 0.5))
             * dnc.GetBoxSize();
-        CPPUNIT_ASSERT(figureNearness(dnc, key, center, 2.0) == 0);
+        CPPUNIT_ASSERT(figureNearness(dnc, center, 2.0) == (size_t)Borders::CENTER);
 
         for (size_t d(1); d < (1 << 6); d <<= 1)
         {
-          LatticePosition const disp = CellReference::directions(d) * 0.6;
-          int const nearness = figureNearness(dnc, key, center + disp, 2.0);
-          CPPUNIT_ASSERT(nearness == d);
+          LatticePosition const disp = direction<LatticePosition::value_type>(d) * 0.6;
+          size_t const nearness = figureNearness(dnc, center + disp, 2.0);
+          CPPUNIT_ASSERT(nearness == (d bitor (size_t)Borders::CENTER));
         }
 
-        LatticePosition const mult = CellReference::directions(CellReference::TOP) * 0.6
-            + CellReference::directions(CellReference::NORTH) * 0.6
-            + CellReference::directions(CellReference::EAST) * 0.6;
-        int const actual = figureNearness(dnc, key, center + mult, 2.0);
-        int const expected = CellReference::TOP bitor CellReference::NORTH
-            bitor CellReference::EAST;
+        LatticePosition const mult =
+            direction<LatticePosition::value_type>(Borders::TOP) * 0.6
+            + direction<LatticePosition::value_type>(Borders::NORTH) * 0.6
+            + direction<LatticePosition::value_type>(Borders::EAST) * 0.6;
+        size_t const actual = figureNearness(dnc, center + mult, 2.0);
+        size_t const expected =
+          size_t(Borders::TOP) bitor size_t(Borders::NORTH) bitor size_t(Borders::EAST)
+          bitor size_t(Borders::CENTER);
         CPPUNIT_ASSERT(actual == expected);
       }
 
@@ -105,7 +121,7 @@ namespace hemelb
         vertices.push_back(center + LatticePosition(offhalo, 0, 0) * cutoff);
         vertices.push_back(center + LatticePosition(2, offhalo + 3.0, -2) * cutoff);
         vertices.push_back(center + LatticePosition(1, 0, 0) * cutoff
-            + CellReference::directions(CellReference::NORTH) * inhalo * cutoff);
+            + direction<LatticePosition::value_type>(Borders::NORTH) * inhalo * cutoff);
 
         CellContainer cells;
         std::shared_ptr<Cell> intel(new Cell(Mesh(MeshData())));
@@ -135,24 +151,27 @@ namespace hemelb
         CPPUNIT_ASSERT(helpers::is_zero(omega.first->first));
         CPPUNIT_ASSERT(omega.first->second.cellIterator == cells.begin());
         CPPUNIT_ASSERT(omega.first->second.nodeIndex == 0 or omega.first->second.nodeIndex == 1);
-        CPPUNIT_ASSERT(omega.first->second.isNearBorder == 0);
+        CPPUNIT_ASSERT(omega.first->second.nearBorder == (size_t)Borders::CENTER);
         DivideConquer<CellReference>::const_iterator other = omega.first;
         ++other;
         CPPUNIT_ASSERT(helpers::is_zero(other->first));
         CPPUNIT_ASSERT(other->second.cellIterator == cells.begin());
         CPPUNIT_ASSERT(other->second.nodeIndex == 0 or other->second.nodeIndex == 1);
         CPPUNIT_ASSERT(other->second.nodeIndex != omega.first->second.nodeIndex);
-        CPPUNIT_ASSERT(other->second.isNearBorder == 0);
+        CPPUNIT_ASSERT(other->second.nearBorder == (size_t)Borders::CENTER);
 
         CPPUNIT_ASSERT(alpha.first->first == LatticeVector(2, 3, -2));
         CPPUNIT_ASSERT(alpha.first->second.nodeIndex == 2);
         CPPUNIT_ASSERT(alpha.first->second.cellIterator == cells.begin());
-        CPPUNIT_ASSERT(alpha.first->second.isNearBorder == 0);
+        CPPUNIT_ASSERT(alpha.first->second.nearBorder == (size_t)Borders::CENTER);
 
-        CPPUNIT_ASSERT(haloed.first->first == LatticeVector(1, 0, 0));
-        CPPUNIT_ASSERT(haloed.first->second.nodeIndex == 3);
-        CPPUNIT_ASSERT(haloed.first->second.cellIterator == cells.begin());
-        CPPUNIT_ASSERT(haloed.first->second.isNearBorder == CellReference::NORTH);
+        CPPUNIT_ASSERT_EQUAL(LatticeVector::value_type(1), haloed.first->first.x);
+        CPPUNIT_ASSERT_EQUAL(LatticeVector::value_type(0), haloed.first->first.y);
+        CPPUNIT_ASSERT_EQUAL(LatticeVector::value_type(0), haloed.first->first.z);
+        CPPUNIT_ASSERT_EQUAL(site_t(3), haloed.first->second.nodeIndex);
+        CPPUNIT_ASSERT(cells.begin() == haloed.first->second.cellIterator);
+        CPPUNIT_ASSERT_EQUAL(
+            size_t(Borders::NORTH) bitor size_t(Borders::CENTER), haloed.first->second.nearBorder);
       }
 
       void checkCell(DivideConquerCells const &dnc, LatticeVector const &key,
@@ -269,10 +288,10 @@ namespace hemelb
         CPPUNIT_ASSERT_EQUAL(std::distance(dnc(newbox).first, dnc(newbox).second), 1l);
         CPPUNIT_ASSERT(helpers::is_zero(*dnc(newbox).first - inhalo));
         CPPUNIT_ASSERT(dnc(newbox).first.IsNearBorder());
-        CPPUNIT_ASSERT(dnc(newbox).first.IsNearBorder(CellReference::TOP));
-        CPPUNIT_ASSERT(not dnc(newbox).first.IsNearBorder(CellReference::BOTTOM));
+        CPPUNIT_ASSERT(dnc(newbox).first.IsNearBorder(Borders::TOP));
+        CPPUNIT_ASSERT(not dnc(newbox).first.IsNearBorder(Borders::BOTTOM));
         CPPUNIT_ASSERT_EQUAL(dnc(newbox).first.GetNearBorder(),
-                             (CellReference::TOP bitor CellReference::EAST));
+            size_t(Borders::TOP) bitor size_t(Borders::EAST) bitor size_t(Borders::CENTER));
       }
 
       void CellCellInteractionTests::testPairIteratorNoPairs()
@@ -314,16 +333,23 @@ namespace hemelb
         auto cells = TwoPancakeSamosas<>(cutoff);
 
         // Move one node closer  to the other
-        LatticePosition const n0 = (*cells.begin())->GetVertices()[0];
-        LatticePosition const n1 = (*std::next(cells.begin()))->GetVertices()[1];
-        (*std::next(cells.begin()))->GetVertices()[1] = (n1 - n0).GetNormalised() * 0.3 + n0;
+        auto const &firstCell = *cells.begin();
+        auto const &secondCell = *next(cells.begin());
+        LatticePosition const n0 = firstCell->GetVertices()[0];
+        LatticePosition const n1 = secondCell->GetVertices()[1];
+        secondCell->GetVertices()[1] = (n1 - n0).GetNormalised() * 0.3 + n0;
         DivideConquerCells dnc(cells, cutoff, halo);
 
         DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
         CPPUNIT_ASSERT(range.is_valid());
-        CPPUNIT_ASSERT(helpers::is_zero(*range->first - (*cells.begin())->GetVertices().front()));
-        CPPUNIT_ASSERT(helpers::is_zero(*range->second
-            - (*std::next(cells.begin()))->GetVertices()[1]));
+        auto const firstNode = range->first.GetCell() == firstCell ? *range->first: *range->second;
+        auto const secondNode = range->first.GetCell() == firstCell ? *range->second: *range->first;
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.x, n0.x, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.y, n0.y, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.z, n0.z, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.x, secondCell->GetVertices()[1].x, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.y, secondCell->GetVertices()[1].y, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.z, secondCell->GetVertices()[1].z, 1e-8);
         CPPUNIT_ASSERT(not ++range);
         CPPUNIT_ASSERT(not range.is_valid());
       }
@@ -337,8 +363,10 @@ namespace hemelb
         // Only one pair, and each in a separate box
         LatticePosition const n0(2 * cutoff - 0.1, 4.5 * cutoff, 4.5 * cutoff);
         LatticePosition const n1(2 * cutoff + 0.1, 4.5 * cutoff, 4.5 * cutoff);
-        (*cells.begin())->GetVertices().front() = n0;
-        (*std::next(cells.begin()))->GetVertices().front() = n1;
+        auto const &firstCell = *cells.begin();
+        auto const &secondCell = *next(cells.begin());
+        firstCell->GetVertices().front() = n0;
+        secondCell->GetVertices().front() = n1;
 
         DivideConquerCells dnc(cells, cutoff, halo);
         // Checks that fixture is what I think it is
@@ -350,8 +378,60 @@ namespace hemelb
         DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
         CPPUNIT_ASSERT(range.is_valid());
 
-        CPPUNIT_ASSERT(helpers::is_zero(*range->first - n0));
-        CPPUNIT_ASSERT(helpers::is_zero(*range->second - n1));
+        auto const firstNode = range->first.GetCell() == firstCell ? *range->first: *range->second;
+        auto const secondNode = range->first.GetCell() == firstCell ? *range->second: *range->first;
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.x, n0.x, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.y, n0.y, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.z, n0.z, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.x, n1.x, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.y, n1.y, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.z, n1.z, 1e-8);
+        CPPUNIT_ASSERT(not ++range);
+        CPPUNIT_ASSERT(not range.is_valid());
+      }
+
+      void CellCellInteractionTests::testPairIteratorDiagonalBoxes()
+      {
+        // There three pairs and they are each in different boxe, but each contained
+        // within one box
+        auto cells = TwoPancakeSamosas<>(cutoff);
+
+        // Only one pair, and each in diagonally separate box
+        LatticePosition const n0(2 * cutoff - 0.1, 4 * cutoff - 0.1, 8 * cutoff - 0.1);
+        LatticePosition const n1(2 * cutoff + 0.1, 4 * cutoff + 0.1, 8 * cutoff + 0.1);
+        auto const &firstCell = *cells.begin();
+        auto const &secondCell = *next(cells.begin());
+        firstCell->GetVertices().front() = n0;
+        secondCell->GetVertices().front() = n1;
+
+        DivideConquerCells dnc(cells, cutoff, halo);
+        // Checks that fixture is what I think it is
+        LatticeVector const N0(1, 3, 7);
+        LatticeVector const N1(2, 4, 8);
+        CPPUNIT_ASSERT(std::distance(dnc(N0).first, dnc(N0).second) == 1);
+        CPPUNIT_ASSERT(std::distance(dnc(N1).first, dnc(N1).second) == 1);
+        CPPUNIT_ASSERT_EQUAL(
+            size_t(Borders::CENTER) bitor size_t(Borders::TOP) bitor size_t(Borders::NORTH)
+            bitor size_t(Borders::EAST),
+            dnc(N0).first.GetNearBorder()
+        );
+        CPPUNIT_ASSERT_EQUAL(
+            size_t(Borders::CENTER) bitor size_t(Borders::BOTTOM) bitor size_t(Borders::SOUTH)
+            bitor size_t(Borders::WEST),
+            dnc(N1).first.GetNearBorder()
+        );
+
+        DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
+        CPPUNIT_ASSERT(range.is_valid());
+
+        auto const firstNode = range->first.GetCell() == firstCell ? *range->first: *range->second;
+        auto const secondNode = range->first.GetCell() == firstCell ? *range->second: *range->first;
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.x, n0.x, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.y, n0.y, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.z, n0.z, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.x, n1.x, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.y, n1.y, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.z, n1.z, 1e-8);
         CPPUNIT_ASSERT(not ++range);
         CPPUNIT_ASSERT(not range.is_valid());
       }
@@ -365,8 +445,10 @@ namespace hemelb
         // Only one pair, and each in a separate box
         LatticePosition const n0(2 * cutoff - 0.1, 4.5 * cutoff, 4.5 * cutoff);
         LatticePosition const n1(2 * cutoff + 0.1, 4.5 * cutoff, 4.5 * cutoff);
-        (*cells.begin())->GetVertices().front() = n0;
-        (*std::next(cells.begin()))->GetVertices().front() = n1;
+        auto const &firstCell = *cells.begin();
+        auto const &secondCell = *next(cells.begin());
+        firstCell->GetVertices().front() = n0;
+        secondCell->GetVertices().front() = n1;
 
         DivideConquerCells dnc(cells, cutoff, halo);
         // Checks that fixture is what I think it is
@@ -378,8 +460,14 @@ namespace hemelb
         DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
         CPPUNIT_ASSERT(range.is_valid());
 
-        CPPUNIT_ASSERT(helpers::is_zero(*range->first - n0));
-        CPPUNIT_ASSERT(helpers::is_zero(*range->second - n1));
+        auto const firstNode = range->first.GetCell() == firstCell ? *range->first: *range->second;
+        auto const secondNode = range->first.GetCell() == firstCell ? *range->second: *range->first;
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.x, n0.x, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.y, n0.y, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(firstNode.z, n0.z, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.x, n1.x, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.y, n1.y, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(secondNode.z, n1.z, 1e-8);
         CPPUNIT_ASSERT(not ++range);
         CPPUNIT_ASSERT(not range.is_valid());
       }

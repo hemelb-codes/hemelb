@@ -20,38 +20,31 @@ namespace hemelb
   namespace redblood
   {
     //! \brief Federates the cells together so we can apply ops simultaneously
-    template<class KERNEL, class Stencil>
-    class CellController : public CellArmy<KERNEL>,
-                           public net::IteratedAction
+    //! \tparam TRAITS holds type of kernel and stencil
+    template<class TRAITS>
+    class CellController : public CellArmy<TRAITS>, public net::IteratedAction
     {
       public:
-#       ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
-        CellController(geometry::LatticeData &_latDat, CellContainer const &cells,
-                       LatticeDistance boxsize = 10.0, LatticeDistance halo = 2.0) :
-            CellArmy<KERNEL>(_latDat, cells, boxsize, halo)
-        {
-        }
-#       else
-        using CellArmy<KERNEL>::CellArmy;
-#       endif
+        typedef TRAITS Traits;
+        using CellArmy<TRAITS>::CellArmy;
 
         void RequestComms() override
         {
           using namespace log;
           Logger::Log<Debug, Singleton>("Cell insertion");
-          CellArmy<KERNEL>::CallCellInsertion();
+          CellArmy<TRAITS>::CallCellInsertion();
           Logger::Log<Debug, Singleton>("Fluid interaction with cells");
-          CellArmy<KERNEL>::template Fluid2CellInteractions<Stencil>();
+          CellArmy<TRAITS>::Fluid2CellInteractions();
           Logger::Log<Debug, Singleton>("Cell interaction with fluid");
-          CellArmy<KERNEL>::template Cell2FluidInteractions<Stencil>();
+          CellArmy<TRAITS>::Cell2FluidInteractions();
         }
         void EndIteration() override
         {
           using namespace log;
           Logger::Log<Debug, Singleton>("Checking whether cells have reached outlets");
-          CellArmy<KERNEL>::CellRemoval();
+          CellArmy<TRAITS>::CellRemoval();
           Logger::Log<Debug, Singleton>("Notify cell listeners");
-          CellArmy<KERNEL>::NotifyCellChangeListeners();
+          CellArmy<TRAITS>::NotifyCellChangeListeners();
         }
     };
   }

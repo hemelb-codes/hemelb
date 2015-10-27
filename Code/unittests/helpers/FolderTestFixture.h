@@ -113,7 +113,7 @@ namespace hemelb
             // return to origin
             util::ChangeDirectory(origin);
           }
-          void CopyResourceToTempdir(const std::string & resource)
+          void CopyResourceToTempdir(const std::string & resource) const
           {
             // TODO this should use a filesystem-independent path join (BOOST)
             bool ok = util::FileCopy(resources::Resource(resource).Path().c_str(),
@@ -131,7 +131,7 @@ namespace hemelb
           //! \param[in] value: Value to set the attribute to
           template<class T>
           void ModifyXMLInput(std::string const &resource, std::vector<std::string>&& elements,
-                              T const &_value)
+                              T const &_value) const
           {
             std::string const filename = tempPath + "/" + resource;
             TiXmlDocument document(filename.c_str());
@@ -141,7 +141,8 @@ namespace hemelb
             output << document;
           }
 
-          void DeleteXMLInput(std::string const &resource, std::vector<std::string>&& elements)
+          void DeleteXMLInput(
+              std::string const &resource, std::vector<std::string>&& elements) const
           {
             std::string const filename = tempPath + "/" + resource;
             TiXmlDocument document(filename.c_str());

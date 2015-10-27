@@ -15,6 +15,8 @@
 #include "resources/Resource.h"
 #include "unittests/FourCubeLatticeData.h"
 #include "unittests/helpers/FolderTestFixture.h"
+#include "unittests/helpers/LaddFail.h"
+
 namespace hemelb
 {
   namespace unittests
@@ -64,11 +66,13 @@ namespace hemelb
 
           void TestRead()
           {
+            LADD_FAIL();
             reader->LoadAndDecompose(simConfig->GetDataFilePath());
           }
 
           void TestSameAsFourCube()
           {
+            LADD_FAIL();
             Geometry readResult = reader->LoadAndDecompose(simConfig->GetDataFilePath());
 
             for (site_t i = 1; i < 5; i++)

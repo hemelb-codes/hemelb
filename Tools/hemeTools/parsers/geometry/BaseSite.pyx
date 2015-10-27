@@ -97,7 +97,7 @@ cdef class BaseSite:
         
         self.Type = loader.unpack_uint()
         # Solid and simple fluid, we are done loading
-        if self.IsFluid == FLUID:
+        if self.Type == FLUID:
             # Initialise arrays
             itype = self.IntersectionType = np.empty(DIRECTIONS, dtype=np.uint)
             itype[:] = NO_INTERSECTION
