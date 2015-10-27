@@ -49,11 +49,6 @@ namespace hemelb
         {
           throw Exception() << "This object is a fake.";
         }
-        virtual LatticeForceVector WallInteractionForce(LatticePosition const &vertex,
-                                                        LatticePosition const &wall) const override
-        {
-          throw Exception() << "This object is a fake.";
-        }
         std::unique_ptr<VertexBag> clone() const
         {
           return std::unique_ptr<VertexBag>(static_cast<VertexBag*>(cloneImpl().release()));

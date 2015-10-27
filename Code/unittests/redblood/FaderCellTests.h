@@ -58,12 +58,6 @@ namespace hemelb
             }
             return 1e0;
           }
-          LatticeForceVector WallInteractionForce(LatticePosition const& vertex,
-                                                  LatticePosition const &wall) const override
-          {
-            return
-            { 1, 2, 3};
-          }
         private:
           std::unique_ptr<CellBase> cloneImpl() const override
           {
@@ -101,10 +95,6 @@ namespace hemelb
         CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, forces.back().x, 1e-8);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(2e0, forces.back().y, 1e-8);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(8e0, forces.back().z, 1e-8);
-        auto force = dummyCell->WallInteractionForce(zero, zero);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(1e0, force.x, 1e-8);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(2e0, force.y, 1e-8);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(3e0, force.z, 1e-8);
 
         // Now fades to 0.7
         forces = std::vector<LatticeForceVector>(2, zero);
@@ -117,11 +107,6 @@ namespace hemelb
         CPPUNIT_ASSERT_DOUBLES_EQUAL(0.7 * 0e0, forces.back().x, 1e-8);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(0.7 * 2e0, forces.back().y, 1e-8);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(0.7 * 8e0, forces.back().z, 1e-8);
-        // wall interactions do *not* fade
-        force = dummyCell->WallInteractionForce(zero, zero);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(1e0, force.x, 1e-8);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(2e0, force.y, 1e-8);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(3e0, force.z, 1e-8);
 
         // fades to 0.7 in outlet
         forces = std::vector<LatticeForceVector>(2, zero);
@@ -134,10 +119,6 @@ namespace hemelb
         CPPUNIT_ASSERT_DOUBLES_EQUAL(0.7 * 0e0, forces.back().x, 1e-8);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(0.7 * 2e0, forces.back().y, 1e-8);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(0.7 * 8e0, forces.back().z, 1e-8);
-        force = dummyCell->WallInteractionForce(zero, zero);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(1e0, force.x, 1e-8);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(2e0, force.y, 1e-8);
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(3e0, force.z, 1e-8);
       }
 
       void FaderCellTests::testDivideAndConquer()
@@ -154,9 +135,6 @@ namespace hemelb
                                    1.8);
 
         auto const cell = std::make_shared<Cell>(tetrahedron());
-        cell->nodeWall.cutoff = 0.6;
-        cell->nodeWall.intensity = 1e0;
-        cell->nodeWall.exponent = 2;
         *cell *= 5e0;
         auto const fader0 =
             std::make_shared<FaderCell>(cell, std::vector<FlowExtension> { inlet, outlet });
@@ -178,7 +156,6 @@ namespace hemelb
         CPPUNIT_ASSERT(range.is_valid());
         CPPUNIT_ASSERT(not (++range));
       }
-
 
       CPPUNIT_TEST_SUITE_REGISTRATION (FaderCellTests);
     }

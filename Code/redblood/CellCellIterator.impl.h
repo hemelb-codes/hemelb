@@ -117,19 +117,19 @@ class HEMELB_ITERATOR
     }
 
     //! Gets integer coding for whether node is close to boundary
-    int GetNearBorder() const
+    size_t GetNearBorder() const
     {
-      return GetCellReference().isNearBorder;
+      return GetCellReference().nearBorder;
     }
     //! True if close to given boundary
-    bool IsNearBorder(CellReference::Borders border) const
+    bool IsNearBorder(Borders border) const
     {
-      return GetNearBorder() bitand border;
+      return GetNearBorder() bitand size_t(border);
     }
     //! True if close to any boundary
     bool IsNearBorder() const
     {
-      return GetNearBorder() != 0;
+      return GetNearBorder() != static_cast<size_t>(Borders::CENTER);
     }
 
     //! Returns shared pointer to cell pointed to by this object
