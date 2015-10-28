@@ -23,8 +23,19 @@ namespace hemelb
 {
   namespace redblood
   {
+    namespace details
+    {
+      //! Stable comparison of cells across nodes
+      struct CellUUIDComparison
+      {
+        bool operator()(std::shared_ptr<CellBase> const&a, std::shared_ptr<CellBase> const &b) const
+        {
+          return a->GetTag() < b->GetTag();
+        }
+      };
+    }
     //! Typical cell container type
-    typedef std::set<std::shared_ptr<CellBase>> CellContainer;
+    typedef std::set<std::shared_ptr<CellBase>, details::CellUUIDComparison> CellContainer;
     //! \brief Container of template meshes
     //! \details An instance of this object is used to reference meshes across the simulation
     typedef std::map<std::string, std::shared_ptr<CellBase>> TemplateCellContainer;
