@@ -13,6 +13,7 @@
 #include <hdf5.h>
 #include <mpi.h>
 
+#include "redblood/types.h"
 #include "redblood/Cell.h"
 
 namespace hemelb

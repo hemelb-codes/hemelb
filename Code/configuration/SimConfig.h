@@ -19,6 +19,7 @@
 #include "io/xml/XmlAbstractionLayer.h"
 #include "redblood/Cell.h"
 #include "redblood/Mesh.h"
+#include "redblood/types.h"
 #include "redblood/RBCInserter.h"
 #include "redblood/Node2Node.h"
 
