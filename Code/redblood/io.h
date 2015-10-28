@@ -5,6 +5,7 @@
 #include <memory>
 #include <functional>
 #include "redblood/Cell.h"
+#include "redblood/types.h"
 #include "io/xml/XmlAbstractionLayer.h"
 #include "util/UnitConverter.h"
 #include "redblood/stencil.h"

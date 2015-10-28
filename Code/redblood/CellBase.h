@@ -192,14 +192,6 @@ namespace hemelb
         "Explicit type characteristics"
     );
 
-    //! Typical cell container type
-    typedef std::set<std::shared_ptr<CellBase>> CellContainer;
-    //! \brief Container of template meshes
-    //! \details An instance of this object is used to reference meshes across the simulation
-    typedef std::map<std::string, std::shared_ptr<CellBase>> TemplateCellContainer;
-    //! Function to insert cells somewhere
-    typedef std::function<void(CellContainer::value_type)> CellInserter;
-
     //! Write cell-mesh to file in VTK XML format
     void writeVTKMesh(std::ostream &, std::shared_ptr<CellBase const>, util::UnitConverter const&);
     //! Write cell-mesh to file in VTK XML format

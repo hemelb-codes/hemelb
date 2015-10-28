@@ -9,6 +9,7 @@
 
 #include <iterator>
 #include "redblood/buffer/Buffer.h"
+#include "redblood/types.h"
 #include "Exception.h"
 
 namespace hemelb

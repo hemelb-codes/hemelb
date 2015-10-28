@@ -11,6 +11,7 @@
 #include "redblood/CellCell.h"
 #include "redblood/Cell.h"
 #include "redblood/Interpolation.h"
+#include "redblood/types.h"
 #include "log/Logger.h"
 
 namespace hemelb

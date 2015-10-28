@@ -16,6 +16,7 @@
 #include "util/Packer.h"
 #include "geometry/LatticeData.h"
 #include "redblood/Cell.h"
+#include "redblood/types.h"
 
 namespace hemelb
 {

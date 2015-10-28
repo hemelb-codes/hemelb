@@ -14,6 +14,7 @@
 #include "redblood/Cell.h"
 #include "redblood/FlowExtension.h"
 #include "redblood/buffer/Buffer.h"
+#include "redblood/types.h"
 
 namespace hemelb
 {

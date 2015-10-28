@@ -21,6 +21,7 @@
 #include "redblood/GridAndCell.h"
 #include "redblood/FlowExtension.h"
 #include "geometry/LatticeData.h"
+#include "redblood/types.h"
 
 namespace hemelb
 {
