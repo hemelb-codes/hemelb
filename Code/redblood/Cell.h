@@ -215,7 +215,7 @@ namespace hemelb
 
             Moduli(LatticeModulus b = 0, LatticeModulus s = 0, LatticeModulus v = 0,
                    LatticeModulus d = 0, LatticeModulus st = 0) :
-                bending(b), surface(s), volume(v), dilation(d), strain(s)
+                bending(b), surface(s), volume(v), dilation(d), strain(st)
             {
             }
             Moduli(std::initializer_list<LatticeModulus> const &l)
