@@ -9,13 +9,6 @@
 #include "redblood/VertexBag.h"
 #include "redblood/Interpolation.h"
 
-#ifndef HEMELB_DOING_UNITTESTS
-// Contains definition of CellBase::CellData
-// Should not be included by anyone except VertexBag and cell base source file
-// In fact, there are no header guards on this file, just to make sure it is not included wrongly.
-#include "redblood/CellDataDefinition.impl.cc"
-#endif
-
 namespace hemelb
 {
   namespace redblood
