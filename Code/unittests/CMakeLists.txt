@@ -1,7 +1,7 @@
 find_package(CPPUnit REQUIRED)
 include_directories(${CPPUNIT_INCLUDE_DIR})
 
-macro(add_test_executable target includename)
+function(create_test_executable target includename)
   set(HEMELB_UNITTEST_INCLUDE ${includename})
   configure_file(main.in.cc "${CMAKE_CURRENT_BINARY_DIR}/${target}.cc")
   add_executable(${target} "${CMAKE_CURRENT_BINARY_DIR}/${target}.cc")
@@ -20,11 +20,15 @@ macro(add_test_executable target includename)
     ${CMAKE_DL_LIBS}
   )
   set_target_properties(${target} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
-  INSTALL(TARGETS ${target} RUNTIME DESTINATION bin)
-  set(testdir "${PROJECT_BINARY_DIR}/tests/")
+endfunction()
+
+function(add_test_executable target includename)
+  create_test_executable(${target} ${includename})
+  set(testdr "${PROJECT_BINARY_DIR}/tests/")
   file(MAKE_DIRECTORY "${testdir}")
   add_test(NAME ${target} COMMAND ${target} -o ${testdir}/${target}.xml)
-endmacro()
+endfunction()
+
 
 add_test_executable(unittests_hemelb hemelb_unittests.h)
 add_test_executable(unittests_redblood redblood.h)
