@@ -182,12 +182,6 @@ namespace hemelb
         // First node and second in common
         return IndexPair(0, 1);
       }
-      // Returns common edge with specific direction
-      LatticePosition commonEdge(Facet const &a, Facet const &b)
-      {
-        IndexPair common(commonNodes(a, b));
-        return a(common.first, common.second);
-      }
 
       // Figures out nodes that are not in common
       // Returns non-sense if the nodes are not neighbors.
