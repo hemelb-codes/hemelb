@@ -12,9 +12,9 @@
 
 #include <cppunit/TestFixture.h>
 #include "unittests/redblood/Fixtures.h"
-#include "redblood/parallelization/ParticleShuffler.h"
+#include "redblood/parallel/ParticleShuffler.h"
 // to unittest packing and unpacking in anonymous namespace
-#include "redblood/parallelization/ParticleShuffler.cc"
+#include "redblood/parallel/ParticleShuffler.cc"
 #include <algorithm>
 
 namespace hemelb
@@ -23,8 +23,10 @@ namespace hemelb
   {
     namespace redblood_parallel
     {
+      using namespace hemelb::redblood;
+      using namespace hemelb::redblood::parallel;
       //! Mock cell for ease of use
-      class Shuffler : public ParticleShuffler
+      class Shuffler : public redblood::parallel::ParticleShuffler
       {
         public:
           Shuffler(proc_t arank) :

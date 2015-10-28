@@ -9,7 +9,7 @@
 
 #include <iostream>
 #include <numeric>
-#include "redblood/parallelization/ParticleShuffler.h"
+#include "redblood/parallel/ParticleShuffler.h"
 #include "units.h"
 
 namespace hemelb
