@@ -43,6 +43,8 @@ namespace hemelb
         }
       }
 
+      // remove unused function warning
+#     ifndef HEMELB_DOING_UNITTESTS
       void initializeCells(DivideConquer<CellReference> &dnc, CellContainer const &cells,
                            LatticeDistance haloLength)
       {
@@ -54,6 +56,7 @@ namespace hemelb
           initializeCells(dnc, (*i_first)->GetVertices(), i_first, haloLength);
         }
       }
+#     endif
 
       // Compare distance between vertices
       template<class T_FUNCTION>
