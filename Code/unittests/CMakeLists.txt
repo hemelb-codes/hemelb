@@ -33,6 +33,7 @@ endfunction()
 add_test_executable(unittests_hemelb hemelb_unittests.h)
 add_test_executable(unittests_redblood redblood.h)
 add_test_executable(unittests_redblood_integrations redblood_integrations.h)
+add_test_executable(unittests_redblood_parallel redblood_parallel.h)
 
 
 add_to_resources(resources/four_cube.gmy resources/four_cube.xml
