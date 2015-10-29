@@ -10,12 +10,14 @@
 default: 
   # General default values for all machines live in the default dictionary.
   # Machine-specific overrides replace these.
-  # Mercurial server to find HemeLB
-  hg: "ssh://hg@entropy.chem.ucl.ac.uk"
-  # Repository on the mercurial server to find HemeLB
-  repository: "hemelb"
-  # Repository on the mercurial server holding the RegressionTests
-  regression_tests_repository: "hemelb-input"
+  # git server to find HemeLB
+  github: "git@github.com"
+  # Github user (configurable for forks)
+  github_user: "UCL-CCS"
+  # Repository containing HemeLB
+  hemelb_repo: "hemelb-dev"
+  # Repository holding the RegressionTests
+  regression_tests_repo: "hemelb-tests"
   # Default Modules to load or unload on remote, via module 'foo'
   # e.g. ['load cmake'].
   modules: []
@@ -277,7 +279,7 @@ oppenheimer:
    run_command: "/opt/openmpi/gfortran/1.6.5/bin/mpirun -np $cores"
    batch_header: sge_oppenheimer
    build_prefix_commands: ["export set PATH=$PATH:/home/$username/install/bin","export set PYTHONPATH=$PYTHONPATH:/home/$username/install/lib/python2.6/site-packages"]
-   no_hg: true
+   no_git: true
    job_dispatch: "qsub"
    python_build: "lib/python2.6"
    make_jobs: 4
@@ -288,7 +290,7 @@ localhost:
 huygens:
     remote: "huygens.sara.nl"
     username: "sar00033"
-    no_hg: true
+    no_git: true
     home_path_template: "/home/$username/hemelb"
     modules: ["load cmake/2.8.5","load gcc"]
     build_prefix_commands: [] #Tell autoconf for dependencies where the hector compilers are
@@ -311,7 +313,7 @@ huygens:
 riken:
    remote: "127.0.0.1:2200"  #Not a place to run code, just to get the via code there to run on Marigold
    no_ssh: true
-   no_hg: true
+   no_git: true
    needs_tarballs: true
 # Before the marigold section will work, you need to set up your LOCAL ssh config as follows:
 # Host riken
@@ -326,7 +328,7 @@ riken:
 marigold:
    remote: marigold
    no_ssh: true
-   no_hg: true
+   no_git: true
    needs_tarballs: true
    manual_ssh: true
    runtime_path_template: "/data/$username"
