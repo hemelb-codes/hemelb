@@ -20,22 +20,21 @@ namespace hemelb
     {
       namespace
       {
-        // id of the proc that should own this cell
-        std::tuple<bool, proc_t> owner(CellContainer::const_reference cell,
-                                       geometry::LatticeData const &latticeData)
-        {
-          auto const barycenter = cell->GetBarycenter();
-          auto const node = latticeData.GetProcIdFromGlobalCoords(barycenter);
-          assert(node != BIG_NUMBER2);
-          auto const thisrank = latticeData.GetLocalRank();
-          return std::make_tuple(bool(thisrank == node), proc_t(node));
-        }
-
+#       ifndef HEMELB_DOING_UNITTESTS
+        // // id of the proc that should own this cell
+        // std::tuple<bool, proc_t> owner(CellContainer::const_reference cell,
+        //                                geometry::LatticeData const &latticeData)
+        // {
+        //   auto const barycenter = cell->GetBarycenter();
+        //   auto const node = latticeData.GetProcIdFromGlobalCoords(barycenter);
+        //   assert(node != BIG_NUMBER2);
+        //   auto const thisrank = latticeData.GetLocalRank();
+        //   return std::make_tuple(bool(thisrank == node), proc_t(node));
+        // }
+        //
         // packs a single cell
         util::Packer& pack(util::Packer& packer, CellContainer::const_reference cell)
         {
-          typedef decltype(cell->GetScale()) ScaleType;
-          typedef decltype(cell->GetVertices()[0].x) LatticeCoodinateType;
           packer << cell->GetScale();
           packer << cell->GetVertices();
           return packer;
@@ -49,6 +48,7 @@ namespace hemelb
           cell->SetScale(scale);
           return packer;
         }
+#       endif
 
         site_t cellSetPackSize(CellContainer const &cells)
         {
@@ -61,6 +61,8 @@ namespace hemelb
           }
           return sizer.cast();
         }
+
+#       ifndef HEMELB_DOING_UNITTESTS
         site_t cellSetPackSize(std::map<proc_t, CellContainer> const &cellSet, proc_t node)
         {
           util::Packer::Sizer sizer;
@@ -68,6 +70,7 @@ namespace hemelb
           assert(cells != cellSet.end());
           return cellSetPackSize(cells->second);
         }
+#       endif
       } // anonymous namespace
 
 #     ifndef HEMELB_DOING_UNITTESTS
