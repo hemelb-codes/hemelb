@@ -14,9 +14,9 @@ on run args
 	end repeat
 	
 	set lldbPath to do shell script "which lldb"
-	if lldbPath is equal to ""
+	if lldbPath is equal to "" then
 		set gdbPath to do shell script "which gdb"
-		if gdbPath is equal to ""
+		if gdbPath is equal to "" then
 			-- Error - no known debugger!
 			return "Cannot find a debugger"
 		else
@@ -64,22 +64,17 @@ on CreateTabs(pIds)
 end CreateTabs
 
 on lldbRun(binary, pIds)
-	set debugger to "lldb"
-		
+	set debuggerCommandFile to myDir() & "/resume.lldb"
+	set debugger to "lldb -s " & debuggerCommandFile
+	
 	set tabList to CreateTabs(pIds)
 	tell application "Terminal"
 		-- run commands in tabs
 		repeat with i from 1 to count pIds
 			set pId to item i of pIds
 			set curTab to item i of tabList
-			set cmd to debugger & " -f " & binary & " -p " & pId
+			set cmd to debugger & " -p " & pId & " " & binary
 			set newTab to do script cmd in curTab
-			delay 1
-			do script ("frame select -r 3") in curTab
-			do script ("expr amWaiting = 0") in curTab
-			do script ("breakpoint set -F hemelb::debug::ActiveDebugger::BreakHere()") in curTab
-			do script ("breakpoint command add -o 'finish' 1") in curTab
-			do script ("continue") in curTab
 		end repeat
 		
 		tell application "System Events" to tell process "Terminal" to keystroke "}" using command down

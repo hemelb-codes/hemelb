@@ -1,0 +1,11 @@
+# Get out of sleep and disable the waiting flag
+frame select -r 3
+expr amWaiting = 0
+
+# Set up a breakpoint for our break function and a command to finish
+# it automatically
+breakpoint set -F hemelb::debug::ActiveDebugger::BreakHere()
+breakpoint command add -o 'finish' 1
+
+# Carry on
+continue
