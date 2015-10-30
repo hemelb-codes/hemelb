@@ -57,6 +57,8 @@ default:
   manual_ssh: false
   local_templates_path: "$localroot/deploy/templates"
   stat: qstat
+  forward_agent: true
+
 archer: #the ARCHER supercomputer at EPCC
   import: "archer"
   max_job_name_chars: 15
@@ -65,14 +67,13 @@ archer: #the ARCHER supercomputer at EPCC
   job_dispatch: "qsub"
   run_command: "aprun -n $cores"
   batch_header: pbs-archer
-  no_ssh: true # ARCHER doesn't allow outgoing ssh sessions.
   remote: "login.archer.ac.uk"
   # On ARCHER, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
   install_path_template: "$work_path/install"
   home_path_template: "/home/$project/$project/$username"
   runtime_path_template: "/work/$project/$project/$username"
   fabric_dir: "FabricHemeLb"
-  modules: ["load cmake", "swap PrgEnv-cray PrgEnv-gnu"]
+  modules: ["load cmake", "swap PrgEnv-cray PrgEnv-gnu", "load anaconda"]
   # Tell autoconf for dependencies where the compilers are
   build_prefix_commands: ["export LDFLAGS=-dynamic","export CXX=CC","export CC=cc", "export LD=CC", "export XTPE_LINK_TYPE=dynamic" ]
   temp_path_template: "$work_path/tmp"
