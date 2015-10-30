@@ -270,7 +270,6 @@ def fetch_distributions():
 @task
 def clone_regression_tests():
     """Get the latest data from the repo."""
-    run(template("mkdir -p $regression_test_repo_path"))
     if env.no_ssh or env.no_git:
         # Some machines do not allow outgoing connections
         # so the data must be sent by a project sync instead.
@@ -281,7 +280,7 @@ def clone_regression_tests():
 @task
 def copy_regression_tests():
     if env.regression_test_source_path != env.regression_test_path:
-        run(template("cp -r $regression_test_source_path/* $regression_test_path"))
+        run(template("cp -r $regression_test_source_path $regression_test_path"))
 
 @task
 def sync():
