@@ -14,11 +14,11 @@
 #include <functional>
 
 #include "util/Packer.h"
-#include "redblood/cell.h"
+#include "redblood/Cell.h"
 #include "redblood/stencil.h"
-#include "redblood/interpolation.h"
+#include "redblood/Interpolation.h"
 #include "redblood/VelocityInterpolation.h"
-#include "geometry/latticeData.h"
+#include "geometry/LatticeData.h"
 #include "Traits.h"
 
 
