@@ -117,9 +117,9 @@ namespace hemelb
           }
 
           //! Consolidates result from another proc into an input array
-          // void ReduceFrom(
-          //     MeshData::Vertices const &consolidated,
-          //     proc_t node, MeshData::Vertices const& incoming) const;
+          void ReduceFrom(
+              MeshData::Vertices &consolidated,
+              proc_t node, MeshData::Vertices const& incoming) const;
 
         protected:
           template<class STENCIL>

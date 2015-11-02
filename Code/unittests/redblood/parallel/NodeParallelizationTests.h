@@ -13,6 +13,7 @@
 #include <cppunit/TestFixture.h>
 #include "unittests/redblood/Fixtures.h"
 #include "redblood/parallel/NodeCharacterizer.h"
+#include "util/Iterator.h"
 #include <algorithm>
 
 namespace hemelb
@@ -28,6 +29,7 @@ namespace hemelb
           CPPUNIT_TEST_SUITE (NodeParallelizationTests);
           CPPUNIT_TEST (testProperties);
           CPPUNIT_TEST (testConstruction);
+          CPPUNIT_TEST (testReduceFrom);
           // CPPUNIT_TEST (testApplyMidDomain);
           CPPUNIT_TEST_SUITE_END();
 
@@ -35,18 +37,19 @@ namespace hemelb
 
           void testProperties();
           void testConstruction();
+          void testReduceFrom();
           // void testApplyMidDomain();
       };
 
       void NodeParallelizationTests::testProperties()
       {
-        NodeCharacterizer mm({{0, {0, 2}}, {1, {1, 2}}, {}});
-        CPPUNIT_ASSERT_EQUAL(mm.IsMidDomain(0), true);
-        CPPUNIT_ASSERT_EQUAL(mm.IsMidDomain(1), true);
-        CPPUNIT_ASSERT_EQUAL(mm.IsMidDomain(2), false);
-        CPPUNIT_ASSERT_EQUAL(mm.IsBoundary(0), false);
-        CPPUNIT_ASSERT_EQUAL(mm.IsBoundary(1), false);
-        CPPUNIT_ASSERT_EQUAL(mm.IsBoundary(2), true);
+        NodeCharacterizer nc({{0, {0, 2}}, {1, {1, 2}}, {}});
+        CPPUNIT_ASSERT_EQUAL(nc.IsMidDomain(0), true);
+        CPPUNIT_ASSERT_EQUAL(nc.IsMidDomain(1), true);
+        CPPUNIT_ASSERT_EQUAL(nc.IsMidDomain(2), false);
+        CPPUNIT_ASSERT_EQUAL(nc.IsBoundary(0), false);
+        CPPUNIT_ASSERT_EQUAL(nc.IsBoundary(1), false);
+        CPPUNIT_ASSERT_EQUAL(nc.IsBoundary(2), true);
       }
 
       void NodeParallelizationTests::testConstruction()
@@ -61,13 +64,47 @@ namespace hemelb
           return {isZero? 0: 1};
         };
 
-        NodeCharacterizer mm(func,
+        NodeCharacterizer nc(func,
             {LatticePosition(0, 0, 0), LatticePosition(1e2, 0, 0), LatticePosition(7e0, 0, 0)});
 
-        CPPUNIT_ASSERT(mm[0].count(0));
-        CPPUNIT_ASSERT(mm[0].count(2));
-        CPPUNIT_ASSERT(mm[1].count(1));
-        CPPUNIT_ASSERT(mm[1].count(2));
+        CPPUNIT_ASSERT(nc[0].count(0));
+        CPPUNIT_ASSERT(nc[0].count(2));
+        CPPUNIT_ASSERT(nc[1].count(1));
+        CPPUNIT_ASSERT(nc[1].count(2));
+      }
+
+      void NodeParallelizationTests::testReduceFrom()
+      {
+        std::vector<LatticePosition> reduced(3, {0, 0, 0});
+        std::vector<LatticePosition> const incomming0 = {{1, 0, 0}, {0, 2, 0}};
+        std::vector<LatticePosition> const incomming1 = {{0, 1, 1}, {0, 0, 1}};
+        NodeCharacterizer const nc({{0, {0, 1}}, {1, {0, 2}}, {2, {}}});
+
+        nc.ReduceFrom(reduced, 0, incomming0);
+        std::vector<LatticePosition> const expected0 = {{1, 0, 0}, {0, 2, 0}, {0, 0, 0}};
+        for(auto const item: util::czip(reduced, expected0))
+        {
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).x, std::get<1>(item).x, 1e-8);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).y, std::get<1>(item).y, 1e-8);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).z, std::get<1>(item).z, 1e-8);
+        }
+
+        nc.ReduceFrom(reduced, 1, incomming1);
+        std::vector<LatticePosition> const expected1 = {{1, 1, 1}, {0, 2, 0}, {0, 0, 1}};
+        for(auto const item: util::czip(reduced, expected1))
+        {
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).x, std::get<1>(item).x, 1e-8);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).y, std::get<1>(item).y, 1e-8);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).z, std::get<1>(item).z, 1e-8);
+        }
+
+        nc.ReduceFrom(reduced, 2, {});
+        for(auto const item: util::czip(reduced, expected1))
+        {
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).x, std::get<1>(item).x, 1e-8);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).y, std::get<1>(item).y, 1e-8);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).z, std::get<1>(item).z, 1e-8);
+        }
       }
 
       // void NodeParallelizationTests::testApplyMidDomain()
