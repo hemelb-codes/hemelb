@@ -47,7 +47,8 @@ namespace hemelb
 
       void NodeParallelizationTests::testProperties()
       {
-        NodeCharacterizer nc({{0, {0, 2}}, {1, {1, 2}}, {}});
+        typedef NodeCharacterizer::Process2NodesMap::mapped_type V;
+        NodeCharacterizer const nc({{0, V{0, 2}}, {1, V{1, 2}}, {2, V{}}});
         CPPUNIT_ASSERT_EQUAL(nc.IsMidDomain(0), true);
         CPPUNIT_ASSERT_EQUAL(nc.IsMidDomain(1), true);
         CPPUNIT_ASSERT_EQUAL(nc.IsMidDomain(2), false);
@@ -82,7 +83,8 @@ namespace hemelb
         std::vector<LatticePosition> reduced(3, {0, 0, 0});
         std::vector<LatticePosition> const incomming0 = {{1, 0, 0}, {0, 2, 0}};
         std::vector<LatticePosition> const incomming1 = {{0, 1, 1}, {0, 0, 1}};
-        NodeCharacterizer const nc({{0, {0, 1}}, {1, {0, 2}}, {2, {}}});
+        typedef NodeCharacterizer::Process2NodesMap::mapped_type V;
+        NodeCharacterizer const nc({{0, V{0, 1}}, {1, V{0, 2}}, {2, V{}}});
 
         nc.ReduceFrom(reduced, 0, incomming0);
         std::vector<LatticePosition> const expected0 = {{1, 0, 0}, {0, 2, 0}, {0, 0, 0}};
@@ -114,7 +116,8 @@ namespace hemelb
       void NodeParallelizationTests::testReduceFromAll()
       {
         std::vector<LatticePosition> reduced(3, {0, 0, 0});
-        NodeCharacterizer const nc({{0, {0, 1}}, {1, {0, 2}}, {2, {}}});
+        typedef NodeCharacterizer::Process2NodesMap::mapped_type V;
+        NodeCharacterizer const nc({{0, V{0, 1}}, {1, V{0, 2}}, {2, V{}}});
 
         nc.ReduceFrom(reduced, 0, {{1, 0, 0}, {0, 2, 0}, {0, 1, 1}, {0, 0, 1}});
         std::vector<LatticePosition> const expected = {{1, 1, 1}, {0, 2, 0}, {0, 0, 1}};
@@ -128,7 +131,8 @@ namespace hemelb
 
       void NodeParallelizationTests::testSpreadTo()
       {
-        NodeCharacterizer const nc({{0, {0, 1}}, {1, {0, 2}}, {2, {}}});
+        typedef NodeCharacterizer::Process2NodesMap::mapped_type V;
+        NodeCharacterizer const nc({{0, V{0, 1}}, {1, V{0, 2}}, {2, V{}}});
 
         auto const actual = nc.SpreadTo({{1, 0, 0}, {0, 2, 0}, {0, 0, 3}});
         CPPUNIT_ASSERT_EQUAL(size_t(3), actual.first.size());
