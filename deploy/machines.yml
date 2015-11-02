@@ -79,7 +79,7 @@ archer: #the ARCHER supercomputer at EPCC
   temp_path_template: "$work_path/tmp"
   regression_test_path_template: "$work_path/regression"
   queue: "standard"
-  python_build: "lib64/python2.6"
+  python_build: "lib/python2.7"
   corespernode: 24
 #  build_prefix_command: [ "export LDFLAGS=-dynamic", "export XTPE_LINK_TYPE=dynamic" ]
   cmake_options:
