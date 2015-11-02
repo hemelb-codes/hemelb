@@ -120,6 +120,28 @@ namespace hemelb
           void ReduceFrom(
               MeshData::Vertices &consolidated,
               proc_t node, MeshData::Vertices const& incoming) const;
+          //! \brief Reduce results from all nodes
+          //! \details Assumes that the incomming array is aranged such that it contains first all
+          //! the nodes from the lowest rank, then the next lowest, ...
+          void ReduceFrom(
+              MeshData::Vertices &consolidated, MeshData::Vertices const& incoming) const;
+          //! \brief Spread data to different node
+          //! \details Creates an array with all the nodes to send over to different processor. The
+          //! output is tailored to fit MPI's gatherv.
+          void SpreadTo(
+              std::vector<size_t> & sizes, MeshData::Vertices &outgoing,
+              MeshData::Vertices const& vertices) const;
+          //! \brief Spread data to different node
+          //! \details Creates an array with all the nodes to send over to different processor. The
+          //! output is tailored to fit MPI's gatherv.
+          std::pair<std::vector<size_t>, MeshData::Vertices>
+          SpreadTo(MeshData::Vertices const& vertices) const
+          {
+            std::pair<std::vector<size_t>, MeshData::Vertices> result;
+            SpreadTo(result.first, result.second, vertices);
+            return result;
+          }
+
 
         protected:
           template<class STENCIL>

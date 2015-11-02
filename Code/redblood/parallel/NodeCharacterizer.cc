@@ -116,6 +116,36 @@ namespace hemelb
         }
       }
 
+      void NodeCharacterizer::ReduceFrom(
+          MeshData::Vertices &consolidated, MeshData::Vertices const& incoming) const
+      {
+        auto incoming_node = incoming.cbegin();
+        for(auto const proc: affectedProcs)
+        {
+          for(auto const index: proc.second)
+          {
+            assert(incoming_node != incoming.end());
+            consolidated[index] += *incoming_node;
+            ++incoming_node;
+          }
+        }
+      }
+
+      void NodeCharacterizer::SpreadTo(
+          std::vector<size_t> & sizes, MeshData::Vertices & outgoing,
+          MeshData::Vertices const &vertices) const
+      {
+        for(auto const proc: affectedProcs)
+        {
+          sizes.push_back(proc.second.size());
+          for(auto const index: proc.second)
+          {
+            assert(index < vertices.size());
+            outgoing.push_back(vertices[index]);
+          }
+        }
+      }
+
       // void MeshOwner::UpdateNodeCharacterization(
       //     AssessNodeRange const& assessNodeRange,
       //     proc_t const localRank,

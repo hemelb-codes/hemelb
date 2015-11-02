@@ -30,6 +30,8 @@ namespace hemelb
           CPPUNIT_TEST (testProperties);
           CPPUNIT_TEST (testConstruction);
           CPPUNIT_TEST (testReduceFrom);
+          CPPUNIT_TEST (testReduceFromAll);
+          CPPUNIT_TEST (testSpreadTo);
           // CPPUNIT_TEST (testApplyMidDomain);
           CPPUNIT_TEST_SUITE_END();
 
@@ -38,6 +40,8 @@ namespace hemelb
           void testProperties();
           void testConstruction();
           void testReduceFrom();
+          void testReduceFromAll();
+          void testSpreadTo();
           // void testApplyMidDomain();
       };
 
@@ -82,7 +86,7 @@ namespace hemelb
 
         nc.ReduceFrom(reduced, 0, incomming0);
         std::vector<LatticePosition> const expected0 = {{1, 0, 0}, {0, 2, 0}, {0, 0, 0}};
-        for(auto const item: util::czip(reduced, expected0))
+        for(auto const item: util::czip(expected0, reduced))
         {
           CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).x, std::get<1>(item).x, 1e-8);
           CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).y, std::get<1>(item).y, 1e-8);
@@ -91,7 +95,7 @@ namespace hemelb
 
         nc.ReduceFrom(reduced, 1, incomming1);
         std::vector<LatticePosition> const expected1 = {{1, 1, 1}, {0, 2, 0}, {0, 0, 1}};
-        for(auto const item: util::czip(reduced, expected1))
+        for(auto const item: util::czip(expected1, reduced))
         {
           CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).x, std::get<1>(item).x, 1e-8);
           CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).y, std::get<1>(item).y, 1e-8);
@@ -99,7 +103,41 @@ namespace hemelb
         }
 
         nc.ReduceFrom(reduced, 2, {});
-        for(auto const item: util::czip(reduced, expected1))
+        for(auto const item: util::czip(expected1, reduced))
+        {
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).x, std::get<1>(item).x, 1e-8);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).y, std::get<1>(item).y, 1e-8);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).z, std::get<1>(item).z, 1e-8);
+        }
+      }
+
+      void NodeParallelizationTests::testReduceFromAll()
+      {
+        std::vector<LatticePosition> reduced(3, {0, 0, 0});
+        NodeCharacterizer const nc({{0, {0, 1}}, {1, {0, 2}}, {2, {}}});
+
+        nc.ReduceFrom(reduced, 0, {{1, 0, 0}, {0, 2, 0}, {0, 1, 1}, {0, 0, 1}});
+        std::vector<LatticePosition> const expected = {{1, 1, 1}, {0, 2, 0}, {0, 0, 1}};
+        for(auto const item: util::czip(expected, reduced))
+        {
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).x, std::get<1>(item).x, 1e-8);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).y, std::get<1>(item).y, 1e-8);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).z, std::get<1>(item).z, 1e-8);
+        }
+      }
+
+      void NodeParallelizationTests::testSpreadTo()
+      {
+        NodeCharacterizer const nc({{0, {0, 1}}, {1, {0, 2}}, {2, {}}});
+
+        auto const actual = nc.SpreadTo({{1, 0, 0}, {0, 2, 0}, {0, 0, 3}});
+        CPPUNIT_ASSERT_EQUAL(size_t(3), actual.first.size());
+        CPPUNIT_ASSERT_EQUAL(size_t(2), actual.first[0]);
+        CPPUNIT_ASSERT_EQUAL(size_t(2), actual.first[1]);
+        CPPUNIT_ASSERT_EQUAL(size_t(0), actual.first[2]);
+        std::vector<LatticePosition> const expected = {{1, 0, 0}, {0, 2, 0}, {1, 0, 0}, {0, 0, 3}};
+        CPPUNIT_ASSERT_EQUAL(expected.size(), actual.second.size());
+        for(auto const item: util::czip(expected, actual.second))
         {
           CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).x, std::get<1>(item).x, 1e-8);
           CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).y, std::get<1>(item).y, 1e-8);
