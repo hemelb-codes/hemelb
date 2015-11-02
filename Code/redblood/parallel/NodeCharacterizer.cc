@@ -105,6 +105,17 @@ namespace hemelb
         return result;
       }
 
+      void NodeCharacterizer::ReduceFrom(
+          MeshData::Vertices &consolidated,
+          Process2NodesMap::key_type node, MeshData::Vertices const& incoming) const
+      {
+        assert(affectedProcs.count(node) == 1);
+        for(auto const && item: util::czip(affectedProcs.find(node)->second, incoming))
+        {
+          consolidated[std::get<0>(item)] += std::get<1>(item);
+        }
+      }
+
       // void MeshOwner::UpdateNodeCharacterization(
       //     AssessNodeRange const& assessNodeRange,
       //     proc_t const localRank,
