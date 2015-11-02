@@ -11,6 +11,8 @@
 #define HEMELB_UTIL_ITERATOR_H
 
 #include <iterator>
+#include <iostream>
+#include <tuple>
 
 namespace hemelb
 {
@@ -92,6 +94,128 @@ namespace hemelb
     {
       return {begin(x), end(x)};
     }
+
+    //! For-ranged loop over several containers in parallel
+    template<class ... CONTAINER> class Zip
+    {
+      public:
+        //! Iterates over all objects that are being zipped
+        template<class ... ITERATOR> class iterator
+        {
+          public:
+            typedef std::tuple<typename std::iterator_traits<ITERATOR>::reference...> reference;
+            //! Inherits from all iterator types
+            iterator(ITERATOR const & ... args) : iter(args...)
+            {
+            }
+            //! Inherits from all iterator types
+            iterator(ITERATOR && ... args) : iter(std::move(args)...)
+            {
+            }
+            iterator& operator++()
+            {
+              increment<0>();
+              return *this;
+            }
+            reference operator*() const
+            {
+              return deref<sizeof...(ITERATOR) - 1, sizeof...(ITERATOR) - 1>();
+            }
+
+            bool operator==(iterator const &b) const
+            {
+              return IsEqual<sizeof...(ITERATOR)>(b);
+            }
+            bool operator!=(iterator const &b) const
+            {
+              return not operator==(b);
+            }
+
+          protected:
+            //! Increments by recurrence
+            template<size_t N>
+              typename std::enable_if<N < sizeof...(ITERATOR)>::type increment()
+              {
+                ++std::get<N>(iter);
+                increment<N+1>();
+              }
+            //! Final for increment by recurrence
+            template<size_t N>
+              typename std::enable_if<N >= sizeof...(ITERATOR)>::type increment()
+              {
+              }
+            //! Comparison by recurrence
+            template<size_t N>
+              typename std::enable_if<N < sizeof...(ITERATOR), bool>::type
+              IsEqual(iterator const &b) const
+              {
+                return std::get<N>(iter) == std::get<N>(b.iter) and IsEqual<N-1>(b);
+              }
+            //! Final for comparison by recurrence
+            template<size_t N>
+              typename std::enable_if<N == sizeof...(ITERATOR), bool>::type
+              IsEqual(iterator const &) const
+              {
+                return true;
+              }
+            //! Comparison by recurrence
+            template<size_t i, size_t ... N>
+              typename std::enable_if<i == 0, reference>::type deref() const
+              {
+                return std::tie(*std::get<N>(iter)...);
+              }
+            //! Comparison by recurrence
+            template<size_t i, size_t ... N>
+              typename std::enable_if<i != 0, reference>::type deref() const
+              {
+                return deref<i - 1, i - 1, N...>();
+              }
+
+            //! Holds each iterator
+            std::tuple<ITERATOR...> iter;
+        };
+
+        Zip(CONTAINER && ... cont) : first(cont.begin()...), last(cont.end()...)
+        {
+        };
+        iterator<decltype(std::declval<CONTAINER>().begin())...> begin() const
+        {
+          return first;
+        }
+        iterator<decltype(std::declval<CONTAINER>().end())...> end() const
+        {
+          return last;
+        }
+      protected:
+        iterator<decltype(std::declval<CONTAINER>().begin())...> const first;
+        iterator<decltype(std::declval<CONTAINER>().begin())...> const last;
+    };
+
+    //! \brief Ranged-for loops over sets of containers in parallel
+    //! \code
+    //! for(auto const && item: zip(container0, container2, containerN))
+    //! {
+    //!   std::get<0>(item);
+    //!   std::get<1>(item);
+    //! }
+    //! \endcode
+    template<class ... CONTAINER> auto zip(CONTAINER && ... x) -> Zip<CONTAINER...>
+    {
+      return {x...};
+    }
+    //! \brief Ranged-for loops over sets of (const) containers in parallel
+    //! \code
+    //! for(auto const && item: zip(container0, container2, containerN))
+    //! {
+    //!   std::get<0>(item);
+    //!   std::get<1>(item);
+    //! }
+    //! \endcode
+    template<class ... CONTAINER> auto czip(CONTAINER const & ... x) -> Zip<CONTAINER const &...>
+    {
+      return {x...};
+    }
+
   }
 }
 
