@@ -33,14 +33,20 @@ namespace hemelb
             iterator(ITERATOR const &iter) : index(0), iter(iter)
             {
             }
-            auto operator++() -> decltype(++std::declval<ITERATOR>())
+            iterator(ITERATOR const &iter, size_t index) : index(index), iter(iter)
+            {
+            }
+            iterator & operator++()
             {
               ++index;
-              return ++iter;
+              ++iter;
+              return *this;
             }
-            auto operator++(int) -> decltype(std::declval<ITERATOR>()++)
+            iterator operator++(int)
             {
-              return iter++;
+              iterator const result(iter.iter);
+              iter++;
+              return result;
             }
             EnumerateItem operator*() const
             {
@@ -76,11 +82,16 @@ namespace hemelb
     };
 
     //! Ranged-for loops with enumeration
-    template<class CONTAINER> auto enumerate(CONTAINER &&x) -> Enumerate<decltype(x.begin())>
+    template<class CONTAINER> auto enumerate(CONTAINER &&x) -> Enumerate<decltype(begin(x))>
     {
-      return {x.begin(), x.end()};
+      return {begin(x), end(x)};
     }
 
+    //! Ranged-for loops with enumeration
+    template<class CONTAINER> auto cenumerate(CONTAINER const &x) -> Enumerate<decltype(begin(x))>
+    {
+      return {begin(x), end(x)};
+    }
   }
 }
 
