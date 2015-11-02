@@ -13,6 +13,7 @@
                 - UCL-CCS
             cron: "H/10 * * * *"
             github-hooks: true
+            allow-whitelist-orgs-as-admins: true
 
 # Parameters
 - parameter:
