@@ -5,6 +5,7 @@ function(create_test_executable target includename)
   set(HEMELB_UNITTEST_INCLUDE ${includename})
   configure_file(main.in.cc "${CMAKE_CURRENT_BINARY_DIR}/${target}.cc")
   add_executable(${target} "${CMAKE_CURRENT_BINARY_DIR}/${target}.cc")
+  add_codesign(${target})
   target_link_libraries(${target}
     ${heme_libraries}
     ${MPI_LIBRARIES}
