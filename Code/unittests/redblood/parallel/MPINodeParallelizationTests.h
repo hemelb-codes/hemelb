@@ -12,6 +12,7 @@
 
 #include <cppunit/TestFixture.h>
 #include "unittests/redblood/Fixtures.h"
+#include "net/MpiCommunicator.h"
 #include "redblood/parallel/NodeCharacterizer.h"
 #include "util/Iterator.h"
 #include <algorithm>
@@ -56,33 +57,10 @@ namespace hemelb
           }
           auto graph = world.Graph(vertices);
           auto const neighbors = graph.GetNeighbors();
-          if(graph.Rank() == 0)
+          CPPUNIT_ASSERT_EQUAL(vertices[graph.Rank()].size(), neighbors.size());
+          for(auto const item: util::zip(vertices[graph.Rank()], neighbors))
           {
-            CPPUNIT_ASSERT_EQUAL(size_t(1), neighbors.size());
-            CPPUNIT_ASSERT_EQUAL(int(1), neighbors.front());
-          }
-          else if(graph.Rank() == 1)
-          {
-            CPPUNIT_ASSERT_EQUAL(size_t(3), neighbors.size());
-            CPPUNIT_ASSERT_EQUAL(int(0), neighbors[0]);
-            CPPUNIT_ASSERT_EQUAL(int(2), neighbors[1]);
-            CPPUNIT_ASSERT_EQUAL(int(3), neighbors[2]);
-          }
-          else if(graph.Rank() == 2)
-          {
-            CPPUNIT_ASSERT_EQUAL(size_t(2), neighbors.size());
-            CPPUNIT_ASSERT_EQUAL(int(1), neighbors[0]);
-            CPPUNIT_ASSERT_EQUAL(int(3), neighbors[1]);
-          }
-          else if(graph.Rank() == 3)
-          {
-            CPPUNIT_ASSERT_EQUAL(size_t(2), neighbors.size());
-            CPPUNIT_ASSERT_EQUAL(int(1), neighbors[0]);
-            CPPUNIT_ASSERT_EQUAL(int(2), neighbors[1]);
-          }
-          else
-          {
-            CPPUNIT_ASSERT_EQUAL(size_t(0), neighbors.size());
+            CPPUNIT_ASSERT_EQUAL(std::get<0>(item), std::get<1>(item) + 1);
           }
         }
       }
