@@ -31,44 +31,61 @@ namespace hemelb
           CPPUNIT_TEST_SUITE_END();
 
         public:
-          void testNeighborhoodGraphCreation()
-          {
-            auto world = net::MpiCommunicator::World();
-            if(world.Size() >= 4)
-            {
-              auto graph = world.Graph({{1}, {0, 2, 3}, {1, 3}, {1, 2}});
-              auto const neighbors = graph.GetNeighbors();
-              if(graph.Rank() == 0)
-              {
-                CPPUNIT_ASSERT_EQUAL(size_t(1), neighbors.size());
-                CPPUNIT_ASSERT_EQUAL(int(1), neighbors.front());
-              }
-              else if(graph.Rank() == 1)
-              {
-                CPPUNIT_ASSERT_EQUAL(size_t(3), neighbors.size());
-                CPPUNIT_ASSERT_EQUAL(int(0), neighbors[0]);
-                CPPUNIT_ASSERT_EQUAL(int(2), neighbors[1]);
-                CPPUNIT_ASSERT_EQUAL(int(3), neighbors[2]);
-              }
-              else if(graph.Rank() == 2)
-              {
-                CPPUNIT_ASSERT_EQUAL(size_t(2), neighbors.size());
-                CPPUNIT_ASSERT_EQUAL(int(1), neighbors[0]);
-                CPPUNIT_ASSERT_EQUAL(int(3), neighbors[1]);
-              }
-              else if(graph.Rank() == 3)
-              {
-                CPPUNIT_ASSERT_EQUAL(size_t(2), neighbors.size());
-                CPPUNIT_ASSERT_EQUAL(int(1), neighbors[0]);
-                CPPUNIT_ASSERT_EQUAL(int(2), neighbors[1]);
-              }
-              else
-              {
-                CPPUNIT_ASSERT_EQUAL(size_t(0), neighbors.size());
-              }
-            }
-          }
+          //! Test creation of mpi graph topology
+          //! \details The test topology includes only the first four nodes:
+          //!
+          //!            2
+          //!           / \
+          //!          /   \
+          //!  0 ---- 1 ---- 3  4  5  6 ...
+          //!
+          //! This topology checks we have nodes with different numbers of neighbors, cycles, and
+          //! empty neighborhoods.
+          void testNeighborhoodGraphCreation();
       };
+
+      void MPINodeParallelizationTests::testNeighborhoodGraphCreation()
+      {
+        auto world = net::MpiCommunicator::World();
+        if(world.Size() >= 4)
+        {
+          std::vector<std::vector<int>> vertices{{1}, {0, 2, 3}, {1, 3}, {1, 2}};
+          for(int i(4); i < world.Size(); ++i)
+          {
+            vertices.push_back(std::vector<int>{});
+          }
+          auto graph = world.Graph(vertices);
+          auto const neighbors = graph.GetNeighbors();
+          if(graph.Rank() == 0)
+          {
+            CPPUNIT_ASSERT_EQUAL(size_t(1), neighbors.size());
+            CPPUNIT_ASSERT_EQUAL(int(1), neighbors.front());
+          }
+          else if(graph.Rank() == 1)
+          {
+            CPPUNIT_ASSERT_EQUAL(size_t(3), neighbors.size());
+            CPPUNIT_ASSERT_EQUAL(int(0), neighbors[0]);
+            CPPUNIT_ASSERT_EQUAL(int(2), neighbors[1]);
+            CPPUNIT_ASSERT_EQUAL(int(3), neighbors[2]);
+          }
+          else if(graph.Rank() == 2)
+          {
+            CPPUNIT_ASSERT_EQUAL(size_t(2), neighbors.size());
+            CPPUNIT_ASSERT_EQUAL(int(1), neighbors[0]);
+            CPPUNIT_ASSERT_EQUAL(int(3), neighbors[1]);
+          }
+          else if(graph.Rank() == 3)
+          {
+            CPPUNIT_ASSERT_EQUAL(size_t(2), neighbors.size());
+            CPPUNIT_ASSERT_EQUAL(int(1), neighbors[0]);
+            CPPUNIT_ASSERT_EQUAL(int(2), neighbors[1]);
+          }
+          else
+          {
+            CPPUNIT_ASSERT_EQUAL(size_t(0), neighbors.size());
+          }
+        }
+      }
 
       CPPUNIT_TEST_SUITE_REGISTRATION (MPINodeParallelizationTests);
     }
