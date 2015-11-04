@@ -373,29 +373,29 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif()
 
+# Get rid of popups on mac
+set(CERTIFICATE "" CACHE STRING "Name of the certificate to use for code-signing")
+function(add_codesign target)
+  if(APPLE AND CERTIFICATE)
+    add_custom_command(
+      TARGET ${target}
+      POST_BUILD
+      COMMAND codesign -f -s "${CERTIFICATE}" $<TARGET_FILE:${target}>
+      COMMENT "Codsigning ${target}"
+      VERBATIM
+    )
+  endif()
+endfunction()
 add_executable(${HEMELB_EXECUTABLE} main.cc)
+add_codesign(${HEMELB_EXECUTABLE})
 
 include_directories(${PROJECT_SOURCE_DIR})
-set(package_subdirs
-	configuration
-	extraction
-	reporting
-	steering
-	vis
-	lb
-	geometry
-	debug
-	util
-	io
-	net
-	log
-        colloids
-    redblood
-	)
+set(package_subdirs configuration extraction reporting steering vis lb geometry debug util io net
+  log colloids redblood)
 foreach(subdir ${package_subdirs})
-	set(lib "hemelb_${subdir}")
-	list(APPEND heme_libraries ${lib})
-	add_subdirectory(${subdir})
+  set(lib "hemelb_${subdir}")
+  list(APPEND heme_libraries ${lib})
+  add_subdirectory(${subdir})
 endforeach()
 add_subdirectory(resources)
 target_link_libraries(${HEMELB_EXECUTABLE} 
