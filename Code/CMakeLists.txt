@@ -384,10 +384,10 @@ set(package_subdirs
 	vis
 	lb
 	geometry
-	net
 	debug
 	util
 	io
+	net
 	log
         colloids
     redblood
