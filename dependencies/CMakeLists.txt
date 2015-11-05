@@ -287,7 +287,7 @@ endif()
 
 find_package(GreatCMakeCookOff QUIET)
 get_tarball(
-       https://github.com/UCL/GreatCMakeCookOff/archive/v2.0.4.tar.gz
+       https://github.com/UCL/GreatCMakeCookOff/archive/v2.0.7.tar.gz
        cooktar
 )
 if(GreatCMakeCookOff_FOUND)
