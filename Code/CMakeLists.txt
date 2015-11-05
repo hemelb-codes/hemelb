@@ -83,6 +83,7 @@ find_package(GreatCMakeCookOff REQUIRED)
 initialize_cookoff()
 include(AddCPP11Flags)
 include(CheckCXX11Features)
+include(AddCodeSigning)
 cxx11_feature_check(override REQUIRED unique_ptr nullptr lambda)
 if(NOT HAS_CXX11_OVERRIDE)
     add_definitions(-Doverride= )
@@ -374,18 +375,6 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
 endif()
 
 # Get rid of popups on mac
-set(CERTIFICATE "" CACHE STRING "Name of the certificate to use for code-signing")
-function(add_codesign target)
-  if(APPLE AND CERTIFICATE)
-    add_custom_command(
-      TARGET ${target}
-      POST_BUILD
-      COMMAND codesign -f -s "${CERTIFICATE}" $<TARGET_FILE:${target}>
-      COMMENT "Codsigning ${target}"
-      VERBATIM
-    )
-  endif()
-endfunction()
 add_executable(${HEMELB_EXECUTABLE} main.cc)
 add_codesign(${HEMELB_EXECUTABLE})
 
