@@ -57,6 +57,16 @@ namespace hemelb
     {
     }
 
+    void MpiCommunicator::operator =(MpiCommunicator const &comm)
+    {
+      commPtr = comm.commPtr;
+    }
+
+    void MpiCommunicator::operator =(MpiCommunicator &&comm)
+    {
+      commPtr = std::move(comm.commPtr);
+    }
+
     bool operator==(const MpiCommunicator& comm1, const MpiCommunicator& comm2)
     {
       if (comm1)
