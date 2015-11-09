@@ -124,7 +124,7 @@ namespace hemelb
 
             bool operator==(iterator const &b) const
             {
-              return IsEqual<sizeof...(ITERATOR)>(b);
+              return IsEqual<0>(b);
             }
             bool operator!=(iterator const &b) const
             {
@@ -149,7 +149,7 @@ namespace hemelb
               typename std::enable_if<N < sizeof...(ITERATOR), bool>::type
               IsEqual(iterator const &b) const
               {
-                return std::get<N>(iter) == std::get<N>(b.iter) and IsEqual<N-1>(b);
+                return std::get<N>(iter) == std::get<N>(b.iter) or IsEqual<N+1>(b);
               }
             //! Final for comparison by recurrence
             template<size_t N>
