@@ -9,6 +9,7 @@
 
 #include <cstdio>
 #include "io/writers/xdr/XdrFileWriter.h"
+#include "Exception.h"
 
 namespace hemelb
 {
@@ -24,6 +25,10 @@ namespace hemelb
         XdrFileWriter::XdrFileWriter(const std::string& fileName, const std::string& mode)
         {
           myFile = std::fopen(fileName.c_str(), mode.c_str());
+          if (myFile == NULL)
+          {
+            throw Exception() << "Failed to open file '" << fileName << "'";
+          }
           xdrstdio_create(&mXdr, myFile, XDR_ENCODE);
         }
 
