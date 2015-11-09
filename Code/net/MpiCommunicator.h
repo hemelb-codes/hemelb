@@ -33,6 +33,21 @@ namespace hemelb
          * @param communicator
          */
         MpiCommunicator();
+        /**
+         * Move Constructor
+         */
+        MpiCommunicator(MpiCommunicator const & comm)
+          : commPtr(comm.commPtr)
+        {
+        }
+        /**
+         * Move Constructor
+         */
+        MpiCommunicator(MpiCommunicator && comm)
+          : commPtr(std::move(comm.commPtr))
+        {
+        }
+
 
         /**
          * Class has virtual methods so should have virtual d'tor.
@@ -57,6 +72,11 @@ namespace hemelb
          * @return New communicator.
          */
         MpiCommunicator Create(const MpiGroup& grp) const;
+
+        //! Copy assignment
+        void operator=(MpiCommunicator const &comm);
+        //! Move assignment
+        void operator=(MpiCommunicator &&comm);
 
         /**
          * Allow implicit casts to MPI_Comm
