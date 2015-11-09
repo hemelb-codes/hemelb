@@ -122,6 +122,7 @@ namespace hemelb
               return deref<sizeof...(ITERATOR) - 1, sizeof...(ITERATOR) - 1>();
             }
 
+            //! True if any of the iterator is equal to the corresponding on in b
             bool operator==(iterator const &b) const
             {
               return IsEqual<0>(b);
@@ -146,17 +147,17 @@ namespace hemelb
               }
             //! Comparison by recurrence
             template<size_t N>
-              typename std::enable_if<N < sizeof...(ITERATOR), bool>::type
+              typename std::enable_if<N + 1 < sizeof...(ITERATOR), bool>::type
               IsEqual(iterator const &b) const
               {
                 return std::get<N>(iter) == std::get<N>(b.iter) or IsEqual<N+1>(b);
               }
             //! Final for comparison by recurrence
             template<size_t N>
-              typename std::enable_if<N == sizeof...(ITERATOR), bool>::type
-              IsEqual(iterator const &) const
+              typename std::enable_if<N + 1 == sizeof...(ITERATOR), bool>::type
+              IsEqual(iterator const &b) const
               {
-                return true;
+                return std::get<N>(iter) == std::get<N>(b.iter);
               }
             //! Comparison by recurrence
             template<size_t i, size_t ... N>
