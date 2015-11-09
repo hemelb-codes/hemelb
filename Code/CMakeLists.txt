@@ -71,7 +71,7 @@ if(HEMELB_OPTIMISATION)
 endif()
 
 
-
+add_definitions(-DHEMELB_CODE)
 add_definitions(-DHEMELB_READING_GROUP_SIZE=${HEMELB_READING_GROUP_SIZE})
 add_definitions(-DHEMELB_LATTICE=${HEMELB_LATTICE})
 add_definitions(-DHEMELB_KERNEL=${HEMELB_KERNEL})
