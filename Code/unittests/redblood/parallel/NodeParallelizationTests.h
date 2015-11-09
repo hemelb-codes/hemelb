@@ -32,7 +32,6 @@ namespace hemelb
           CPPUNIT_TEST (testReduceFrom);
           CPPUNIT_TEST (testReduceFromAll);
           CPPUNIT_TEST (testSpreadTo);
-          // CPPUNIT_TEST (testApplyMidDomain);
           CPPUNIT_TEST_SUITE_END();
 
         public:
@@ -42,7 +41,6 @@ namespace hemelb
           void testReduceFrom();
           void testReduceFromAll();
           void testSpreadTo();
-          // void testApplyMidDomain();
       };
 
       void NodeParallelizationTests::testProperties()
@@ -119,7 +117,7 @@ namespace hemelb
         typedef NodeCharacterizer::Process2NodesMap::mapped_type V;
         NodeCharacterizer const nc({{0, V{0, 1}}, {1, V{0, 2}}, {2, V{}}});
 
-        nc.ReduceFrom(reduced, 0, {{1, 0, 0}, {0, 2, 0}, {0, 1, 1}, {0, 0, 1}});
+        nc.ReduceFrom(reduced, {{1, 0, 0}, {0, 2, 0}, {0, 1, 1}, {0, 0, 1}});
         std::vector<LatticePosition> const expected = {{1, 1, 1}, {0, 2, 0}, {0, 0, 1}};
         for(auto const item: util::czip(expected, reduced))
         {
@@ -148,44 +146,6 @@ namespace hemelb
           CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).z, std::get<1>(item).z, 1e-8);
         }
       }
-
-      // void NodeParallelizationTests::testApplyMidDomain()
-      // {
-      //   auto const cell = std::make_shared<Cell>(pancakeSamosa());
-      //   auto positionOnProc = [](LatticePosition const &position) -> std::set<proc_t>
-      //   {
-      //     bool isZero = position.GetMagnitude() < 1e-8;
-      //     bool isSecond = (position - LatticePosition{1, 0, 1}).GetMagnitude() < 1e-8;
-      //     return isZero ?
-      //       std::set<proc_t>{0}: (isSecond ? std::set<proc_t>{1}: std::set<proc_t>{0, 1, 2});
-      //   };
-      //   // MeshOwner const mm(positionOnProc, cell);
-      //   // size_t nbcalls(0);
-      //   // LatticePosition position(10, 10, 10);
-      //   // auto apply = [&position, &nbcalls](LatticePosition &input)
-      //   // {
-      //   //   ++nbcalls;
-      //   //   position = input;
-      //   // };
-      //   //
-      //   // // Finally, makes a call: there should be one node on proc 0
-      //   // mm.ApplyToMidDomainNodes(apply, 0);
-      //   // CPPUNIT_ASSERT_EQUAL(1ul, nbcalls);
-      //   // CPPUNIT_ASSERT_DOUBLES_EQUAL(0, position.x, 1e-8);
-      //   // CPPUNIT_ASSERT_DOUBLES_EQUAL(0, position.y, 1e-8);
-      //   // CPPUNIT_ASSERT_DOUBLES_EQUAL(0, position.z, 1e-8);
-      //   //
-      //   // // there should be one node on proc 1
-      //   // mm.ApplyToMidDomainNodes(apply, 1);
-      //   // CPPUNIT_ASSERT_EQUAL(2ul, nbcalls);
-      //   // CPPUNIT_ASSERT_DOUBLES_EQUAL(1, position.x, 1e-8);
-      //   // CPPUNIT_ASSERT_DOUBLES_EQUAL(0, position.y, 1e-8);
-      //   // CPPUNIT_ASSERT_DOUBLES_EQUAL(1, position.z, 1e-8);
-      //   //
-      //   // // The node on proc 2 is shared (not mid-domain)
-      //   // mm.ApplyToMidDomainNodes(apply, 2);
-      //   // CPPUNIT_ASSERT_EQUAL(2ul, nbcalls);
-      // }
 
       CPPUNIT_TEST_SUITE_REGISTRATION (NodeParallelizationTests);
     }
