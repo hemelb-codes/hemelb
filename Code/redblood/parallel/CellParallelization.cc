@@ -33,6 +33,7 @@ namespace hemelb
         {
           throw Exception() << "Out-of-order Exchange cell step called\n";
         }
+        ++step;
         auto const neighbors = graphComm.GetNeighbors();
         std::fill(sendLengths.begin(), sendLengths.end(), Length{0, 0});
         std::fill(receiveLengths.begin(), receiveLengths.end(), Length{0, 0});
