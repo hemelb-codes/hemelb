@@ -89,7 +89,6 @@ namespace hemelb
           {
           }
 
-
           //! Whether the node affects more than one processor
           bool IsMidDomain(Index index) const;
           //! Whether the node affects more than one processor
@@ -100,11 +99,19 @@ namespace hemelb
           //! \brief The processors affected by a given node
           std::set<Process2NodesMap::key_type> AffectedProcs(Index i) const;
 
+          //! The nodes affected by a given proc
           Process2NodesMap::mapped_type const & operator[](Process2NodesMap::key_type proc) const
           {
             auto result = affectedProcs.find(proc);
             assert(result != affectedProcs.end());
             return result->second;
+          }
+          //! The number of nodes affected by a given proc
+          Process2NodesMap::mapped_type::difference_type
+          CountNodes(Process2NodesMap::key_type proc) const
+          {
+            auto result = affectedProcs.find(proc);
+            return result == affectedProcs.end() ? 0: result->second.size();
           }
 
           //! Updates node characterization and return change in ownership
@@ -156,145 +163,6 @@ namespace hemelb
           Process2NodesMap affectedProcs;
       };
 
-      // //! An object for nodes owned by this process
-      // class MeshOwner : public NodeCharacterizer
-      // {
-      //   public:
-      //     MeshOwner(
-      //         AssessNodeRange const& assessNodeRange,
-      //         std::shared_ptr<CellBase> cell)
-      //       : NodeCharacterizer(assessNodeRange, cell), cell(cell)
-      //     {
-      //     }
-      //     //! Constructs object using a custom assessor function
-      //     template<class ... ARGS>
-      //     MeshOwner(
-      //         geometry::LatticeData const &latDat,
-      //         std::shared_ptr<CellBase> cell,
-      //         redblood::stencil::types stencil=redblood::stencil::types::FOUR_POINT)
-      //       : NodeCharacterizer(latDat, cell, Traits<ARGS...>()), cell(cell)
-      //     {
-      //     }
-      //
-      //     //! Apply functor to mid-domain nodes
-      //     template<class APPLY> void ApplyToMidDomainNodes(APPLY apply, proc_t proc) const;
-      //     //! Update mid-domain positions by computing velocities
-      //     template <typename KERNEL> void UpdateLocalMidDomainPositions(
-      //         geometry::LatticeData const &latDat,
-      //         stencil::types stencil = stencil::types::FOUR_POINT) const;
-      //
-      //     //! Recomputes node locations and packs diffs for other procs
-      //     void UpdateNodeCharacterization(
-      //         AssessNodeRange const& assessNodeRange,
-      //         proc_t const localRank,
-      //         std::map<proc_t, util::Packer> &packer);
-      //
-      //   protected:
-      //     using NodeCharacterizer::affectedProcs;
-      //     //! Reference to vertices characterized by this object
-      //     std::shared_ptr<CellBase> cell;
-      // };
-
-      // //! \brief An object for nodes owned by another processor
-      // //! \details Internally, there are two kind of nodes: mid-domain nodes and boundary nodes.
-      // //! The former do not interact with sites owned by other procs. The latter do. The interaction
-      // //! range is determined by the size of the stencil for velocity interpolation and force
-      // //! spreading. (Though a larger stencil could also be used).
-      // class DistributedNodes
-      // {
-      //   public:
-      //     //! type of the vector of nodes for each proc
-      //     typedef std::vector<LatticePosition> Nodes;
-      //     //! constructor
-      //     DistributedNodes()
-      //     {
-      //     }
-      //     //! Explicit construction from a map of proc -> vector of nodes
-      //     DistributedNodes(std::map<proc_t, Nodes> && mid, std::map<proc_t, Nodes> && bound)
-      //       : midDomain(mid), boundary(bound)
-      //     {
-      //     }
-      //     //! destructor
-      //     virtual ~DistributedNodes();
-      //
-      //     //! Apply functor to mid-domain nodes
-      //     template<class KERNEL> void UpdateMidDomainPositions(
-      //         geometry::LatticeData const &latDat,
-      //         stencil::types stencil = stencil::types::FOUR_POINT);
-      //     //! Send new node positions to owner
-      //     void PackMidDomainNodes(util::Packer &packer, proc_t proc) const
-      //     {
-      //       auto const nodes = midDomain.find(proc);
-      //       assert(nodes != midDomain.end());
-      //       packer << nodes->second;
-      //     }
-      //     //! Send partial boundary velocity to owner
-      //     // void ComputeAndPackBoundaryDomainNodes(util::Packer &packer, proc_t proc) const;
-      //
-      //   protected:
-      //     //! MidDomain nodes and the processor they are owned by
-      //     std::map<proc_t, Nodes> midDomain;
-      //     //! Boundary nodes and the processor they are owned by
-      //     std::map<proc_t, Nodes> boundary;
-      // };
-
-      // template<class APPLY> void MeshOwner::ApplyToMidDomainNodes(APPLY apply, proc_t proc) const
-      // {
-      //   auto i_procs = affectedProcs.cbegin();
-      //   auto const i_procs_end = affectedProcs.cend();
-      //   auto i_vertex = cell->GetVertices().begin();
-      //   for(; i_procs != i_procs_end; ++i_procs, ++i_vertex)
-      //   {
-      //     if(i_procs->count(proc) == 1 and i_procs->size() == 1)
-      //     {
-      //       apply(*i_vertex);
-      //     }
-      //   }
-      // }
-
-      // template<class APPLY>
-      //   void DistributedNodes::ApplyToMidDomainNodes(APPLY apply, proc_t proc) const
-      // {
-      //   for(; i_procs != i_procs_end; ++i_procs, ++i_vertex)
-      //   {
-      //     if(i_procs->count(proc) == 1 and i_procs->size() == 1)
-      //     {
-      //       apply(*i_vertex);
-      //     }
-      //   }
-      // }
-
-      // template<class KERNEL> void MeshOwner::UpdateLocalMidDomainPositions(
-      //     geometry::LatticeData const &latDat, stencil::types stencil) const
-      // {
-      //   auto velocity = [&latDat, &stencil](LatticePosition &position)
-      //   {
-      //     position += interpolateVelocity<KERNEL>(latDat, position, stencil);
-      //   };
-      //   ApplyToMidDomainNodes(velocity, latDat.GetLocalRank());
-      // }
-      //
-      // template<class KERNEL> void DistributedNodes::UpdateLocalMidDomainPositions(
-      //     geometry::LatticeData const &latDat, stencil::types stencil)
-      // {
-      //   assert(midDomain.count(proc) == 1);
-      //   for(auto & position: midDomain[proc])
-      //   {
-      //     position += interpolateVelocity<KERNEL>(latDat, position, stencil);
-      //   }
-      // }
-
-      // template<class KERNEL> void DistributedNodes::ComputeAndPackBoundaryDomainNodes(
-      //     util::Packer & packer, proc_t proc,
-      //     geometry::LatticeData const &latDat, stencil::types stencil) const
-      // {
-      //   assert(boundary.count(proc) == 1);
-      //   for(auto & position: boundary[proc])
-      //   {
-      //     packer << interpolateVelocity<KERNEL>(latDat, position, stencil);
-      //   }
-      // }
-
       namespace details
       {
         template<class STENCIL>
@@ -322,6 +190,7 @@ namespace hemelb
           return positionAffectsProcs(latDat, interpolationIterator<STENCIL>(position));
         }
       } /* details */
+
     } /* parallel */
   } /* redblood */
 } /* hemelb */
