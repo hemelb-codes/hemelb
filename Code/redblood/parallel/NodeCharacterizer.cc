@@ -60,6 +60,7 @@ namespace hemelb
         }
       }
 
+
       NodeCharacterizer::NodeCharacterizer(
               AssessNodeRange const& assessNodeRange, MeshData::Vertices const &vertices)
         : NodeCharacterizer(details::meshMessenger(assessNodeRange, vertices))
@@ -110,8 +111,10 @@ namespace hemelb
           Process2NodesMap::key_type node, MeshData::Vertices const& incoming) const
       {
         assert(affectedProcs.count(node) == 1);
+        assert(affectedProcs.find(node)->second.size() == incoming.size());
         for(auto const && item: util::czip(affectedProcs.find(node)->second, incoming))
         {
+          assert(std::get<0>(item) < consolidated.size());
           consolidated[std::get<0>(item)] += std::get<1>(item);
         }
       }
@@ -145,24 +148,6 @@ namespace hemelb
           }
         }
       }
-
-      // void MeshOwner::UpdateNodeCharacterization(
-      //     AssessNodeRange const& assessNodeRange,
-      //     proc_t const localRank,
-      //     std::map<proc_t, util::Packer> &packers)
-      // {
-      //   MeshData::Vertices :: const_iterator vertex = cell->GetVertices().begin();
-      //   MeshData::Vertices :: const_iterator const vertex_end = cell->GetVertices().end();
-      //   ProcessorSets::iterator procs = affectedProcs.begin();
-      //   assert(affectedProcs.size() == cell->GetVertices().size());
-      //   for(; vertex != vertex_end; ++vertex, ++procs)
-      //   {
-      //     auto const newProcs = assessNodeRange(*vertex);
-      //     parallel::details::UpdateNodeCharacterization(
-      //         newProcs, *procs, localRank, *vertex, packers);
-      //     *procs = std::move(newProcs);
-      //   }
-      // }
     } // parallel
   } // redblood
 }  // hemelb
