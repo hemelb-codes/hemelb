@@ -124,7 +124,7 @@ def level_one_plane(z):
         "z: {}; expected: {}' got: {}".format(z, expected_fluid, parent.fluid_count)
 
 def test_sphere():
-    levels = 5
+    levels = 4
     size = 2**levels
     tri_level = 3
     points, triangles, normals = GetSphereNumpy()

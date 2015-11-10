@@ -242,7 +242,7 @@ def test_rectangle():
         continue
     
 def test_sphere():
-    levels = 5
+    levels = 4
     size = 2**levels
     tri_level = 3
     points, triangles, normals = GetSphereNumpy()
@@ -253,7 +253,7 @@ def test_sphere():
         finder(tn)
      
     inside = InsideSphere(np.mgrid[:size,:size,:size].transpose((1,2,3,0)))
-     
+
     for ijk, fluid in np.ndenumerate(inside):
         for i_vec, vec in enumerate(neighbours):
             neigh_ijk = ijk+vec

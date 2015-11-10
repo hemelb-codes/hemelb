@@ -112,11 +112,8 @@ class MyApp(wx.App):
         return True
     pass
 
-def test():
-    app = MyApp(0)
-    app.MainLoop()
-    
 
 if __name__ == "__main__":
-    test()
+    app = MyApp(0)
+    app.MainLoop()
     
