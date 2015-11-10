@@ -10,12 +10,14 @@
 default: 
   # General default values for all machines live in the default dictionary.
   # Machine-specific overrides replace these.
-  # Mercurial server to find HemeLB
-  hg: "ssh://hg@entropy.chem.ucl.ac.uk"
-  # Repository on the mercurial server to find HemeLB
-  repository: "hemelb"
-  # Repository on the mercurial server holding the RegressionTests
-  regression_tests_repository: "hemelb-input"
+  # git server to find HemeLB
+  github: "git@github.com"
+  # Github user (configurable for forks)
+  github_user: "UCL-CCS"
+  # Repository containing HemeLB
+  hemelb_repo: "hemelb-dev"
+  # Repository holding the RegressionTests
+  regression_tests_repo: "hemelb-tests"
   # Default Modules to load or unload on remote, via module 'foo'
   # e.g. ['load cmake'].
   modules: []
@@ -55,6 +57,8 @@ default:
   manual_ssh: false
   local_templates_path: "$localroot/deploy/templates"
   stat: qstat
+  forward_agent: true
+
 archer: #the ARCHER supercomputer at EPCC
   import: "archer"
   max_job_name_chars: 15
@@ -63,20 +67,21 @@ archer: #the ARCHER supercomputer at EPCC
   job_dispatch: "qsub"
   run_command: "aprun -n $cores"
   batch_header: pbs-archer
-  no_ssh: true # ARCHER doesn't allow outgoing ssh sessions.
   remote: "login.archer.ac.uk"
   # On ARCHER, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
   install_path_template: "$work_path/install"
   home_path_template: "/home/$project/$project/$username"
   runtime_path_template: "/work/$project/$project/$username"
   fabric_dir: "FabricHemeLb"
-  modules: ["load cmake", "swap PrgEnv-cray PrgEnv-gnu"]
-  build_prefix_commands: ["export LDFLAGS=-dynamic","export CXX=CC","export CC=cc", "export LD=CC", "export XTPE_LINK_TYPE=dynamic" ] #Tell autoconf for dependencies where the hector compilers are
+  modules: ["load cmake", "swap PrgEnv-cray PrgEnv-gnu", "load anaconda"]
+  # Tell autoconf for dependencies where the compilers are
+  build_prefix_commands: ["export LDFLAGS=-dynamic","export CXX=CC","export CC=cc", "export LD=CC", "export XTPE_LINK_TYPE=dynamic" ]
   temp_path_template: "$work_path/tmp"
   regression_test_path_template: "$work_path/regression"
   queue: "standard"
-  python_build: "lib64/python2.6"
+  python_build: "lib/python2.7"
   corespernode: 24
+#  build_prefix_command: [ "export LDFLAGS=-dynamic", "export XTPE_LINK_TYPE=dynamic" ]
   cmake_options:
     CMAKE_CXX_FLAGS: "-dynamic"
     CMAKE_C_FLAGS: "-dynamic"
@@ -92,7 +97,23 @@ archer: #the ARCHER supercomputer at EPCC
     CTEMPLATE_PATCH_ALIGN: "ON"
     CTEMPLATE_USE_STATIC: "OFF"
     HEMELB_COMPUTE_ARCHITECTURE: "INTELSANDYBRIDGE"
+    #  CMAKE_VERBOSE_MAKEFILE: "TRUE"
+
+##    CMAKE_SKIP_RPATH: "TRUE"
+##    CMAKE_SKIP_INSTALL_RPATH: "TRUE"
+#    CMAKE_CXX_FLAGS: "-dynamic"
+#    CMAKE_C_FLAGS: "-dynamic"
 #    CMAKE_VERBOSE_MAKEFILE: "TRUE"
+##    CPPUNIT_USE_STATIC: "ON"
+#    CPPUNIT_PATCH_LDL: "OFF"
+#    CPPUNIT_PATCH_DYNAMIC: "OFF"
+##    CTEMPLATE_USE_STATIC: "ON"
+#    CTEMPLATE_PATCH_ALIGN: "ON"
+#    CTEMPLATE_USE_STATIC: "OFF"
+##    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+#    HEMELB_OPTIMISATION: "-O3"
+#    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+#    HEMELB_USE_SSE3: "ON"
 legion: 
   job_dispatch: "qsub"
   run_command: "mpirun -np $cores -machinefile $$TMPDIR/machines"
@@ -118,7 +139,8 @@ legion_intel:
   fabric_dir: "IntelHemeLB"
   import: legion
   modules: ["remove mpi/qlogic/1.2.7/intel","add mpi/openmpi/1.4.1/intel","add cmake/2.8.3", "add python/2.6.6/gnu"]
-  build_prefix_commands: ["export CXX=icpc","export CC=icc", "export LD=icc"] #Tell autoconf for dependencies where the hector compilers are
+  # Tell autoconf for dependencies where the compilers are
+  build_prefix_commands: ["export CXX=icpc","export CC=icc", "export LD=icc"]
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
     CMAKE_CXX_COMPILER: "icpc"
@@ -137,56 +159,21 @@ entropy:
   remote: "entropy.chem.ucl.ac.uk"
   python_build: "lib/python2.6"
   runtime_path_template: "/store4/blood/$username"
-hector_gnu: #Hector, compiling using GNU compiler
-#  import: "hector"
-  max_job_name_chars: 15
-  make_jobs: 4
-  job_dispatch: "qsub"
-  run_command: "aprun -n $cores -N $coresusedpernode"
-  batch_header: pbs
-  no_ssh: true # Hector doesn't allow outgoing ssh sessions.
-  remote: "login.hector.ac.uk"
-  # On hector, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
-  install_path_template: "$work_path/install"
-  home_path_template: "/home/$project/$project/$username"
-  runtime_path_template: "/work/$project/$project/$username"
-  fabric_dir: "FabricHemeLbGNU"
-  modules: ["load CMake/2.8.6","swap PrgEnv-cray PrgEnv-gnu"] 
-  build_prefix_commands: ["export CXX=CC","export CC=cc", "export LD=CC", "export XTPE_LINK_TYPE=dynamic" ] #Tell autoconf for dependencies where the hector compilers are
-  temp_path_template: "$work_path/tmp"
-  regression_test_path_template: "$work_path/regression"
-  queue: "parallel"
-  python_build: "lib64/python2.6"
-  corespernode: 32
-  cmake_options: 
-    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
-    CMAKE_CXX_COMPILER: "CC"
-    CMAKE_C_COMPILER: "cc"
-    CMAKE_CXX_FLAGS_RELEASE: ""
-    HEMELB_OPTIMISATION: "-O3"
-    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
-    CTEMPLATE_PATCH_ALIGN: "ON"
-    MPWide_INCLUDE_DIR: "/home/e10/e10/derek/mpwide"
-    MPWide_LIBRARIES: "/home/e10/e10/derek/mpwide/libMPW.a"
-    HEMELB_USE_SSE3: "ON"
-    CTEMPLATE_PATCH_ALIGN: "OFF"
-    CTEMPLATE_USE_STATIC: "OFF"   
-    HEMELB_COMPUTE_ARCHITECTURE: "AMDBULLDOZER" 
-#    CMAKE_VERBOSE_MAKEFILE: "TRUE"
 supermuc:
   max_job_name_chars: 15
   make_jobs: 4
   job_dispatch: "llsubmit"
   run_command: "mpiexec -n $cores"
   batch_header: ll
-  no_ssh: true # Hector doesn't allow outgoing ssh sessions.
+  no_ssh: true # doesn't allow outgoing ssh sessions.
   remote: "supermuc.lrz.de"
-  # On hector, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
+  # On supermuc, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
   install_path_template: "/home/hpc/pr45su/lu64bap/install"
   home_path_template: "/home/hpc/$project/$username"
   runtime_path_template: "/home/hpc/$project/$username"
   modules: ["load cmake/2.8","load mpi.ibm"]
-  build_prefix_commands: ["export CXX=mpiCC","export CC=mpicc", "export LD=mpiCC"] #Tell autoconf for dependencies where the hector compilers are
+  # Tell autoconf for dependencies where the compilers are
+  build_prefix_commands: ["export CXX=mpiCC","export CC=mpicc", "export LD=mpiCC"]
   temp_path_template: "$work_path/tmp"
   regression_test_path_template: "$work_path/regression"
   queue: "parallel"
@@ -208,14 +195,15 @@ hermit:
   job_dispatch: "qsub"
   run_command: "aprun -n $cores -N $coresusedpernode"
   batch_header: pbs_barebone
-  no_ssh: true # Hector doesn't allow outgoing ssh sessions.
+  no_ssh: true # Hermit doesn't allow outgoing ssh sessions.
   remote: "hermit1.hww.de"
-  # On hector, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
+  # On hermit, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
   install_path_template: "$work_path/install"
   home_path_template: "/zhome/academic/HLRS/pri/$username"
   runtime_path_template: "/zhome/academic/HLRS/pri/$username"
   modules: ["load tools/cmake/2.8.7"]
-  build_prefix_commands: ["export CXX=CC","export CC=cc", "export LD=CC"] #Tell autoconf for dependencies where the hector compilers are
+  # Tell autoconf for dependencies where the compilers are
+  build_prefix_commands: ["export CXX=CC","export CC=cc", "export LD=CC"]
   temp_path_template: "$work_path/tmp"
   regression_test_path_template: "$work_path/regression"
   python_build: "lib64/python2.6"
@@ -228,29 +216,6 @@ hermit:
     HEMELB_OPTIMISATION: "-O3"
     HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
     CTEMPLATE_PATCH_ALIGN: "ON"
-hector_login: #Hector, compiling for login nodes and serial queues
-   import: "hector"
-   fabric_dir: "FabricHemeLbLogin"
-   modules: ["load CMake/2.8.6", "swap xtpe-interlagos xtpe-istanbul"]
-   job_dispatch: ""
-hector_vampir:
-  import: "hector"
-  fabric_dir: "FabricHemeLBVampir"
-  build_prefix_commands:
-    - export CXX=vtCC
-    - export CC=vtcc
-    - export LD=vtCC
-  run_prefix_commands:
-    - export VT_BUFFER_SIZE=150M
-  cmake_options: 
-    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
-    CMAKE_CXX_COMPILER: "vtCC"
-    CMAKE_C_COMPILER: "vtcc"
-    CMAKE_CXX_FLAGS_RELEASE: "-vt:mpi"
-    HEMELB_OPTIMISATION: "-O3"
-    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
-    CTEMPLATE_PATCH_ALIGN: "ON"
-  modules: ["load CMake/2.8.6","use /home/d37/d37/vampir/privatemodules","load vampirtrace","load vampir"]
 julian:
    home_path_template: "/Users/$username"
    remote: "julian.chem.ucl.ac.uk"
@@ -260,7 +225,7 @@ oppenheimer:
    run_command: "/opt/openmpi/gfortran/1.6.5/bin/mpirun -np $cores"
    batch_header: sge_oppenheimer
    build_prefix_commands: ["export set PATH=$PATH:/home/$username/install/bin","export set PYTHONPATH=$PYTHONPATH:/home/$username/install/lib/python2.6/site-packages"]
-   no_hg: true
+   no_git: true
    job_dispatch: "qsub"
    python_build: "lib/python2.6"
    make_jobs: 4
@@ -271,10 +236,10 @@ localhost:
 huygens:
     remote: "huygens.sara.nl"
     username: "sar00033"
-    no_hg: true
+    no_git: true
     home_path_template: "/home/$username/hemelb"
     modules: ["load cmake/2.8.5","load gcc"]
-    build_prefix_commands: [] #Tell autoconf for dependencies where the hector compilers are
+    build_prefix_commands: []
     temp_path_template: /scratch/shared
     regression_test_path_template: "$work_path/regression"
     corespernode: 32
@@ -294,7 +259,7 @@ huygens:
 riken:
    remote: "127.0.0.1:2200"  #Not a place to run code, just to get the via code there to run on Marigold
    no_ssh: true
-   no_hg: true
+   no_git: true
    needs_tarballs: true
 # Before the marigold section will work, you need to set up your LOCAL ssh config as follows:
 # Host riken
@@ -309,7 +274,7 @@ riken:
 marigold:
    remote: marigold
    no_ssh: true
-   no_hg: true
+   no_git: true
    needs_tarballs: true
    manual_ssh: true
    runtime_path_template: "/data/$username"

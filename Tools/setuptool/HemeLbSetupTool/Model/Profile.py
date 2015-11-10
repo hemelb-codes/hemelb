@@ -176,6 +176,7 @@ class Profile(Observable):
         
     def LoadProfileV2(self, filename):
         state = yaml.load(file(filename))
+        self._ResetPathsV2(state, filename)
         self.LoadFrom(state)
         return
     
@@ -202,7 +203,21 @@ class Profile(Observable):
             os.path.join(basePath, self.OutputXmlFile)
         )
         return
-    
+
+    def _ResetPathsV2(self, state, filename):
+        # Now adjust the paths of filenames relative to the Profile file.
+        basePath = os.path.dirname(os.path.abspath(filename))
+        state['StlFile'] = os.path.abspath(
+            os.path.join(basePath, state['StlFile'])
+        )
+        state['OutputGeometryFile'] = os.path.abspath(
+            os.path.join(basePath, state['OutputGeometryFile'])
+        )
+        state['OutputXmlFile'] = os.path.abspath(
+            os.path.join(basePath, state['OutputXmlFile'])
+        )
+        return
+        
     def Save(self, filename):
         basePath = str(os.path.dirname(filename))
         state = self.Yamlify()

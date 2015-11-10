@@ -21,6 +21,7 @@ option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
 option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" OFF)
+option(HEMELB_USE_VELOCITY_WEIGHTS_FILE "Use Velocity weights file" OFF)
 
 set(HEMELB_EXECUTABLE "hemelb"
   CACHE STRING "File name of executable to produce")
@@ -46,7 +47,7 @@ set(HEMELB_INLET_BOUNDARY "NASHZEROTHORDERPRESSUREIOLET"
 set(HEMELB_OUTLET_BOUNDARY "NASHZEROTHORDERPRESSUREIOLET"
   CACHE STRING "Select the boundary conditions to be used at the outlets (NASHZEROTHORDERPRESSUREIOLET,LADDIOLET)")
 set(HEMELB_COMPUTE_ARCHITECTURE "AMDBULLDOZER"
-  CACHE STRING "Select the architecture of the machine being used (INTELSANDYBRIDGE,AMDBULLDOZER,NEUTRAL)")
+  CACHE STRING "Select the architecture of the machine being used (INTELSANDYBRIDGE,AMDBULLDOZER,NEUTRAL,ISBFILEVELOCITYINLET)")
 set(HEMELB_WALL_INLET_BOUNDARY "NASHZEROTHORDERPRESSURESBB"
   CACHE STRING "Select the boundary conditions to be used at corners between walls and inlets (NASHZEROTHORDERPRESSURESBB,NASHZEROTHORDERPRESSUREBFL,LADDIOLETSBB,LADDIOLETBFL)")
 set(HEMELB_WALL_OUTLET_BOUNDARY "NASHZEROTHORDERPRESSURESBB"
@@ -109,6 +110,9 @@ if (HEMELB_USE_SSE3)
         set( CMAKE_CXX_FLAGS_RELEASE "${HEMELB_OPTIMISATION} -msse3")
 endif()
 
+if (HEMELB_USE_VELOCITY_WEIGHTS_FILE)
+    add_definitions(-DHEMELB_USE_VELOCITY_WEIGHTS_FILE)
+endif()
 
 # Check for a serious compiler bug in GCC
 # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=50618
@@ -148,7 +152,9 @@ endif()
 
 #------Capture build environment -------------
 
-execute_process(COMMAND hg -R ${CMAKE_CURRENT_SOURCE_DIR}/../ id -i RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)
+find_package(Git REQUIRED)
+execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
+  RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)
 if (NOT rev_ok EQUAL 0)
   message("Could not get revision number from mercurial, looking for revision_info.txt")
   execute_process(COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/../revision_info.txt RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -268,8 +274,7 @@ int main(int argc, char* argv[]) {
 
 #------Parmetis  ------------
 find_package(Parmetis REQUIRED)
-include_directories(${PARMETIS_INCLUDE_DIR})
-MESSAGE(STATUS "Found Parmetis: ${PARMETIS_LIBRARY}")
+include_directories(${PARMETIS_INCLUDE_DIRS})
 
 #------TinyXML ----------------
 find_package(TinyXML REQUIRED)
@@ -433,6 +438,7 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
 		unittests/resources/config.xml unittests/resources/config0_2_0.xml
 		unittests/resources/config_file_inlet.xml unittests/resources/iolet.txt 
 		unittests/resources/config-velocity-iolet.xml unittests/resources/config_new_velocity_inlets.xml
+    unittests/resources/velocity_inlet.txt.weights.txt
 		unittests/resources/xmltest.xml unittests/resources/config_file_velocity_inlet.xml unittests/resources/velocity_inlet.txt 
 		)
 endif()

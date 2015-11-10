@@ -43,7 +43,7 @@ pp = PrettyPrinter()
 env.localroot = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 env.regression_tests_root = os.path.join(os.path.dirname(env.localroot), 'RegressionTests')
 env.no_ssh = False
-env.no_hg = False
+env.no_git = False
 #Load and invoke the default non-machine specific config JSON dictionaries.
 config = yaml.load(open(os.path.join(env.localroot, 'deploy', 'machines.yml')))
 env.update(config['default'])
@@ -98,6 +98,7 @@ def complete_environment():
     results_path: Path to store results
     remote_path: Root of area for checkout and build on remote
     config_path: Path to store config files
+    analysis_path: Path to access HemeLB analysis scripts
     repository_path: Path of remote mercurial checkout
     tools_path: Path of remote python 'Tools' folder
     tools_build_path: Path of disttools python 'build' folder for python tools
@@ -120,11 +121,12 @@ def complete_environment():
 
     env.results_path = env.pather.join(env.work_path, "results")
     env.config_path = env.pather.join(env.work_path, "config_files")
+    env.analysis_path= env.pather.join(env.work_path, "Tools/analysis")
     env.profiles_path = env.pather.join(env.work_path, "profiles")
     env.scripts_path = env.pather.join(env.work_path, "scripts")
     env.build_path = env.pather.join(env.remote_path, 'build')
     env.code_build_path = env.pather.join(env.remote_path, 'code_build')
-    env.repository_path = env.pather.join(env.remote_path, env.repository)
+    env.repository_path = env.pather.join(env.remote_path, env.hemelb_repo)
     
     env.local_results = os.path.expanduser(template(env.local_results))
     env.local_configs = os.path.expanduser(template(env.local_configs))
@@ -147,12 +149,11 @@ def complete_environment():
         run_prefix_commands.append(template("export TMPDIR=$temp_path"))
 
     env.run_prefix = " && ".join(module_commands + map(template, run_prefix_commands)) or 'echo Running...'
-    #env.build_number=subprocess.check_output(['hg','id','-q'.'-i']).strip()
+    #env.build_number=subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()
     # check_output is 2.7 python and later only. Revert to oldfashioned popen.
-    cmd = os.popen(template("hg id -q -i"))
+    cmd = os.popen(template("git rev-parse HEAD"))
     env.build_number = cmd.read().strip()
     cmd.close()
-    #env.build_number=run("hg id -q -i")
     env.build_cache = env.pather.join(env.build_path, 'CMakeCache.txt')
     env.code_build_cache = env.pather.join(env.code_build_path, "CMakeCache.txt")
     env.executable = 'hemelb'

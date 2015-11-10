@@ -55,7 +55,8 @@ namespace hemelb
             CPPUNIT_TEST(TestIoletCoordinates);
             CPPUNIT_TEST(TestParabolicVelocityConstruct);
             CPPUNIT_TEST(TestWomersleyVelocityConstruct);
-            CPPUNIT_TEST(TestFileVelocityConstruct);CPPUNIT_TEST_SUITE_END();
+            CPPUNIT_TEST(TestFileVelocityConstruct);
+            CPPUNIT_TEST_SUITE_END();
           public:
             void setUp()
             {
@@ -295,7 +296,8 @@ namespace hemelb
               fileVel->Initialise(&converter);
               fileVel->Reset(state);
 
-              CPPUNIT_ASSERT_EQUAL(fileVel->GetFilePath(), std::string("./velocity_inlet.txt"));
+              int FilePath_length = fileVel->GetFilePath().length();
+              CPPUNIT_ASSERT_EQUAL(fileVel->GetFilePath().substr(FilePath_length-19), std::string("/velocity_inlet.txt"));
               CPPUNIT_ASSERT_EQUAL(fileVel->GetRadius(), 20.0);
               PhysicalPosition expected(0, 0, -0.05);
               PhysicalPosition actual =
