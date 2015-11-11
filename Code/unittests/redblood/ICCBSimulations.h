@@ -21,8 +21,8 @@ namespace hemelb
       class ICCBSimulations : public hemelb::unittests::helpers::FolderTestFixture
       {
           CPPUNIT_TEST_SUITE (ICCBSimulations);
-          CPPUNIT_TEST (testCoarseNetwork);
-          //CPPUNIT_TEST (testFineNetwork);
+          //CPPUNIT_TEST (testCoarseNetwork);
+          CPPUNIT_TEST (testFineNetwork);
           CPPUNIT_TEST_SUITE_END();
 
           typedef Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type Traits;
@@ -70,7 +70,9 @@ namespace hemelb
             ModifyXMLInput(
                 "iccb_capillary_network.xml", {"redbloodcells", "cells", "cell", "moduli", "strain", "value"}, 0.0004597);
             ModifyXMLInput(
-                "iccb_capillary_network.xml", {"redbloodcells", "cells", "cell", "interaction", "intensity", "value"}, 1.135e-05);
+                "iccb_capillary_network.xml", {"redbloodcells", "cell2Cell", "intensity", "value"}, 1.135e-05);
+            ModifyXMLInput(
+                "iccb_capillary_network.xml", {"redbloodcells", "cell2Wall", "intensity", "value"}, 1.135e-05);
 
             // The MasterSim object has to be created after the XML file has been modified for those changes to be taken into account
             master = std::make_shared<MasterSim>(*options, Comms());
