@@ -11,6 +11,11 @@
 #define HEMELB_NET_MPIDATATYPE_H
 
 #include <mpi.h>
+#if HEMELB_HAVE_CSTDINT
+# include <cstdint>
+#else
+# include <stdint.h>
+#endif
 
 #define HEMELB_MPI_TYPE_BEGIN(outType, Type, n) \
   MPI_Datatype outType = MPI_DATATYPE_NULL; \
@@ -137,10 +142,8 @@ namespace hemelb
     MPI_Datatype MpiDataTypeTraits<int32_t>::RegisterMpiDataType();
     template<>
     MPI_Datatype MpiDataTypeTraits<int64_t>::RegisterMpiDataType();
-#ifdef __APPLE__
     template<>
     MPI_Datatype MpiDataTypeTraits<size_t>::RegisterMpiDataType();
-#endif
     template<>
     MPI_Datatype MpiDataTypeTraits<signed char>::RegisterMpiDataType();
     template<>
