@@ -67,7 +67,7 @@ namespace hemelb
             entry != timeValuePairs.end(); entry++)
         {
 
-          /* If the time value stretches beyond the end of the simulation, then insert an interpolated end value and exit the loop. */
+          /* If the time value in the input file stretches BEYOND the end of the simulation, then insert an interpolated end value and exit the loop. */
           if(entry->first > totalTimeSteps*timeStepLength) {
   
             PhysicalTime time_diff = totalTimeSteps*timeStepLength - times.back();
@@ -88,6 +88,9 @@ namespace hemelb
 //        densityMin = units->ConvertPressureToLatticeUnits(pMin) / Cs2;
 //        densityMax = units->ConvertPressureToLatticeUnits(pMax) / Cs2;
 
+        /* If the time values in the input file end BEFORE the planned end of the simulation, then loop the profile afterwards (using %TimeStepsInInletVelocityProfile). */
+        int TimeStepsInInletVelocityProfile = times.back() / timeStepLength;
+
         // Check if last point's value matches the first
         if (values.back() != values.front())
           throw Exception() << "Last point's value does not match the first point's value in "
@@ -98,8 +101,9 @@ namespace hemelb
         // Now convert these vectors into arrays using linear interpolation
         for (unsigned int timeStep = 0; timeStep <= totalTimeSteps; timeStep++)
         {
+          // The "% TimeStepsInInletVelocityProfile" here is to prevent profile stretching (it will loop instead).
           double point = times.front()
-              + (static_cast<double>(timeStep) / static_cast<double>(totalTimeSteps))
+              + (static_cast<double>(timeStep % TimeStepsInInletVelocityProfile) / static_cast<double>(totalTimeSteps))
                   * (times.back() - times.front());
 
           PhysicalSpeed vel = util::NumericalFunctions::LinearInterpolate(times, values, point);
