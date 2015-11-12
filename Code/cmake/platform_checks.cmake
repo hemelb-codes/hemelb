@@ -22,3 +22,14 @@ int main(int count, char** v){
   xdr_uint64_t(&xdr, &c);
   return b;
 }" HAVE_XDRUINTXX_T)
+
+
+# cstdint is the c++11 version of C99 stdint.h.
+# better to go with cstdint, but stdint.h is available more widely.
+find_path(HAVE_STDINT_H stdint.h)
+find_path(HAVE_CSTDINT cstdint)
+if(HAVE_CSTDINT)
+  add_definitions(-DHEMELB_HAVE_CSTDINT=TRUE)
+elseif(NOT HAVE_STDINT_H)
+  message(ERROR "Neither cstdint nor stdint.h found")
+endif()
