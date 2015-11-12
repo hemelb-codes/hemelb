@@ -198,6 +198,13 @@ namespace hemelb
         friend struct ParticleSorter;
     };
   }
+  namespace net
+  {
+    template<>
+    MPI_Datatype MpiDataTypeTraits<colloids::Particle>::RegisterMpiDataType();
+    template<>
+    MPI_Datatype MpiDataTypeTraits<std::pair<unsigned long, util::Vector3D<double> > >::RegisterMpiDataType();
+  }
 }
 
 #endif /* HEMELB_COLLOIDS_PARTICLE_H */
