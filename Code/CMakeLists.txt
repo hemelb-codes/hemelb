@@ -114,56 +114,7 @@ if (HEMELB_USE_VELOCITY_WEIGHTS_FILE)
     add_definitions(-DHEMELB_USE_VELOCITY_WEIGHTS_FILE)
 endif()
 
-# Check for a serious compiler bug in GCC
-# http://gcc.gnu.org/bugzilla/show_bug.cgi?id=50618
-if(CMAKE_COMPILER_IS_GNUXX)
-  include(CheckCXXSourceRuns)
-  CHECK_CXX_SOURCE_RUNS("struct Base {
-  const int text;
-  Base() : text(1) {}
-  Base(int aText) : text(aText) {}
-};
-struct SubA : public virtual Base {
-protected:
-  int x;
-public:
-  SubA(int aX) : x(aX) {}
-};
-class SubB : public virtual Base {};
-struct Diamond : public SubA, public SubB {
-    Diamond(int text) : Base(text), SubA(5), SubB() {}
-    void printText() {
-        if(text != 2)
-          __builtin_abort();
-        if(x!=5)
-          __builtin_abort();
-    }
-};
-
-int main(int, char**) {
-    Diamond x(2);
-    x.printText();
-}" HAVE_GCC_WITHOUT_DIAMOND_BUG)
-  
-  if (NOT HAVE_GCC_WITHOUT_DIAMOND_BUG)
-    message(SEND_ERROR "Your version of GCC has this bug http://gcc.gnu.org/bugzilla/show_bug.cgi?id=50618. HemeLB requires a working implementation of virtual base classes. Please use a different compiler.")
-  endif()
-endif()
-
-#------Capture build environment -------------
-
-find_package(Git REQUIRED)
-execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
-  RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)
-if (NOT rev_ok EQUAL 0)
-  message("Could not get revision number from mercurial, looking for revision_info.txt")
-  execute_process(COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/../revision_info.txt RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)
-endif()
-message("Revision number: ${HEMELB_REVISION_NUMBER}")
-
-execute_process(COMMAND date OUTPUT_VARIABLE HEMELB_BUILD_TIME OUTPUT_STRIP_TRAILING_WHITESPACE)
-#------Dependencies --------------------------
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${HEMELB_DEPENDENCIES_PATH}/Modules/")
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${HEMELB_DEPENDENCIES_PATH}/Modules/")
 list(APPEND CMAKE_INCLUDE_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/include)
 list(APPEND CMAKE_LIBRARY_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/lib)
 
@@ -173,56 +124,8 @@ if(HEMELB_DEPENDENCIES_SET_RPATH)
 	SET(CMAKE_INSTALL_RPATH "${HEMELB_DEPENDENCIES_INSTALL_PATH}/lib")
 endif()
 
-#-------Check for platform dependent features ----
-
-include(CheckCXXSourceCompiles)
-CHECK_CXX_SOURCE_COMPILES("#include <cmath>\n int main(int c,char** v){ return isnan(1.0); }" HAVE_ISNAN)
-CHECK_CXX_SOURCE_COMPILES("#include <cmath>\n int main(int c,char** v){ return std::isnan(1.0); }" HAVE_STD_ISNAN)
-CHECK_CXX_SOURCE_COMPILES("#include <sys/time.h>\n#include <sys/resource.h>\nint main(int c,char** v){ rusage usage;\ngetrusage(RUSAGE_SELF, &usage);\nreturn usage.ru_maxrss; }" HAVE_RUSAGE)
-CHECK_CXX_SOURCE_COMPILES("
-#include <stdint.h>
-#include <rpc/types.h>
-#include <rpc/xdr.h>
-int main(int count, char** v){
-  char buffer[15] = \"aaaaaaaaaaaaa\";
-  XDR xdr;
-  xdrmem_create(&xdr, buffer, 32, XDR_ENCODE);
-  uint16_t a;
-  uint32_t b;
-  uint64_t c;
-  xdr_uint16_t(&xdr, &a);
-  xdr_uint32_t(&xdr, &b);
-  xdr_uint64_t(&xdr, &c);
-  return b;
-}" HAVE_XDRUINTXX_T)
-# mountain lion changed the api of scandir from BSD to LINUX style
-CHECK_CXX_SOURCE_COMPILES("
-#include <string>
-#include <dirent.h>
-#include <cstdlib>
-#include <cstdio>
-#include <cstring>
-#include <fstream>
-#include <unistd.h>
-#include <sys/dir.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sstream>
-
-typedef const struct direct direct_t;
-int selectOnlyContents(direct_t *entry)
-    {
-    return 1;
-    }
-int main(int count, char** v)
-    {
-      std::string pathname = \"\\tmp\";
-      struct direct **files;
-      int file_count = scandir(pathname.c_str(), &files, selectOnlyContents, alphasort);
-      return 0;
-    }"
-LINUX_SCANDIR)
-
+include(build_environment)
+include(platform_checks)
 
 if(HAVE_ISNAN)
   add_definitions(-DHAVE_ISNAN)
@@ -247,62 +150,8 @@ if(NOT HAVE_XDRUINTXX_T)
   add_definitions(-Dxdr_uint64_t=xdr_u_int64_t)
 endif()
 
-# ------MPI------------------
-# Require MPI for this project:
-find_package(MPI REQUIRED)
-set(CMAKE_CXX_COMPILE_FLAGS "${CMAKE_CXX_COMPILE_FLAGS} ${MPI_COMPILE_FLAGS}")
-set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} ${CMAKE_CXX_LINK_FLAGS}")
-include_directories(${MPI_INCLUDE_PATH})
-
-# Figure out if this MPI implementation has a const-correct API (supports MPI 3)
-set(CMAKE_REQUIRED_FLAGS -Werror)
-set(CMAKE_REQUIRED_DEFINITIONS ${MPI_COMPILE_FLAGS})
-set(CMAKE_REQUIRED_INCLUDES ${MPI_INCLUDE_PATH})
-set(CMAKE_REQUIRED_LIBRARIES ${MPI_LIBRARIES})
-CHECK_CXX_SOURCE_COMPILES("#include <mpi.h>
-int main(int argc, char* argv[]) {
-  const int send = 0;
-  int recv;
-  MPI_Request req;
-  MPI_Init(&argc, &argv);
-  MPI_Irecv(&recv, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &req);
-  MPI_Send(&send, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-  MPI_Wait(&req, MPI_STATUS_IGNORE);
-  MPI_Finalize();
-}" HAVE_CONSTCORRECTMPI)
-
-
-#------Parmetis  ------------
-find_package(Parmetis REQUIRED)
-include_directories(${PARMETIS_INCLUDE_DIRS})
-
-#------TinyXML ----------------
-find_package(TinyXML REQUIRED)
-OPTION(TIXML_USE_STL "Use STL with TIXML" ON)
-if(TIXML_USE_STL)
-	add_definitions(-DTIXML_USE_STL)
-endif()
-include_directories(${TINYXML_INCLUDE_DIR})
-if(HEMELB_USE_BOOST)
-	#------BOOST ------------------
-	SET(Boost_ADDITIONAL_VERSIONS "1.48" "1.48.0")
-	find_package(Boost 1.48 REQUIRED)
-	include_directories(${Boost_INCLUDE_DIRS})
-	add_definitions(-DHEMELB_USE_BOOST)
-endif()
-#------CTemplate ----------------
-find_package(CTemplate REQUIRED)
-include_directories(${CTEMPLATE_INCLUDE_DIR})
-if(HEMELB_BUILD_MULTISCALE)
-  #------MPWide ----------------
-  find_package(MPWide REQUIRED)
-  include_directories(${MPWide_INCLUDE_DIR})
-  add_definitions(-DHEMELB_BUILD_MULTISCALE)
-endif()
-
-#------zlib ----------------
-find_package(ZLIB REQUIRED)
-include_directories(${ZLIB_INCLUDE_DIR})
+include(mpi)
+include(dependencies)
 
 #-------------Resources -----------------------
 
