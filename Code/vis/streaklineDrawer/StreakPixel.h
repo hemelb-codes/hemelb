@@ -94,6 +94,11 @@ namespace hemelb
       };
     }
   }
+  namespace net
+  {
+    template<>
+    MPI_Datatype MpiDataTypeTraits<hemelb::vis::streaklinedrawer::StreakPixel>::RegisterMpiDataType();
+  }
 }
 
 #endif /* HEMELB_VIS_STREAKLINEDRAWER_STREAKPIXEL_H */
