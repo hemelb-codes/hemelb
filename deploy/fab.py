@@ -568,6 +568,19 @@ def hemelbs(config, **args):
         hemeconfig['cores'] = currentCores
         execute(hemelb, config, **hemeconfig)
 
+@task
+def hemelb_benchmark(config, min_cores, max_cores, **args):
+    """ Performs a strong scaling test from <min_cores> cores to <max_cores> cores, in steps of a factor 2. """
+    cores_used = int(min_cores)
+    while cores_used < int(max_cores):
+        args['cores'] = cores_used
+        
+        with_config(config)
+        execute(put_configs, config)
+        job(dict(script='hemelb',
+            cores=cores_used, images=10, steering=1111, wall_time='0:15:0', memory='2G'), args)
+        cores_used *= 2
+
 @task(alias='regress')
 def regression_test(**args):
     """Submit a regression-testing job to the remote queue."""
