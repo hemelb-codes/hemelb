@@ -18,6 +18,20 @@ namespace hemelb
 {
   namespace net
   {
+    //! \brief Simplifies non-blocking neighberhood collectives
+    //! \details Owns send and receive buffer. Handles waiting for request to complete.
+    //! \code
+    //! INeighborAllToAll<element_type> all2all(graph_communicator);
+    //! all2all.GetSendBuffer().resize(N * number of neighbors);
+    //! all2all.GetSendBuffer()[0] = populate this
+    //! all2all.GetSendBuffer()[1] = populate that
+    //! ..
+    //! all2all.GetSendBuffer()[N * number of neighbors - 1] = populate that
+    //! all2all.send() // sends N items to buffer
+    //! all2all.receive() // waits until all items are received
+    //! all2all.GetReceiveBuffer() // profit!
+    //! \endcode
+    //! Both SEND and RECEIVE should be types registered with net::MpiDataType;
     template<class SEND, class RECEIVE = SEND> class INeighborAllToAll {
       public:
         //! Sent type
