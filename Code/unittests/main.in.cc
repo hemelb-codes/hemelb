@@ -17,8 +17,13 @@
 #include <stdexcept>
 #include <unistd.h>
 
-#include "debug/Debugger.h"
 #include "unittests/@HEMELB_UNITTEST_INCLUDE@"
+
+#include "debug/Debugger.h"
+#include "unittests/helpers/HasCommsTestFixture.h"
+#include "net/MpiEnvironment.h"
+#include "net/IOCommunicator.h"
+#include "log/Logger.h"
 
 int main(int argc, char **argv)
 {
