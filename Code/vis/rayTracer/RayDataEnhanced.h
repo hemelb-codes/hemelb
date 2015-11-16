@@ -286,6 +286,11 @@ namespace hemelb
     }
   }
 
+  namespace net
+  {
+    template<>
+    MPI_Datatype MpiDataTypeTraits<hemelb::vis::raytracer::RayDataEnhanced>::RegisterMpiDataType();
+  }
 }
 
 #endif // HEMELB_VIS_RAYTRACER_RAYDATAENHANCED_H

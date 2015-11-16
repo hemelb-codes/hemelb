@@ -735,4 +735,21 @@ namespace hemelb
   }
 }
 
+#ifdef HEMELB_CODE
+#include "net/MpiDataType.h"
+
+namespace hemelb
+{
+  namespace net
+  {
+    template<>
+    MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<float> >::RegisterMpiDataType();
+    template<>
+    MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<int64_t> >::RegisterMpiDataType();
+    template<>
+    MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<double> >::RegisterMpiDataType();
+  }
+}
+#endif
+
 #endif // HEMELB_UTIL_VECTOR3D_H
