@@ -82,15 +82,20 @@ namespace hemelb
               FolderTestFixture::setUp();
               CopyResourceToTempdir("iolet.txt");
               MoveToTempdir();
+
               configuration::SimConfig *fileInletConfig =
                   configuration::SimConfig::New(Resource("config_file_inlet.xml").Path());
+
+              // Reloading simState to ensure the time step size from config_file_inlet.xml is indeed used in HemeLB.
+              simState = new hemelb::lb::SimulationState(fileInletConfig->GetTimeStepLength(),
+                                                       fileInletConfig->GetTotalTimeSteps());
 
               inlets = new BoundaryValues(hemelb::geometry::INLET_TYPE,
                                           latDat,
                                           fileInletConfig->GetInlets(),
                                           simState,
                                           Comms(),
-                                          *unitConverter);
+                                          *unitConverter);            
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL(pressureToDensity(78.0), inlets->GetBoundaryDensity(0), 1e-6);
 

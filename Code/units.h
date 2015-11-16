@@ -10,7 +10,11 @@
 #ifndef HEMELB_UNITS_H
 #define HEMELB_UNITS_H
 
-#include <stdint.h>
+#if HEMELB_HAVE_CSTDINT
+# include <cstdint>
+#else
+# include <stdint.h>
+#endif
 #include "util/Vector3D.h"
 
 namespace hemelb

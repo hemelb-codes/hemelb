@@ -48,6 +48,12 @@ namespace hemelb
         int i, j;
     };
   }
+
+  namespace net
+  {
+    template<>
+    MPI_Datatype MpiDataTypeTraits<hemelb::vis::BasicPixel>::RegisterMpiDataType();
+  }
 }
 
 #endif /* HEMELB_VIS_BASICPIXEL_H */

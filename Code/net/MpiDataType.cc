@@ -7,8 +7,6 @@
 // specifically made by you with University College London.
 //
 
-#include <stdint.h>
-
 #include "net/MpiDataType.h"
 
 namespace hemelb
