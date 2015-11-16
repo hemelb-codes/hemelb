@@ -33,6 +33,11 @@ namespace hemelb
 
     }
   }
+  namespace net
+  {
+    template<>
+    MPI_Datatype MpiDataTypeTraits<hemelb::vis::streaklinedrawer::Particle>::RegisterMpiDataType();
+  }
 }
 
 #endif // HEMELB_VIS_STREAKLINEDRAWER_PARTICLE_H

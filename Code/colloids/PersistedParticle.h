@@ -12,6 +12,7 @@
 
 #include "io/xml/XmlAbstractionLayer.h"
 #include "units.h"
+#include "net/MpiDataType.h"
 
 namespace hemelb
 {
@@ -62,6 +63,11 @@ namespace hemelb
         /** the global position of the particle in lattice units */
         LatticePosition globalPosition;
     };
+  }
+  namespace net
+  {
+    template<>
+    MPI_Datatype MpiDataTypeTraits<colloids::PersistedParticle>::RegisterMpiDataType();
   }
 }
 
