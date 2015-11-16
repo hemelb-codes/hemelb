@@ -64,15 +64,7 @@ namespace hemelb
         //! \brief Adds objects to buffer
         //! \details resizes buffer according to input size (all messages have the same size) and
         //! copies input so it is sent to given neighbor.
-        void AddToBuffer(int neighbor, std::vector<Send> const &input)
-        {
-          auto const i_neigh = std::find(neighbors.begin(), neighbors.end(), neighbor);
-          assert(i_neigh != neighbors.end());
-          auto const N = input.size();
-          auto const i = i_neigh - neighbors.begin();
-          sendBuffer.resize(neighbors.size() * N);
-          std::copy(input.begin(), input.end(), sendBuffer.begin() + N * i);
-        }
+        void AddToBuffer(int neighbor, std::vector<Send> const &input);
 
         ReceiveBuffer & GetReceiveBuffer()
         {
@@ -88,30 +80,12 @@ namespace hemelb
           return comm;
         }
 
-        void send()
-        {
-          assert(sendBuffer.size() % neighbors.size() == 0);
-          auto const n = sendBuffer.size() / neighbors.size();
-          receiveBuffer.resize(sendBuffer.size());
+        //! Non-blocking send
+        void send();
+        //! Blocks until received
+        MPI_Status receive();
 
-          // Post message
-          HEMELB_MPI_CALL(
-            MPI_Ineighbor_alltoall,
-            (
-              sendBuffer.data(), n, net::MpiDataType<Send>(),
-              receiveBuffer.data(), n, net::MpiDataType<Receive>(),
-              comm, &request
-            )
-          );
-        }
-        MPI_Status receive()
-        {
-          MPI_Status result;
-          HEMELB_MPI_CALL(MPI_Wait, (&request, &result));
-          return result;
-        }
-
-      private:
+      protected:
         //! Where information is sent
         SendBuffer sendBuffer;
         //! Where information is receive
@@ -122,7 +96,56 @@ namespace hemelb
         MpiCommunicator comm;
         //! List of neighbors
         std::vector<int> neighbors;
+
+      protected:
+        //! Returns index of neighbor
+        int GetNeighborIndex(int neighbor) const;
     };
+
+    template<class SEND, class RECEIVE> void INeighborAllToAll<SEND, RECEIVE>::send()
+    {
+      assert(sendBuffer.size() % neighbors.size() == 0);
+      auto const n = sendBuffer.size() / neighbors.size();
+      receiveBuffer.resize(sendBuffer.size());
+
+      // Makes sure pointers are valid even if no data
+      sendBuffer.reserve(1);
+      receiveBuffer.reserve(1);
+
+      // Post message
+      HEMELB_MPI_CALL(
+        MPI_Ineighbor_alltoall,
+        (
+          sendBuffer.data(), n, net::MpiDataType<Send>(),
+          receiveBuffer.data(), n, net::MpiDataType<Receive>(),
+          comm, &request
+        )
+      );
+    }
+
+    template<class SEND, class RECEIVE> MPI_Status INeighborAllToAll<SEND, RECEIVE>::receive()
+    {
+      MPI_Status result;
+      HEMELB_MPI_CALL(MPI_Wait, (&request, &result));
+      return result;
+    }
+
+    template<class SEND, class RECEIVE>
+    int INeighborAllToAll<SEND, RECEIVE>::GetNeighborIndex(int neighbor) const
+    {
+      auto const i_neigh = std::find(neighbors.begin(), neighbors.end(), neighbor);
+      assert(i_neigh != neighbors.end());
+      return i_neigh - neighbors.begin();
+    }
+
+    template<class SEND, class RECEIVE>
+    void INeighborAllToAll<SEND, RECEIVE>::AddToBuffer(int neighbor, std::vector<Send> const &input)
+    {
+      auto const N = input.size();
+      sendBuffer.resize(neighbors.size() * N);
+      std::copy(input.begin(), input.end(), sendBuffer.begin() + N * GetNeighborIndex(neighbor));
+    }
+
   } /* redblood */
 } /* hemelb */
 #endif
