@@ -112,5 +112,23 @@ class FloatTranslator(Translator):
         
     pass
 
+class Constraint(Translator):
+    """Applies a constraint to the untranslated value."""
+    def __init__(self, func, inner=None):
+        """The supplied callable must accept one argument of
+        the untranslated (i.e. model side) value and return
+        True if it's OK and False if not.
+        """
+        Translator.__init__(self, inner)
+        self.func = func
+        return
 
-        
+    def TranslateStage(self, value):
+        if self.func(value):
+            return value
+        raise ValidationError('Constraint on value not satisfied')
+
+    def UntranslateStage(self, value):
+        if self.func(value):
+            return value
+        raise ValidationError('Constraint on value not satisfied')

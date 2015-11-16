@@ -48,7 +48,7 @@ namespace hemelb
       // IMPORTANT: to allow reading in data taken at irregular intervals the user
       // needs to make sure that the last point in the file coincides with the first
       // point of a new cycle for a continuous trace.
-      void InOutLetFile::CalculateTable(LatticeTimeStep totalTimeSteps)
+      void InOutLetFile::CalculateTable(LatticeTimeStep totalTimeSteps, PhysicalTime timeStepLength)
       {
         // First read in values from file
         // Used to be complex code here to keep a vector unique, but this is just achieved by using a map.
@@ -79,6 +79,23 @@ namespace hemelb
         for (std::map<PhysicalTime, PhysicalPressure>::iterator entry = timeValuePairs.begin();
             entry != timeValuePairs.end(); entry++)
         {
+          /* If the time value stretches beyond the end of the simulation, then insert an interpolated end value and exit the loop. */
+          if(entry->first > totalTimeSteps*timeStepLength) {
+
+            PhysicalTime time_diff = totalTimeSteps*timeStepLength - times.back();
+
+            PhysicalTime time_diff_ratio = time_diff / (entry->first - times.back());
+            PhysicalPressure pres_diff = entry->second - values.back();
+
+            PhysicalSpeed final_pressure = values.back() + time_diff_ratio * pres_diff;
+
+            times.push_back(totalTimeSteps*timeStepLength);
+            pMin = util::NumericalFunctions::min(pMin, final_pressure);
+            pMax = util::NumericalFunctions::max(pMax, final_pressure);
+            values.push_back(final_pressure);
+            break;
+          }
+
           pMin = util::NumericalFunctions::min(pMin, entry->second);
           pMax = util::NumericalFunctions::max(pMax, entry->second);
           times.push_back(entry->first);

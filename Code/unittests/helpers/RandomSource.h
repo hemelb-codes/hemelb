@@ -11,7 +11,11 @@
 #define HEMELB_UNITTESTS_HELPERS_RANDOMSOURCE_H
 
 #include <limits>
-#include <stdint.h>
+#if HEMELB_HAVE_CSTDINT
+# include <cstdint>
+#else
+# include <stdint.h>
+#endif
 
 namespace hemelb
 {

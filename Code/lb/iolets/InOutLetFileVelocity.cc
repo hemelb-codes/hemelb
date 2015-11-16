@@ -35,7 +35,7 @@ namespace hemelb
         return copy;
       }
 
-      void InOutLetFileVelocity::CalculateTable(LatticeTimeStep totalTimeSteps)
+      void InOutLetFileVelocity::CalculateTable(LatticeTimeStep totalTimeSteps, PhysicalTime timeStepLength)
       {
         // First read in values from file
         // Used to be complex code here to keep a vector unique, but this is just achieved by using a map.
@@ -66,8 +66,22 @@ namespace hemelb
         for (std::map<PhysicalTime, PhysicalSpeed>::iterator entry = timeValuePairs.begin();
             entry != timeValuePairs.end(); entry++)
         {
-//          pMin = util::NumericalFunctions::min(pMin, entry->second);
-//          pMax = util::NumericalFunctions::max(pMax, entry->second);
+
+          /* If the time value stretches beyond the end of the simulation, then insert an interpolated end value and exit the loop. */
+          if(entry->first > totalTimeSteps*timeStepLength) {
+  
+            PhysicalTime time_diff = totalTimeSteps*timeStepLength - times.back();
+
+            PhysicalTime time_diff_ratio = time_diff / (entry->first - times.back());
+            PhysicalSpeed vel_diff = entry->second - values.back();
+
+            PhysicalSpeed final_velocity = values.back() + time_diff_ratio * vel_diff;
+
+            times.push_back(totalTimeSteps*timeStepLength);
+            values.push_back(final_velocity);
+            break;
+          }
+
           times.push_back(entry->first);
           values.push_back(entry->second);
         }
@@ -277,23 +291,23 @@ namespace hemelb
         useWeightsFromFile = true;
         #endif
 
-        //if the new velocity approximation is enabled, then we want to create a lookup table here.
-        const std::string in_name = velocityFilePath + ".weights.txt";
-        util::check_file(in_name.c_str());
+        if(useWeightsFromFile) {
+          //if the new velocity approximation is enabled, then we want to create a lookup table here.
+          const std::string in_name = velocityFilePath + ".weights.txt";
+          util::check_file(in_name.c_str());
 
-        /* Load and read file. */
-        std::fstream myfile;
-        myfile.open(in_name.c_str(), std::ios_base::in);
-        log::Logger::Log<log::Warning, log::OnePerCore>("Loading weights file: %s",
+          /* Load and read file. */
+          std::fstream myfile;
+          myfile.open(in_name.c_str(), std::ios_base::in);
+          log::Logger::Log<log::Warning, log::OnePerCore>("Loading weights file: %s",
                                                         in_name.c_str());
 
-        std::string input_line;
-        /* input files are in ASCII, in format:
-         *
-         * coord_x coord_y coord_z weights_value
-         *
-         * */
-        if(useWeightsFromFile) {
+          std::string input_line;
+          /* input files are in ASCII, in format:
+           *
+           * coord_x coord_y coord_z weights_value
+           *
+           * */
           while (myfile.good()) //(std::getline(myfile, input_line))
           {
             int x, y, z;

@@ -11,6 +11,11 @@
 #define HEMELB_NET_MPIDATATYPE_H
 
 #include <mpi.h>
+#if HEMELB_HAVE_CSTDINT
+# include <cstdint>
+#else
+# include <stdint.h>
+#endif
 
 #define HEMELB_MPI_TYPE_BEGIN(outType, Type, n) \
   MPI_Datatype outType = MPI_DATATYPE_NULL; \
@@ -79,6 +84,18 @@ namespace hemelb
      *     }
      *
      * Built-in MPI types have specializations defined in the implementation.
+     *
+     * Important note: to ensure C++ standard compliance, you MUST declare your
+     * specialisations before use and you MUST ensure that the definition
+     * is compiled exactly once (standard ODR). These MUST both be in the
+     * namespace hemelb::net.
+     *
+     * Declaration is best done in the relevant header file. These templates are
+     * only used by MpiCommunicator's templated communication methods so the
+     * relevant #include must be before you call comm->Send() etc.
+     *
+     * Definition is best done in a .cc file.
+     *
      */
 
     template<typename T>
@@ -114,6 +131,37 @@ namespace hemelb
     {
       return MpiDataTypeTraits<T>::GetMpiDataType();
     }
+
+    // Declare specialisations for MPI built in types
+    // See ticket #600 for discussion around why this is required.
+    template<>
+    MPI_Datatype MpiDataTypeTraits<char>::RegisterMpiDataType();
+    template<>
+    MPI_Datatype MpiDataTypeTraits<int16_t>::RegisterMpiDataType();
+    template<>
+    MPI_Datatype MpiDataTypeTraits<int32_t>::RegisterMpiDataType();
+    template<>
+    MPI_Datatype MpiDataTypeTraits<int64_t>::RegisterMpiDataType();
+    template<>
+    MPI_Datatype MpiDataTypeTraits<size_t>::RegisterMpiDataType();
+    template<>
+    MPI_Datatype MpiDataTypeTraits<signed char>::RegisterMpiDataType();
+    template<>
+    MPI_Datatype MpiDataTypeTraits<unsigned char>::RegisterMpiDataType();
+    template<>
+    MPI_Datatype MpiDataTypeTraits<uint16_t>::RegisterMpiDataType();
+    template<>
+    MPI_Datatype MpiDataTypeTraits<uint32_t>::RegisterMpiDataType();
+    template<>
+    MPI_Datatype MpiDataTypeTraits<uint64_t>::RegisterMpiDataType();
+    template<>
+    MPI_Datatype MpiDataTypeTraits<float>::RegisterMpiDataType();
+    template<>
+    MPI_Datatype MpiDataTypeTraits<double>::RegisterMpiDataType();
+    template<>
+    MPI_Datatype MpiDataTypeTraits<long double>::RegisterMpiDataType();
+    template<>
+    MPI_Datatype MpiDataTypeTraits<wchar_t>::RegisterMpiDataType();
 
   }
 }
