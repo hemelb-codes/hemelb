@@ -62,7 +62,7 @@ namespace hemelb
         public:
           ExchangeCells(net::MpiCommunicator const &graphComm)
             : cellCount(graphComm), totalNodeCount(graphComm), nodeCount(graphComm),
-              sendUUIDs(graphComm), sendPositionsAndScales(graphComm)
+              cellUUIDs(graphComm), cellScales(graphComm), nodePositions(graphComm)
           {
           }
           //! \brief Computes and posts length of message when sending cells
@@ -75,9 +75,6 @@ namespace hemelb
           virtual void ReceiveCells();
 
         protected:
-          //! Current step
-          int step;
-
           //! \brief Sends number of cells
           //! \details Using int because it meshes better with sending the number of nodes per cell.
           net::INeighborAllToAll<int> cellCount;
@@ -85,14 +82,20 @@ namespace hemelb
           net::INeighborAllToAll<size_t> totalNodeCount;
           //! Sends number of nodes per cell
           net::INeighborAllToAllV<size_t> nodeCount;
-          //! Sends uuids
-          net::INeighborAllToAllV<char> sendUUIDs;
-          //! Sends positions and Scale
-          net::INeighborAllToAllV<LatticeDistance> sendPositionsAndScales;
+          //! Cell uuids
+          net::INeighborAllToAllV<unsigned char> cellUUIDs;
+          //! Sends scales
+          net::INeighborAllToAllV<LatticeDistance> cellScales;
+          //! Sends positions
+          net::INeighborAllToAllV<LatticeDistance> nodePositions;
 
           //! Number of nodes to send to each neighboring process
-          void SetupLocalNodeCount(CellParallelization::NodeDistributions const &owned);
+          void SetupLocalSendBuffers(
+              CellParallelization::NodeDistributions const &owned, CellContainer const &cells);
+          void AddToLocalSendBuffers(
+              int neighbor, int nth, int nVertices, CellContainer::const_reference cell);
       };
+
     } /* parallel */
   } /* redblood */
 } /* hemelb */
