@@ -34,18 +34,13 @@ namespace hemelb
           {
           };
 
-          std::vector<Length> const& GetSendLengths() const
+          net::INeighborAllToAll<int> & GetCellCount()
           {
-            return sendLengths;
+            return cellCount;
           }
-          std::vector<Length> const& GetReceiveLengths() const
+          net::INeighborAllToAll<size_t> & GetTotalNodeCount()
           {
-            return receiveLengths;
-          }
-          void WaitOutLengthRequest()
-          {
-            MPI_Status status;
-            HEMELB_MPI_CALL(MPI_Wait, (&lengthRequest, &status));
+            return totalNodeCount;
           }
       };
 
@@ -178,37 +173,44 @@ namespace hemelb
         auto const dist = GetNodeDistribution(cells);
 
         ExchangeCells xc(graph);
+        CPPUNIT_ASSERT(xc.GetCellCount().GetCommunicator());
+        CPPUNIT_ASSERT(xc.GetTotalNodeCount().GetCommunicator());
         xc.PostCellMessageLength(dist);
 
         // Checks message is correct
-        auto const sendLengths = xc.GetSendLengths();
+        auto const &sendCellCount = xc.GetCellCount().GetSendBuffer();
+        auto const &sendTotalNodeCount = xc.GetTotalNodeCount().GetSendBuffer();
         auto const neighbors = graph.GetNeighbors();
-        CPPUNIT_ASSERT_EQUAL(neighbors.size(), sendLengths.size());
-        for(auto const item: util::zip(neighbors, sendLengths))
+        CPPUNIT_ASSERT_EQUAL(neighbors.size(), sendCellCount.size());
+        CPPUNIT_ASSERT_EQUAL(neighbors.size(), sendTotalNodeCount.size());
+        for(auto const item: util::zip(neighbors, sendCellCount, sendTotalNodeCount))
         {
           auto const sending = std::get<0>(item) == sendto;
           size_t const nCells = sending ? 1: 0;
           size_t const nVertices = sending ? (*cells.begin())->GetNumberOfNodes(): 0;
-          CPPUNIT_ASSERT_EQUAL(nCells, std::get<1>(item).nCells);
-          CPPUNIT_ASSERT_EQUAL(nVertices, std::get<1>(item).nVertices);
+          CPPUNIT_ASSERT_EQUAL(int(nCells), std::get<1>(item));
+          CPPUNIT_ASSERT_EQUAL(nVertices, std::get<2>(item));
         }
 
         // Wait for end of request and check received lengths
-        xc.WaitOutLengthRequest();
+        xc.GetCellCount().receive();
+        xc.GetTotalNodeCount().receive();
         auto const recvfrom =
           graph.Rank() == 0 ? 1:
           graph.Rank() == 1 ? 2:
           graph.Rank() == 2 ? 3: std::numeric_limits<size_t>::max();
 
-        auto const recvLengths = xc.GetReceiveLengths();
-        CPPUNIT_ASSERT_EQUAL(neighbors.size(), recvLengths.size());
-        for(auto const item: util::zip(neighbors, recvLengths))
+        auto const &receiveCellCount = xc.GetCellCount().GetReceiveBuffer();
+        auto const &receiveTotalNodeCount = xc.GetTotalNodeCount().GetReceiveBuffer();
+        CPPUNIT_ASSERT_EQUAL(neighbors.size(), receiveCellCount.size());
+        CPPUNIT_ASSERT_EQUAL(neighbors.size(), receiveTotalNodeCount.size());
+        for(auto const item: util::zip(neighbors, receiveCellCount, receiveTotalNodeCount))
         {
           auto const receiving = std::get<0>(item) == recvfrom;
           size_t const nCells = receiving ? 1: 0;
           size_t const nVerts = receiving ? GetCell(center, 1e0, recvfrom)->GetNumberOfNodes(): 0;
-          CPPUNIT_ASSERT_EQUAL(nCells, std::get<1>(item).nCells);
-          CPPUNIT_ASSERT_EQUAL(nVerts, std::get<1>(item).nVertices);
+          CPPUNIT_ASSERT_EQUAL(int(nCells), std::get<1>(item));
+          CPPUNIT_ASSERT_EQUAL(nVerts, std::get<2>(item));
         }
       }
 

@@ -19,14 +19,6 @@ namespace hemelb
   {
     namespace parallel
     {
-      ExchangeCells::ExchangeCells(net::MpiCommunicator const &graphComm) :
-        graphComm(graphComm.Duplicate()), step(0)
-      {
-        auto const neighbors = graphComm.GetNeighbors();
-        sendLengths.resize(neighbors.size());
-        receiveLengths.resize(neighbors.size());
-      }
-
       void ExchangeCells::PostCellMessageLength(CellParallelization::NodeDistributions const &owned)
       {
         if(step % 3 != 0)
@@ -34,39 +26,80 @@ namespace hemelb
           throw Exception() << "Out-of-order Exchange cell step called\n";
         }
         ++step;
-        auto const neighbors = graphComm.GetNeighbors();
-        std::fill(sendLengths.begin(), sendLengths.end(), Length{0, 0});
-        std::fill(receiveLengths.begin(), receiveLengths.end(), Length{0, 0});
+        auto const neighbors = cellCount.GetCommunicator().GetNeighbors();
+        cellCount.GetSendBuffer().resize(neighbors.size());
+        totalNodeCount.GetSendBuffer().resize(neighbors.size());
+        std::fill(cellCount.GetSendBuffer().begin(), cellCount.GetSendBuffer().end(), 0);
+        std::fill(totalNodeCount.GetSendBuffer().begin(), totalNodeCount.GetSendBuffer().end(), 0);
         // Count the number of vertices and cells
         for(auto const & dist: owned)
         {
-          for(auto && item: util::zip(neighbors, sendLengths))
+          for(auto item: util::enumerate(neighbors))
           {
-            auto const nVertices = dist.second.CountNodes(std::get<0>(item));
+            auto const nVertices = dist.second.CountNodes(item.value);
             if(nVertices > 0)
             {
-              ++std::get<1>(item).nCells;
-              std::get<1>(item).nVertices += nVertices;
+              ++cellCount.GetSendBuffer()[item.index];
+              totalNodeCount.GetSendBuffer()[item.index] += nVertices;
             }
           }
         }
-        // Post message
-        HEMELB_MPI_CALL(
-          MPI_Ineighbor_alltoall,
-          (
-            sendLengths.data(), 2, net::MpiDataType<size_t>(),
-            receiveLengths.data(), 2, net::MpiDataType<size_t>(),
-            graphComm, &lengthRequest
-          )
-        );
+
+        // Then send message
+        cellCount.send();
+        totalNodeCount.send();
       }
 
-      void ExchangeCells::PostCells() const
+      void ExchangeCells::PostCells(
+          CellParallelization::NodeDistributions const &owned, CellContainer const &)
       {
+        auto const neighbors = cellCount.GetCommunicator().GetNeighbors();
+
+        // Sets up information about number of cells to send
+        nodeCount.SetSendCounts(cellCount.GetSendBuffer());
+        for(auto neighbor: neighbors)
+        {
+          int i(0);
+          for(auto const & dist: owned)
+          {
+            auto const nVertices = dist.second.CountNodes(neighbor);
+            if(nVertices > 0)
+            {
+              nodeCount.SetSend(neighbor, nVertices, i++);
+            }
+          }
+        }
+
+
+        cellCount.receive();
+        totalNodeCount.receive();
+
+
+        nodeCount.SetReceiveCounts(cellCount.GetReceiveBuffer());
+        nodeCount.send();
       }
 
       void ExchangeCells::ReceiveCells()
       {
+      }
+
+      std::vector<size_t> ExchangeCells::GetNodesPerCells(
+              CellParallelization::NodeDistributions const &owned,
+              std::vector<int> neighbors) const
+      {
+        std::vector<size_t> result;
+        for(auto const & dist: owned)
+        {
+          for(auto item: util::enumerate(neighbors))
+          {
+            auto const nVertices = dist.second.CountNodes(item.value);
+            if(nVertices > 0)
+            {
+              result.push_back(nVertices);
+            }
+          }
+        }
+        return result;
       }
 
     } // parallel
