@@ -86,38 +86,44 @@ namespace hemelb
           HEMELB_MACRO(Communicator, MpiCommunicator, const);
 #       undef HEMELB_MACRO
 
-#       define HEMELB_MACRO(Name, name)                                                \
-          void Set ## Name ## Counts(std::vector<int> & input)                         \
-          {                                                                            \
-            name ## Counts = input;                                                    \
-          }                                                                            \
-          std::vector<int> const & Get ## Name ## Counts()  const                      \
-          {                                                                            \
-            return name ## Counts;                                                     \
-          }                                                                            \
-          int Get ## Name ## Counts(proc_t process)                                    \
-          {                                                                            \
-            return name ## Counts[GetNeighborIndex(process)];                          \
-          }                                                                            \
-          void Set ## Name ## Counts(proc_t process, int count)                        \
-          {                                                                            \
-            name ## Counts[GetNeighborIndex(process)] = count;                         \
-          }                                                                            \
-          /** Sets specific send object **/                                            \
-          void Set ## Name(int neighbor, Send const &input, int i)                     \
-          {                                                                            \
-            SetInternal(neighbor, input, name ## Buffer, name ## Counts, i);           \
-          }                                                                            \
-          /** Uses output iterator to fill in send or receive buffer **/               \
-          template<class ITERATOR> void insert ## Name(int neighbor, ITERATOR input)   \
-          {                                                                            \
-            insert(neighbor, input, name ## Buffer, name ## Counts);                   \
-          }                                                                            \
-          /** Uses output iterator to fill in send or receive buffer **/               \
-          void insert ## Name(int neighbor, std::vector<Name> const & input)           \
-          {                                                                            \
-            assert(input.size() == name ## Counts[GetNeighborIndex(neighbor)]);        \
-            insert(neighbor, input.begin(), name ## Buffer, name ## Counts);           \
+#       define HEMELB_MACRO(Name, name)                                                          \
+          void Set ## Name ## Counts(std::vector<int> const & input)                             \
+          {                                                                                      \
+            name ## Counts = input;                                                              \
+            auto const N = std::accumulate(name ## Counts.begin(), name ## Counts.end(), 0);     \
+            name ## Buffer.resize(N);                                                            \
+          }                                                                                      \
+          std::vector<int> const & Get ## Name ## Counts()  const                                \
+          {                                                                                      \
+            return name ## Counts;                                                               \
+          }                                                                                      \
+          int Get ## Name ## Counts(proc_t process)                                              \
+          {                                                                                      \
+            assert(name ## Counts.size() > GetNeighborIndex(process));                           \
+            return name ## Counts[GetNeighborIndex(process)];                                    \
+          }                                                                                      \
+          void Set ## Name ## Counts(proc_t process, int count)                                  \
+          {                                                                                      \
+            assert(name ## Counts.size() > GetNeighborIndex(process));                           \
+            name ## Counts[GetNeighborIndex(process)] = count;                                   \
+            auto const N = std::accumulate(name ## Counts.begin(), name ## Counts.end(), 0);     \
+            name ## Buffer.resize(N);                                                            \
+          }                                                                                      \
+          /** Sets specific send object **/                                                      \
+          void Set ## Name(int neighbor, Name const &input, int i)                               \
+          {                                                                                      \
+            SetInternal(neighbor, input, name ## Buffer, name ## Counts, i);                     \
+          }                                                                                      \
+          /** Uses output iterator to fill in send or receive buffer **/                         \
+          template<class ITERATOR> void insert ## Name(int neighbor, ITERATOR input)             \
+          {                                                                                      \
+            insert(neighbor, input, name ## Buffer, name ## Counts);                             \
+          }                                                                                      \
+          /** Uses output iterator to fill in send or receive buffer **/                         \
+          void insert ## Name(int neighbor, std::vector<Name> const & input)                     \
+          {                                                                                      \
+            assert(input.size() == name ## Counts[GetNeighborIndex(neighbor)]);                  \
+            insert(neighbor, input.begin(), name ## Buffer, name ## Counts);                     \
           }
 
           HEMELB_MACRO(Send, send);
