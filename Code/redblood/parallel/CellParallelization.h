@@ -15,6 +15,8 @@
 #include "redblood/parallel/NodeCharacterizer.h"
 #include "redblood/Cell.h"
 #include "net/MpiCommunicator.h"
+#include "net/INeighborAllToAll.h"
+#include "net/INeighborAllToAllV.h"
 
 
 namespace hemelb
@@ -58,35 +60,40 @@ namespace hemelb
       class ExchangeCells
       {
         public:
-          ExchangeCells(net::MpiCommunicator const &graphComm);
+          ExchangeCells(net::MpiCommunicator const &graphComm)
+            : cellCount(graphComm), totalNodeCount(graphComm), nodeCount(graphComm),
+              sendUUIDs(graphComm), sendPositionsAndScales(graphComm)
+          {
+          }
           //! \brief Computes and posts length of message when sending cells
           //! \param[in] owned: Node distributions of the cells owned by this process
           virtual void PostCellMessageLength(CellParallelization::NodeDistributions const& owned);
           //! \brief Post all owned cells and preps for receiving lent cells
-          virtual void PostCells() const;
+          virtual void PostCells(
+            CellParallelization::NodeDistributions const &owned, CellContainer const &cells);
           //! Receives cells
           virtual void ReceiveCells();
 
         protected:
-          //! Graph communicator
-          net::MpiCommunicator graphComm;
           //! Current step
           int step;
-          //! On-going mpi-request
-          MPI_Request lengthRequest;
 
-          //! Length message
-          struct Length
-          {
-            //! Number of cells that will be sent
-            size_t nCells;
-            //! Total number of vertices that will be sent
-            size_t nVertices;
-          };
-          //! Send buffer
-          std::vector<Length> sendLengths;
-          //! Receive buffer
-          std::vector<Length> receiveLengths;
+          //! \brief Sends number of cells
+          //! \details Using int because it meshes better with sending the number of nodes per cell.
+          net::INeighborAllToAll<int> cellCount;
+          //! Sends total number of nodes
+          net::INeighborAllToAll<size_t> totalNodeCount;
+          //! Sends number of nodes per cell
+          net::INeighborAllToAllV<size_t> nodeCount;
+          //! Sends uuids
+          net::INeighborAllToAllV<char> sendUUIDs;
+          //! Sends positions and Scale
+          net::INeighborAllToAllV<LatticeDistance> sendPositionsAndScales;
+
+          //! Number of nodes to send to each cell.
+          std::vector<size_t> GetNodesPerCells(
+              CellParallelization::NodeDistributions const &owned,
+              std::vector<int> neighbors) const;
       };
     } /* parallel */
   } /* redblood */
