@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 //
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_PARALLEL_CELLPARALLELIZATION_H
-#define HEMELB_UNITTESTS_REDBLOOD_PARALLEL_CELLPARALLELIZATION_H
+#ifndef HEMELB_UNITTESTS_NET_NEIGHBORSCOMMTESTS_H
+#define HEMELB_UNITTESTS_NET_NEIGHBORSCOMMTESTS_H
 
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
@@ -29,8 +29,8 @@ namespace hemelb
       class NeighborCommTests : public CppUnit::TestFixture
       {
           CPPUNIT_TEST_SUITE (NeighborCommTests);
-          // CPPUNIT_TEST(testInteger);
-          // CPPUNIT_TEST(testDoubles);
+          CPPUNIT_TEST(testInteger);
+          CPPUNIT_TEST(testDoubles);
           CPPUNIT_TEST(testVariableInts);
           CPPUNIT_TEST_SUITE_END();
 
