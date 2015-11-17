@@ -148,11 +148,19 @@ namespace hemelb
       return MpiCommunicator(newComm, true);
     }
 
-    std::vector<int> MpiCommunicator::GetNeighbors() const
+    int MpiCommunicator::GetNeighborsCount() const
     {
+      assert(commPtr);
       int N;
       HEMELB_MPI_CALL(MPI_Graph_neighbors_count, (*commPtr, Rank(), &N));
-      std::vector<int> result(N);
+      return N;
+    }
+
+    std::vector<int> MpiCommunicator::GetNeighbors() const
+    {
+      assert(commPtr);
+      std::vector<int> result(GetNeighborsCount());
+      result.reserve(1);
       HEMELB_MPI_CALL(MPI_Graph_neighbors, (*commPtr, Rank(), result.size(), result.data()));
       return result;
     }
