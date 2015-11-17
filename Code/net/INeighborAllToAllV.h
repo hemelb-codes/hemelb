@@ -51,13 +51,24 @@ namespace hemelb
         INeighborAllToAllV(
             MpiCommunicator const &comm,
             std::vector<int> sendCounts,
-            std::vector<int> recvCounts)
-          : INeighborAllToAll<Send, Receive>(comm.Duplicate()),
-            sendCounts(sendCounts), recvCounts(recvCounts)
+            std::vector<int> receiveCounts)
+          : INeighborAllToAll<Send, Receive>(comm), sendCounts(sendCounts),
+            receiveCounts(receiveCounts)
         {
           sendBuffer.resize(std::accumulate(sendCounts.begin(), sendCounts.end(), 0));
-          receiveBuffer.resize(std::accumulate(recvCounts.begin(), recvCounts.end(), 0));
+          receiveBuffer.resize(std::accumulate(receiveCounts.begin(), receiveCounts.end(), 0));
         };
+        //! Input is a graph communicator
+        INeighborAllToAllV(MpiCommunicator const &comm)
+          : INeighborAllToAllV<Send, Receive>
+            (
+              comm,
+              std::vector<int>(comm.GetNeighborsCount(), 0),
+              std::vector<int>(comm.GetNeighborsCount(), 0)
+            )
+        {
+        }
+
         virtual ~INeighborAllToAllV()
         {
         }
@@ -75,55 +86,48 @@ namespace hemelb
           HEMELB_MACRO(Communicator, MpiCommunicator, const);
 #       undef HEMELB_MACRO
 
-#       define HEMELB_MACRO(NAME, VAR)                                \
-          void Set ## NAME(std::vector<int> & input)                  \
-          {                                                           \
-            VAR = input;                                              \
-          }                                                           \
-          std::vector<int> const & Get ## NAME()  const               \
-          {                                                           \
-            return VAR;                                               \
-          }                                                           \
-          int Get ## NAME(proc_t process)                             \
-          {                                                           \
-            return VAR[GetNeighborIndex(process)];                    \
-          }                                                           \
-          void Set ## NAME(proc_t process, int count)                 \
-          {                                                           \
-            VAR[GetNeighborIndex(process)] = count;                   \
+#       define HEMELB_MACRO(Name, name)                                                \
+          void Set ## Name ## Counts(std::vector<int> & input)                         \
+          {                                                                            \
+            name ## Counts = input;                                                    \
+          }                                                                            \
+          std::vector<int> const & Get ## Name ## Counts()  const                      \
+          {                                                                            \
+            return name ## Counts;                                                     \
+          }                                                                            \
+          int Get ## Name ## Counts(proc_t process)                                    \
+          {                                                                            \
+            return name ## Counts[GetNeighborIndex(process)];                          \
+          }                                                                            \
+          void Set ## Name ## Counts(proc_t process, int count)                        \
+          {                                                                            \
+            name ## Counts[GetNeighborIndex(process)] = count;                         \
+          }                                                                            \
+          /** Sets specific send object **/                                            \
+          void Set ## Name(int neighbor, Send const &input, int i)                     \
+          {                                                                            \
+            SetInternal(neighbor, input, name ## Buffer, name ## Counts, i);           \
+          }                                                                            \
+          /** Uses output iterator to fill in send or receive buffer **/               \
+          template<class ITERATOR> void insert ## Name(int neighbor, ITERATOR input)   \
+          {                                                                            \
+            insert(neighbor, input, name ## Buffer, name ## Counts);                   \
+          }                                                                            \
+          /** Uses output iterator to fill in send or receive buffer **/               \
+          void insert ## Name(int neighbor, std::vector<Name> const & input)           \
+          {                                                                            \
+            assert(input.size() == name ## Counts[GetNeighborIndex(neighbor)]);        \
+            insert(neighbor, input.begin(), name ## Buffer, name ## Counts);           \
           }
 
-          HEMELB_MACRO(SendCounts, sendCounts)
-          HEMELB_MACRO(RecvCounts, recvCounts)
+          HEMELB_MACRO(Send, send);
+          HEMELB_MACRO(Receive, receive);
 #       undef HEMELB_MACRO
 
         void send();
         MPI_Status receive()
         {
           return INeighborAllToAll<Send, Receive>::receive();
-        }
-
-        //! Uses output iterator to fill in send or receive buffer
-        template<class ITERATOR> void insertSend(int neighbor, ITERATOR input)
-        {
-          insert(neighbor, input, sendBuffer, GetSendCounts());
-        }
-        //! Uses output iterator to fill in send or receive buffer
-        void insertSend(int neighbor, std::vector<Send> const & input)
-        {
-          assert(input.size() == GetSendCounts()[GetNeighborIndex(neighbor)]);
-          insert(neighbor, input.begin(), sendBuffer, GetSendCounts());
-        }
-        //! Uses output iterator to fill in send or receive buffer
-        template<class ITERATOR> void insertReceive(int neighbor, ITERATOR input)
-        {
-          insert(neighbor, input, receiveBuffer, GetRecvCounts());
-        }
-        //! Uses output iterator to fill in send or receive buffer
-        void insertReceive(int neighbor, std::vector<Send> const & input)
-        {
-          assert(input.size() == GetRecvCounts()[GetNeighborIndex(neighbor)]);
-          insert(neighbor, input, receiveBuffer, GetRecvCounts());
         }
 
       private:
@@ -136,7 +140,7 @@ namespace hemelb
         //! Number of objects to send to each proc
         std::vector<int> sendCounts;
         //! Number of objects to receive from each proc
-        std::vector<int> recvCounts;
+        std::vector<int> receiveCounts;
 
         //! Computes offsets for each neighbor
         static std::vector<int> GetOffsets(std::vector<int> const &counts);
@@ -146,6 +150,14 @@ namespace hemelb
           void insert(
               int neighbor, ITERATOR input,
               std::vector<INPUT> &container, std::vector<int> const & counts);
+
+        //! Sets give object
+        template<class INPUT>
+          void SetInternal(
+              int neighbor, INPUT const &input,
+              std::vector<INPUT> &container,
+              std::vector<int> const & counts,
+              int i);
     };
 
     template<class SEND, class RECEIVE>
@@ -178,24 +190,36 @@ namespace hemelb
       }
     }
 
+    template<class SEND, class RECEIVE> template<class INPUT>
+    void INeighborAllToAllV<SEND, RECEIVE>::SetInternal(
+        int neighbor, INPUT const &input,
+        std::vector<INPUT> &container, std::vector<int> const & counts, int i)
+    {
+      auto const index = GetNeighborIndex(neighbor);
+      assert(counts.size() > index);
+      auto const offset = std::accumulate(counts.begin(), counts.begin() + index, 0) + i;
+      assert(container.size() > offset);
+      container[i] = input;
+    }
+
     template<class SEND, class RECEIVE>
       void INeighborAllToAllV<SEND, RECEIVE>::send()
       {
         auto const sendOffsets = GetOffsets(sendCounts);
         auto const sendType = net::MpiDataType<Send>();
-        auto const recvOffsets = GetOffsets(recvCounts);
+        auto const recvOffsets = GetOffsets(receiveCounts);
         auto const recvType = net::MpiDataType<Receive>();
 
         // Makes sure buffers are valid even if not communicating anything
         sendBuffer.reserve(1);     sendCounts.reserve(1);
-        receiveBuffer.reserve(1);  recvCounts.reserve(1);
+        receiveBuffer.reserve(1);  receiveCounts.reserve(1);
 
         // Post message
         HEMELB_MPI_CALL(
           MPI_Ineighbor_alltoallv,
           (
             sendBuffer.data(), sendCounts.data(), sendOffsets.data(), sendType,
-            receiveBuffer.data(), recvCounts.data(), recvOffsets.data(), recvType,
+            receiveBuffer.data(), receiveCounts.data(), recvOffsets.data(), recvType,
             comm, &request
           )
         );
