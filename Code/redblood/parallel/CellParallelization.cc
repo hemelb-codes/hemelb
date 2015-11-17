@@ -9,6 +9,7 @@
 
 #include <set>
 #include <numeric>
+#include <algorithm>
 #include "util/Iterator.h"
 #include "net/MpiError.h"
 #include "redblood/parallel/CellParallelization.h"
@@ -19,13 +20,22 @@ namespace hemelb
   {
     namespace parallel
     {
+      namespace
+      {
+        std::vector<int> GetUUIDCounts(std::vector<int> const &cellCounts)
+        {
+          std::vector<int> result = cellCounts;
+          auto const uuidSize = [](int a)
+          {
+            return a * sizeof(boost::uuids::uuid);
+          };
+          std::transform(result.begin(), result.end(), result.begin(), uuidSize);
+          return result;
+        }
+      }
+
       void ExchangeCells::PostCellMessageLength(CellParallelization::NodeDistributions const &owned)
       {
-        if(step % 3 != 0)
-        {
-          throw Exception() << "Out-of-order Exchange cell step called\n";
-        }
-        ++step;
         auto const neighbors = cellCount.GetCommunicator().GetNeighbors();
         cellCount.GetSendBuffer().resize(neighbors.size());
         totalNodeCount.GetSendBuffer().resize(neighbors.size());
@@ -51,17 +61,21 @@ namespace hemelb
       }
 
       void ExchangeCells::PostCells(
-          CellParallelization::NodeDistributions const &owned, CellContainer const &)
+          CellParallelization::NodeDistributions const &owned, CellContainer const & cells)
       {
 
         // sets up nodeCount's send buffer
-        SetupLocalNodeCount(owned);
+        SetupLocalSendBuffers(owned, cells);
         // nodeCount's receive buffer depends on the number of incoming cell from each neigbor
         cellCount.receive();
         nodeCount.SetReceiveCounts(cellCount.GetReceiveBuffer());
-        nodeCount.send();
+        cellScales.SetReceiveCounts(cellCount.GetReceiveBuffer());
+        cellUUIDs.SetReceiveCounts(GetUUIDCounts(cellCount.GetReceiveBuffer()));
 
-        // Now set up array to receive nodes
+        nodeCount.send();
+        cellScales.send();
+        cellUUIDs.send();
+
         totalNodeCount.receive();
       }
 
@@ -69,11 +83,16 @@ namespace hemelb
       {
       }
 
-      void ExchangeCells::SetupLocalNodeCount(CellParallelization::NodeDistributions const &owned)
+      void ExchangeCells::SetupLocalSendBuffers(
+          CellParallelization::NodeDistributions const &owned, CellContainer const &cells)
       {
-        auto const neighbors = cellCount.GetCommunicator().GetNeighbors();
+        // Sets up size of messages to send to neighbors
         nodeCount.SetSendCounts(cellCount.GetSendBuffer());
-        for(auto neighbor: neighbors)
+        cellScales.SetSendCounts(cellCount.GetSendBuffer());
+
+        cellUUIDs.SetSendCounts(GetUUIDCounts(cellCount.GetSendBuffer()));
+
+        for(auto neighbor: nodeCount.GetCommunicator().GetNeighbors())
         {
           int i(0);
           for(auto const & dist: owned)
@@ -81,12 +100,30 @@ namespace hemelb
             auto const nVertices = dist.second.CountNodes(neighbor);
             if(nVertices > 0)
             {
-              nodeCount.SetSend(neighbor, nVertices, i++);
+              auto byUUID = [&dist](CellContainer::const_reference cell)
+              {
+                return cell->GetTag() == dist.first;
+              };
+              auto const i_cell = std::find_if(cells.begin(), cells.end(), byUUID);
+              assert(i_cell != cells.end());
+              AddToLocalSendBuffers(neighbor, i++, nVertices, *i_cell);
             }
           }
         }
       }
 
+      void ExchangeCells::AddToLocalSendBuffers(
+          int neighbor, int nth, int nVertices, CellContainer::const_reference cell)
+      {
+        nodeCount.SetSend(neighbor, nVertices, nth);
+        cellScales.SetSend(neighbor, cell->GetScale(), nth);
+        // boost::uuids::uuid are pod structures making up an array of unsigned chars.
+        auto const & uuid = cell->GetTag();
+        for(size_t j(0); j < sizeof(boost::uuids::uuid); ++j)
+        {
+          cellUUIDs.SetSend(neighbor, *(uuid.begin() + j), nth * sizeof(boost::uuids::uuid) + j);
+        }
+      }
     } // parallel
   } // redblood
 }  // hemelb

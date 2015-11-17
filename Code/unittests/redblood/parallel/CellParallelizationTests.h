@@ -34,14 +34,18 @@ namespace hemelb
           {
           };
 
-          net::INeighborAllToAll<int> & GetCellCount()
-          {
-            return cellCount;
-          }
-          net::INeighborAllToAll<size_t> & GetTotalNodeCount()
-          {
-            return totalNodeCount;
-          }
+#         define HEMELB_MACRO(Name, name, TYPE)   \
+            net::TYPE & Get ## Name()             \
+            {                                     \
+              return name;                        \
+            }
+
+            HEMELB_MACRO(CellCount, cellCount, INeighborAllToAll<int>);
+            HEMELB_MACRO(TotalNodeCount, totalNodeCount, INeighborAllToAll<size_t>);
+            HEMELB_MACRO(NodeCount, nodeCount, INeighborAllToAllV<size_t>);
+            HEMELB_MACRO(CellUUIDs, cellUUIDs, INeighborAllToAllV<unsigned char>);
+            HEMELB_MACRO(CellScales, cellScales, INeighborAllToAllV<LatticeDistance>);
+#         undef HEMELB_MACRO
       };
 
       using namespace hemelb::redblood;
@@ -49,13 +53,16 @@ namespace hemelb
       class CellParallelizationTests : public CppUnit::TestFixture
       {
           CPPUNIT_TEST_SUITE (CellParallelizationTests);
-          CPPUNIT_TEST(testCellSwapGetLength);
+          // CPPUNIT_TEST(testCellSwapGetLength);
+          CPPUNIT_TEST(testCellSwapPostCells);
           CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp();
           //! Test message sending number of cells and number of nodes
           void testCellSwapGetLength();
+          //! Test messages from swapping cells
+          void testCellSwapPostCells();
 
           //! Set of nodes affected by given proc
           std::set<proc_t> nodeLocation(LatticePosition const &node);
@@ -103,6 +110,7 @@ namespace hemelb
         auto cell = std::make_shared<Cell>(icoSphere(depth));
         *cell += pos - cell->GetBarycenter();
         *cell *= scale;
+        cell->SetScale(scale);
         return cell;
       }
 
@@ -152,7 +160,7 @@ namespace hemelb
         return result;
       }
 
-      //! Check that cell send each other whole cells
+      // Check that cell send each other whole cells
       void CellParallelizationTests::testCellSwapGetLength()
       {
         if(not graph)
@@ -211,6 +219,70 @@ namespace hemelb
           size_t const nVerts = receiving ? GetCell(center, 1e0, recvfrom)->GetNumberOfNodes(): 0;
           CPPUNIT_ASSERT_EQUAL(int(nCells), std::get<1>(item));
           CPPUNIT_ASSERT_EQUAL(nVerts, std::get<2>(item));
+        }
+      }
+
+      void CellParallelizationTests::testCellSwapPostCells()
+      {
+        if(not graph)
+        {
+          return;
+        }
+        size_t const sendto =
+          graph.Rank() == 0 ? std::numeric_limits<size_t>::max():
+          graph.Rank() == 1 ? 0:
+          graph.Rank() == 2 ? 1:
+          graph.Rank() == 3 ? 2: std::numeric_limits<size_t>::max();
+        auto const center = GetCenter(sendto);
+        auto const getScale = [](int process)
+        {
+          return 1.0 + 0.1 * static_cast<double>(process);
+        };
+        CellContainer cells{GetCell(center, getScale(graph.Rank()), graph.Rank())};
+        if(graph.Rank() == 0)
+        {
+          cells.clear();
+        }
+        auto const dist = GetNodeDistribution(cells);
+
+        ExchangeCells xc(graph);
+        xc.PostCellMessageLength(dist);
+        xc.PostCells(dist, cells);
+
+        // check message sizes
+        auto const neighbors = graph.GetNeighbors();
+        unsigned long const Nsend = graph.Rank() > 0 and graph.Rank() < 4 ? 1: 0;
+        unsigned long const Nreceive = graph.Rank() < 3 ? 1: 0;
+        unsigned long const uuid_size = sizeof(boost::uuids::uuid);
+        CPPUNIT_ASSERT_EQUAL(Nsend, xc.GetCellScales().GetSendBuffer().size());
+        CPPUNIT_ASSERT_EQUAL(Nreceive, xc.GetCellScales().GetReceiveBuffer().size());
+        CPPUNIT_ASSERT_EQUAL(Nsend, xc.GetNodeCount().GetSendBuffer().size());
+        CPPUNIT_ASSERT_EQUAL(Nreceive, xc.GetNodeCount().GetReceiveBuffer().size());
+        CPPUNIT_ASSERT_EQUAL(Nsend * uuid_size , xc.GetCellUUIDs().GetSendBuffer().size());
+        CPPUNIT_ASSERT_EQUAL(Nreceive * uuid_size , xc.GetCellUUIDs().GetReceiveBuffer().size());
+
+        if(cells.size() > 0)
+        {
+          auto const cell = *cells.begin();
+          auto const xcScale = xc.GetCellScales().GetSendBuffer()[0];
+          auto const xcTag = xc.GetCellUUIDs().GetSendBuffer()[0];
+          auto const xcNodes = xc.GetNodeCount().GetSendBuffer()[0];
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(cell->GetScale(), xcScale, 1e-8);
+          CPPUNIT_ASSERT_EQUAL(*cell->GetTag().begin(), xcTag);
+          CPPUNIT_ASSERT_EQUAL(cell->GetNumberOfNodes(), site_t(xcNodes));
+        }
+
+        // receive messages
+        xc.GetCellScales().receive();
+        xc.GetNodeCount().receive();
+        xc.GetCellUUIDs().receive();
+
+        if(graph.Rank() < 3)
+        {
+          auto const scale = getScale(graph.Rank() + 1);
+          auto const nNodes = GetCell(center, scale, graph.Rank() + 1)->GetNumberOfNodes();
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(scale, xc.GetCellScales().GetReceiveBuffer()[0], 1e-8);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(nNodes, xc.GetNodeCount().GetReceiveBuffer()[0], 1e-8);
         }
       }
 
