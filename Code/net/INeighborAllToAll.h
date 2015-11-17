@@ -105,6 +105,7 @@ namespace hemelb
     template<class SEND, class RECEIVE> void INeighborAllToAll<SEND, RECEIVE>::send()
     {
       assert(sendBuffer.size() % neighbors.size() == 0);
+      assert(comm);
       auto const n = sendBuffer.size() / neighbors.size();
       receiveBuffer.resize(sendBuffer.size());
 
