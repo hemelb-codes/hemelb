@@ -154,6 +154,8 @@ namespace hemelb
         //! \brief Returns graph neighberhood
         //! \details This communicator must have been created with graph
         std::vector<int> GetNeighbors() const;
+        //! \brief Number of neighbors in a graph communicator
+        int GetNeighborsCount() const;
 
       protected:
         /**
