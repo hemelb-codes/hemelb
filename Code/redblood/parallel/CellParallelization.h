@@ -90,10 +90,8 @@ namespace hemelb
           //! Sends positions and Scale
           net::INeighborAllToAllV<LatticeDistance> sendPositionsAndScales;
 
-          //! Number of nodes to send to each cell.
-          std::vector<size_t> GetNodesPerCells(
-              CellParallelization::NodeDistributions const &owned,
-              std::vector<int> neighbors) const;
+          //! Number of nodes to send to each neighboring process
+          void SetupLocalNodeCount(CellParallelization::NodeDistributions const &owned);
       };
     } /* parallel */
   } /* redblood */

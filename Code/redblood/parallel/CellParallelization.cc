@@ -53,9 +53,25 @@ namespace hemelb
       void ExchangeCells::PostCells(
           CellParallelization::NodeDistributions const &owned, CellContainer const &)
       {
-        auto const neighbors = cellCount.GetCommunicator().GetNeighbors();
 
-        // Sets up information about number of cells to send
+        // sets up nodeCount's send buffer
+        SetupLocalNodeCount(owned);
+        // nodeCount's receive buffer depends on the number of incoming cell from each neigbor
+        cellCount.receive();
+        nodeCount.SetReceiveCounts(cellCount.GetReceiveBuffer());
+        nodeCount.send();
+
+        // Now set up array to receive nodes
+        totalNodeCount.receive();
+      }
+
+      void ExchangeCells::ReceiveCells()
+      {
+      }
+
+      void ExchangeCells::SetupLocalNodeCount(CellParallelization::NodeDistributions const &owned)
+      {
+        auto const neighbors = cellCount.GetCommunicator().GetNeighbors();
         nodeCount.SetSendCounts(cellCount.GetSendBuffer());
         for(auto neighbor: neighbors)
         {
@@ -69,37 +85,6 @@ namespace hemelb
             }
           }
         }
-
-
-        cellCount.receive();
-        totalNodeCount.receive();
-
-
-        nodeCount.SetReceiveCounts(cellCount.GetReceiveBuffer());
-        nodeCount.send();
-      }
-
-      void ExchangeCells::ReceiveCells()
-      {
-      }
-
-      std::vector<size_t> ExchangeCells::GetNodesPerCells(
-              CellParallelization::NodeDistributions const &owned,
-              std::vector<int> neighbors) const
-      {
-        std::vector<size_t> result;
-        for(auto const & dist: owned)
-        {
-          for(auto item: util::enumerate(neighbors))
-          {
-            auto const nVertices = dist.second.CountNodes(item.value);
-            if(nVertices > 0)
-            {
-              result.push_back(nVertices);
-            }
-          }
-        }
-        return result;
       }
 
     } // parallel
