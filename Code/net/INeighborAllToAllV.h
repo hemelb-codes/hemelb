@@ -109,6 +109,16 @@ namespace hemelb
             auto const N = std::accumulate(name ## Counts.begin(), name ## Counts.end(), 0);     \
             name ## Buffer.resize(N);                                                            \
           }                                                                                      \
+          /** Gets nth object from/for a given neighbor  **/                                     \
+          Name const & Get ## Name(int neighbor, int i) const                                    \
+          {                                                                                      \
+            auto const index = GetNeighborIndex(neighbor);                                       \
+            assert(name ## Counts.size() > index);                                               \
+            auto const offset = std::accumulate(                                                 \
+                name ## Counts.begin(), name ## Counts.begin() + index, 0) + i;                  \
+            assert(name ## Buffer.size() > offset);                                              \
+            return name ## Buffer[i];                                                            \
+          }                                                                                      \
           /** Sets specific send object **/                                                      \
           void Set ## Name(int neighbor, Name const &input, int i)                               \
           {                                                                                      \
@@ -124,6 +134,11 @@ namespace hemelb
           {                                                                                      \
             assert(input.size() == name ## Counts[GetNeighborIndex(neighbor)]);                  \
             insert(neighbor, input.begin(), name ## Buffer, name ## Counts);                     \
+          }                                                                                      \
+          /** Fill buffer with specific input **/                                                \
+          template<class INPUT> void fill ## Name(INPUT input)                                   \
+          {                                                                                      \
+            std::fill(name ## Buffer.begin(), name ## Buffer.end(), input);                      \
           }
 
           HEMELB_MACRO(Send, send);
