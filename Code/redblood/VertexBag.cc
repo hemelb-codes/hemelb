@@ -96,6 +96,13 @@ namespace hemelb
       addVertex(vertex);
     }
 
+    VertexBag::VertexBag(boost::uuids::uuid const &tag, std::string const &templateName)
+      : CellBase(
+          std::make_shared<CellBase::CellData>(
+            Mesh(std::make_shared<MeshData>(MeshData())), tag, templateName))
+    {
+    }
+
     template <class STENCIL>
     std::map<size_t, std::shared_ptr<VertexBag>> splitVertices(
         std::shared_ptr<CellBase const> cell, geometry::LatticeData const &latticeData,
