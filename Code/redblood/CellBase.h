@@ -100,6 +100,8 @@ namespace hemelb
         Mesh const &GetTemplateMesh() const;
         //! Unmodified mesh
         std::string const &GetTemplateName() const;
+        //! Modifies template cell
+        void SetTemplateName(std::string const&);
         //! Facets for the mesh
         MeshData::Facets const &GetFacets() const;
         //! Vertices of the cell
@@ -161,6 +163,8 @@ namespace hemelb
 
         //! A unique identifier for the cell
         boost::uuids::uuid const & GetTag() const;
+        //! Sets the cell's unique identifier
+        void SetTag(boost::uuids::uuid const & uuid);
 
         //! Computes average edge length of cell
         double GetAverageEdgeLength() const;
@@ -198,8 +202,6 @@ namespace hemelb
     void writeVTKMesh(
         std::string const &, std::shared_ptr<CellBase const>, util::UnitConverter const&);
 
-    // Advanced declaration
-    class VertexBag;
     // Holds the data of CellBase
     // Although its own data members are public, it can only be accessed by CellBase and derived
     // classes. So encapsulation is not broken. Indeed, the definition of this class should not be
@@ -233,6 +235,13 @@ namespace hemelb
                 scale(c.scale), tag(std::move(c.tag)), templateName(std::move(c.templateName))
         {
         }
+        // Constructor that can copy the tag
+        CellData(
+            Mesh const &origMesh, boost::uuids::uuid const &uuid, std::string const &templateName) :
+            templateMesh(origMesh), scale(1e0), tag(uuid), templateName(templateName)
+        {
+          assert(scale > 1e-12);
+        }
         //! Holds list of vertices for this cell
         MeshData::Vertices vertices;
         //! Unmodified original mesh
@@ -240,24 +249,12 @@ namespace hemelb
         //! Scale factor for the template;
         LatticeDistance scale;
         //! Uuid tag
-        boost::uuids::uuid const tag;
+        boost::uuids::uuid tag;
         //! \brief tag of the cell from which this one was cloned
         //! \details In practice, all cells are generated from a few templates. This tag identifies
         //! that template. If not given on input, then it is set to "default"
         std::string templateName;
 
-      private:
-        // Gives access to special constructor for VertexBag
-        friend class VertexBag;
-        // Constructor that can copy the tag
-        // Should only be used by people in the know.
-        // It breaks the unicity of the cell.
-        CellData(Mesh const &origMesh, boost::uuids::uuid const &uuid,
-                 std::string const &templateName) :
-            templateMesh(origMesh), scale(1e0), tag(uuid), templateName(templateName)
-        {
-          assert(scale > 1e-12);
-        }
     };
   }
 } // namespace hemelb::redblood
