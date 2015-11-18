@@ -58,6 +58,10 @@ namespace hemelb
     {
       return data->templateName;
     }
+    void CellBase::SetTemplateName(std::string const& name)
+    {
+      data->templateName = name;
+    }
     //! Facets for the mesh
     MeshData::Facets const &CellBase::GetFacets() const
     {
@@ -139,6 +143,10 @@ namespace hemelb
     boost::uuids::uuid const & CellBase::GetTag() const
     {
       return data->tag;
+    }
+    void CellBase::SetTag(boost::uuids::uuid const & uuid)
+    {
+      data->tag = uuid;
     }
 
     double CellBase::GetAverageEdgeLength() const
