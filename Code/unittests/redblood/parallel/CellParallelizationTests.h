@@ -41,10 +41,13 @@ namespace hemelb
             }
 
             HEMELB_MACRO(CellCount, cellCount, INeighborAllToAll<int>);
-            HEMELB_MACRO(TotalNodeCount, totalNodeCount, INeighborAllToAll<size_t>);
+            HEMELB_MACRO(TotalNodeCount, totalNodeCount, INeighborAllToAll<int>);
             HEMELB_MACRO(NodeCount, nodeCount, INeighborAllToAllV<size_t>);
-            HEMELB_MACRO(CellUUIDs, cellUUIDs, INeighborAllToAllV<unsigned char>);
             HEMELB_MACRO(CellScales, cellScales, INeighborAllToAllV<LatticeDistance>);
+            HEMELB_MACRO(OwnerIDs, ownerIDs, INeighborAllToAllV<int>);
+            HEMELB_MACRO(CellUUIDs, cellUUIDs, INeighborAllToAllV<unsigned char>);
+            HEMELB_MACRO(NodePositions, nodePositions, INeighborAllToAllV<LatticeDistance>);
+            HEMELB_MACRO(TemplateNames, templateNames, INeighborAllToAllV<char>);
 #         undef HEMELB_MACRO
       };
 
@@ -53,8 +56,9 @@ namespace hemelb
       class CellParallelizationTests : public CppUnit::TestFixture
       {
           CPPUNIT_TEST_SUITE (CellParallelizationTests);
-          // CPPUNIT_TEST(testCellSwapGetLength);
+          CPPUNIT_TEST(testCellSwapGetLength);
           CPPUNIT_TEST(testCellSwapPostCells);
+          CPPUNIT_TEST(testSingleCellSwap);
           CPPUNIT_TEST_SUITE_END();
 
         public:
@@ -63,6 +67,8 @@ namespace hemelb
           void testCellSwapGetLength();
           //! Test messages from swapping cells
           void testCellSwapPostCells();
+          //! Test messages from swapping cells
+          void testSingleCellSwap();
 
           //! Set of nodes affected by given proc
           std::set<proc_t> nodeLocation(LatticePosition const &node);
@@ -76,7 +82,14 @@ namespace hemelb
 
           //! Get cell centered at given position
           std::shared_ptr<Cell> GetCell(
-              LatticePosition const &pos, Dimensionless scale=1e0, unsigned int depth=0) const;
+              LatticePosition const &pos, boost::uuids::uuid const & uuid,
+              Dimensionless scale=1e0, unsigned int depth=0) const;
+          //! Get cell centered at given position
+          std::shared_ptr<Cell> GetCell(
+              LatticePosition const &pos, Dimensionless scale=1e0, unsigned int depth=0) const
+          {
+            return GetCell(pos, boost::uuids::uuid(), scale, depth);
+          }
           //! Get cell centered at given position
           std::shared_ptr<Cell> GetCell(Dimensionless scale=1e0, unsigned int depth=0) const
           {
@@ -105,12 +118,14 @@ namespace hemelb
 
       //! Get cell centered at given position
       std::shared_ptr<Cell> CellParallelizationTests::GetCell(
-          LatticePosition const &pos, Dimensionless scale, unsigned int depth) const
+          LatticePosition const &pos, boost::uuids::uuid const & uuid,
+          Dimensionless scale, unsigned int depth) const
       {
         auto cell = std::make_shared<Cell>(icoSphere(depth));
         *cell += pos - cell->GetBarycenter();
         *cell *= scale;
         cell->SetScale(scale);
+        cell->SetTag(uuid);
         return cell;
       }
 
@@ -183,7 +198,7 @@ namespace hemelb
         ExchangeCells xc(graph);
         CPPUNIT_ASSERT(xc.GetCellCount().GetCommunicator());
         CPPUNIT_ASSERT(xc.GetTotalNodeCount().GetCommunicator());
-        xc.PostCellMessageLength(dist);
+        xc.PostCellMessageLength(dist, cells);
 
         // Checks message is correct
         auto const &sendCellCount = xc.GetCellCount().GetSendBuffer();
@@ -197,7 +212,7 @@ namespace hemelb
           size_t const nCells = sending ? 1: 0;
           size_t const nVertices = sending ? (*cells.begin())->GetNumberOfNodes(): 0;
           CPPUNIT_ASSERT_EQUAL(int(nCells), std::get<1>(item));
-          CPPUNIT_ASSERT_EQUAL(nVertices, std::get<2>(item));
+          CPPUNIT_ASSERT_EQUAL(int(nVertices), int(std::get<2>(item)));
         }
 
         // Wait for end of request and check received lengths
@@ -218,7 +233,7 @@ namespace hemelb
           size_t const nCells = receiving ? 1: 0;
           size_t const nVerts = receiving ? GetCell(center, 1e0, recvfrom)->GetNumberOfNodes(): 0;
           CPPUNIT_ASSERT_EQUAL(int(nCells), std::get<1>(item));
-          CPPUNIT_ASSERT_EQUAL(nVerts, std::get<2>(item));
+          CPPUNIT_ASSERT_EQUAL(int(nVerts), int(std::get<2>(item)));
         }
       }
 
@@ -246,7 +261,7 @@ namespace hemelb
         auto const dist = GetNodeDistribution(cells);
 
         ExchangeCells xc(graph);
-        xc.PostCellMessageLength(dist);
+        xc.PostCellMessageLength(dist, cells);
         xc.PostCells(dist, cells);
 
         // check message sizes
@@ -275,7 +290,10 @@ namespace hemelb
         // receive messages
         xc.GetCellScales().receive();
         xc.GetNodeCount().receive();
+        xc.GetOwnerIDs().receive();
         xc.GetCellUUIDs().receive();
+        xc.GetNodePositions().receive();
+        xc.GetTemplateNames().receive();
 
         if(graph.Rank() < 3)
         {
@@ -283,6 +301,63 @@ namespace hemelb
           auto const nNodes = GetCell(center, scale, graph.Rank() + 1)->GetNumberOfNodes();
           CPPUNIT_ASSERT_DOUBLES_EQUAL(scale, xc.GetCellScales().GetReceiveBuffer()[0], 1e-8);
           CPPUNIT_ASSERT_DOUBLES_EQUAL(nNodes, xc.GetNodeCount().GetReceiveBuffer()[0], 1e-8);
+        }
+      }
+
+      void CellParallelizationTests::testSingleCellSwap()
+      {
+        if(not graph)
+        {
+          return;
+        }
+        auto const givenCell = [this](size_t process)
+        {
+          size_t const sendto =
+            process > 0 and process < 4 ? process - 1: std::numeric_limits<size_t>::max();
+          auto const center = GetCenter(sendto);
+          auto const scale = 1.0 + 0.1 * static_cast<double>(process);
+          boost::uuids::uuid uuid;
+          std::fill(uuid.begin(), uuid.end(), static_cast<char>(process));
+          auto result = GetCell(center, uuid, scale, process);
+          std::ostringstream sstr; sstr << process;
+          result->SetTemplateName(sstr.str());
+          return result;
+        };
+
+        auto templates = std::make_shared<TemplateCellContainer>(
+            TemplateCellContainer{{"1", givenCell(1)}, {"2", givenCell(2)}, {"3", givenCell(3)}});
+
+        CellContainer owned{givenCell(graph.Rank())};
+        std::map<proc_t, CellContainer> lent;
+        auto const dist = GetNodeDistribution(owned);
+
+        ExchangeCells xc(graph);
+        xc.PostCellMessageLength(dist, owned);
+        xc.PostCells(dist, owned);
+        xc.ReceiveCells(owned, lent, templates);
+
+        if(graph.Rank() < 3)
+        {
+          CPPUNIT_ASSERT_EQUAL(size_t(1), lent.size());
+          CPPUNIT_ASSERT_EQUAL(size_t(1), lent.begin()->second.size());
+          HEMELB_CAPTURE2(proc_t(graph.Rank() + 1), lent.begin()->first);
+          CPPUNIT_ASSERT_EQUAL(proc_t(graph.Rank() + 1), lent.begin()->first);
+          auto const actual = *lent.begin()->second.begin();
+          auto const expected = givenCell(graph.Rank()+1);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(expected->GetScale(), actual->GetScale(), 1e-8);
+          CPPUNIT_ASSERT_EQUAL(expected->GetTemplateName(), actual->GetTemplateName());
+          CPPUNIT_ASSERT(expected->GetTag() == actual->GetTag());
+          CPPUNIT_ASSERT_EQUAL(expected->GetNumberOfNodes(), actual->GetNumberOfNodes());
+          for(auto item: util::zip(expected->GetVertices(), actual->GetVertices()))
+          {
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).x, std::get<1>(item).x, 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).y, std::get<1>(item).y, 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).z, std::get<1>(item).z, 1e-8);
+          }
+        }
+        else
+        {
+          CPPUNIT_ASSERT_EQUAL(size_t(0), lent.size());
         }
       }
 

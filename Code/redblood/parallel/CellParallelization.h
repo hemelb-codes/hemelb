@@ -60,26 +60,38 @@ namespace hemelb
       class ExchangeCells
       {
         public:
+          typedef CellParallelization::NodeDistributions NodeDistributions;
+
           ExchangeCells(net::MpiCommunicator const &graphComm)
-            : cellCount(graphComm), totalNodeCount(graphComm), nodeCount(graphComm),
+            : cellCount(graphComm), totalNodeCount(graphComm), nameLengths(graphComm),
+              templateNames(graphComm), ownerIDs(graphComm), nodeCount(graphComm),
               cellUUIDs(graphComm), cellScales(graphComm), nodePositions(graphComm)
           {
           }
           //! \brief Computes and posts length of message when sending cells
           //! \param[in] owned: Node distributions of the cells owned by this process
-          virtual void PostCellMessageLength(CellParallelization::NodeDistributions const& owned);
+          virtual void PostCellMessageLength(
+              NodeDistributions const& distributions, CellContainer const &cells);
           //! \brief Post all owned cells and preps for receiving lent cells
           virtual void PostCells(
-            CellParallelization::NodeDistributions const &owned, CellContainer const &cells);
-          //! Receives cells
-          virtual void ReceiveCells();
+              NodeDistributions const &distributions, CellContainer const &cells);
+          //! Receives messages, reconstructs cells, updates structures and containers
+          virtual void ReceiveCells(
+              CellContainer &owned, std::map<proc_t, CellContainer> &lent,
+              std::shared_ptr<TemplateCellContainer const> const &templateCells);
 
         protected:
           //! \brief Sends number of cells
           //! \details Using int because it meshes better with sending the number of nodes per cell.
           net::INeighborAllToAll<int> cellCount;
           //! Sends total number of nodes
-          net::INeighborAllToAll<size_t> totalNodeCount;
+          net::INeighborAllToAll<int> totalNodeCount;
+          //! Send size of message containing template mesh names
+          net::INeighborAllToAll<int> nameLengths;
+          //! Names of the template meshes
+          net::INeighborAllToAllV<char> templateNames;
+          //! ID of owner process
+          net::INeighborAllToAllV<int> ownerIDs;
           //! Sends number of nodes per cell
           net::INeighborAllToAllV<size_t> nodeCount;
           //! Cell uuids
@@ -91,9 +103,17 @@ namespace hemelb
 
           //! Number of nodes to send to each neighboring process
           void SetupLocalSendBuffers(
-              CellParallelization::NodeDistributions const &owned, CellContainer const &cells);
+              NodeDistributions const &distributions, CellContainer const &cells);
+          //! Adds data to local buffers, knowning the neighbor and the cell
           void AddToLocalSendBuffers(
-              int neighbor, int nth, int nVertices, CellContainer::const_reference cell);
+              int neighbor, int nth, int nVertices,
+              CellContainer::const_reference cell,
+              NodeCharacterizer::Process2NodesMap::mapped_type const& indices);
+          //! Recreates a given cell from messages
+          CellContainer::value_type RecreateLentCell(size_t i);
+          //! Recreates a given cell from messages
+          CellContainer::value_type RecreateOwnedCell(
+              size_t i, std::shared_ptr<TemplateCellContainer const> const &templateCells);
       };
 
     } /* parallel */
