@@ -60,6 +60,7 @@ namespace hemelb
           CPPUNIT_TEST(testCellSwapGetLength);
           CPPUNIT_TEST(testCellSwapPostCells);
           CPPUNIT_TEST(testSingleCellSwapWithRetainedOwnership);
+          CPPUNIT_TEST(testSingleCellSwap);
           CPPUNIT_TEST_SUITE_END();
 
         public:
@@ -68,8 +69,10 @@ namespace hemelb
           void testCellSwapGetLength();
           //! Test messages from swapping cells
           void testCellSwapPostCells();
-          //! Test messages from swapping cells
+          //! Test messages from swapping cells while retaining ownership
           void testSingleCellSwapWithRetainedOwnership();
+          //! Test messages from swapping cells while retaining ownership
+          void testSingleCellSwap();
 
           //! Set of nodes affected by given proc
           std::set<proc_t> nodeLocation(LatticePosition const &node);
@@ -91,6 +94,7 @@ namespace hemelb
           {
             return GetCell(pos, boost::uuids::uuid(), scale, depth);
           }
+          std::shared_ptr<Cell> GivenCell(size_t i) const;
           //! Get cell centered at given position
           std::shared_ptr<Cell> GetCell(Dimensionless scale=1e0, unsigned int depth=0) const
           {
@@ -132,6 +136,20 @@ namespace hemelb
         cell->SetTag(uuid);
         return cell;
       }
+
+      std::shared_ptr<Cell> CellParallelizationTests::GivenCell(size_t process) const
+      {
+        size_t const sendto =
+          process > 0 and process < 4 ? process - 1: std::numeric_limits<size_t>::max();
+        auto const center = GetCenter(sendto);
+        auto const scale = 1.0 + 0.1 * static_cast<double>(process);
+        boost::uuids::uuid uuid;
+        std::fill(uuid.begin(), uuid.end(), static_cast<char>(process));
+        auto result = GetCell(center, uuid, scale, process);
+        std::ostringstream sstr; sstr << process;
+        result->SetTemplateName(sstr.str());
+        return result;
+      };
 
       CellParallelization::NodeDistributions CellParallelizationTests::GetNodeDistribution(
           CellContainer const & ownedCells) const
@@ -333,24 +351,11 @@ namespace hemelb
         {
           return;
         }
-        auto const givenCell = [this](size_t process)
-        {
-          size_t const sendto =
-            process > 0 and process < 4 ? process - 1: std::numeric_limits<size_t>::max();
-          auto const center = GetCenter(sendto);
-          auto const scale = 1.0 + 0.1 * static_cast<double>(process);
-          boost::uuids::uuid uuid;
-          std::fill(uuid.begin(), uuid.end(), static_cast<char>(process));
-          auto result = GetCell(center, uuid, scale, process);
-          std::ostringstream sstr; sstr << process;
-          result->SetTemplateName(sstr.str());
-          return result;
-        };
 
         auto templates = std::make_shared<TemplateCellContainer>(
-            TemplateCellContainer{{"1", givenCell(1)}, {"2", givenCell(2)}, {"3", givenCell(3)}});
+            TemplateCellContainer{{"1", GivenCell(1)}, {"2", GivenCell(2)}, {"3", GivenCell(3)}});
 
-        CellContainer owned{givenCell(graph.Rank())};
+        CellContainer owned{GivenCell(graph.Rank())};
         std::map<proc_t, CellContainer> lent;
         auto const dist = GetNodeDistribution(owned);
 
@@ -370,7 +375,7 @@ namespace hemelb
           HEMELB_CAPTURE2(proc_t(graph.Rank() + 1), lent.begin()->first);
           CPPUNIT_ASSERT_EQUAL(proc_t(graph.Rank() + 1), lent.begin()->first);
           auto const actual = *lent.begin()->second.begin();
-          auto const expected = givenCell(graph.Rank()+1);
+          auto const expected = GivenCell(graph.Rank()+1);
           CPPUNIT_ASSERT_DOUBLES_EQUAL(expected->GetScale(), actual->GetScale(), 1e-8);
           CPPUNIT_ASSERT_EQUAL(expected->GetTemplateName(), actual->GetTemplateName());
           CPPUNIT_ASSERT(expected->GetTag() == actual->GetTag());
@@ -388,6 +393,53 @@ namespace hemelb
         }
       }
 
+      void CellParallelizationTests::testSingleCellSwap()
+      {
+        if(not graph)
+        {
+          return;
+        }
+
+        auto templates = std::make_shared<TemplateCellContainer>(
+            TemplateCellContainer{{"1", GivenCell(1)}, {"2", GivenCell(2)}, {"3", GivenCell(3)}});
+
+        CellContainer owned{GivenCell(graph.Rank())};
+        std::map<proc_t, CellContainer> lent;
+        auto const dist = GetNodeDistribution(owned);
+
+        ExchangeCells xc(graph);
+        xc.PostCellMessageLength(dist, owned);
+        auto const ownership = [this](CellContainer::const_reference cell)
+        {
+          return Ownership(cell);
+        };
+        xc.PostCells(dist, owned, ownership);
+        xc.ReceiveCells(owned, lent, templates);
+
+        CPPUNIT_ASSERT_EQUAL(size_t(0), lent.size());
+        // if(graph.Rank() < 3)
+        // {
+        //   CPPUNIT_ASSERT_EQUAL(size_t(1), lent.size());
+        //   CPPUNIT_ASSERT_EQUAL(size_t(1), lent.begin()->second.size());
+        //   HEMELB_CAPTURE2(proc_t(graph.Rank() + 1), lent.begin()->first);
+        //   CPPUNIT_ASSERT_EQUAL(proc_t(graph.Rank() + 1), lent.begin()->first);
+        //   auto const actual = *lent.begin()->second.begin();
+        //   auto const expected = GivenCell(graph.Rank()+1);
+        //   CPPUNIT_ASSERT_DOUBLES_EQUAL(expected->GetScale(), actual->GetScale(), 1e-8);
+        //   CPPUNIT_ASSERT_EQUAL(expected->GetTemplateName(), actual->GetTemplateName());
+        //   CPPUNIT_ASSERT(expected->GetTag() == actual->GetTag());
+        //   CPPUNIT_ASSERT_EQUAL(expected->GetNumberOfNodes(), actual->GetNumberOfNodes());
+        //   for(auto item: util::zip(expected->GetVertices(), actual->GetVertices()))
+        //   {
+        //     CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).x, std::get<1>(item).x, 1e-8);
+        //     CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).y, std::get<1>(item).y, 1e-8);
+        //     CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).z, std::get<1>(item).z, 1e-8);
+        //   }
+        // }
+        // else
+        // {
+        // }
+      }
       CPPUNIT_TEST_SUITE_REGISTRATION (CellParallelizationTests);
     }
   }
