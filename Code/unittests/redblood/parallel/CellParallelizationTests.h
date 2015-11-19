@@ -59,7 +59,7 @@ namespace hemelb
           CPPUNIT_TEST_SUITE (CellParallelizationTests);
           CPPUNIT_TEST(testCellSwapGetLength);
           CPPUNIT_TEST(testCellSwapPostCells);
-          CPPUNIT_TEST(testSingleCellSwap);
+          CPPUNIT_TEST(testSingleCellSwapWithRetainedOwnership);
           CPPUNIT_TEST_SUITE_END();
 
         public:
@@ -69,7 +69,7 @@ namespace hemelb
           //! Test messages from swapping cells
           void testCellSwapPostCells();
           //! Test messages from swapping cells
-          void testSingleCellSwap();
+          void testSingleCellSwapWithRetainedOwnership();
 
           //! Set of nodes affected by given proc
           std::set<proc_t> nodeLocation(LatticePosition const &node);
@@ -96,6 +96,9 @@ namespace hemelb
           {
             return GetCell(GetCenter(graph ? graph.Rank(): 0), scale, depth);
           }
+
+          //! Id of owning cell
+          int Ownership(CellContainer::const_reference cell) const;
 
         protected:
           LatticeDistance const radius = 5;
@@ -174,6 +177,19 @@ namespace hemelb
           }
         }
         return result;
+      }
+
+      int CellParallelizationTests::Ownership(CellContainer::const_reference cell) const
+      {
+        std::vector<LatticeDistance> distances;
+        auto const ranks = graph.RankMap(net::MpiCommunicator::World());
+        auto const barycenter = cell->GetBarycenter();
+        for(size_t i(0); i < graph.Size(); ++i)
+        {
+          auto const d = (GetCenter(ranks.find(i)->second) - barycenter).GetMagnitudeSquared();
+          distances.push_back(d);
+        };
+        return std::min_element(distances.begin(), distances.end()) - distances.begin();
       }
 
       // Check that cell send each other whole cells
@@ -264,7 +280,12 @@ namespace hemelb
 
         ExchangeCells xc(graph);
         xc.PostCellMessageLength(dist, cells);
-        xc.PostCells(dist, cells);
+
+        auto keepOwnership = [](CellContainer::const_reference)
+        {
+          return net::MpiCommunicator::World();
+        };
+        xc.PostCells(dist, cells, keepOwnership);
 
         // check message sizes
         auto const neighbors = graph.GetNeighbors();
@@ -306,7 +327,7 @@ namespace hemelb
         }
       }
 
-      void CellParallelizationTests::testSingleCellSwap()
+      void CellParallelizationTests::testSingleCellSwapWithRetainedOwnership()
       {
         if(not graph)
         {
@@ -335,7 +356,11 @@ namespace hemelb
 
         ExchangeCells xc(graph);
         xc.PostCellMessageLength(dist, owned);
-        xc.PostCells(dist, owned);
+        auto keepOwnership = [](CellContainer::const_reference)
+        {
+          return net::MpiCommunicator::World().Rank();
+        };
+        xc.PostCells(dist, owned, keepOwnership);
         xc.ReceiveCells(owned, lent, templates);
 
         if(graph.Rank() < 3)

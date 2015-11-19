@@ -10,6 +10,7 @@
 #include <set>
 #include <numeric>
 #include <algorithm>
+#include <functional>
 #include "util/Iterator.h"
 #include "net/MpiError.h"
 #include "redblood/parallel/CellParallelization.h"
@@ -115,11 +116,26 @@ namespace hemelb
       }
 
       void ExchangeCells::PostCells(
-          NodeDistributions const &distributions, CellContainer const & owned)
+          NodeDistributions const &distributions, CellContainer const & owned,
+          Ownership const &ownership)
       {
+        auto const rankMap = net::MpiCommunicator::World().RankMap(cellCount.GetCommunicator());
+        std::map<boost::uuids::uuid, proc_t> id;
+        auto const getID = [&rankMap, &ownership](CellContainer::const_reference cell)
+        {
+          auto const worldIndex = ownership(cell);
+          return std::make_pair(cell->GetTag(), rankMap.find(worldIndex)->second);
+        };
+        std::transform(owned.begin(), owned.end(), std::inserter(id, id.begin()), getID);
+        PostCells(distributions, owned, id);
+      }
 
+      void ExchangeCells::PostCells(
+          NodeDistributions const &distributions, CellContainer const & owned,
+          std::map<boost::uuids::uuid, proc_t> const &ownership)
+      {
         // sets up nodeCount's send buffer
-        SetupLocalSendBuffers(distributions, owned);
+        SetupLocalSendBuffers(distributions, owned, ownership);
 
         // nodeCount's receive buffer depends on the number of incoming cell from each neigbor
         cellCount.receive();
@@ -207,7 +223,8 @@ namespace hemelb
       }
 
       void ExchangeCells::SetupLocalSendBuffers(
-          NodeDistributions const &distributions, CellContainer const &owned)
+          NodeDistributions const &distributions, CellContainer const &owned,
+          std::map<boost::uuids::uuid, proc_t> const &ownership)
       {
         // Sets up size of messages to send to neighbors
         nodeCount.SetSendCounts(cellCount.GetSendBuffer());
@@ -218,6 +235,7 @@ namespace hemelb
         templateNames.SetSendCounts(nameLengths.GetSendBuffer());
         templateNames.fillSend('\0');
 
+        auto const thisRank = nodeCount.GetCommunicator().Rank();
         for(auto neighbor: nodeCount.GetCommunicator().GetNeighbors())
         {
           int i(0);
@@ -227,35 +245,26 @@ namespace hemelb
             if(nVertices > 0)
             {
               auto const cell = cellFromTag(dist.first, owned);
-              AddToLocalSendBuffers(neighbor, i++, nVertices, cell, dist.second[neighbor]);
+              auto const owner = ownership.find(dist.first)->second;
+              owner == thisRank ?
+                AddToLocalSendBuffers(neighbor, i++, nVertices, owner, cell, dist.second[neighbor]):
+                AddToLocalSendBuffers(neighbor, i++, owner, cell);
             }
           }
         }
       }
 
-      void ExchangeCells::AddToLocalSendBuffers(
-          int neighbor, int nth, int nVertices,
-          CellContainer::const_reference cell,
-          NodeCharacterizer::Process2NodesMap::mapped_type const & indices)
+      void ExchangeCells::AddToLocalSendBuffersAllButNodes(
+          int neighbor, int nth, proc_t ownerID, CellContainer::const_reference cell)
       {
         // For now, onwership is left with sending process
-        nodeCount.SetSend(neighbor, nVertices, nth);
         cellScales.SetSend(neighbor, cell->GetScale(), nth);
-        ownerIDs.SetSend(neighbor, ownerIDs.GetCommunicator().Rank(), nth);
+        ownerIDs.SetSend(neighbor, ownerID, nth);
         // boost::uuids::uuid are pod structures making up an array of unsigned chars.
         auto const & uuid = cell->GetTag();
         for(size_t j(0); j < sizeof(boost::uuids::uuid); ++j)
         {
           cellUUIDs.SetSend(neighbor, *(uuid.begin() + j), nth * sizeof(boost::uuids::uuid) + j);
-        }
-        size_t node_offset(0);
-        for(int j(0); j < nth; ++j, node_offset += 3 * nodeCount.GetSend(neighbor, j));
-        for(auto const item: util::enumerate(indices))
-        {
-          auto const& node = cell->GetVertices()[item.value];
-          nodePositions.SetSend(neighbor, node.x, node_offset + item.index * 3);
-          nodePositions.SetSend(neighbor, node.y, node_offset + item.index * 3 + 1);
-          nodePositions.SetSend(neighbor, node.z, node_offset + item.index * 3 + 2);
         }
         // Copy template mesh name into message buffer
         // First, finds where out where we are in the stream.
@@ -267,6 +276,40 @@ namespace hemelb
         for(auto const item: util::enumerate(cell->GetTemplateName()))
         {
           templateNames.SetSend(neighbor, item.value, name_offset + item.index);
+        }
+      }
+
+      void ExchangeCells::AddToLocalSendBuffers(
+          int neighbor, int nth, proc_t ownerID, CellContainer::const_reference cell)
+      {
+        AddToLocalSendBuffersAllButNodes(neighbor, nth, ownerID, cell);
+        nodeCount.SetSend(neighbor, cell->GetNumberOfNodes(), nth);
+        size_t node_offset(0);
+        for(int j(0); j < nth; ++j, node_offset += 3 * nodeCount.GetSend(neighbor, j));
+        for(auto const item: util::enumerate(cell->GetVertices()))
+        {
+          nodePositions.SetSend(neighbor, item.value.x, node_offset + item.index * 3);
+          nodePositions.SetSend(neighbor, item.value.y, node_offset + item.index * 3 + 1);
+          nodePositions.SetSend(neighbor, item.value.z, node_offset + item.index * 3 + 2);
+        }
+      }
+
+      void ExchangeCells::AddToLocalSendBuffers(
+          int neighbor, int nth, int nVertices, proc_t ownerID,
+          CellContainer::const_reference cell,
+          NodeCharacterizer::Process2NodesMap::mapped_type const & indices)
+      {
+        AddToLocalSendBuffersAllButNodes(neighbor, nth, ownerID, cell);
+        // For now, onwership is left with sending process
+        nodeCount.SetSend(neighbor, nVertices, nth);
+        size_t node_offset(0);
+        for(int j(0); j < nth; ++j, node_offset += 3 * nodeCount.GetSend(neighbor, j));
+        for(auto const item: util::enumerate(indices))
+        {
+          auto const& node = cell->GetVertices()[item.value];
+          nodePositions.SetSend(neighbor, node.x, node_offset + item.index * 3);
+          nodePositions.SetSend(neighbor, node.y, node_offset + item.index * 3 + 1);
+          nodePositions.SetSend(neighbor, node.z, node_offset + item.index * 3 + 2);
         }
       }
     } // parallel

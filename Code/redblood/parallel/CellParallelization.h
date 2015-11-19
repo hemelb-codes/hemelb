@@ -61,6 +61,7 @@ namespace hemelb
       {
         public:
           typedef CellParallelization::NodeDistributions NodeDistributions;
+          typedef std::function<int(CellContainer::const_reference)> Ownership;
 
           ExchangeCells(net::MpiCommunicator const &graphComm)
             : cellCount(graphComm), totalNodeCount(graphComm), nameLengths(graphComm),
@@ -73,8 +74,21 @@ namespace hemelb
           virtual void PostCellMessageLength(
               NodeDistributions const& distributions, CellContainer const &cells);
           //! \brief Post all owned cells and preps for receiving lent cells
+          //! \param[in] distributions tells us for each proc the list of nodes it requires
+          //! \param[in] cells a container of cells owned and managed by this process
+          //! \param[in] ownership a function to ascertain ownership. It should return the rank of
+          //! the owning process in the *world* communicator, according to the position in the cell.
           virtual void PostCells(
-              NodeDistributions const &distributions, CellContainer const &cells);
+              NodeDistributions const &distributions, CellContainer const &cells,
+              Ownership const & ownership);
+          //! \brief Post all owned cells and preps for receiving lent cells
+          //! \param[in] distributions tells us for each proc the list of nodes it requires
+          //! \param[in] cells a container of cells owned and managed by this process
+          //! \param[in] ownership id of the process owning the cell, corresponding to the rank in
+          //! the graph communicator used to build this object.
+          virtual void PostCells(
+              NodeDistributions const &distributions, CellContainer const &cells,
+              std::map<boost::uuids::uuid, proc_t> const & ownership);
           //! Receives messages, reconstructs cells, updates structures and containers
           virtual void ReceiveCells(
               CellContainer &owned, std::map<proc_t, CellContainer> &lent,
@@ -103,12 +117,19 @@ namespace hemelb
 
           //! Number of nodes to send to each neighboring process
           void SetupLocalSendBuffers(
-              NodeDistributions const &distributions, CellContainer const &cells);
+              NodeDistributions const &distributions, CellContainer const &cells,
+              std::map<boost::uuids::uuid, proc_t> const & ownership);
           //! Adds data to local buffers, knowning the neighbor and the cell
           void AddToLocalSendBuffers(
-              int neighbor, int nth, int nVertices,
+              int neighbor, int nth, int nVertices, proc_t owner,
               CellContainer::const_reference cell,
               NodeCharacterizer::Process2NodesMap::mapped_type const& indices);
+          //! Adds local data and send all nodes
+          void AddToLocalSendBuffers(
+              int neighbor, int nth, proc_t ownerID, CellContainer::const_reference cell);
+          //! Adds local data exept nodes
+          void AddToLocalSendBuffersAllButNodes(
+              int neighbor, int nth, proc_t ownerID, CellContainer::const_reference cell);
           //! Recreates a given cell from messages
           CellContainer::value_type RecreateLentCell(size_t i);
           //! Recreates a given cell from messages
