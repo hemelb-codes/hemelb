@@ -32,6 +32,7 @@ namespace hemelb
           CPPUNIT_TEST(testInteger);
           CPPUNIT_TEST(testDoubles);
           CPPUNIT_TEST(testVariableInts);
+          CPPUNIT_TEST(testRankMap);
           CPPUNIT_TEST_SUITE_END();
 
         public:
@@ -43,6 +44,8 @@ namespace hemelb
           //! \brief Sends different number of ints from each proc
           //! \details Each proc expects to know how many it is gettin from each before hand
           void testVariableInts();
+          //! Tests mapping of ranks from one comm to another
+          void testRankMap();
 
         protected:
           net::MpiCommunicator graph;
@@ -190,6 +193,20 @@ namespace hemelb
         }
 
       }
+
+      void NeighborCommTests::testRankMap()
+      {
+        int const N = graph.Size();
+        auto newRank = [N](int i) { return (i + 5) % N; };
+        auto const newComm = graph.Split(0, newRank(graph.Rank()));
+        auto const rankMap = newComm.RankMap(graph);
+        for(int i(0); i < graph.Size(); ++i)
+        {
+          CPPUNIT_ASSERT_EQUAL(size_t(1), rankMap.count(newRank(i)));
+          CPPUNIT_ASSERT_EQUAL(i, rankMap.find(newRank(i))->second);
+        }
+      }
+
 
       CPPUNIT_TEST_SUITE_REGISTRATION (NeighborCommTests);
     }

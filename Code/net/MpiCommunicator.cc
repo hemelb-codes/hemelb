@@ -7,9 +7,12 @@
 // specifically made by you with University College London.
 //
 
+#include <cassert>
+#include <numeric>
+
 #include "net/MpiCommunicator.h"
 #include "net/MpiGroup.h"
-#include <cassert>
+#include "util/Iterator.h"
 
 namespace hemelb
 {
@@ -162,6 +165,37 @@ namespace hemelb
       std::vector<int> result(GetNeighborsCount());
       result.reserve(1);
       HEMELB_MPI_CALL(MPI_Graph_neighbors, (*commPtr, Rank(), result.size(), result.data()));
+      return result;
+    }
+
+    MpiCommunicator MpiCommunicator::Split(int color, int key) const
+    {
+      MPI_Comm newComm;
+      MPI_Comm_split(*commPtr, color, key, &newComm);
+      return MpiCommunicator(newComm, true);
+    }
+
+    std::map<int, int> MpiCommunicator::RankMap(MpiCommunicator const &valueComm) const
+    {
+      MPI_Group keyGroup, valueGroup;
+
+      MPI_Comm_group(*commPtr, &keyGroup);
+      MPI_Comm_group(valueComm, &valueGroup);
+
+      auto const N = Size();
+      std::vector<int> keys(N), values(N);
+      std::iota(keys.begin(), keys.end(), 0);
+
+      MPI_Group_translate_ranks(keyGroup, N, keys.data(), valueGroup, values.data());
+      std::map<int, int> result;
+      for(auto const & item: util::zip(keys, values))
+      {
+        result[std::get<0>(item)] = std::get<1>(item);
+      }
+
+      MPI_Group_free(&keyGroup);
+      MPI_Group_free(&valueGroup);
+
       return result;
     }
 

@@ -157,6 +157,17 @@ namespace hemelb
         //! \brief Number of neighbors in a graph communicator
         int GetNeighborsCount() const;
 
+        //! A map from the ranks of this communicator to another
+        std::map<int, int> RankMap(MpiCommunicator const &valueComm) const;
+
+        //! Splits a communicator
+        MpiCommunicator Split(int color, int rank) const;
+        //! Splits a communicator
+        MpiCommunicator Split(int color) const
+        {
+          return Split(color, Rank());
+        }
+
       protected:
         /**
          * Constructor to get data needed from an MPI communicator
@@ -169,7 +180,6 @@ namespace hemelb
 
     bool operator==(const MpiCommunicator& comm1, const MpiCommunicator& comm2);
     bool operator!=(const MpiCommunicator& comm1, const MpiCommunicator& comm2);
-
   }
 }
 
