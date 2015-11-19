@@ -42,6 +42,7 @@ namespace hemelb
 
             HEMELB_MACRO(CellCount, cellCount, INeighborAllToAll<int>);
             HEMELB_MACRO(TotalNodeCount, totalNodeCount, INeighborAllToAll<int>);
+            HEMELB_MACRO(NameLengths, nameLengths, INeighborAllToAll<int>);
             HEMELB_MACRO(NodeCount, nodeCount, INeighborAllToAllV<size_t>);
             HEMELB_MACRO(CellScales, cellScales, INeighborAllToAllV<LatticeDistance>);
             HEMELB_MACRO(OwnerIDs, ownerIDs, INeighborAllToAllV<int>);
@@ -218,6 +219,7 @@ namespace hemelb
         // Wait for end of request and check received lengths
         xc.GetCellCount().receive();
         xc.GetTotalNodeCount().receive();
+        xc.GetNameLengths().receive();
         auto const recvfrom =
           graph.Rank() == 0 ? 1:
           graph.Rank() == 1 ? 2:
@@ -288,8 +290,8 @@ namespace hemelb
         }
 
         // receive messages
-        xc.GetCellScales().receive();
         xc.GetNodeCount().receive();
+        xc.GetCellScales().receive();
         xc.GetOwnerIDs().receive();
         xc.GetCellUUIDs().receive();
         xc.GetNodePositions().receive();
