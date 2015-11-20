@@ -318,6 +318,19 @@ namespace hemelb
           nodePositions.SetSend(neighbor, node.z, node_offset + item.index * 3 + 2);
         }
       }
+
+      void ExchangeCells::UpdateOwnedCells(CellContainer &owned, const ChangedCells &changes)
+      {
+        for(auto const& cell: std::get<0>(changes))
+        {
+          owned.insert(cell);
+        }
+        for(auto const& cell: std::get<1>(changes))
+        {
+          owned.erase(cell);
+        }
+      }
+
     } // parallel
   } // redblood
 }  // hemelb

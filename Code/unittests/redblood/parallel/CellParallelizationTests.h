@@ -61,6 +61,7 @@ namespace hemelb
           CPPUNIT_TEST(testCellSwapPostCells);
           CPPUNIT_TEST(testSingleCellSwapWithRetainedOwnership);
           CPPUNIT_TEST(testSingleCellSwap);
+          CPPUNIT_TEST(testUpdateOwnedCells);
           CPPUNIT_TEST_SUITE_END();
 
         public:
@@ -73,6 +74,8 @@ namespace hemelb
           void testSingleCellSwapWithRetainedOwnership();
           //! Test messages from swapping cells while retaining ownership
           void testSingleCellSwap();
+          //! Checks static function for updating owned cells
+          void testUpdateOwnedCells();
 
           //! Set of nodes affected by given proc
           std::set<proc_t> nodeLocation(LatticePosition const &node);
@@ -442,6 +445,22 @@ namespace hemelb
           CPPUNIT_ASSERT(owned == std::get<1>(result));
         }
       }
+
+      void CellParallelizationTests::testUpdateOwnedCells()
+      {
+        typedef ExchangeCells::ChangedCells Changes;
+        CellContainer::value_type const cells[4]
+          = {GivenCell(0), GivenCell(1), GivenCell(2), GivenCell(3)};
+        CellContainer owned{cells[0], cells[1], cells[2]};
+
+        ExchangeCells::UpdateOwnedCells(owned, Changes{{cells[3]}, {cells[0], cells[2]}, {}});
+        CPPUNIT_ASSERT((owned == CellContainer{cells[1], cells[3]}));
+
+        // idem-potent
+        ExchangeCells::UpdateOwnedCells(owned, Changes{{cells[3]}, {cells[0], cells[2]}, {}});
+        CPPUNIT_ASSERT((owned == CellContainer{cells[1], cells[3]}));
+      }
+
       CPPUNIT_TEST_SUITE_REGISTRATION (CellParallelizationTests);
     }
   }
