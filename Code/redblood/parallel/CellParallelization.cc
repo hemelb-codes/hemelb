@@ -134,7 +134,8 @@ namespace hemelb
           NodeDistributions const &distributions, CellContainer const & owned,
           std::map<boost::uuids::uuid, proc_t> const &ownership)
       {
-        // sets up nodeCount's send buffer
+        // sets up all main messages and the disowned cells
+        disowned.clear();
         SetupLocalSendBuffers(distributions, owned, ownership);
 
         // nodeCount's receive buffer depends on the number of incoming cell from each neigbor
@@ -161,8 +162,7 @@ namespace hemelb
         templateNames.send();
       }
 
-      void ExchangeCells::ReceiveCells(
-              CellContainer &owned, std::map<proc_t, CellContainer> &lent,
+      ExchangeCells::ChangedCells ExchangeCells::ReceiveCells(
               std::shared_ptr<TemplateCellContainer const> const &templateCells)
       {
         nodeCount.receive();
@@ -172,14 +172,19 @@ namespace hemelb
         nodePositions.receive();
         templateNames.receive();
 
+        ChangedCells result;
+        std::get<1>(result) = disowned;
+
         for(size_t i(0); i < nodeCount.GetReceiveBuffer().size(); ++i)
         {
           auto const ownerID = ownerIDs.GetReceiveBuffer()[i];
           bool const isOwned = ownerID == ownerIDs.GetCommunicator().Rank();
           auto cell = isOwned ? RecreateOwnedCell(i, templateCells): RecreateLentCell(i);
-          auto & container = isOwned ? owned: lent[ownerID];
+          auto & container =
+            isOwned ?  std::get<0>(result): std::get<2>(result)[ownerID];
           container.insert(cell);
         }
+        return result;
       }
 
       CellContainer::value_type ExchangeCells::RecreateLentCell(size_t index)
@@ -292,6 +297,7 @@ namespace hemelb
           nodePositions.SetSend(neighbor, item.value.y, node_offset + item.index * 3 + 1);
           nodePositions.SetSend(neighbor, item.value.z, node_offset + item.index * 3 + 2);
         }
+        disowned.insert(cell);
       }
 
       void ExchangeCells::AddToLocalSendBuffers(
