@@ -62,6 +62,7 @@ namespace hemelb
           CPPUNIT_TEST(testSingleCellSwapWithRetainedOwnership);
           CPPUNIT_TEST(testSingleCellSwap);
           CPPUNIT_TEST(testUpdateOwnedCells);
+          CPPUNIT_TEST(testUpdateNodeDistributions);
           CPPUNIT_TEST_SUITE_END();
 
         public:
@@ -76,6 +77,8 @@ namespace hemelb
           void testSingleCellSwap();
           //! Checks static function for updating owned cells
           void testUpdateOwnedCells();
+          //! Checks static function for updating owned cells
+          void testUpdateNodeDistributions();
 
           //! Set of nodes affected by given proc
           std::set<proc_t> nodeLocation(LatticePosition const &node);
@@ -453,12 +456,34 @@ namespace hemelb
           = {GivenCell(0), GivenCell(1), GivenCell(2), GivenCell(3)};
         CellContainer owned{cells[0], cells[1], cells[2]};
 
-        ExchangeCells::UpdateOwnedCells(owned, Changes{{cells[3]}, {cells[0], cells[2]}, {}});
+        ExchangeCells::Update(owned, Changes{{cells[3]}, {cells[0], cells[2]}, {}});
         CPPUNIT_ASSERT((owned == CellContainer{cells[1], cells[3]}));
 
         // idem-potent
-        ExchangeCells::UpdateOwnedCells(owned, Changes{{cells[3]}, {cells[0], cells[2]}, {}});
+        ExchangeCells::Update(owned, Changes{{cells[3]}, {cells[0], cells[2]}, {}});
         CPPUNIT_ASSERT((owned == CellContainer{cells[1], cells[3]}));
+      }
+
+      void CellParallelizationTests::testUpdateNodeDistributions()
+      {
+        typedef ExchangeCells::ChangedCells Changes;
+        CellContainer::value_type const cells[4]
+          = {GivenCell(0), GivenCell(1), GivenCell(2), GivenCell(3)};
+        CellContainer owned{cells[0], cells[1], cells[2]};
+        auto distributions = GetNodeDistribution(owned);
+        auto const assess = std::bind(
+            &CellParallelizationTests::nodeLocation, *this, std::placeholders::_1);
+
+        ExchangeCells::Update(distributions, Changes{{cells[3]}, {cells[0], cells[2]}, {}}, assess);
+        CPPUNIT_ASSERT_EQUAL(size_t(2), distributions.size());
+        CPPUNIT_ASSERT_EQUAL(size_t(1), distributions.count(cells[1]->GetTag()));
+        CPPUNIT_ASSERT_EQUAL(size_t(1), distributions.count(cells[3]->GetTag()));
+
+        // idem-potent
+        ExchangeCells::Update(distributions, Changes{{cells[3]}, {cells[0], cells[2]}, {}}, assess);
+        CPPUNIT_ASSERT_EQUAL(size_t(2), distributions.size());
+        CPPUNIT_ASSERT_EQUAL(size_t(1), distributions.count(cells[1]->GetTag()));
+        CPPUNIT_ASSERT_EQUAL(size_t(1), distributions.count(cells[3]->GetTag()));
       }
 
       CPPUNIT_TEST_SUITE_REGISTRATION (CellParallelizationTests);
