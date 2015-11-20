@@ -30,6 +30,8 @@ namespace hemelb
         public:
           //! Type of the object holding distributions
           typedef std::map<boost::uuids::uuid, NodeCharacterizer> NodeDistributions;
+          //! Container holding cells lent by other processes
+          typedef std::map<proc_t, CellContainer> LentCells;
           //! Creates a cell-parallelization object
           CellParallelization(net::MpiCommunicator const &comm)
             : comm(comm.Duplicate())
@@ -54,14 +56,20 @@ namespace hemelb
           //! Distribution of the cells owned by this process
           NodeDistributions distributions;
           //! Cells lent by other proces
-          std::map<proc_t, CellContainer> lent;
+          LentCells lent;
       };
 
       class ExchangeCells
       {
         public:
+          //! Type of the object holding distributions
           typedef CellParallelization::NodeDistributions NodeDistributions;
+          //! Container holding cells lent by other processes
+          typedef CellParallelization::LentCells LentCells;
+          //! Function that can figure out who should own a cell
           typedef std::function<int(CellContainer::const_reference)> Ownership;
+          //! Result of the whole messaging mess
+          typedef std::tuple<CellContainer, CellContainer, LentCells> ChangedCells;
 
           ExchangeCells(net::MpiCommunicator const &graphComm)
             : cellCount(graphComm), totalNodeCount(graphComm), nameLengths(graphComm),
@@ -89,9 +97,9 @@ namespace hemelb
           virtual void PostCells(
               NodeDistributions const &distributions, CellContainer const &cells,
               std::map<boost::uuids::uuid, proc_t> const & ownership);
-          //! Receives messages, reconstructs cells, updates structures and containers
-          virtual void ReceiveCells(
-              CellContainer &owned, std::map<proc_t, CellContainer> &lent,
+          //! Receives messages, reconstructs cells
+          //! \return a 3-tuple with the newly owned cells, the disowned cells, and the lent cells
+          virtual ChangedCells ReceiveCells(
               std::shared_ptr<TemplateCellContainer const> const &templateCells);
 
         protected:
@@ -114,6 +122,8 @@ namespace hemelb
           net::INeighborAllToAllV<LatticeDistance> cellScales;
           //! Sends positions
           net::INeighborAllToAllV<LatticeDistance> nodePositions;
+          //! Cell that are no longuer owned by this process
+          CellContainer disowned;
 
           //! Number of nodes to send to each neighboring process
           void SetupLocalSendBuffers(

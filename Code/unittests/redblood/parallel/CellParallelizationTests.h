@@ -366,10 +366,11 @@ namespace hemelb
           return net::MpiCommunicator::World().Rank();
         };
         xc.PostCells(dist, owned, keepOwnership);
-        xc.ReceiveCells(owned, lent, templates);
+        auto const result = xc.ReceiveCells(templates);
 
         if(graph.Rank() < 3)
         {
+          auto const & lent = std::get<2>(result);
           CPPUNIT_ASSERT_EQUAL(size_t(1), lent.size());
           CPPUNIT_ASSERT_EQUAL(size_t(1), lent.begin()->second.size());
           HEMELB_CAPTURE2(proc_t(graph.Rank() + 1), lent.begin()->first);
@@ -389,8 +390,10 @@ namespace hemelb
         }
         else
         {
-          CPPUNIT_ASSERT_EQUAL(size_t(0), lent.size());
+          CPPUNIT_ASSERT_EQUAL(size_t(0), std::get<2>(result).size());
         }
+        CPPUNIT_ASSERT_EQUAL(size_t(0), std::get<0>(result).size());
+        CPPUNIT_ASSERT_EQUAL(size_t(0), std::get<1>(result).size());
       }
 
       void CellParallelizationTests::testSingleCellSwap()
@@ -414,31 +417,30 @@ namespace hemelb
           return Ownership(cell);
         };
         xc.PostCells(dist, owned, ownership);
-        xc.ReceiveCells(owned, lent, templates);
+        auto const result = xc.ReceiveCells(templates);
 
-        CPPUNIT_ASSERT_EQUAL(size_t(0), lent.size());
-        // if(graph.Rank() < 3)
-        // {
-        //   CPPUNIT_ASSERT_EQUAL(size_t(1), lent.size());
-        //   CPPUNIT_ASSERT_EQUAL(size_t(1), lent.begin()->second.size());
-        //   HEMELB_CAPTURE2(proc_t(graph.Rank() + 1), lent.begin()->first);
-        //   CPPUNIT_ASSERT_EQUAL(proc_t(graph.Rank() + 1), lent.begin()->first);
-        //   auto const actual = *lent.begin()->second.begin();
-        //   auto const expected = GivenCell(graph.Rank()+1);
-        //   CPPUNIT_ASSERT_DOUBLES_EQUAL(expected->GetScale(), actual->GetScale(), 1e-8);
-        //   CPPUNIT_ASSERT_EQUAL(expected->GetTemplateName(), actual->GetTemplateName());
-        //   CPPUNIT_ASSERT(expected->GetTag() == actual->GetTag());
-        //   CPPUNIT_ASSERT_EQUAL(expected->GetNumberOfNodes(), actual->GetNumberOfNodes());
-        //   for(auto item: util::zip(expected->GetVertices(), actual->GetVertices()))
-        //   {
-        //     CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).x, std::get<1>(item).x, 1e-8);
-        //     CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).y, std::get<1>(item).y, 1e-8);
-        //     CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).z, std::get<1>(item).z, 1e-8);
-        //   }
-        // }
-        // else
-        // {
-        // }
+        CPPUNIT_ASSERT_EQUAL(size_t(0), std::get<2>(result).size());
+        if(graph.Rank() < 3)
+        {
+          CPPUNIT_ASSERT_EQUAL(size_t(1), std::get<0>(result).size());
+          auto const actual = *std::get<0>(result).begin();
+          auto const expected = GivenCell(graph.Rank()+1);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(expected->GetScale(), actual->GetScale(), 1e-8);
+          CPPUNIT_ASSERT_EQUAL(expected->GetTemplateName(), actual->GetTemplateName());
+          CPPUNIT_ASSERT(expected->GetTag() == actual->GetTag());
+          CPPUNIT_ASSERT_EQUAL(expected->GetNumberOfNodes(), actual->GetNumberOfNodes());
+          for(auto item: util::zip(expected->GetVertices(), actual->GetVertices()))
+          {
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).x, std::get<1>(item).x, 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).y, std::get<1>(item).y, 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).z, std::get<1>(item).z, 1e-8);
+          }
+        }
+        if(graph.Rank() < 4 and graph.Rank() > 0)
+        {
+          CPPUNIT_ASSERT_EQUAL(size_t(1), std::get<1>(result).size());
+          CPPUNIT_ASSERT(owned == std::get<1>(result));
+        }
       }
       CPPUNIT_TEST_SUITE_REGISTRATION (CellParallelizationTests);
     }
