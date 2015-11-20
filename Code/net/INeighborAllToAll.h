@@ -104,9 +104,9 @@ namespace hemelb
 
     template<class SEND, class RECEIVE> void INeighborAllToAll<SEND, RECEIVE>::send()
     {
-      assert(sendBuffer.size() % neighbors.size() == 0);
+      assert(neighbors.size() == 0 or sendBuffer.size() % neighbors.size() == 0);
       assert(comm);
-      auto const n = sendBuffer.size() / neighbors.size();
+      auto const n = neighbors.size() > 0 ? sendBuffer.size() / neighbors.size(): 0;
       receiveBuffer.resize(sendBuffer.size());
 
       // Makes sure pointers are valid even if no data
