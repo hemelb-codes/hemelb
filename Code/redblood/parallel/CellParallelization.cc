@@ -319,7 +319,7 @@ namespace hemelb
         }
       }
 
-      void ExchangeCells::UpdateOwnedCells(CellContainer &owned, const ChangedCells &changes)
+      void ExchangeCells::Update(CellContainer &owned, const ChangedCells &changes)
       {
         for(auto const& cell: std::get<0>(changes))
         {
@@ -331,6 +331,26 @@ namespace hemelb
         }
       }
 
+      void ExchangeCells::Update(
+          NodeDistributions &distributions, const ChangedCells &changes,
+          NodeCharacterizer::AssessNodeRange const &assessor)
+      {
+        for(auto const& cell: std::get<1>(changes))
+        {
+          distributions.erase(cell->GetTag());
+        }
+        for(auto const& cell: std::get<0>(changes))
+        {
+          if(distributions.count(cell->GetTag()) == 0)
+          {
+            distributions.emplace(
+                std::piecewise_construct,
+                std::forward_as_tuple(cell->GetTag()),
+                std::forward_as_tuple(assessor, cell)
+            );
+          }
+        }
+      }
     } // parallel
   } // redblood
 }  // hemelb

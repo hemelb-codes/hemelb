@@ -103,7 +103,12 @@ namespace hemelb
               std::shared_ptr<TemplateCellContainer const> const &templateCells);
 
           //! Adds new cells and removes old ones
-          static void UpdateOwnedCells(CellContainer &owned, ChangedCells const & changes);
+          static void Update(CellContainer &owned, ChangedCells const & changes);
+
+          //! Updates node-distributions to have only owned cells
+          static void Update(
+              NodeDistributions &distributions, ChangedCells const & changes,
+              NodeCharacterizer::AssessNodeRange const &assessor);
         protected:
           //! \brief Sends number of cells
           //! \details Using int because it meshes better with sending the number of nodes per cell.
