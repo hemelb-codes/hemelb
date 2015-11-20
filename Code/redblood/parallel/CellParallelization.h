@@ -102,6 +102,8 @@ namespace hemelb
           virtual ChangedCells ReceiveCells(
               std::shared_ptr<TemplateCellContainer const> const &templateCells);
 
+          //! Adds new cells and removes old ones
+          static void UpdateOwnedCells(CellContainer &owned, ChangedCells const & changes);
         protected:
           //! \brief Sends number of cells
           //! \details Using int because it meshes better with sending the number of nodes per cell.
