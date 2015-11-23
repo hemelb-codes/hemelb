@@ -93,14 +93,17 @@ namespace hemelb
         std::fill(totalNodeCount.GetSendBuffer().begin(), totalNodeCount.GetSendBuffer().end(), 0);
         std::fill(nameLengths.GetSendBuffer().begin(), nameLengths.GetSendBuffer().end(), 0);
         // Count the number of vertices and cells
-        for(auto const & dist: distributions)
+        for(auto const & cell: owned)
         {
-          auto const cell = cellFromTag(dist.first, owned);
+          auto const dist = distributions.find(cell->GetTag())->second;
           for(auto item: util::enumerate(neighbors))
           {
-            auto const nVertices = dist.second.CountNodes(item.value);
+            auto const nVertices = dist.CountNodes(item.value);
             if(nVertices > 0)
             {
+              assert(cellCount.GetSendBuffer().size() > item.index);
+              assert(totalNodeCount.GetSendBuffer().size() > item.index);
+              assert(nameLengths.GetSendBuffer().size() > item.index);
               ++cellCount.GetSendBuffer()[item.index];
               totalNodeCount.GetSendBuffer()[item.index] += nVertices;
               // Include null termination that will seperate one name from another
@@ -121,12 +124,10 @@ namespace hemelb
       {
         auto const rankMap = net::MpiCommunicator::World().RankMap(cellCount.GetCommunicator());
         std::map<boost::uuids::uuid, proc_t> id;
-        auto const getID = [&rankMap, &ownership](CellContainer::const_reference cell)
+        for(auto const &cell: owned)
         {
-          auto const worldIndex = ownership(cell);
-          return std::make_pair(cell->GetTag(), rankMap.find(worldIndex)->second);
-        };
-        std::transform(owned.begin(), owned.end(), std::inserter(id, id.begin()), getID);
+          id[cell->GetTag()] = rankMap.find(ownership(cell))->second;
+        }
         PostCells(distributions, owned, id);
       }
 
@@ -163,7 +164,7 @@ namespace hemelb
       }
 
       ExchangeCells::ChangedCells ExchangeCells::ReceiveCells(
-              std::shared_ptr<TemplateCellContainer const> const &templateCells)
+          TemplateCellContainer const &templateCells)
       {
         nodeCount.receive();
         cellScales.receive();
@@ -208,14 +209,21 @@ namespace hemelb
       }
 
       CellContainer::value_type ExchangeCells::RecreateOwnedCell(
-              size_t index, std::shared_ptr<TemplateCellContainer const> const &templateCells)
+              size_t index, TemplateCellContainer const &templateCells)
       {
         auto const templateName = getTemplateName(index, templateNames.GetReceiveBuffer());
-        auto result = templateCells->find(templateName)->second->clone();
+        assert(templateCells.count(templateName) == 1);
+        auto result = templateCells.find(templateName)->second->clone();
         result->SetTag(getTag(index, cellUUIDs.GetReceiveBuffer()));
+        assert(cellScales.GetReceiveBuffer().size() > index);
         result->SetScale(cellScales.GetReceiveBuffer()[index]);
-        auto i_node = nodePositions.GetReceiveBuffer().cbegin();
-        for(size_t i(0); i < index; ++index, i_node += nodeCount.GetReceiveBuffer()[i] * 3);
+        auto const offset =
+          std::accumulate(
+              nodeCount.GetReceiveBuffer().cbegin(),
+              nodeCount.GetReceiveBuffer().cbegin() + index,
+              0
+          );
+        auto i_node = nodePositions.GetReceiveBuffer().cbegin() + offset * 3;
         auto const Nnodes = nodeCount.GetReceiveBuffer()[index];
         assert(Nnodes == result->GetNumberOfNodes());
         for(size_t j(0); j < Nnodes; ++j)
@@ -240,20 +248,28 @@ namespace hemelb
         templateNames.SetSendCounts(nameLengths.GetSendBuffer());
         templateNames.fillSend('\0');
 
-        auto const thisRank = nodeCount.GetCommunicator().Rank();
-        for(auto neighbor: nodeCount.GetCommunicator().GetNeighbors())
+        auto const neighbors = nodeCount.GetCommunicator().GetNeighbors();
+        std::map<int, int> nth;
+        for(auto const &neighbor: neighbors)
         {
-          int i(0);
-          for(auto const & dist: distributions)
+          nth[neighbor] = 0;
+        }
+        for(auto const &cell: owned)
+        {
+          auto const owner = ownership.find(cell->GetTag())->second;
+          for(auto const neighbor: neighbors)
           {
-            auto const nVertices = dist.second.CountNodes(neighbor);
+            if(owner == neighbor)
+            {
+              AddToLocalSendBuffers(neighbor, nth[neighbor]++, owner, cell);
+              continue;
+            }
+            auto const i_dist = distributions.find(cell->GetTag());
+            auto const nVertices = i_dist->second.CountNodes(neighbor);
             if(nVertices > 0)
             {
-              auto const cell = cellFromTag(dist.first, owned);
-              auto const owner = ownership.find(dist.first)->second;
-              owner == thisRank ?
-                AddToLocalSendBuffers(neighbor, i++, nVertices, owner, cell, dist.second[neighbor]):
-                AddToLocalSendBuffers(neighbor, i++, owner, cell);
+              AddToLocalSendBuffers(
+                  neighbor, nth[neighbor]++, nVertices, owner, cell, i_dist->second[neighbor]);
             }
           }
         }
@@ -276,8 +292,9 @@ namespace hemelb
         auto name_offset(0);
         for(int i(0); i < nth; ++i)
         {
-          while(templateNames.GetSend(neighbor, ++name_offset) != '\0');
+          while(templateNames.GetSend(neighbor, name_offset++) != '\0');
         }
+        assert(nth == 0 or templateNames.GetSend(neighbor, name_offset - 1) == '\0');
         for(auto const item: util::enumerate(cell->GetTemplateName()))
         {
           templateNames.SetSend(neighbor, item.value, name_offset + item.index);
