@@ -220,7 +220,7 @@ namespace hemelb
       assert(counts.size() > index);
       auto const offset = std::accumulate(counts.begin(), counts.begin() + index, 0) + i;
       assert(container.size() > offset);
-      container[i] = input;
+      container[offset] = input;
     }
 
     template<class SEND, class RECEIVE>
