@@ -117,7 +117,7 @@ namespace hemelb
             auto const offset = std::accumulate(                                                 \
                 name ## Counts.begin(), name ## Counts.begin() + index, 0) + i;                  \
             assert(name ## Buffer.size() > offset);                                              \
-            return name ## Buffer[i];                                                            \
+            return name ## Buffer[offset];                                                       \
           }                                                                                      \
           /** Sets specific send object **/                                                      \
           void Set ## Name(int neighbor, Name const &input, int i)                               \
