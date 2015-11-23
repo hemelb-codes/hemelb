@@ -45,23 +45,6 @@ namespace hemelb
           return result;
         }
 
-        template<class ITER> ITER cellFromTag(boost::uuids::uuid const &tag, ITER first, ITER last)
-        {
-          auto byUUID = [&tag](CellContainer::const_reference cell)
-          {
-            return cell->GetTag() == tag;
-          };
-          return std::find_if(first, last, byUUID);
-        }
-
-        CellContainer::const_reference cellFromTag(
-            boost::uuids::uuid const &tag, CellContainer const &cells)
-        {
-          auto const i_cell = cellFromTag(tag, cells.begin(), cells.end());
-          assert(i_cell != cells.end());
-          return *i_cell;
-        }
-
         std::string getTemplateName(size_t index, std::vector<char> const &buffer)
         {
           // loop over n occurences
@@ -80,10 +63,32 @@ namespace hemelb
           std::copy(buffer.begin() + index * n, buffer.begin() + (index + 1) * n, result.begin());
           return result;
         }
+
+        std::map<boost::uuids::uuid, proc_t> getOwnership(
+            net::MpiCommunicator const &graphComm,
+            CellContainer const &owned, ExchangeCells::Ownership const &ownership)
+        {
+          auto const rankMap = net::MpiCommunicator::World().RankMap(graphComm);
+          std::map<boost::uuids::uuid, proc_t> result;
+          for(auto const &cell: owned)
+          {
+            result[cell->GetTag()] = rankMap.find(ownership(cell))->second;
+          }
+          return result;
+        }
       }
 
       void ExchangeCells::PostCellMessageLength(
-          NodeDistributions const &distributions, CellContainer const &owned)
+              NodeDistributions const& distributions, CellContainer const &owned,
+              Ownership const & ownership)
+      {
+        PostCellMessageLength(
+            distributions, owned, getOwnership(nodeCount.GetCommunicator(), owned, ownership));
+      }
+
+      void ExchangeCells::PostCellMessageLength(
+          NodeDistributions const &distributions, CellContainer const &owned,
+          std::map<boost::uuids::uuid, proc_t> const &ownership)
       {
         auto const neighbors = cellCount.GetCommunicator().GetNeighbors();
         cellCount.GetSendBuffer().resize(neighbors.size());
@@ -96,9 +101,12 @@ namespace hemelb
         for(auto const & cell: owned)
         {
           auto const dist = distributions.find(cell->GetTag())->second;
+          assert(distributions.count(cell->GetTag()) == 1);
+          auto const newOwner = ownership.find(cell->GetTag())->second;
           for(auto item: util::enumerate(neighbors))
           {
-            auto const nVertices = dist.CountNodes(item.value);
+            auto const nVertices =
+              newOwner == item.value ? cell->GetNumberOfNodes(): dist.CountNodes(item.value);
             if(nVertices > 0)
             {
               assert(cellCount.GetSendBuffer().size() > item.index);
@@ -122,21 +130,16 @@ namespace hemelb
           NodeDistributions const &distributions, CellContainer const & owned,
           Ownership const &ownership)
       {
-        auto const rankMap = net::MpiCommunicator::World().RankMap(cellCount.GetCommunicator());
-        std::map<boost::uuids::uuid, proc_t> id;
-        for(auto const &cell: owned)
-        {
-          id[cell->GetTag()] = rankMap.find(ownership(cell))->second;
-        }
-        PostCells(distributions, owned, id);
+        PostCells(
+            distributions, owned, getOwnership(nodeCount.GetCommunicator(), owned, ownership));
       }
 
       void ExchangeCells::PostCells(
           NodeDistributions const &distributions, CellContainer const & owned,
           std::map<boost::uuids::uuid, proc_t> const &ownership)
       {
-        // sets up all main messages and the disowned cells
-        disowned.clear();
+        // sets up all main messages and the disowned cells (lent back to this process)
+        disowned.clear(); formelyOwned.clear();
         SetupLocalSendBuffers(distributions, owned, ownership);
 
         // nodeCount's receive buffer depends on the number of incoming cell from each neigbor
@@ -184,6 +187,15 @@ namespace hemelb
           auto & container =
             isOwned ?  std::get<0>(result): std::get<2>(result)[ownerID];
           container.insert(cell);
+        }
+
+        // adds formely owned cells to lent cells
+        for(auto const & item: formelyOwned)
+        {
+          for(auto const & cell: item.second)
+          {
+            std::get<2>(result)[item.first].insert(cell);
+          }
         }
         return result;
       }
@@ -249,6 +261,7 @@ namespace hemelb
         templateNames.fillSend('\0');
 
         auto const neighbors = nodeCount.GetCommunicator().GetNeighbors();
+        auto const thisRank = nodeCount.GetCommunicator().Rank();
         std::map<int, int> nth;
         for(auto const &neighbor: neighbors)
         {
@@ -256,20 +269,26 @@ namespace hemelb
         }
         for(auto const &cell: owned)
         {
-          auto const owner = ownership.find(cell->GetTag())->second;
+          auto const newOwner = ownership.find(cell->GetTag())->second;
+          assert(distributions.count(cell->GetTag()) == 1);
+          auto const & distribution = distributions.find(cell->GetTag())->second;
           for(auto const neighbor: neighbors)
           {
-            if(owner == neighbor)
+            auto const nVertices
+              = distribution.CountNodes(newOwner == neighbor ? thisRank: neighbor);
+            if(newOwner == neighbor and nVertices > 0)
             {
-              AddToLocalSendBuffers(neighbor, nth[neighbor]++, owner, cell);
-              continue;
+              AddDisownedToLocalSendBuffers(
+                  neighbor, nth[neighbor]++, cell, distribution[thisRank]);
             }
-            auto const i_dist = distributions.find(cell->GetTag());
-            auto const nVertices = i_dist->second.CountNodes(neighbor);
-            if(nVertices > 0)
+            else if(newOwner == neighbor)
             {
-              AddToLocalSendBuffers(
-                  neighbor, nth[neighbor]++, nVertices, owner, cell, i_dist->second[neighbor]);
+              AddDisownedToLocalSendBuffers(neighbor, nth[neighbor]++, cell);
+            }
+            else if(nVertices > 0)
+            {
+              AddOwnedToLocalSendBuffers(
+                  neighbor, nth[neighbor]++, nVertices, newOwner, cell, distribution[neighbor]);
             }
           }
         }
@@ -301,23 +320,53 @@ namespace hemelb
         }
       }
 
-      void ExchangeCells::AddToLocalSendBuffers(
-          int neighbor, int nth, proc_t ownerID, CellContainer::const_reference cell)
+      void ExchangeCells::AddDisownedToLocalSendBuffers(
+          int neighbor, int nth, CellContainer::const_reference cell)
       {
-        AddToLocalSendBuffersAllButNodes(neighbor, nth, ownerID, cell);
+        AddToLocalSendBuffersAllButNodes(neighbor, nth, neighbor, cell);
         nodeCount.SetSend(neighbor, cell->GetNumberOfNodes(), nth);
         size_t node_offset(0);
-        for(int j(0); j < nth; ++j, node_offset += 3 * nodeCount.GetSend(neighbor, j));
+        for(int j(0); j < nth; ++j)
+        {
+          node_offset += 3 * nodeCount.GetSend(neighbor, j);
+        }
         for(auto const item: util::enumerate(cell->GetVertices()))
         {
           nodePositions.SetSend(neighbor, item.value.x, node_offset + item.index * 3);
           nodePositions.SetSend(neighbor, item.value.y, node_offset + item.index * 3 + 1);
           nodePositions.SetSend(neighbor, item.value.z, node_offset + item.index * 3 + 2);
         }
+        // adds to disowned cells and to formely owned cells
         disowned.insert(cell);
       }
 
-      void ExchangeCells::AddToLocalSendBuffers(
+      void ExchangeCells::AddDisownedToLocalSendBuffers(
+          int neighbor, int nth, CellContainer::const_reference cell,
+          NodeCharacterizer::Process2NodesMap::mapped_type const & indices)
+      {
+        AddDisownedToLocalSendBuffers(neighbor, nth, cell);
+        // create vertex bag if any nodes are lent to this object
+        if(indices.size() > 0)
+        {
+          auto lentCell = std::make_shared<VertexBag>(cell->GetTag(), cell->GetTemplateName());
+          lentCell->SetScale(cell->GetScale());
+          // add nodes
+          for(auto const index: indices)
+          {
+            lentCell->addVertex(cell->GetVertices()[index]);
+          }
+          if(formelyOwned.count(neighbor) == 1)
+          {
+            formelyOwned[neighbor] = CellContainer{lentCell};
+          }
+          else
+          {
+            formelyOwned[neighbor].emplace(std::move(lentCell));
+          }
+        }
+      }
+
+      void ExchangeCells::AddOwnedToLocalSendBuffers(
           int neighbor, int nth, int nVertices, proc_t ownerID,
           CellContainer::const_reference cell,
           NodeCharacterizer::Process2NodesMap::mapped_type const & indices)
@@ -326,7 +375,10 @@ namespace hemelb
         // For now, onwership is left with sending process
         nodeCount.SetSend(neighbor, nVertices, nth);
         size_t node_offset(0);
-        for(int j(0); j < nth; ++j, node_offset += 3 * nodeCount.GetSend(neighbor, j));
+        for(int j(0); j < nth; ++j)
+        {
+          node_offset += 3 * nodeCount.GetSend(neighbor, j);
+        }
         for(auto const item: util::enumerate(indices))
         {
           auto const& node = cell->GetVertices()[item.value];
