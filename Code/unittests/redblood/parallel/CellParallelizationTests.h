@@ -65,6 +65,7 @@ namespace hemelb
           CPPUNIT_TEST(testUpdateOwnedCells);
           CPPUNIT_TEST(testUpdateNodeDistributions);
           CPPUNIT_TEST(testDistributeCells);
+          CPPUNIT_TEST(testLendCells);
           CPPUNIT_TEST_SUITE_END();
 
         public:
@@ -83,6 +84,8 @@ namespace hemelb
           void testUpdateNodeDistributions();
           //! All cells are in zero at first
           void testDistributeCells();
+          //! Two cells are lent from 1 to 0, one of whcih switches ownership
+          void testLendCells();
 
           //! Set of nodes affected by given proc
           std::set<proc_t> nodeLocation(LatticePosition const &node);
@@ -113,8 +116,13 @@ namespace hemelb
 
           //! Id of owning cell
           int Ownership(CellContainer::const_reference cell) const;
+          //! Checks that two cells are identical
           void CompareCells(
               CellContainer::value_type expected, CellContainer::value_type actual) const;
+          //! Check that actual contains only vertices from expected affecting this process
+          void CompareDistributions(
+              CellContainer::value_type expected,
+              CellContainer::value_type actual) const;
 
         protected:
           LatticeDistance const radius = 5;
@@ -247,7 +255,11 @@ namespace hemelb
         ExchangeCells xc(graph);
         CPPUNIT_ASSERT(xc.GetCellCount().GetCommunicator());
         CPPUNIT_ASSERT(xc.GetTotalNodeCount().GetCommunicator());
-        xc.PostCellMessageLength(dist, cells);
+        auto keepOwnership = [this](CellContainer::const_reference)
+        {
+          return graph.Rank();
+        };
+        xc.PostCellMessageLength(dist, cells, keepOwnership);
 
         // Checks message is correct
         auto const &sendCellCount = xc.GetCellCount().GetSendBuffer();
@@ -311,12 +323,11 @@ namespace hemelb
         auto const dist = GetNodeDistribution(cells);
 
         ExchangeCells xc(graph);
-        xc.PostCellMessageLength(dist, cells);
-
-        auto keepOwnership = [](CellContainer::const_reference)
+        auto keepOwnership = [this](CellContainer::const_reference)
         {
-          return net::MpiCommunicator::World();
+          return graph.Rank();
         };
+        xc.PostCellMessageLength(dist, cells, keepOwnership);
         xc.PostCells(dist, cells, keepOwnership);
 
         // check message sizes
@@ -374,11 +385,11 @@ namespace hemelb
         auto const dist = GetNodeDistribution(owned);
 
         ExchangeCells xc(graph);
-        xc.PostCellMessageLength(dist, owned);
-        auto keepOwnership = [](CellContainer::const_reference)
+        auto keepOwnership = [this](CellContainer::const_reference)
         {
-          return net::MpiCommunicator::World().Rank();
+          return graph.Rank();
         };
+        xc.PostCellMessageLength(dist, owned, keepOwnership);
         xc.PostCells(dist, owned, keepOwnership);
         auto const result = xc.ReceiveCells(templates);
 
@@ -415,11 +426,9 @@ namespace hemelb
         auto const dist = GetNodeDistribution(owned);
 
         ExchangeCells xc(graph);
-        xc.PostCellMessageLength(dist, owned);
-        auto const ownership = [this](CellContainer::const_reference cell)
-        {
-          return Ownership(cell);
-        };
+        auto const ownership
+          = std::bind(&CellParallelizationTests::Ownership, *this, std::placeholders::_1);
+        xc.PostCellMessageLength(dist, owned, ownership);
         xc.PostCells(dist, owned, ownership);
         auto const result = xc.ReceiveCells(templates);
 
@@ -502,9 +511,9 @@ namespace hemelb
         auto const dist = GetNodeDistribution(owned);
 
         ExchangeCells xc(graph);
-        xc.PostCellMessageLength(dist, owned);
         auto const ownership
           = std::bind(&CellParallelizationTests::Ownership, *this, std::placeholders::_1);
+        xc.PostCellMessageLength(dist, owned, ownership);
         xc.PostCells(dist, owned, ownership);
         auto const result = xc.ReceiveCells(templates);
         xc.Update(owned, result);
@@ -536,6 +545,63 @@ namespace hemelb
         }
       }
 
+      void CellParallelizationTests::testLendCells()
+      {
+        if(not graph)
+        {
+          return;
+        }
+
+        auto const templateCell = GivenCell(0);
+        TemplateCellContainer const templates{{templateCell->GetTemplateName(), templateCell}};
+
+        std::vector<int> const sendto = {0, 1};
+        std::vector<CellContainer::value_type> cells;
+        for(size_t i(0); i < sendto.size(); ++i)
+        {
+          cells.push_back(templateCell->clone());
+          // one barycenter on each side of the ownership line
+          *cells[i] += (GetCenter(0) + GetCenter(1)) * 0.5 - cells[i]->GetBarycenter();
+          *cells[i] += (GetCenter(0) - GetCenter(1)).GetNormalised() * (i != 0 ? 0.1: -0.1);
+          cells[i]->SetScale(1e0 + 0.1 * static_cast<double>(i));
+          boost::uuids::uuid tag;
+          std::fill(tag.begin(), tag.end(), static_cast<unsigned char>(i));
+          cells[i]->SetTag(tag);
+        }
+
+        auto owned = graph.Rank() == 1 ?
+          CellContainer{cells.begin(), cells.end()}: CellContainer{};
+        auto const dist = GetNodeDistribution(owned);
+
+        ExchangeCells xc(graph);
+        auto const ownership
+          = std::bind(&CellParallelizationTests::Ownership, *this, std::placeholders::_1);
+        xc.PostCellMessageLength(dist, owned, ownership);
+        xc.PostCells(dist, owned, ownership);
+        auto const result = xc.ReceiveCells(templates);
+        xc.Update(owned, result);
+
+
+        switch(graph.Rank())
+        {
+          case 0:
+            CPPUNIT_ASSERT_EQUAL(size_t(1), std::get<2>(result).size());
+            CPPUNIT_ASSERT_EQUAL(size_t(1), owned.size());
+            CompareCells(cells[1], *owned.begin());
+            // CompareDistributions(cells[0], *std::get<2>(result).begin()->second.begin());
+            break;
+          case 1:
+            CPPUNIT_ASSERT_EQUAL(size_t(1), std::get<2>(result).size());
+            CPPUNIT_ASSERT_EQUAL(size_t(1), owned.size());
+            CompareCells(cells[0], *owned.begin());
+            CompareDistributions(cells[1], *std::get<2>(result).begin()->second.begin());
+            break;
+          default:
+            CPPUNIT_ASSERT_EQUAL(size_t(0), owned.size());
+            break;
+        }
+      }
+
       void CellParallelizationTests::CompareCells(
           CellContainer::value_type expected, CellContainer::value_type actual) const
       {
@@ -549,6 +615,32 @@ namespace hemelb
           CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).y, std::get<1>(item).y, 1e-8);
           CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).z, std::get<1>(item).z, 1e-8);
         }
+      }
+
+      void CellParallelizationTests::CompareDistributions(
+              CellContainer::value_type expectedCell,
+              CellContainer::value_type actualCell) const
+      {
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedCell->GetScale(), actualCell->GetScale(), 1e-8);
+        CPPUNIT_ASSERT_EQUAL(expectedCell->GetTemplateName(), actualCell->GetTemplateName());
+        auto getDist = [=](CellContainer::value_type cell)
+        {
+          CellContainer const cells{cell};
+          auto const distributions = GetNodeDistribution(cells);
+          auto const distribution = distributions.find(cell->GetTag())->second;
+          return distribution.CountNodes(graph.Rank()) > 0 ?
+            distribution[graph.Rank()]: decltype(distribution[graph.Rank()]){};
+        };
+        auto const expected = getDist(expectedCell);
+        CPPUNIT_ASSERT_EQUAL(size_t(expected.size()), size_t(actualCell->GetNumberOfNodes()));
+        auto const &expectedV = expectedCell->GetVertices();
+        auto const &actualV = actualCell->GetVertices();
+        for(auto const item: util::enumerate(expected))
+        {
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedV[item.value].x, actualV[item.index].x, 1e-8);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedV[item.value].y, actualV[item.index].y, 1e-8);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedV[item.value].z, actualV[item.index].z, 1e-8);
+        };
       }
       CPPUNIT_TEST_SUITE_REGISTRATION (CellParallelizationTests);
     }

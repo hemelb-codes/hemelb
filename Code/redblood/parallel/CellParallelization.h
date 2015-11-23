@@ -78,9 +78,21 @@ namespace hemelb
           {
           }
           //! \brief Computes and posts length of message when sending cells
-          //! \param[in] owned: Node distributions of the cells owned by this process
+          //! \param[in] distributions: Node distributions of the cells owned by this process
+          //! \param[in] owned: Cells currently owned by this process
+          //! \param[in] ownership a function to ascertain ownership. It should return the rank of
+          //! the owning process in the *world* communicator, according to the position in the cell.
           virtual void PostCellMessageLength(
-              NodeDistributions const& distributions, CellContainer const &cells);
+              NodeDistributions const& distributions, CellContainer const &owned,
+              Ownership const & ownership);
+          //! \brief Computes and posts length of message when sending cells
+          //! \param[in] distributions: Node distributions of the cells owned by this process
+          //! \param[in] owned: Cells currently owned by this process
+          //! \param[in] ownership id of the process owning the cell, corresponding to the rank in
+          //! the graph communicator used to build this object.
+          virtual void PostCellMessageLength(
+              NodeDistributions const& distributions, CellContainer const &owned,
+              std::map<boost::uuids::uuid, proc_t> const & ownership);
           //! \brief Post all owned cells and preps for receiving lent cells
           //! \param[in] distributions tells us for each proc the list of nodes it requires
           //! \param[in] cells a container of cells owned and managed by this process
@@ -133,21 +145,30 @@ namespace hemelb
           net::INeighborAllToAllV<LatticeDistance> cellScales;
           //! Sends positions
           net::INeighborAllToAllV<LatticeDistance> nodePositions;
-          //! Cell that are no longuer owned by this process
+          //! \brief Cell that are no longuer owned by this process
+          //! \details Unlike formelyOwned, this keeps track of the whole cell
           CellContainer disowned;
+          //! \brief Formely owned cells are lent back to this process by the neibhbor
+          //! \details These cells are the same as the disowned cells. However, only part of the
+          //! nodes kept: those that affect this process.
+          LentCells formelyOwned;
 
           //! Number of nodes to send to each neighboring process
           void SetupLocalSendBuffers(
               NodeDistributions const &distributions, CellContainer const &cells,
               std::map<boost::uuids::uuid, proc_t> const & ownership);
-          //! Adds data to local buffers, knowning the neighbor and the cell
-          void AddToLocalSendBuffers(
+          //! Adds data to local buffers for a cell that retains the same ownership
+          void AddOwnedToLocalSendBuffers(
               int neighbor, int nth, int nVertices, proc_t owner,
               CellContainer::const_reference cell,
               NodeCharacterizer::Process2NodesMap::mapped_type const& indices);
-          //! Adds local data and send all nodes
-          void AddToLocalSendBuffers(
-              int neighbor, int nth, proc_t ownerID, CellContainer::const_reference cell);
+          //! Adds data to local buffer for a cell that changes ownership
+          void AddDisownedToLocalSendBuffers(
+              int neighbor, int nth, CellContainer::const_reference cell);
+          //! Adds data to local buffer for a cell that changes ownership
+          void AddDisownedToLocalSendBuffers(
+              int neighbor, int nth, CellContainer::const_reference cell,
+              NodeCharacterizer::Process2NodesMap::mapped_type const& indices);
           //! Adds local data exept nodes
           void AddToLocalSendBuffersAllButNodes(
               int neighbor, int nth, proc_t ownerID, CellContainer::const_reference cell);
