@@ -99,8 +99,12 @@ namespace hemelb
               std::map<boost::uuids::uuid, proc_t> const & ownership);
           //! Receives messages, reconstructs cells
           //! \return a 3-tuple with the newly owned cells, the disowned cells, and the lent cells
-          virtual ChangedCells ReceiveCells(
-              std::shared_ptr<TemplateCellContainer const> const &templateCells);
+          ChangedCells ReceiveCells(
+              std::shared_ptr<TemplateCellContainer const> const &templateCells)
+          {
+            return ReceiveCells(*templateCells);
+          }
+          virtual ChangedCells ReceiveCells(TemplateCellContainer const &templateCells);
 
           //! Adds new cells and removes old ones
           static void Update(CellContainer &owned, ChangedCells const & changes);
@@ -151,7 +155,7 @@ namespace hemelb
           CellContainer::value_type RecreateLentCell(size_t i);
           //! Recreates a given cell from messages
           CellContainer::value_type RecreateOwnedCell(
-              size_t i, std::shared_ptr<TemplateCellContainer const> const &templateCells);
+              size_t i, TemplateCellContainer const &templateCells);
       };
 
     } /* parallel */
