@@ -10,9 +10,8 @@
 #ifndef HEMELB_NET_MPICOMMUNICATOR_H
 #define HEMELB_NET_MPICOMMUNICATOR_H
 
-//#include "units.h"
-//#include "net/mpi.h"
 #include <vector>
+#include <map>
 #include "net/MpiError.h"
 #include <memory>
 
