@@ -588,7 +588,7 @@ namespace hemelb
             CPPUNIT_ASSERT_EQUAL(size_t(1), std::get<2>(result).size());
             CPPUNIT_ASSERT_EQUAL(size_t(1), owned.size());
             CompareCells(cells[1], *owned.begin());
-            // CompareDistributions(cells[0], *std::get<2>(result).begin()->second.begin());
+            CompareDistributions(cells[0], *std::get<2>(result).begin()->second.begin());
             break;
           case 1:
             CPPUNIT_ASSERT_EQUAL(size_t(1), std::get<2>(result).size());
