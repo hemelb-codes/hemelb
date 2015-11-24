@@ -119,10 +119,14 @@
 
             # run cpp tests
             mkdir -p $build_dir/tests && cd $build_dir
-            for testname in $WORKSPACE/build/unittests_*; do
-              filename=$(basename $testname)
-              mpirun -n 1 $testname -o $build_dir/tests/$filename.xml || true
-            done
+            if [ -e "CTestTestfile.cmake" ] ; then
+              ctest .
+            else;
+              for testname in $WORKSPACE/build/unittests_*; do
+                filename=$(basename $testname)
+                mpirun -n 1 $testname -o $build_dir/tests/$filename.xml || true
+              done
+            fi
 
             # setup regressions
             reg_dir=$WORKSPACE/regression/hemelb-inputs
