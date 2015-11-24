@@ -343,7 +343,7 @@ namespace hemelb
         CPPUNIT_ASSERT_EQUAL(Nsend * uuid_size , xc.GetCellUUIDs().GetSendBuffer().size());
         CPPUNIT_ASSERT_EQUAL(Nreceive * uuid_size , xc.GetCellUUIDs().GetReceiveBuffer().size());
 
-        if(cells.size() > 0)
+        if(cells.size() > 0 and graph.Rank() < 4)
         {
           auto const cell = *cells.begin();
           auto const xcScale = xc.GetCellScales().GetSendBuffer()[0];
