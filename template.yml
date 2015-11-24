@@ -121,7 +121,7 @@
             mkdir -p $build_dir/tests && cd $build_dir
             if [ -e "CTestTestfile.cmake" ] ; then
               ctest .
-            else;
+            else
               for testname in $WORKSPACE/build/unittests_*; do
                 filename=$(basename $testname)
                 mpirun -n 1 $testname -o $build_dir/tests/$filename.xml || true
