@@ -11,6 +11,7 @@
 #include <numeric>
 #include <algorithm>
 #include <functional>
+
 #include "util/Iterator.h"
 #include "net/MpiError.h"
 #include "redblood/parallel/CellParallelization.h"
@@ -209,9 +210,15 @@ namespace hemelb
         // create cell
         auto result = std::make_shared<VertexBag>(tag, templateName);
         // add nodes
-        auto i_node = nodePositions.GetReceiveBuffer().cbegin();
-        for(size_t i(0); i < index; ++index, i_node += nodeCount.GetReceiveBuffer()[i] * 3);
-        for(size_t j(0); j < nodeCount.GetReceiveBuffer()[index]; ++j)
+        auto const offset =
+          std::accumulate(
+              nodeCount.GetReceiveBuffer().cbegin(),
+              nodeCount.GetReceiveBuffer().cbegin() + index,
+              0
+          );
+        auto i_node = nodePositions.GetReceiveBuffer().cbegin() + offset * 3;
+        auto const Nnodes = nodeCount.GetReceiveBuffer()[index];
+        for(size_t j(0); j < Nnodes; ++j)
         {
           result->addVertex({*(i_node++), *(i_node++), *(i_node++)});
         }
