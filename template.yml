@@ -114,6 +114,7 @@
                   -DHEMELB_USE_STREAKLINES='{streaks}'               \
                   -DHEMELB_USE_SSE3='{sse3}'                         \
                   -DHEMELB_STEERING_LIB='{steering}'                 \
+                  -DMPIEXEC_MAX_NUMPROCS=4                           \
                   $WORKSPACE/Code
             make
 
