@@ -26,6 +26,7 @@ endfunction()
 function(add_test_executable target includename)
   create_test_executable(${target} ${includename})
   add_test(NAME ${target} COMMAND ${target} -o ${testdir}/${target}.xml)
+  set_tests_properties (${target} PROPERTIES TIMEOUT 60)
 endfunction()
 
 function(add_mpi_test_executable target includename)
