@@ -66,6 +66,7 @@ namespace hemelb
           CPPUNIT_TEST(testUpdateNodeDistributions);
           CPPUNIT_TEST(testDistributeCells);
           CPPUNIT_TEST(testLendCells);
+          CPPUNIT_TEST(testMotherOfAll);
           CPPUNIT_TEST_SUITE_END();
 
         public:
@@ -86,6 +87,8 @@ namespace hemelb
           void testDistributeCells();
           //! Two cells are lent from 1 to 0, one of whcih switches ownership
           void testLendCells();
+          //! Several cells to and from several processors
+          void testMotherOfAll();
 
           //! Set of nodes affected by given proc
           std::set<proc_t> nodeLocation(LatticePosition const &node);
@@ -119,10 +122,15 @@ namespace hemelb
           //! Checks that two cells are identical
           void CompareCells(
               CellContainer::value_type expected, CellContainer::value_type actual) const;
+          //! Checks that two cells are identical
+          void CompareCells(CellContainer const &expected, CellContainer const & actual) const;
           //! Check that actual contains only vertices from expected affecting this process
           void CompareDistributions(
-              CellContainer::value_type expected,
-              CellContainer::value_type actual) const;
+              CellContainer::value_type expected, CellContainer::value_type actual) const;
+          void CompareDistributions(
+              CellContainer const & expected,
+              CellParallelization::LentCells const & actual,
+              proc_t proc) const;
 
         protected:
           LatticeDistance const radius = 5;
@@ -603,12 +611,98 @@ namespace hemelb
         }
       }
 
+      void CellParallelizationTests::testMotherOfAll()
+      {
+        if(not graph)
+        {
+          return;
+        }
+
+        std::vector<CellContainer::value_type> const templateCells
+          = { GivenCell(0), GivenCell(1), GivenCell(2), GivenCell(3) };
+        TemplateCellContainer const templates =
+        {
+          {templateCells[0]->GetTemplateName(), templateCells[0]},
+          {templateCells[1]->GetTemplateName(), templateCells[1]},
+          {templateCells[2]->GetTemplateName(), templateCells[2]},
+          {templateCells[3]->GetTemplateName(), templateCells[3]}
+        };
+
+        auto const centerOnLine = [=](proc_t i, proc_t j, double alpha)
+        {
+          auto const a = GetCenter(i), b = GetCenter(j);
+          return (b - a) * alpha + a;
+        };
+        auto const gimmeCell = [=](int n, proc_t i, proc_t j, double alpha, char u)
+        {
+          auto result = templateCells[n]->clone();
+          boost::uuids::uuid tag;
+          std::fill(tag.begin(), tag.end(), static_cast<unsigned char>(u));
+          result->SetTag(tag);
+          *result += centerOnLine(i, j, alpha) - result->GetBarycenter();
+          return CellContainer::value_type(std::move(result));
+        };
+        std::vector<CellContainer::value_type> const cells
+        {
+          // owned by 0
+          gimmeCell(0, 0, 1, 0.45, 0), gimmeCell(0, 0, 1, 0.48, 1), gimmeCell(1, 0, 1, 0.55, 2),
+          // owned by 1
+          gimmeCell(1, 1, 0, 0.0, 3), gimmeCell(1, 1, 2, 0.48, 4), gimmeCell(2, 1, 2, 0.55, 5),
+          gimmeCell(3, 1, 3, 0.48, 6), gimmeCell(2, 1, 3, 0.54, 7), gimmeCell(3, 1, 3, 0.49, 8),
+          gimmeCell(0, 1, 3, 0.54, 9), gimmeCell(3, 1, 3, 0.0, 10), gimmeCell(0, 1, 3, 1.0, 11),
+          // owned by 2
+          gimmeCell(2, 2, 1, 0.48, 12), gimmeCell(1, 2, 1, 0.47, 13), gimmeCell(2, 2, 3, 0.45, 14)
+        };
+
+        auto owned
+          = graph.Rank() == 0 ? CellContainer{cells.begin(), cells.begin() + 3}:
+            graph.Rank() == 1 ? CellContainer{cells.begin() + 3, cells.begin() + 3 + 9}:
+            graph.Rank() == 2 ? CellContainer{cells.begin() + 3 + 9, cells.end()}:
+            CellContainer{};
+        auto const dist = GetNodeDistribution(owned);
+
+        ExchangeCells xc(graph);
+        auto const ownership
+          = std::bind(&CellParallelizationTests::Ownership, *this, std::placeholders::_1);
+        xc.PostCellMessageLength(dist, owned, ownership);
+        xc.PostCells(dist, owned, ownership);
+        auto const result = xc.ReceiveCells(templates);
+        xc.Update(owned, result);
+
+        switch(graph.Rank())
+        {
+          case 0:
+            CompareCells({cells[0], cells[1]}, owned);
+            CompareDistributions({cells[2]}, std::get<2>(result), 1);
+            break;
+          case 1:
+            CompareCells({cells[2], cells[3], cells[4], cells[6], cells[8], cells[10]}, owned);
+            CompareDistributions({cells[0], cells[1]}, std::get<2>(result), 0);
+            CompareDistributions({cells[5], cells[12], cells[13]}, std::get<2>(result), 2);
+            CompareDistributions({cells[9]}, std::get<2>(result), 3);
+            break;
+          case 2:
+            CompareCells({cells[5], cells[12], cells[13], cells[14]}, owned);
+            CompareDistributions({cells[4]}, std::get<2>(result), 1);
+            CPPUNIT_ASSERT_EQUAL(size_t(0), std::get<2>(result).count(3));
+            break;
+          case 3:
+            CompareCells({cells[7], cells[9], cells[11]}, owned);
+            CompareDistributions({cells[6], cells[8]}, std::get<2>(result), 1);
+            CompareDistributions({cells[14]}, std::get<2>(result), 2);
+            break;
+          default:
+            CPPUNIT_ASSERT_EQUAL(size_t(0), owned.size());
+            break;
+        }
+      }
+
       void CellParallelizationTests::CompareCells(
           CellContainer::value_type expected, CellContainer::value_type actual) const
       {
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected->GetScale(), actual->GetScale(), 1e-8);
-        CPPUNIT_ASSERT_EQUAL(expected->GetTemplateName(), actual->GetTemplateName());
         CPPUNIT_ASSERT_EQUAL(expected->GetTag(), actual->GetTag());
+        CPPUNIT_ASSERT_EQUAL(expected->GetTemplateName(), actual->GetTemplateName());
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(expected->GetScale(), actual->GetScale(), 1e-8);
         CPPUNIT_ASSERT_EQUAL(expected->GetNumberOfNodes(), actual->GetNumberOfNodes());
         for(auto item: util::zip(expected->GetVertices(), actual->GetVertices()))
         {
@@ -617,32 +711,52 @@ namespace hemelb
           CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item).z, std::get<1>(item).z, 1e-8);
         }
       }
+      void CellParallelizationTests::CompareCells(
+          CellContainer const &expected, CellContainer const & actual) const
+      {
+        CPPUNIT_ASSERT_EQUAL(expected.size(), actual.size());
+        for(auto const &item: util::zip(expected, actual))
+        {
+          CompareCells(std::get<0>(item), std::get<1>(item));
+        }
+      }
 
       void CellParallelizationTests::CompareDistributions(
               CellContainer::value_type expectedCell,
               CellContainer::value_type actualCell) const
       {
+        CPPUNIT_ASSERT_EQUAL(expectedCell->GetTag(), actualCell->GetTag());
         CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedCell->GetScale(), actualCell->GetScale(), 1e-8);
         CPPUNIT_ASSERT_EQUAL(expectedCell->GetTemplateName(), actualCell->GetTemplateName());
-        auto getDist = [=](CellContainer::value_type cell)
-        {
-          CellContainer const cells{cell};
-          auto const distributions = GetNodeDistribution(cells);
-          auto const distribution = distributions.find(cell->GetTag())->second;
-          return distribution.CountNodes(graph.Rank()) > 0 ?
+        auto const distributions = GetNodeDistribution({expectedCell});
+        auto const distribution = distributions.find(expectedCell->GetTag())->second;
+        auto const expectedNodes = distribution.CountNodes(graph.Rank()) > 0 ?
             distribution[graph.Rank()]: decltype(distribution[graph.Rank()]){};
-        };
-        auto const expected = getDist(expectedCell);
-        CPPUNIT_ASSERT_EQUAL(size_t(expected.size()), size_t(actualCell->GetNumberOfNodes()));
+        CPPUNIT_ASSERT_EQUAL(size_t(expectedNodes.size()), size_t(actualCell->GetNumberOfNodes()));
         auto const &expectedV = expectedCell->GetVertices();
         auto const &actualV = actualCell->GetVertices();
-        for(auto const item: util::enumerate(expected))
+        for(auto const item: util::enumerate(expectedNodes))
         {
           CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedV[item.value].x, actualV[item.index].x, 1e-8);
           CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedV[item.value].y, actualV[item.index].y, 1e-8);
           CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedV[item.value].z, actualV[item.index].z, 1e-8);
         };
       }
+
+      void CellParallelizationTests::CompareDistributions(
+              CellContainer const & expected,
+              CellParallelization::LentCells const & actual,
+              proc_t proc) const
+      {
+        auto const i_proc = actual.find(proc);
+        CPPUNIT_ASSERT(i_proc != actual.end());
+        CPPUNIT_ASSERT_EQUAL(expected.size(), i_proc->second.size());
+        for(auto const &item: util::zip(expected, i_proc->second))
+        {
+          CompareDistributions(std::get<0>(item), std::get<1>(item));
+        }
+      }
+
       CPPUNIT_TEST_SUITE_REGISTRATION (CellParallelizationTests);
     }
   }
