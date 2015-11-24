@@ -459,21 +459,23 @@ namespace hemelb
       void CellParallelizationTests::testUpdateOwnedCells()
       {
         typedef ExchangeCells::ChangedCells Changes;
+        typedef ExchangeCells::LentCells LentCells;
         CellContainer::value_type const cells[4]
           = {GivenCell(0), GivenCell(1), GivenCell(2), GivenCell(3)};
         CellContainer owned{cells[0], cells[1], cells[2]};
 
-        ExchangeCells::Update(owned, Changes{{cells[3]}, {cells[0], cells[2]}, {}});
+        ExchangeCells::Update(owned, Changes{{cells[3]}, {cells[0], cells[2]}, LentCells{}});
         CPPUNIT_ASSERT((owned == CellContainer{cells[1], cells[3]}));
 
         // idem-potent
-        ExchangeCells::Update(owned, Changes{{cells[3]}, {cells[0], cells[2]}, {}});
+        ExchangeCells::Update(owned, Changes{{cells[3]}, {cells[0], cells[2]}, LentCells{}});
         CPPUNIT_ASSERT((owned == CellContainer{cells[1], cells[3]}));
       }
 
       void CellParallelizationTests::testUpdateNodeDistributions()
       {
         typedef ExchangeCells::ChangedCells Changes;
+        typedef ExchangeCells::LentCells LentCells;
         CellContainer::value_type const cells[4]
           = {GivenCell(0), GivenCell(1), GivenCell(2), GivenCell(3)};
         CellContainer owned{cells[0], cells[1], cells[2]};
@@ -481,13 +483,15 @@ namespace hemelb
         auto const assess = std::bind(
             &CellParallelizationTests::nodeLocation, *this, std::placeholders::_1);
 
-        ExchangeCells::Update(distributions, Changes{{cells[3]}, {cells[0], cells[2]}, {}}, assess);
+        ExchangeCells::Update(
+          distributions, Changes{{cells[3]}, {cells[0], cells[2]}, LentCells{}}, assess);
         CPPUNIT_ASSERT_EQUAL(size_t(2), distributions.size());
         CPPUNIT_ASSERT_EQUAL(size_t(1), distributions.count(cells[1]->GetTag()));
         CPPUNIT_ASSERT_EQUAL(size_t(1), distributions.count(cells[3]->GetTag()));
 
         // idem-potent
-        ExchangeCells::Update(distributions, Changes{{cells[3]}, {cells[0], cells[2]}, {}}, assess);
+        ExchangeCells::Update(
+          distributions, Changes{{cells[3]}, {cells[0], cells[2]}, LentCells{}}, assess);
         CPPUNIT_ASSERT_EQUAL(size_t(2), distributions.size());
         CPPUNIT_ASSERT_EQUAL(size_t(1), distributions.count(cells[1]->GetTag()));
         CPPUNIT_ASSERT_EQUAL(size_t(1), distributions.count(cells[3]->GetTag()));
