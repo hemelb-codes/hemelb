@@ -193,12 +193,13 @@ namespace hemelb
         switch(rank)
         {
           case 0:
+            return {0, 0, 0};
           case 1:
-            return {0, 0, static_cast<double>(rank * 2) * radius};
+            return {0, 0,  2 * radius};
           case 2:
-            return {0, 2 * radius, (static_cast<double>(rank * 2 + 1)) * radius};
+            return {0, std::sqrt(4 - 1) * radius, 3 * radius};
           case 3:
-            return {0, 0, (static_cast<double>(rank * 2 - 2)) * radius};
+            return {0, 0, 4 * radius};
           default:
             return {0, 0, static_cast<double>(rank) * radius * 10};
         }
