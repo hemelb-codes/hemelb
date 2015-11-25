@@ -59,6 +59,20 @@ namespace hemelb
           LentCells lent;
       };
 
+      //! \brief Takes cells and distribute them over the mpi graph
+      //! \details Cells can only be distributed from one neighbor to another.
+      //! At present, this is a three step operation invoking non-blocking neighberhood collectives:
+      //!
+      //! 1. Send the number of cells (to be exchanged) and total number of nodes (idem) to each
+      //! neighbor
+      //! 1. Received the first message and use it to construct and send messages describing the
+      //! cells
+      //! 1. Receive the previous message and reconstruct the cells
+      //!
+      //! This class owns only data that strictly concerns receiving and sending cells (mpi
+      //! communicators, buffers, etc). Anything that could be used outside the class is passed as
+      //! an input parameter to the class-methods (primarily, the container of cells, the parallel
+      //! distribution of nodes, and a funtion or vertor describing who owns which cell).
       class ExchangeCells
       {
         public:
