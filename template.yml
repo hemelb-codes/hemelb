@@ -114,6 +114,7 @@
                   -DHEMELB_USE_STREAKLINES='{streaks}'               \
                   -DHEMELB_USE_SSE3='{sse3}'                         \
                   -DHEMELB_STEERING_LIB='{steering}'                 \
+                  -DMPIEXEC=$(which mpirun)                          \
                   -DMPIEXEC_MAX_NUMPROCS=4                           \
                   $WORKSPACE/Code
             make
@@ -121,7 +122,7 @@
             # run cpp tests
             mkdir -p $build_dir/tests && cd $build_dir
             if [ -e "CTestTestfile.cmake" ] ; then
-              ctest .
+              ctest -V .
             else
               for testname in $WORKSPACE/build/unittests_*; do
                 filename=$(basename $testname)
