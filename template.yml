@@ -132,10 +132,9 @@
 
             # setup regressions
             reg_dir=$WORKSPACE/regression/hemelb-inputs
-            entropy=hg@entropy.chem.ucl.ac.uk
             mkdir -p $(dirname $reg_dir)
-            [[ -e $reg_dir ]] || hg clone ssh://$entropy/hemelb-input $reg_dir
-            cd $reg_dir && hg update
+            [[ -e $reg_dir ]] || git clone git@github.com:UCL-CCS/hemelb-tests.git $reg_dir
+            cd $reg_dir
 
             # run regression
             nodes=$([[ "$os" == "LegionRHEL7" ]] && echo "1" || echo "2")
