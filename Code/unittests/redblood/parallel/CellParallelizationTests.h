@@ -48,7 +48,7 @@ namespace hemelb
             HEMELB_MACRO(CellScales, cellScales, INeighborAllToAllV<LatticeDistance>);
             HEMELB_MACRO(OwnerIDs, ownerIDs, INeighborAllToAllV<int>);
             HEMELB_MACRO(CellUUIDs, cellUUIDs, INeighborAllToAllV<unsigned char>);
-            HEMELB_MACRO(NodePositions, nodePositions, INeighborAllToAllV<LatticeDistance>);
+            HEMELB_MACRO(NodePositions, nodePositions, INeighborAllToAllV<LatticePosition>);
             HEMELB_MACRO(TemplateNames, templateNames, INeighborAllToAllV<char>);
 #         undef HEMELB_MACRO
       };
