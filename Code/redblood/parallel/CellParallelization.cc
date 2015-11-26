@@ -35,16 +35,6 @@ namespace hemelb
           std::transform(result.begin(), result.end(), result.begin(), uuidSize);
           return result;
         }
-        std::vector<int> GetTotalNodeCounts(std::vector<int> const &cellCounts)
-        {
-          std::vector<int> result = cellCounts;
-          auto const uuidSize = [](int a)
-          {
-            return a * 3;
-          };
-          std::transform(result.begin(), result.end(), result.begin(), uuidSize);
-          return result;
-        }
 
         std::string getTemplateName(size_t index, std::vector<char> const &buffer)
         {
@@ -158,7 +148,7 @@ namespace hemelb
 
         // Need total number of nodes to prepare buffers for positions
         totalNodeCount.receive();
-        nodePositions.SetReceiveCounts(GetTotalNodeCounts(totalNodeCount.GetReceiveBuffer()));
+        nodePositions.SetReceiveCounts(totalNodeCount.GetReceiveBuffer());
         nodePositions.send();
 
         // Need template name lengths to prepare buffers for template names
@@ -216,11 +206,11 @@ namespace hemelb
               nodeCount.GetReceiveBuffer().cbegin() + index,
               0
           );
-        auto i_node = nodePositions.GetReceiveBuffer().cbegin() + offset * 3;
+        auto i_node = nodePositions.GetReceiveBuffer().cbegin() + offset;
         auto const Nnodes = nodeCount.GetReceiveBuffer()[index];
         for(size_t j(0); j < Nnodes; ++j)
         {
-          result->addVertex({*(i_node++), *(i_node++), *(i_node++)});
+          result->addVertex(*(i_node++));
         }
         // and set the scale
         result->SetScale(cellScales.GetReceiveBuffer()[index]);
@@ -242,15 +232,10 @@ namespace hemelb
               nodeCount.GetReceiveBuffer().cbegin() + index,
               0
           );
-        auto i_node = nodePositions.GetReceiveBuffer().cbegin() + offset * 3;
+        auto i_node = nodePositions.GetReceiveBuffer().cbegin() + offset;
         auto const Nnodes = nodeCount.GetReceiveBuffer()[index];
         assert(Nnodes == result->GetNumberOfNodes());
-        for(size_t j(0); j < Nnodes; ++j)
-        {
-          result->GetVertices()[j].x = *(i_node++);
-          result->GetVertices()[j].y = *(i_node++);
-          result->GetVertices()[j].z = *(i_node++);
-        }
+        std::copy(i_node, i_node + Nnodes, result->GetVertices().begin());
         return std::move(result);
       }
 
@@ -263,7 +248,7 @@ namespace hemelb
         cellScales.SetSendCounts(cellCount.GetSendBuffer());
         ownerIDs.SetSendCounts(cellCount.GetSendBuffer());
         cellUUIDs.SetSendCounts(GetUUIDCounts(cellCount.GetSendBuffer()));
-        nodePositions.SetSendCounts(GetTotalNodeCounts(totalNodeCount.GetSendBuffer()));
+        nodePositions.SetSendCounts(totalNodeCount.GetSendBuffer());
         templateNames.SetSendCounts(nameLengths.GetSendBuffer());
         templateNames.fillSend('\0');
 
@@ -335,13 +320,11 @@ namespace hemelb
         size_t node_offset(0);
         for(int j(0); j < nth; ++j)
         {
-          node_offset += 3 * nodeCount.GetSend(neighbor, j);
+          node_offset += nodeCount.GetSend(neighbor, j);
         }
         for(auto const item: util::enumerate(cell->GetVertices()))
         {
-          nodePositions.SetSend(neighbor, item.value.x, node_offset + item.index * 3);
-          nodePositions.SetSend(neighbor, item.value.y, node_offset + item.index * 3 + 1);
-          nodePositions.SetSend(neighbor, item.value.z, node_offset + item.index * 3 + 2);
+          nodePositions.SetSend(neighbor, item.value, node_offset + item.index);
         }
         // adds to disowned cells and to formely owned cells
         disowned.insert(cell);
@@ -384,14 +367,12 @@ namespace hemelb
         size_t node_offset(0);
         for(int j(0); j < nth; ++j)
         {
-          node_offset += 3 * nodeCount.GetSend(neighbor, j);
+          node_offset += nodeCount.GetSend(neighbor, j);
         }
         for(auto const item: util::enumerate(indices))
         {
           auto const& node = cell->GetVertices()[item.value];
-          nodePositions.SetSend(neighbor, node.x, node_offset + item.index * 3);
-          nodePositions.SetSend(neighbor, node.y, node_offset + item.index * 3 + 1);
-          nodePositions.SetSend(neighbor, node.z, node_offset + item.index * 3 + 2);
+          nodePositions.SetSend(neighbor, node, node_offset + item.index);
         }
       }
 
