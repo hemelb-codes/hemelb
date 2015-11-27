@@ -30,8 +30,8 @@ namespace hemelb
       // is the <parametervalue>.
       for (size_t ii = 1; ii < argv.size(); ii += 2)
       {
-        auto const * paramName = argv[ii].c_str();
-        auto const * paramValue = argv[ii + 1].c_str();
+        auto paramName = argv[ii].c_str();
+        auto paramValue = argv[ii + 1].c_str();
         if (std::strcmp(paramName, "-in") == 0)
         {
           inputFile = std::string(paramValue);
