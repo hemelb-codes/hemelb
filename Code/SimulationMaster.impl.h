@@ -45,42 +45,30 @@ namespace hemelb
   {
     timings[hemelb::reporting::Timers::total].Start();
 
-    latticeData = nullptr;
-
-    colloidController = nullptr;
-    latticeBoltzmannModel = nullptr;
-    steeringCpt = nullptr;
-    propertyDataSource = nullptr;
-    visualisationControl = nullptr;
-    propertyExtractor = nullptr;
-    simulationState = nullptr;
-    stepManager = nullptr;
-    netConcern = nullptr;
-    neighbouringDataManager = nullptr;
     imagesPerSimulation = options.NumberOfImages();
     steeringSessionId = options.GetSteeringSessionId();
 
-    fileManager = new hemelb::io::PathManager(options,
+    fileManager = std::make_shared<hemelb::io::PathManager>(options,
                                               IsCurrentProcTheIOProc(),
                                               GetProcessorCount());
-    simConfig = hemelb::configuration::SimConfig::New(fileManager->GetInputFile());
+    simConfig.reset(hemelb::configuration::SimConfig::New(fileManager->GetInputFile()));
     unitConverter = &simConfig->GetUnitConverter();
     monitoringConfig = simConfig->GetMonitoringConfiguration();
 
-    fileManager->SaveConfiguration(simConfig);
+    fileManager->SaveConfiguration(simConfig.get());
     Initialise();
     if (IsCurrentProcTheIOProc())
     {
-      reporter = new hemelb::reporting::Reporter(fileManager->GetReportPath(),
+      reporter = std::make_shared<hemelb::reporting::Reporter>(fileManager->GetReportPath(),
                                                  fileManager->GetInputFile());
       reporter->AddReportable(&build_info);
       if (monitoringConfig->doIncompressibilityCheck)
       {
-        reporter->AddReportable(incompressibilityChecker);
+        reporter->AddReportable(incompressibilityChecker.get());
       }
       reporter->AddReportable(&timings);
-      reporter->AddReportable(latticeData);
-      reporter->AddReportable(simulationState);
+      reporter->AddReportable(latticeData.get());
+      reporter->AddReportable(simulationState.get());
     }
   }
 
@@ -91,35 +79,6 @@ namespace hemelb
    */
   template<class TRAITS> SimulationMaster<TRAITS>::~SimulationMaster()
   {
-
-    if (ioComms.OnIORank())
-    {
-      delete imageSendCpt;
-    }
-    delete latticeData;
-    delete colloidController;
-    delete latticeBoltzmannModel;
-    delete inletValues;
-    delete outletValues;
-    delete network;
-    delete steeringCpt;
-    delete visualisationControl;
-    delete propertyExtractor;
-    delete propertyDataSource;
-    delete stabilityTester;
-    delete entropyTester;
-    delete simulationState;
-    delete incompressibilityChecker;
-    delete neighbouringDataManager;
-
-    delete simConfig;
-    delete fileManager;
-    if (IsCurrentProcTheIOProc())
-    {
-      delete reporter;
-    }
-    delete stepManager;
-    delete netConcern;
   }
 
   /**
@@ -151,7 +110,7 @@ namespace hemelb
 
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Beginning Initialisation.");
 
-    simulationState = new hemelb::lb::SimulationState(simConfig->GetTimeStepLength(),
+    simulationState = std::make_shared<hemelb::lb::SimulationState>(simConfig->GetTimeStepLength(),
                                                       simConfig->GetTotalTimeSteps());
 
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising LatticeData.");
@@ -168,23 +127,23 @@ namespace hemelb
         reader.LoadAndDecompose(simConfig->GetDataFilePath());
 
     // Create a new lattice based on that info and return it.
-    latticeData = new hemelb::geometry::LatticeData(latticeType::GetLatticeInfo(),
+    latticeData = std::make_shared<hemelb::geometry::LatticeData>(latticeType::GetLatticeInfo(),
                                                     readGeometryData,
                                                     ioComms);
 
     timings[hemelb::reporting::Timers::latDatInitialise].Stop();
 
     neighbouringDataManager =
-        new hemelb::geometry::neighbouring::NeighbouringDataManager(*latticeData,
+        std::make_shared<hemelb::geometry::neighbouring::NeighbouringDataManager>(*latticeData,
                                                                     latticeData->GetNeighbouringData(),
                                                                     communicationNet);
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising LBM.");
-    latticeBoltzmannModel = new hemelb::lb::LBM<Traits>(simConfig,
+    latticeBoltzmannModel = std::make_shared<hemelb::lb::LBM<Traits>>(simConfig.get(),
                                                         &communicationNet,
-                                                        latticeData,
-                                                        simulationState,
+                                                        latticeData.get(),
+                                                        simulationState.get(),
                                                         timings,
-                                                        neighbouringDataManager);
+                                                        neighbouringDataManager.get());
 
     hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
 
@@ -199,11 +158,11 @@ namespace hemelb
       hemelb::colloids::BodyForces::InitBodyForces(xml);
 
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Boundary Conditions.");
-      hemelb::colloids::BoundaryConditions::InitBoundaryConditions(latticeData, xml);
+      hemelb::colloids::BoundaryConditions::InitBoundaryConditions(latticeData.get(), xml);
 
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising Colloids.");
       colloidController =
-          new hemelb::colloids::ColloidController(*latticeData,
+          std::make_shared<hemelb::colloids::ColloidController>(*latticeData,
                                                   *simulationState,
                                                   readGeometryData,
                                                   xml,
@@ -232,91 +191,77 @@ namespace hemelb
     // Initialise and begin the steering.
     if (ioComms.OnIORank())
     {
-      network = new hemelb::steering::Network(steeringSessionId, timings);
-    }
-    else
-    {
-      network = nullptr;
+      network = std::make_shared<hemelb::steering::Network>(steeringSessionId, timings);
     }
 
-    stabilityTester = new hemelb::lb::StabilityTester<latticeType>(latticeData,
+    stabilityTester = std::make_shared<hemelb::lb::StabilityTester<latticeType>>(latticeData.get(),
                                                                    &communicationNet,
-                                                                   simulationState,
+                                                                   simulationState.get(),
                                                                    timings,
                                                                    monitoringConfig);
-    entropyTester = nullptr;
-
     if (monitoringConfig->doIncompressibilityCheck)
     {
-      incompressibilityChecker = new hemelb::lb::IncompressibilityChecker<
-          hemelb::net::PhasedBroadcastRegular<> >(latticeData,
+      incompressibilityChecker = std::make_shared<hemelb::lb::IncompressibilityChecker<
+          hemelb::net::PhasedBroadcastRegular<> >>(latticeData.get(),
                                                   &communicationNet,
-                                                  simulationState,
+                                                  simulationState.get(),
                                                   latticeBoltzmannModel->GetPropertyCache(),
                                                   timings);
-    }
-    else
-    {
-      incompressibilityChecker = nullptr;
     }
 
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising visualisation controller.");
     visualisationControl =
-        new hemelb::vis::Control(latticeBoltzmannModel->GetLbmParams()->StressType,
+        std::make_shared<hemelb::vis::Control>(latticeBoltzmannModel->GetLbmParams()->StressType,
                                  &communicationNet,
-                                 simulationState,
+                                 simulationState.get(),
                                  latticeBoltzmannModel->GetPropertyCache(),
-                                 latticeData,
+                                 latticeData.get(),
                                  timings[hemelb::reporting::Timers::visualisation]);
 
     if (ioComms.OnIORank())
     {
-      imageSendCpt = new hemelb::steering::ImageSendComponent(simulationState,
-                                                              visualisationControl,
+      imageSendCpt = std::make_shared<hemelb::steering::ImageSendComponent>(simulationState.get(),
+                                                              visualisationControl.get(),
                                                               latticeBoltzmannModel->GetLbmParams(),
-                                                              network,
+                                                              network.get(),
                                                               latticeBoltzmannModel->InletCount());
 
     }
-    else
-    {
-      imageSendCpt = nullptr;
-    }
 
-    inletValues = new hemelb::lb::iolets::BoundaryValues(hemelb::geometry::INLET_TYPE,
-                                                         latticeData,
+    inletValues = std::make_shared<hemelb::lb::iolets::BoundaryValues>(hemelb::geometry::INLET_TYPE,
+                                                         latticeData.get(),
                                                          simConfig->GetInlets(),
-                                                         simulationState,
+                                                         simulationState.get(),
                                                          ioComms,
                                                          *unitConverter);
 
-    outletValues = new hemelb::lb::iolets::BoundaryValues(hemelb::geometry::OUTLET_TYPE,
-                                                          latticeData,
+    outletValues = std::make_shared<hemelb::lb::iolets::BoundaryValues>(hemelb::geometry::OUTLET_TYPE,
+                                                          latticeData.get(),
                                                           simConfig->GetOutlets(),
-                                                          simulationState,
+                                                          simulationState.get(),
                                                           ioComms,
                                                           *unitConverter);
 
-    latticeBoltzmannModel->Initialise(visualisationControl,
-                                      inletValues,
-                                      outletValues,
+    latticeBoltzmannModel->Initialise(visualisationControl.get(),
+                                      inletValues.get(),
+                                      outletValues.get(),
                                       unitConverter);
     neighbouringDataManager->ShareNeeds();
     neighbouringDataManager->TransferNonFieldDependentInformation();
 
-    steeringCpt = new hemelb::steering::SteeringComponent(network,
-                                                          visualisationControl,
-                                                          imageSendCpt,
+    steeringCpt = std::make_shared<hemelb::steering::SteeringComponent>(network.get(),
+                                                          visualisationControl.get(),
+                                                          imageSendCpt.get(),
                                                           &communicationNet,
-                                                          simulationState,
-                                                          simConfig,
+                                                          simulationState.get(),
+                                                          simConfig.get(),
                                                           unitConverter);
 
     // Read in the visualisation parameters.
     latticeBoltzmannModel->ReadVisParameters();
 
     propertyDataSource =
-        new hemelb::extraction::LbDataSourceIterator(latticeBoltzmannModel->GetPropertyCache(),
+        std::make_shared<hemelb::extraction::LbDataSourceIterator>(latticeBoltzmannModel->GetPropertyCache(),
                                                      *latticeData,
                                                      ioComms.Rank(),
                                                      *unitConverter);
@@ -331,7 +276,7 @@ namespace hemelb
             + simConfig->GetPropertyOutput(outputNumber)->filename;
       }
 
-      propertyExtractor = new hemelb::extraction::PropertyActor(*simulationState,
+      propertyExtractor = std::make_shared<hemelb::extraction::PropertyActor>(*simulationState,
                                                                 simConfig->GetPropertyOutputs(),
                                                                 *propertyDataSource,
                                                                 timings,
@@ -340,12 +285,12 @@ namespace hemelb
 
     imagesPeriod = OutputPeriod(imagesPerSimulation);
 
-    stepManager = new hemelb::net::phased::StepManager(2,
+    stepManager = std::make_shared<hemelb::net::phased::StepManager>(2,
                                                        &timings,
                                                        hemelb::net::separate_communications);
-    netConcern = new hemelb::net::phased::NetConcern(communicationNet);
-    stepManager->RegisterIteratedActorSteps(*neighbouringDataManager, 0);
-    if (colloidController != nullptr)
+    netConcern = std::make_shared<hemelb::net::phased::NetConcern>(communicationNet);
+    stepManager->RegisterIteratedActorSteps(*neighbouringDataManager.get(), 0);
+    if (colloidController)
     {
       stepManager->RegisterIteratedActorSteps(*colloidController, 1);
     }
@@ -359,7 +304,7 @@ namespace hemelb
     stepManager->RegisterIteratedActorSteps(*outletValues, 1);
     stepManager->RegisterIteratedActorSteps(*steeringCpt, 1);
     stepManager->RegisterIteratedActorSteps(*stabilityTester, 1);
-    if (entropyTester != nullptr)
+    if (entropyTester)
     {
       stepManager->RegisterIteratedActorSteps(*entropyTester, 1);
     }
@@ -369,7 +314,7 @@ namespace hemelb
       stepManager->RegisterIteratedActorSteps(*incompressibilityChecker, 1);
     }
     stepManager->RegisterIteratedActorSteps(*visualisationControl, 1);
-    if (propertyExtractor != nullptr)
+    if (propertyExtractor)
     {
       stepManager->RegisterIteratedActorSteps(*propertyExtractor, 1);
     }
@@ -423,18 +368,17 @@ namespace hemelb
       if (ioComms.OnIORank())
       {
         reporter->Image();
-        hemelb::io::writers::Writer * writer = fileManager->XdrImageWriter(1
-            + ( (it->second - 1) % simulationState->GetTimeStep()));
+        std::unique_ptr<hemelb::io::writers::Writer> writer(
+            fileManager->XdrImageWriter(1 + ( (it->second - 1) % simulationState->GetTimeStep())));
 
         const hemelb::vis::PixelSet<hemelb::vis::ResultPixel>* result =
             visualisationControl->GetResult(it->second);
 
-        visualisationControl->WriteImage(writer,
+        visualisationControl->WriteImage(writer.get(),
                                          *result,
                                          visualisationControl->domainStats,
                                          visualisationControl->visSettings);
 
-        delete writer;
       }
     }
 
@@ -595,7 +539,7 @@ namespace hemelb
       simulationState->SetIsTerminating(true);
     }
 
-    if ( (simulationState->GetTimeStep() % 500 == 0) && colloidController != nullptr)
+    if ( (simulationState->GetTimeStep() % 500 == 0) && colloidController)
       colloidController->OutputInformation(simulationState->GetTimeStep());
 
 #ifndef NO_STREAKLINES
@@ -652,7 +596,7 @@ namespace hemelb
     }
 
     // If extracting property results, check what's required by them.
-    if (propertyExtractor != nullptr)
+    if (propertyExtractor)
     {
       propertyExtractor->SetRequiredProperties(propertyCache);
     }

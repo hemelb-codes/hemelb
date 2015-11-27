@@ -95,7 +95,7 @@ namespace hemelb
 
             /* Do include iolet adjacent sites (inlet) */
             long long int ioletsSiteCount = latticeData->GetMidDomainCollisionCount(2);
-            invertedInletBoundaryList = PopulateInvertedBoundaryList(latticeData,
+            invertedInletBoundaryList = PopulateInvertedBoundaryList(latticeData.get(),
                                                                      invertedInletBoundaryList,
                                                                      offset,
                                                                      ioletsSiteCount);
@@ -103,7 +103,7 @@ namespace hemelb
             offset += latticeData->GetMidDomainCollisionCount(2);
             /* Do include iolet adjacent sites (outlet) */
             ioletsSiteCount = latticeData->GetMidDomainCollisionCount(3);
-            invertedOutletBoundaryList = PopulateInvertedBoundaryList(latticeData,
+            invertedOutletBoundaryList = PopulateInvertedBoundaryList(latticeData.get(),
                                                                       invertedOutletBoundaryList,
                                                                       offset,
                                                                       ioletsSiteCount);
@@ -111,7 +111,7 @@ namespace hemelb
             offset += latticeData->GetMidDomainCollisionCount(3);
             /* Do include iolet adjacent sites (inlet-wall) */
             ioletsSiteCount = latticeData->GetMidDomainCollisionCount(4);
-            invertedInletBoundaryList = PopulateInvertedBoundaryList(latticeData,
+            invertedInletBoundaryList = PopulateInvertedBoundaryList(latticeData.get(),
                                                                      invertedInletBoundaryList,
                                                                      offset,
                                                                      ioletsSiteCount);
@@ -119,7 +119,7 @@ namespace hemelb
             offset += latticeData->GetMidDomainCollisionCount(4);
             /* Do include iolet adjacent sites (outlet-wall) */
             ioletsSiteCount = latticeData->GetMidDomainCollisionCount(5);
-            invertedOutletBoundaryList = PopulateInvertedBoundaryList(latticeData,
+            invertedOutletBoundaryList = PopulateInvertedBoundaryList(latticeData.get(),
                                                                       invertedOutletBoundaryList,
                                                                       offset,
                                                                       ioletsSiteCount);
@@ -244,13 +244,13 @@ namespace hemelb
                                                                                   outletValues->GetLocalIolet(0)->GetDensityMax(),
                                                                                   outletValues->GetLocalIolet(0)->GetPressureMax());
 
-            SetCommsRequired(inletValues, true);
-            SetCommsRequired(outletValues, true);
+            SetCommsRequired(inletValues.get(), true);
+            SetCommsRequired(outletValues.get(), true);
 
             inletValues->RequestComms();
             outletValues->RequestComms();
-            SetCommsRequired(inletValues, false);
-            SetCommsRequired(outletValues, false);
+            SetCommsRequired(inletValues.get(), false);
+            SetCommsRequired(outletValues.get(), false);
 
             for (unsigned int i = 0; i < inletValues->GetLocalIoletCount(); i++)
             {

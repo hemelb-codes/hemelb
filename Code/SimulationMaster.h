@@ -9,6 +9,8 @@
 
 #ifndef HEMELB_SIMULATIONMASTER_H
 #define HEMELB_SIMULATIONMASTER_H
+#include <memory>
+
 #include "lb/lattices/Lattices.h"
 #include "extraction/PropertyActor.h"
 #include "lb/lb.hpp"
@@ -51,7 +53,7 @@ namespace hemelb
       int GetProcessorCount();
 
       void RunSimulation();
-      hemelb::lb::SimulationState const * GetState() const
+      std::shared_ptr<hemelb::lb::SimulationState const> GetState() const
       {
         return simulationState;
       }
@@ -74,16 +76,17 @@ namespace hemelb
 #     endif
     protected:
 
-      hemelb::lb::iolets::BoundaryValues* inletValues;
-      hemelb::lb::iolets::BoundaryValues* outletValues;
+      std::shared_ptr<hemelb::lb::iolets::BoundaryValues> inletValues;
+      std::shared_ptr<hemelb::lb::iolets::BoundaryValues> outletValues;
       virtual void DoTimeStep();
 
       /* The next quantities are protected because they are used by MultiscaleSimulationMaster */
       // Set the lattice type via a build parameter
       typedef typename Traits::Lattice latticeType;
-      hemelb::geometry::LatticeData* latticeData;
-      hemelb::lb::LBM<Traits>* latticeBoltzmannModel;
-      hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
+      std::shared_ptr<hemelb::geometry::LatticeData> latticeData;
+      std::shared_ptr<hemelb::lb::LBM<Traits>> latticeBoltzmannModel;
+      std::shared_ptr<hemelb::geometry::neighbouring::NeighbouringDataManager>
+        neighbouringDataManager;
       const hemelb::net::IOCommunicator& ioComms;
 
     private:
@@ -105,41 +108,42 @@ namespace hemelb
        */
       void LogStabilityReport();
 
-      hemelb::configuration::SimConfig *simConfig;
-      hemelb::io::PathManager* fileManager;
+      std::shared_ptr<hemelb::configuration::SimConfig> simConfig;
+      std::shared_ptr<hemelb::io::PathManager> fileManager;
       hemelb::reporting::Timers timings;
-      hemelb::reporting::Reporter* reporter;
+      std::shared_ptr<hemelb::reporting::Reporter> reporter;
       hemelb::reporting::BuildInfo build_info;
       typedef std::multimap<unsigned long, unsigned long> MapType;
 
       MapType writtenImagesCompleted;
       MapType networkImagesCompleted;
 
-      hemelb::steering::Network* network;
-      hemelb::steering::ImageSendComponent *imageSendCpt;
-      hemelb::steering::SteeringComponent* steeringCpt;
+      std::shared_ptr<hemelb::steering::Network> network;
+      std::shared_ptr<hemelb::steering::ImageSendComponent> imageSendCpt;
+      std::shared_ptr<hemelb::steering::SteeringComponent> steeringCpt;
 
-      hemelb::lb::SimulationState* simulationState;
+      std::shared_ptr<hemelb::lb::SimulationState> simulationState;
 
       /** Struct containing the configuration of various checkers/testers */
       const hemelb::configuration::SimConfig::MonitoringConfig* monitoringConfig;
-      hemelb::lb::StabilityTester<latticeType>* stabilityTester;
-      hemelb::lb::EntropyTester<latticeType>* entropyTester;
+      std::shared_ptr<hemelb::lb::StabilityTester<latticeType>> stabilityTester;
+      std::shared_ptr<hemelb::lb::EntropyTester<latticeType>> entropyTester;
       /** Actor in charge of checking the maximum density difference across the domain */
-      hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<> >* incompressibilityChecker;
+      std::shared_ptr<hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<> >>
+        incompressibilityChecker;
 
       std::shared_ptr<hemelb::net::IteratedAction> cellController;
-      hemelb::colloids::ColloidController* colloidController;
+      std::shared_ptr<hemelb::colloids::ColloidController> colloidController;
       hemelb::net::Net communicationNet;
 
       const hemelb::util::UnitConverter* unitConverter;
 
-      hemelb::vis::Control* visualisationControl;
-      hemelb::extraction::IterableDataSource* propertyDataSource;
-      hemelb::extraction::PropertyActor* propertyExtractor;
+      std::shared_ptr<hemelb::vis::Control> visualisationControl;
+      std::shared_ptr<hemelb::extraction::IterableDataSource> propertyDataSource;
+      std::shared_ptr<hemelb::extraction::PropertyActor> propertyExtractor;
 
-      hemelb::net::phased::StepManager* stepManager;
-      hemelb::net::phased::NetConcern* netConcern;
+      std::shared_ptr<hemelb::net::phased::StepManager> stepManager;
+      std::shared_ptr<hemelb::net::phased::NetConcern> netConcern;
 
       unsigned int imagesPerSimulation;
       int steeringSessionId;
