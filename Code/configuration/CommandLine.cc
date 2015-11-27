@@ -15,13 +15,12 @@ namespace hemelb
   namespace configuration
   {
 
-    CommandLine::CommandLine(int aargc, const char * const * const aargv) :
+    CommandLine::CommandLine(std::vector<std::string> const & argv):
         inputFile("input.xml"), outputDir(""), images(10), steeringSessionId(1), debugMode(false),
-            argc(aargc), argv(aargv)
+      argv(argv)
     {
-
       // There should be an odd number of arguments since the parameters occur in pairs.
-      if ( (argc % 2) == 0)
+      if ( (argv.size() % 2) == 0)
       {
         throw OptionError()
             << "There should be an odd number of arguments since the parameters occur in pairs.";
@@ -29,10 +28,10 @@ namespace hemelb
 
       // All arguments are parsed in pairs, one is a "-<paramName>" type, and one
       // is the <parametervalue>.
-      for (int ii = 1; ii < argc; ii += 2)
+      for (size_t ii = 1; ii < argv.size(); ii += 2)
       {
-        const char* const paramName = argv[ii];
-        const char* const paramValue = argv[ii + 1];
+        auto const * paramName = argv[ii].c_str();
+        auto const * paramValue = argv[ii + 1].c_str();
         if (std::strcmp(paramName, "-in") == 0)
         {
           inputFile = std::string(paramValue);
