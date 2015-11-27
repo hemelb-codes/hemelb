@@ -10,6 +10,7 @@
 #ifndef HEMELB_CONFIGURATION_COMMANDLINE_H
 #define HEMELB_CONFIGURATION_COMMANDLINE_H
 
+#include <vector>
 #include <string>
 
 #include "Exception.h"
@@ -36,7 +37,15 @@ namespace hemelb
          * @param aargc count of arguments supplied to program, including program name
          * @param aargv values of arguments supplied to program, of which first is program name
          */
-        CommandLine(int aargc, const char * const * const aargv);
+        CommandLine(int aargc, const char * const aargv[])
+          : CommandLine(std::vector<std::string>(aargv, aargv + aargc))
+        {
+        };
+        CommandLine(std::initializer_list<char const*> init)
+          : CommandLine(std::vector<std::string>(init.begin(), init.end()))
+        {
+        }
+        CommandLine(std::vector<std::string> const &argv);
         /**
          * Report to standard output an error message describing the usage
          */
@@ -85,15 +94,15 @@ namespace hemelb
          */
         int ArgumentCount() const
         {
-          return (argc);
+          return argv.size();
         }
         /**
          *
          * @return the command line arguments that were given.
          */
-        const char * const * Arguments()
+        std::vector<std::string> const& Arguments() const
         {
-          return (argv);
+          return argv;
         }
 
         /**
@@ -108,8 +117,7 @@ namespace hemelb
         unsigned int images; //! images to produce
         int steeringSessionId; //! unique identifier for steering session
         bool debugMode; //! Use debugger
-        int argc; //! count of command line arguments, including program name
-        const char * const * const argv; //! command line arguments
+        std::vector<std::string> argv; //! command line arguments
     };
   }
 }
