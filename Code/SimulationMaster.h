@@ -87,7 +87,7 @@ namespace hemelb
       std::shared_ptr<hemelb::lb::LBM<Traits>> latticeBoltzmannModel;
       std::shared_ptr<hemelb::geometry::neighbouring::NeighbouringDataManager>
         neighbouringDataManager;
-      const hemelb::net::IOCommunicator& ioComms;
+      const hemelb::net::IOCommunicator ioComms;
 
     private:
       void Initialise();
