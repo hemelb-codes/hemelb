@@ -227,7 +227,7 @@ namespace hemelb
          *
          * @todo #23 This is defined in StabilityChecker as well, refactor somewhere else?
          */
-        static const unsigned int SPREADFACTOR = 10u;
+        static const unsigned int SPREADFACTOR;
 
         /** Pointer to lattice data object. */
         const geometry::LatticeData * mLatDat;
@@ -257,6 +257,8 @@ namespace hemelb
         distribn_t childrenDensitiesSerialised[SPREADFACTOR * DensityTracker::DENSITY_TRACKER_SIZE];
     };
 
+    template<class BroadcastPolicy>
+    const unsigned int IncompressibilityChecker<BroadcastPolicy> :: SPREADFACTOR = 10u;
   }
 }
 
