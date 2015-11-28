@@ -16,6 +16,7 @@
 #include "redblood/Cell.h"
 #include "redblood/stencil.h"
 #include "redblood/VelocityInterpolation.h"
+#include "util/Iterator.h"
 #include "geometry/LatticeData.h"
 
 namespace hemelb

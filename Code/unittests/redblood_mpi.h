@@ -9,7 +9,8 @@
 
 #ifndef HEMELB_UNITTEST_REDBLOOD_PARALLEL_H
 #define HEMELB_DOING_UNITTESTS
-#include <unittests/redblood/parallel/CellParallelizationTests.h>
 #include <unittests/net/NeighborCommTests.h>
+#include <unittests/redblood/parallel/CellParallelizationTests.h>
+#include <unittests/redblood/parallel/MPISpreadForcesTests.h>
 #undef HEMELB_DOING_UNITTESTS
 #endif

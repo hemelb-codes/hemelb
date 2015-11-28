@@ -193,28 +193,35 @@ namespace hemelb
               size_t i, TemplateCellContainer const &templateCells);
       };
 
-      // class SpreadForces
-      // {
-      //   //! Type of the object holding distributions
-      //   typedef CellParallelization::NodeDistributions NodeDistributions;
-      //   //! Container holding cells lent by other processes
-      //   typedef CellParallelization::LentCells LentCells;
-      //
-      //   SpreadForces(net::MpiCommunicator const &graphComm)
-      //     : totalNodeCount(graphComm), nodePositions(graphComm)
-      //   {
-      //   }
-      //
-      //   protected:
-      //     //! Sends total number of shared nodes
-      //     net::INeighborAllToAll<int> totalNodeCount;
-      //     //! Sends positions for the nodes
-      //     net::INeighborAllToAllV<LatticeDistance> nodePositions;
-      //     //! Sends forces
-      //     net::INeighborAllToAllV<LatticeDistance> nodeForces;
-      // };
+
+      //! Creates a map from uuids to node distributions over MPI domains
+      template<class ASSESSOR>
+      CellParallelization::NodeDistributions nodeDistributions(
+          ASSESSOR assessor, CellContainer const & ownedCells)
+      {
+        CellParallelization::NodeDistributions result;
+        for(auto const&cell: ownedCells)
+        {
+          result.emplace(
+              std::piecewise_construct,
+              std::forward_as_tuple(cell->GetTag()),
+              std::forward_as_tuple(assessor, cell)
+          );
+        }
+        return result;
+      }
+
+      //! \brief Creates a map from uuids to node distributions over MPI domains
+      //! \details This version uses standard assessor that loops over interpolated fluid sites.
+      template<class STENCIL = Traits<>::Stencil>
+      CellParallelization::NodeDistributions nodeDistributions(
+          geometry::LatticeData const &latDat, CellContainer const & ownedCells)
+      {
+        return nodeDistributions(details::AssessMPIFunction<STENCIL>(latDat), ownedCells);
+      }
 
     } /* parallel */
   } /* redblood */
 } /* hemelb */
+
 #endif
