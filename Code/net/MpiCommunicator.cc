@@ -134,6 +134,8 @@ namespace hemelb
         std::vector<std::vector<int>> edges, bool reorder) const
     {
       std::vector<int> indices, flat_edges;
+      indices.reserve(1);
+      flat_edges.reserve(1);
       for(auto const & edge_per_proc: edges)
       {
         for(auto const & edge: edge_per_proc)
