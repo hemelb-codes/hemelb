@@ -47,6 +47,17 @@ namespace hemelb
         template<class STENCIL>
         std::set<proc_t> positionAffectsProcs(
             geometry::LatticeData const &latDat, LatticePosition const &position);
+
+        //! Simplest MPI range assessor loops over nodes + interpolation stencil
+        template<class STENCIL>
+          static AssessNodeRange AssessMPIFunction(geometry::LatticeData const &latDat)
+          {
+            return [&latDat](LatticePosition const &pos)
+            {
+              return details::positionAffectsProcs<STENCIL>(
+                  latDat, InterpolationIterator<STENCIL>(pos));
+            };
+          }
       } /* details */
 
       class NodeCharacterizer
@@ -85,7 +96,8 @@ namespace hemelb
               geometry::LatticeData const &latDat,
               std::shared_ptr<CellBase const> cell,
               Traits<ARGS...> const& )
-          : NodeCharacterizer(AssessMPIFunction<typename Traits<ARGS...>::Stencil>(latDat), cell)
+          : NodeCharacterizer(
+              details::AssessMPIFunction<typename Traits<ARGS...>::Stencil>(latDat), cell)
           {
           }
 
@@ -120,7 +132,7 @@ namespace hemelb
           template<class STENCIL>
           void Reindex(geometry::LatticeData const &latDat, std::shared_ptr<CellBase const> cell)
           {
-            Reindex(AssessMPIFunction<STENCIL>(latDat), cell->GetVertices());
+            Reindex(details::AssessMPIFunction<STENCIL>(latDat), cell->GetVertices());
           }
 
           //! Consolidates result from another proc into an input array
@@ -151,14 +163,6 @@ namespace hemelb
 
 
         protected:
-          template<class STENCIL>
-            static AssessNodeRange AssessMPIFunction(geometry::LatticeData const &latDat)
-            {
-              return std::bind(
-                details::positionAffectsProcs<STENCIL>,
-                latDat, std::placeholders::_1
-              );
-            }
           //! Processes affected by a given processor
           Process2NodesMap affectedProcs;
       };
