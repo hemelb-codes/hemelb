@@ -57,6 +57,10 @@ namespace hemelb
 
         virtual ~LatticeData();
 
+        net::IOCommunicator const & GetCommunicator() const
+        {
+          return comms;
+        }
         /**
          * Swap the fOld and fNew arrays around.
          */
