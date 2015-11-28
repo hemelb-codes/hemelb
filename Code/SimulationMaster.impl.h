@@ -40,8 +40,8 @@ namespace hemelb
   template<class TRAITS>
   SimulationMaster<TRAITS>::SimulationMaster(hemelb::configuration::CommandLine & options,
                                              const hemelb::net::IOCommunicator& ioComm) :
-      ioComms(ioComm), timings(ioComm), build_info(), cellController(nullptr),
-          communicationNet(ioComm)
+      ioComms(ioComm.Duplicate()), timings(ioComms), build_info(), cellController(nullptr),
+          communicationNet(ioComms)
   {
     timings[hemelb::reporting::Timers::total].Start();
 
