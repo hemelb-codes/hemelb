@@ -155,6 +155,49 @@ namespace hemelb
 
       return cells;
     }
+
+    //! Fake cell that contains a single node
+    class NodeCell : public hemelb::redblood::CellBase
+    {
+      public:
+        NodeCell(LatticePosition const&position, std::string const &templateName = "nope")
+          : NodeCell(std::vector<LatticePosition>{position}, templateName)
+        {
+        }
+        template<class ITER>
+        NodeCell(ITER first, ITER last, std::string const &templateName = "nope")
+          : NodeCell(std::vector<LatticePosition>{first, last}, templateName)
+        {
+        }
+        NodeCell(
+            std::vector<LatticePosition> const &positions, std::string const &templateName = "nope")
+          : hemelb::redblood::CellBase(
+              positions,
+              hemelb::redblood::Mesh(
+                std::make_shared<hemelb::redblood::MeshData>(
+                  hemelb::redblood::MeshData{positions, {}}
+                ),
+                std::make_shared<hemelb::redblood::MeshTopology>()
+              ),
+              1e0, templateName
+            )
+        {
+        }
+
+
+        LatticeEnergy operator()() const override
+        {
+          return 0e0;
+        }
+        LatticeEnergy operator()(std::vector<LatticeForceVector> &) const override
+        {
+          return 0e0;
+        }
+        std::unique_ptr<CellBase> cloneImpl() const override
+        {
+          return std::unique_ptr<NodeCell>{new NodeCell(*this)};
+        }
+    };
   }
 }
 #endif

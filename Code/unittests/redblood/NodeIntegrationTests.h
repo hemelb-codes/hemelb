@@ -28,38 +28,6 @@ namespace hemelb
   {
     namespace redblood
     {
-      //! Fake cell that contains a single node
-      class NodeCell : public hemelb::redblood::CellBase
-      {
-        public:
-          NodeCell(LatticePosition const&position)
-            : hemelb::redblood::CellBase(
-                {position},
-                hemelb::redblood::Mesh(
-                  std::make_shared<hemelb::redblood::MeshData>(
-                    hemelb::redblood::MeshData{{position}, {}}
-                  ),
-                  std::make_shared<hemelb::redblood::MeshTopology>()
-                ),
-                1e0, "nope"
-              )
-          {
-          }
-
-          LatticeEnergy operator()() const override
-          {
-            return 0e0;
-          }
-          LatticeEnergy operator()(std::vector<LatticeForceVector> &) const override
-          {
-            return 0e0;
-          }
-          std::unique_ptr<CellBase> cloneImpl() const override
-          {
-            return std::unique_ptr<NodeCell>{new NodeCell(GetVertices()[0])};
-          }
-      };
-
       class NodeIntegrationTests : public helpers::FolderTestFixture
       {
           CPPUNIT_TEST_SUITE (NodeIntegrationTests);
