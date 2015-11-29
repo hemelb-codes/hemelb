@@ -174,13 +174,13 @@ namespace hemelb
             geometry::LatticeData const &latDat, InterpolationIterator<STENCIL> &&iterator)
         {
           std::set<proc_t> result;
+          auto const thisRank = latDat.GetCommunicator().Rank();
           for(; iterator.IsValid(); ++iterator)
           {
-            proc_t procid;
-            site_t siteid;
-            if (latDat.GetContiguousSiteId(*iterator, procid, siteid))
+            auto const id = latDat.GetProcIdFromGlobalCoords(*iterator);
+            if(id != BIG_NUMBER2 and id != thisRank)
             {
-              result.insert(procid);
+              result.insert(id);
             }
           }
           return result;
