@@ -18,6 +18,7 @@
 #include "resources/Resource.h"
 #include "util/utilityFunctions.h"
 #include "unittests/helpers/HasCommsTestFixture.h"
+#include "net/MpiCommunicator.h"
 #include <tinyxml.h>
 
 namespace hemelb
@@ -94,9 +95,14 @@ namespace hemelb
             tempPath = tempPathStream.str();
             // store current location
             origin = util::GetCurrentDir();
+            SyncTempPath(Comms());
 
             // create a folder to work in
-            util::MakeDirAllRXW(tempPath);
+            if(Comms().Rank() == 0)
+            {
+              util::MakeDirAllRXW(tempPath);
+            }
+            HEMELB_MPI_CALL(MPI_Barrier, (Comms()));
             MoveToTempdir();
           }
 
@@ -164,6 +170,27 @@ namespace hemelb
           const std::string & GetTempdir()
           {
             return tempPath;
+          }
+
+          void SyncTempPath(net::MpiCommunicator const &comm)
+          {
+            int n = tempPath.size();
+            comm.Broadcast(n, 0);
+            // no broadcast for strings defined...
+            std::vector<int> value(n);
+            if(comm.Rank() == 0)
+            {
+              for(int i(0); i < n; ++i)
+              {
+                value[i] = static_cast<int>(tempPath[i]);
+              }
+            }
+            tempPath.resize(n);
+            comm.Broadcast(value, 0);
+            for(int i(0); i < n; ++i)
+            {
+              tempPath[i] = static_cast<char>(value[i]);
+            }
           }
         private:
           std::string origin;
