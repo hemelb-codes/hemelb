@@ -155,13 +155,19 @@ namespace hemelb
         FolderTestFixture::setUp();
 
         // Have everything ready to creates simulations
-        CopyResourceToTempdir("red_blood_cell.txt");
-        TiXmlDocument doc(resources::Resource("large_cylinder.xml").Path());
-        CopyResourceToTempdir("large_cylinder.xml");
-        ModifyXMLInput("large_cylinder.xml", {"simulation", "steps", "value"}, 2);
-        CopyResourceToTempdir("large_cylinder.gmy");
+        if(net::MpiCommunicator::World().Rank() == 0)
+        {
+          CopyResourceToTempdir("red_blood_cell.txt");
+          TiXmlDocument doc(resources::Resource("large_cylinder.xml").Path());
+          CopyResourceToTempdir("large_cylinder.xml");
+          ModifyXMLInput("large_cylinder.xml", {"simulation", "steps", "value"}, 2);
+          CopyResourceToTempdir("large_cylinder.gmy");
+        }
+        HEMELB_MPI_CALL(MPI_Barrier, (net::MpiCommunicator::World()));
+        auto const result = Comms().Rank() == 0 ? "root_result": "others";
         options = std::make_shared<CommandLine>(
-          CommandLine{"hemelb", "-in", "large_cylinder.xml", "-i", "1", "-ss", "1111"});
+          CommandLine{"hemelb", "-in", "large_cylinder.xml",
+            "-i", "1", "-ss", "1111", "-out", result});
       }
 
       net::MpiCommunicator MPISpreadForcesTests::GetGraphComm(net::MpiCommunicator const &comm)
