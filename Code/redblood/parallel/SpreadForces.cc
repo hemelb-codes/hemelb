@@ -21,10 +21,10 @@ namespace hemelb
       {
         typedef NodeCharacterizer::Process2NodesMap::mapped_type NodeIndices;
         auto countNodesToSend
-          = [this](int neighbor, NodeIndices const & indices, CellContainer::value_type const&)
+          = [this](int index, int, NodeIndices const & indices, CellContainer::value_type const&)
         {
-          assert(sendNodeCount.GetSendBuffer().size() > neighbor);
-          sendNodeCount.GetSendBuffer()[neighbor] += indices.size();
+          assert(sendNodeCount.GetSendBuffer().size() > index);
+          sendNodeCount.GetSendBuffer()[index] += indices.size();
         };
         IterateOverMessageCells(distributions, owned, countNodesToSend);
 
@@ -61,7 +61,7 @@ namespace hemelb
         typedef NodeCharacterizer::Process2NodesMap::mapped_type NodeIndices;
         auto provisionSendBuffer
           = [=](
-              int neighbor, NodeIndices const & indices,
+              int, int neighbor, NodeIndices const & indices,
               CellContainer::value_type const &cell) mutable
         {
           auto const offset = offsets[neighbor];
@@ -78,6 +78,9 @@ namespace hemelb
 
         IterateOverMessageCells(distributions, owned, provisionSendBuffer);
 
+        sendNodeCount.receive();
+        sendPositions.SetReceiveCounts(sendNodeCount.GetReceiveBuffer());
+        sendForces.SetReceiveCounts(sendNodeCount.GetReceiveBuffer());
         sendPositions.send();
         sendForces.send();
       }

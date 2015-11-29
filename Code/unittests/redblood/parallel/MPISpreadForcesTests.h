@@ -102,14 +102,15 @@ namespace hemelb
       class MPISpreadForcesTests : public helpers::FolderTestFixture
       {
           CPPUNIT_TEST_SUITE (MPISpreadForcesTests);
-          CPPUNIT_TEST (testMidregion<hemelb::redblood::stencil::FourPoint>);
+          CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::FourPoint>);
+          CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::FourPoint>);
           CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp();
 
-          //! Tests that forces from a single node is spread to other processes
-          template<class STENCIL> void testMidregion();
+          template<class STENCIL> void testMidRegion();
+          template<class STENCIL> void testEdgeRegion();
 
 
         protected:
@@ -254,18 +255,23 @@ namespace hemelb
         return cells;
       }
 
-      template<class STENCIL> void MPISpreadForcesTests::testMidregion()
+      template<class STENCIL> void MPISpreadForcesTests::testMidRegion()
       {
         Check<STENCIL>(2, 0);
       }
 
+      template<class STENCIL> void MPISpreadForcesTests::testEdgeRegion()
+      {
+        Check<STENCIL>(0, 2);
+      }
+
       template<class STENCIL> void MPISpreadForcesTests::Check(size_t mid, size_t edges)
       {
-        if(net::MpiCommunicator::World().Size() == 1)
+        auto const world = net::MpiCommunicator::World();
+        if(world.Size() == 1)
         {
           return;
         }
-        auto const world = net::MpiCommunicator::World();
         auto const color = world.Rank() == 0;
         auto const split = world.Split(color);
         auto master = CreateMasterSim<STENCIL>(split);
