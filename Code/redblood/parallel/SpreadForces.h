@@ -100,12 +100,12 @@ namespace hemelb
         {
           auto const dist = distributions.find(cell->GetTag())->second;
           assert(distributions.count(cell->GetTag()) == 1);
-          for(auto neighbor: neighbors)
+          for(auto const neighbor: util::enumerate(neighbors))
           {
-            auto const nVertices = dist.CountNodes(neighbor);
+            auto const nVertices = dist.CountNodes(neighbor.value);
             if(nVertices > 0)
             {
-              functor(neighbor, dist[neighbor], cell);
+              functor(neighbor.index, neighbor.value, dist[neighbor.value], cell);
             }
           }
         }
@@ -134,6 +134,7 @@ namespace hemelb
 
         sendPositions.receive();
         sendForces.receive();
+        assert(sendPositions.GetReceiveBuffer().size() == sendForces.GetReceiveBuffer().size());
         hrd::spreadForce2Grid<hrd::SpreadForces, Stencil>(
             sendPositions.GetReceiveBuffer(),
             hrd::SpreadForces(sendForces.GetReceiveBuffer(), latticeData)
