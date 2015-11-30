@@ -29,9 +29,6 @@ namespace hemelb
   {
     namespace redblood
     {
-      using hemelb::redblood::CellContainer;
-      using hemelb::redblood::parallel::nodeDistributions;
-
       class MPISpreadForcesTests : public helpers::FolderTestFixture
       {
           CPPUNIT_TEST_SUITE (MPISpreadForcesTests);
@@ -86,20 +83,7 @@ namespace hemelb
               return std::make_shared<MasterSim>(*options, comm);
             }
 
-          //! \brief gathers mid-domain and egde positions from all procs
-          //! \details If there are insufficient number of edges, mid-domains are used instead.
-          //! erase removes the components from the first process.
-          std::vector<LatticePosition> GetPositions(
-            geometry::LatticeData const & latDat,
-            size_t mid, size_t edges, net::MpiCommunicator const &c);
-          //! Creates list of cells for each set of positions from each process
-          std::vector<CellContainer::value_type> GetCells(
-            geometry::LatticeData const & latDat,
-            size_t mid, size_t edges, net::MpiCommunicator const &c, size_t nCells);
-
           template<class STENCIL> void Check(size_t mid, size_t edges, size_t nCells);
-
-          net::MpiCommunicator GetGraphComm(net::MpiCommunicator const &comm);
       };
 
       void MPISpreadForcesTests::setUp()
@@ -123,89 +107,11 @@ namespace hemelb
             "-i", "1", "-ss", "1111", "-out", result});
       }
 
-      net::MpiCommunicator MPISpreadForcesTests::GetGraphComm(net::MpiCommunicator const &comm)
-      {
-        if(comm.Size() == 1)
-        {
-        }
-        // setups a graph communicator that in-practice is all-to-all
-        // Simpler than setting up something realistic
-        std::vector<std::vector<int>> vertices;
-        for(size_t i(0); i < comm.Size(); ++i)
-        {
-          vertices.push_back(std::vector<int>());
-          for(size_t j(0); j < comm.Size(); ++j)
-          {
-            if(j != i)
-            {
-              vertices[i].push_back(j);
-            }
-          }
-        }
-        return comm.Graph(vertices);
-      }
-
-      std::vector<LatticePosition> MPISpreadForcesTests::GetPositions(
-          geometry::LatticeData const & latDat,
-          size_t mid, size_t edges, net::MpiCommunicator const &c)
-      {
-        std::mt19937 g;
-
-        int const nMids = latDat.GetMidDomainSiteCount();
-        int const nEdges = latDat.GetDomainEdgeCollisionCount(0);
-        std::vector<LatticePosition> positions(c.Size() * (mid + edges));
-        std::vector<int> shuf(nMids);
-        std::iota(shuf.begin(), shuf.end(), 0);
-        std::shuffle(shuf.begin(), shuf.end(), g);
-        mid += std::max(0, static_cast<int>(edges) - nEdges);
-        edges = std::min(edges, static_cast<size_t>(nEdges));
-        for(size_t i(0); i < mid; ++i)
-        {
-          auto const site = latDat.GetSite(shuf[i]);
-          positions[c.Rank() * (mid +  edges) + i] = site.GetGlobalSiteCoords();
-        }
-        shuf.resize(nEdges);
-        std::iota(shuf.begin(), shuf.end(), 0);
-        std::shuffle(shuf.begin(), shuf.end(), g);
-        for(size_t i(0); i < edges; ++i)
-        {
-          auto const site = latDat.GetSite(nMids + shuf[i]);
-          positions[c.Rank() * (mid +  edges) + i + mid] = site.GetGlobalSiteCoords();
-        }
-
-        auto const sendType = net::MpiDataType<LatticePosition>();
-        HEMELB_MPI_CALL(
-            MPI_Allgather,
-            (MPI_IN_PLACE, mid + edges, sendType, positions.data(), mid + edges, sendType, c)
-        );
-
-        // Erase contribution from first proc (acting as serial oracle)
-        for(size_t i(0); i < positions.size() - mid - edges; ++i)
-        {
-          positions[i] = positions[i + mid + edges];
-        }
-        positions.resize(positions.size() - mid - edges);
-
-        return positions;
-      }
-
-      std::vector<CellContainer::value_type> MPISpreadForcesTests::GetCells(
-          geometry::LatticeData const & latDat,
-          size_t mid, size_t edges, net::MpiCommunicator const &c, size_t nCells)
-      {
-        auto const positions = GetPositions(latDat, mid * nCells, edges * nCells, c);
-        std::vector<CellContainer::value_type> cells;
-        for(auto i_first = positions.begin(); i_first != positions.end(); i_first += mid + edges)
-        {
-          cells.push_back(std::make_shared<DummyCell>(
-                std::vector<LatticePosition>{i_first, i_first + mid + edges}, 1e0));
-        }
-        return cells;
-      }
-
       template<class STENCIL>
       void MPISpreadForcesTests::Check(size_t mid, size_t edges, size_t nCells)
       {
+        using hemelb::redblood::CellContainer;
+        using hemelb::redblood::parallel::nodeDistributions;
         auto const world = net::MpiCommunicator::World();
         if(world.Size() == 1)
         {
@@ -218,14 +124,14 @@ namespace hemelb
         helpers::ZeroOutForces(latDat);
 
         // Figure out positions to use for cell nodes
-        auto const cells = GetCells(latDat, mid, edges, world, nCells);
+        auto const cells = CreateCellsFromSpecialPositions(latDat, mid, edges, world, nCells);
         auto const owned = split.Size() != 1 ?
           CellContainer{
             cells.begin() + split.Rank() * nCells, cells.begin() + (1 + split.Rank()) * nCells}:
           CellContainer{cells.begin(), cells.end()};
         auto const distributions = nodeDistributions(latDat, owned);
 
-        hemelb::redblood::parallel::SpreadForces mpi_spreader(GetGraphComm(split));
+        hemelb::redblood::parallel::SpreadForces mpi_spreader(CreateGraphComm(split));
         mpi_spreader.PostMessageLength(distributions, owned);
         mpi_spreader.ComputeForces(owned);
         mpi_spreader.PostForcesAndNodes(distributions, owned);
