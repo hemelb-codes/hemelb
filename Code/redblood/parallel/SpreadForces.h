@@ -96,8 +96,8 @@ namespace hemelb
         // Count the number of vertices and cells
         for(auto const & cell: owned)
         {
-          auto const dist = distributions.find(cell->GetTag())->second;
           assert(distributions.count(cell->GetTag()) == 1);
+          auto const dist = distributions.find(cell->GetTag())->second;
           for(auto const neighbor: util::enumerate(neighbors))
           {
             auto const nVertices = dist.CountNodes(neighbor.value);
