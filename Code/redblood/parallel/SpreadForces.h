@@ -93,8 +93,6 @@ namespace hemelb
         NodeDistributions const& distributions, CellContainer const &owned, FUNCTOR functor)
       {
         auto const neighbors = sendNodeCount.GetCommunicator().GetNeighbors();
-        sendNodeCount.GetSendBuffer().resize(neighbors.size());
-        std::fill(sendNodeCount.GetSendBuffer().begin(), sendNodeCount.GetSendBuffer().end(), 0);
         // Count the number of vertices and cells
         for(auto const & cell: owned)
         {
