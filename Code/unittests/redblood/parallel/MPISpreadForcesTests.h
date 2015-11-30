@@ -290,7 +290,7 @@ namespace hemelb
         mpi_spreader.ComputeForces(owned);
         mpi_spreader.PostForcesAndNodes(distributions, owned);
         mpi_spreader.SpreadLocalForces<typename MasterSim<STENCIL>::Traits>(latDat, owned);
-        mpi_spreader.SpreadNonLocalForces(latDat);
+        mpi_spreader.SpreadNonLocalForces<typename MasterSim<STENCIL>::Traits>(latDat);
 
         std::vector<LatticeVector> indices;
         std::vector<LatticeForceVector> forces;
