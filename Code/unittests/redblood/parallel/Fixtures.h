@@ -27,7 +27,8 @@ namespace hemelb
           geometry::LatticeData const & latDat,
           size_t mid, size_t edges, net::MpiCommunicator const &c)
       {
-        std::mt19937 g;
+        std::random_device rd;
+        std::mt19937 g(rd());
 
         int const nMids = latDat.GetMidDomainSiteCount();
         int const nEdges = latDat.GetDomainEdgeCollisionCount(0);
