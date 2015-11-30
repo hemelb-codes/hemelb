@@ -85,10 +85,18 @@ namespace hemelb
           //! Result of the whole messaging mess
           typedef std::tuple<CellContainer, CellContainer, LentCells> ChangedCells;
 
-          ExchangeCells(net::MpiCommunicator const &graphComm)
+          //! \brief An object to exchange and distribute cells
+          //! \param[in] graphComm: neighberhood communicator
+          //! \param[in] simCom: world communicator of the simulation
+          ExchangeCells(net::MpiCommunicator const &graphComm, net::MpiCommunicator const &simComm)
             : cellCount(graphComm), totalNodeCount(graphComm), nameLengths(graphComm),
               templateNames(graphComm), ownerIDs(graphComm), nodeCount(graphComm),
-              cellUUIDs(graphComm), cellScales(graphComm), nodePositions(graphComm)
+              cellUUIDs(graphComm), cellScales(graphComm), nodePositions(graphComm),
+              simComm(simComm)
+          {
+          }
+          ExchangeCells(net::MpiCommunicator const &graphComm):
+            ExchangeCells(graphComm, net::MpiCommunicator::World())
           {
           }
           //! \brief Computes and posts length of message when sending cells
@@ -166,6 +174,8 @@ namespace hemelb
           //! \details These cells are the same as the disowned cells. However, only part of the
           //! nodes kept: those that affect this process.
           LentCells formelyOwned;
+          //! World communicator for the simulation
+          net::MpiCommunicator simComm;
 
           //! Number of nodes to send to each neighboring process
           void SetupLocalSendBuffers(
