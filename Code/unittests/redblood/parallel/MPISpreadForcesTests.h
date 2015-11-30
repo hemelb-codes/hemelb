@@ -21,6 +21,7 @@
 #include "unittests/redblood/Fixtures.h"
 #include "unittests/helpers/LatticeDataAccess.h"
 #include "unittests/helpers/FolderTestFixture.h"
+#include "unittests/redblood/parallel/Fixtures.h"
 
 namespace hemelb
 {
@@ -30,74 +31,6 @@ namespace hemelb
     {
       using hemelb::redblood::CellContainer;
       using hemelb::redblood::parallel::nodeDistributions;
-      //! Make some functionality available
-      template<class TRAITS>
-      class OpenedSimulationMaster : public SimulationMaster<TRAITS> 
-      {
-        public:
-          using SimulationMaster<TRAITS>::SimulationMaster;
-          using SimulationMaster<TRAITS>::Finalise;
-
-          void DoTimeStep()
-          {
-            SimulationMaster<TRAITS>::DoTimeStep();
-          }
-      };
-
-      //! Open SpreadForces object to introspection
-      class OpenedSpreadForces : public hemelb::redblood::parallel::SpreadForces
-      {
-        public:
-          using hemelb::redblood::parallel::SpreadForces::SpreadForces;
-#         define HEMELB_MACRO(Name, name, TYPE)   \
-            TYPE & Get ## Name()                  \
-            {                                     \
-              return name;                        \
-            }
-
-            HEMELB_MACRO(SendNodeCount, sendNodeCount, net::INeighborAllToAll<int>);
-            HEMELB_MACRO(SendPositions, sendPositions, net::INeighborAllToAllV<LatticePosition>);
-            HEMELB_MACRO(SendForces, sendForces, net::INeighborAllToAllV<LatticeForceVector>);
-            HEMELB_MACRO(
-                CellForces, cellForces, hemelb::redblood::parallel::SpreadForces::CellForces);
-#         undef HEMELB_MACRO
-      };
-
-      class DummyCell : public NodeCell
-      {
-        public:
-          LatticeForce force;
-
-          DummyCell(
-              LatticePosition const&position, LatticeForce f = 0e0,
-              std::string const &templateName = "nope")
-            : DummyCell(std::vector<LatticePosition>{position}, f, templateName)
-          {
-          }
-          DummyCell(
-              std::vector<LatticePosition> const &positions, LatticeForce f = 0e0,
-              std::string const &templateName = "nope")
-            : NodeCell(positions, templateName), force(f)
-          {
-          }
-          template<class ITER>
-          DummyCell(ITER first, ITER last,
-              LatticeForce f = 0e0, std::string const &templateName = "nope")
-            : NodeCell(first, last, templateName), force(f)
-          {
-          }
-
-          LatticeEnergy operator()(std::vector<LatticeForceVector> &f) const override
-          {
-            f.resize(GetNumberOfNodes());
-            std::fill(f.begin(), f.end(), force);
-            return 0e0;
-          }
-          std::unique_ptr<CellBase> cloneImpl() const override
-          {
-            return std::unique_ptr<DummyCell>{new DummyCell(*this)};
-          }
-      };
 
       class MPISpreadForcesTests : public helpers::FolderTestFixture
       {
@@ -292,7 +225,7 @@ namespace hemelb
           CellContainer{cells.begin(), cells.end()};
         auto const distributions = nodeDistributions(latDat, owned);
 
-        OpenedSpreadForces mpi_spreader(GetGraphComm(split));
+        hemelb::redblood::parallel::SpreadForces mpi_spreader(GetGraphComm(split));
         mpi_spreader.PostMessageLength(distributions, owned);
         mpi_spreader.ComputeForces(owned);
         mpi_spreader.PostForcesAndNodes(distributions, owned);
