@@ -104,14 +104,33 @@ namespace hemelb
           CPPUNIT_TEST_SUITE (MPISpreadForcesTests);
           CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::FourPoint>);
           CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::FourPoint>);
+          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::FourPoint>);
+          CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::ThreePoint>);
+          CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::ThreePoint>);
+          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::ThreePoint>);
+          CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::CosineApprox>);
+          CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::CosineApprox>);
+          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::CosineApprox>);
+          CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::TwoPoint>);
+          CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::TwoPoint>);
+          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::TwoPoint>);
           CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp();
 
-          template<class STENCIL> void testMidRegion();
-          template<class STENCIL> void testEdgeRegion();
-
+          template<class STENCIL> void testMidRegion()
+          {
+            Check<STENCIL>(2, 0, 1);
+          }
+          template<class STENCIL> void testEdgeRegion()
+          {
+            Check<STENCIL>(0, 2, 1);
+          }
+          template<class STENCIL> void testAll()
+          {
+            Check<STENCIL>(3, 3, 2);
+          }
 
         protected:
           std::shared_ptr<hemelb::configuration::CommandLine> options;
@@ -139,13 +158,13 @@ namespace hemelb
           //! erase removes the components from the first process.
           std::vector<LatticePosition> GetPositions(
             geometry::LatticeData const & latDat,
-            size_t mid, size_t edges, net::MpiCommunicator const &c, bool erase=true);
+            size_t mid, size_t edges, net::MpiCommunicator const &c);
           //! Creates list of cells for each set of positions from each process
           std::vector<CellContainer::value_type> GetCells(
             geometry::LatticeData const & latDat,
-            size_t mid, size_t edges, net::MpiCommunicator const &c, bool erase=true);
+            size_t mid, size_t edges, net::MpiCommunicator const &c, size_t nCells);
 
-          template<class STENCIL> void Check(size_t mid, size_t edges);
+          template<class STENCIL> void Check(size_t mid, size_t edges, size_t nCells);
 
           net::MpiCommunicator GetGraphComm(net::MpiCommunicator const &comm);
       };
@@ -195,10 +214,9 @@ namespace hemelb
 
       std::vector<LatticePosition> MPISpreadForcesTests::GetPositions(
           geometry::LatticeData const & latDat,
-          size_t mid, size_t edges, net::MpiCommunicator const &c, bool erase)
+          size_t mid, size_t edges, net::MpiCommunicator const &c)
       {
-        std::random_device rd;
-        std::mt19937 g(rd());
+        std::mt19937 g;
 
         int const nMids = latDat.GetMidDomainSiteCount();
         int const nEdges = latDat.GetDomainEdgeCollisionCount(0);
@@ -228,44 +246,32 @@ namespace hemelb
             (MPI_IN_PLACE, mid + edges, sendType, positions.data(), mid + edges, sendType, c)
         );
 
-        if(erase)
+        // Erase contribution from first proc (acting as serial oracle)
+        for(size_t i(0); i < positions.size() - mid - edges; ++i)
         {
-          for(size_t i(0); i < positions.size() - mid - edges; ++i)
-          {
-            positions[i] = positions[i + mid + edges];
-          }
-          positions.resize(positions.size() - mid - edges);
+          positions[i] = positions[i + mid + edges];
         }
+        positions.resize(positions.size() - mid - edges);
 
         return positions;
       }
 
       std::vector<CellContainer::value_type> MPISpreadForcesTests::GetCells(
           geometry::LatticeData const & latDat,
-          size_t mid, size_t edges, net::MpiCommunicator const &c, bool erase)
+          size_t mid, size_t edges, net::MpiCommunicator const &c, size_t nCells)
       {
-        auto const positions = GetPositions(latDat, mid, edges, c, erase);
-        auto const n = mid + edges;
+        auto const positions = GetPositions(latDat, mid * nCells, edges * nCells, c);
         std::vector<CellContainer::value_type> cells;
-        for(auto i_first = positions.begin(); i_first != positions.end(); i_first += n)
+        for(auto i_first = positions.begin(); i_first != positions.end(); i_first += mid + edges)
         {
           cells.push_back(std::make_shared<DummyCell>(
-                std::vector<LatticePosition>{i_first, i_first + n}, 1e0));
+                std::vector<LatticePosition>{i_first, i_first + mid + edges}, 1e0));
         }
         return cells;
       }
 
-      template<class STENCIL> void MPISpreadForcesTests::testMidRegion()
-      {
-        Check<STENCIL>(2, 0);
-      }
-
-      template<class STENCIL> void MPISpreadForcesTests::testEdgeRegion()
-      {
-        Check<STENCIL>(0, 2);
-      }
-
-      template<class STENCIL> void MPISpreadForcesTests::Check(size_t mid, size_t edges)
+      template<class STENCIL>
+      void MPISpreadForcesTests::Check(size_t mid, size_t edges, size_t nCells)
       {
         auto const world = net::MpiCommunicator::World();
         if(world.Size() == 1)
@@ -279,9 +285,10 @@ namespace hemelb
         helpers::ZeroOutForces(latDat);
 
         // Figure out positions to use for cell nodes
-        auto const cells = GetCells(latDat, mid, edges, world, true);
+        auto const cells = GetCells(latDat, mid, edges, world, nCells);
         auto const owned = split.Size() != 1 ?
-          CellContainer{cells[split.Rank()]}:
+          CellContainer{
+            cells.begin() + split.Rank() * nCells, cells.begin() + (1 + split.Rank()) * nCells}:
           CellContainer{cells.begin(), cells.end()};
         auto const distributions = nodeDistributions(latDat, owned);
 
@@ -306,10 +313,10 @@ namespace hemelb
             }
           }
         }
-        int n = indices.size();
-        world.Broadcast(n, 0);
-        CPPUNIT_ASSERT(n > 0);
-        indices.resize(n);
+        int nIndices = indices.size();
+        world.Broadcast(nIndices, 0);
+        CPPUNIT_ASSERT(nIndices > 0);
+        indices.resize(nIndices);
         world.Broadcast(indices, 0);
 
         if(not color)
@@ -328,7 +335,7 @@ namespace hemelb
             }
           }
         }
-        CPPUNIT_ASSERT_EQUAL(size_t(n), size_t(forces.size()));
+        CPPUNIT_ASSERT_EQUAL(size_t(nIndices), size_t(forces.size()));
         std::vector<LatticeForceVector> summed(indices.size());
         HEMELB_MPI_CALL(MPI_Allreduce,
           (forces.data(), summed.data(), forces.size() * 3,
