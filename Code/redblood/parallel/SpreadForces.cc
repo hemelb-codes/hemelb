@@ -26,6 +26,10 @@ namespace hemelb
           assert(sendNodeCount.GetSendBuffer().size() > index);
           sendNodeCount.GetSendBuffer()[index] += indices.size();
         };
+
+        sendNodeCount.GetSendBuffer().resize(sendNodeCount.GetCommunicator().GetNeighborsCount());
+        std::fill(sendNodeCount.GetSendBuffer().begin(), sendNodeCount.GetSendBuffer().end(), 0);
+
         IterateOverMessageCells(distributions, owned, countNodesToSend);
 
         // Then send message
