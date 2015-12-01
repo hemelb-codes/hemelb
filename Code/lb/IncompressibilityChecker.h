@@ -44,7 +44,7 @@ namespace hemelb
              */
           public:
             /** Number of densities being tracked. Needs to be exposed for send/receive. */
-            static const unsigned DENSITY_TRACKER_SIZE = 3;
+            static const unsigned DENSITY_TRACKER_SIZE = 3u;
 
             /** Identifiers of the densities being tracked. Cardinality must be kept consistent with DENSITY_TRACKER_SIZE */
             typedef enum
@@ -227,7 +227,7 @@ namespace hemelb
          *
          * @todo #23 This is defined in StabilityChecker as well, refactor somewhere else?
          */
-        static const unsigned int SPREADFACTOR;
+        static const unsigned int SPREADFACTOR = 10u;
 
         /** Pointer to lattice data object. */
         const geometry::LatticeData * mLatDat;
@@ -256,9 +256,6 @@ namespace hemelb
         /** Array for storing the passed-up densities from child nodes. */
         distribn_t childrenDensitiesSerialised[SPREADFACTOR * DensityTracker::DENSITY_TRACKER_SIZE];
     };
-
-    template<class BroadcastPolicy>
-    const unsigned int IncompressibilityChecker<BroadcastPolicy> :: SPREADFACTOR = 10u;
   }
 }
 
