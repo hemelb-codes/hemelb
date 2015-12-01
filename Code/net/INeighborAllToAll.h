@@ -10,6 +10,7 @@
 #define HEMELB_NET_INEIGHBORALLTOALL_H
 
 #include <vector>
+#include <algorithm>
 #include <cassert>
 #include "net/MpiCommunicator.h"
 
