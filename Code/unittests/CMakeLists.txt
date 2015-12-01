@@ -35,7 +35,7 @@ endfunction()
 
 function(add_mpi_test_executable target includename)
   create_test_executable(mpi_${target} ${includename})
-  if(MPIEXEC_MAX_NUMPROCS GREATER 3)
+  if(MPIEXEC_MAX_NUMPROCS GREATER 3 AND "${HEMELB_STEERING_LIB}" STREQUAL "none")
     add_test(NAME mpi_${target}
       COMMAND
         ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS}
@@ -43,10 +43,16 @@ function(add_mpi_test_executable target includename)
     )
     set_target_properties(mpi_${target} PROPERTIES LABEL mpi)
     set_tests_properties (${target} PROPERTIES TIMEOUT 60)
-  else()
+  endif()
+  if(NOT MPIEXEC_MAX_NUMPROCS GREATER 3)
     message(WARNING "MPIEXEC_MAX_NUMPROCS = ${MPIEXEC_MAX_NUMPROCS}"
       " yet redblood cells mpi tests require > 4: "
       " disabling test mpi_${target}")
+  endif()
+  if(NOT "${HEMELB_STEERING_LIB}" STREQUAL "none")
+    message(WARNING "Cannot run mpi tests unless steering is disabled."
+      " Please set HEMELB_STEERING_LIB to none."
+      " Disabling test mpi_${target} until then.")
   endif()
 endfunction()
 
