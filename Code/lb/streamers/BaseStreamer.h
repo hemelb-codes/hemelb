@@ -27,18 +27,18 @@ namespace hemelb
        *  - Constructor(InitParams&)
        *  - StreamAndCollide(const site_t, const site_t, const LbmParameters*,
        *      geometry::LatticeData*, lb::MacroscopicPropertyCache&)
-       *  - <bool tDoRayTracing> PostStep(const site_t, const site_t, const LbmParameters*,
-       *      geometry::LatticeData*, hemelb::vis::Control*)
+       *  - PostStep(const site_t, const site_t, const LbmParameters*,
+       *      geometry::LatticeData*, lb::MacroscopicPropertyCache&)
        *  - Reset(kernels::InitParams* init)
        *
        * The following must be implemented by concrete streamers (which derive from this class
        * using the CRTP).
        *  - typedef for CollisionType, the type of the collider operation.
        *  - Constructor(InitParams&)
-       *  - <bool tDoRayTracing> DoStreamAndCollide(const site_t, const site_t, const LbmParameters*,
-       *      geometry::LatticeData*, hemelb::vis::Control*)
-       *  - <bool tDoRayTracing> DoPostStep(const site_t, const site_t, const LbmParameters*,
-       *      geometry::LatticeData*, hemelb::vis::Control*)
+       *  - DoStreamAndCollide(const site_t, const site_t, const LbmParameters*,
+       *      geometry::LatticeData*, lb::MacroscopicPropertyCache&)
+       *  - DoPostStep(const site_t, const site_t, const LbmParameters*,
+       *      geometry::LatticeData*, lb::MacroscopicPropertyCache&)
        *  - DoReset(kernels::InitParams* init)
        *
        * The design is to for the streamers to be pretty dumb and for them to
