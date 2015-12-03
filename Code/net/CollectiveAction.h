@@ -23,18 +23,26 @@ namespace hemelb
       public:
         bool CallAction(int action);
 
+        inline void MustFinishThisTimeStep()
+        {
+
+          mustWait = true;
+        }
+
+      protected:
+        CollectiveAction(const MpiCommunicator& comm, reporting::Timer& waitTimer);
         /**
          * Initiate the collective.
          */
         virtual void Send(void) = 0;
 
         /**
-         * Wait on the collectives to finish.
+         * Progress the communication
          */
         virtual void Wait(void);
 
-      protected:
-        CollectiveAction(const MpiCommunicator& comm, reporting::Timer& waitTimer);
+        bool isCollectiveRunning;
+        bool mustWait;
 
         /**
          * Private communicator for non-blocking collectives.
@@ -49,6 +57,7 @@ namespace hemelb
          */
         MpiRequest collectiveReq;
      };
+
   }
 }
 

@@ -15,47 +15,67 @@ namespace hemelb
   namespace net
   {
     CollectiveAction::CollectiveAction(const MpiCommunicator& comm, reporting::Timer& wTimer) :
-        collectiveComm(comm.Duplicate()), waitTimer(wTimer), collectiveReq()
+        isCollectiveRunning(false), mustWait(false), collectiveComm(comm.Duplicate()), waitTimer(wTimer), collectiveReq()
     {
     }
+
     bool CollectiveAction::CallAction(int action)
     {
-      switch (static_cast<phased::steps::Step>(action))
+      if (isCollectiveRunning)
       {
-        case phased::steps::BeginPhase:
-          RequestComms();
-          return true;
-        case phased::steps::PreSend:
-          PreSend();
-          return true;
-        case phased::steps::Send:
-          Send();
-          return true;
-        case phased::steps::PreWait:
-          PreReceive();
-          return true;
-        case phased::steps::Wait:
-          Wait();
-          return true;
-        case phased::steps::EndPhase:
-          PostReceive();
-          return true;
-        case phased::steps::EndAll:
-          EndIteration();
-          return true;
-        default:
-          return false;
+        switch (static_cast<phased::steps::Step>(action))
+        {
+          case phased::steps::Wait:
+            Wait();
+            return true;
+          default:
+            return false;
+        }
+      }
+      else
+      {
+        switch (static_cast<phased::steps::Step>(action))
+        {
+          case phased::steps::BeginPhase:
+            RequestComms();
+            return true;
+          case phased::steps::PreSend:
+            PreSend();
+            return true;
+          case phased::steps::Send:
+            Send();
+            isCollectiveRunning = true;
+            return true;
+          case phased::steps::EndPhase:
+            PostReceive();
+            return true;
+          case phased::steps::EndAll:
+            EndIteration();
+            return true;
+          default:
+            return false;
+        }
       }
     }
+
     /**
      * Wait on the collectives to finish.
      */
     void CollectiveAction::Wait(void)
     {
       waitTimer.Start();
-      collectiveReq.Wait();
+      if (mustWait) {
+        collectiveReq.Wait();
+        mustWait = false;
+        isCollectiveRunning = false;
+      }
+      else
+      {
+        bool done = collectiveReq.Test();
+        if (done)
+          isCollectiveRunning = false;
+        }
       waitTimer.Stop();
     }
-
   }
 }
