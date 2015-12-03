@@ -93,10 +93,6 @@ namespace hemelb
         void Save(std::string path); // TODO this method should be able to be CONST
         // but because it uses DoIo, which uses one function signature for both reading and writing, it cannot be.
 
-        const util::Vector3D<float> & GetVisualisationCentre() const
-        {
-          return visualisationCentre;
-        }
         const std::vector<lb::iolets::InOutLet*> & GetInlets() const
         {
           return inlets;
@@ -108,30 +104,6 @@ namespace hemelb
         lb::StressTypes GetStressType() const
         {
           return stressType;
-        }
-        float GetVisualisationLongitude() const
-        {
-          return visualisationLongitude;
-        }
-        float GetVisualisationLatitude() const
-        {
-          return visualisationLatitude;
-        }
-        float GetVisualisationZoom() const
-        {
-          return visualisationZoom;
-        }
-        float GetVisualisationBrightness() const
-        {
-          return visualisationBrightness;
-        }
-        float GetMaximumVelocity() const
-        {
-          return maxVelocity;
-        }
-        float GetMaximumStress() const
-        {
-          return maxStress;
         }
         const std::string& GetDataFilePath() const
         {
@@ -272,7 +244,6 @@ namespace hemelb
 
         void DoIOForInitialConditions(io::xml::Element parent);
 	void DoIOForCheckpointFile(const io::xml::Element& checkpointEl);
-        void DoIOForVisualisation(const io::xml::Element& visEl);
 
         /**
          * Reads monitoring configuration from XML file
@@ -299,13 +270,6 @@ namespace hemelb
         io::xml::Document* rawXmlDoc;
         std::string dataFilePath;
 
-        util::Vector3D<float> visualisationCentre;
-        float visualisationLongitude;
-        float visualisationLatitude;
-        float visualisationZoom;
-        float visualisationBrightness;
-        float maxVelocity;
-        float maxStress;
         lb::StressTypes stressType;
         std::vector<extraction::PropertyOutputFile*> propertyOutputs;
         std::string colloidConfigPath;

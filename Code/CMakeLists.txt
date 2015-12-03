@@ -135,7 +135,6 @@ set(package_subdirs
   extraction
   reporting
   steering
-  vis
   lb
   geometry
   net
@@ -179,7 +178,6 @@ if (HEMELB_BUILD_MULTISCALE)
     extraction
     reporting
     steering
-    vis
     lb
     geometry
     net

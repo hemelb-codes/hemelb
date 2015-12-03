@@ -7,7 +7,6 @@
 #include "geometry/BlockTraverserWithVisitedBlockTracker.h"
 #include "geometry/LatticeData.h"
 #include "util/Vector3D.h"
-#include "vis/rayTracer/RayTracer.h"
 
 namespace hemelb
 {

@@ -12,14 +12,9 @@ namespace hemelb
   namespace reporting
   {
     Reporter::Reporter(const std::string &apath, const std::string &inputFile) :
-        path(apath), imageCount(0), dictionary("Reporting dictionary")
+        path(apath), dictionary("Reporting dictionary")
     {
       dictionary.SetValue("CONFIG", inputFile);
-    }
-
-    void Reporter::Image()
-    {
-      imageCount++;
     }
 
     void Reporter::AddReportable(Reportable* reportable)
@@ -40,8 +35,6 @@ namespace hemelb
 
     void Reporter::FillDictionary()
     {
-      dictionary.SetIntValue("IMAGES", imageCount);
-
       for (std::vector<Reportable*>::iterator reporters = reportableObjects.begin();
           reporters != reportableObjects.end(); reporters++)
       {

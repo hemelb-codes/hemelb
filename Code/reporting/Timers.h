@@ -92,7 +92,6 @@ namespace hemelb
           latDatInitialise, //!< Time spent initialising the lattice data
           lb, //!< Time spent doing the core lattice boltzman simulation
           lb_calc, //!< Time spent doing calculations in the core lattice boltzmann simulation
-          visualisation, //!< Time spent on visualisation
           monitoring, //!< Time spent monitoring for stability, compressibility, etc.
           mpiSend, //!< Time spent sending MPI data
           mpiWait, //!< Time spent waiting for MPI
@@ -215,7 +214,7 @@ namespace hemelb
     const std::string TimersBase<ClockPolicy, CommsPolicy>::timerNames[TimersBase<ClockPolicy, CommsPolicy>::numberOfTimers] =
 
     { "Total", "Seed Decomposition", "Domain Decomposition", "File Read", "Re Read", "Unzip", "Moves", "Parmetis",
-      "Lattice Data initialisation", "Lattice Boltzmann", "LB calc only", "Visualisation", "Monitoring", "MPI Send",
+      "Lattice Data initialisation", "Lattice Boltzmann", "LB calc only", "Monitoring", "MPI Send",
       "MPI Wait", "Simulation total", "Reading communications", "Parsing", "Read IO", "Read Blocks prelim",
       "Read blocks all", "Steering Client Wait", "Move Forcing Counts", "Move Forcing Data", "Block Requirements",
       "Move Counts Sending", "Move Data Sending", "Populating moves list for decomposition optimisation",

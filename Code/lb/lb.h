@@ -84,21 +84,9 @@ namespace hemelb
          * Second constructor.
          *
          */
-        void Initialise(vis::Control* iControl,
-                        iolets::BoundaryValues* iInletValues,
+        void Initialise(iolets::BoundaryValues* iInletValues,
                         iolets::BoundaryValues* iOutletValues,
                         const util::UnitConverter* iUnits);
-
-        void ReadVisParameters();
-        void SetInitialConditions(const net::IOCommunicator& ioComms);
-
-        void CalculateMouseFlowField(const ScreenDensity densityIn,
-                                     const ScreenStress stressIn,
-                                     const LatticeDensity density_threshold_min,
-                                     const LatticeDensity density_threshold_minmax_inv,
-                                     const LatticeStress stress_threshold_max_inv,
-                                     PhysicalPressure &mouse_pressure,
-                                     PhysicalStress &mouse_stress);
 
         hemelb::lb::LbmParameters *GetLbmParams();
         lb::MacroscopicPropertyCache& GetPropertyCache();
@@ -129,27 +117,14 @@ namespace hemelb
         template<typename Collision>
         void StreamAndCollide(Collision* collision, const site_t iFirstIndex, const site_t iSiteCount)
         {
-          if (mVisControl->IsRendering())
-          {
-            collision->template StreamAndCollide<true> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
-          }
-          else
-          {
-            collision->template StreamAndCollide<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
-          }
+          // TODO: factor out template bool "do rendering"
+          collision->template StreamAndCollide<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
         }
 
         template<typename Collision>
         void PostStep(Collision* collision, const site_t iFirstIndex, const site_t iSiteCount)
         {
-          if (mVisControl->IsRendering())
-          {
-            collision->template DoPostStep<true> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
-          }
-          else
-          {
-            collision->template DoPostStep<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
-          }
+          collision->template DoPostStep<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
         }
 
         unsigned int inletCount;
@@ -162,7 +137,6 @@ namespace hemelb
         iolets::BoundaryValues *mInletValues, *mOutletValues;
 
         LbmParameters mParams;
-        vis::Control* mVisControl;
 
         const util::UnitConverter* mUnits;
 

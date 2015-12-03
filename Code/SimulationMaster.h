@@ -11,7 +11,6 @@
 #include "lb/lb.hpp"
 #include "lb/StabilityTester.h"
 #include "net/net.h"
-#include "steering/ImageSendComponent.h"
 #include "steering/SteeringComponent.h"
 #include "lb/EntropyTester.h"
 #include "lb/iolets/BoundaryValues.h"
@@ -64,8 +63,6 @@ class SimulationMaster
     unsigned int OutputPeriod(unsigned int frequency);
     void HandleActors();
     void OnUnstableSimulation();
-    void WriteLocalImages();
-    void GenerateNetworkImages();
     /**
      * Updates the property caches record of which properties need to be calculated
      * and cached on this iteration.
@@ -84,11 +81,7 @@ class SimulationMaster
     hemelb::reporting::BuildInfo build_info;
     typedef std::multimap<unsigned long, unsigned long> MapType;
 
-    MapType writtenImagesCompleted;
-    MapType networkImagesCompleted;
-
     hemelb::steering::Network* network;
-    hemelb::steering::ImageSendComponent *imageSendCpt;
     hemelb::steering::SteeringComponent* steeringCpt;
 
     hemelb::lb::SimulationState* simulationState;
@@ -105,16 +98,13 @@ class SimulationMaster
 
     const hemelb::util::UnitConverter* unitConverter;
 
-    hemelb::vis::Control* visualisationControl;
     hemelb::extraction::IterableDataSource* propertyDataSource;
     hemelb::extraction::PropertyActor* propertyExtractor;
 
     hemelb::net::phased::StepManager* stepManager;
     hemelb::net::phased::NetConcern* netConcern;
 
-    unsigned int imagesPerSimulation;
     int steeringSessionId;
-    unsigned int imagesPeriod;
     static const hemelb::LatticeTimeStep FORCE_FLUSH_PERIOD=1000;
 };
 

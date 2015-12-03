@@ -10,7 +10,6 @@
 #include <cmath>
 
 #include "geometry/LatticeData.h"
-#include "vis/Control.h"
 #include "lb/LbmParameters.h"
 #include "lb/kernels/BaseKernel.h"
 #include "lb/MacroscopicPropertyCache.h"
@@ -54,6 +53,7 @@ namespace hemelb
       class BaseStreamer
       {
         public:
+          // TODO: remove tDoRayTracing
           template<bool tDoRayTracing>
           inline void StreamAndCollide(const site_t firstIndex,
                                        const site_t siteCount,
