@@ -8,7 +8,7 @@
 # specifically made by you with University College London.
 # 
 #PBS -N $job_name
-#PBS -l select=$nodes
+#PBS -l select=$nodes:mpiprocs=$corespernode
 #PBS -l walltime=$wall_time
 #PBS -A $budget
 #PBS -q $queue
