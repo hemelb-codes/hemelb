@@ -34,14 +34,12 @@ namespace hemelb
         void setUp()
         {
           configFile = Resource("four_cube.xml").Path();
-          argc = 7;
+          argc = 5;
           argv[0] = "hemelb";
-          argv[2] = configFile.c_str();
           argv[1] = "-in";
-          argv[3] = "-i";
-          argv[4] = "1";
-          argv[5] = "-ss";
-          argv[6] = "1111";
+          argv[2] = configFile.c_str();
+          argv[3] = "-ss";
+          argv[4] = "1111";
           FolderTestFixture::setUp();
           options = new hemelb::configuration::CommandLine(argc, argv);
         }

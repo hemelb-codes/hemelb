@@ -18,15 +18,14 @@ namespace hemelb
 {
   namespace steering
   {
-    SteeringComponent::SteeringComponent(Network* iNetwork, vis::Control* iVisControl,
-                                         steering::ImageSendComponent* imageSendComponent,
+    SteeringComponent::SteeringComponent(Network* iNetwork,
                                          net::Net * iNet, lb::SimulationState * iSimState,
                                          configuration::SimConfig* iSimConfig,
                                          const util::UnitConverter* iUnits,
                                          reporting::Timers& timings) :
         net::CollectiveAction(iNet->GetCommunicator(), timings[reporting::Timers::steeringWait]),
-            mNetwork(iNetwork), mSimState(iSimState), mVisControl(iVisControl),
-            imageSendComponent(imageSendComponent), privateSteeringParams(STEERABLE_PARAMETERS + 1),
+            mNetwork(iNetwork), mSimState(iSimState),
+            privateSteeringParams(STEERABLE_PARAMETERS + 1),
             mUnits(iUnits), simConfig(iSimConfig)
     {
       ClearValues();
@@ -42,14 +41,6 @@ namespace hemelb
     {
       if (collectiveComm.Rank() != RootRank)
         return;
-
-      /*
-       * The final steering parameter is DoRendering, which is true if we're connected and ready
-       * for the next frame.
-       */
-      {
-        privateSteeringParams[STEERABLE_PARAMETERS] = (float) (isConnected && readyForNextImage);
-      }
 
       // Create a buffer for the data received.
       const int num_chars = STEERABLE_PARAMETERS * sizeof(float) / sizeof(char);

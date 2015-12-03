@@ -8,7 +8,6 @@ if(HEMELB_STEERING_LIB MATCHES [Bb]asic)
 	set(steerers 
 		basic/ClientConnection.cc
 		basic/HttpPost.cc
-		basic/ImageSendComponent.cc
 		basic/Network.cc
 		basic/SimulationParameters.cc
 		basic/SteeringComponentB.cc
@@ -17,7 +16,6 @@ if(HEMELB_STEERING_LIB MATCHES [Bb]asic)
 elseif(HEMELB_STEERING_LIB MATCHES [Nn]one)
 	set(steerers
 		none/ClientConnection.cc
-		none/ImageSendComponent.cc
 		none/Network.cc
 		none/SteeringComponentN.cc
 	)
@@ -27,7 +25,6 @@ else()
 	set(steerers 
 		basic/ClientConnection.cc
 		basic/HttpPost.cc
-		basic/ImageSendComponent.cc
 		basic/Network.cc
 		basic/SimulationParameters.cc
 		basic/SteeringComponentB.cc
@@ -36,9 +33,7 @@ else()
 endif()
 
 add_library(hemelb_steering
-	#common/Steerer.cc # Not used in old nrmake build either -- TODO find out why
 	common/SteeringComponentC.cc
-	#common/Tags.cc
 	${steerers}
 )
 

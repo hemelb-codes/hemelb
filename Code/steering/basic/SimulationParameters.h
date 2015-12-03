@@ -26,10 +26,8 @@ namespace hemelb
         int timeStep;
         double time;
         int nInlets;
-        double mousePressure;
-        double mouseStress;
 
-        static const u_int paramsSizeB = 3 * sizeof(int) + 3 * sizeof(double);
+        static const u_int paramsSizeB = 3 * sizeof(int) + 1 * sizeof(double);
 
         SimulationParameters();
         ~SimulationParameters();

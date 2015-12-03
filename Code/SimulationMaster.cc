@@ -46,13 +46,11 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options,
   latticeBoltzmannModel = NULL;
   steeringCpt = NULL;
   propertyDataSource = NULL;
-  visualisationControl = NULL;
   propertyExtractor = NULL;
   simulationState = NULL;
   stepManager = NULL;
   netConcern = NULL;
   neighbouringDataManager = NULL;
-  imagesPerSimulation = options.NumberOfImages();
   steeringSessionId = options.GetSteeringSessionId();
 
   fileManager = new hemelb::io::PathManager(options, IsCurrentProcTheIOProc(), GetProcessorCount());
@@ -85,10 +83,6 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options,
 SimulationMaster::~SimulationMaster()
 {
 
-  if (ioComms.OnIORank())
-  {
-    delete imageSendCpt;
-  }
   delete latticeData;
   delete colloidController;
   delete latticeBoltzmannModel;
@@ -96,7 +90,6 @@ SimulationMaster::~SimulationMaster()
   delete outletValues;
   delete network;
   delete steeringCpt;
-  delete visualisationControl;
   delete propertyExtractor;
   delete propertyDataSource;
   delete stabilityTester;
@@ -134,7 +127,7 @@ int SimulationMaster::GetProcessorCount()
 
 /**
  * Initialises various elements of the simulation if necessary - steering,
- * domain decomposition, LBM and visualisation.
+ * domain decomposition, and LBM.
  */
 void SimulationMaster::Initialise()
 {
@@ -233,29 +226,6 @@ void SimulationMaster::Initialise()
     incompressibilityChecker = NULL;
   }
 
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising visualisation controller.");
-  visualisationControl =
-      new hemelb::vis::Control(latticeBoltzmannModel->GetLbmParams()->StressType,
-                               &communicationNet,
-                               simulationState,
-                               latticeBoltzmannModel->GetPropertyCache(),
-                               latticeData,
-                               timings[hemelb::reporting::Timers::visualisation]);
-
-  if (ioComms.OnIORank())
-  {
-    imageSendCpt = new hemelb::steering::ImageSendComponent(simulationState,
-                                                            visualisationControl,
-                                                            latticeBoltzmannModel->GetLbmParams(),
-                                                            network,
-                                                            latticeBoltzmannModel->InletCount());
-
-  }
-  else
-  {
-    imageSendCpt = NULL;
-  }
-
   inletValues = new hemelb::lb::iolets::BoundaryValues(hemelb::geometry::INLET_TYPE,
                                                        latticeData,
                                                        simConfig->GetInlets(),
@@ -270,21 +240,16 @@ void SimulationMaster::Initialise()
                                                         ioComms,
                                                         *unitConverter);
 
-  latticeBoltzmannModel->Initialise(visualisationControl, inletValues, outletValues, unitConverter);
+  latticeBoltzmannModel->Initialise(inletValues, outletValues, unitConverter);
   neighbouringDataManager->ShareNeeds();
   neighbouringDataManager->TransferNonFieldDependentInformation();
 
   steeringCpt = new hemelb::steering::SteeringComponent(network,
-                                                        visualisationControl,
-                                                        imageSendCpt,
                                                         &communicationNet,
                                                         simulationState,
                                                         simConfig,
                                                         unitConverter,
                                                         timings);
-
-  // Read in the visualisation parameters.
-  latticeBoltzmannModel->ReadVisParameters();
 
   propertyDataSource =
       new hemelb::extraction::LbDataSourceIterator(latticeBoltzmannModel->GetPropertyCache(),
@@ -306,8 +271,6 @@ void SimulationMaster::Initialise()
                                                               *propertyDataSource,
                                                               timings, ioComms);
   }
-
-  imagesPeriod = OutputPeriod(imagesPerSimulation);
 
   stepManager = new hemelb::net::phased::StepManager(2,
                                                      &timings,
@@ -335,7 +298,7 @@ void SimulationMaster::Initialise()
     stepManager->RegisterIteratedActorSteps(*incompressibilityChecker, 1);
     stepManager->RegisterCommsSteps(*incompressibilityChecker, 1);
   }
-  stepManager->RegisterIteratedActorSteps(*visualisationControl, 1);
+
   if (propertyExtractor != NULL)
   {
     stepManager->RegisterIteratedActorSteps(*propertyExtractor, 1);
@@ -372,77 +335,6 @@ void SimulationMaster::OnUnstableSimulation()
   Abort();
 }
 
-void SimulationMaster::WriteLocalImages()
-{
-  /**
-   * this map iteration iterates over all those image generation requests completing this step.
-   * The map key (it->first) is the completion time step number.
-   * The map value (it->second) is the initiation time step number.
-   */
-  for (MapType::const_iterator it = writtenImagesCompleted.find(simulationState->GetTimeStep());
-      it != writtenImagesCompleted.end() && it->first == simulationState->GetTimeStep(); ++it)
-  {
-
-    if (ioComms.OnIORank())
-    {
-      reporter->Image();
-      hemelb::io::writers::Writer * writer = fileManager->XdrImageWriter(1
-          + ( (it->second - 1) % simulationState->GetTimeStep()));
-
-      const hemelb::vis::PixelSet<hemelb::vis::ResultPixel>* result =
-          visualisationControl->GetResult(it->second);
-
-      visualisationControl->WriteImage(writer,
-                                       *result,
-                                       visualisationControl->domainStats,
-                                       visualisationControl->visSettings);
-
-      delete writer;
-    }
-  }
-
-  writtenImagesCompleted.erase(simulationState->GetTimeStep());
-}
-
-void SimulationMaster::GenerateNetworkImages()
-{
-  for (std::multimap<unsigned long, unsigned long>::const_iterator it =
-      networkImagesCompleted.find(simulationState->GetTimeStep());
-      it != networkImagesCompleted.end() && it->first == simulationState->GetTimeStep(); ++it)
-  {
-    if (ioComms.OnIORank())
-    {
-
-      const hemelb::vis::PixelSet<hemelb::vis::ResultPixel>* result =
-          visualisationControl->GetResult(it->second);
-
-      if (steeringCpt->updatedMouseCoords)
-      {
-        float density, stress;
-
-        if (visualisationControl->MouseIsOverPixel(result, &density, &stress))
-        {
-          double mousePressure = 0.0, mouseStress = 0.0;
-          latticeBoltzmannModel->CalculateMouseFlowField(density,
-                                                         stress,
-                                                         mousePressure,
-                                                         mouseStress,
-                                                         visualisationControl->domainStats.density_threshold_min,
-                                                         visualisationControl->domainStats.density_threshold_minmax_inv,
-                                                         visualisationControl->domainStats.stress_threshold_max_inv);
-
-          visualisationControl->SetMouseParams(mousePressure, mouseStress);
-        }
-        steeringCpt->updatedMouseCoords = false;
-      }
-
-      imageSendCpt->DoWork(result);
-
-    }
-  }
-
-  networkImagesCompleted.erase(simulationState->GetTimeStep());
-}
 
 /**
  * Begin the simulation.
@@ -484,54 +376,10 @@ void SimulationMaster::Finalise()
 
 void SimulationMaster::DoTimeStep()
 {
-  bool writeImage = ( (simulationState->GetTimeStep() % imagesPeriod) == 0) ?
-    true :
-    false;
-
-  // Make sure we're rendering if we're writing this iteration.
-  if (writeImage)
-  {
-    /***
-     * writtenImagesCompleted and networkImagesCompleted are multimaps.
-     * The keys are the iterations on which production of an image will complete, and should be written or sent over the network.
-     * The values are the iterations on which the image creation began.
-     */
-    writtenImagesCompleted.insert(std::pair<unsigned long, unsigned long>(visualisationControl->Start(),
-                                                                          simulationState->GetTimeStep()));
-  }
-
-  if (simulationState->IsRendering())
-  {
-    // Here, Start() actually triggers the render.
-    networkImagesCompleted.insert(std::pair<unsigned long, unsigned long>(visualisationControl->Start(),
-                                                                          simulationState->GetTimeStep()));
-    hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("%d images currently being composited for the steering client",
-                                                                         networkImagesCompleted.size());
-    simulationState->SetIsRendering(false);
-  }
-
-  /* In the following two if blocks we do the core magic to ensure we only Render
-   when (1) we are not sending a frame or (2) we need to output to disk */
-
-  /* TODO for debugging purposes we want to ensure we capture the variables in a single
-   instant of time since variables might be altered by the thread half way through?
-   This is to be done. */
-
-  bool renderForNetworkStream = false;
-  if (ioComms.OnIORank()
-      && !steeringCpt->readyForNextImage)
-  {
-    renderForNetworkStream = imageSendCpt->ShouldRenderNewNetworkImage();
-    steeringCpt->readyForNextImage = renderForNetworkStream;
-  }
-
   if (simulationState->GetTimeStep() % 100 == 0)
   {
-    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i render_network_stream %i write_image_to_disk %i rendering %i",
-                                                                        simulationState->GetTimeStep(),
-                                                                        renderForNetworkStream,
-                                                                        writeImage,
-                                                                        simulationState->IsRendering());
+    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i",
+                                                                        simulationState->GetTimeStep());
     LogStabilityReport();
   }
 
@@ -556,22 +404,6 @@ void SimulationMaster::DoTimeStep()
   if ( (simulationState->GetTimeStep() % 500 == 0) && colloidController != NULL)
     colloidController->OutputInformation(simulationState->GetTimeStep());
 
-#ifndef NO_STREAKLINES
-  visualisationControl->ProgressStreaklines(simulationState->GetTimeStep(),
-                                            simulationState->GetTotalTimeSteps());
-#endif
-
-  if (writtenImagesCompleted.count(simulationState->GetTimeStep()) > 0)
-  {
-    WriteLocalImages();
-
-  }
-
-  if (networkImagesCompleted.count(simulationState->GetTimeStep()) > 0)
-  {
-    GenerateNetworkImages();
-  }
-
   if (simulationState->GetTimeStep() % FORCE_FLUSH_PERIOD == 0 && IsCurrentProcTheIOProc())
   {
     fflush(NULL);
@@ -586,22 +418,6 @@ void SimulationMaster::RecalculatePropertyRequirements()
 
   propertyCache.ResetRequirements();
 
-  // Check whether we're rendering images on this iteration.
-  if (visualisationControl->IsRendering())
-  {
-    propertyCache.densityCache.SetRefreshFlag();
-    propertyCache.velocityCache.SetRefreshFlag();
-
-    if (simConfig->GetStressType() == hemelb::lb::ShearStress)
-    {
-      propertyCache.wallShearStressMagnitudeCache.SetRefreshFlag();
-    }
-    else if (simConfig->GetStressType() == hemelb::lb::VonMises)
-    {
-      propertyCache.vonMisesStressCache.SetRefreshFlag();
-    }
-  }
-
   if (monitoringConfig->doIncompressibilityCheck)
   {
     propertyCache.densityCache.SetRefreshFlag();
@@ -613,11 +429,6 @@ void SimulationMaster::RecalculatePropertyRequirements()
   {
     propertyExtractor->SetRequiredProperties(propertyCache);
   }
-
-  // If using streaklines, the velocity will be needed.
-#ifndef NO_STREAKLINES
-  propertyCache.velocityCache.SetRefreshFlag();
-#endif
 }
 
 /**

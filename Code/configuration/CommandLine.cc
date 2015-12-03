@@ -16,7 +16,7 @@ namespace hemelb
   {
 
     CommandLine::CommandLine(int aargc, const char * const * const aargv) :
-      inputFile("input.xml"), outputDir(""), images(10), steeringSessionId(1), debugMode(false), argc(aargc),
+      inputFile("input.xml"), outputDir(""), steeringSessionId(1), debugMode(false), argc(aargc),
           argv(aargv)
     {
 
@@ -39,11 +39,6 @@ namespace hemelb
         else if (std::strcmp(paramName, "-out") == 0)
         {
           outputDir = std::string(paramValue);
-        }
-        else if (std::strcmp(paramName, "-i") == 0)
-        {
-          char *dummy;
-          images = (unsigned int) (strtoul(paramValue, &dummy, 10));
         }
         else if (std::strcmp(paramName, "-ss") == 0)
         {

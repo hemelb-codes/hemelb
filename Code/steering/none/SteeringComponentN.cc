@@ -24,14 +24,13 @@ namespace hemelb
      * @param iSimState
      * @return
      */
-    SteeringComponent::SteeringComponent(Network* network, vis::Control* iVisControl,
-                                         steering::ImageSendComponent* imageSendComponent,
+    SteeringComponent::SteeringComponent(Network* network,
                                          net::Net * iNet, lb::SimulationState * iSimState,
                                          configuration::SimConfig* iSimConfig,
                                          const util::UnitConverter* iUnits,
                                          reporting::Timers& timings) :
         net::CollectiveAction(iNet->GetCommunicator(), timings[reporting::Timers::steeringWait]),
-            mSimState(iSimState), mVisControl(iVisControl), imageSendComponent(imageSendComponent),
+            mSimState(iSimState),
             mUnits(iUnits), simConfig(iSimConfig), privateSteeringParams(STEERABLE_PARAMETERS + 1)
     {
       ClearValues();

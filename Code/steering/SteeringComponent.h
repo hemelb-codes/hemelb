@@ -10,18 +10,17 @@
 #ifndef HEMELB_STEERING_STEERINGCOMPONENT_H
 #define HEMELB_STEERING_STEERINGCOMPONENT_H
 
+#include "net/Net.h"
 #include "net/CollectiveAction.h"
 #include "lb/SimulationState.h"
 #include "configuration/SimConfig.h"
 #include "steering/Network.h"
-#include "vis/DomainStats.h"
-#include "vis/Control.h"
-#include "steering/ImageSendComponent.h"
 
 namespace hemelb
 {
   namespace steering
   {
+    // TODO: remove most of these
     enum parameter
     {
       SceneCentreX = 0,
@@ -59,8 +58,6 @@ namespace hemelb
     {
       public:
         SteeringComponent(Network* iNetwork,
-                          vis::Control* iVisControl,
-                          steering::ImageSendComponent* imageSendComponent,
                           net::Net * iNet,
                           lb::SimulationState * iSimState,
                           configuration::SimConfig* iSimConfig,
@@ -76,9 +73,6 @@ namespace hemelb
          */
         void ClearValues();
 
-        bool readyForNextImage;
-        bool updatedMouseCoords;
-
         void PreSend();
         void Send();
         void PostReceive();
@@ -93,8 +87,6 @@ namespace hemelb
 
         Network* mNetwork;
         lb::SimulationState* mSimState;
-        vis::Control* mVisControl;
-        steering::ImageSendComponent* imageSendComponent;
         std::vector<float> privateSteeringParams;
         const util::UnitConverter* mUnits;
         configuration::SimConfig* simConfig;

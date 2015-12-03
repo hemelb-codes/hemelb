@@ -86,8 +86,6 @@ namespace hemelb
       inlets = DoIOForInOutlets(topNode.GetChildOrThrow("inlets"));
       outlets = DoIOForInOutlets(topNode.GetChildOrThrow("outlets"));
 
-      DoIOForVisualisation(topNode.GetChildOrThrow("visualisation"));
-
       // Optional element <properties>
       io::xml::Element propertiesEl = topNode.GetChildOrNull("properties");
       if (propertiesEl != io::xml::Element::Missing())
@@ -290,24 +288,6 @@ namespace hemelb
       }
 
       return newIolet;
-    }
-    void SimConfig::DoIOForVisualisation(const io::xml::Element& visEl)
-    {
-      GetDimensionalValue(visEl.GetChildOrThrow("centre"), "m", visualisationCentre);
-
-      io::xml::Element orientationEl = visEl.GetChildOrThrow("orientation");
-      GetDimensionalValue(orientationEl.GetChildOrThrow("longitude"),
-                          "deg",
-                          visualisationLongitude);
-      GetDimensionalValue(orientationEl.GetChildOrThrow("latitude"), "deg", visualisationLatitude);
-
-      io::xml::Element displayEl = visEl.GetChildOrThrow("display");
-      displayEl.GetAttributeOrThrow("zoom", visualisationZoom);
-      displayEl.GetAttributeOrThrow("brightness", visualisationBrightness);
-
-      io::xml::Element rangeEl = visEl.GetChildOrThrow("range");
-      GetDimensionalValue(rangeEl.GetChildOrThrow("maxvelocity"), "m/s", maxVelocity);
-      GetDimensionalValue(rangeEl.GetChildOrThrow("maxstress"), "Pa", maxStress);
     }
 
     void SimConfig::DoIOForProperties(const io::xml::Element& propertiesEl)

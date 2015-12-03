@@ -39,16 +39,4 @@
       <position value="(0.0,0.0,0.05)" units="m" />
     </outlet>
   </outlets>
-  <visualisation>
-    <centre value="(0.0,0.0,0.0)" units="m" />
-    <orientation>
-      <latitude value="45.0" units="deg" />
-      <longitude value="45.0" units="deg" />
-    </orientation>
-    <display brightness="0.03" zoom="1.0" />
-    <range>
-      <maxstress value="0.1" units="Pa" />
-      <maxvelocity value="0.1" units="m/s" />
-    </range>
-  </visualisation>
 </hemelbsettings>

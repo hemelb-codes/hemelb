@@ -10,6 +10,8 @@
 #ifndef HEMELB_LB_STREAMERS_JUNKYANGFACTORY_H
 #define HEMELB_LB_STREAMERS_JUNKYANGFACTORY_H
 
+#include <set>
+
 #include "lb/kernels/BaseKernel.h"
 #include "lb/streamers/BaseStreamer.h"
 #include <boost/numeric/ublas/matrix.hpp>

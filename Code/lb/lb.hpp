@@ -45,22 +45,6 @@ namespace hemelb
     }
 
     template<class LatticeType>
-    void LBM<LatticeType>::CalculateMouseFlowField(const ScreenDensity densityIn,
-                                                   const ScreenStress stressIn,
-                                                   const LatticeDensity density_threshold_min,
-                                                   const LatticeDensity density_threshold_minmax_inv,
-                                                   const LatticeStress stress_threshold_max_inv,
-                                                   PhysicalPressure &mouse_pressure,
-                                                   PhysicalStress &mouse_stress)
-    {
-      LatticeDensity density = density_threshold_min + densityIn / density_threshold_minmax_inv;
-      LatticeStress stress = stressIn / stress_threshold_max_inv;
-
-      mouse_pressure = mUnits->ConvertPressureToPhysicalUnits(density * Cs2);
-      mouse_stress = mUnits->ConvertStressToPhysicalUnits(stress);
-    }
-
-    template<class LatticeType>
     void LBM<LatticeType>::InitInitParamsSiteRanges(kernels::InitParams& initParams, unsigned& state)
     {
       initParams.siteRanges.resize(2);
@@ -129,8 +113,7 @@ namespace hemelb
     }
 
     template<class LatticeType>
-    void LBM<LatticeType>::Initialise(vis::Control* iControl,
-                                      iolets::BoundaryValues* iInletValues,
+    void LBM<LatticeType>::Initialise(iolets::BoundaryValues* iInletValues,
                                       iolets::BoundaryValues* iOutletValues,
                                       const util::UnitConverter* iUnits)
     {
@@ -141,8 +124,6 @@ namespace hemelb
       InitCollisions();
 
       SetInitialConditions();
-
-      mVisControl = iControl;
     }
 
     template<class LatticeType>
@@ -373,37 +354,6 @@ namespace hemelb
       mParams.StressType = mSimConfig->GetStressType();
     }
 
-    template<class LatticeType>
-    void LBM<LatticeType>::ReadVisParameters()
-    {
-      distribn_t density_min = std::numeric_limits<distribn_t>::max();
-      distribn_t density_max = std::numeric_limits<distribn_t>::min();
-
-      distribn_t velocity_max = mUnits->ConvertVelocityToLatticeUnits(mSimConfig->GetMaximumVelocity());
-      distribn_t stress_max = mUnits->ConvertStressToLatticeUnits(mSimConfig->GetMaximumStress());
-
-      for (int i = 0; i < InletCount(); i++)
-      {
-        density_min = util::NumericalFunctions::min(density_min, mInletValues->GetDensityMin(i));
-        density_max = util::NumericalFunctions::max(density_max, mInletValues->GetDensityMax(i));
-      }
-      for (int i = 0; i < OutletCount(); i++)
-      {
-        density_min = util::NumericalFunctions::min(density_min, mOutletValues->GetDensityMin(i));
-        density_max = util::NumericalFunctions::max(density_max, mOutletValues->GetDensityMax(i));
-      }
-
-      distribn_t lDensity_threshold_min = density_min;
-      distribn_t lDensity_threshold_minmax_inv = 1.0F / (density_max - density_min);
-      distribn_t lVelocity_threshold_max_inv = 1.0F / velocity_max;
-      distribn_t lStress_threshold_max_inv = 1.0F / stress_max;
-
-      mVisControl->SetSomeParams(mSimConfig->GetVisualisationBrightness(),
-                                 lDensity_threshold_min,
-                                 lDensity_threshold_minmax_inv,
-                                 lVelocity_threshold_max_inv,
-                                 lStress_threshold_max_inv);
-    }
   }
 }
 
