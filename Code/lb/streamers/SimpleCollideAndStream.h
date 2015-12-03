@@ -32,14 +32,12 @@ namespace hemelb
 
         public:
           SimpleCollideAndStream(kernels::InitParams& initParams) :
-            collider(initParams), bulkLinkDelegate(collider, initParams)
+              collider(initParams), bulkLinkDelegate(collider, initParams)
           {
 
           }
 
-          template<bool tDoRayTracing>
-          inline void DoStreamAndCollide(const site_t firstIndex,
-                                         const site_t siteCount,
+          inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::LatticeData* latDat,
                                          lb::MacroscopicPropertyCache& propertyCache)
@@ -48,7 +46,7 @@ namespace hemelb
             {
               geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
 
-              const distribn_t* lFOld = site.GetFOld<LatticeType> ();
+              const distribn_t* lFOld = site.GetFOld<LatticeType>();
 
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(lFOld);
 
@@ -64,18 +62,15 @@ namespace hemelb
                 bulkLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
               }
 
-              BaseStreamer<SimpleCollideAndStream>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
-                                                                                               hydroVars,
-                                                                                               lbmParams,
-                                                                                               propertyCache);
+              BaseStreamer<SimpleCollideAndStream>::UpdateMinsAndMaxes(site,
+                                                                       hydroVars,
+                                                                       lbmParams,
+                                                                       propertyCache);
             }
           }
 
-          template<bool tDoRayTracing>
-          inline void DoPostStep(const site_t iFirstIndex,
-                                 const site_t iSiteCount,
-                                 const LbmParameters* iLbmParams,
-                                 geometry::LatticeData* bLatDat,
+          inline void DoPostStep(const site_t iFirstIndex, const site_t iSiteCount,
+                                 const LbmParameters* iLbmParams, geometry::LatticeData* bLatDat,
                                  lb::MacroscopicPropertyCache& propertyCache)
           {
 

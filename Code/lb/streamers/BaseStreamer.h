@@ -25,8 +25,8 @@ namespace hemelb
        * BaseStreamer: inheritable base class for the streaming operator. The public interface
        * here defines the complete interface usable by external code.
        *  - Constructor(InitParams&)
-       *  - <bool tDoRayTracing> StreamAndCollide(const site_t, const site_t, const LbmParameters*,
-       *      geometry::LatticeData*, hemelb::vis::Control*)
+       *  - StreamAndCollide(const site_t, const site_t, const LbmParameters*,
+       *      geometry::LatticeData*, lb::MacroscopicPropertyCache&)
        *  - <bool tDoRayTracing> PostStep(const site_t, const site_t, const LbmParameters*,
        *      geometry::LatticeData*, hemelb::vis::Control*)
        *  - Reset(kernels::InitParams* init)
@@ -53,43 +53,37 @@ namespace hemelb
       class BaseStreamer
       {
         public:
-          // TODO: remove tDoRayTracing
-          template<bool tDoRayTracing>
-          inline void StreamAndCollide(const site_t firstIndex,
-                                       const site_t siteCount,
+          inline void StreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                        const LbmParameters* lbmParams,
                                        geometry::LatticeData* latDat,
                                        lb::MacroscopicPropertyCache& propertyCache)
           {
-            static_cast<StreamerImpl*> (this)->template DoStreamAndCollide<tDoRayTracing> (firstIndex,
-                                                                                           siteCount,
-                                                                                           lbmParams,
-                                                                                           latDat,
-                                                                                           propertyCache);
+            static_cast<StreamerImpl*>(this)->DoStreamAndCollide(firstIndex,
+                                                                 siteCount,
+                                                                 lbmParams,
+                                                                 latDat,
+                                                                 propertyCache);
           }
 
-          template<bool tDoRayTracing>
-          inline void PostStep(const site_t firstIndex,
-                               const site_t siteCount,
-                               const LbmParameters* lbmParams,
-                               geometry::LatticeData* latDat,
+          inline void PostStep(const site_t firstIndex, const site_t siteCount,
+                               const LbmParameters* lbmParams, geometry::LatticeData* latDat,
                                lb::MacroscopicPropertyCache& propertyCache)
           {
             // The template parameter is required because we're using the CRTP to call a
             // metaprogrammed method of the implementation class.
-            static_cast<StreamerImpl*> (this)->template DoPostStep<tDoRayTracing> (firstIndex,
-                                                                                   siteCount,
-                                                                                   lbmParams,
-                                                                                   latDat,
-                                                                                   propertyCache);
+            static_cast<StreamerImpl*>(this)->DoPostStep(firstIndex,
+                                                         siteCount,
+                                                         lbmParams,
+                                                         latDat,
+                                                         propertyCache);
           }
 
         protected:
-          template<bool tDoRayTracing, class LatticeType>
-          inline static void UpdateMinsAndMaxes(const geometry::Site<geometry::LatticeData>& site,
-                                                const kernels::HydroVarsBase<LatticeType>& hydroVars,
-                                                const LbmParameters* lbmParams,
-                                                lb::MacroscopicPropertyCache& propertyCache)
+          template<class LatticeType>
+          inline static void UpdateMinsAndMaxes(
+              const geometry::Site<geometry::LatticeData>& site,
+              const kernels::HydroVarsBase<LatticeType>& hydroVars, const LbmParameters* lbmParams,
+              lb::MacroscopicPropertyCache& propertyCache)
           {
             if (propertyCache.densityCache.RequiresRefresh())
             {
@@ -191,7 +185,8 @@ namespace hemelb
                                                                    tangentialProjectionTractionOnAPoint);
               }
 
-              propertyCache.tangentialProjectionTractionCache.Put(site.GetIndex(), tangentialProjectionTractionOnAPoint);
+              propertyCache.tangentialProjectionTractionCache.Put(site.GetIndex(),
+                                                                  tangentialProjectionTractionOnAPoint);
 
             }
           }
