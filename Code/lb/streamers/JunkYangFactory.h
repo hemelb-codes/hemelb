@@ -80,7 +80,6 @@ namespace hemelb
             }
           }
 
-          template<bool tDoRayTracing>
           inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::LatticeData* latticeData,
@@ -148,15 +147,14 @@ namespace hemelb
                 fOld[siteIndex](index) = site.GetFOld<LatticeType>()[*outgoingVelocityIter];
               }
 
-              BaseStreamer<JunkYangFactory>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
-                                                                                        hydroVars,
-                                                                                        lbmParams,
-                                                                                        propertyCache);
+              BaseStreamer<JunkYangFactory>::UpdateMinsAndMaxes(site,
+                                                                hydroVars,
+                                                                lbmParams,
+                                                                propertyCache);
             }
 
           }
 
-          template<bool tDoRayTracing>
           inline void DoPostStep(const site_t firstIndex, const site_t siteCount,
                                  const LbmParameters* lbmParams, geometry::LatticeData* latticeData,
                                  lb::MacroscopicPropertyCache& propertyCache)
@@ -327,8 +325,10 @@ namespace hemelb
                     + LatticeType::CZ[*rowIndexIncomingVelocity]
                         * LatticeType::CZ[*columnIndexIncomingVelocity];
 
-                assert(site.template GetWallDistance<LatticeType> (LatticeType::INVERSEDIRECTIONS[(Direction) *rowIndexIncomingVelocity]) >= 0);
-                assert(site.template GetWallDistance<LatticeType> (LatticeType::INVERSEDIRECTIONS[(Direction) *rowIndexIncomingVelocity]) < 1);
+                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
+                    >= 0);
+                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
+                    < 1);
 
                 kMatrices[contiguousSiteIndex](rowIndex, columnIndex) =
                     (-3.0 / 2.0)
@@ -369,8 +369,10 @@ namespace hemelb
                     + LatticeType::CZ[*rowIndexIncomingVelocity]
                         * LatticeType::CZ[*columnIndexOutgoingVelocity];
 
-                assert(site.template GetWallDistance<LatticeType> (LatticeType::INVERSEDIRECTIONS[(Direction) *rowIndexIncomingVelocity]) >= 0);
-                assert(site.template GetWallDistance<LatticeType> (LatticeType::INVERSEDIRECTIONS[(Direction) *rowIndexIncomingVelocity]) < 1);
+                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
+                    >= 0);
+                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
+                    < 1);
 
                 kMatrices[contiguousSiteIndex](rowIndex, columnIndex) =
                     (-3.0 / 2.0)

@@ -121,14 +121,13 @@ namespace hemelb
         template<typename Collision>
         void StreamAndCollide(Collision* collision, const site_t iFirstIndex, const site_t iSiteCount)
         {
-          // TODO: factor out template bool "do rendering"
-          collision->template StreamAndCollide<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+          collision->StreamAndCollide(iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
         }
 
         template<typename Collision>
         void PostStep(Collision* collision, const site_t iFirstIndex, const site_t iSiteCount)
         {
-          collision->template DoPostStep<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+          collision->DoPostStep(iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
         }
 
         unsigned int inletCount;
