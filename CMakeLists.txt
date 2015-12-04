@@ -19,7 +19,6 @@ set(HEMELB_STEERING_LIB basic
 	CACHE STRING "Steering library, choose 'basic' or 'none'" )
 option(HEMELB_USE_MULTIMACHINE "Use multi-level parallelism support" OFF)
 option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
-option(HEMELB_USE_STREAKLINES "Calculate streakline images" OFF)
 option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 option(HEMELB_USE_BOOST "Use Boost" ON)
 option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
@@ -61,7 +60,6 @@ ExternalProject_Add(
 	-DHEMELB_STEERING_LIB=${HEMELB_STEERING_LIB}
 	-DHEMELB_USE_MULTIMACHINE=${HEMELB_USE_MULTIMACHINE}
 	-DHEMELB_BUILD_UNITTESTS=${HEMELB_BUILD_UNITTESTS}
-	-DHEMELB_USE_STREAKLINES=${HEMELB_USE_STREAKLINES}
 	-DHEMELB_OPTIMISATION=${HEMELB_OPTIMISATION}
 	-DHEMELB_READING_GROUP_SIZE=${HEMELB_READING_GROUP_SIZE}
 	-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}

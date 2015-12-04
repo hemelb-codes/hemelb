@@ -13,7 +13,6 @@ option(HEMELB_BUILD_TESTS_ALL "Build all the tests" ON)
 option(HEMELB_BUILD_TESTS_UNIT "Build the unit-tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
 option(HEMELB_BUILD_TESTS_FUNCTIONAL "Build the functional tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
 option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
-option(HEMELB_USE_STREAKLINES "Calculate streakline images" OFF)
 option(HEMELB_USE_BOOST "Use Boost" ON)
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
 option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
@@ -83,10 +82,6 @@ add_definitions(-DHEMELB_LOG_LEVEL=${HEMELB_LOG_LEVEL})
 
 if(HEMELB_VALIDATE_GEOMETRY)
   add_definitions(-DHEMELB_VALIDATE_GEOMETRY)
-endif()
-
-if (NOT HEMELB_USE_STREAKLINES)
-	add_definitions(-DNO_STREAKLINES)
 endif()
 
 if (HEMELB_WAIT_ON_CONNECT)
