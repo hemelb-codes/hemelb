@@ -9,7 +9,6 @@
 
 #ifndef HEMELB_UNITTEST_REDBLOOD_PARALLEL_H
 #define HEMELB_DOING_UNITTESTS
-#include <unittests/redblood/parallel/ParticleShufflerTests.h>
 #include <unittests/redblood/parallel/NodeParallelizationTests.h>
 #undef HEMELB_DOING_UNITTESTS
 #endif
