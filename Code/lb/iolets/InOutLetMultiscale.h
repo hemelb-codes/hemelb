@@ -58,8 +58,6 @@ namespace hemelb
           // field points will map one-to-one to HemeLB lattice sites initially; we will
           // rely on external tools to perform any interpolation tasks.
           LatticeDensity GetDensity(unsigned long timeStep) const;
-          virtual LatticeDensity GetDensityMin() const;
-          virtual LatticeDensity GetDensityMax() const;
           PhysicalVelocity GetVelocity() const;
           LatticePressure GetPressure() const;
           //std::vector<PhysicalPressure GetPressures() const;

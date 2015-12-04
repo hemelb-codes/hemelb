@@ -129,35 +129,29 @@ namespace hemelb
     template<class LatticeType>
     void LBM<LatticeType>::PrepareBoundaryObjects()
     {
-      // First, iterate through all of the inlet and outlet objects, finding out the minimum density seen in the simulation.
-      distribn_t minDensity = std::numeric_limits<distribn_t>::max();
-
+      LatticeDensity initialDensity = GetInitialDensity();
+      // Now go through iolets, informing them of the minimum density.
       for (unsigned inlet = 0; inlet < mInletValues->GetLocalIoletCount(); ++inlet)
       {
-        minDensity = std::min(minDensity, mInletValues->GetLocalIolet(inlet)->GetDensityMin());
+        mInletValues->GetLocalIolet(inlet)->SetMinimumSimulationDensity(initialDensity);
       }
 
       for (unsigned outlet = 0; outlet < mOutletValues->GetLocalIoletCount(); ++outlet)
       {
-        minDensity = std::min(minDensity, mOutletValues->GetLocalIolet(outlet)->GetDensityMin());
+        mOutletValues->GetLocalIolet(outlet)->SetMinimumSimulationDensity(initialDensity);
       }
+    }
 
-      // Now go through them again, informing them of the minimum density.
-      for (unsigned inlet = 0; inlet < mInletValues->GetLocalIoletCount(); ++inlet)
-      {
-        mInletValues->GetLocalIolet(inlet)->SetMinimumSimulationDensity(minDensity);
-      }
-
-      for (unsigned outlet = 0; outlet < mOutletValues->GetLocalIoletCount(); ++outlet)
-      {
-        mOutletValues->GetLocalIolet(outlet)->SetMinimumSimulationDensity(minDensity);
-      }
+    template<class LatticeType>
+    LatticeDensity LBM<LatticeType>::GetInitialDensity() const
+    {
+      return mUnits->ConvertPressureToLatticeUnits(mSimConfig->GetInitialPressure()) / Cs2;
     }
 
     template<class LatticeType>
     void LBM<LatticeType>::SetInitialConditions()
     {
-      distribn_t density = mUnits->ConvertPressureToLatticeUnits(mSimConfig->GetInitialPressure()) / Cs2;
+      distribn_t density = GetInitialDensity();
 
       for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
       {

@@ -42,9 +42,6 @@ namespace hemelb
 
           LatticeDensity GetBoundaryDensity(const int index);
 
-          LatticeDensity GetDensityMin(int boundaryId);
-          LatticeDensity GetDensityMax(int boundaryId);
-
           static proc_t GetBCProcRank();
           iolets::InOutLet* GetLocalIolet(unsigned int index)
           {

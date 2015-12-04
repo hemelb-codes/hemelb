@@ -114,36 +114,6 @@ namespace hemelb
           {
           }
 
-          /***
-           * Get the minimum density, in lattice units
-           * @return minimum density, in lattice units
-           */
-          virtual LatticeDensity GetDensityMin() const = 0;
-
-          /***
-           * Get the maximum density, in lattice units
-           * @return maximum density, in lattice units
-           */
-          virtual LatticeDensity GetDensityMax() const = 0;
-
-          /***
-           * Get the minimum pressure, in lattice units
-           * @return
-           */
-          LatticePressure GetPressureMin() const
-          {
-            return GetDensityMin() * Cs2;
-          }
-
-          /***
-           * Get the maximum pressure, in lattice units
-           * @return
-           */
-          LatticePressure GetPressureMax() const
-          {
-            return GetDensityMax() * Cs2;
-          }
-
           /// @todo: #632 This method must be moved to InOutletPressure
           virtual LatticeDensity GetDensity(LatticeTimeStep time_step) const = 0;
 

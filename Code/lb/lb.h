@@ -97,6 +97,8 @@ namespace hemelb
       private:
         void SetInitialConditions();
 
+        LatticeDensity GetInitialDensity() const;
+
         void InitCollisions();
         // The following function pair simplify initialising the site ranges for each collider object.
         void InitInitParamsSiteRanges(kernels::InitParams& initParams, unsigned& state);

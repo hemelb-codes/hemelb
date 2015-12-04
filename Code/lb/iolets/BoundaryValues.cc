@@ -187,16 +187,6 @@ namespace hemelb
         return iolets[index]->GetDensity(state->Get0IndexedTimeStep());
       }
 
-      LatticeDensity BoundaryValues::GetDensityMin(int iBoundaryId)
-      {
-        return iolets[iBoundaryId]->GetDensityMin();
-      }
-
-      LatticeDensity BoundaryValues::GetDensityMax(int iBoundaryId)
-      {
-        return iolets[iBoundaryId]->GetDensityMax();
-      }
-
     }
   }
 }

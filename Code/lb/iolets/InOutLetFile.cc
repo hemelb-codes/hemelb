@@ -73,9 +73,6 @@ namespace hemelb
         std::vector<double> values(0);
 
         // Must convert into vectors since LinearInterpolate works on a pair of vectors
-        // Determine min and max pressure on the way
-        PhysicalPressure pMin = timeValuePairs.begin()->second;
-        PhysicalPressure pMax = timeValuePairs.begin()->second;
         for (std::map<PhysicalTime, PhysicalPressure>::iterator entry = timeValuePairs.begin(); entry
             != timeValuePairs.end(); entry++)
         {
@@ -90,19 +87,13 @@ namespace hemelb
             PhysicalSpeed final_pressure = values.back() + time_diff_ratio * pres_diff;
 
             times.push_back(totalTimeSteps*timeStepLength);
-            pMin = util::NumericalFunctions::min(pMin, final_pressure);
-            pMax = util::NumericalFunctions::max(pMax, final_pressure);
             values.push_back(final_pressure);
             break;
           }
 
-          pMin = util::NumericalFunctions::min(pMin, entry->second);
-          pMax = util::NumericalFunctions::max(pMax, entry->second);
           times.push_back(entry->first);
           values.push_back(entry->second);
         }
-        densityMin = units->ConvertPressureToLatticeUnits(pMin) / Cs2;
-        densityMax = units->ConvertPressureToLatticeUnits(pMax) / Cs2;
 
         // Check if last point's value matches the first
         if (values.back() != values.front())
