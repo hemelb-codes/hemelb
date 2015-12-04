@@ -41,10 +41,6 @@ if(HEMELB_VALIDATE_GEOMETRY)
   add_definitions(-DHEMELB_VALIDATE_GEOMETRY)
 endif()
 
-if (NOT HEMELB_USE_STREAKLINES)
-  add_definitions(-DNO_STREAKLINES)
-endif()
-
 if (HEMELB_WAIT_ON_CONNECT)
   add_definitions(-DHEMELB_WAIT_ON_CONNECT)
 endif()

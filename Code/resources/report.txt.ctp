@@ -28,7 +28,6 @@ Name Local Min Mean Max
 {{#BUILD}}
 Revision number:{{REVISION}}
 Steering mode: {{STEERING}}
-Streaklines: {{STREAKLINES}}
 Build type: {{TYPE}}
 Optimisation level: {{OPTIMISATION}}
 Use SSE3: {{USE_SSE3}}
