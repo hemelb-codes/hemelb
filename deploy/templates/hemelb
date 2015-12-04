@@ -12,4 +12,4 @@ cd $job_results
 $run_prefix
 rm -rf results
 cp $job_config_path/* .
-$run_command $install_path/bin/$executable -in config.xml -i $images 
+$run_command $install_path/bin/$executable -in config.xml
