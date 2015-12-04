@@ -23,9 +23,9 @@ namespace hemelb
         std::fill(sendNodeCount.GetSendBuffer().begin(), sendNodeCount.GetSendBuffer().end(), 0);
 
         auto const neighbors = sendNodeCount.GetCommunicator().GetNeighbors();
-        for(auto const lentCells: lent)
+        for (auto const lentCells : lent)
         {
-          for(auto const &cell: lentCells.second)
+          for (auto const &cell : lentCells.second)
           {
             auto const i_index = std::find(neighbors.begin(), neighbors.end(), lentCells.first);
             assert(i_index != neighbors.end());
@@ -36,27 +36,27 @@ namespace hemelb
         sendNodeCount.send();
       }
 
-      void  IntegrateVelocities::UpdatePositionsNonLocal(
-              NodeDistributions const& distributions, CellContainer &owned)
+      void IntegrateVelocities::UpdatePositionsNonLocal(NodeDistributions const& distributions,
+                                                        CellContainer &owned)
       {
         sendVelocities.receive();
 
         std::map<int, int> offsets;
-        for(auto const neighbor: sendVelocities.GetCommunicator().GetNeighbors())
+        for (auto const neighbor : sendVelocities.GetCommunicator().GetNeighbors())
         {
           offsets[neighbor] = 0;
         }
 
         auto const neighbors = sendNodeCount.GetCommunicator().GetNeighbors();
         // Count the number of vertices and cells
-        for(auto const & cell: owned)
+        for (auto const & cell : owned)
         {
           assert(distributions.count(cell->GetTag()) == 1);
           auto const dist = distributions.find(cell->GetTag())->second;
-          for(auto const neighbor: util::enumerate(neighbors))
+          for (auto const neighbor : util::enumerate(neighbors))
           {
             auto const nVertices = dist.CountNodes(neighbor.value);
-            if(nVertices == 0)
+            if (nVertices == 0)
             {
               continue;
             }
@@ -64,7 +64,7 @@ namespace hemelb
             auto const offset = offsets[neighbor.value];
             offsets[neighbor.value] += nVertices;
 
-            for(auto const item: util::enumerate(dist[neighbor.value]))
+            for (auto const item : util::enumerate(dist[neighbor.value]))
             {
               assert(item.value <= cell->GetNumberOfNodes());
               auto &pos = cell->GetVertices()[item.value];
@@ -75,4 +75,4 @@ namespace hemelb
       }
     } // parallel
   } // redblood
-}  // hemelb
+} // hemelb

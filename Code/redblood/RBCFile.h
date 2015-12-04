@@ -38,12 +38,12 @@ namespace hemelb
          * @return a shared pointer to an RBCFile object.
          */
         static std::shared_ptr<RBCFile> create(const std::string & filename,
-                                               const std::string & author,
-                                               bool trunc = false)
+                                               const std::string & author, bool trunc = false)
         {
           // Create a new HDF5 file
-          hid_t file_id = H5Fcreate(filename.c_str(),
-                                    (trunc) ? H5F_ACC_TRUNC : H5F_ACC_EXCL,
+          hid_t file_id = H5Fcreate(filename.c_str(), (trunc) ?
+            H5F_ACC_TRUNC :
+            H5F_ACC_EXCL,
                                     H5P_DEFAULT, H5P_DEFAULT);
 
           // If creation failed throw an exception
@@ -71,10 +71,8 @@ namespace hemelb
          * @return a shared pointer to an RBCFile object.
          */
         static std::shared_ptr<RBCFile> create(const std::string & filename,
-                                               const std::string & author,
-                                               const MPI_Comm & comm,
-                                               const MPI_Info & info,
-                                               bool trunc = false)
+                                               const std::string & author, const MPI_Comm & comm,
+                                               const MPI_Info & info, bool trunc = false)
         {
           // TODO: This method signature will probably have to be changed when
           // MPI is implemented for RBCs to take a hemelb::net::MpiCommunicator
@@ -84,12 +82,13 @@ namespace hemelb
           if (access_plist < 0)
             throw;
 
-          if ((status = H5Pset_fapl_mpio(access_plist, comm, info)) < 0)
+          if ( (status = H5Pset_fapl_mpio(access_plist, comm, info)) < 0)
             throw;
 
           // Create a new HDF5 file
-          hid_t file_id = H5Fcreate(filename.c_str(),
-                                    (trunc) ? H5F_ACC_TRUNC : H5F_ACC_EXCL,
+          hid_t file_id = H5Fcreate(filename.c_str(), (trunc) ?
+            H5F_ACC_TRUNC :
+            H5F_ACC_EXCL,
                                     H5P_DEFAULT, access_plist);
 
           // If creation failed throw an exception
@@ -112,12 +111,12 @@ namespace hemelb
          * @throw if the file does not exist.
          * @return a shared pointer to an RBCFile object.
          */
-        static std::shared_ptr<RBCFile> open(const std::string & filename,
-                                             bool readonly = true)
+        static std::shared_ptr<RBCFile> open(const std::string & filename, bool readonly = true)
         {
           // Open the HDF5 file
-          hid_t file_id = H5Fopen(filename.c_str(),
-                                  (readonly) ? H5F_ACC_RDONLY : H5F_ACC_RDWR,
+          hid_t file_id = H5Fopen(filename.c_str(), (readonly) ?
+            H5F_ACC_RDONLY :
+            H5F_ACC_RDWR,
                                   H5P_DEFAULT);
 
           // If opening failed throw an exception
@@ -143,10 +142,10 @@ namespace hemelb
          * @throw if the file does not exist.
          * @return a shared pointer to an RBCFile object.
          */
-        static std::shared_ptr<RBCFile> open(const std::string & filename,
-                                             const MPI_Comm & comm = MPI_COMM_WORLD,
-                                             const MPI_Info & info = MPI_INFO_NULL,
-                                             bool readonly = true)
+        static std::shared_ptr<RBCFile> open(const std::string & filename, const MPI_Comm & comm =
+                                                 MPI_COMM_WORLD,
+                                             const MPI_Info & info = MPI_INFO_NULL, bool readonly =
+                                                 true)
         {
           // TODO: This method signature will probably have to be changed when
           // MPI is implemented for RBCs to take a hemelb::net::MpiCommunicator
@@ -160,8 +159,9 @@ namespace hemelb
             throw;
 
           // Open the HDF5 file
-          hid_t file_id = H5Fopen(filename.c_str(),
-                                  (readonly) ? H5F_ACC_RDONLY : H5F_ACC_RDWR,
+          hid_t file_id = H5Fopen(filename.c_str(), (readonly) ?
+            H5F_ACC_RDONLY :
+            H5F_ACC_RDWR,
                                   access_plist);
 
           // If opening failed throw an exception
@@ -246,7 +246,7 @@ namespace hemelb
 
         RBCFile(const hid_t & id) :
             file(id), writeBaryCentre(true), writeMesh(false), writeScale(false),
-            author(readAuthor(id))
+                author(readAuthor(id))
         {
         }
 

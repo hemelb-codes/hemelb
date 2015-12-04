@@ -41,8 +41,8 @@ namespace hemelb
           virtual ~CellRegulator();
 
           //! Adds a new inlet
-          void addInlet(
-              std::shared_ptr<Cylinder>, CellDistributionFunction const &, FlowFunction const &);
+          void addInlet(std::shared_ptr<Cylinder>, CellDistributionFunction const &,
+                        FlowFunction const &);
 
           //! Makes request to the buffers
           void requestNewCells();
@@ -61,41 +61,40 @@ namespace hemelb
       }
 
       template<class DERIVED>
-        void CellRegulator<DERIVED>::addInlet(
-            std::shared_ptr<Cylinder> cyl,
-            CellDistributionFunction const &density,
-            FlowFunction const &flow)
-        {
-          buffers.emplace_back(cyl);
-          buffers.back().SetCellDistributionFunction(density);
-          flows.emplace_back(flow);
-        }
+      void CellRegulator<DERIVED>::addInlet(std::shared_ptr<Cylinder> cyl,
+                                            CellDistributionFunction const &density,
+                                            FlowFunction const &flow)
+      {
+        buffers.emplace_back(cyl);
+        buffers.back().SetCellDistributionFunction(density);
+        flows.emplace_back(flow);
+      }
 
       template<class DERIVED>
-        void CellRegulator<DERIVED>::requestNewCells()
+      void CellRegulator<DERIVED>::requestNewCells()
+      {
+        for (size_t i(0); i < buffers.size(); ++i)
         {
-          for(size_t i(0); i < buffers.size(); ++i)
+          if (site_t const n = flows[i]())
           {
-            if(site_t const n = flows[i]())
-            {
-              buffers[i].requestNewCells(n);
-            }
+            buffers[i].requestNewCells(n);
           }
         }
+      }
 
       template<class DERIVED>
-        void CellRegulator<DERIVED>::dropCells()
+      void CellRegulator<DERIVED>::dropCells()
+      {
+        auto * const derived = static_cast<DERIVED*>(this);
+        auto callback = [derived](CellContainer::value_type cell)
         {
-          auto *const derived = static_cast<DERIVED*>(this);
-          auto callback = [derived](CellContainer::value_type cell)
-          {
-            derived->AddCell(cell);
-          };
-          for(auto &buffer: buffers)
-          {
-            buffer(callback);
-          }
+          derived->AddCell(cell);
+        };
+        for (auto &buffer : buffers)
+        {
+          buffer(callback);
         }
+      }
     } // buffer
   } // redblood
 } // hemelb

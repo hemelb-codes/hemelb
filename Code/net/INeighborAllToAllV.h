@@ -1,4 +1,3 @@
-
 // Copyright (C) University College London, 2007-2012, all rights reserved.
 //
 // This file is part of HemeLB and is CONFIDENTIAL. You may not work
@@ -36,7 +35,8 @@ namespace hemelb
     //! \endcode
     //! Both SEND and RECEIVE should be types registered with net::MpiDataType;
     template<class SEND, class RECEIVE = SEND>
-    class INeighborAllToAllV : protected INeighborAllToAll<SEND, RECEIVE> {
+    class INeighborAllToAllV : protected INeighborAllToAll<SEND, RECEIVE>
+    {
       public:
         //! Sent type
         typedef SEND Send;
@@ -48,24 +48,20 @@ namespace hemelb
         typedef std::vector<Receive> ReceiveBuffer;
 
         //! Input is a graph communicator
-        INeighborAllToAllV(
-            MpiCommunicator const &comm,
-            std::vector<int> sendCounts,
-            std::vector<int> receiveCounts)
-          : INeighborAllToAll<Send, Receive>(comm), sendCounts(sendCounts),
-            receiveCounts(receiveCounts)
+        INeighborAllToAllV(MpiCommunicator const &comm, std::vector<int> sendCounts,
+                           std::vector<int> receiveCounts) :
+            INeighborAllToAll<Send, Receive>(comm), sendCounts(sendCounts),
+                receiveCounts(receiveCounts)
         {
           sendBuffer.resize(std::accumulate(sendCounts.begin(), sendCounts.end(), 0));
           receiveBuffer.resize(std::accumulate(receiveCounts.begin(), receiveCounts.end(), 0));
-        };
+        }
+        ;
         //! Input is a graph communicator
-        INeighborAllToAllV(MpiCommunicator const &comm)
-          : INeighborAllToAllV<Send, Receive>
-            (
-              comm,
-              std::vector<int>(comm.GetNeighborsCount(), 0),
-              std::vector<int>(comm.GetNeighborsCount(), 0)
-            )
+        INeighborAllToAllV(MpiCommunicator const &comm) :
+                INeighborAllToAllV<Send, Receive>(comm,
+                                                  std::vector<int>(comm.GetNeighborsCount(), 0),
+                                                  std::vector<int>(comm.GetNeighborsCount(), 0))
         {
         }
 
@@ -79,11 +75,12 @@ namespace hemelb
             return INeighborAllToAll<Send, Receive>::Get ## NAME();    \
           }
 
-          // We don't want exactly the same interface for INeighborAllToAll and INeighborAllToAllV,
-          // so redeclare the bits in common and keep the base protected.
-          HEMELB_MACRO(SendBuffer, SendBuffer, const);
-          HEMELB_MACRO(ReceiveBuffer, ReceiveBuffer, const);
-          HEMELB_MACRO(Communicator, MpiCommunicator, const);
+        // We don't want exactly the same interface for INeighborAllToAll and INeighborAllToAllV,
+        // so redeclare the bits in common and keep the base protected.
+        HEMELB_MACRO(SendBuffer, SendBuffer, const)
+        ;HEMELB_MACRO(ReceiveBuffer, ReceiveBuffer, const)
+        ;HEMELB_MACRO(Communicator, MpiCommunicator, const)
+        ;
 #       undef HEMELB_MACRO
 
 #       define HEMELB_MACRO(Name, name)                                                          \
@@ -141,8 +138,9 @@ namespace hemelb
             std::fill(name ## Buffer.begin(), name ## Buffer.end(), input);                      \
           }
 
-          HEMELB_MACRO(Send, send);
-          HEMELB_MACRO(Receive, receive);
+        HEMELB_MACRO(Send, send)
+        ;HEMELB_MACRO(Receive, receive)
+        ;
 #       undef HEMELB_MACRO
 
         void send();
@@ -168,53 +166,49 @@ namespace hemelb
 
         //! Uses output iterator to fill in send or receive buffer
         template<class ITERATOR, class INPUT>
-          void insert(
-              int neighbor, ITERATOR input,
-              std::vector<INPUT> &container, std::vector<int> const & counts);
+        void insert(int neighbor, ITERATOR input, std::vector<INPUT> &container,
+                    std::vector<int> const & counts);
 
         //! Sets give object
         template<class INPUT>
-          void SetInternal(
-              int neighbor, INPUT const &input,
-              std::vector<INPUT> &container,
-              std::vector<int> const & counts,
-              int i);
+        void SetInternal(int neighbor, INPUT const &input, std::vector<INPUT> &container,
+                         std::vector<int> const & counts, int i);
     };
 
     template<class SEND, class RECEIVE>
-      std::vector<int>
-      INeighborAllToAllV<SEND, RECEIVE>::GetOffsets(std::vector<int> const & counts)
+    std::vector<int> INeighborAllToAllV<SEND, RECEIVE>::GetOffsets(std::vector<int> const & counts)
+    {
+      //! Reserving at least one, so that result.data() is valid.
+      std::vector<int> result;
+      result.reserve(1);
+      int current = 0;
+      for (auto c : counts)
       {
-        //! Reserving at least one, so that result.data() is valid.
-        std::vector<int> result; result.reserve(1);
-        int current = 0;
-        for(auto c: counts)
-        {
-          result.push_back(current);
-          current += c;
-        }
-        return result;
+        result.push_back(current);
+        current += c;
       }
+      return result;
+    }
 
     template<class SEND, class RECEIVE> template<class ITERATOR, class INPUT>
-    void INeighborAllToAllV<SEND, RECEIVE>::insert(
-        int neighbor, ITERATOR input,
-        std::vector<INPUT> &container, std::vector<int> const & counts)
+    void INeighborAllToAllV<SEND, RECEIVE>::insert(int neighbor, ITERATOR input,
+                                                   std::vector<INPUT> &container,
+                                                   std::vector<int> const & counts)
     {
       auto const index = GetNeighborIndex(neighbor);
       assert(counts.size() > index);
       auto const offset = std::accumulate(counts.begin(), counts.begin() + index, 0);
       assert(container.size() >= counts[index] + offset);
-      for(int i(offset); i < counts[index] + offset; ++i, ++input)
+      for (int i(offset); i < counts[index] + offset; ++i, ++input)
       {
         container[i] = *input;
       }
     }
 
     template<class SEND, class RECEIVE> template<class INPUT>
-    void INeighborAllToAllV<SEND, RECEIVE>::SetInternal(
-        int neighbor, INPUT const &input,
-        std::vector<INPUT> &container, std::vector<int> const & counts, int i)
+    void INeighborAllToAllV<SEND, RECEIVE>::SetInternal(int neighbor, INPUT const &input,
+                                                        std::vector<INPUT> &container,
+                                                        std::vector<int> const & counts, int i)
     {
       auto const index = GetNeighborIndex(neighbor);
       assert(counts.size() > index);
@@ -224,27 +218,23 @@ namespace hemelb
     }
 
     template<class SEND, class RECEIVE>
-      void INeighborAllToAllV<SEND, RECEIVE>::send()
-      {
-        auto const sendOffsets = GetOffsets(sendCounts);
-        auto const sendType = net::MpiDataType<Send>();
-        auto const recvOffsets = GetOffsets(receiveCounts);
-        auto const recvType = net::MpiDataType<Receive>();
+    void INeighborAllToAllV<SEND, RECEIVE>::send()
+    {
+      auto const sendOffsets = GetOffsets(sendCounts);
+      auto const sendType = net::MpiDataType<Send>();
+      auto const recvOffsets = GetOffsets(receiveCounts);
+      auto const recvType = net::MpiDataType<Receive>();
 
-        // Makes sure buffers are valid even if not communicating anything
-        sendBuffer.reserve(1);     sendCounts.reserve(1);
-        receiveBuffer.reserve(1);  receiveCounts.reserve(1);
+      // Makes sure buffers are valid even if not communicating anything
+      sendBuffer.reserve(1);
+      sendCounts.reserve(1);
+      receiveBuffer.reserve(1);
+      receiveCounts.reserve(1);
 
-        // Post message
-        HEMELB_MPI_CALL(
-          MPI_Ineighbor_alltoallv,
-          (
-            sendBuffer.data(), sendCounts.data(), sendOffsets.data(), sendType,
-            receiveBuffer.data(), receiveCounts.data(), recvOffsets.data(), recvType,
-            comm, &request
-          )
-        );
-      }
+      // Post message
+      HEMELB_MPI_CALL(MPI_Ineighbor_alltoallv,
+                      ( sendBuffer.data(), sendCounts.data(), sendOffsets.data(), sendType, receiveBuffer.data(), receiveCounts.data(), recvOffsets.data(), recvType, comm, &request ));
+    }
   } /* redblood */
 } /* hemelb */
 #endif

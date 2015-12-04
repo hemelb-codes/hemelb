@@ -41,7 +41,7 @@ namespace hemelb
         }
         RBCInserter(RBCInserter &&c) :
             condition(std::move(c.condition)), cell(std::move(c.cell)),
-            barycenter(std::move(c.barycenter))
+                barycenter(std::move(c.barycenter))
         {
         }
         RBCInserter(RBCInserter const&c) :
@@ -73,8 +73,10 @@ namespace hemelb
         {
           if (condition())
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>(
-                "Dropping one cell at (%f, %f, %f)", barycenter.x, barycenter.y, barycenter.z);
+            log::Logger::Log<log::Debug, log::OnePerCore>("Dropping one cell at (%f, %f, %f)",
+                                                          barycenter.x,
+                                                          barycenter.y,
+                                                          barycenter.z);
             insertFn(drop());
           }
         }
@@ -94,14 +96,15 @@ namespace hemelb
     };
 
     //! Red blood cell inserter that adds random rotation and translation to each cell
-    class RBCInserterWithPerturbation : public RBCInserter {
+    class RBCInserterWithPerturbation : public RBCInserter
+    {
       public:
-        RBCInserterWithPerturbation(
-            std::function<bool()> condition, std::unique_ptr<CellBase const> cell,
-            util::Matrix3D const &initialRotation, Angle dtheta, Angle dphi,
-            LatticePosition const& dx, LatticePosition const& dy)
-          : RBCInserter(condition, std::move(cell)), initialRotation(initialRotation),
-            dtheta(dtheta), dphi(dphi), dx(dx), dy(dy)
+        RBCInserterWithPerturbation(std::function<bool()> condition,
+                                    std::unique_ptr<CellBase const> cell,
+                                    util::Matrix3D const &initialRotation, Angle dtheta, Angle dphi,
+                                    LatticePosition const& dx, LatticePosition const& dy) :
+            RBCInserter(condition, std::move(cell)), initialRotation(initialRotation),
+                dtheta(dtheta), dphi(dphi), dx(dx), dy(dy)
         {
         }
 
@@ -144,7 +147,7 @@ namespace hemelb
 
         void operator()(CellInserter insertFn) const
         {
-          for (const std::shared_ptr<RBCInserter> & inserter: inserters)
+          for (const std::shared_ptr<RBCInserter> & inserter : inserters)
           {
             (*inserter)(insertFn);
           }

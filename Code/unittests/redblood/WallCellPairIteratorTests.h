@@ -33,8 +33,7 @@ namespace hemelb
           CPPUNIT_TEST (testTwoCellNodes);
           CPPUNIT_TEST (testHaloAndNeighboringBoxes);
           CPPUNIT_TEST (testAllWallNodesFound);
-          CPPUNIT_TEST (testInteractionPassedOnToFluid<hemelb::redblood::stencil::FourPoint>);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testInteractionPassedOnToFluid<hemelb::redblood::stencil::FourPoint> );CPPUNIT_TEST_SUITE_END();
 
           LatticeDistance const cutoff = 3.0;
           LatticeDistance const interactionDistance = 0.5;
@@ -44,16 +43,16 @@ namespace hemelb
         public:
           void setUp()
           {
-            latticeData.reset(FourCubeLatticeData::Create(Comms(), 27+2));
-            for(auto const site: std::cref(*latticeData))
+            latticeData.reset(FourCubeLatticeData::Create(Comms(), 27 + 2));
+            for (auto const site : std::cref(*latticeData))
             {
-              if(not site.IsWall())
+              if (not site.IsWall())
               {
                 continue;
               }
-              for(Direction d(0); d < Lattice::NUMVECTORS; ++d)
+              for (Direction d(0); d < Lattice::NUMVECTORS; ++d)
               {
-                if(site.HasWall(d))
+                if (site.HasWall(d))
                 {
                   latticeData->SetBoundaryDistance(site.GetIndex(), d, 0.5);
                 }
@@ -70,23 +69,19 @@ namespace hemelb
             *cell += 100;
             cell->GetVertices()[0] = LatticePosition(0.5, 3.5 * cutoff, 3.5 * cutoff);
 
-            DivideConquerCells const cellDnC({cell}, cutoff, interactionDistance);
+            DivideConquerCells const cellDnC( { cell }, cutoff, interactionDistance);
 
             auto const last_iterator = std::end(iterate(cellDnC, wallDnC, interactionDistance));
             auto const first_iterator = std::begin(iterate(cellDnC, wallDnC, interactionDistance));
             CPPUNIT_ASSERT(first_iterator != last_iterator);
             CPPUNIT_ASSERT_EQUAL(std::ptrdiff_t(4), std::distance(first_iterator, last_iterator));
-            for(auto const item: iterate(cellDnC, wallDnC, interactionDistance))
+            for (auto const item : iterate(cellDnC, wallDnC, interactionDistance))
             {
-              CPPUNIT_ASSERT((item.wallNode - item.cellNode).GetMagnitude() < interactionDistance);
+              CPPUNIT_ASSERT( (item.wallNode - item.cellNode).GetMagnitude() < interactionDistance);
             }
-            CPPUNIT_ASSERT_EQUAL(
-                std::ptrdiff_t(0),
-                std::distance(
-                  std::begin(iterate(cellDnC, wallDnC, 0.05)),
-                  std::end(iterate(cellDnC, wallDnC, 0.05))
-                )
-            );
+            CPPUNIT_ASSERT_EQUAL(std::ptrdiff_t(0),
+                                 std::distance(std::begin(iterate(cellDnC, wallDnC, 0.05)),
+                                               std::end(iterate(cellDnC, wallDnC, 0.05))));
           }
 
           void testNoWall()
@@ -97,7 +92,7 @@ namespace hemelb
             *cell *= 3;
             *cell += 100;
             cell->GetVertices()[0] = LatticePosition(0.5, 3.5 * cutoff, 3.5 * cutoff);
-            DivideConquerCells const cellDnC({cell}, cutoff, interactionDistance);
+            DivideConquerCells const cellDnC( { cell }, cutoff, interactionDistance);
 
             auto const last_iterator = std::end(iterate(cellDnC, wallDnC, interactionDistance));
             auto const first_iterator = std::begin(iterate(cellDnC, wallDnC, interactionDistance));
@@ -115,15 +110,15 @@ namespace hemelb
             cell->GetVertices()[0] = LatticePosition(0.5, 3.5 * cutoff, 3.5 * cutoff);
             cell->GetVertices()[1] = LatticePosition(0.49, 3.5 * cutoff, 3.5 * cutoff);
 
-            DivideConquerCells const cellDnC({cell}, cutoff, interactionDistance);
+            DivideConquerCells const cellDnC( { cell }, cutoff, interactionDistance);
 
-            CPPUNIT_ASSERT_EQUAL(
-                std::ptrdiff_t(8),
-                std::distance(
-                  std::begin(iterate(cellDnC, wallDnC, interactionDistance)),
-                  std::end(iterate(cellDnC, wallDnC, interactionDistance))
-                )
-            );
+            CPPUNIT_ASSERT_EQUAL(std::ptrdiff_t(8),
+                                 std::distance(std::begin(iterate(cellDnC,
+                                                                  wallDnC,
+                                                                  interactionDistance)),
+                                               std::end(iterate(cellDnC,
+                                                                wallDnC,
+                                                                interactionDistance))));
           }
 
           void testHaloAndNeighboringBoxes(Dimensionless where, std::ptrdiff_t howMany)
@@ -135,15 +130,15 @@ namespace hemelb
             *cell += 100;
             cell->GetVertices()[0] = LatticePosition(0.5, where * cutoff, where * cutoff);
 
-            DivideConquerCells const cellDnC({cell}, cutoff, interactionDistance);
+            DivideConquerCells const cellDnC( { cell }, cutoff, interactionDistance);
 
-            CPPUNIT_ASSERT_EQUAL(
-                howMany,
-                std::distance(
-                  std::begin(iterate(cellDnC, wallDnC, interactionDistance)),
-                  std::end(iterate(cellDnC, wallDnC, interactionDistance))
-                )
-            );
+            CPPUNIT_ASSERT_EQUAL(howMany,
+                                 std::distance(std::begin(iterate(cellDnC,
+                                                                  wallDnC,
+                                                                  interactionDistance)),
+                                               std::end(iterate(cellDnC,
+                                                                wallDnC,
+                                                                interactionDistance))));
           }
 
           void testHaloAndNeighboringBoxes()
@@ -164,7 +159,7 @@ namespace hemelb
             *cell *= 3;
             *cell += 100;
             cell->GetVertices()[0] = LatticePosition(0.5, where * cutoff, where * cutoff);
-            DivideConquerCells const cellDnC({cell}, cutoff, interactionDistance);
+            DivideConquerCells const cellDnC( { cell }, cutoff, interactionDistance);
 
             // Creates list of wall-nodes and check unicity
             auto const isSame = [](LatticePosition const &a, LatticePosition const &b)
@@ -172,39 +167,38 @@ namespace hemelb
               return (a - b).GetMagnitude() < 1e-8;
             };
             std::vector<LatticePosition> wallNodes;
-            for(auto const nodes: iterate(cellDnC, wallDnC, interactionDistance))
+            for (auto const nodes : iterate(cellDnC, wallDnC, interactionDistance))
             {
-              auto const same = std::find_if(
-                  wallNodes.begin(), wallNodes.end(),
-                  std::bind(isSame, nodes.wallNode, std::placeholders::_1)
-              );
+              auto const same = std::find_if(wallNodes.begin(),
+                                             wallNodes.end(),
+                                             std::bind(isSame,
+                                                       nodes.wallNode,
+                                                       std::placeholders::_1));
               CPPUNIT_ASSERT(same == wallNodes.end());
               wallNodes.push_back(nodes.wallNode);
             }
 
             // Loop over all nodes, check whether they are in range, check they are in list
-            for(auto const site: std::cref(*latticeData))
+            for (auto const site : std::cref(*latticeData))
             {
-              if(not site.IsWall())
+              if (not site.IsWall())
               {
                 continue;
               }
-              for(Direction d(0); d < Lattice::NUMVECTORS; ++d)
+              for (Direction d(0); d < Lattice::NUMVECTORS; ++d)
               {
-                if(site.HasWall(d))
+                if (site.HasWall(d))
                 {
-                  auto  const node
-                    = LatticePosition(Lattice::CX[d], Lattice::CY[d], Lattice::CZ[d])
-                        .GetNormalised() * site.GetWallDistance<Lattice>(d)
-                      + site.GetGlobalSiteCoords();
-                  auto const visited = std::find_if(
-                      wallNodes.begin(), wallNodes.end(),
-                      std::bind(isSame, node, std::placeholders::_1)
-                  );
-                  auto const inRange
-                    = (node - cell->GetVertices()[0]).GetMagnitude() < interactionDistance;
+                  auto const node =
+                      LatticePosition(Lattice::CX[d], Lattice::CY[d], Lattice::CZ[d]).GetNormalised()
+                          * site.GetWallDistance<Lattice>(d) + site.GetGlobalSiteCoords();
+                  auto const visited = std::find_if(wallNodes.begin(),
+                                                    wallNodes.end(),
+                                                    std::bind(isSame, node, std::placeholders::_1));
+                  auto const inRange = (node - cell->GetVertices()[0]).GetMagnitude()
+                      < interactionDistance;
                   CPPUNIT_ASSERT_EQUAL(visited != wallNodes.end(), inRange);
-                  if(visited != wallNodes.end())
+                  if (visited != wallNodes.end())
                   {
                     wallNodes.erase(visited);
                   }
@@ -218,10 +212,10 @@ namespace hemelb
           void testAllWallNodesFound()
           {
             size_t const N = 10;
-            for(size_t i(0); i <= N; ++i)
+            for (size_t i(0); i <= N; ++i)
             {
-              testAllWallNodesFound(Dimensionless(i)/Dimensionless(2*N) + 3.0);
-              testAllWallNodesFound(Dimensionless(i)/Dimensionless(2*N) + 0.0);
+              testAllWallNodesFound(Dimensionless(i) / Dimensionless(2 * N) + 3.0);
+              testAllWallNodesFound(Dimensionless(i) / Dimensionless(2 * N) + 0.0);
             }
           }
 
@@ -234,40 +228,38 @@ namespace hemelb
             *cell *= 3;
             *cell += 100;
             cell->GetVertices()[0] = node;
-            DivideConquerCells const cellDnC({cell}, cutoff, interactionDistance);
+            DivideConquerCells const cellDnC( { cell }, cutoff, interactionDistance);
 
             // Set forces to zero
             helpers::ZeroOutForces(static_cast<geometry::LatticeData*>(latticeData.get()));
 
             // Finds pairs, computes interaction, spread forces to lattice
-            addCell2WallInteractions<STENCIL>(
-                DivideConquerCells({cell}, cutoff, halo),
-                wallDnC,
-                Node2NodeForce(1.0, interactionDistance),
-               *static_cast<geometry::LatticeData*>(latticeData.get())
-            );
+            addCell2WallInteractions<STENCIL>(DivideConquerCells( { cell }, cutoff, halo),
+                                              wallDnC,
+                                              Node2NodeForce(1.0, interactionDistance),
+                                              *static_cast<geometry::LatticeData*>(latticeData.get()));
 
-            for(auto const site: std::cref(*latticeData))
+            for (auto const site : std::cref(*latticeData))
             {
               auto const d = LatticePosition(site.GetGlobalSiteCoords()) - node;
-              CPPUNIT_ASSERT_EQUAL(
-                  STENCIL::stencil(d) > 1e-12, site.GetForce().GetMagnitude() > 1e-12);
+              CPPUNIT_ASSERT_EQUAL(STENCIL::stencil(d) > 1e-12,
+                                   site.GetForce().GetMagnitude() > 1e-12);
             }
           }
 
           template<class STENCIL> void testInteractionPassedOnToFluid()
           {
             size_t const N = 10;
-            for(size_t i(0); i <= N; ++i)
+            for (size_t i(0); i <= N; ++i)
             {
-              testInteractionPassedOnToFluid<STENCIL>(Dimensionless(i)/Dimensionless(2*N) + 3.0);
+              testInteractionPassedOnToFluid<STENCIL>(Dimensionless(i) / Dimensionless(2 * N)
+                  + 3.0);
             }
           }
 
         private:
           std::unique_ptr<unittests::FourCubeLatticeData> latticeData;
       };
-
 
       CPPUNIT_TEST_SUITE_REGISTRATION (WallCellPairIteratorTests);
     }

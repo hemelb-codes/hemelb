@@ -1,4 +1,3 @@
-
 // Copyright (C) University College London, 2007-2012, all rights reserved.
 //
 // This file is part of HemeLB and is CONFIDENTIAL. You may not work
@@ -13,7 +12,6 @@
 #include <algorithm>
 #include <cassert>
 #include "net/MpiCommunicator.h"
-
 
 namespace hemelb
 {
@@ -33,7 +31,8 @@ namespace hemelb
     //! all2all.GetReceiveBuffer() // profit!
     //! \endcode
     //! Both SEND and RECEIVE should be types registered with net::MpiDataType;
-    template<class SEND, class RECEIVE = SEND> class INeighborAllToAll {
+    template<class SEND, class RECEIVE = SEND> class INeighborAllToAll
+    {
       public:
         //! Sent type
         typedef SEND Send;
@@ -45,10 +44,11 @@ namespace hemelb
         typedef std::vector<Receive> ReceiveBuffer;
 
         //! Input is a graph communicator
-        INeighborAllToAll(MpiCommunicator const &comm)
-          : comm(comm.Duplicate()), neighbors(comm.GetNeighbors())
+        INeighborAllToAll(MpiCommunicator const &comm) :
+            comm(comm.Duplicate()), neighbors(comm.GetNeighbors())
         {
-        };
+        }
+        ;
         virtual ~INeighborAllToAll()
         {
         }
@@ -107,7 +107,9 @@ namespace hemelb
     {
       assert(neighbors.size() == 0 or sendBuffer.size() % neighbors.size() == 0);
       assert(comm);
-      auto const n = neighbors.size() > 0 ? sendBuffer.size() / neighbors.size(): 0;
+      auto const n = neighbors.size() > 0 ?
+        sendBuffer.size() / neighbors.size() :
+        0;
       receiveBuffer.resize(sendBuffer.size());
 
       // Makes sure pointers are valid even if no data
@@ -115,14 +117,8 @@ namespace hemelb
       receiveBuffer.reserve(1);
 
       // Post message
-      HEMELB_MPI_CALL(
-        MPI_Ineighbor_alltoall,
-        (
-          sendBuffer.data(), n, net::MpiDataType<Send>(),
-          receiveBuffer.data(), n, net::MpiDataType<Receive>(),
-          comm, &request
-        )
-      );
+      HEMELB_MPI_CALL(MPI_Ineighbor_alltoall,
+                      ( sendBuffer.data(), n, net::MpiDataType<Send>(), receiveBuffer.data(), n, net::MpiDataType<Receive>(), comm, &request ));
     }
 
     template<class SEND, class RECEIVE> MPI_Status INeighborAllToAll<SEND, RECEIVE>::receive()

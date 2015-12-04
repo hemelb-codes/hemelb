@@ -25,11 +25,11 @@ namespace hemelb
       // apply rotation
       auto const theta = dtheta * (2e0 * random() - 1e0);
       auto const phi = dphi * (2e0 * random() - 1e0);
-      using std::cos; using std::sin;
-      LatticePosition const z(cos(theta)*sin(phi), sin(theta)*sin(phi), cos(phi));
-      util::Matrix3D const rotation = initialRotation
-        * rotationMatrix(LatticePosition(0, 0, 1), z)
-        * initialRotation.transpose();
+      using std::cos;
+      using std::sin;
+      LatticePosition const z(cos(theta) * sin(phi), sin(theta) * sin(phi), cos(phi));
+      util::Matrix3D const rotation = initialRotation * rotationMatrix(LatticePosition(0, 0, 1), z)
+          * initialRotation.transpose();
       *result *= rotation;
 
       // apply translation

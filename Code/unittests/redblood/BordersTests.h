@@ -27,9 +27,8 @@ namespace hemelb
       class BordersTests : public CppUnit::TestFixture
       {
           CPPUNIT_TEST_SUITE (BordersTests);
-          CPPUNIT_TEST(testNothingToIterate);
-          CPPUNIT_TEST(testIterate);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testNothingToIterate);
+          CPPUNIT_TEST (testIterate);CPPUNIT_TEST_SUITE_END();
         public:
 
           size_t index(size_t x, size_t y, size_t z) const
@@ -38,8 +37,8 @@ namespace hemelb
           }
           std::vector<size_t> visitme(BorderBoxIterator iterator)
           {
-            std::vector<size_t> result(3*3*3, 0);
-            for(; iterator; ++iterator)
+            std::vector<size_t> result(3 * 3 * 3, 0);
+            for (; iterator; ++iterator)
             {
               ++result[index(iterator->x, iterator->y, iterator->z)];
             }
@@ -49,7 +48,7 @@ namespace hemelb
           void testNothingToIterate()
           {
             auto const visited = visitme(BorderBoxIterator(0));
-            for(auto const v: visited)
+            for (auto const v : visited)
             {
               CPPUNIT_ASSERT(not v);
             }
@@ -58,35 +57,38 @@ namespace hemelb
           void testIterate(size_t border, std::vector<LatticeVector> const &indices)
           {
             auto visited = visitme(BorderBoxIterator(border));
-            for(auto const &id: indices)
+            for (auto const &id : indices)
             {
               CPPUNIT_ASSERT_EQUAL(size_t(1), visited[index(id.x, id.y, id.z)]);
               visited[index(id.x, id.y, id.z)] = 0;
             }
-            for(auto const v: visited)
+            for (auto const v : visited)
             {
               CPPUNIT_ASSERT_EQUAL(size_t(0), v);
             }
           }
           void testIterate()
           {
-            testIterate((size_t)Borders::CENTER, {{0, 0, 0}});
-            testIterate((size_t)Borders::BOTTOM, {{-1, 0, 0}});
-            testIterate((size_t)Borders::TOP, {{1, 0, 0}});
-            testIterate((size_t)Borders::SOUTH, {{0, -1, 0}});
-            testIterate((size_t)Borders::NORTH, {{0, 1, 0}});
-            testIterate((size_t)Borders::WEST, {{0, 0, -1}});
-            testIterate((size_t)Borders::EAST, {{0, 0, 1}});
-            testIterate((size_t)Borders::BOTTOM + (size_t)Borders::TOP, {{-1, 0, 0}, {1, 0, 0}});
-            testIterate((size_t)Borders::BOTTOM + (size_t)Borders::CENTER, {{-1, 0, 0}, {0, 0, 0}});
-            testIterate(
-                (size_t)Borders::BOTTOM + (size_t)Borders::NORTH,
-                {{-1, 0, 0}, {0, 1, 0}, {-1, 1, 0}}
-            );
-            testIterate(
-                (size_t)Borders::BOTTOM + (size_t)Borders::NORTH + (size_t)Borders::EAST,
-                {{-1, 0, 0}, {0, 1, 0}, {-1, 1, 0}, {0, 0, 1}, {-1, 0, 1}, {0, 1, 1}, {-1, 1, 1}}
-            );
+            testIterate((size_t) Borders::CENTER, { { 0, 0, 0 } });
+            testIterate((size_t) Borders::BOTTOM, { { -1, 0, 0 } });
+            testIterate((size_t) Borders::TOP, { { 1, 0, 0 } });
+            testIterate((size_t) Borders::SOUTH, { { 0, -1, 0 } });
+            testIterate((size_t) Borders::NORTH, { { 0, 1, 0 } });
+            testIterate((size_t) Borders::WEST, { { 0, 0, -1 } });
+            testIterate((size_t) Borders::EAST, { { 0, 0, 1 } });
+            testIterate((size_t) Borders::BOTTOM + (size_t) Borders::TOP, { { -1, 0, 0 },
+                                                                            { 1, 0, 0 } });
+            testIterate((size_t) Borders::BOTTOM + (size_t) Borders::CENTER,
+                        { { -1, 0, 0 }, { 0, 0, 0 } });
+            testIterate((size_t) Borders::BOTTOM + (size_t) Borders::NORTH, { { -1, 0, 0 }, { 0,
+                                                                                              1,
+                                                                                              0 },
+                                                                              { -1, 1, 0 } });
+            testIterate((size_t) Borders::BOTTOM + (size_t) Borders::NORTH + (size_t) Borders::EAST,
+                        { { -1, 0, 0 }, { 0, 1, 0 }, { -1, 1, 0 }, { 0, 0, 1 }, { -1, 0, 1 }, { 0,
+                                                                                                1,
+                                                                                                1 },
+                          { -1, 1, 1 } });
           }
       };
 

@@ -45,7 +45,7 @@ namespace hemelb
           {
             MeshData copy(mesh);
             orientFacets(copy);
-            for(size_t i(0); i < mesh.facets.size(); ++i)
+            for (size_t i(0); i < mesh.facets.size(); ++i)
             {
               CPPUNIT_ASSERT_EQUAL(mesh.facets[i][0], copy.facets[i][0]);
               CPPUNIT_ASSERT_EQUAL(mesh.facets[i][1], copy.facets[i][1]);
@@ -59,7 +59,7 @@ namespace hemelb
 
             // change facet order of copy for next test
             MeshData copy(mesh);
-            for(auto &facet: copy.facets)
+            for (auto &facet : copy.facets)
             {
               std::swap(facet[0], facet[2]);
             }

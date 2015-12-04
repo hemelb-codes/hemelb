@@ -117,8 +117,8 @@ namespace hemelb
       writeMesh(file, data, c);
     }
 
-    void writeVTKMesh(
-        std::string const &filename, MeshData const &data, util::UnitConverter const& converter)
+    void writeVTKMesh(std::string const &filename, MeshData const &data,
+                      util::UnitConverter const& converter)
     {
       log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
                                                    filename.c_str());
@@ -173,7 +173,8 @@ namespace hemelb
       VertexIterator i_vertex = vertices.begin();
       VertexIterator const i_vertex_end = vertices.end();
 
-      for (unsigned i(1); i_vertex != i_vertex_end; ++i_vertex, ++i) {
+      for (unsigned i(1); i_vertex != i_vertex_end; ++i_vertex, ++i)
+      {
         auto const vertex = converter.ConvertPositionToPhysicalUnits(*i_vertex);
         stream << vertex[0] << " " << vertex[1] << " " << vertex[2] << " ";
       }
@@ -626,26 +627,26 @@ namespace hemelb
       // create a new mesh at slighly smaller scale
       MeshData smaller(mesh);
       auto const scale = 0.99;
-      for(auto &vertex: smaller.vertices)
+      for (auto &vertex : smaller.vertices)
       {
         vertex *= scale;
       }
       auto const recenter = barycenter(mesh) - barycenter(smaller);
-      for(auto &vertex: smaller.vertices)
+      for (auto &vertex : smaller.vertices)
       {
         vertex += recenter;
       }
 
       // Loop over each facet, checks orientation and modify as appropriate
-      for(auto &facet: mesh.facets)
+      for (auto &facet : mesh.facets)
       {
         auto const &v0 = mesh.vertices[facet[0]];
         auto const &v1 = mesh.vertices[facet[1]];
         auto const &v2 = mesh.vertices[facet[2]];
-        auto const direction = v0 + v1 + v2
-          - smaller.vertices[facet[0]] - smaller.vertices[facet[1]] - smaller.vertices[facet[2]];
+        auto const direction = v0 + v1 + v2 - smaller.vertices[facet[0]]
+            - smaller.vertices[facet[1]] - smaller.vertices[facet[2]];
 
-        if(((v0 - v1).Cross(v2 - v1).Dot(direction) > 0e0) xor outward)
+        if ( ( (v0 - v1).Cross(v2 - v1).Dot(direction) > 0e0) xor outward)
         {
           std::swap(facet[0], facet[2]);
         }

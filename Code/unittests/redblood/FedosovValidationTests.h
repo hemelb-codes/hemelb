@@ -24,8 +24,7 @@ namespace hemelb
       class FedosovValidationTests : public hemelb::unittests::helpers::FolderTestFixture
       {
           CPPUNIT_TEST_SUITE (FedosovValidationTests);
-          CPPUNIT_TEST(testIntegration);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testIntegration);CPPUNIT_TEST_SUITE_END();
 
           typedef Traits<>::Reinstantiate<lb::lattices::D3Q19, lb::GuoForcingLBGK>::Type Traits;
           typedef hemelb::redblood::CellController<Traits> CellControl;

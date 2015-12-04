@@ -22,10 +22,11 @@ namespace hemelb
     {
       template<class T>
       CellReference initCellRef(DivideConquer<T> &dnc, CellContainer::const_iterator cellid,
-                                site_t nodeid, 
-                                LatticePosition const &vertex, LatticeDistance const &haloLength)
+                                site_t nodeid, LatticePosition const &vertex,
+                                LatticeDistance const &haloLength)
       {
-        return {cellid, nodeid, figureNearness(dnc, vertex, haloLength)};
+        return
+        { cellid, nodeid, figureNearness(dnc, vertex, haloLength)};
       }
 
       void initializeCells(DivideConquer<CellReference> &dnc, MeshData::Vertices const &vertices,
@@ -134,9 +135,11 @@ namespace hemelb
 
     bool DivideConquerCells::pair_range::nextDist()
     {
-      return nextDistance(
-          decltype(owner.cells)::key_compare(),
-          currents.second, ends.second, currents.first, maxdist);
+      return nextDistance(decltype(owner.cells)::key_compare(),
+                          currents.second,
+                          ends.second,
+                          currents.first,
+                          maxdist);
     }
 
     bool DivideConquerCells::pair_range::doBox()
@@ -148,7 +151,7 @@ namespace hemelb
 
     bool DivideConquerCells::pair_range::operator++()
     {
-      while(is_valid())
+      while (is_valid())
       {
         // First try and finds next pair in current range
         if (currents.second != ends.second)
@@ -162,9 +165,9 @@ namespace hemelb
         }
 
         // If reaches here, then go to next box
-        for(++box_iterator; box_iterator; ++box_iterator)
+        for (++box_iterator; box_iterator; ++box_iterator)
         {
-          if(doBox())
+          if (doBox())
           {
             return true;
           }
@@ -177,7 +180,7 @@ namespace hemelb
         }
 
         box_iterator = BorderBoxIterator(currents.first.GetNearBorder());
-        if(doBox())
+        if (doBox())
         {
           return true;
         }
@@ -188,8 +191,8 @@ namespace hemelb
     DivideConquerCells::pair_range::pair_range(DivideConquerCells const &owner,
                                                iterator const &begin, iterator const &end,
                                                LatticeDistance maxdist) :
-        maxdist(maxdist), box_iterator(begin.GetNearBorder()),
-        currents(begin, end), ends(end, end), owner(owner)
+        maxdist(maxdist), box_iterator(begin.GetNearBorder()), currents(begin, end), ends(end, end),
+            owner(owner)
     {
       // No throw garantee. Makes iterator invalid instead.
       try

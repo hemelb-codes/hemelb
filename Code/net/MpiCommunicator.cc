@@ -130,15 +130,14 @@ namespace hemelb
       return MpiCommunicator(newComm, true);
     }
 
-    MpiCommunicator MpiCommunicator::Graph(
-        std::vector<std::vector<int>> edges, bool reorder) const
+    MpiCommunicator MpiCommunicator::Graph(std::vector<std::vector<int>> edges, bool reorder) const
     {
       std::vector<int> indices, flat_edges;
       indices.reserve(1);
       flat_edges.reserve(1);
-      for(auto const & edge_per_proc: edges)
+      for (auto const & edge_per_proc : edges)
       {
-        for(auto const & edge: edge_per_proc)
+        for (auto const & edge : edge_per_proc)
         {
           assert(edge < Size());
           flat_edges.push_back(edge);
@@ -146,10 +145,8 @@ namespace hemelb
         indices.push_back(flat_edges.size());
       }
       MPI_Comm newComm;
-      HEMELB_MPI_CALL(
-          MPI_Graph_create,
-          (*commPtr, indices.size(), indices.data(), flat_edges.data(), reorder, &newComm)
-      );
+      HEMELB_MPI_CALL(MPI_Graph_create,
+                      (*commPtr, indices.size(), indices.data(), flat_edges.data(), reorder, &newComm));
       return MpiCommunicator(newComm, true);
     }
 
@@ -190,7 +187,7 @@ namespace hemelb
 
       MPI_Group_translate_ranks(keyGroup, N, keys.data(), valueGroup, values.data());
       std::map<int, int> result;
-      for(auto const & item: util::zip(keys, values))
+      for (auto const & item : util::zip(keys, values))
       {
         result[std::get<0>(item)] = std::get<1>(item);
       }

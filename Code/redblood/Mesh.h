@@ -62,7 +62,7 @@ namespace hemelb
     LatticeArea area(MeshData const &mesh);
     LatticeArea area(MeshData::Vertices const &vertices, MeshData::Facets const &facets);
     //! Orients facet inward, or inward
-    void orientFacets(MeshData &mesh, bool outward=true);
+    void orientFacets(MeshData &mesh, bool outward = true);
 
     //! Holds raw topology data
     class MeshTopology
@@ -252,8 +252,8 @@ namespace hemelb
     //! Write mesh to file in VTK XML format
     void writeVTKMesh(std::string const &, MeshData const &, util::UnitConverter const&);
     //! Write mesh to file in VTK XML format
-    void writeVTKMesh(std::ostream &, MeshData::Vertices const &,
-                      MeshData::Facets const &, util::UnitConverter const&);
+    void writeVTKMesh(std::ostream &, MeshData::Vertices const &, MeshData::Facets const &,
+                      util::UnitConverter const&);
 
     //! Tetrahedron of a depth
     //! Depth refers to the number of triangular subdivision in each facet
@@ -268,7 +268,7 @@ namespace hemelb
     Mesh icoSphere(unsigned int depth = 0);
 
     //! Orients facet outward, or inward
-    void orientFacets(Mesh &mesh, bool outward=true);
+    void orientFacets(Mesh &mesh, bool outward = true);
   }
 }
 #endif

@@ -17,7 +17,8 @@ namespace hemelb
 
       //! Throws if input does not have units
       template<typename T>
-      std::pair<T, std::string> GetNonDimensionalValue(const io::xml::Element& elem, const std::string& units)
+      std::pair<T, std::string> GetNonDimensionalValue(const io::xml::Element& elem,
+                                                       const std::string& units)
       {
         T value;
         const std::string& got = elem.GetAttributeOrThrow("units");
@@ -33,20 +34,21 @@ namespace hemelb
 
       //! Defaults to some value if parent, or its child elemname are not present
       template<typename T>
-      std::pair<T, std::string> GetNonDimensionalValue(const io::xml::Element& parent, const std::string &elemname,
-                                                      const std::string& units, T default_)
+      std::pair<T, std::string> GetNonDimensionalValue(const io::xml::Element& parent,
+                                                       const std::string &elemname,
+                                                       const std::string& units, T default_)
       {
         if (parent == parent.Missing())
         {
           hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Using internal default value for RBC parameter: %s\n",
-                                                                                 elemname.c_str());
+                                                                               elemname.c_str());
           return std::pair<T, std::string>(default_, units);
         }
         auto const element = parent.GetChildOrNull(elemname);
         if (element == element.Missing())
         {
           hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Using internal default value for RBC parameter: %s\n",
-                                                                                 elemname.c_str());
+                                                                               elemname.c_str());
           return std::pair<T, std::string>(default_, units);
         }
         return GetNonDimensionalValue<T>(element, units);
@@ -55,8 +57,8 @@ namespace hemelb
       //! Gets value and convert to LB units. Default value should be in physical units.
       template<typename T>
       T GetNonDimensionalValue(const io::xml::Element& parent, const std::string &elemname,
-                            const std::string& units, util::UnitConverter const &converter,
-                            T default_)
+                               const std::string& units, util::UnitConverter const &converter,
+                               T default_)
       {
         auto const value_unit = GetNonDimensionalValue<T>(parent, elemname, units, default_);
         return value_unit.second == "LB" ?
@@ -67,7 +69,7 @@ namespace hemelb
       //! Gets value and convert to LB units
       template<typename T>
       T GetNonDimensionalValue(const io::xml::Element& parent, const std::string &elemname,
-                            const std::string& units, util::UnitConverter const &converter)
+                               const std::string& units, util::UnitConverter const &converter)
       {
         auto const value_unit = GetNonDimensionalValue<T>(parent.GetChildOrThrow(elemname), units);
         return value_unit.second == "LB" ?
@@ -79,7 +81,8 @@ namespace hemelb
       LatticePosition GetPosition(const io::xml::Element& parent, const std::string &elemname,
                                   util::UnitConverter const &converter)
       {
-        std::pair<LatticePosition, std::string> const value_unit = GetNonDimensionalValue<LatticePosition>(parent.GetChildOrThrow(elemname), "m");
+        std::pair<LatticePosition, std::string> const value_unit = GetNonDimensionalValue<
+            LatticePosition>(parent.GetChildOrThrow(elemname), "m");
         return value_unit.second == "LB" ?
           value_unit.first :
           converter.ConvertPositionToLatticeUnits(value_unit.first);
@@ -87,8 +90,8 @@ namespace hemelb
 
       void readFlowExtensions(io::xml::Element const& ioletsNode,
                               util::UnitConverter const& converter,
-                              std::vector<FlowExtension> &results,
-                              bool mustHaveFlowExtension = false)
+                              std::vector<FlowExtension> &results, bool mustHaveFlowExtension =
+                                  false)
       {
         if (ioletsNode == ioletsNode.Missing())
         {
@@ -102,7 +105,7 @@ namespace hemelb
           {
             results.emplace_back(readFlowExtension(ioletNode, converter));
           }
-          else if(mustHaveFlowExtension)
+          else if (mustHaveFlowExtension)
           {
             throw Exception() << "Could not find flow extension in iolet";
           }
@@ -110,17 +113,16 @@ namespace hemelb
       }
 
       //! Rotates a cell to be aligned with the flow and translates it to the start of the flow extension fade length
-      void rotateTranslateCellToFlow(std::unique_ptr<CellBase> & cell,
-                                     const Angle theta, const Angle phi,
-                                     const FlowExtension & flowExtension,
+      void rotateTranslateCellToFlow(std::unique_ptr<CellBase> & cell, const Angle theta,
+                                     const Angle phi, const FlowExtension & flowExtension,
                                      LatticePosition const & translation,
-                                     util::Matrix3D & rotateToFlow,
-                                     util::Matrix3D & rotation)
+                                     util::Matrix3D & rotateToFlow, util::Matrix3D & rotation)
       {
         // Rotate cell to align z axis with given position, and then z axis with flow
         // If phi == 0, then cell symmetry axis is aligned with the flow
-        using std::cos; using std::sin;
-        LatticePosition const z(cos(theta)*sin(phi), sin(theta)*sin(phi), cos(phi));
+        using std::cos;
+        using std::sin;
+        LatticePosition const z(cos(theta) * sin(phi), sin(theta) * sin(phi), cos(phi));
         rotateToFlow = rotationMatrix(LatticePosition(0, 0, 1), flowExtension.normal);
         rotation = rotateToFlow * rotationMatrix(LatticePosition(0, 0, 1), z);
         *cell *= rotation;
@@ -167,12 +169,15 @@ namespace hemelb
         // There are potentially multiple cell inserters each with their own
         // insertion criteria
         CompositeRBCInserter composite;
-        for (auto insNode = node.GetChildOrThrow("insertcell");
-            insNode != insNode.Missing();
+        for (auto insNode = node.GetChildOrThrow("insertcell"); insNode != insNode.Missing();
             insNode = insNode.NextSiblingOrNull("insertcell"))
         {
 
-          auto const offset = GetNonDimensionalValue<LatticeTime>(insNode, "offset", "s", converter, 0);
+          auto const offset = GetNonDimensionalValue<LatticeTime>(insNode,
+                                                                  "offset",
+                                                                  "s",
+                                                                  converter,
+                                                                  0);
           auto const templateName = insNode.GetAttributeOrThrow("template");
           if (templateCells.count(templateName) == 0)
           {
@@ -190,19 +195,29 @@ namespace hemelb
           auto const z = GetNonDimensionalValue<LatticeDistance>(insNode, "z", "m", converter, 0e0);
 
           util::Matrix3D rotateToFlow, rotation;
-          rotateTranslateCellToFlow(
-              cell, theta, phi, flowExtension, LatticePosition(x, y, z), rotateToFlow, rotation);
+          rotateTranslateCellToFlow(cell,
+                                    theta,
+                                    phi,
+                                    flowExtension,
+                                    LatticePosition(x, y, z),
+                                    rotateToFlow,
+                                    rotation);
 
           // Drops first cell when time reaches offset, and then every deltaTime thereafter.
           // Note: c++14 will allow more complex captures. Until then, we will need to create
           // semi-local lambda variables on the stack as shared pointers. Where semi-local means the
           // variables should live as long as the lambda. But longuer than a single call.
-          auto const timeStep = GetNonDimensionalValue<LatticeTime>(insNode, "every", "s", converter);
-          auto const dt = GetNonDimensionalValue<LatticeTime>(insNode, "delta_t", "s", converter, 0e0);
-          auto time = std::make_shared<LatticeTime>
-          (
-            timeStep - 1e0 + std::numeric_limits<LatticeTime>::epsilon() - offset
-          );
+          auto const timeStep = GetNonDimensionalValue<LatticeTime>(insNode,
+                                                                    "every",
+                                                                    "s",
+                                                                    converter);
+          auto const dt = GetNonDimensionalValue<LatticeTime>(insNode,
+                                                              "delta_t",
+                                                              "s",
+                                                              converter,
+                                                              0e0);
+          auto time = std::make_shared<LatticeTime>(timeStep - 1e0
+              + std::numeric_limits<LatticeTime>::epsilon() - offset);
           auto condition = [time, timeStep, dt, offset]()
           {
             *time += 1e0;
@@ -213,22 +228,35 @@ namespace hemelb
             }
             return false;
           };
-          auto const dtheta
-            = GetNonDimensionalValue<Angle>(insNode, "delta_theta", "rad", converter, 0e0);
-          auto const dphi
-            = GetNonDimensionalValue<Angle>(insNode, "delta_phi", "rad", converter, 0e0);
-          auto const dx
-            = GetNonDimensionalValue<LatticeDistance>(insNode, "delta_x", "m", converter, 0e0);
-          auto const dy
-            = GetNonDimensionalValue<LatticeDistance>(insNode, "delta_y", "m", converter, 0e0);
+          auto const dtheta = GetNonDimensionalValue<Angle>(insNode,
+                                                            "delta_theta",
+                                                            "rad",
+                                                            converter,
+                                                            0e0);
+          auto const dphi = GetNonDimensionalValue<Angle>(insNode,
+                                                          "delta_phi",
+                                                          "rad",
+                                                          converter,
+                                                          0e0);
+          auto const dx = GetNonDimensionalValue<LatticeDistance>(insNode,
+                                                                  "delta_x",
+                                                                  "m",
+                                                                  converter,
+                                                                  0e0);
+          auto const dy = GetNonDimensionalValue<LatticeDistance>(insNode,
+                                                                  "delta_y",
+                                                                  "m",
+                                                                  converter,
+                                                                  0e0);
 
-          composite.AddInserter(std::static_pointer_cast<RBCInserter>(
-              std::make_shared<RBCInserterWithPerturbation>(
-                  condition, std::move(cell),
-                  rotation,
-                  dtheta, dphi,
-                  rotateToFlow * LatticePosition(dx, 0, 0),
-                  rotateToFlow * LatticePosition(0, dy, 0))));
+          composite.AddInserter(std::static_pointer_cast<RBCInserter>(std::make_shared<
+              RBCInserterWithPerturbation>(condition,
+                                           std::move(cell),
+                                           rotation,
+                                           dtheta,
+                                           dphi,
+                                           rotateToFlow * LatticePosition(dx, 0, 0),
+                                           rotateToFlow * LatticePosition(0, dy, 0))));
         }
 
         return composite;
@@ -243,10 +271,9 @@ namespace hemelb
       moduli.surface = GetNonDimensionalValue(moduliNode, "surface", "LB", converter, 1e0);
       moduli.volume = GetNonDimensionalValue(moduliNode, "volume", "LB", converter, 1e0);
       moduli.dilation = GetNonDimensionalValue(moduliNode, "dilation", "LB", converter, 0.75);
-      if(1e0 < moduli.dilation or moduli.dilation < 0.5)
+      if (1e0 < moduli.dilation or moduli.dilation < 0.5)
       {
-        log::Logger::Log<log::Critical, log::Singleton>(
-            "Dilation moduli is outside the recommended range 1e0 >= m >= 0.5");
+        log::Logger::Log<log::Critical, log::Singleton>("Dilation moduli is outside the recommended range 1e0 >= m >= 0.5");
       }
       moduli.strain = GetNonDimensionalValue(moduliNode, "strain", "N/m", converter, 5e-6);
       return moduli;
@@ -260,15 +287,21 @@ namespace hemelb
       {
         return result;
       }
-      result.intensity = GetNonDimensionalValue(node, "intensity", "Nm", converter, result.intensity);
-      result.cutoff = GetNonDimensionalValue(node, "cutoffdistance", "LB", converter, result.cutoff);
-      if(2e0 * result.cutoff > Dimensionless(Traits<>::Stencil::GetRange()))
+      result.intensity = GetNonDimensionalValue(node,
+                                                "intensity",
+                                                "Nm",
+                                                converter,
+                                                result.intensity);
+      result.cutoff = GetNonDimensionalValue(node,
+                                             "cutoffdistance",
+                                             "LB",
+                                             converter,
+                                             result.cutoff);
+      if (2e0 * result.cutoff > Dimensionless(Traits<>::Stencil::GetRange()))
       {
-          log::Logger::Log<log::Warning, log::Singleton>(
-              "Input inconsistency: cell-cell and cell-wall interactions larger then stencil size\n"
-              "See issue #586."
-           );
-          throw Exception() << "Cell-cell interaction longuer that stencil size permits";
+        log::Logger::Log<log::Warning, log::Singleton>("Input inconsistency: cell-cell and cell-wall interactions larger then stencil size\n"
+                                                       "See issue #586.");
+        throw Exception() << "Cell-cell interaction longuer that stencil size permits";
       }
       auto const exponentNode = node != node.Missing() ?
         node.GetChildOrNull("exponent") :
@@ -290,12 +323,12 @@ namespace hemelb
                                                                                     converter).release());
       // Then read template cells
       auto const redbloodcellsNode = topNode.GetChildOrNull("redbloodcells");
-      if(not redbloodcellsNode)
+      if (not redbloodcellsNode)
       {
         return result;
       }
       auto const cellsNode = redbloodcellsNode.GetChildOrNull("cells");
-      if(not cellsNode)
+      if (not cellsNode)
       {
         return result;
       }
@@ -311,10 +344,9 @@ namespace hemelb
           throw Exception() << "Multiple template mesh with same name";
         }
         auto cell = readCell(cellNode, converter);
-        if(!validateCellEdgeLengths(*cell))
+        if (!validateCellEdgeLengths(*cell))
         {
-          log::Logger::Log<log::Critical, log::Singleton>(
-              "Average edge length in cell mesh not in [0.7, 1.3]");
+          log::Logger::Log<log::Critical, log::Singleton>("Average edge length in cell mesh not in [0.7, 1.3]");
         }
         if (flowExtensions)
         {
@@ -404,18 +436,18 @@ namespace hemelb
       result.radius = GetNonDimensionalValue<LatticeDistance>(flowXML, "radius", "m", converter);
       result.fadeLength =
           GetNonDimensionalValue<LatticeDistance>(flowXML,
-                                                "fadelength",
-                                                "m",
-                                                converter,
-                                                converter.ConvertDistanceToPhysicalUnits(result.length));
+                                                  "fadelength",
+                                                  "m",
+                                                  converter,
+                                                  converter.ConvertDistanceToPhysicalUnits(result.length));
 
       // Infer normal and position from inlet
       // However, normals point in *opposite* direction, and, as a result, origin are at opposite
       // end of the cylinder
       result.normal = -GetNonDimensionalValue<LatticePosition>(node,
-                                                            "normal",
-                                                            "dimensionless",
-                                                            converter);
+                                                               "normal",
+                                                               "dimensionless",
+                                                               converter);
       result.normal.Normalise();
       result.origin = GetPosition(node, "position", converter) - result.normal * result.length;
 
@@ -480,7 +512,7 @@ namespace hemelb
       auto outletsNode = topNode.GetChildOrThrow("outlets");
       readFlowExtensions(outletsNode, converter, *result);
       // Then transforms them to cell outlets: should start somewhere near the end of fadelength
-      for(auto &flowExt: *result)
+      for (auto &flowExt : *result)
       {
         auto length = flowExt.length - flowExt.fadeLength;
         flowExt.origin += flowExt.normal * (flowExt.length - length);

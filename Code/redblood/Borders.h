@@ -19,9 +19,10 @@ namespace hemelb
   namespace redblood
   {
     //! Names for each border
-    enum class Borders : size_t
-    {
-      NONE = 0,
+    enum class Borders
+      : size_t
+      {
+        NONE = 0,
       TOP = 1,
       BOTTOM = 2,
       NORTH = 4,
@@ -40,9 +41,8 @@ namespace hemelb
     //! \param[in] vertex Position to investigate
     //! \param[in] haloLenght the meaning of close
     template<class T>
-    size_t figureNearness(
-        DivideConquer<T> const &dnc,
-        LatticePosition const &vertex, LatticeDistance const &haloLength);
+    size_t figureNearness(DivideConquer<T> const &dnc, LatticePosition const &vertex,
+                          LatticeDistance const &haloLength);
 
     //! \brief Iterates only over nearest borders
     class BorderBoxIterator
@@ -90,39 +90,43 @@ namespace hemelb
     {
       switch (border)
       {
-        case Borders::TOP:    return util::Vector3D<T>(1, 0, 0);
-        case Borders::BOTTOM: return util::Vector3D<T>(-1, 0, 0);
-        case Borders::NORTH:  return util::Vector3D<T>(0, 1, 0);
-        case Borders::SOUTH:  return util::Vector3D<T>(0, -1, 0);
-        case Borders::WEST:   return util::Vector3D<T>(0, 0, -1);
-        case Borders::EAST:   return util::Vector3D<T>(0, 0, 1);
-        default:     return util::Vector3D<T>(0, 0, 0);
+        case Borders::TOP:
+          return util::Vector3D<T>(1, 0, 0);
+        case Borders::BOTTOM:
+          return util::Vector3D<T>(-1, 0, 0);
+        case Borders::NORTH:
+          return util::Vector3D<T>(0, 1, 0);
+        case Borders::SOUTH:
+          return util::Vector3D<T>(0, -1, 0);
+        case Borders::WEST:
+          return util::Vector3D<T>(0, 0, -1);
+        case Borders::EAST:
+          return util::Vector3D<T>(0, 0, 1);
+        default:
+          return util::Vector3D<T>(0, 0, 0);
       };
       return LatticeVector(0, 0, 0);
     }
     template<class T> util::Vector3D<T> direction(size_t border)
     {
       Borders const b(static_cast<Borders>(border));
-      assert(b == Borders::TOP or Borders(b) == Borders::BOTTOM or b == Borders::NORTH or
-          b == Borders::SOUTH or b == Borders::EAST or b == Borders::WEST);
+      assert(b == Borders::TOP or Borders(b) == Borders::BOTTOM or b == Borders::NORTH
+          or b == Borders::SOUTH or b == Borders::EAST or b == Borders::WEST);
       return direction<T>(b);
     }
 
     template<class T>
     size_t figureNearness(DivideConquer<T> const &dnc, LatticeVector const &key,
-                       LatticePosition const &vertex, LatticeDistance const &haloLength)
+                          LatticePosition const &vertex, LatticeDistance const &haloLength)
     {
       if (haloLength > dnc.GetBoxSize())
       {
-        return static_cast<size_t>(Borders::CENTER)
-          bitor static_cast<size_t>(Borders::NORTH)
-          bitor static_cast<size_t>(Borders::SOUTH)
-          bitor static_cast<size_t>(Borders::EAST)
-          bitor static_cast<size_t>(Borders::WEST)
-          bitor static_cast<size_t>(Borders::TOP)
-          bitor static_cast<size_t>(Borders::BOTTOM);
+        return static_cast<size_t>(Borders::CENTER) bitor static_cast<size_t>(Borders::NORTH)
+            bitor static_cast<size_t>(Borders::SOUTH) bitor static_cast<size_t>(Borders::EAST)
+            bitor static_cast<size_t>(Borders::WEST) bitor static_cast<size_t>(Borders::TOP)
+            bitor static_cast<size_t>(Borders::BOTTOM);
       }
-      else if(haloLength < 1e-12)
+      else if (haloLength < 1e-12)
       {
         return static_cast<size_t>(Borders::CENTER);
       }
@@ -144,9 +148,8 @@ namespace hemelb
       return result bitor static_cast<size_t>(Borders::CENTER);
     }
     template<class T>
-    size_t figureNearness(
-        DivideConquer<T> const &dnc,
-        LatticePosition const &vertex, LatticeDistance const &haloLength)
+    size_t figureNearness(DivideConquer<T> const &dnc, LatticePosition const &vertex,
+                          LatticeDistance const &haloLength)
     {
       return figureNearness<T>(dnc, dnc.DowngradeKey(vertex), vertex, haloLength);
     }

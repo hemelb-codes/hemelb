@@ -24,11 +24,10 @@ namespace hemelb
       class CellCellInteractionWithGridTests : public helpers::FourCubeBasedTestFixture
       {
           CPPUNIT_TEST_SUITE (CellCellInteractionWithGridTests);
-          CPPUNIT_TEST (testInteraction<stencil::FourPoint>);
-          CPPUNIT_TEST (testInteraction<stencil::CosineApprox>);
-          CPPUNIT_TEST (testInteraction<stencil::ThreePoint>);
-          CPPUNIT_TEST (testInteraction<stencil::TwoPoint>);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testInteraction<stencil::FourPoint> );
+          CPPUNIT_TEST (testInteraction<stencil::CosineApprox> );
+          CPPUNIT_TEST (testInteraction<stencil::ThreePoint> );
+          CPPUNIT_TEST (testInteraction<stencil::TwoPoint> );CPPUNIT_TEST_SUITE_END();
 
           LatticeDistance const cutoff = 5.0;
           LatticeDistance const halo = 2.0;
@@ -48,8 +47,8 @@ namespace hemelb
         auto cells = TwoPancakeSamosas<>(cutoff);
 
         // Place two nodes close enough for interactions
-        LatticePosition const n0{15 - 0.1, 15.5, 15.5};
-        LatticePosition const n1{15 + 0.1, 15.5, 15.5};
+        LatticePosition const n0 { 15 - 0.1, 15.5, 15.5 };
+        LatticePosition const n1 { 15 + 0.1, 15.5, 15.5 };
         (*cells.begin())->GetVertices().front() = n0;
         (*std::next(cells.begin()))->GetVertices().front() = n1;
 
@@ -57,11 +56,9 @@ namespace hemelb
         helpers::ZeroOutFOld(latDat);
 
         // Finds pairs, computes interaction, spread forces to lattice
-        addCell2CellInteractions<STENCIL>(
-            DivideConquerCells(cells, cutoff, halo),
-            Node2NodeForce(1.0, halo),
-           *latDat
-        );
+        addCell2CellInteractions<STENCIL>(DivideConquerCells(cells, cutoff, halo),
+                                          Node2NodeForce(1.0, halo),
+                                          *latDat);
 
         // By symmetry, there are no forces on the lattice points equidistant from
         // the nodes
@@ -71,7 +68,7 @@ namespace hemelb
 
         // There are non-zero opposite forces on the following nodes
         size_t delta(1);
-        for(; 2 * delta <= STENCIL::GetRange(); ++delta)
+        for (; 2 * delta <= STENCIL::GetRange(); ++delta)
         {
           CPPUNIT_ASSERT(latDat->GetSite(14, 15, 15).GetForce().GetMagnitudeSquared() > 1e-8);
           auto const left = latDat->GetSite(15 + delta, 15, 15).GetForce();
@@ -80,13 +77,12 @@ namespace hemelb
           CPPUNIT_ASSERT_DOUBLES_EQUAL(left.y, -right.y, 1e-8);
           CPPUNIT_ASSERT_DOUBLES_EQUAL(left.z, -right.z, 1e-8);
           // The forces at (14, 15, 15) should be  in direction (-1, 0, 0)
-          CPPUNIT_ASSERT_DOUBLES_EQUAL(right.Dot({-1, 0, 0}), std::abs(right.x), 1e-8);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(right.Dot( { -1, 0, 0 }), std::abs(right.x), 1e-8);
         }
         // This node is too far away
-        CPPUNIT_ASSERT(latDat->GetSite(15+delta, 15, 15).GetForce().GetMagnitudeSquared() < 1e-8);
-        CPPUNIT_ASSERT(latDat->GetSite(15-delta, 15, 15).GetForce().GetMagnitudeSquared() < 1e-8);
+        CPPUNIT_ASSERT(latDat->GetSite(15 + delta, 15, 15).GetForce().GetMagnitudeSquared() < 1e-8);
+        CPPUNIT_ASSERT(latDat->GetSite(15 - delta, 15, 15).GetForce().GetMagnitudeSquared() < 1e-8);
       }
-
 
       CPPUNIT_TEST_SUITE_REGISTRATION (CellCellInteractionWithGridTests);
     }

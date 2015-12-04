@@ -16,16 +16,16 @@ namespace hemelb
   {
     namespace parallel
     {
-      void SpreadForces::PostMessageLength(
-          NodeDistributions const& distributions, CellContainer const &owned)
+      void SpreadForces::PostMessageLength(NodeDistributions const& distributions,
+                                           CellContainer const &owned)
       {
         typedef NodeCharacterizer::Process2NodesMap::mapped_type NodeIndices;
-        auto countNodesToSend
-          = [this](int index, int, NodeIndices const & indices, CellContainer::value_type const&)
-        {
-          assert(sendNodeCount.GetSendBuffer().size() > index);
-          sendNodeCount.GetSendBuffer()[index] += indices.size();
-        };
+        auto countNodesToSend =
+            [this](int index, int, NodeIndices const & indices, CellContainer::value_type const&)
+            {
+              assert(sendNodeCount.GetSendBuffer().size() > index);
+              sendNodeCount.GetSendBuffer()[index] += indices.size();
+            };
 
         sendNodeCount.GetSendBuffer().resize(sendNodeCount.GetCommunicator().GetNeighborsCount());
         std::fill(sendNodeCount.GetSendBuffer().begin(), sendNodeCount.GetSendBuffer().end(), 0);
@@ -36,7 +36,6 @@ namespace hemelb
         sendNodeCount.send();
       }
 
-
       // Computes and caches forces
       LatticeEnergy SpreadForces::ComputeForces(CellContainer const &owned)
       {
@@ -44,29 +43,27 @@ namespace hemelb
         cellForces.clear();
         // compute forces for each
         LatticeEnergy energy(0);
-        for(auto const &cell: owned)
+        for (auto const &cell : owned)
         {
           energy += cell->Energy(cellForces[cell->GetTag()]);
         }
         return energy;
       }
 
-
-      void SpreadForces::PostForcesAndNodes(
-              NodeDistributions const &distributions, CellContainer const &owned)
+      void SpreadForces::PostForcesAndNodes(NodeDistributions const &distributions,
+                                            CellContainer const &owned)
       {
         sendPositions.SetSendCounts(sendNodeCount.GetSendBuffer());
         sendForces.SetSendCounts(sendNodeCount.GetSendBuffer());
         std::map<int, int> offsets;
-        for(auto const neighbor: sendPositions.GetCommunicator().GetNeighbors())
+        for (auto const neighbor : sendPositions.GetCommunicator().GetNeighbors())
         {
           offsets[neighbor] = 0;
         }
         typedef NodeCharacterizer::Process2NodesMap::mapped_type NodeIndices;
-        auto provisionSendBuffer
-          = [=](
-              int, int neighbor, NodeIndices const & indices,
-              CellContainer::value_type const &cell) mutable
+        auto provisionSendBuffer = [=](
+            int, int neighbor, NodeIndices const & indices,
+            CellContainer::value_type const &cell) mutable
         {
           auto const offset = offsets[neighbor];
           offsets[neighbor] += indices.size();
@@ -90,4 +87,4 @@ namespace hemelb
       }
     } // parallel
   } // redblood
-}  // hemelb
+} // hemelb

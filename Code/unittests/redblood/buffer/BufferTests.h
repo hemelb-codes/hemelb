@@ -426,7 +426,6 @@ namespace hemelb
           Cylinder cylinder;
       };
 
-
       CPPUNIT_TEST_SUITE_REGISTRATION (BufferTests);
     }
   }

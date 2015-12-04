@@ -72,7 +72,7 @@ namespace hemelb
           LatticeEnergy const deltaE(energy(newmesh) - firstE);
 
           double const tolerance(std::max(std::abs( (deltaE / epsilon) * 1e-4), 1e-8));
-          CPPUNIT_ASSERT_DOUBLES_EQUAL(-(deltaE / epsilon), forces[node].Dot(dir), tolerance);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(- (deltaE / epsilon), forces[node].Dot(dir), tolerance);
         }
 
         template<class ENERGY, class GRADIENT>
@@ -160,30 +160,27 @@ namespace hemelb
     class NodeCell : public hemelb::redblood::CellBase
     {
       public:
-        NodeCell(LatticePosition const&position, std::string const &templateName = "nope")
-          : NodeCell(std::vector<LatticePosition>{position}, templateName)
+        NodeCell(LatticePosition const&position, std::string const &templateName = "nope") :
+            NodeCell(std::vector<LatticePosition> { position }, templateName)
         {
         }
         template<class ITER>
-        NodeCell(ITER first, ITER last, std::string const &templateName = "nope")
-          : NodeCell(std::vector<LatticePosition>{first, last}, templateName)
+        NodeCell(ITER first, ITER last, std::string const &templateName = "nope") :
+            NodeCell(std::vector<LatticePosition> { first, last }, templateName)
         {
         }
-        NodeCell(
-            std::vector<LatticePosition> const &positions, std::string const &templateName = "nope")
-          : hemelb::redblood::CellBase(
-              positions,
-              hemelb::redblood::Mesh(
-                std::make_shared<hemelb::redblood::MeshData>(
-                  hemelb::redblood::MeshData{positions, {}}
-                ),
-                std::make_shared<hemelb::redblood::MeshTopology>()
-              ),
-              1e0, templateName
-            )
+        NodeCell(std::vector<LatticePosition> const &positions, std::string const &templateName =
+                     "nope") :
+                hemelb::redblood::CellBase(positions,
+                                           hemelb::redblood::Mesh(std::make_shared<
+                                                                      hemelb::redblood::MeshData>(hemelb::redblood::MeshData { positions,
+                                                                                                                               { } }),
+                                                                  std::make_shared<
+                                                                      hemelb::redblood::MeshTopology>()),
+                                           1e0,
+                                           templateName)
         {
         }
-
 
         LatticeEnergy operator()() const override
         {
@@ -195,7 +192,7 @@ namespace hemelb
         }
         std::unique_ptr<CellBase> cloneImpl() const override
         {
-          return std::unique_ptr<NodeCell>{new NodeCell(*this)};
+          return std::unique_ptr<NodeCell> { new NodeCell(*this) };
         }
     };
   }

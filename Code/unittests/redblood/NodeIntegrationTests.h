@@ -31,15 +31,14 @@ namespace hemelb
       class NodeIntegrationTests : public helpers::FolderTestFixture
       {
           CPPUNIT_TEST_SUITE (NodeIntegrationTests);
-          CPPUNIT_TEST (testNodeWall<hemelb::redblood::stencil::FourPoint>);
-          CPPUNIT_TEST (testNodeWall<hemelb::redblood::stencil::CosineApprox>);
-          CPPUNIT_TEST (testNodeWall<hemelb::redblood::stencil::ThreePoint>);
-          CPPUNIT_TEST (testNodeWall<hemelb::redblood::stencil::TwoPoint>);
-          CPPUNIT_TEST (testNodeNode<hemelb::redblood::stencil::FourPoint>);
-          CPPUNIT_TEST (testNodeNode<hemelb::redblood::stencil::CosineApprox>);
-          CPPUNIT_TEST (testNodeNode<hemelb::redblood::stencil::ThreePoint>);
-          CPPUNIT_TEST (testNodeNode<hemelb::redblood::stencil::TwoPoint>);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testNodeWall<hemelb::redblood::stencil::FourPoint> );
+          CPPUNIT_TEST (testNodeWall<hemelb::redblood::stencil::CosineApprox> );
+          CPPUNIT_TEST (testNodeWall<hemelb::redblood::stencil::ThreePoint> );
+          CPPUNIT_TEST (testNodeWall<hemelb::redblood::stencil::TwoPoint> );
+          CPPUNIT_TEST (testNodeNode<hemelb::redblood::stencil::FourPoint> );
+          CPPUNIT_TEST (testNodeNode<hemelb::redblood::stencil::CosineApprox> );
+          CPPUNIT_TEST (testNodeNode<hemelb::redblood::stencil::ThreePoint> );
+          CPPUNIT_TEST (testNodeNode<hemelb::redblood::stencil::TwoPoint> );CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp()
@@ -58,8 +57,9 @@ namespace hemelb
 
           //! Creates a simulation. Does not run it.
           template<class TRAITS>
-            std::shared_ptr<SimulationMaster<TRAITS>> simulationMaster(
-              size_t steps, Dimensionless cell, Dimensionless wall) const;
+          std::shared_ptr<SimulationMaster<TRAITS>> simulationMaster(size_t steps,
+                                                                     Dimensionless cell,
+                                                                     Dimensionless wall) const;
 
           //! Runs simulation with a single node
           template<class STENCIL>
@@ -69,7 +69,7 @@ namespace hemelb
           template<class STENCIL> void testNodeWall()
           {
             // no interaction because far from wall
-            auto const farFromWall = testNodeWall<STENCIL>(2e0, {7e0, 7e0, 16.1e0});
+            auto const farFromWall = testNodeWall<STENCIL>(2e0, { 7e0, 7e0, 16.1e0 });
             CPPUNIT_ASSERT_DOUBLES_EQUAL(7e0, farFromWall.x, 1e-8);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(7e0, farFromWall.y, 1e-8);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(16.1e0, farFromWall.z, 1e-8);
@@ -96,8 +96,9 @@ namespace hemelb
 
           //! Runs simulation with two nodes
           template<class STENCIL>
-          std::pair<LatticePosition, LatticePosition> testNodeNode(
-              Dimensionless intensity, LatticePosition const &n0, LatticePosition const & n1);
+          std::pair<LatticePosition, LatticePosition> testNodeNode(Dimensionless intensity,
+                                                                   LatticePosition const &n0,
+                                                                   LatticePosition const & n1);
 
           //! Checks that 2 nodes move away from one another
           template<class STENCIL> void testNodeNode()
@@ -131,8 +132,9 @@ namespace hemelb
             CPPUNIT_ASSERT_DOUBLES_EQUAL(center.x, withForce.second.x, 1e-8);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(center.y, withForce.second.y, 1e-8);
             CPPUNIT_ASSERT(center.z + z.z * 0.2 + 1e-4 < withForce.second.z);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(
-                center.z - withForce.second.z, withForce.first.z - center.z, 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(center.z - withForce.second.z,
+                                         withForce.first.z - center.z,
+                                         1e-8);
           }
 
         private:
@@ -141,73 +143,68 @@ namespace hemelb
           std::string const resource = "large_cylinder_rbc.xml";
       };
 
-
       template<class TRAITS>
-        std::shared_ptr<SimulationMaster<TRAITS>> NodeIntegrationTests::simulationMaster(
+      std::shared_ptr<SimulationMaster<TRAITS>> NodeIntegrationTests::simulationMaster(
           size_t steps, Dimensionless cell, Dimensionless wall) const
+      {
+        CopyResourceToTempdir(resource);
+        if (util::DoesDirectoryExist("results"))
         {
-          CopyResourceToTempdir(resource);
-          if(util::DoesDirectoryExist("results"))
-          {
-            system("rm -rf results");
-          }
-          DeleteXMLInput(resource, {"inlets", "inlet", "insertcell"});
-          DeleteXMLInput(resource, {"inlets", "inlet", "flowextension"});
-          DeleteXMLInput(resource, {"outlets", "outlet", "flowextension"});
-          DeleteXMLInput(resource, {"properties", "propertyoutput"});
-          ModifyXMLInput(resource, {"inlets", "inlet", "condition", "mean", "value"}, 0);
-          ModifyXMLInput(resource, {"simulation", "steps", "value"}, steps);
-          ModifyXMLInput(resource, {"redbloodcells", "cell2Cell", "intensity", "value"}, cell);
-          ModifyXMLInput(resource, {"redbloodcells", "cell2Cell", "cutoff", "value"}, 2);
-          ModifyXMLInput(resource, {"redbloodcells", "cell2Wall", "intensity", "value"}, wall);
-          ModifyXMLInput(resource, {"redbloodcells", "cell2Well", "cutoff", "value"}, 2);
-          auto options = std::make_shared<configuration::CommandLine>(argc, argv);
-          auto const master = std::make_shared<SimulationMaster<TRAITS>>(*options, Comms());
-          helpers::LatticeDataAccess(&master->GetLatticeData()).ZeroOutForces();
-          return master;
+          system("rm -rf results");
         }
+        DeleteXMLInput(resource, { "inlets", "inlet", "insertcell" });
+        DeleteXMLInput(resource, { "inlets", "inlet", "flowextension" });
+        DeleteXMLInput(resource, { "outlets", "outlet", "flowextension" });
+        DeleteXMLInput(resource, { "properties", "propertyoutput" });
+        ModifyXMLInput(resource, { "inlets", "inlet", "condition", "mean", "value" }, 0);
+        ModifyXMLInput(resource, { "simulation", "steps", "value" }, steps);
+        ModifyXMLInput(resource, { "redbloodcells", "cell2Cell", "intensity", "value" }, cell);
+        ModifyXMLInput(resource, { "redbloodcells", "cell2Cell", "cutoff", "value" }, 2);
+        ModifyXMLInput(resource, { "redbloodcells", "cell2Wall", "intensity", "value" }, wall);
+        ModifyXMLInput(resource, { "redbloodcells", "cell2Well", "cutoff", "value" }, 2);
+        auto options = std::make_shared<configuration::CommandLine>(argc, argv);
+        auto const master = std::make_shared<SimulationMaster<TRAITS>>(*options, Comms());
+        helpers::LatticeDataAccess(&master->GetLatticeData()).ZeroOutForces();
+        return master;
+      }
 
       template<class STENCIL>
-        LatticePosition NodeIntegrationTests::testNodeWall(
-            Dimensionless intensity, LatticePosition const & where)
-        {
-          typedef typename
-            Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type::ChangeStencil<STENCIL>::Type
-            Traits;
-          typedef hemelb::redblood::CellController<Traits> CellController;
+      LatticePosition NodeIntegrationTests::testNodeWall(Dimensionless intensity,
+                                                         LatticePosition const & where)
+      {
+        typedef typename Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type::ChangeStencil<STENCIL>::Type Traits;
+        typedef hemelb::redblood::CellController<Traits> CellController;
 
-          auto const master = simulationMaster<Traits>(3, 0, intensity);
-          auto controller = std::static_pointer_cast<CellController>(master->GetCellController());
-          controller->AddCell(std::make_shared<NodeCell>(where));
+        auto const master = simulationMaster<Traits>(3, 0, intensity);
+        auto controller = std::static_pointer_cast<CellController>(master->GetCellController());
+        controller->AddCell(std::make_shared<NodeCell>(where));
 
-          master->RegisterActor(*controller, 1);
-          master->RunSimulation();
-          master->Finalise();
-          return (*controller->GetCells().begin())->GetVertices().front();
-        }
+        master->RegisterActor(*controller, 1);
+        master->RunSimulation();
+        master->Finalise();
+        return (*controller->GetCells().begin())->GetVertices().front();
+      }
 
       template<class STENCIL>
-        std::pair<LatticePosition, LatticePosition>
-        NodeIntegrationTests::testNodeNode(
-            Dimensionless intensity, LatticePosition const & n0, LatticePosition const & n1)
-        {
-          typedef typename
-            Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type::ChangeStencil<STENCIL>::Type
-            Traits;
-          typedef hemelb::redblood::CellController<Traits> CellController;
+      std::pair<LatticePosition, LatticePosition> NodeIntegrationTests::testNodeNode(
+          Dimensionless intensity, LatticePosition const & n0, LatticePosition const & n1)
+      {
+        typedef typename Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type::ChangeStencil<STENCIL>::Type Traits;
+        typedef hemelb::redblood::CellController<Traits> CellController;
 
-          auto const master = simulationMaster<Traits>(3, intensity, 0);
-          auto controller = std::static_pointer_cast<CellController>(master->GetCellController());
-          auto const firstCell = std::make_shared<NodeCell>(n0);
-          auto const secondCell = std::make_shared<NodeCell>(n1);
-          controller->AddCell(firstCell);
-          controller->AddCell(secondCell);
+        auto const master = simulationMaster<Traits>(3, intensity, 0);
+        auto controller = std::static_pointer_cast<CellController>(master->GetCellController());
+        auto const firstCell = std::make_shared<NodeCell>(n0);
+        auto const secondCell = std::make_shared<NodeCell>(n1);
+        controller->AddCell(firstCell);
+        controller->AddCell(secondCell);
 
-          master->RegisterActor(*controller, 1);
-          master->RunSimulation();
-          master->Finalise();
-          return {firstCell->GetVertices().front(), secondCell->GetVertices().front()};
-        }
+        master->RegisterActor(*controller, 1);
+        master->RunSimulation();
+        master->Finalise();
+        return
+        { firstCell->GetVertices().front(), secondCell->GetVertices().front()};
+      }
 
       CPPUNIT_TEST_SUITE_REGISTRATION (NodeIntegrationTests);
     }

@@ -155,17 +155,16 @@ namespace hemelb
 
       for (auto &facet : data->templateMesh.GetFacets())
       {
-        edgeLengths.push_back((data->vertices[facet[0]] - data->vertices[facet[1]]).GetMagnitude());
-        edgeLengths.push_back((data->vertices[facet[1]] - data->vertices[facet[2]]).GetMagnitude());
-        edgeLengths.push_back((data->vertices[facet[2]] - data->vertices[facet[0]]).GetMagnitude());
+        edgeLengths.push_back( (data->vertices[facet[0]] - data->vertices[facet[1]]).GetMagnitude());
+        edgeLengths.push_back( (data->vertices[facet[1]] - data->vertices[facet[2]]).GetMagnitude());
+        edgeLengths.push_back( (data->vertices[facet[2]] - data->vertices[facet[0]]).GetMagnitude());
       }
 
       return std::accumulate(edgeLengths.begin(), edgeLengths.end(), 0.0) / edgeLengths.size();
     }
 
-    void writeVTKMesh(
-        std::string const &filename, std::shared_ptr<CellBase const> cell,
-        util::UnitConverter const &converter)
+    void writeVTKMesh(std::string const &filename, std::shared_ptr<CellBase const> cell,
+                      util::UnitConverter const &converter)
     {
       log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
                                                    filename.c_str());
@@ -173,9 +172,8 @@ namespace hemelb
       writeVTKMesh(file, cell, converter);
     }
 
-    void writeVTKMesh(
-        std::ostream &stream, std::shared_ptr<CellBase const> cell,
-        util::UnitConverter const &converter)
+    void writeVTKMesh(std::ostream &stream, std::shared_ptr<CellBase const> cell,
+                      util::UnitConverter const &converter)
     {
       writeVTKMesh(stream, cell->GetVertices(), cell->GetTemplateMesh().GetFacets(), converter);
     }

@@ -25,31 +25,30 @@ namespace hemelb
       class BendingTests : public CppUnit::TestFixture
       {
           CPPUNIT_TEST_SUITE (BendingTests);
-          CPPUNIT_TEST(testNoBendingNoNothing);
-          CPPUNIT_TEST(testEnergy);
-          CPPUNIT_TEST(testNumericalForces);
-          CPPUNIT_TEST(testConvexities);
-          CPPUNIT_TEST(testSwapFacets);
-          CPPUNIT_TEST(testRotateNodeInFacet);
-          CPPUNIT_TEST(testInflate);
-          CPPUNIT_TEST(testMoveNodes);
-          CPPUNIT_TEST(testStuff);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testNoBendingNoNothing);
+          CPPUNIT_TEST (testEnergy);
+          CPPUNIT_TEST (testNumericalForces);
+          CPPUNIT_TEST (testConvexities);
+          CPPUNIT_TEST (testSwapFacets);
+          CPPUNIT_TEST (testRotateNodeInFacet);
+          CPPUNIT_TEST (testInflate);
+          CPPUNIT_TEST (testMoveNodes);
+          CPPUNIT_TEST (testStuff);CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp()
           {
             using namespace hemelb::redblood;
-            vertices = MeshData::Vertices{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+            vertices = MeshData::Vertices { { 0, 0, 0 }, { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } };
             mesh.vertices = vertices;
-            mesh.facets = MeshData::Facets{{{0, 1, 2}}, {{1, 3, 2}}};
+            mesh.facets = MeshData::Facets { { { 0, 1, 2 } }, { { 1, 3, 2 } } };
             forces.resize(4, LatticeForceVector(0, 0, 0));
           }
 
           void testNoBendingNoNothing()
           {
             CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, energyAndForces(), 1e-10);
-            for(auto const force: forces)
+            for (auto const force : forces)
             {
               CPPUNIT_ASSERT_DOUBLES_EQUAL(force.x, 0e0, 1e-10);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(force.y, 0e0, 1e-10);
@@ -58,12 +57,12 @@ namespace hemelb
           }
           void testEnergy()
           {
-            for(auto const theta: {1e-2, 2e-2, 3e-2})
+            for (auto const theta : { 1e-2, 2e-2, 3e-2 })
             {
               std::fill(forces.begin(), forces.end(), 0e0);
               vertices.back() = bending(mesh.vertices.back(), theta);
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(0.5 * theta*theta * moduli, energy(), 1e-10);
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(0.5 * theta*theta * moduli, energy(), 1e-10);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(0.5 * theta * theta * moduli, energy(), 1e-10);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(0.5 * theta * theta * moduli, energy(), 1e-10);
             }
           }
 
@@ -74,8 +73,8 @@ namespace hemelb
             mesh.vertices.back() = bending(LatticePosition(1, 1, 0), theta);
             // Now go to flat geometry, check energy and forces
             vertices.back() = LatticePosition(1, 1, 0);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.5*moduli*theta*theta, energyAndForces(), 1e-10);
-            for(auto const &force: forces)
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.5 * moduli * theta * theta, energyAndForces(), 1e-10);
+            for (auto const &force : forces)
             {
               CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, force.x, 1e-8);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, force.y, 1e-8);
@@ -89,7 +88,7 @@ namespace hemelb
           }
           void testInflate()
           {
-            for(auto &vertex: vertices)
+            for (auto &vertex : vertices)
             {
               vertex = vertex * 1.5;
             }
@@ -106,11 +105,11 @@ namespace hemelb
               numericalForces();
             };
             // Explores all sorts of configurations with different concavities, etc
-            for(auto const theta0: {2e-1, -2e-1})
+            for (auto const theta0 : { 2e-1, -2e-1 })
             {
-              for(auto const theta: {1e-1, -1e-1, 3e-1, -3e-1})
+              for (auto const theta : { 1e-1, -1e-1, 3e-1, -3e-1 })
               {
-                if(std::abs(theta0 - theta) > 1e-8)
+                if (std::abs(theta0 - theta) > 1e-8)
                 {
                   with_angles(theta0, theta);
                 }
@@ -137,16 +136,26 @@ namespace hemelb
 
           void testMoveNodes()
           {
-            for(auto &vertex: vertices)
+            for (auto &vertex : vertices)
             {
-              for(int j(0); j < 6; ++j)
+              for (int j(0); j < 6; ++j)
               {
                 auto const epsilon = 1e-1;
-                LatticePosition const direction(
-                    j == 0 ? 1: (j == 1 ? -1: 0),
-                    j == 2 ? 1: (j == 3 ? -1: 0),
-                    j == 4 ? 1: (j == 5 ? -1: 0)
-                );
+                LatticePosition const direction(j == 0 ?
+                  1 :
+                  (j == 1 ?
+                    -1 :
+                    0),
+                                                j == 2 ?
+                                                  1 :
+                                                  (j == 3 ?
+                                                    -1 :
+                                                    0),
+                                                j == 4 ?
+                                                  1 :
+                                                  (j == 5 ?
+                                                    -1 :
+                                                    0));
                 auto const old = vertex;
                 vertex += direction * epsilon;
                 numericalForces();
@@ -158,14 +167,14 @@ namespace hemelb
           void numericalForces(LatticePosition const &direction, int node)
           {
             auto const theta0 = orientedAngle(Facet(mesh, 0), Facet(mesh, 1));
-            auto const theta = orientedAngle(
-                Facet(vertices, mesh.facets, 0), Facet(vertices, mesh.facets, 1));
+            auto const theta = orientedAngle(Facet(vertices, mesh.facets, 0),
+                                             Facet(vertices, mesh.facets, 1));
             auto const epsilon = 1e-4;
             std::fill(forces.begin(), forces.end(), 0e0);
             auto const oldPos = vertices[node];
 
             auto const e0 = energyAndForces();
-            if(std::abs(theta - theta0) < 1e-8)
+            if (std::abs(theta - theta0) < 1e-8)
             {
               CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, forces[node].Dot(direction), 1e-8);
               return;
@@ -173,20 +182,37 @@ namespace hemelb
 
             vertices[node] += direction * epsilon;
             auto const e1 = energy();
-            auto const tol= std::max(std::abs((e1 - e0)/epsilon) * 1e-2, 1e-5);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(-(e1 - e0)/epsilon, forces[node].Dot(direction), tol);
+            auto const tol = std::max(std::abs( (e1 - e0) / epsilon) * 1e-2, 1e-5);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(- (e1 - e0) / epsilon, forces[node].Dot(direction), tol);
             vertices[node] = oldPos;
-          };
+          }
+          ;
 
           void numericalForces()
           {
-            for(int j(0); j < 6; ++j)
+            for (int j(0); j < 6; ++j)
             {
-              LatticePosition const direction(
-                  j == 0 ? 1: (j == 1 ? -1: (j >= 6 ? random() - 0.5: 0)),
-                  j == 2 ? 1: (j == 3 ? -1: (j >= 6 ? random() - 0.5: 0)),
-                  j == 4 ? 1: (j == 5 ? -1: (j >= 6 ? random() - 0.5: 0))
-              );
+              LatticePosition const direction(j == 0 ?
+                1 :
+                (j == 1 ?
+                  -1 :
+                  (j >= 6 ?
+                    random() - 0.5 :
+                    0)),
+                                              j == 2 ?
+                                                1 :
+                                                (j == 3 ?
+                                                  -1 :
+                                                  (j >= 6 ?
+                                                    random() - 0.5 :
+                                                    0)),
+                                              j == 4 ?
+                                                1 :
+                                                (j == 5 ?
+                                                  -1 :
+                                                  (j >= 6 ?
+                                                    random() - 0.5 :
+                                                    0)));
               numericalForces(direction.GetNormalised(), 0);
               numericalForces(direction.GetNormalised(), 1);
               numericalForces(direction.GetNormalised(), 2);
@@ -220,7 +246,6 @@ namespace hemelb
           std::vector<LatticeForceVector> forces;
           LatticeForce const moduli = 1e0;
       };
-
 
       CPPUNIT_TEST_SUITE_REGISTRATION (BendingTests);
     }

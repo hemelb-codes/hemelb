@@ -43,8 +43,8 @@ namespace hemelb
         //! \param [in] scale: scales template by a given amount
         //!    The scale is added during internal operations. The template will still
         //!    refer to the same data in memory.
-        CellBase(MeshData::Vertices &&verticesIn, Mesh const &origMesh,
-                 LatticeDistance scale = 1e0, std::string const &templateName = "default");
+        CellBase(MeshData::Vertices &&verticesIn, Mesh const &origMesh, LatticeDistance scale = 1e0,
+                 std::string const &templateName = "default");
         //! \brief Initializes mesh from mesh data
         //! \param [in] verticesIn: deformable vertices that define the cell. These
         //!    values are *not* modified by the scale.
@@ -53,8 +53,9 @@ namespace hemelb
         //! \param [in] scale: scales template by a given amount
         //!    The scale is added during internal operations. The template will still
         //!    refer to the same data in memory.
-        CellBase(MeshData::Vertices const &verticesIn, Mesh const &origMesh,
-                 LatticeDistance scale = 1e0, std::string const &templateName = "default");
+        CellBase(MeshData::Vertices const &verticesIn, Mesh const &origMesh, LatticeDistance scale =
+                     1e0,
+                 std::string const &templateName = "default");
 
         //! \brief Initializes mesh from mesh data
         //! \param [in] mesh: deformable vertices that define the cell are copied
@@ -199,8 +200,8 @@ namespace hemelb
     //! Write cell-mesh to file in VTK XML format
     void writeVTKMesh(std::ostream &, std::shared_ptr<CellBase const>, util::UnitConverter const&);
     //! Write cell-mesh to file in VTK XML format
-    void writeVTKMesh(
-        std::string const &, std::shared_ptr<CellBase const>, util::UnitConverter const&);
+    void writeVTKMesh(std::string const &, std::shared_ptr<CellBase const>,
+                      util::UnitConverter const&);
 
     // Holds the data of CellBase
     // Although its own data members are public, it can only be accessed by CellBase and derived
@@ -236,8 +237,8 @@ namespace hemelb
         {
         }
         // Constructor that can copy the tag
-        CellData(
-            Mesh const &origMesh, boost::uuids::uuid const &uuid, std::string const &templateName) :
+        CellData(Mesh const &origMesh, boost::uuids::uuid const &uuid,
+                 std::string const &templateName) :
             templateMesh(origMesh), scale(1e0), tag(uuid), templateName(templateName)
         {
           assert(scale > 1e-12);

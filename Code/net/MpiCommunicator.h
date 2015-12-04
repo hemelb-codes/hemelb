@@ -35,18 +35,17 @@ namespace hemelb
         /**
          * Move Constructor
          */
-        MpiCommunicator(MpiCommunicator const & comm)
-          : commPtr(comm.commPtr)
+        MpiCommunicator(MpiCommunicator const & comm) :
+            commPtr(comm.commPtr)
         {
         }
         /**
          * Move Constructor
          */
-        MpiCommunicator(MpiCommunicator && comm)
-          : commPtr(std::move(comm.commPtr))
+        MpiCommunicator(MpiCommunicator && comm) :
+            commPtr(std::move(comm.commPtr))
         {
         }
-
 
         /**
          * Class has virtual methods so should have virtual d'tor.
@@ -148,7 +147,7 @@ namespace hemelb
         //! \brief Creates a graph communicator
         //! \param edges: [ [vertices connected to 0], [vertices connected to 1], ...]
         //! \param reorder: Whether nodes can be re-ordered
-        MpiCommunicator Graph(std::vector<std::vector<int>> edges, bool reorder=true) const;
+        MpiCommunicator Graph(std::vector<std::vector<int>> edges, bool reorder = true) const;
 
         //! \brief Returns graph neighberhood
         //! \details This communicator must have been created with graph

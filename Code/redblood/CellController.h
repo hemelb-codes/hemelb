@@ -22,7 +22,8 @@ namespace hemelb
     //! \brief Federates the cells together so we can apply ops simultaneously
     //! \tparam TRAITS holds type of kernel and stencil
     template<class TRAITS>
-    class CellController : public CellArmy<TRAITS>, public net::IteratedAction
+    class CellController : public CellArmy<TRAITS>,
+                           public net::IteratedAction
     {
       public:
         typedef TRAITS Traits;

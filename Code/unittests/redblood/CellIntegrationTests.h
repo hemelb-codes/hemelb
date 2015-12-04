@@ -31,8 +31,7 @@ namespace hemelb
           CPPUNIT_TEST_SUITE (CellIntegrationTests);
           CPPUNIT_TEST (testCellOutOfBounds);
           CPPUNIT_TEST (testIntegration);
-          CPPUNIT_TEST (testIntegrationWithoutCells);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testIntegrationWithoutCells);CPPUNIT_TEST_SUITE_END();
 
           typedef Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type Traits;
           typedef CellController<Traits> CellControll;

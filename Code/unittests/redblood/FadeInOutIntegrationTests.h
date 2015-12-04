@@ -38,14 +38,16 @@ namespace hemelb
             CopyResourceToTempdir("large_cylinder.gmy");
             CopyResourceToTempdir("red_blood_cell.txt");
 
-            ModifyXMLInput(
-                "large_cylinder_rbc.xml", {"simulation", "steps", "value"}, 22000);
-            ModifyXMLInput(
-                "large_cylinder_rbc.xml", {"redbloodcells", "controller", "stencil"}, "two");
-            ModifyXMLInput(
-                "large_cylinder_rbc.xml",
-                {"outlets", "outlet", "flowextension", "length", "value"},
-                40e-6);
+            ModifyXMLInput("large_cylinder_rbc.xml", { "simulation", "steps", "value" }, 22000);
+            ModifyXMLInput("large_cylinder_rbc.xml",
+                           { "redbloodcells", "controller", "stencil" },
+                           "two");
+            ModifyXMLInput("large_cylinder_rbc.xml", { "outlets",
+                                                       "outlet",
+                                                       "flowextension",
+                                                       "length",
+                                                       "value" },
+                           40e-6);
             argv[0] = "hemelb";
             argv[1] = "-in";
             argv[2] = "large_cylinder_rbc.xml";
@@ -61,7 +63,8 @@ namespace hemelb
           void testIntegration()
           {
             auto const & converter = master->GetUnitConverter();
-            auto const volumeFactor = std::pow(converter.ConvertToLatticeUnits("m", 1e0), -3)*1e12;
+            auto const volumeFactor = std::pow(converter.ConvertToLatticeUnits("m", 1e0), -3)
+                * 1e12;
             bool didDropCell = false;
             auto checkDidDropCell = [&didDropCell](const hemelb::redblood::CellContainer & cells)
             {
@@ -117,7 +120,6 @@ namespace hemelb
               ++iter;
             };
 
-
             CPPUNIT_ASSERT(master);
             auto controller = std::static_pointer_cast<CellControl>(master->GetCellController());
             CPPUNIT_ASSERT(controller);
@@ -127,23 +129,21 @@ namespace hemelb
             controller->AddCellChangeListener(checkDidDropCell);
 
             // keep those lambdas inline to avoid unused function warning when commented out.
-            controller->AddCellChangeListener(
-                []( const hemelb::redblood::CellContainer & cells)
-                {
-                  static int iter = -1;
-                  ++iter;
-                  if(cells.empty())
-                  {
-                    return;
-                  }
-                  auto cell = *cells.begin();
-                  auto const tag = cell->GetTag();
-                  auto const b = cell->GetBarycenter();
-                  auto const v = cell->GetVolume();
-                  auto const e = (*cell)();
-                  HEMELB_CAPTURE5(iter, tag, b, v, e);
-                }
-            );
+            controller->AddCellChangeListener([]( const hemelb::redblood::CellContainer & cells)
+            {
+              static int iter = -1;
+              ++iter;
+              if(cells.empty())
+              {
+                return;
+              }
+              auto cell = *cells.begin();
+              auto const tag = cell->GetTag();
+              auto const b = cell->GetBarycenter();
+              auto const v = cell->GetVolume();
+              auto const e = (*cell)();
+              HEMELB_CAPTURE5(iter, tag, b, v, e);
+            });
 
             // controller->AddCellChangeListener(
             //     [&converter](const hemelb::redblood::CellContainer &cells)
@@ -164,7 +164,6 @@ namespace hemelb
             //     }
             // );
 
-
             // run the simulation
             master->RunSimulation();
             master->Finalise();
@@ -183,8 +182,6 @@ namespace hemelb
           char const * argv[7];
 
       };
-
-
 
       CPPUNIT_TEST_SUITE_REGISTRATION (FadeInOutIntegrationTests);
     } // namespace redblood

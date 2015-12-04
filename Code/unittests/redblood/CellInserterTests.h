@@ -33,8 +33,7 @@ namespace hemelb
           CPPUNIT_TEST (testCellOutsideFlowExtension);
           CPPUNIT_TEST (testPeriodicInsertion);
           CPPUNIT_TEST (testTranslation);
-          CPPUNIT_TEST (testSpatialOffset);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testSpatialOffset);CPPUNIT_TEST_SUITE_END();
 
         public:
 
@@ -105,8 +104,8 @@ namespace hemelb
             {
               // This function is called by inserter with a new cell
               // It is meant to actually do the job of adding cells to the simulation
-              ++num_calls;
-            };
+                ++num_calls;
+              };
             auto const dt = converter->ConvertTimeToPhysicalUnits(1e0);
             auto const N = static_cast<int>(std::floor(offset / dt));
             for (int i(0); i < N; ++i)
@@ -138,16 +137,17 @@ namespace hemelb
 
           void testTranslation()
           {
-            auto const identity = rotationMatrix(LatticePosition(0, 0, 1), LatticePosition(0, 0, 1));
-            RBCInserterWithPerturbation inserter
-            (
-              []() { return true; }, cells["joe"]->clone(),
-              identity, 0e0, 0e0,
-              LatticePosition(2, 0, 0), LatticePosition(0, 4, 0)
-            );
+            auto const identity = rotationMatrix(LatticePosition(0, 0, 1),
+                                                 LatticePosition(0, 0, 1));
+            RBCInserterWithPerturbation inserter([]()
+            { return true;},
+                                                 cells["joe"]->clone(), identity, 0e0, 0e0, LatticePosition(2,
+                                                                                                            0,
+                                                                                                            0),
+                                                 LatticePosition(0, 4, 0));
 
             auto const barycenter = cells["joe"]->GetBarycenter();
-            for(size_t i(0); i < 500; ++i)
+            for (size_t i(0); i < 500; ++i)
             {
               auto const cell = inserter.drop();
               auto const n = cell->GetBarycenter();
@@ -160,8 +160,12 @@ namespace hemelb
           void testSpatialOffset()
           {
             auto doc = getDocument(1e0, 1);
-            helpers::ModifyXMLInput(doc, {"inlets", "inlet", "insertcell", "offset", "value"}, 0.0);
-            helpers::ModifyXMLInput(doc, {"inlets", "inlet", "insertcell", "every", "value"}, 0.4);
+            helpers::ModifyXMLInput(doc,
+                                    { "inlets", "inlet", "insertcell", "offset", "value" },
+                                    0.0);
+            helpers::ModifyXMLInput(doc,
+                                    { "inlets", "inlet", "insertcell", "every", "value" },
+                                    0.4);
             *cells["joe"] *= 0.1e0;
             CellContainer::value_type current_cell;
             auto addCell = [&current_cell](CellContainer::value_type cell)
@@ -169,36 +173,44 @@ namespace hemelb
               current_cell = cell;
             };
             auto const inserter = readRBCInserters(doc.FirstChildElement("hemelbsettings"),
-                                                   *converter, cells);
+                                                   *converter,
+                                                   cells);
             CPPUNIT_ASSERT(inserter);
             inserter(addCell);
             CPPUNIT_ASSERT(current_cell);
             auto const cell0 = current_cell;
 
-            helpers::ModifyXMLInput(doc, {"inlets", "inlet", "insertcell", "x", "units"}, "m");
-            helpers::ModifyXMLInput(doc, {"inlets", "inlet", "insertcell", "x", "value"}, 0.1);
-            helpers::ModifyXMLInput(doc, {"inlets", "inlet", "insertcell", "y", "units"}, "m");
-            helpers::ModifyXMLInput(doc, {"inlets", "inlet", "insertcell", "y", "value"}, 0.1);
+            helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "x", "units" }, "m");
+            helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "x", "value" }, 0.1);
+            helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "y", "units" }, "m");
+            helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "y", "value" }, 0.1);
             auto const insertTranslated = readRBCInserters(doc.FirstChildElement("hemelbsettings"),
-                                                   *converter, cells);
+                                                           *converter,
+                                                           cells);
             CPPUNIT_ASSERT(insertTranslated);
             insertTranslated(addCell);
             CPPUNIT_ASSERT(current_cell);
             auto const trans = cell0->GetBarycenter() - current_cell->GetBarycenter();
             CPPUNIT_ASSERT_DOUBLES_EQUAL(0, trans.Dot(LatticePosition(0, 1, 1)), 1e-8);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.1/0.6*0.1/0.6*2e0, trans.GetMagnitudeSquared(), 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.1 / 0.6 * 0.1 / 0.6 * 2e0,
+                                         trans.GetMagnitudeSquared(),
+                                         1e-8);
 
-            helpers::ModifyXMLInput(doc, {"inlets", "inlet", "insertcell", "z", "units"}, "m");
-            helpers::ModifyXMLInput(doc, {"inlets", "inlet", "insertcell", "z", "value"}, 0.1);
+            helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "z", "units" }, "m");
+            helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "z", "value" }, 0.1);
             auto const insertWithZ = readRBCInserters(doc.FirstChildElement("hemelbsettings"),
-                                                   *converter, cells);
+                                                      *converter,
+                                                      cells);
             CPPUNIT_ASSERT(insertWithZ);
             insertWithZ(addCell);
             CPPUNIT_ASSERT(current_cell);
             auto const transZ = cell0->GetBarycenter() - current_cell->GetBarycenter();
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(
-                0.1/0.6*std::sqrt(2), transZ.Dot(LatticePosition(0, 1, 1)), 1e-8);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.1/0.6*0.1/0.6*3e0, transZ.GetMagnitudeSquared(), 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.1 / 0.6 * std::sqrt(2),
+                                         transZ.Dot(LatticePosition(0, 1, 1)),
+                                         1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.1 / 0.6 * 0.1 / 0.6 * 3e0,
+                                         transZ.GetMagnitudeSquared(),
+                                         1e-8);
           }
 
         private:
@@ -206,7 +218,6 @@ namespace hemelb
           LatticeTime every, offset;
           TemplateCellContainer cells;
       };
-
 
       CPPUNIT_TEST_SUITE_REGISTRATION (CellInserterTests);
     } // namespace: redblood

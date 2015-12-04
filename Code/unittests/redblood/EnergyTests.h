@@ -67,8 +67,8 @@ namespace hemelb
             // Now modify mesh and check "energy" is square of volume diff
             mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
             LatticeEnergy const actual1(volumeEnergy(mesh.vertices,
-                                                      original,
-                                                      2.0 * volume(original)));
+                                                     original,
+                                                     2.0 * volume(original)));
 
             LatticeEnergy const deltaV(volume(mesh) - volume(original));
             CPPUNIT_ASSERT(helpers::is_zero(actual1 - deltaV * deltaV));
@@ -85,8 +85,8 @@ namespace hemelb
             // Now modify mesh and check "energy" is square of volume diff
             mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
             LatticeEnergy const actual1(surfaceEnergy(mesh.vertices,
-                                                       original,
-                                                       2.0 * area(original)));
+                                                      original,
+                                                      2.0 * area(original)));
 
             LatticeEnergy const deltaS(area(mesh) - area(original));
             CPPUNIT_ASSERT(helpers::is_zero(actual1 - deltaS * deltaS));

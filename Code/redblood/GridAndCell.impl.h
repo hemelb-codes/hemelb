@@ -15,9 +15,9 @@ namespace details
   template<class FUNCTOR, class STENCIL>
   void spreadForce2Grid(std::vector<LatticePosition> const &positions, FUNCTOR functor)
   {
-    for (auto const item: util::enumerate(positions))
+    for (auto const item : util::enumerate(positions))
     {
-      InterpolationIterator<STENCIL> spreader{item.value};
+      InterpolationIterator<STENCIL> spreader { item.value };
 
       for (; spreader; ++spreader)
       {
@@ -35,7 +35,6 @@ namespace details
     spreadForce2Grid<FUNCTOR, STENCIL>(cell->GetVertices(), functor);
   }
 
-
   class SpreadForces
   {
     public:
@@ -51,10 +50,10 @@ namespace details
 
         if (latticeData.GetContiguousSiteId(site, procid, siteid))
         {
-          if(procid == latticeData.GetCommunicator().Rank())
+          if (procid == latticeData.GetCommunicator().Rank())
           {
             auto siteOb = latticeData.GetSite(site);
-            siteOb.AddToForce(*(i_force + vertex) * weight);
+            siteOb.AddToForce(* (i_force + vertex) * weight);
           }
         }
       }
@@ -63,5 +62,5 @@ namespace details
       geometry::LatticeData &latticeData;
       std::vector<LatticeForceVector>::const_iterator const i_force;
   };
-  
+
 } // namespace details::anonymous

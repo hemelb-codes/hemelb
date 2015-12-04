@@ -23,7 +23,6 @@
 #include "net/INeighborAllToAll.h"
 #include "net/INeighborAllToAllV.h"
 
-
 namespace hemelb
 {
   namespace redblood
@@ -42,8 +41,8 @@ namespace hemelb
           //! Container holding cells lent by other processes
           typedef CellParallelization::LentCells LentCells;
 
-          SpreadForces(net::MpiCommunicator const &graphComm)
-            : sendNodeCount(graphComm), sendPositions(graphComm), sendForces(graphComm)
+          SpreadForces(net::MpiCommunicator const &graphComm) :
+              sendNodeCount(graphComm), sendPositions(graphComm), sendForces(graphComm)
           {
           }
 
@@ -51,8 +50,8 @@ namespace hemelb
           //| \note This function must be called before PostForcesAndNode
           //! \param[in] distributions: Node distributions of the cells owned by this process
           //! \param[in] owned: Cells currently owned by this process
-          void PostMessageLength(
-              NodeDistributions const& distributions, CellContainer const &owned);
+          void PostMessageLength(NodeDistributions const& distributions,
+                                 CellContainer const &owned);
           //! Computes and caches forces
           //! \note This function must be called prior to PostForcesAndNodes and SpreadLocal. It
           //! can be called before or after PostMessageLength.
@@ -61,13 +60,13 @@ namespace hemelb
           //! \brief Post non-local forces
           //! \param[in] distributions tells us for each proc the list of nodes it requires
           //! \param[in] cells a container of cells owned and managed by this process
-          void PostForcesAndNodes(
-              NodeDistributions const &distributions, CellContainer const &owned);
+          void PostForcesAndNodes(NodeDistributions const &distributions,
+                                  CellContainer const &owned);
           //! \brief Spreads local forces
           //! \tparam TRAITS defines TRAITS::Stencil needed to actually do the spreading.
           template<class TRAITS = Traits<>>
-          void SpreadLocalForces(
-              geometry::LatticeData & latticeData, CellContainer const &owned) const;
+          void SpreadLocalForces(geometry::LatticeData & latticeData,
+                                 CellContainer const &owned) const;
           //! \brief Receive and spread forces from other procs
           template<class TRAITS = Traits<>>
           void SpreadNonLocalForces(geometry::LatticeData & latticeData);
@@ -84,24 +83,24 @@ namespace hemelb
 
           //! Helper function to iterate over cells that do need sending
           template<class FUNCTOR>
-            void IterateOverMessageCells(
-              NodeDistributions const& distributions, CellContainer const &owned, FUNCTOR functor);
+          void IterateOverMessageCells(NodeDistributions const& distributions,
+                                       CellContainer const &owned, FUNCTOR functor);
       };
 
       template<class FUNCTOR>
-      void SpreadForces::IterateOverMessageCells(
-        NodeDistributions const& distributions, CellContainer const &owned, FUNCTOR functor)
+      void SpreadForces::IterateOverMessageCells(NodeDistributions const& distributions,
+                                                 CellContainer const &owned, FUNCTOR functor)
       {
         auto const neighbors = sendNodeCount.GetCommunicator().GetNeighbors();
         // Count the number of vertices and cells
-        for(auto const & cell: owned)
+        for (auto const & cell : owned)
         {
           assert(distributions.count(cell->GetTag()) == 1);
           auto const dist = distributions.find(cell->GetTag())->second;
-          for(auto const neighbor: util::enumerate(neighbors))
+          for (auto const neighbor : util::enumerate(neighbors))
           {
             auto const nVertices = dist.CountNodes(neighbor.value);
-            if(nVertices > 0)
+            if (nVertices > 0)
             {
               functor(neighbor.index, neighbor.value, dist[neighbor.value], cell);
             }
@@ -110,17 +109,17 @@ namespace hemelb
       }
 
       template<class TRAITS>
-      void SpreadForces::SpreadLocalForces(
-          geometry::LatticeData & latticeData, CellContainer const &owned) const
+      void SpreadForces::SpreadLocalForces(geometry::LatticeData & latticeData,
+                                           CellContainer const &owned) const
       {
         namespace hrd = hemelb::redblood::details;
         typedef typename TRAITS::Stencil Stencil;
-        for(auto const cell: owned)
+        for (auto const cell : owned)
         {
           assert(cellForces.count(cell->GetTag()) == 1);
           auto const& forces = cellForces.find(cell->GetTag())->second;
-          hrd::spreadForce2Grid<hrd::SpreadForces, Stencil>(
-              cell, hrd::SpreadForces(forces, latticeData));
+          hrd::spreadForce2Grid<hrd::SpreadForces, Stencil>(cell,
+                                                            hrd::SpreadForces(forces, latticeData));
         }
       }
 
@@ -133,10 +132,9 @@ namespace hemelb
         sendPositions.receive();
         sendForces.receive();
         assert(sendPositions.GetReceiveBuffer().size() == sendForces.GetReceiveBuffer().size());
-        hrd::spreadForce2Grid<hrd::SpreadForces, Stencil>(
-            sendPositions.GetReceiveBuffer(),
-            hrd::SpreadForces(sendForces.GetReceiveBuffer(), latticeData)
-        );
+        hrd::spreadForce2Grid<hrd::SpreadForces, Stencil>(sendPositions.GetReceiveBuffer(),
+                                                          hrd::SpreadForces(sendForces.GetReceiveBuffer(),
+                                                                            latticeData));
       }
     } /* parallel */
   } /* redblood */

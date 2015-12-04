@@ -23,9 +23,9 @@ namespace hemelb
       //! \brief gathers mid-domain and egde positions from all procs
       //! \details If there are insufficient number of edges, mid-domains are used instead.
       //! erase removes the components from the first process.
-      std::vector<LatticePosition> GatherSpecialPositions(
-          geometry::LatticeData const & latDat,
-          size_t mid, size_t edges, net::MpiCommunicator const &c)
+      std::vector<LatticePosition> GatherSpecialPositions(geometry::LatticeData const & latDat,
+                                                          size_t mid, size_t edges,
+                                                          net::MpiCommunicator const &c)
       {
         std::random_device rd;
         std::mt19937 g(rd());
@@ -38,28 +38,26 @@ namespace hemelb
         std::shuffle(shuf.begin(), shuf.end(), g);
         mid += std::max(0, static_cast<int>(edges) - nEdges);
         edges = std::min(edges, static_cast<size_t>(nEdges));
-        for(size_t i(0); i < mid; ++i)
+        for (size_t i(0); i < mid; ++i)
         {
           auto const site = latDat.GetSite(shuf[i]);
-          positions[c.Rank() * (mid +  edges) + i] = site.GetGlobalSiteCoords();
+          positions[c.Rank() * (mid + edges) + i] = site.GetGlobalSiteCoords();
         }
         shuf.resize(nEdges);
         std::iota(shuf.begin(), shuf.end(), 0);
         std::shuffle(shuf.begin(), shuf.end(), g);
-        for(size_t i(0); i < edges; ++i)
+        for (size_t i(0); i < edges; ++i)
         {
           auto const site = latDat.GetSite(nMids + shuf[i]);
-          positions[c.Rank() * (mid +  edges) + i + mid] = site.GetGlobalSiteCoords();
+          positions[c.Rank() * (mid + edges) + i + mid] = site.GetGlobalSiteCoords();
         }
 
         auto const sendType = net::MpiDataType<LatticePosition>();
-        HEMELB_MPI_CALL(
-            MPI_Allgather,
-            (MPI_IN_PLACE, mid + edges, sendType, positions.data(), mid + edges, sendType, c)
-        );
+        HEMELB_MPI_CALL(MPI_Allgather,
+                        (MPI_IN_PLACE, mid + edges, sendType, positions.data(), mid + edges, sendType, c));
 
         // Erase contribution from first proc (acting as serial oracle)
-        for(size_t i(0); i < positions.size() - mid - edges; ++i)
+        for (size_t i(0); i < positions.size() - mid - edges; ++i)
         {
           positions[i] = positions[i + mid + edges];
         }
@@ -87,22 +85,20 @@ namespace hemelb
         public:
           LatticeForce force;
 
-          DummyCell(
-              LatticePosition const&position, LatticeForce f = 0e0,
-              std::string const &templateName = "nope")
-            : DummyCell(std::vector<LatticePosition>{position}, f, templateName)
+          DummyCell(LatticePosition const&position, LatticeForce f = 0e0,
+                    std::string const &templateName = "nope") :
+              DummyCell(std::vector<LatticePosition> { position }, f, templateName)
           {
           }
-          DummyCell(
-              std::vector<LatticePosition> const &positions, LatticeForce f = 0e0,
-              std::string const &templateName = "nope")
-            : NodeCell(positions, templateName), force(f)
+          DummyCell(std::vector<LatticePosition> const &positions, LatticeForce f = 0e0,
+                    std::string const &templateName = "nope") :
+              NodeCell(positions, templateName), force(f)
           {
           }
           template<class ITER>
-          DummyCell(ITER first, ITER last,
-              LatticeForce f = 0e0, std::string const &templateName = "nope")
-            : NodeCell(first, last, templateName), force(f)
+          DummyCell(ITER first, ITER last, LatticeForce f = 0e0, std::string const &templateName =
+                        "nope") :
+              NodeCell(first, last, templateName), force(f)
           {
           }
 
@@ -114,7 +110,7 @@ namespace hemelb
           }
           std::unique_ptr<CellBase> cloneImpl() const override
           {
-            return std::unique_ptr<DummyCell>{new DummyCell(*this)};
+            return std::unique_ptr<DummyCell> { new DummyCell(*this) };
           }
       };
 
@@ -126,29 +122,30 @@ namespace hemelb
         using hemelb::redblood::CellContainer;
         auto const positions = GatherSpecialPositions(latDat, mid * nCells, edges * nCells, c);
         std::vector<CellContainer::value_type> cells;
-        for(auto i_first = positions.begin(); i_first != positions.end(); i_first += mid + edges)
+        for (auto i_first = positions.begin(); i_first != positions.end(); i_first += mid + edges)
         {
-          cells.push_back(std::make_shared<DummyCell>(
-                std::vector<LatticePosition>{i_first, i_first + mid + edges}, 1e0));
+          cells.push_back(std::make_shared<DummyCell>(std::vector<LatticePosition> { i_first,
+                                                                                     i_first + mid
+                                                                                         + edges },
+                                                      1e0));
         }
         return cells;
       }
 
-
       net::MpiCommunicator CreateGraphComm(net::MpiCommunicator const &comm)
       {
-        if(comm.Size() == 1)
+        if (comm.Size() == 1)
         {
         }
         // setups a graph communicator that in-practice is all-to-all
         // Simpler than setting up something realistic
         std::vector<std::vector<int>> vertices;
-        for(size_t i(0); i < comm.Size(); ++i)
+        for (size_t i(0); i < comm.Size(); ++i)
         {
           vertices.push_back(std::vector<int>());
-          for(size_t j(0); j < comm.Size(); ++j)
+          for (size_t j(0); j < comm.Size(); ++j)
           {
-            if(j != i)
+            if (j != i)
             {
               vertices[i].push_back(j);
             }

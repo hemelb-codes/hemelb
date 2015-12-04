@@ -33,19 +33,18 @@ namespace hemelb
       class MPIIntegrateVelocitiesTests : public helpers::FolderTestFixture
       {
           CPPUNIT_TEST_SUITE (MPIIntegrateVelocitiesTests);
-          CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::FourPoint>);
-          CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::FourPoint>);
-          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::FourPoint>);
-          CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::ThreePoint>);
-          CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::ThreePoint>);
-          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::ThreePoint>);
-          CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::CosineApprox>);
-          CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::CosineApprox>);
-          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::CosineApprox>);
-          CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::TwoPoint>);
-          CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::TwoPoint>);
-          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::TwoPoint>);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::FourPoint> );
+          CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::FourPoint> );
+          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::FourPoint> );
+          CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::ThreePoint> );
+          CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::ThreePoint> );
+          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::ThreePoint> );
+          CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::CosineApprox> );
+          CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::CosineApprox> );
+          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::CosineApprox> );
+          CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::TwoPoint> );
+          CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::TwoPoint> );
+          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::TwoPoint> );CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp();
@@ -68,21 +67,21 @@ namespace hemelb
 
           //! Meta-function to create simulation type
           template<class STENCIL>
-            struct MasterSim
-            {
+          struct MasterSim
+          {
               typedef ::hemelb::Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type LBTraits;
               typedef typename LBTraits::ChangeStencil<STENCIL>::Type Traits;
               typedef OpenedSimulationMaster<Traits> Type;
-            };
+          };
 
           //! Creates a master simulation
           template<class STENCIL>
-            std::shared_ptr<typename MasterSim<STENCIL>::Type> CreateMasterSim(
-                net::MpiCommunicator const &comm) const
-            {
-              typedef typename MasterSim<STENCIL>::Type MasterSim;
-              return std::make_shared<MasterSim>(*options, comm);
-            }
+          std::shared_ptr<typename MasterSim<STENCIL>::Type> CreateMasterSim(
+              net::MpiCommunicator const &comm) const
+          {
+            typedef typename MasterSim<STENCIL>::Type MasterSim;
+            return std::make_shared<MasterSim>(*options, comm);
+          }
 
           template<class STENCIL> void Check(size_t mid, size_t edges, size_t nCells);
       };
@@ -93,19 +92,27 @@ namespace hemelb
         FolderTestFixture::setUp();
 
         // Have everything ready to creates simulations
-        if(net::MpiCommunicator::World().Rank() == 0)
+        if (net::MpiCommunicator::World().Rank() == 0)
         {
           CopyResourceToTempdir("red_blood_cell.txt");
           TiXmlDocument doc(resources::Resource("large_cylinder.xml").Path());
           CopyResourceToTempdir("large_cylinder.xml");
-          ModifyXMLInput("large_cylinder.xml", {"simulation", "steps", "value"}, 2);
+          ModifyXMLInput("large_cylinder.xml", { "simulation", "steps", "value" }, 2);
           CopyResourceToTempdir("large_cylinder.gmy");
         }
         HEMELB_MPI_CALL(MPI_Barrier, (net::MpiCommunicator::World()));
-        auto const result = Comms().Rank() == 0 ? "root_result": "others";
-        options = std::make_shared<CommandLine>(
-          CommandLine{"hemelb", "-in", "large_cylinder.xml",
-            "-i", "1", "-ss", "1111", "-out", result});
+        auto const result = Comms().Rank() == 0 ?
+          "root_result" :
+          "others";
+        options = std::make_shared<CommandLine>(CommandLine { "hemelb",
+                                                              "-in",
+                                                              "large_cylinder.xml",
+                                                              "-i",
+                                                              "1",
+                                                              "-ss",
+                                                              "1111",
+                                                              "-out",
+                                                              result });
       }
 
       template<class STENCIL>
@@ -122,7 +129,7 @@ namespace hemelb
         helpers::ZeroOutForces(latDat);
 
         // Setup same distribution for all instances
-        for(int i=0; i < Traits::Lattice::NUMVECTORS; ++i)
+        for (int i = 0; i < Traits::Lattice::NUMVECTORS; ++i)
         {
           auto func = [i](LatticePosition const &x)
           {
@@ -135,15 +142,17 @@ namespace hemelb
         // Figure out positions to use for cell nodes
         auto const cells = CreateCellsFromSpecialPositions(latDat, mid, edges, world, nCells);
         auto const checkMoves = cells[0]->GetVertices()[0];
-        auto owned = split.Size() != 1 ?
-          CellContainer{
-            cells.begin() + split.Rank() * nCells, cells.begin() + (1 + split.Rank()) * nCells}:
-          CellContainer{cells.begin(), cells.end()};
+        auto owned =
+            split.Size() != 1 ?
+              CellContainer { cells.begin() + split.Rank() * nCells, cells.begin()
+                                  + (1 + split.Rank()) * nCells } :
+              CellContainer { cells.begin(), cells.end() };
         auto const distributions = hemelb::redblood::parallel::nodeDistributions(latDat, owned);
 
         // Goes through "ExchangeCells" to figure out who owns/lends what.
         // Ownership is pre-determined here: first nCells got to 0, second nCells to 2, etc...
-        TemplateCellContainer const templates = {{cells[0]->GetTemplateName(), cells[0]->clone()}};
+        TemplateCellContainer const templates =
+            { { cells[0]->GetTemplateName(), cells[0]->clone() } };
         auto ownership = [&cells, nCells](CellContainer::const_reference cell)
         {
           size_t i(0);
@@ -171,20 +180,21 @@ namespace hemelb
         integrator.PostVelocities<Traits>(latDat, lentCells);
         integrator.UpdatePositionsNonLocal(distributions, owned);
 
-        if(world.Rank() == 0)
+        if (world.Rank() == 0)
         {
-          CPPUNIT_ASSERT((checkMoves - cells[0]->GetVertices()[0]).GetMagnitude() > 1e-8);
+          CPPUNIT_ASSERT( (checkMoves - cells[0]->GetVertices()[0]).GetMagnitude() > 1e-8);
         }
 
-        for(auto const &cell: cells)
+        for (auto const &cell : cells)
         {
           typedef std::vector<LatticePosition> Positions;
           Positions positions = world.Rank() == 0 ?
-            cell->GetVertices(): Positions(cell->GetNumberOfNodes(), 0);
+            cell->GetVertices() :
+            Positions(cell->GetNumberOfNodes(), 0);
           world.Broadcast(positions, 0);
-          if(world.Rank() != 0 and owned.find(cell) != owned.end())
+          if (world.Rank() != 0 and owned.find(cell) != owned.end())
           {
-            for(auto const item: util::zip(cell->GetVertices(), positions))
+            for (auto const item : util::zip(cell->GetVertices(), positions))
             {
               CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<1>(item).x, std::get<0>(item).x, 1e-8);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<1>(item).y, std::get<0>(item).y, 1e-8);

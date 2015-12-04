@@ -74,9 +74,8 @@ namespace hemelb
             CellBase(std::move(verticesIn), origMesh, scale, templateName)
         {
         }
-        Cell(MeshData::Vertices const &verticesIn, Mesh const &origMesh, LatticeDistance scale =
-                 1e0,
-             std::string const & templateName = "default") :
+        Cell(MeshData::Vertices const &verticesIn, Mesh const &origMesh,
+             LatticeDistance scale = 1e0, std::string const & templateName = "default") :
             CellBase(verticesIn, origMesh, scale, templateName)
         {
         }
@@ -103,7 +102,8 @@ namespace hemelb
 #       endif
         //! Copy constructor
         //! Copy refers to the same template mesh
-        Cell(Cell const &cell) : CellBase(cell), moduli(cell.moduli)
+        Cell(Cell const &cell) :
+            CellBase(cell), moduli(cell.moduli)
         {
         }
 

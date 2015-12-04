@@ -165,7 +165,7 @@ namespace hemelb
               LatticePosition const conv = converter.ConvertPositionToLatticeUnits(pos);
               return contains(flow, conv);
             };
-            auto const l= 0.1/std::sqrt(2);
+            auto const l = 0.1 / std::sqrt(2);
             CPPUNIT_ASSERT(isInFlow(0.1, 0.25, 0.35));
             CPPUNIT_ASSERT(isInFlow(0.1, 0.2 + 0.001, 0.3 + 0.001));
             CPPUNIT_ASSERT(isInFlow(0.1, 0.2 + l - 0.001, 0.3 + l - 0.001));

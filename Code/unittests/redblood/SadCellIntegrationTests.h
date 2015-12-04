@@ -38,16 +38,22 @@ namespace hemelb
             CopyResourceToTempdir("large_cylinder.gmy");
             CopyResourceToTempdir("rbc_ico_1280.msh");
 
-            ModifyXMLInput(
-                "large_cylinder_rbc.xml", {"simulation", "steps", "value"}, 10000);
-            ModifyXMLInput(
-                "large_cylinder_rbc.xml", {"redbloodcells", "cells", "cell", "shape", "mesh_path"},
-                "rbc_ico_1280.msh");
-            ModifyXMLInput(
-                "large_cylinder_rbc.xml", {"inlets", "inlet", "condition", "mean", "value"}, 0);
-            DeleteXMLInput("large_cylinder_rbc.xml", {"redbloodcells", "cells"});
-            DeleteXMLInput("large_cylinder_rbc.xml", {"inlets", "inlet", "flowextension"});
-            DeleteXMLInput("large_cylinder_rbc.xml", {"outlets", "outlet", "flowextension"});
+            ModifyXMLInput("large_cylinder_rbc.xml", { "simulation", "steps", "value" }, 10000);
+            ModifyXMLInput("large_cylinder_rbc.xml", { "redbloodcells",
+                                                       "cells",
+                                                       "cell",
+                                                       "shape",
+                                                       "mesh_path" },
+                           "rbc_ico_1280.msh");
+            ModifyXMLInput("large_cylinder_rbc.xml", { "inlets",
+                                                       "inlet",
+                                                       "condition",
+                                                       "mean",
+                                                       "value" },
+                           0);
+            DeleteXMLInput("large_cylinder_rbc.xml", { "redbloodcells", "cells" });
+            DeleteXMLInput("large_cylinder_rbc.xml", { "inlets", "inlet", "flowextension" });
+            DeleteXMLInput("large_cylinder_rbc.xml", { "outlets", "outlet", "flowextension" });
 
             argv[0] = "hemelb";
             argv[1] = "-in";
@@ -73,13 +79,11 @@ namespace hemelb
             cell->SetScale(scale);
             *cell *= scale;
             sadcell->SetScale(scale);
-            *sadcell *= 1e0/converter.GetVoxelSize();
-            *sadcell +=
-              converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
-              - sadcell->GetBarycenter();
-            *cell +=
-              converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
-              - cell->GetBarycenter();
+            *sadcell *= 1e0 / converter.GetVoxelSize();
+            *sadcell += converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
+                - sadcell->GetBarycenter();
+            *cell += converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
+                - cell->GetBarycenter();
             writeVTKMesh("/tmp/ideal.vtp", cell, converter);
             writeVTKMesh("/tmp/deformed.vtp", sadcell, converter);
             sadcell->moduli.bending = 0.0000375;
@@ -91,13 +95,11 @@ namespace hemelb
             auto controller = std::static_pointer_cast<CellControl>(master->GetCellController());
             controller->AddCell(sadcell);
             std::vector<PhysicalEnergy> energies;
-            energies.push_back((*sadcell)());
-            controller->AddCellChangeListener(
-                [&energies](CellContainer const &cells)
-                {
-                   energies.push_back((**cells.begin())());
-                }
-            );
+            energies.push_back( (*sadcell)());
+            controller->AddCellChangeListener([&energies](CellContainer const &cells)
+            {
+              energies.push_back((**cells.begin())());
+            });
 
             controller->AddCellChangeListener([&converter](const hemelb::redblood::CellContainer &cells)
             {
@@ -118,9 +120,8 @@ namespace hemelb
             master->RunSimulation();
             writeVTKMesh("/tmp/reformed.vtp", sadcell, converter);
 
-            *sadcell +=
-              converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
-              - sadcell->GetBarycenter();
+            *sadcell += converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
+                - sadcell->GetBarycenter();
             writeVTKMesh("/tmp/reformed_centered.vtp", sadcell, converter);
 
             AssertPresent("results/report.txt");

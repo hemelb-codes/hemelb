@@ -23,7 +23,7 @@ namespace hemelb
     {
       // Facet bending energy between two facets
       LatticeEnergy facetBending(Facet const &facetA, Facet const &facetB, Facet const &facetA_eq,
-                                  Facet const &facetB_eq, LatticeModulus intensity)
+                                 Facet const &facetB_eq, LatticeModulus intensity)
       {
         Angle const theta = orientedAngle(facetA, facetB);
         Angle const theta0 = orientedAngle(facetA_eq, facetB_eq);
@@ -33,8 +33,8 @@ namespace hemelb
 
       // Facet bending energy and force between neighboring facets
       LatticeEnergy facetBending(ForceFacet const &facetA, ForceFacet const &facetB,
-                                  Facet const &facetA_eq, Facet const &facetB_eq,
-                                  LatticeModulus intensity)
+                                 Facet const &facetA_eq, Facet const &facetB_eq,
+                                 LatticeModulus intensity)
       {
         IndexPair const commons = commonNodes(facetA, facetB);
         IndexPair const singles = singleNodes(facetA, facetB);
@@ -44,38 +44,46 @@ namespace hemelb
 
         // Figures out orientation of the common nodes, whether we have x3 - x1 or x1 - x3.
         const bool orientation =
-          facetA(commons.first, commons.second)
-            .Cross(facetA(singles.first, commons.second))
-            .Dot(normali) < 0e0;
+            facetA(commons.first, commons.second).Cross(facetA(singles.first, commons.second)).Dot(normali)
+                < 0e0;
 
         auto n_ij = normali - normalj * normali.Dot(normalj);
         auto n_ji = normalj - normali * normalj.Dot(normali);
         auto const area_ij = n_ij.GetMagnitude();
         auto const area_ji = n_ji.GetMagnitude();
-        if(area_ij > 1e-12)
+        if (area_ij > 1e-12)
         {
           n_ij = n_ij / area_ij;
         }
-        if(area_ji > 1e-12)
+        if (area_ji > 1e-12)
         {
           n_ji = n_ji / area_ji;
         }
 
         Angle const theta = orientedAngle(facetA, facetB);
         Angle const theta0 = orientedAngle(facetA_eq, facetB_eq);
-        const LatticeModulus strength = 5e-1 * intensity * (theta - theta0)
-          * (theta < 0e0 ? 1e0: -1e0);
-        n_ij = n_ij * (strength/facetB.area());
-        n_ji = n_ji * (strength/facetA.area());
+        const LatticeModulus strength = 5e-1 * intensity * (theta - theta0) * (theta < 0e0 ?
+          1e0 :
+          -1e0);
+        n_ij = n_ij * (strength / facetB.area());
+        n_ji = n_ji * (strength / facetA.area());
 
-        auto const & n1 = facetA(orientation ? commons.first: commons.second);
+        auto const & n1 = facetA(orientation ?
+          commons.first :
+          commons.second);
         auto const & n2 = facetA(singles.first);
-        auto const & n3 = facetA(orientation ? commons.second: commons.first);
+        auto const & n3 = facetA(orientation ?
+          commons.second :
+          commons.first);
         auto const & n4 = facetB(singles.second);
 
-        auto & f1 = facetA.GetForce(orientation ? commons.first: commons.second);
+        auto & f1 = facetA.GetForce(orientation ?
+          commons.first :
+          commons.second);
         auto & f2 = facetA.GetForce(singles.first);
-        auto & f3 = facetA.GetForce(orientation ? commons.second: commons.first);
+        auto & f3 = facetA.GetForce(orientation ?
+          commons.second :
+          commons.first);
         auto & f4 = facetB.GetForce(singles.second);
 
         f1 += (n2 - n3).Cross(n_ji) + (n3 - n4).Cross(n_ij);
@@ -87,8 +95,8 @@ namespace hemelb
       }
 
       LatticeEnergy facetBending(MeshData::Vertices const &vertices, MeshData const &orig,
-                                  size_t facetIndex, size_t neighborIndex, LatticeModulus intensity,
-                                  std::vector<LatticeForceVector> &forces)
+                                 size_t facetIndex, size_t neighborIndex, LatticeModulus intensity,
+                                 std::vector<LatticeForceVector> &forces)
       {
         return facetBending(ForceFacet(vertices, orig.facets[facetIndex], forces),
                             ForceFacet(vertices, orig.facets[neighborIndex], forces),
@@ -97,7 +105,7 @@ namespace hemelb
                             intensity);
       }
       LatticeEnergy facetBending(MeshData::Vertices const &vertices, MeshData const &orig,
-                                  size_t facetIndex, size_t neighborIndex, LatticeModulus intensity)
+                                 size_t facetIndex, size_t neighborIndex, LatticeModulus intensity)
       {
         return facetBending(Facet(vertices, orig.facets[facetIndex]),
                             Facet(vertices, orig.facets[neighborIndex]),
@@ -107,7 +115,7 @@ namespace hemelb
       }
 
       LatticeEnergy volumeEnergy(MeshData::Vertices const &vertices, MeshData const &orig,
-                                  LatticeModulus intensity, Dimensionless origMesh_scale = 1e0)
+                                 LatticeModulus intensity, Dimensionless origMesh_scale = 1e0)
       {
         if (intensity <= 1e-12)
         {
@@ -120,8 +128,8 @@ namespace hemelb
       }
 
       LatticeEnergy volumeEnergy(MeshData::Vertices const &vertices, MeshData const &orig,
-                                  LatticeModulus intensity, std::vector<LatticeForceVector> &forces,
-                                  Dimensionless origMesh_scale = 1e0)
+                                 LatticeModulus intensity, std::vector<LatticeForceVector> &forces,
+                                 Dimensionless origMesh_scale = 1e0)
       {
         if (intensity <= 1e-12)
         {
@@ -150,7 +158,7 @@ namespace hemelb
       }
 
       LatticeEnergy surfaceEnergy(MeshData::Vertices const &vertices, MeshData const &orig,
-                                   LatticeModulus intensity, Dimensionless origMesh_scale = 1e0)
+                                  LatticeModulus intensity, Dimensionless origMesh_scale = 1e0)
       {
         LatticeArea const surf0 = area(orig) * origMesh_scale * origMesh_scale;
         LatticeArea const deltaS = area(vertices, orig.facets) - surf0;
@@ -158,8 +166,8 @@ namespace hemelb
       }
 
       LatticeEnergy surfaceEnergy(MeshData::Vertices const &vertices, MeshData const &orig,
-                                   LatticeModulus intensity, std::vector<LatticeForceVector> &forces,
-                                   Dimensionless origMesh_scale = 1e0)
+                                  LatticeModulus intensity, std::vector<LatticeForceVector> &forces,
+                                  Dimensionless origMesh_scale = 1e0)
       {
         assert(orig.vertices.size() == vertices.size());
 
@@ -180,16 +188,15 @@ namespace hemelb
         return intensity * 0.5 * deltaS * deltaS / surf0;
       }
 
-      LatticeEnergy strainEnergyDensity(
-          std::pair<Dimensionless, Dimensionless> const &strainParams, LatticeModulus shearModulus,
-          LatticeModulus dilationModulus)
+      LatticeEnergy strainEnergyDensity(std::pair<Dimensionless, Dimensionless> const &strainParams,
+                                        LatticeModulus shearModulus, LatticeModulus dilationModulus)
       {
         Dimensionless const I1 = strainParams.first, I2 = strainParams.second;
         return shearModulus / 12. * (I1 * I1 + 2. * I1 - 2. * I2) + dilationModulus / 12. * I2 * I2;
       }
       LatticeEnergy strainEnergy(Facet const &deformed, Facet const &undeformed,
-                                  LatticeModulus shearModulus, LatticeModulus dilationModulus,
-                                  Dimensionless origMesh_scale = 1e0)
+                                 LatticeModulus shearModulus, LatticeModulus dilationModulus,
+                                 Dimensionless origMesh_scale = 1e0)
       {
         return strainEnergyDensity(strainInvariants(deformed, undeformed, origMesh_scale),
                                    shearModulus,
@@ -197,8 +204,8 @@ namespace hemelb
       }
 
       LatticeEnergy strainEnergy(ForceFacet const &deformed, Facet const &undeformed,
-                                  LatticeModulus shearModulus, LatticeModulus dilationModulus,
-                                  Dimensionless origMesh_scale = 1e0)
+                                 LatticeModulus shearModulus, LatticeModulus dilationModulus,
+                                 Dimensionless origMesh_scale = 1e0)
       {
         // Shape function parameters
         Dimensionless const b0 = undeformed.length(0) * 0.5 * origMesh_scale, b1 =

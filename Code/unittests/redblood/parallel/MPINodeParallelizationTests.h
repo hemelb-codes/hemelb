@@ -28,8 +28,7 @@ namespace hemelb
       class MPINodeParallelizationTests : public CppUnit::TestFixture
       {
           CPPUNIT_TEST_SUITE (MPINodeParallelizationTests);
-          CPPUNIT_TEST(testNeighborhoodGraphCreation);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testNeighborhoodGraphCreation);CPPUNIT_TEST_SUITE_END();
 
         public:
           //! Test creation of mpi graph topology
@@ -48,17 +47,17 @@ namespace hemelb
       void MPINodeParallelizationTests::testNeighborhoodGraphCreation()
       {
         auto world = net::MpiCommunicator::World();
-        if(world.Size() >= 4)
+        if (world.Size() >= 4)
         {
-          std::vector<std::vector<int>> vertices{{1}, {0, 2, 3}, {1, 3}, {1, 2}};
-          for(int i(4); i < world.Size(); ++i)
+          std::vector<std::vector<int>> vertices { { 1 }, { 0, 2, 3 }, { 1, 3 }, { 1, 2 } };
+          for (int i(4); i < world.Size(); ++i)
           {
-            vertices.push_back(std::vector<int>{});
+            vertices.push_back(std::vector<int> { });
           }
           auto graph = world.Graph(vertices);
           auto const neighbors = graph.GetNeighbors();
           CPPUNIT_ASSERT_EQUAL(vertices[graph.Rank()].size(), neighbors.size());
-          for(auto const item: util::zip(vertices[graph.Rank()], neighbors))
+          for (auto const item : util::zip(vertices[graph.Rank()], neighbors))
           {
             CPPUNIT_ASSERT_EQUAL(std::get<0>(item), std::get<1>(item) + 1);
           }

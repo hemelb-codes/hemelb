@@ -238,9 +238,10 @@ namespace hemelb
         bool nextDist();
     };
 
-    namespace {
+    namespace
+    {
       //! Spread force from given vertices to lattice-sites
-      template <class STENCIL>
+      template<class STENCIL>
       void spreadForce(LatticePosition const &vertex, geometry::LatticeData &latticeData,
                        LatticeForceVector const &force)
       {
@@ -262,7 +263,7 @@ namespace hemelb
     //! functional, computes the short-range that can occur between cells that are
     //! too close to one another. The interaction forces are computed and spread to
     //! the lattice.
-    template <class STENCIL>
+    template<class STENCIL>
     void addCell2CellInteractions(DivideConquerCells const &dnc, Node2NodeForce const &functional,
                                   geometry::LatticeData &latticeData)
     {

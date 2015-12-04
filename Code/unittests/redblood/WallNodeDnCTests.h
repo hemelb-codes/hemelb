@@ -26,8 +26,7 @@ namespace hemelb
       class WallNodeDnCTests : public helpers::HasCommsTestFixture
       {
           CPPUNIT_TEST_SUITE (WallNodeDnCTests);
-          CPPUNIT_TEST (testWallNodeDnC);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testWallNodeDnC);CPPUNIT_TEST_SUITE_END();
 
           LatticeDistance const cutoff = 3.0;
           LatticeDistance const halo = 0.5;
@@ -36,17 +35,17 @@ namespace hemelb
         public:
           void setUp()
           {
-            latticeData.reset(FourCubeLatticeData::Create(Comms(), 27+2));
-            for(site_t i(0); i < latticeData->GetLocalFluidSiteCount(); ++i)
+            latticeData.reset(FourCubeLatticeData::Create(Comms(), 27 + 2));
+            for (site_t i(0); i < latticeData->GetLocalFluidSiteCount(); ++i)
             {
               auto const site = latticeData->GetSite(i);
-              if(not site.IsWall())
+              if (not site.IsWall())
               {
                 continue;
               }
-              for(Direction d(0); d < Lattice::NUMVECTORS; ++d)
+              for (Direction d(0); d < Lattice::NUMVECTORS; ++d)
               {
-                if(site.HasWall(d))
+                if (site.HasWall(d))
                 {
                   latticeData->SetBoundaryDistance(i, d, 0.5);
                 }
@@ -67,20 +66,18 @@ namespace hemelb
             // 5 because there are five possible directions in D3Q15 pointing towards the wall
             auto upper = dnc.equal_range(LatticePosition(0, 3.5 * 3, 3.5 * 3));
             CPPUNIT_ASSERT_EQUAL(45l, std::distance(upper.first, upper.second));
-            for(; upper.first != upper.second; ++upper.first)
+            for (; upper.first != upper.second; ++upper.first)
             {
               CPPUNIT_ASSERT(upper.first->second.nearBorder bitand size_t(Borders::CENTER));
-              CPPUNIT_ASSERT_EQUAL(
-                  (upper.first->second.nearBorder bitand size_t(Borders::BOTTOM)) != 0,
-                  upper.first->second.node.x < halo
-              );
+              CPPUNIT_ASSERT_EQUAL( (upper.first->second.nearBorder bitand size_t(Borders::BOTTOM))
+                                       != 0,
+                                   upper.first->second.node.x < halo);
             }
           }
 
         private:
           std::unique_ptr<unittests::FourCubeLatticeData> latticeData;
       };
-
 
       CPPUNIT_TEST_SUITE_REGISTRATION (WallNodeDnCTests);
     }

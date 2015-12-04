@@ -33,7 +33,7 @@ namespace hemelb
           return 2e0 * result;
         }
 
-      // avoids a warning
+        // avoids a warning
 #     ifndef HEMELB_DOING_UNITTESTS
         LatticePosition maxExtensions(MeshData::Vertices const &vertices,
                                       LatticePosition const &col, LatticePosition const& normal)

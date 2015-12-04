@@ -43,27 +43,32 @@ namespace hemelb
           void testProcsAffectedBySingleProc()
           {
             LatticePosition const X(10, 10, 10);
-            auto const high_quadrant = procsAffectedByPosition<Stencil>(VertexBagTests::proc_at_pos, X);
+            auto const high_quadrant = procsAffectedByPosition < Stencil
+                > (VertexBagTests::proc_at_pos, X);
             CPPUNIT_ASSERT_EQUAL(size_t(1), high_quadrant.size());
             CPPUNIT_ASSERT_EQUAL(size_t(1), high_quadrant.count(0));
-            auto const low_quadrant = procsAffectedByPosition<Stencil>(VertexBagTests::proc_at_pos, -X);
+            auto const low_quadrant = procsAffectedByPosition < Stencil
+                > (VertexBagTests::proc_at_pos, -X);
             CPPUNIT_ASSERT_EQUAL(size_t(1), low_quadrant.size());
             CPPUNIT_ASSERT_EQUAL(size_t(1), low_quadrant.count(7));
 
-            auto const avoid = procsAffectedByPosition<Stencil>(VertexBagTests::proc_at_pos, -X, 7);
+            auto const avoid = procsAffectedByPosition < Stencil
+                > (VertexBagTests::proc_at_pos, -X, 7);
             CPPUNIT_ASSERT_EQUAL(size_t(0), avoid.size());
           }
 
           void testProcsAffectedByMultiProcs()
           {
             LatticePosition const X(10, 0, 10);
-            auto const two_quadrants = procsAffectedByPosition<Stencil>(VertexBagTests::proc_at_pos, X);
+            auto const two_quadrants = procsAffectedByPosition < Stencil
+                > (VertexBagTests::proc_at_pos, X);
             CPPUNIT_ASSERT_EQUAL(size_t(2), two_quadrants.size());
             CPPUNIT_ASSERT_EQUAL(size_t(1), two_quadrants.count(0));
             CPPUNIT_ASSERT_EQUAL(size_t(1), two_quadrants.count(2));
 
             LatticePosition const Y(0, 0, 10);
-            auto const four_quadrants = procsAffectedByPosition<Stencil>(VertexBagTests::proc_at_pos, Y);
+            auto const four_quadrants = procsAffectedByPosition < Stencil
+                > (VertexBagTests::proc_at_pos, Y);
             CPPUNIT_ASSERT_EQUAL(size_t(4), four_quadrants.size());
             for (proc_t i(0); i < proc_t(4); ++i)
             {
@@ -71,7 +76,8 @@ namespace hemelb
             }
 
             LatticePosition const Z(0, 0, 0);
-            auto const all_quadrants = procsAffectedByPosition<Stencil>(VertexBagTests::proc_at_pos, Z);
+            auto const all_quadrants = procsAffectedByPosition < Stencil
+                > (VertexBagTests::proc_at_pos, Z);
             CPPUNIT_ASSERT_EQUAL(size_t(8), all_quadrants.size());
             for (proc_t i(0); i < proc_t(8); ++i)
             {
@@ -84,7 +90,7 @@ namespace hemelb
             auto const cell = std::make_shared<Cell>(icoSphere());
             *cell *= 5e0;
             *cell += LatticePosition(50, 50, 50) - cell->GetBarycenter();
-            auto splits = splitVertices<Stencil>(VertexBagTests::proc_at_pos, cell);
+            auto splits = splitVertices < Stencil > (VertexBagTests::proc_at_pos, cell);
             CPPUNIT_ASSERT_EQUAL(size_t(1), splits.size());
             CPPUNIT_ASSERT_EQUAL(size_t(1), splits.count(0));
             auto const &expected = cell->GetVertices();
@@ -103,7 +109,7 @@ namespace hemelb
             auto const cell = std::make_shared<Cell>(icoSphere());
             *cell *= 5e0;
             *cell += LatticePosition(1, 0, 1) * 50e0 - cell->GetBarycenter();
-            auto splits = splitVertices<Stencil>(VertexBagTests::proc_at_pos, cell);
+            auto splits = splitVertices < Stencil > (VertexBagTests::proc_at_pos, cell);
             CPPUNIT_ASSERT_EQUAL(size_t(2), splits.size());
             CPPUNIT_ASSERT_EQUAL(size_t(1), splits.count(0));
             CPPUNIT_ASSERT_EQUAL(size_t(1), splits.count(2));

@@ -24,23 +24,22 @@ namespace hemelb
       class CellForceSpreadTests : public SquareDuctTetrahedronFixture
       {
           CPPUNIT_TEST_SUITE (CellForceSpreadTests);
-          CPPUNIT_TEST (testIsZeroFarFromMembrane<stencil::FourPoint>);
-          CPPUNIT_TEST (testIsZeroFarFromMembrane<stencil::CosineApprox>);
-          CPPUNIT_TEST (testIsZeroFarFromMembrane<stencil::ThreePoint>);
-          CPPUNIT_TEST (testIsZeroFarFromMembrane<stencil::TwoPoint>);
-          CPPUNIT_TEST (testIsSymmetric<stencil::FourPoint>);
-          CPPUNIT_TEST (testIsSymmetric<stencil::CosineApprox>);
-          CPPUNIT_TEST (testIsSymmetric<stencil::ThreePoint>);
-          CPPUNIT_TEST (testIsSymmetric<stencil::TwoPoint>);
-          CPPUNIT_TEST (testIsIncreasing<stencil::FourPoint>);
-          CPPUNIT_TEST (testIsIncreasing<stencil::CosineApprox>);
-          CPPUNIT_TEST (testIsIncreasing<stencil::ThreePoint>);
-          CPPUNIT_TEST (testIsIncreasing<stencil::TwoPoint>);
-          CPPUNIT_TEST (testIsLinear<stencil::FourPoint>);
+          CPPUNIT_TEST (testIsZeroFarFromMembrane<stencil::FourPoint> );
+          CPPUNIT_TEST (testIsZeroFarFromMembrane<stencil::CosineApprox> );
+          CPPUNIT_TEST (testIsZeroFarFromMembrane<stencil::ThreePoint> );
+          CPPUNIT_TEST (testIsZeroFarFromMembrane<stencil::TwoPoint> );
+          CPPUNIT_TEST (testIsSymmetric<stencil::FourPoint> );
+          CPPUNIT_TEST (testIsSymmetric<stencil::CosineApprox> );
+          CPPUNIT_TEST (testIsSymmetric<stencil::ThreePoint> );
+          CPPUNIT_TEST (testIsSymmetric<stencil::TwoPoint> );
+          CPPUNIT_TEST (testIsIncreasing<stencil::FourPoint> );
+          CPPUNIT_TEST (testIsIncreasing<stencil::CosineApprox> );
+          CPPUNIT_TEST (testIsIncreasing<stencil::ThreePoint> );
+          CPPUNIT_TEST (testIsIncreasing<stencil::TwoPoint> );
+          CPPUNIT_TEST (testIsLinear<stencil::FourPoint> );
           // CPPUNIT_TEST (testIsLinear<stencil::CosineApprox>);
-          CPPUNIT_TEST (testIsLinear<stencil::ThreePoint>);
-          CPPUNIT_TEST (testIsLinear<stencil::TwoPoint>);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testIsLinear<stencil::ThreePoint> );
+          CPPUNIT_TEST (testIsLinear<stencil::TwoPoint> );CPPUNIT_TEST_SUITE_END();
 
           typedef lb::lattices::D3Q15 D3Q15;
           typedef lb::kernels::LBGK<D3Q15> Kernel;
@@ -52,7 +51,7 @@ namespace hemelb
           // Moves fixture so barycenter is at given position and computes spread
           // force at origin
           template<class STENCIL>
-            LatticeForceVector force_at_center(LatticePosition const &position);
+          LatticeForceVector force_at_center(LatticePosition const &position);
           template<class STENCIL> void testIsZeroFarFromMembrane();
           template<class STENCIL> void testIsSymmetric();
           template<class STENCIL> void testIsIncreasing();
@@ -76,9 +75,11 @@ namespace hemelb
       {
         mesh += position - mesh.GetBarycenter();
         helpers::ZeroOutForces(latDat);
-        details::spreadForce2Grid<details::SpreadForces, STENCIL>
-        (std::shared_ptr<CellBase>(&mesh, [](CellBase*){}),
-           details::SpreadForces(forces, *latDat));
+        details::spreadForce2Grid<details::SpreadForces, STENCIL>(std::shared_ptr<CellBase>(&mesh,
+                                                                                            [](CellBase*)
+                                                                                            {}),
+                                                                  details::SpreadForces(forces,
+                                                                                        *latDat));
         return latDat->GetSite(center).GetForce();
       }
 
@@ -108,8 +109,8 @@ namespace hemelb
       {
         // Very far away from pancake samosa
         auto const border = Dimensionless(STENCIL::GetRange()) / 2e0;
-        LatticeForceVector const faraway
-          = force_at_center<STENCIL>(center + LatticePosition(0, 0, border + 1e0));
+        LatticeForceVector const faraway = force_at_center<STENCIL>(center
+            + LatticePosition(0, 0, border + 1e0));
         CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, faraway.x, 1e-8);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, faraway.y, 1e-8);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, faraway.z, 1e-8);
@@ -119,8 +120,8 @@ namespace hemelb
         CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, justTooFar.y, 1e-8);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, justTooFar.z, 1e-8);
 
-        auto const justInside
-          = force_at_center<STENCIL>(center + LatticePosition(0, 0, border - 1e-4));
+        auto const justInside = force_at_center<STENCIL>(center
+            + LatticePosition(0, 0, border - 1e-4));
         CPPUNIT_ASSERT(not helpers::is_zero(justInside));
         CPPUNIT_ASSERT(justInside[0] > 1e-8 and justInside[0] < 1e-4);
       }
@@ -170,9 +171,9 @@ namespace hemelb
         LatticePosition const x1(center[0], center[1] + 0.5, center[2] - 0.1);
         LatticeForceVector const v0(force_at_center<STENCIL>(x0)), v1(force_at_center<STENCIL>(x1));
 
-        LatticeForceVector const a((v1 - v0) / (direction.Dot(x1) - direction.Dot(x0)));
+        LatticeForceVector const a( (v1 - v0) / (direction.Dot(x1) - direction.Dot(x0)));
 
-        auto const reltol = std::vector<double>{1e-3, 1e-4, 1e-5}.at(STENCIL::GetRange() - 2);
+        auto const reltol = std::vector<double> { 1e-3, 1e-4, 1e-5 }.at(STENCIL::GetRange() - 2);
         for (size_t i(0); i < N; ++i)
         {
           LatticePosition const x = (x1 - x0) * (Dimensionless(i + 1) / Dimensionless(N + 2)) + x0;

@@ -39,13 +39,12 @@ namespace hemelb
       {
           CPPUNIT_TEST_SUITE (CellVelocityInterpolTests);
           CPPUNIT_TEST (testDistributionFixture);
-          CPPUNIT_TEST (testLinearVelocityPerpendicularToPancakeSamosa<stencil::FourPoint>);
-          CPPUNIT_TEST (testLinearVelocityPerpendicularToPancakeSamosa<stencil::ThreePoint>);
-          CPPUNIT_TEST (testLinearVelocityPerpendicularToPancakeSamosa<stencil::TwoPoint>);
-          CPPUNIT_TEST (testLinearVelocityInSamosaPlane<stencil::FourPoint>);
-          CPPUNIT_TEST (testLinearVelocityInSamosaPlane<stencil::ThreePoint>);
-          CPPUNIT_TEST (testLinearVelocityInSamosaPlane<stencil::TwoPoint>);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testLinearVelocityPerpendicularToPancakeSamosa<stencil::FourPoint> );
+          CPPUNIT_TEST (testLinearVelocityPerpendicularToPancakeSamosa<stencil::ThreePoint> );
+          CPPUNIT_TEST (testLinearVelocityPerpendicularToPancakeSamosa<stencil::TwoPoint> );
+          CPPUNIT_TEST (testLinearVelocityInSamosaPlane<stencil::FourPoint> );
+          CPPUNIT_TEST (testLinearVelocityInSamosaPlane<stencil::ThreePoint> );
+          CPPUNIT_TEST (testLinearVelocityInSamosaPlane<stencil::TwoPoint> );CPPUNIT_TEST_SUITE_END();
 
           typedef lb::lattices::D3Q15 D3Q15;
           typedef lb::kernels::LBGK<D3Q15> Kernel;
@@ -138,8 +137,9 @@ namespace hemelb
         // Perform interpolation
         std::vector<LatticePosition> displacements;
         // shared pointer with a fake deleter
-        std::shared_ptr<CellBase> ptr_mesh(&mesh, [](CellBase*){});
-        velocitiesOnMesh < Kernel, STENCIL > (ptr_mesh, *latDat, displacements);
+        std::shared_ptr<CellBase> ptr_mesh(&mesh, [](CellBase*)
+        {});
+        velocitiesOnMesh<Kernel, STENCIL>(ptr_mesh, *latDat, displacements);
 
         // Compute expected velocities
         typedef std::vector<LatticePosition>::const_iterator const_iterator;
@@ -163,8 +163,9 @@ namespace hemelb
 
         // Perform interpolation
         std::vector<LatticePosition> displacements;
-        std::shared_ptr<CellBase> ptr_mesh(&mesh, [](CellBase*){});
-        velocitiesOnMesh < Kernel, STENCIL > (ptr_mesh, *latDat, displacements);
+        std::shared_ptr<CellBase> ptr_mesh(&mesh, [](CellBase*)
+        {});
+        velocitiesOnMesh<Kernel, STENCIL>(ptr_mesh, *latDat, displacements);
 
         // Computes what the interpolation should be
         typedef std::vector<LatticePosition>::const_iterator const_iterator;
@@ -183,7 +184,6 @@ namespace hemelb
         }
       }
 #undef HEMELB_LINEAR_VELOCITY_PROFILE
-
 
       CPPUNIT_TEST_SUITE_REGISTRATION (CellVelocityInterpolTests);
     }

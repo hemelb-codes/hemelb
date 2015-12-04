@@ -20,7 +20,6 @@
 #include "geometry/LatticeData.h"
 #include "Traits.h"
 
-
 namespace hemelb
 {
   namespace redblood
@@ -37,26 +36,26 @@ namespace hemelb
         //! \param[in] latDat will tell us which site belongs to which proc
         //! \param[in] iterator a  stencil iterator going over affected lattice points
         template<class STENCIL>
-        std::set<proc_t> positionAffectsProcs(
-            geometry::LatticeData const &latDat, InterpolationIterator<STENCIL> &&iterator);
+        std::set<proc_t> positionAffectsProcs(geometry::LatticeData const &latDat,
+                                              InterpolationIterator<STENCIL> &&iterator);
         //! Set of procs affected by this position
         //! \param[in] latDat will tell us which site belongs to which proc
         //! \param[in] position for which to figure out affected processes
         //! \param[in] stencil giving interaction range
         template<class STENCIL>
-        std::set<proc_t> positionAffectsProcs(
-            geometry::LatticeData const &latDat, LatticePosition const &position);
+        std::set<proc_t> positionAffectsProcs(geometry::LatticeData const &latDat,
+                                              LatticePosition const &position);
 
         //! Simplest MPI range assessor loops over nodes + interpolation stencil
         template<class STENCIL>
-          static AssessNodeRange AssessMPIFunction(geometry::LatticeData const &latDat)
+        static AssessNodeRange AssessMPIFunction(geometry::LatticeData const &latDat)
+        {
+          return [&latDat](LatticePosition const &pos)
           {
-            return [&latDat](LatticePosition const &pos)
-            {
-              return details::positionAffectsProcs<STENCIL>(
-                  latDat, InterpolationIterator<STENCIL>(pos));
-            };
-          }
+            return details::positionAffectsProcs<STENCIL>(
+                latDat, InterpolationIterator<STENCIL>(pos));
+          };
+        }
       } /* details */
 
       class NodeCharacterizer
@@ -70,33 +69,32 @@ namespace hemelb
           typedef details::AssessNodeRange AssessNodeRange;
 
           //! Constructs object from prior knowledge of how processors are affected
-          NodeCharacterizer(Process2NodesMap const &affectedProcs)
-            : affectedProcs(affectedProcs)
+          NodeCharacterizer(Process2NodesMap const &affectedProcs) :
+              affectedProcs(affectedProcs)
           {
           }
           //! Constructs object from prior knowledge of how processors are affected
-          NodeCharacterizer(Process2NodesMap &&affectedProcs) : affectedProcs(affectedProcs)
+          NodeCharacterizer(Process2NodesMap &&affectedProcs) :
+              affectedProcs(affectedProcs)
           {
           }
           //! Constructs object using stencil as range object
           //! In practice, this will be the main constructor. Others are there for testing and
           //! convenience.
-          NodeCharacterizer(
-              AssessNodeRange const &assessNodeRange, MeshData::Vertices const &vertices);
+          NodeCharacterizer(AssessNodeRange const &assessNodeRange,
+                            MeshData::Vertices const &vertices);
           //! Constructs object using stencil as range object
           //! In practice, this will be the main constructor. Others are there for testing and
           //! convenience.
-          NodeCharacterizer(
-              AssessNodeRange const &assessNodeRange, std::shared_ptr<CellBase const> cell);
+          NodeCharacterizer(AssessNodeRange const &assessNodeRange,
+                            std::shared_ptr<CellBase const> cell);
 
           //! Constructs object using a custom assessor function
           template<class ... ARGS>
-          NodeCharacterizer(
-              geometry::LatticeData const &latDat,
-              std::shared_ptr<CellBase const> cell,
-              Traits<ARGS...> const& )
-          : NodeCharacterizer(
-              details::AssessMPIFunction<typename Traits<ARGS...>::Stencil>(latDat), cell)
+          NodeCharacterizer(geometry::LatticeData const &latDat,
+                            std::shared_ptr<CellBase const> cell, Traits<ARGS...> const&) :
+                  NodeCharacterizer(details::AssessMPIFunction<typename Traits<ARGS...>::Stencil>(latDat),
+                                    cell)
           {
           }
 
@@ -118,11 +116,13 @@ namespace hemelb
             return result->second;
           }
           //! The number of nodes affected by a given proc
-          Process2NodesMap::mapped_type::difference_type
-          CountNodes(Process2NodesMap::key_type proc) const
+          Process2NodesMap::mapped_type::difference_type CountNodes(
+              Process2NodesMap::key_type proc) const
           {
             auto result = affectedProcs.find(proc);
-            return result == affectedProcs.end() ? 0: result->second.size();
+            return result == affectedProcs.end() ?
+              0 :
+              result->second.size();
           }
 
           //! Updates node characterization and return change in ownership
@@ -135,31 +135,28 @@ namespace hemelb
           }
 
           //! Consolidates result from another proc into an input array
-          void ReduceFrom(
-              MeshData::Vertices &consolidated,
-              proc_t node, MeshData::Vertices const& incoming) const;
+          void ReduceFrom(MeshData::Vertices &consolidated, proc_t node,
+                          MeshData::Vertices const& incoming) const;
           //! \brief Reduce results from all nodes
           //! \details Assumes that the incomming array is aranged such that it contains first all
           //! the nodes from the lowest rank, then the next lowest, ...
-          void ReduceFrom(
-              MeshData::Vertices &consolidated, MeshData::Vertices const& incoming) const;
+          void ReduceFrom(MeshData::Vertices &consolidated,
+                          MeshData::Vertices const& incoming) const;
           //! \brief Spread data to different node
           //! \details Creates an array with all the nodes to send over to different processor. The
           //! output is tailored to fit MPI's gatherv.
-          void SpreadTo(
-              std::vector<size_t> & sizes, MeshData::Vertices &outgoing,
-              MeshData::Vertices const& vertices) const;
+          void SpreadTo(std::vector<size_t> & sizes, MeshData::Vertices &outgoing,
+                        MeshData::Vertices const& vertices) const;
           //! \brief Spread data to different node
           //! \details Creates an array with all the nodes to send over to different processor. The
           //! output is tailored to fit MPI's gatherv.
-          std::pair<std::vector<size_t>, MeshData::Vertices>
-          SpreadTo(MeshData::Vertices const& vertices) const
+          std::pair<std::vector<size_t>, MeshData::Vertices> SpreadTo(
+              MeshData::Vertices const& vertices) const
           {
             std::pair<std::vector<size_t>, MeshData::Vertices> result;
             SpreadTo(result.first, result.second, vertices);
             return result;
           }
-
 
         protected:
           //! Processes affected by a given processor
@@ -169,14 +166,14 @@ namespace hemelb
       namespace details
       {
         template<class STENCIL>
-        std::set<proc_t> positionAffectsProcs(
-            geometry::LatticeData const &latDat, InterpolationIterator<STENCIL> &&iterator)
+        std::set<proc_t> positionAffectsProcs(geometry::LatticeData const &latDat,
+                                              InterpolationIterator<STENCIL> &&iterator)
         {
           std::set<proc_t> result;
-          for(; iterator.IsValid(); ++iterator)
+          for (; iterator.IsValid(); ++iterator)
           {
             auto const id = latDat.GetProcIdFromGlobalCoords(*iterator);
-            if(id != BIG_NUMBER2)
+            if (id != BIG_NUMBER2)
             {
               result.insert(id);
             }
@@ -185,9 +182,8 @@ namespace hemelb
         }
 
         template<class STENCIL>
-        std::set<proc_t> positionAffectsProcs(
-            geometry::LatticeData const &latDat,
-            LatticePosition const &position)
+        std::set<proc_t> positionAffectsProcs(geometry::LatticeData const &latDat,
+                                              LatticePosition const &position)
         {
           return positionAffectsProcs(latDat, interpolationIterator<STENCIL>(position));
         }

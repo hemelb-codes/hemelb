@@ -26,8 +26,7 @@ namespace hemelb
       class MulticellBenchmarkTests : public hemelb::unittests::helpers::FolderTestFixture
       {
           CPPUNIT_TEST_SUITE (MulticellBenchmarkTests);
-          CPPUNIT_TEST(testBenchmark);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testBenchmark);CPPUNIT_TEST_SUITE_END();
 
           typedef Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type Traits;
           typedef hemelb::redblood::CellController<Traits> CellControl;
@@ -104,23 +103,23 @@ namespace hemelb
             bool instrumented = false;
             unsigned int start_timestep;
             auto callgrind_callback =
-                [&timestep, &instrumented, &start_timestep](const hemelb::redblood::CellContainer & cells)
-                {
-                  if (cells.size() >= 5 && !instrumented)
-                  {
-                    instrumented = true;
-                    start_timestep = timestep;
-                    std::cerr << "Starting callgrind instrumentation at timestep " << timestep << std::endl;
-                    CALLGRIND_ZERO_STATS;
-                    CALLGRIND_START_INSTRUMENTATION;
-                  }
-                  if (instrumented && timestep - start_timestep == 1000)
-                  {
-                    CALLGRIND_STOP_INSTRUMENTATION;
-                    std::cerr << "Stopped callgrind instrumentation at timestep " << timestep << std::endl;
-                    CALLGRIND_DUMP_STATS;
-                  }
-                };
+            [&timestep, &instrumented, &start_timestep](const hemelb::redblood::CellContainer & cells)
+            {
+              if (cells.size() >= 5 && !instrumented)
+              {
+                instrumented = true;
+                start_timestep = timestep;
+                std::cerr << "Starting callgrind instrumentation at timestep " << timestep << std::endl;
+                CALLGRIND_ZERO_STATS;
+                CALLGRIND_START_INSTRUMENTATION;
+              }
+              if (instrumented && timestep - start_timestep == 1000)
+              {
+                CALLGRIND_STOP_INSTRUMENTATION;
+                std::cerr << "Stopped callgrind instrumentation at timestep " << timestep << std::endl;
+                CALLGRIND_DUMP_STATS;
+              }
+            };
 #endif
 
             CPPUNIT_ASSERT(master);
@@ -150,8 +149,9 @@ namespace hemelb
 #ifdef HEMELB_CALLGRIND
     CPPUNIT_TEST_SUITE_REGISTRATION(MulticellBenchmarkTests);
 #endif
-    }// namespace redblood
-  } // namespace unittests
+  }
+// namespace redblood
+}// namespace unittests
 } // namespace hemelb
 
 #endif

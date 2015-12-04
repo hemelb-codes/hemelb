@@ -39,12 +39,11 @@ namespace hemelb
         typedef std::function<void(const CellContainer &)> CellChangeListener;
 
         CellArmy(geometry::LatticeData &_latDat, CellContainer const &cells,
-                 LatticeDistance boxsize = 10.0,
-                 Node2NodeForce const &cell2Cell = {0e0, 1e0, 2},
-                 Node2NodeForce const &cell2Wall = {0e0, 1e0, 2} ) :
+                 LatticeDistance boxsize = 10.0, Node2NodeForce const &cell2Cell = { 0e0, 1e0, 2 },
+                 Node2NodeForce const &cell2Wall = { 0e0, 1e0, 2 }) :
             latticeData(_latDat), cells(cells), cellDnC(cells, boxsize, cell2Cell.cutoff + 1e-6),
-            wallDnC(createWallNodeDnC<Lattice>(_latDat, boxsize, cell2Wall.cutoff + 1e-6)),
-            cell2Cell(cell2Cell), cell2Wall(cell2Wall)
+                wallDnC(createWallNodeDnC<Lattice>(_latDat, boxsize, cell2Wall.cutoff + 1e-6)),
+                cell2Cell(cell2Cell), cell2Wall(cell2Wall)
         {
         }
 
@@ -123,10 +122,10 @@ namespace hemelb
         void AddCell(CellContainer::value_type cell)
         {
           auto const barycenter = cell->GetBarycenter();
-          log::Logger::Log<log::Debug, log::OnePerCore>(
-              "Adding cell at (%f, %f, %f)",
-              barycenter.x, barycenter.y, barycenter.z
-          );
+          log::Logger::Log<log::Debug, log::OnePerCore>("Adding cell at (%f, %f, %f)",
+                                                        barycenter.x,
+                                                        barycenter.y,
+                                                        barycenter.z);
           cellDnC.insert(cell);
           cells.insert(cell);
         }
@@ -143,8 +142,9 @@ namespace hemelb
         template<class ... ARGS> void SetCell2Wall(ARGS && ... args)
         {
           cell2Wall = Node2NodeForce(std::forward<ARGS>(args)...);
-          wallDnC = createWallNodeDnC<Lattice>(
-              wallDnC, wallDnC.GetBoxSize(), cell2Wall.cutoff + 1e-6);
+          wallDnC = createWallNodeDnC<Lattice>(wallDnC,
+                                               wallDnC.GetBoxSize(),
+                                               cell2Wall.cutoff + 1e-6);
         }
 
       protected:
@@ -197,7 +197,7 @@ namespace hemelb
       log::Logger::Log<log::Debug, log::OnePerCore>("Cell -> fluid interations");
       latticeData.ResetForces();
 
-      for (auto const &cell: cells)
+      for (auto const &cell : cells)
       {
         forcesOnGrid<typename Kernel::LatticeType, Stencil>(cell, work, latticeData);
       }
@@ -223,10 +223,10 @@ namespace hemelb
         ++i_first;
         if (std::find_if(outlets.begin(), outlets.end(), checkCell) != outlets.end())
         {
-          log::Logger::Log<log::Debug, log::OnePerCore>(
-              "Removing cell at (%f, %f, %f)",
-              barycenter.x, barycenter.y, barycenter.z
-          );
+          log::Logger::Log<log::Debug, log::OnePerCore>("Removing cell at (%f, %f, %f)",
+                                                        barycenter.x,
+                                                        barycenter.y,
+                                                        barycenter.z);
           cellDnC.remove(*i_current);
           cells.erase(i_current);
         }

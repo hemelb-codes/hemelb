@@ -114,7 +114,7 @@ namespace hemelb
             mesh.facets.front()[1] = 2;
             mesh.facets.front()[2] = 1;
             Angle const actual2 = orientedAngle(Facet(mesh, 0), Facet(mesh, 3));
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(-PI/4.0, actual2, 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(-PI / 4.0, actual2, 1e-8);
             mesh.facets.front()[1] = 1;
             mesh.facets.front()[2] = 2;
 

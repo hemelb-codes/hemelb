@@ -28,10 +28,11 @@ namespace hemelb
       //! Stable comparison of cells across nodes
       struct CellUUIDComparison
       {
-        bool operator()(std::shared_ptr<CellBase> const&a, std::shared_ptr<CellBase> const &b) const
-        {
-          return a->GetTag() < b->GetTag();
-        }
+          bool operator()(std::shared_ptr<CellBase> const&a,
+                          std::shared_ptr<CellBase> const &b) const
+          {
+            return a->GetTag() < b->GetTag();
+          }
       };
     }
     //! Typical cell container type

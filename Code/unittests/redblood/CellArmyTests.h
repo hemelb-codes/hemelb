@@ -64,8 +64,8 @@ namespace hemelb
           LatticeDistance const cutoff = 5.0;
           LatticeDistance const halo = 2.0;
           typedef lb::lattices::D3Q15 D3Q15;
-          typedef hemelb::Traits<>::Reinstantiate<D3Q15, lb::GuoForcingLBGK>::Type
-            ::ChangeStencil<stencil::FourPoint>::Type Traits;
+          typedef hemelb::Traits<>::Reinstantiate<D3Q15, lb::GuoForcingLBGK>::Type::ChangeStencil<
+              stencil::FourPoint>::Type Traits;
 
         public:
           void testCell2Fluid();
@@ -189,10 +189,11 @@ namespace hemelb
       {
         auto cell = std::make_shared<FakeCell>(tetrahedron());
         MeshData::Vertices::value_type barycentre;
-        CellArmy<Traits>::CellChangeListener callback = [&barycentre](const CellContainer & container)
-        {
-          barycentre = (*(container.begin()))->GetBarycenter();
-        };
+        CellArmy<Traits>::CellChangeListener callback =
+            [&barycentre](const CellContainer & container)
+            {
+              barycentre = (*(container.begin()))->GetBarycenter();
+            };
 
         CellContainer intel;
         intel.insert(cell);

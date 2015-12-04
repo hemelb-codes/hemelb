@@ -25,9 +25,9 @@ namespace hemelb
     //! \param[in] cutoffDistance: Maximum interaction distance, squared
     //! \param[in] exponent
     inline LatticeForce node2NodeForce(LatticeDistance const distance,
-                                        LatticeModulus const intensity,
-                                        LatticeDistance const cutoffDistance = 1.0,
-                                        size_t exponent = 2)
+                                       LatticeModulus const intensity,
+                                       LatticeDistance const cutoffDistance = 1.0, size_t exponent =
+                                           2)
     {
       if (distance >= cutoffDistance)
       {
@@ -37,13 +37,13 @@ namespace hemelb
       LatticeDistance const deltaX = 1;
       auto const d_to_pow = std::pow(deltaX / distance, exponent);
       auto const d_to_pow0 = std::pow(deltaX / cutoffDistance, exponent);
-      if(std::isnan(d_to_pow) or std::isinf(d_to_pow))
+      if (std::isnan(d_to_pow) or std::isinf(d_to_pow))
       {
         std::string const message = "*** node-node interaction is NaN or infinite";
         log::Logger::Log<log::Critical, log::Singleton>(message);
         throw Exception() << message;
       }
-      return - intensity * (d_to_pow - d_to_pow0);
+      return -intensity * (d_to_pow - d_to_pow0);
     }
 
     // Repulsive force between two nodes

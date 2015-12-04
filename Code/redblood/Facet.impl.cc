@@ -251,7 +251,9 @@ namespace hemelb
         // (p - anode).Dot(normal to a) < 0  <==> given side of plane defined by facet a
         // where anode (bnode) is the node of a (b) not in common with b (a)
         auto const inside = (b(singles.second) - a(singles.first)) * 0.5;
-        return inside.Dot(unitA) < 0e0 ? result: -result;
+        return inside.Dot(unitA) < 0e0 ?
+          result :
+          -result;
       }
 
       // Returns Dxx, Dyy, Dxy packed in vector

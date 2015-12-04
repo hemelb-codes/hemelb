@@ -28,8 +28,7 @@ namespace hemelb
           CPPUNIT_TEST (testCellEnergy);
           CPPUNIT_TEST (testNullTemplateScaling);
           CPPUNIT_TEST (testTemplateScaling);
-          CPPUNIT_TEST (testGetAverageEdgeLength);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testGetAverageEdgeLength);CPPUNIT_TEST_SUITE_END();
 
           struct CellEnergy
           {
@@ -49,7 +48,7 @@ namespace hemelb
                 return particle();
               }
               LatticeEnergy operator()(MeshData const &mesh,
-                                        std::vector<LatticeForceVector> &forces) const
+                                       std::vector<LatticeForceVector> &forces) const
               {
                 particle.GetVertices() = mesh.vertices;
                 return particle(forces);
@@ -150,7 +149,7 @@ namespace hemelb
           {
             // MeshData original is a tetrahedron with 3 edges of length 1 and 3 edges of length sqrt(2)
             Cell cell(original);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(cell.GetAverageEdgeLength(), (1+sqrt(2))/2, 1e-12);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(cell.GetAverageEdgeLength(), (1 + sqrt(2)) / 2, 1e-12);
           }
 
         protected:

@@ -60,9 +60,9 @@ namespace hemelb
 
       LatticeEnergy result(0);
       site_t current_facet(0);
-      for (auto const & neighbors: GetTopology()->facetNeighbors)
+      for (auto const & neighbors : GetTopology()->facetNeighbors)
       {
-        for (auto neighbor: neighbors)
+        for (auto neighbor : neighbors)
         {
           if (neighbor > current_facet)
           {
@@ -88,9 +88,9 @@ namespace hemelb
 
       LatticeEnergy result(0);
       site_t current_facet(0);
-      for (auto const & neighbors: GetTopology()->facetNeighbors)
+      for (auto const & neighbors : GetTopology()->facetNeighbors)
       {
-        for (auto neighbor: neighbors)
+        for (auto neighbor : neighbors)
         {
           if (neighbor > current_facet)
           {
