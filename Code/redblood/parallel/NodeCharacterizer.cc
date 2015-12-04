@@ -20,22 +20,6 @@ namespace hemelb
     {
       namespace details
       {
-        void UpdateNodeCharacterization(
-            std::set<proc_t> const &newProcs, std::set<proc_t> const &oldProcs,
-            proc_t localRank, LatticePosition const &,
-            std::map<proc_t, util::Packer> &)
-        {
-          bool const
-            wasMidDomain = oldProcs.size() == 1,
-            isMidDomain = newProcs.size() == 1,
-            wasLocal = oldProcs.count(localRank),
-            isLocal = newProcs.count(localRank);
-          if(wasMidDomain == isMidDomain and wasLocal != isLocal)
-          {
-          }
-        }
-
-
         template<class FUNCTION>
           NodeCharacterizer::Process2NodesMap meshMessenger(
               FUNCTION assessNodeRange, MeshData::Vertices const &vertices)

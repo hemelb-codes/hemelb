@@ -13,7 +13,6 @@
 #include <memory>
 #include <functional>
 
-#include "util/Packer.h"
 #include "redblood/Cell.h"
 #include "redblood/stencil.h"
 #include "redblood/Interpolation.h"
