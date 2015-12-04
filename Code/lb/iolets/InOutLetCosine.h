@@ -52,15 +52,6 @@ namespace hemelb
             densityAmp = rho;
           }
 
-          LatticeDensity GetDensityMin() const
-          {
-            return (densityMean - densityAmp);
-          }
-          LatticeDensity GetDensityMax() const
-          {
-            return (densityMean + densityAmp);
-          }
-
           LatticePressure GetPressureMean() const
           {
             return densityMean * Cs2;

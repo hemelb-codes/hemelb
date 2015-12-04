@@ -45,14 +45,6 @@ namespace hemelb
             pressureFilePath = path;
           }
 
-          LatticeDensity GetDensityMin() const
-          {
-            return densityMin;
-          }
-          LatticeDensity GetDensityMax() const
-          {
-            return densityMax;
-          }
           LatticeDensity GetDensity(LatticeTimeStep timeStep) const
           {
             return densityTable[timeStep];
@@ -61,8 +53,6 @@ namespace hemelb
         private:
           void CalculateTable(LatticeTimeStep totalTimeSteps, PhysicalTime timeStepLength);
           std::vector<LatticeDensity> densityTable;
-          LatticeDensity densityMin;
-          LatticeDensity densityMax;
           std::string pressureFilePath;
           const util::UnitConverter* units;
       };

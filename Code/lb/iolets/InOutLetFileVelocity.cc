@@ -56,9 +56,6 @@ namespace hemelb
         std::vector<PhysicalSpeed> values(0);
 
         // Must convert into vectors since LinearInterpolate works on a pair of vectors
-        // Determine min and max pressure on the way
-//        PhysicalPressure pMin = timeValuePairs.begin()->second;
-//        PhysicalPressure pMax = timeValuePairs.begin()->second;
         for (std::map<PhysicalTime, PhysicalSpeed>::iterator entry = timeValuePairs.begin();
             entry != timeValuePairs.end(); entry++)
         {
@@ -81,8 +78,6 @@ namespace hemelb
           times.push_back(entry->first);
           values.push_back(entry->second);
         }
-//        densityMin = units->ConvertPressureToLatticeUnits(pMin) / Cs2;
-//        densityMax = units->ConvertPressureToLatticeUnits(pMax) / Cs2;
 
         /* If the time values in the input file end BEFORE the planned end of the simulation, then loop the profile afterwards (using %TimeStepsInInletVelocityProfile). */
         int TimeStepsInInletVelocityProfile = times.back() / timeStepLength;

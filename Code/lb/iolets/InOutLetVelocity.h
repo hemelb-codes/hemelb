@@ -19,8 +19,6 @@ namespace hemelb
         public:
           InOutLetVelocity();
           virtual ~InOutLetVelocity();
-          LatticeDensity GetDensityMin() const;
-          LatticeDensity GetDensityMax() const;
           LatticeDensity GetDensity(LatticeTimeStep time_step) const;
 
           void Reset(SimulationState &state)

@@ -71,14 +71,6 @@ namespace hemelb
         /* TODO: Fix pressure and GetPressure values (using PressureMax() for now). */
         return units->ConvertPressureToLatticeUnits(maxPressure.GetPayload()) / Cs2;
       }
-      LatticeDensity InOutLetMultiscale::GetDensityMin() const
-      {
-        return units->ConvertPressureToLatticeUnits(minPressure.GetPayload()) / Cs2;
-      }
-      LatticeDensity InOutLetMultiscale::GetDensityMax() const
-      {
-        return units->ConvertPressureToLatticeUnits(maxPressure.GetPayload()) / Cs2;
-      }
       PhysicalVelocity InOutLetMultiscale::GetVelocity() const
       {
         return velocity;

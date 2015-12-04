@@ -35,13 +35,9 @@ namespace hemelb
                                                                                inletValues->GetLocalIoletCount(),
                                                                                outletValues->GetLocalIoletCount());
           hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("inlets: %d",
-                                                                                  inletValues->GetLocalIolet(0)->IsCommsRequired(),
-                                                                                  inletValues->GetLocalIolet(0)->GetDensityMax(),
-                                                                                  inletValues->GetLocalIolet(0)->GetPressureMax());
+                                                                                  inletValues->GetLocalIolet(0)->IsCommsRequired());
           hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("outlets: %d",
-                                                                                  outletValues->GetLocalIolet(0)->IsCommsRequired(),
-                                                                                  outletValues->GetLocalIolet(0)->GetDensityMax(),
-                                                                                  outletValues->GetLocalIolet(0)->GetPressureMax());
+                                                                                  outletValues->GetLocalIolet(0)->IsCommsRequired());
 
           // we only want to register those iolets which are needed on this process.
           // Fortunately, the BoundaryValues instance has worked this out for us.
@@ -233,13 +229,9 @@ namespace hemelb
                                                                                   inletValues->GetLocalIoletCount(),
                                                                                   outletValues->GetLocalIoletCount());
             hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("inlets: %d",
-                                                                                  inletValues->GetLocalIolet(0)->IsCommsRequired(),
-                                                                                  inletValues->GetLocalIolet(0)->GetDensityMax(),
-                                                                                  inletValues->GetLocalIolet(0)->GetPressureMax());
+                                                                                  inletValues->GetLocalIolet(0)->IsCommsRequired());
             hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("outlets: %d",
-                                                                                  outletValues->GetLocalIolet(0)->IsCommsRequired(),
-                                                                                  outletValues->GetLocalIolet(0)->GetDensityMax(),
-                                                                                  outletValues->GetLocalIolet(0)->GetPressureMax());
+                                                                                  outletValues->GetLocalIolet(0)->IsCommsRequired());
 
             SetCommsRequired(inletValues, true);
             SetCommsRequired(outletValues, true);
@@ -251,17 +243,15 @@ namespace hemelb
 
             for (unsigned int i = 0; i < inletValues->GetLocalIoletCount(); i++)
             {
-              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Inlet[%i]: Measured Density is %f. Pressure is %f.",
+              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Inlet[%i]: Measured Density is %f.",
                                                                                     i,
-                                                                                    inletValues->GetLocalIolet(i)->GetDensity(GetState()->GetTimeStep()),
-                                                                                    inletValues->GetLocalIolet(i)->GetPressureMax());
+                                                                                    inletValues->GetLocalIolet(i)->GetDensity(GetState()->GetTimeStep()));
             }
             for (unsigned int i = 0; i < outletValues->GetLocalIoletCount(); i++)
             {
-              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Outlet[%i]: Measured Density is %f. Pressure is %f.",
+              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Outlet[%i]: Measured Density is %f.",
                                                                                     i,
-                                                                                    outletValues->GetLocalIolet(i)->GetDensity(GetState()->GetTimeStep()),
-                                                                                    outletValues->GetLocalIolet(i)->GetPressureMax());
+                                                                                    outletValues->GetLocalIolet(i)->GetDensity(GetState()->GetTimeStep()));
             }
 
             /* Temporary Orchestration hardcode for testing 1/100 step ratio

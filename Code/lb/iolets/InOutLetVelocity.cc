@@ -21,14 +21,6 @@ namespace hemelb
       {
       }
 
-      LatticeDensity InOutLetVelocity::GetDensityMin() const
-      {
-        return 1.0;
-      }
-      LatticeDensity InOutLetVelocity::GetDensityMax() const
-      {
-        return 1.0;
-      }
       LatticeDensity InOutLetVelocity::GetDensity(LatticeTimeStep time_step) const
       {
         return 1.0;
