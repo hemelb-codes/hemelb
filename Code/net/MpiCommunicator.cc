@@ -7,8 +7,12 @@
 // specifically made by you with University College London.
 //
 
+#include <cassert>
+#include <numeric>
+
 #include "net/MpiCommunicator.h"
 #include "net/MpiGroup.h"
+#include "util/Iterator.h"
 
 namespace hemelb
 {
@@ -54,6 +58,16 @@ namespace hemelb
 
     MpiCommunicator::~MpiCommunicator()
     {
+    }
+
+    void MpiCommunicator::operator =(MpiCommunicator const &comm)
+    {
+      commPtr = comm.commPtr;
+    }
+
+    void MpiCommunicator::operator =(MpiCommunicator &&comm)
+    {
+      commPtr = std::move(comm.commPtr);
     }
 
     bool operator==(const MpiCommunicator& comm1, const MpiCommunicator& comm2)
@@ -115,5 +129,77 @@ namespace hemelb
       HEMELB_MPI_CALL(MPI_Comm_dup, (*commPtr, &newComm));
       return MpiCommunicator(newComm, true);
     }
+
+    MpiCommunicator MpiCommunicator::Graph(
+        std::vector<std::vector<int>> edges, bool reorder) const
+    {
+      std::vector<int> indices, flat_edges;
+      indices.reserve(1);
+      flat_edges.reserve(1);
+      for(auto const & edge_per_proc: edges)
+      {
+        for(auto const & edge: edge_per_proc)
+        {
+          assert(edge < Size());
+          flat_edges.push_back(edge);
+        }
+        indices.push_back(flat_edges.size());
+      }
+      MPI_Comm newComm;
+      HEMELB_MPI_CALL(
+          MPI_Graph_create,
+          (*commPtr, indices.size(), indices.data(), flat_edges.data(), reorder, &newComm)
+      );
+      return MpiCommunicator(newComm, true);
+    }
+
+    int MpiCommunicator::GetNeighborsCount() const
+    {
+      assert(commPtr);
+      int N;
+      HEMELB_MPI_CALL(MPI_Graph_neighbors_count, (*commPtr, Rank(), &N));
+      return N;
+    }
+
+    std::vector<int> MpiCommunicator::GetNeighbors() const
+    {
+      assert(commPtr);
+      std::vector<int> result(GetNeighborsCount());
+      result.reserve(1);
+      HEMELB_MPI_CALL(MPI_Graph_neighbors, (*commPtr, Rank(), result.size(), result.data()));
+      return result;
+    }
+
+    MpiCommunicator MpiCommunicator::Split(int color, int key) const
+    {
+      MPI_Comm newComm;
+      MPI_Comm_split(*commPtr, color, key, &newComm);
+      return MpiCommunicator(newComm, true);
+    }
+
+    std::map<int, int> MpiCommunicator::RankMap(MpiCommunicator const &valueComm) const
+    {
+      MPI_Group keyGroup, valueGroup;
+
+      MPI_Comm_group(*commPtr, &keyGroup);
+      MPI_Comm_group(valueComm, &valueGroup);
+
+      auto const N = Size();
+      std::vector<int> keys(N), values(N);
+      std::iota(keys.begin(), keys.end(), 0);
+
+      MPI_Group_translate_ranks(keyGroup, N, keys.data(), valueGroup, values.data());
+      std::map<int, int> result;
+      for(auto const & item: util::zip(keys, values))
+      {
+        result[std::get<0>(item)] = std::get<1>(item);
+      }
+
+      MPI_Group_free(&keyGroup);
+      MPI_Group_free(&valueGroup);
+
+      return result;
+    }
+
   }
 }

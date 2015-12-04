@@ -382,7 +382,6 @@ namespace hemelb
         Packer::Sizer&
       >::type operator<<(Packer::Sizer& sizer, std::map<KEY, T, COMPARE, ALLOC> const &map)
     {
-      typedef typename std::map<KEY, T, COMPARE, ALLOC>::value_type value_type;
       auto const N = map.size();
       sizer << N;
       if(N != 0)
@@ -398,7 +397,6 @@ namespace hemelb
         Packer::Sizer&
       >::type operator<<(Packer::Sizer& sizer, std::map<KEY, T, COMPARE, ALLOC> const &map)
     {
-      typedef typename std::map<KEY, T, COMPARE, ALLOC>::value_type value_type;
       auto const N = map.size();
       sizer << N;
       for(auto const & element: map)

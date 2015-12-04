@@ -22,27 +22,27 @@ namespace hemelb
     {
 
       // Empty FOld distribution
-      void zeroOutFOld(geometry::LatticeData * const _latDat);
+      void zeroOutFOld(geometry::LatticeData * const latDat);
       // Initializes a lattice to empty distributions and forces, execpt at one
       // place
       template<class LATTICE>
-      void allZeroButOne(geometry::LatticeData *_latDat, LatticeVector const &_pos);
+      void allZeroButOne(geometry::LatticeData *latDat, LatticeVector const &_pos);
 
       // FNew at given site
       template<class Lattice>
-      distribn_t const * GetFNew(geometry::LatticeData *_latDat, LatticeVector const &_pos);
+      distribn_t const * GetFNew(geometry::LatticeData *latDat, LatticeVector const &_pos);
 
       // Population i set to some distribution
       template<class LATTICE>
-      void setUpDistribution(geometry::LatticeData *_latDat, size_t _i,
+      void setUpDistribution(geometry::LatticeData *latDat, size_t _i,
                              std::function<Dimensionless(PhysicalVelocity const &)> _function);
 
       // Class to setup/manipulate lattice data
       class LatticeDataAccess
       {
         public:
-          LatticeDataAccess(geometry::LatticeData * const _latDat) :
-              latDat(_latDat)
+          LatticeDataAccess(geometry::LatticeData * const latDat) :
+              latDat(latDat)
           {
           }
           ;
@@ -143,13 +143,17 @@ namespace hemelb
             *i_first = _mindist;
       }
 
-      inline void ZeroOutFOld(geometry::LatticeData * const _latDat)
+      inline void ZeroOutFOld(geometry::LatticeData * const latDat)
       {
-        LatticeDataAccess(_latDat).ZeroOutFOld();
+        LatticeDataAccess(latDat).ZeroOutFOld();
       }
-      inline void ZeroOutForces(geometry::LatticeData * const _latDat)
+      inline void ZeroOutForces(geometry::LatticeData * const latDat)
       {
-        LatticeDataAccess(_latDat).ZeroOutForces();
+        LatticeDataAccess(latDat).ZeroOutForces();
+      }
+      inline void ZeroOutForces(geometry::LatticeData & latDat)
+      {
+        return ZeroOutForces(&latDat);
       }
 
       template<class LATTICE>
@@ -170,47 +174,47 @@ namespace hemelb
 
       // Population i set to some distribution
       template<class LATTICE>
-      void setUpDistribution(geometry::LatticeData *_latDat, size_t _i,
+      void setUpDistribution(geometry::LatticeData *latDat, size_t _i,
                              std::function<Dimensionless(PhysicalVelocity const &)> _function)
       {
-        LatticeDataAccess(_latDat).SetUpDistribution<LATTICE>(_i, _function);
+        LatticeDataAccess(latDat).SetUpDistribution<LATTICE>(_i, _function);
       }
 
       template<class LATTICE>
-      void allZeroButOne(geometry::LatticeData *_latDat, LatticeVector const &_pos)
+      void allZeroButOne(geometry::LatticeData *latDat, LatticeVector const &_pos)
       {
-        LatticeDataAccess manip(_latDat);
+        LatticeDataAccess manip(latDat);
         manip.ZeroOutFOld();
         manip.ZeroOutForces();
         for (size_t i(0); i < LATTICE::NUMVECTORS; ++i)
           manip.SetFOld<LATTICE>(_pos, i, 0.5 + i);
-        _latDat->GetSite(_pos).SetForce(LatticeForceVector(1, 2, 3));
+        latDat->GetSite(_pos).SetForce(LatticeForceVector(1, 2, 3));
       }
 
       template<class LATTICE>
-      distribn_t const * GetFNew(geometry::LatticeData *_latDat, LatticeVector const &_pos)
+      distribn_t const * GetFNew(geometry::LatticeData *latDat, LatticeVector const &_pos)
       {
-        return LatticeDataAccess(_latDat).GetFNew<LATTICE>(_pos);
+        return LatticeDataAccess(latDat).GetFNew<LATTICE>(_pos);
       }
-      distribn_t const * GetFNew(geometry::LatticeData *_latDat, site_t const &index)
+      distribn_t const * GetFNew(geometry::LatticeData *latDat, site_t const &index)
       {
-        return LatticeDataAccess(_latDat).GetFNew(index);
+        return LatticeDataAccess(latDat).GetFNew(index);
       }
 
-      void SetMinWallDistance(geometry::LatticeData * const _latDat, PhysicalDistance _mindist)
+      void SetMinWallDistance(geometry::LatticeData * const latDat, PhysicalDistance _mindist)
       {
-        LatticeDataAccess(_latDat).SetMinWallDistance(_mindist);
+        LatticeDataAccess(latDat).SetMinWallDistance(_mindist);
       }
-      void SetWallDistance(geometry::LatticeData * const _latDat, PhysicalDistance _mindist)
+      void SetWallDistance(geometry::LatticeData * const latDat, PhysicalDistance _mindist)
       {
-        LatticeDataAccess(_latDat).SetWallDistance(_mindist);
+        LatticeDataAccess(latDat).SetWallDistance(_mindist);
       }
 
       template<class LATTICE = lb::lattices::D3Q15>
       std::tuple<Dimensionless, PhysicalVelocity,
           std::function<Dimensionless(PhysicalVelocity const &)>,
           std::function<Dimensionless(PhysicalVelocity const &)> > makeLinearProfile(
-          size_t _cubeSize, geometry::LatticeData * const _latDat, PhysicalVelocity const &_grad)
+          size_t _cubeSize, geometry::LatticeData * const latDat, PhysicalVelocity const &_grad)
       {
 
         PhysicalVelocity const gradient = _grad.GetNormalised();
@@ -224,8 +228,8 @@ namespace hemelb
         {
           return 2.0 * non_neg_pop - _v.Dot(gradient);
         };
-        setUpDistribution<LATTICE>(_latDat, 0, linear);
-        setUpDistribution<LATTICE>(_latDat, 1, linear_inv);
+        setUpDistribution<LATTICE>(latDat, 0, linear);
+        setUpDistribution<LATTICE>(latDat, 1, linear_inv);
 
         return std::make_tuple(non_neg_pop, gradient, linear, linear_inv);
       }

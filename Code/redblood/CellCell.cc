@@ -11,6 +11,7 @@
 #include "redblood/CellCell.h"
 #include "redblood/Cell.h"
 #include "redblood/Interpolation.h"
+#include "redblood/types.h"
 #include "log/Logger.h"
 
 namespace hemelb
@@ -43,6 +44,8 @@ namespace hemelb
         }
       }
 
+      // remove unused function warning
+#     ifndef HEMELB_DOING_UNITTESTS
       void initializeCells(DivideConquer<CellReference> &dnc, CellContainer const &cells,
                            LatticeDistance haloLength)
       {
@@ -54,6 +57,7 @@ namespace hemelb
           initializeCells(dnc, (*i_first)->GetVertices(), i_first, haloLength);
         }
       }
+#     endif
 
       // Compare distance between vertices
       template<class T_FUNCTION>

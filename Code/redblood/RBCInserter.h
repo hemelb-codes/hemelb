@@ -7,6 +7,7 @@
 #include <list>
 #include "io/xml/XmlAbstractionLayer.h"
 #include "lb/iolets/InOutLet.h"
+#include "redblood/types.h"
 #include "Mesh.h"
 #include "Cell.h"
 #include "units.h"

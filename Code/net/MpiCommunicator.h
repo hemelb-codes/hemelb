@@ -10,9 +10,8 @@
 #ifndef HEMELB_NET_MPICOMMUNICATOR_H
 #define HEMELB_NET_MPICOMMUNICATOR_H
 
-//#include "units.h"
-//#include "net/mpi.h"
 #include <vector>
+#include <map>
 #include "net/MpiError.h"
 #include <memory>
 
@@ -33,6 +32,21 @@ namespace hemelb
          * @param communicator
          */
         MpiCommunicator();
+        /**
+         * Move Constructor
+         */
+        MpiCommunicator(MpiCommunicator const & comm)
+          : commPtr(comm.commPtr)
+        {
+        }
+        /**
+         * Move Constructor
+         */
+        MpiCommunicator(MpiCommunicator && comm)
+          : commPtr(std::move(comm.commPtr))
+        {
+        }
+
 
         /**
          * Class has virtual methods so should have virtual d'tor.
@@ -57,6 +71,11 @@ namespace hemelb
          * @return New communicator.
          */
         MpiCommunicator Create(const MpiGroup& grp) const;
+
+        //! Copy assignment
+        void operator=(MpiCommunicator const &comm);
+        //! Move assignment
+        void operator=(MpiCommunicator &&comm);
 
         /**
          * Allow implicit casts to MPI_Comm
@@ -126,6 +145,28 @@ namespace hemelb
         void Receive(std::vector<T>& val, int src, int tag = 0,
                      MPI_Status* stat = MPI_STATUS_IGNORE) const;
 
+        //! \brief Creates a graph communicator
+        //! \param edges: [ [vertices connected to 0], [vertices connected to 1], ...]
+        //! \param reorder: Whether nodes can be re-ordered
+        MpiCommunicator Graph(std::vector<std::vector<int>> edges, bool reorder=true) const;
+
+        //! \brief Returns graph neighberhood
+        //! \details This communicator must have been created with graph
+        std::vector<int> GetNeighbors() const;
+        //! \brief Number of neighbors in a graph communicator
+        int GetNeighborsCount() const;
+
+        //! A map from the ranks of this communicator to another
+        std::map<int, int> RankMap(MpiCommunicator const &valueComm) const;
+
+        //! Splits a communicator
+        MpiCommunicator Split(int color, int rank) const;
+        //! Splits a communicator
+        MpiCommunicator Split(int color) const
+        {
+          return Split(color, Rank());
+        }
+
       protected:
         /**
          * Constructor to get data needed from an MPI communicator
@@ -138,7 +179,6 @@ namespace hemelb
 
     bool operator==(const MpiCommunicator& comm1, const MpiCommunicator& comm2);
     bool operator!=(const MpiCommunicator& comm1, const MpiCommunicator& comm2);
-
   }
 }
 

@@ -1,6 +1,4 @@
 //
-//
-//write
 // Copyright (C) University College London, 2007-2012, all rights reserved.
 //
 // This file is part of HemeLB and is CONFIDENTIAL. You may not work
@@ -9,8 +7,8 @@
 // specifically made by you with University College London.
 //
 
-#ifndef HEMELB_REDBLOOD_PARTICLE_H
-#define HEMELB_REDBLOOD_PARTICLE_H
+#ifndef HEMELB_REDBLOOD_CELL_H
+#define HEMELB_REDBLOOD_CELL_H
 
 #include <boost/uuid/uuid.hpp>
 
@@ -18,6 +16,7 @@
 #include <utility>
 
 #include "redblood/Mesh.h"
+#include "redblood/CellBase.h"
 #include "redblood/Node2Node.h"
 #include "units.h"
 
@@ -25,175 +24,6 @@ namespace hemelb
 {
   namespace redblood
   {
-#   ifndef NDEBUG
-    //! \brief Function checks characteristics of implementation class CellBase::CellData
-    //! \data Nothing more than a bunch of static asserts. CellData is a private member, so we
-    //! need a friend somewhere to check its characteristics.
-    void checkCellDataCharacteristics();
-#   endif
-    class CellBase
-    {
-#     ifndef NDEBUG
-        friend void checkCellDataCharacteristics();
-#     endif
-      public:
-        //! \brief Initializes mesh from mesh data
-        //! \param [in] verticesIn: deformable vertices that define the cell. These
-        //!    values are *not* modified by the scale.
-        //! \param [in] origMesh: Original mesh. A shallow copy is made of this
-        //!    object.
-        //! \param [in] scale: scales template by a given amount
-        //!    The scale is added during internal operations. The template will still
-        //!    refer to the same data in memory.
-        CellBase(MeshData::Vertices &&verticesIn, Mesh const &origMesh,
-                 LatticeDistance scale = 1e0, std::string const &templateName = "default");
-        //! \brief Initializes mesh from mesh data
-        //! \param [in] verticesIn: deformable vertices that define the cell. These
-        //!    values are *not* modified by the scale.
-        //! \param [in] origMesh: Original mesh. A shallow copy is made of this
-        //!    object.
-        //! \param [in] scale: scales template by a given amount
-        //!    The scale is added during internal operations. The template will still
-        //!    refer to the same data in memory.
-        CellBase(MeshData::Vertices const &verticesIn, Mesh const &origMesh,
-                 LatticeDistance scale = 1e0, std::string const &templateName = "default");
-
-        //! \brief Initializes mesh from mesh data
-        //! \param [in] mesh: deformable vertices that define the cell are copied
-        //!    from this mesh. These values are *not* modified by the scale.
-        //! \param [in] origMesh: Original mesh. A shallow copy is made of this
-        //!    object.
-        //! \param [in] scale: scales template by a given amount
-        //!    The scale is added during internal operations. The template will still
-        //!    refer to the same data in memory.
-        CellBase(Mesh const &mesh, Mesh const &origMesh, LatticeDistance scale = 1e0,
-                 std::string const &templateName = "default");
-
-        //! \brief Initializes mesh from mesh data
-        //! \param [in] mesh: Modifyiable mesh and template. Deep copies are made of
-        //!   both.
-        CellBase(Mesh const &mesh);
-        //! \brief Initializes mesh from mesh data
-        //! \param [in] mesh: Modifyiable mesh and template. Deep copies are made of
-        //!   both
-        CellBase(std::shared_ptr<MeshData> const &mesh);
-        //! Copy constructor
-        //! References same template mesh
-        CellBase(CellBase const &cell);
-
-        //! Tag to choose shallow clone constructor
-        struct shallow_clone
-        {
-        };
-        //! Shallow copy constructor
-        //! References same data
-        CellBase(CellBase const &cell, shallow_clone const&) :
-            data(cell.data)
-        {
-        }
-        //! Because it is good practice
-        virtual ~CellBase()
-        {
-        }
-
-        void operator=(Mesh const &mesh);
-
-        //! Unmodified mesh
-        Mesh const &GetTemplateMesh() const;
-        //! Unmodified mesh
-        std::string const &GetTemplateName() const;
-        //! Facets for the mesh
-        MeshData::Facets const &GetFacets() const;
-        //! Vertices of the cell
-        MeshData::Vertices const &GetVertices() const;
-        //! Vertices of the cell
-        MeshData::Vertices &GetVertices();
-        //! Topology of the (template) mesh
-        std::shared_ptr<MeshTopology const> GetTopology() const;
-        site_t GetNumberOfNodes() const;
-
-        //! Facet bending energy
-        virtual LatticeEnergy operator()() const = 0;
-        //! Facet bending energy - pretty printing for shared ptr
-        LatticeEnergy Energy() const
-        {
-          return operator()();
-        }
-        //! Facet bending energy
-        virtual LatticeEnergy operator()(std::vector<LatticeForceVector> &in) const = 0;
-        //! Facet bending energy - pretty printing for shared ptr
-        LatticeEnergy Energy(std::vector<LatticeForceVector> &in) const
-        {
-          return operator()(in);
-        }
-
-        //! Scale mesh around barycenter
-        void operator*=(Dimensionless const &);
-        //! Linear transform of each vertex, centered around barycenter
-        void operator*=(util::Matrix3D const &);
-        //! Translate mesh
-        void operator+=(LatticePosition const &offset);
-        //! Translate mesh
-        void operator-=(LatticePosition const &offset)
-        {
-          return operator+=(-offset);
-        }
-        //! Transform mesh
-        void operator+=(std::vector<LatticePosition> const &displacements);
-
-        MeshData::Vertices::value_type GetBarycenter() const;
-        LatticeVolume GetVolume() const
-        {
-          return volume(GetVertices(), GetTemplateMesh().GetFacets());
-        }
-
-        //! Scale to apply to the template mesh
-        void SetScale(LatticeDistance scale);
-        //! Scale to apply to the template mesh
-        LatticeDistance GetScale() const;
-
-        // cloneImpl is virtual and returns a pointer to abstract class
-        // clone will be overriden. It will call cloneImpl and cast it to derived type.
-        // The hoop jumping is necessary since we are returning managed pointers.
-        //! Clones: shallow copy reference mesh, deep-copy everything else
-        std::unique_ptr<CellBase> clone() const
-        {
-          return cloneImpl();
-        }
-
-        //! A unique identifier for the cell
-        boost::uuids::uuid const & GetTag() const;
-
-        //! Computes average edge length of cell
-        double GetAverageEdgeLength() const;
-
-      protected:
-        //! Clones: shallow copy reference mesh, deep-copy everything else
-        std::unique_ptr<CellBase> virtual cloneImpl() const = 0;
-        //! allows separation of data and behaviors
-        class CellData;
-        //! Holds data
-        std::shared_ptr<CellData> data;
-
-        //! Allows more control by derived classes
-        CellBase(std::shared_ptr<CellData> const &dataIn) :
-            data(dataIn)
-        {
-        }
-    };
-    static_assert(
-        (not std::is_default_constructible<CellBase>::value)
-        and (not std::is_nothrow_default_constructible<CellBase>::value)
-        and (not std::is_move_constructible<CellBase>::value)
-        and (not std::is_nothrow_move_constructible<CellBase>::value)
-        and (not std::is_copy_constructible<CellBase>::value)
-        and std::is_copy_assignable<CellBase>::value
-        and std::is_nothrow_copy_assignable<CellBase>::value
-        and (not std::is_standard_layout<CellBase>::value)
-        and (not std::is_pod<CellBase>::value),
-        "Explicit type characteristics"
-    );
-
     //! Deformable cell for which energy and forces can be computed
     class Cell : public CellBase
     {
@@ -215,7 +45,7 @@ namespace hemelb
 
             Moduli(LatticeModulus b = 0, LatticeModulus s = 0, LatticeModulus v = 0,
                    LatticeModulus d = 0, LatticeModulus st = 0) :
-                bending(b), surface(s), volume(v), dilation(d), strain(s)
+                bending(b), surface(s), volume(v), dilation(d), strain(st)
             {
             }
             Moduli(std::initializer_list<LatticeModulus> const &l)
@@ -319,20 +149,6 @@ namespace hemelb
         and (not std::is_pod<Cell::Moduli>::value),
         "Explicit type characteristics"
     );
-
-    //! Typical cell container type
-    typedef std::set<std::shared_ptr<CellBase>> CellContainer;
-    //! \brief Container of template meshes
-    //! \details An instance of this object is used to reference meshes across the simulation
-    typedef std::map<std::string, std::shared_ptr<CellBase>> TemplateCellContainer;
-    //! Function to insert cells somewhere
-    typedef std::function<void(CellContainer::value_type)> CellInserter;
-
-    //! Write cell-mesh to file in VTK XML format
-    void writeVTKMesh(std::ostream &, std::shared_ptr<CellBase const>, util::UnitConverter const&);
-    //! Write cell-mesh to file in VTK XML format
-    void writeVTKMesh(
-        std::string const &, std::shared_ptr<CellBase const>, util::UnitConverter const&);
   }
 } // namespace hemelb::redblood
 #endif

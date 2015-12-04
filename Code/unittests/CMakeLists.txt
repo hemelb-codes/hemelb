@@ -1,10 +1,11 @@
 find_package(CPPUnit REQUIRED)
 include_directories(${CPPUNIT_INCLUDE_DIR})
 
-macro(add_test_executable target includename)
+function(create_test_executable target includename)
   set(HEMELB_UNITTEST_INCLUDE ${includename})
   configure_file(main.in.cc "${CMAKE_CURRENT_BINARY_DIR}/${target}.cc")
   add_executable(${target} "${CMAKE_CURRENT_BINARY_DIR}/${target}.cc")
+  add_codesign(${target})
   target_link_libraries(${target}
     ${heme_libraries}
     ${MPI_LIBRARIES}
@@ -20,16 +21,51 @@ macro(add_test_executable target includename)
     ${CMAKE_DL_LIBS}
   )
   set_target_properties(${target} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
-  INSTALL(TARGETS ${target} RUNTIME DESTINATION bin)
-  set(testdir "${PROJECT_BINARY_DIR}/tests/")
-  file(MAKE_DIRECTORY "${testdir}")
-  add_test(NAME ${target} COMMAND ${target} -o ${testdir}/${target}.xml)
-endmacro()
+endfunction()
+
+function(add_test_executable target includename)
+  create_test_executable(${target} ${includename})
+  add_test(
+    NAME ${target}
+    COMMAND
+        ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 1
+        $<TARGET_FILE:${target}> -o ${HEMELB_TESTDIR}/${target}.xml
+  )
+endfunction()
+
+function(add_mpi_test_executable target includename)
+  create_test_executable(mpi_${target} ${includename})
+  if(MPIEXEC_MAX_NUMPROCS GREATER 3 AND "${HEMELB_STEERING_LIB}" STREQUAL "none")
+    add_test(NAME mpi_${target}
+      COMMAND
+        ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS}
+        $<TARGET_FILE:mpi_${target}> -o ${HEMELB_TESTDIR}/mpi_${target}.xml
+    )
+    set_target_properties(mpi_${target} PROPERTIES LABEL mpi)
+    set_tests_properties (${target} PROPERTIES TIMEOUT 60)
+  endif()
+  if(NOT MPIEXEC_MAX_NUMPROCS GREATER 3)
+    message(WARNING "MPIEXEC_MAX_NUMPROCS = ${MPIEXEC_MAX_NUMPROCS}"
+      " yet redblood cells mpi tests require > 4: "
+      " disabling test mpi_${target}")
+  endif()
+  if(NOT "${HEMELB_STEERING_LIB}" STREQUAL "none")
+    message(WARNING "Cannot run mpi tests unless steering is disabled."
+      " Please set HEMELB_STEERING_LIB to none."
+      " Disabling test mpi_${target} until then.")
+  endif()
+endfunction()
+
+if(NOT HEMELB_TESTDIR)
+  set(HEMELB_TESTDIR "${PROJECT_BINARY_DIR}/tests")
+  file(MAKE_DIRECTORY "${HEMELB_TESTDIR}")
+endif()
 
 add_test_executable(unittests_hemelb hemelb_unittests.h)
 add_test_executable(unittests_redblood redblood.h)
-add_test_executable(unittests_redblood_integrations redblood_integrations.h)
-
+# add_test_executable(unittests_redblood_integrations redblood_integrations.h)
+add_test_executable(unittests_redblood_parallel redblood_parallel.h)
+add_mpi_test_executable(unittests_redblood redblood_mpi.h)
 
 add_to_resources(resources/four_cube.gmy resources/four_cube.xml
   resources/four_cube_multiscale.xml resources/config.xml

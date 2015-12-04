@@ -10,6 +10,8 @@
 #ifndef HEMELB_GEOMETRY_SITETYPE_H
 #define HEMELB_GEOMETRY_SITETYPE_H
 
+#include "net/MpiDataType.h"
+
 namespace hemelb
 {
   namespace geometry
@@ -25,6 +27,13 @@ namespace hemelb
       INLET_TYPE = 2U,
       OUTLET_TYPE = 3U
     };
+
+  }
+
+  namespace net
+  {
+    template<>
+    MPI_Datatype net::MpiDataTypeTraits<geometry::SiteType>::RegisterMpiDataType();
   }
 }
 #endif // HEMELB_GEOMETRY_SITETYPE_H

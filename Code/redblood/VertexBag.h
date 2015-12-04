@@ -11,7 +11,9 @@
 #define HEMELB_REDBLOOD_VERTEX_BAG_H
 
 #include <map>
+#include <string>
 #include <limits>
+#include <boost/uuid/uuid.hpp>
 
 #include "redblood/Cell.h"
 #include "redblood/stencil.h"
@@ -33,6 +35,8 @@ namespace hemelb
         VertexBag(std::shared_ptr<CellBase const> parent);
         //! Convenience constructor that also adds first vertex
         VertexBag(std::shared_ptr<CellBase const> parent, LatticePosition vertex);
+        //! Construct from scratch
+        VertexBag(boost::uuids::uuid const &tag, std::string const &templateName);
         //! Adds a vertex
         //! Shorter than going through GetVertices.
         void addVertex(LatticePosition const &pos)

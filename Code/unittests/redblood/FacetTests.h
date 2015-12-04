@@ -89,7 +89,7 @@ namespace hemelb
           {
             IndexPair const nodes = commonNodes(*main, *neighbor);
             CPPUNIT_ASSERT(nodes.first == 1 and nodes.second == 2);
-            LatticePosition const edge = commonEdge(*main, *neighbor);
+            LatticePosition const edge = (*main)(nodes.first, nodes.second);
             CPPUNIT_ASSERT(helpers::is_zero(edge - (mesh.vertices[1] - mesh.vertices[2])));
           }
           void testSingleNodes()

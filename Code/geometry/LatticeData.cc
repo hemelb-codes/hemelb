@@ -546,7 +546,12 @@ namespace hemelb
       util::Vector3D<site_t> blockCoords, localSiteCoords;
       GetBlockAndLocalSiteCoords(globalSiteCoords, blockCoords, localSiteCoords);
       // Get the block from the block identifiers.
-      const Block& block = GetBlock(GetBlockIdFromBlockCoords(blockCoords));
+      auto const blockID = GetBlockIdFromBlockCoords(blockCoords);
+      if(blockID >= static_cast<site_t>(blocks.size()))
+      {
+        return BIG_NUMBER2;
+      }
+      const Block& block = GetBlock(blockID);
       // If an empty (solid) block is addressed, return a nullptr pointer.
       if (block.IsEmpty())
       {

@@ -110,11 +110,13 @@ namespace hemelb
     {
       assert(countPerChild == 3);
 
+      int intelbug(0);
       switch (callCounter++)
       {
         case 0:
           for (unsigned childIndex = 0; childIndex < spreadFactor; childIndex++)
           {
+            ++intelbug;
             dataStart[childIndex * countPerChild] = 14.0;
             dataStart[childIndex * countPerChild + 1] = 15.0;
             dataStart[childIndex * countPerChild + 2] = 0.01;
@@ -124,6 +126,7 @@ namespace hemelb
         case 1:
           for (unsigned childIndex = 0; childIndex < spreadFactor - 1; childIndex++)
           {
+            ++intelbug;
             dataStart[childIndex * countPerChild] = 14.0;
             dataStart[childIndex * countPerChild + 1] = 15.0;
             dataStart[childIndex * countPerChild + 2] = 1.0;
@@ -136,6 +139,7 @@ namespace hemelb
         case 2:
           for (unsigned childIndex = 0; childIndex < spreadFactor; childIndex++)
           {
+            ++intelbug;
             dataStart[childIndex * countPerChild] = 14.0;
             dataStart[childIndex * countPerChild + 1] = 15.0;
             dataStart[childIndex * countPerChild + 2] = 0.01;

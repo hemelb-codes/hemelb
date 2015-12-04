@@ -12,6 +12,7 @@
 
 #include "redblood/Cell.h"
 #include "redblood/FlowExtension.h"
+#include "redblood/types.h"
 #include "units.h"
 
 namespace hemelb
