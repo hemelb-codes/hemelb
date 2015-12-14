@@ -13,6 +13,15 @@
 
 namespace hemelb
 {
+  namespace net
+  {
+    template<>
+    MPI_Datatype MpiDataTypeTraits<geometry::SiteType>::RegisterMpiDataType()
+    {
+      return MpiDataTypeTraits<int>::RegisterMpiDataType();
+    }
+  }
+
   namespace geometry
   {
     /**
