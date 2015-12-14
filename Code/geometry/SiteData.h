@@ -13,9 +13,16 @@
 #include "units.h"
 #include "geometry/GeometrySite.h"
 #include "geometry/SiteType.h"
+#include "net/MpiDataType.h"
 
 namespace hemelb
 {
+  namespace net
+  {
+    template<>
+    MPI_Datatype MpiDataTypeTraits<geometry::SiteType>::RegisterMpiDataType();
+  }
+
   namespace geometry
   {
     class SiteData
