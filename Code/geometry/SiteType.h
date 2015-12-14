@@ -10,8 +10,6 @@
 #ifndef HEMELB_GEOMETRY_SITETYPE_H
 #define HEMELB_GEOMETRY_SITETYPE_H
 
-#include "net/MpiDataType.h"
-
 namespace hemelb
 {
   namespace geometry
@@ -30,10 +28,5 @@ namespace hemelb
 
   }
 
-  namespace net
-  {
-    template<>
-    MPI_Datatype net::MpiDataTypeTraits<geometry::SiteType>::RegisterMpiDataType();
-  }
 }
 #endif // HEMELB_GEOMETRY_SITETYPE_H
