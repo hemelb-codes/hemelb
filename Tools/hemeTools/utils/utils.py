@@ -1,12 +1,5 @@
 #!/usr/bin/env python
-# encoding: utf-8
-"""
-utils.py
-
-Created by James Hetherington on 2012-10-18.
-Copyright (c) 2012 UCL. All rights reserved.
-
-Utility functions for HemeTools
+"""Utility functions for HemeTools
 """
 
 import numpy as np

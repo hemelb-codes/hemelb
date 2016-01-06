@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # 
 # Copyright (C) University College London, 2007-2012, all rights reserved.
 # 
