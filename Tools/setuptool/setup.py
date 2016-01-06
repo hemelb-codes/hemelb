@@ -326,7 +326,7 @@ if __name__ == "__main__":
     # HemeLB classes
     hemelb_cpp = [os.path.join(HemeLbDir, cpp)
                   for cpp in ['util/Vector3D.cc',
-                              'geometry/SiteData.cc',
+                              'geometry/SiteDataBare.cc',
                               'lb/lattices/D3Q27.cc',
                               'io/formats/geometry.cc',
                               'io/writers/xdr/XdrFileWriter.cc',
