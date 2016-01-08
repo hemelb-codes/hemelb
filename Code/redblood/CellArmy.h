@@ -152,6 +152,8 @@ namespace hemelb
         void AddCell(CellContainer::value_type cell)
         {
           auto const barycenter = cell->GetBarycenter();
+
+          //! @todo: #623 AddCell should only be called if the subdomain contains the relevant RBC inlet
           auto const id = latticeData.GetProcIdFromGlobalCoords(barycenter);
           if (id == latticeData.GetCommunicator().Rank())
           {
