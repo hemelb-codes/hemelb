@@ -207,29 +207,20 @@ namespace hemelb
 
       auto const distributions = hemelb::redblood::parallel::nodeDistributions(latticeData, cells);
 
-//      // Goes through "ExchangeCells" to figure out who owns/lends what.
-//      TemplateCellContainer const templates =
-//          { { cells[0]->GetTemplateName(), cells[0]->clone() } };
-////      auto ownership = [&cells, nCells](CellContainer::const_reference cell)
-////      {
-////        size_t i(0);
-////        for(auto const& c: cells)
-////        {
-////          if(cell->GetTag() == c->GetTag())
-////          {
-////            break;
-////          }
-////          ++i;
-////        }
-////        proc_t result = i / nCells;
-////        return result;
-////      };
-//
-//      hemelb::redblood::parallel::ExchangeCells xchange(neighbourDependenciesGraph, net::MpiCommunicator::World());
-//      xchange.PostCellMessageLength(distributions, cells, ownership);
-//      xchange.PostCells(distributions, cells, ownership);
-//      auto const distCells = xchange.ReceiveCells(templates);
-//      auto const &lentCells = std::get<2>(distCells);
+      ExchangeCells xc(neighbourDependenciesGraph);
+      auto ownership = [this](CellContainer::value_type cell) {
+        auto const id = latticeData.GetProcIdFromGlobalCoords(cell->GetBarycenter());
+        if (id != BIG_NUMBER2)
+        {
+          throw Exception("Cell nobody owns");
+        }
+        return id;
+      };
+      xc.PostCellMessageLength(distributions, cells, ownership);
+      xc.PostCells(distributions, cells, ownership);
+      auto const distCells = xc.ReceiveCells(rbcMeshes);
+      xc.Update(cells, result);
+      auto const &lentCells = std::get<2>(distCells);
 
       // Actually perform velocity integration
       hemelb::redblood::parallel::IntegrateVelocities integrator(neighbourDependenciesGraph);
@@ -240,6 +231,8 @@ namespace hemelb
 
       //! @todo Any changes required for these lines when running in parallel?
       // Positions have changed: update Divide and Conquer stuff
+      // update should be a function taking the distCells tuple (newly owned, newly disowned, lent)
+      // and update the cell container within cellDnC
       cellDnC.update();
     }
 
