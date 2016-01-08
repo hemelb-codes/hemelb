@@ -85,6 +85,10 @@ namespace hemelb
         {
           return outlets;
         }
+        std::shared_ptr<redblood::TemplateCellContainer> GetRBCMeshes() const
+        {
+          return rbcMeshes;
+        }
         std::shared_ptr<std::vector<redblood::FlowExtension>> GetRBCOutlets() const
         {
           return rbcOutlets;

@@ -23,6 +23,8 @@
 #include "geometry/LatticeData.h"
 #include "redblood/types.h"
 #include "redblood/parallel/SpreadForces.h"
+#include "Exception.h"
+#include "redblood/parallel/IntegrateVelocities.h"
 
 namespace hemelb
 {
@@ -65,11 +67,13 @@ namespace hemelb
         typedef std::function<void(const CellContainer &)> CellChangeListener;
 
         CellArmy(geometry::LatticeData &_latDat, CellContainer const &cells,
+                 std::shared_ptr<TemplateCellContainer> const &cellTemplates,
                  LatticeDistance boxsize = 10.0, Node2NodeForce const &cell2Cell = { 0e0, 1e0, 2 },
                  Node2NodeForce const &cell2Wall = { 0e0, 1e0, 2 }) :
             latticeData(_latDat), cells(cells), cellDnC(cells, boxsize, cell2Cell.cutoff + 1e-6),
                 wallDnC(createWallNodeDnC<Lattice>(_latDat, boxsize, cell2Wall.cutoff + 1e-6)),
-                cell2Cell(cell2Cell), cell2Wall(cell2Wall), neighbourDependenciesGraph(CreateGraphComm(net::MpiCommunicator::World()))
+                cell2Cell(cell2Cell), cell2Wall(cell2Wall), neighbourDependenciesGraph(CreateGraphComm(net::MpiCommunicator::World())),
+                cellTemplates(cellTemplates)
         {
         }
 
@@ -148,12 +152,16 @@ namespace hemelb
         void AddCell(CellContainer::value_type cell)
         {
           auto const barycenter = cell->GetBarycenter();
-          log::Logger::Log<log::Debug, log::OnePerCore>("Adding cell at (%f, %f, %f)",
-                                                        barycenter.x,
-                                                        barycenter.y,
-                                                        barycenter.z);
-          cellDnC.insert(cell);
-          cells.insert(cell);
+          auto const id = latticeData.GetProcIdFromGlobalCoords(barycenter);
+          if (id == latticeData.GetCommunicator().Rank())
+          {
+            log::Logger::Log<log::Debug, log::OnePerCore>("Adding cell at (%f, %f, %f)",
+                                                          barycenter.x,
+                                                          barycenter.y,
+                                                          barycenter.z);
+            cellDnC.insert(cell);
+            cells.insert(cell);
+          }
         }
 
         //! \brief Sets cell to cell interaction forces
@@ -197,6 +205,8 @@ namespace hemelb
         Node2NodeForce cell2Wall;
         //! Communicator defining the data depencies between processors for spreading/interpolation
         net::MpiCommunicator neighbourDependenciesGraph;
+        //! Container with the templates used to create the RBC meshes
+        std::shared_ptr<TemplateCellContainer> cellTemplates;
 
     };
 
@@ -207,33 +217,30 @@ namespace hemelb
 
       auto const distributions = hemelb::redblood::parallel::nodeDistributions(latticeData, cells);
 
-      ExchangeCells xc(neighbourDependenciesGraph);
+      parallel::ExchangeCells xc(neighbourDependenciesGraph);
       auto ownership = [this](CellContainer::value_type cell) {
         auto const id = latticeData.GetProcIdFromGlobalCoords(cell->GetBarycenter());
-        if (id != BIG_NUMBER2)
+        if (id == BIG_NUMBER2)
         {
-          throw Exception("Cell nobody owns");
+          throw Exception() << "Cell nobody owns";
         }
         return id;
       };
       xc.PostCellMessageLength(distributions, cells, ownership);
       xc.PostCells(distributions, cells, ownership);
-      auto const distCells = xc.ReceiveCells(rbcMeshes);
-      xc.Update(cells, result);
+      auto const distCells = xc.ReceiveCells(cellTemplates);
+      xc.Update(cells, distCells);
       auto const &lentCells = std::get<2>(distCells);
 
       // Actually perform velocity integration
       hemelb::redblood::parallel::IntegrateVelocities integrator(neighbourDependenciesGraph);
       integrator.PostMessageLength(lentCells);
-      integrator.ComputeLocalVelocitiesAndUpdatePositions<Traits>(latticeData, cells);
-      integrator.PostVelocities<Traits>(latticeData, lentCells);
+      integrator.ComputeLocalVelocitiesAndUpdatePositions<TRAITS>(latticeData, cells);
+      integrator.PostVelocities<TRAITS>(latticeData, lentCells);
       integrator.UpdatePositionsNonLocal(distributions, cells);
 
-      //! @todo Any changes required for these lines when running in parallel?
       // Positions have changed: update Divide and Conquer stuff
-      // update should be a function taking the distCells tuple (newly owned, newly disowned, lent)
-      // and update the cell container within cellDnC
-      cellDnC.update();
+      cellDnC.update(distCells);
     }
 
     template<class TRAITS>

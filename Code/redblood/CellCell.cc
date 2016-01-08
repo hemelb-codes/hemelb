@@ -126,6 +126,24 @@ namespace hemelb
       initializeCells(*this, cells, GetHaloLength());
     }
 
+    void DivideConquerCells::update(parallel::ExchangeCells::ChangedCells changedCells)
+    {
+      // 3-tuple with the newly owned cells, the disowned cells, and the lent cells
+      auto const &newCells = std::get<0>(changedCells);
+      auto const &disownedCells = std::get<1>(changedCells);
+      auto const &lentCells = std::get<2>(changedCells);
+
+      auto insert_cell = std::bind(&DivideConquerCells::insert, *this, std::placeholders::_1);
+      auto remove = std::bind(&DivideConquerCells::remove, *this, std::placeholders::_1);
+      auto insert_cell_map = [&insert_cell] (std::pair<proc_t, CellContainer> const &pair){
+          std::for_each(pair.second.begin(), pair.second.end(), insert_cell);
+      };
+
+      std::for_each(newCells.begin(), newCells.end(), insert_cell);
+      std::for_each(disownedCells.begin(), disownedCells.end(), remove);
+      std::for_each(lentCells.begin(), lentCells.end(), insert_cell_map);
+    }
+
     DivideConquerCells::const_range DivideConquerCells::operator()(LatticeVector const &pos) const
     {
       base_type::const_range const boxrange = base_type::equal_range(pos);

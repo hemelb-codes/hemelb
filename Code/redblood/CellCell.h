@@ -25,6 +25,7 @@
 #include "redblood/stencil.h"
 #include "redblood/Interpolation.h"
 #include "redblood/Borders.h"
+#include "redblood/parallel/CellParallelization.h"
 
 namespace hemelb
 {
@@ -164,6 +165,10 @@ namespace hemelb
         void update();
         //! recomputes using current cells
         void SetBoxSizeAndHalo(LatticeDistance boxSize, LatticeDistance halo);
+
+        //! In a parallel simulation, some cells will leave/enter the domain.
+        //! \param[in] 3-tuple with the newly owned cells, the disowned cells, and the lent cells
+        void update(parallel::ExchangeCells::ChangedCells changedCells);
 
         //! Insert a new cell
         //! Returns true if the cell was inserted, false if it already existed.
