@@ -22,11 +22,37 @@
 #include "redblood/FlowExtension.h"
 #include "geometry/LatticeData.h"
 #include "redblood/types.h"
+#include "redblood/parallel/SpreadForces.h"
 
 namespace hemelb
 {
   namespace redblood
   {
+    //! \brief Generates a graph communicator describing the data dependencies for interpolation and spreading
+    //! @todo Move declaration somewhere more suitable
+    //! @todo This is the most conservative and inefficient implementation of the method possible
+    net::MpiCommunicator CreateGraphComm(net::MpiCommunicator const &comm)
+    {
+      if (comm.Size() == 1)
+      {
+      }
+      // setups a graph communicator that in-practice is all-to-all
+      // Simpler than setting up something realistic
+      std::vector<std::vector<int>> vertices;
+      for (size_t i(0); i < comm.Size(); ++i)
+      {
+        vertices.push_back(std::vector<int>());
+        for (size_t j(0); j < comm.Size(); ++j)
+        {
+          if (j != i)
+          {
+            vertices[i].push_back(j);
+          }
+        }
+      }
+      return comm.Graph(vertices);
+    }
+
     //! \brief Federates the cells together so we can apply ops simultaneously
     //! \tparam TRAITS holds type of kernel and stencil
     template<class TRAITS> class CellArmy
@@ -43,7 +69,7 @@ namespace hemelb
                  Node2NodeForce const &cell2Wall = { 0e0, 1e0, 2 }) :
             latticeData(_latDat), cells(cells), cellDnC(cells, boxsize, cell2Cell.cutoff + 1e-6),
                 wallDnC(createWallNodeDnC<Lattice>(_latDat, boxsize, cell2Wall.cutoff + 1e-6)),
-                cell2Cell(cell2Cell), cell2Wall(cell2Wall)
+                cell2Cell(cell2Cell), cell2Wall(cell2Wall), neighbourDependenciesGraph(CreateGraphComm(net::MpiCommunicator::World()))
         {
         }
 
@@ -109,7 +135,7 @@ namespace hemelb
           }
         }
 
-        //! Sets outlets within which cells disapear
+        //! Sets outlets within which cells disappear
         void SetOutlets(std::vector<FlowExtension> const & olets)
         {
           outlets = olets;
@@ -169,24 +195,50 @@ namespace hemelb
         Node2NodeForce cell2Cell;
         //! Interaction terms between cells
         Node2NodeForce cell2Wall;
+        //! Communicator defining the data depencies between processors for spreading/interpolation
+        net::MpiCommunicator neighbourDependenciesGraph;
+
     };
 
     template<class TRAITS>
     void CellArmy<TRAITS>::Fluid2CellInteractions()
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Fluid -> cell interations");
-      std::vector<LatticePosition> & positions = work;
-      LatticePosition const origin(0, 0, 0);
 
-      CellContainer::const_iterator i_first = cells.begin();
-      CellContainer::const_iterator const i_end = cells.end();
-      for (; i_first != i_end; ++i_first)
-      {
-        positions.resize( (*i_first)->GetVertices().size());
-        std::fill(positions.begin(), positions.end(), origin);
-        velocitiesOnMesh<Kernel, Stencil>(*i_first, latticeData, positions);
-        (*i_first)->operator+=(positions);
-      }
+      auto const distributions = hemelb::redblood::parallel::nodeDistributions(latticeData, cells);
+
+//      // Goes through "ExchangeCells" to figure out who owns/lends what.
+//      TemplateCellContainer const templates =
+//          { { cells[0]->GetTemplateName(), cells[0]->clone() } };
+////      auto ownership = [&cells, nCells](CellContainer::const_reference cell)
+////      {
+////        size_t i(0);
+////        for(auto const& c: cells)
+////        {
+////          if(cell->GetTag() == c->GetTag())
+////          {
+////            break;
+////          }
+////          ++i;
+////        }
+////        proc_t result = i / nCells;
+////        return result;
+////      };
+//
+//      hemelb::redblood::parallel::ExchangeCells xchange(neighbourDependenciesGraph, net::MpiCommunicator::World());
+//      xchange.PostCellMessageLength(distributions, cells, ownership);
+//      xchange.PostCells(distributions, cells, ownership);
+//      auto const distCells = xchange.ReceiveCells(templates);
+//      auto const &lentCells = std::get<2>(distCells);
+
+      // Actually perform velocity integration
+      hemelb::redblood::parallel::IntegrateVelocities integrator(neighbourDependenciesGraph);
+      integrator.PostMessageLength(lentCells);
+      integrator.ComputeLocalVelocitiesAndUpdatePositions<Traits>(latticeData, cells);
+      integrator.PostVelocities<Traits>(latticeData, lentCells);
+      integrator.UpdatePositionsNonLocal(distributions, cells);
+
+      //! @todo Any changes required for these lines when running in parallel?
       // Positions have changed: update Divide and Conquer stuff
       cellDnC.update();
     }
@@ -194,13 +246,21 @@ namespace hemelb
     template<class TRAITS>
     void CellArmy<TRAITS>::Cell2FluidInteractions()
     {
+      using namespace hemelb::redblood::parallel;
+
       log::Logger::Log<log::Debug, log::OnePerCore>("Cell -> fluid interations");
       latticeData.ResetForces();
 
-      for (auto const &cell : cells)
-      {
-        forcesOnGrid<typename Kernel::LatticeType, Stencil>(cell, work, latticeData);
-      }
+      auto const distributions = nodeDistributions(latticeData, cells);
+
+      SpreadForces mpi_spreader(neighbourDependenciesGraph);
+      mpi_spreader.PostMessageLength(distributions, cells);
+      mpi_spreader.ComputeForces(cells);
+      mpi_spreader.PostForcesAndNodes(distributions, cells);
+      mpi_spreader.SpreadLocalForces<TRAITS>(latticeData, cells);
+      mpi_spreader.SpreadNonLocalForces<TRAITS>(latticeData);
+
+      //! @todo Any changes required for these lines when running in parallel?
       addCell2CellInteractions<Stencil>(cellDnC, cell2Cell, latticeData);
       addCell2WallInteractions<Stencil>(cellDnC, wallDnC, cell2Wall, latticeData);
     }

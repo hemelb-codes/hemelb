@@ -132,7 +132,7 @@ namespace hemelb
         return cells;
       }
 
-      net::MpiCommunicator CreateGraphComm(net::MpiCommunicator const &comm)
+      net::MpiCommunicator CreateDumbGraphComm(net::MpiCommunicator const &comm)
       {
         if (comm.Size() == 1)
         {

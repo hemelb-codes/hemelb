@@ -139,7 +139,7 @@ namespace hemelb
               CellContainer { cells.begin(), cells.end() };
         auto const distributions = nodeDistributions(latDat, owned);
 
-        hemelb::redblood::parallel::SpreadForces mpi_spreader(CreateGraphComm(split));
+        hemelb::redblood::parallel::SpreadForces mpi_spreader(CreateDumbGraphComm(split));
         mpi_spreader.PostMessageLength(distributions, owned);
         mpi_spreader.ComputeForces(owned);
         mpi_spreader.PostForcesAndNodes(distributions, owned);
