@@ -42,7 +42,7 @@ function(add_mpi_test_executable target includename)
         $<TARGET_FILE:mpi_${target}> -o ${HEMELB_TESTDIR}/mpi_${target}.xml
     )
     set_target_properties(mpi_${target} PROPERTIES LABEL mpi)
-    set_tests_properties (${target} PROPERTIES TIMEOUT 60)
+    set_tests_properties (mpi_${target} PROPERTIES TIMEOUT 60)
   endif()
   if(NOT MPIEXEC_MAX_NUMPROCS GREATER 3)
     message(WARNING "MPIEXEC_MAX_NUMPROCS = ${MPIEXEC_MAX_NUMPROCS}"
@@ -65,6 +65,7 @@ add_test_executable(unittests_hemelb hemelb_unittests.h)
 add_test_executable(unittests_redblood redblood.h)
 # add_test_executable(unittests_redblood_integrations redblood_integrations.h)
 add_mpi_test_executable(unittests_redblood redblood_mpi.h)
+add_mpi_test_executable(unittests_redblood_integration redbloodMPIIntegrations.h)
 
 add_to_resources(resources/four_cube.gmy resources/four_cube.xml
   resources/four_cube_multiscale.xml resources/config.xml
