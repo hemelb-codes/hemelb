@@ -45,6 +45,9 @@ namespace hemelb
         LatticeEnergy energy(0);
         for (auto const &cell : owned)
         {
+          // Create the map entry and allocate memory
+          cellForces[cell->GetTag()].resize(cell->GetNumberOfNodes());
+
           energy += cell->Energy(cellForces[cell->GetTag()]);
         }
         return energy;
