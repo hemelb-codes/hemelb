@@ -37,7 +37,7 @@ namespace hemelb
           CPPUNIT_TEST_SUITE (MPIParallelIntegrationTests);
           CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::FourPoint>);
           CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::ThreePoint>);
-          CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::Cosine>);
+          CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::CosineApprox>);
           CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::TwoPoint>);
           CPPUNIT_TEST_SUITE_END();
 

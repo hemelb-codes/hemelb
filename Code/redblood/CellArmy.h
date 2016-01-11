@@ -217,7 +217,7 @@ namespace hemelb
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Fluid -> cell interations");
 
-      auto const distributions = hemelb::redblood::parallel::nodeDistributions(latticeData, cells);
+      auto distributions = hemelb::redblood::parallel::nodeDistributions(latticeData, cells);
 
       parallel::ExchangeCells xc(neighbourDependenciesGraph);
       auto ownership = [this](CellContainer::value_type cell) {
@@ -232,6 +232,7 @@ namespace hemelb
       xc.PostCells(distributions, cells, ownership);
       auto const distCells = xc.ReceiveCells(cellTemplates);
       xc.Update(cells, distCells);
+      xc.Update(distributions, distCells, parallel::details::AssessMPIFunction<Stencil>(latticeData));
       auto const &lentCells = std::get<2>(distCells);
 
       // Actually perform velocity integration
