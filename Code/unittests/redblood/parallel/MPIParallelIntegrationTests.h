@@ -36,9 +36,9 @@ namespace hemelb
       {
           CPPUNIT_TEST_SUITE (MPIParallelIntegrationTests);
           CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::FourPoint>);
-          CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::ThreePoint>);
-          CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::CosineApprox>);
-          CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::TwoPoint>);
+//          CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::ThreePoint>);
+//          CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::CosineApprox>);
+//          CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::TwoPoint>);
           CPPUNIT_TEST_SUITE_END();
 
         public:
@@ -84,7 +84,7 @@ namespace hemelb
           CopyResourceToTempdir("large_cylinder.gmy");
           CopyResourceToTempdir("red_blood_cell.txt");
 
-          ModifyXMLInput("large_cylinder_rbc.xml", { "simulation", "steps", "value" }, 22000);
+          ModifyXMLInput("large_cylinder_rbc.xml", { "simulation", "steps", "value" }, 5000);
           ModifyXMLInput("large_cylinder_rbc.xml",
                          { "redbloodcells", "controller", "stencil" },
                          "two");
