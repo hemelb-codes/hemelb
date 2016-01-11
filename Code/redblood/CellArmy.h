@@ -67,12 +67,13 @@ namespace hemelb
         typedef std::function<void(const CellContainer &)> CellChangeListener;
 
         CellArmy(geometry::LatticeData &_latDat, CellContainer const &cells,
-                 std::shared_ptr<TemplateCellContainer> const &cellTemplates,
+                 std::shared_ptr<TemplateCellContainer> cellTemplates,
                  LatticeDistance boxsize = 10.0, Node2NodeForce const &cell2Cell = { 0e0, 1e0, 2 },
-                 Node2NodeForce const &cell2Wall = { 0e0, 1e0, 2 }) :
+                 Node2NodeForce const &cell2Wall = { 0e0, 1e0, 2 }, net::MpiCommunicator const &worldCommunicator = net::MpiCommunicator::World()) :
             latticeData(_latDat), cells(cells), cellDnC(cells, boxsize, cell2Cell.cutoff + 1e-6),
                 wallDnC(createWallNodeDnC<Lattice>(_latDat, boxsize, cell2Wall.cutoff + 1e-6)),
-                cell2Cell(cell2Cell), cell2Wall(cell2Wall), neighbourDependenciesGraph(CreateGraphComm(net::MpiCommunicator::World())),
+                cell2Cell(cell2Cell), cell2Wall(cell2Wall), worldCommunicator(worldCommunicator),
+                neighbourDependenciesGraph(CreateGraphComm(worldCommunicator)),
                 cellTemplates(cellTemplates)
         {
         }
@@ -205,7 +206,9 @@ namespace hemelb
         Node2NodeForce cell2Cell;
         //! Interaction terms between cells
         Node2NodeForce cell2Wall;
-        //! Communicator defining the data depencies between processors for spreading/interpolation
+        //! Communicator with all the processes participating in the simulation
+        net::MpiCommunicator const &worldCommunicator;
+        //! Communicator defining the data dependencies between processors for spreading/interpolation
         net::MpiCommunicator neighbourDependenciesGraph;
         //! Container with the templates used to create the RBC meshes
         std::shared_ptr<TemplateCellContainer> cellTemplates;
@@ -219,7 +222,7 @@ namespace hemelb
 
       auto distributions = hemelb::redblood::parallel::nodeDistributions(latticeData, cells);
 
-      parallel::ExchangeCells xc(neighbourDependenciesGraph);
+      parallel::ExchangeCells xc(neighbourDependenciesGraph, worldCommunicator);
       auto ownership = [this](CellContainer::value_type cell) {
         auto const id = latticeData.GetProcIdFromGlobalCoords(cell->GetBarycenter());
         if (id == BIG_NUMBER2)

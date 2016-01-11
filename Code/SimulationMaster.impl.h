@@ -181,7 +181,8 @@ namespace hemelb
       auto const controller = std::make_shared<Controller>(
          *latticeData, cells, simConfig->GetRBCMeshes(),
          simConfig->GetBoxSize(),
-         simConfig->GetCell2Cell(), simConfig->GetCell2Wall()
+         simConfig->GetCell2Cell(), simConfig->GetCell2Wall(),
+         ioComms
       );
       controller->SetCellInsertion(simConfig->GetInserter());
       controller->SetOutlets(*simConfig->GetRBCOutlets());

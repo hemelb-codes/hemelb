@@ -84,7 +84,7 @@ namespace hemelb
           CopyResourceToTempdir("large_cylinder.gmy");
           CopyResourceToTempdir("red_blood_cell.txt");
 
-          ModifyXMLInput("large_cylinder_rbc.xml", { "simulation", "steps", "value" }, 5000);
+          ModifyXMLInput("large_cylinder_rbc.xml", { "simulation", "steps", "value" }, 2000);
           ModifyXMLInput("large_cylinder_rbc.xml",
                          { "redbloodcells", "controller", "stencil" },
                          "two");
@@ -153,7 +153,7 @@ namespace hemelb
         }
 
         world.Broadcast(num_cells_sequential, 0);
-        world.AllReduce(num_cells_parallel, MPI_SUM);
+        num_cells_parallel = world.AllReduce(num_cells_parallel, MPI_SUM);
 
         CPPUNIT_ASSERT_EQUAL(num_cells_sequential, num_cells_parallel);
 
