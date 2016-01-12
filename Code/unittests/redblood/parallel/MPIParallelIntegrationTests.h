@@ -24,7 +24,6 @@
 #include "unittests/helpers/LatticeDataAccess.h"
 #include "unittests/helpers/FolderTestFixture.h"
 #include "unittests/redblood/parallel/Fixtures.h"
-#include "redblood/CellController.h"
 
 namespace hemelb
 {
@@ -84,16 +83,16 @@ namespace hemelb
           CopyResourceToTempdir("large_cylinder.gmy");
           CopyResourceToTempdir("red_blood_cell.txt");
 
-          ModifyXMLInput("large_cylinder_rbc.xml", { "simulation", "steps", "value" }, 2000);
-          ModifyXMLInput("large_cylinder_rbc.xml",
-                         { "redbloodcells", "controller", "stencil" },
-                         "two");
-          ModifyXMLInput("large_cylinder_rbc.xml", { "outlets",
-                                                     "outlet",
-                                                     "flowextension",
-                                                     "length",
-                                                     "value" },
-                         40e-6);
+          ModifyXMLInput("large_cylinder_rbc.xml", { "simulation", "steps", "value" }, 20000);
+
+//          auto set_modulus_to_zero = [this](std::string const &modulus_name)
+//          {
+//            ModifyXMLInput("large_cylinder_rbc.xml", { "redbloodcells", "cells", "cell", "moduli", modulus_name, "value" }, 0.0);
+//          };
+//
+//          std::vector<std::string> moduli_list = {"bending", "surface", "volume", "dilation", "strain"};
+//          std::for_each(moduli_list.begin(), moduli_list.end(), set_modulus_to_zero);
+
         }
         HEMELB_MPI_CALL(MPI_Barrier, (net::MpiCommunicator::World()));
 
@@ -140,9 +139,10 @@ namespace hemelb
         master->RunSimulation();
         master->Finalise();
 
+        // check that both simulations have one cell in the domain
         unsigned num_cells_sequential;
         unsigned num_cells_parallel;
-        if (world.Rank() == 0)
+        if (color)
         {
           num_cells_sequential = num_cells;
           num_cells_parallel = 0;
@@ -151,11 +151,42 @@ namespace hemelb
         {
           num_cells_parallel = num_cells;
         }
-
         world.Broadcast(num_cells_sequential, 0);
         num_cells_parallel = world.AllReduce(num_cells_parallel, MPI_SUM);
+        CPPUNIT_ASSERT_EQUAL(num_cells_sequential, 1u);
+        CPPUNIT_ASSERT_EQUAL(num_cells_parallel, 1u);
 
-        CPPUNIT_ASSERT_EQUAL(num_cells_sequential, num_cells_parallel);
+        // Find out number of vertices in the RBC mesh
+        unsigned num_vertices = color ? (*controller->GetCells().begin())->GetVertices().size() : 0;
+        world.Broadcast(num_vertices, 0);
+
+        // Find out the location of the mesh vertices in the sequential run
+        hemelb::redblood::MeshData::Vertices sequential_vertices(num_vertices);
+        if (color)
+        {
+          sequential_vertices = (*controller->GetCells().begin())->GetVertices();
+        }
+        HEMELB_MPI_CALL(MPI_Bcast, (&sequential_vertices[0], 3*sequential_vertices.size(), net::MpiDataType<LatticeDistance>(), 0, net::MpiCommunicator::World()));
+
+        // Find out the location of the mesh vertices in the parallel run
+        hemelb::redblood::MeshData::Vertices vertices_location_reduction(num_vertices, {0,0,0});
+        if (!color && (controller->GetCells().size()==1))
+        {
+          // If I'm the process in the parallel run than owns the only existing cell
+          vertices_location_reduction = (*controller->GetCells().begin())->GetVertices();
+        }
+        hemelb::redblood::MeshData::Vertices parallel_vertices(num_vertices);
+        HEMELB_MPI_CALL(MPI_Allreduce,
+                        (net::MpiConstCast(&vertices_location_reduction[0]), &parallel_vertices[0], 3*vertices_location_reduction.size(), net::MpiDataType<LatticeDistance>(), MPI_SUM, net::MpiCommunicator::World()));
+
+        // Compare locations in sequential and parallel runs
+        for (auto const item : util::zip(sequential_vertices, parallel_vertices))
+        {
+          auto delta = 1e-12;
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item)[0], std::get<1>(item)[0], delta);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item)[1], std::get<1>(item)[1], delta);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(std::get<0>(item)[2], std::get<1>(item)[2], delta);
+        }
 
       }
 
