@@ -35,6 +35,8 @@ namespace hemelb
     LatticeData::LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult, const net::IOCommunicator& comms_) :
         latticeInfo(latticeInfo), neighbouringData(new neighbouring::NeighbouringLatticeData(latticeInfo)), comms(comms_)
     {
+      localRank = comms.Rank();
+
       SetBasicDetails(readResult.GetBlockDimensions(),
                       readResult.GetBlockSize());
 
@@ -42,7 +44,7 @@ namespace hemelb
       // if debugging then output beliefs regarding geometry and neighbour list
       if (log::Logger::ShouldDisplay<log::Trace>())
       {
-        proc_t localRank = comms.Rank();
+        //proc_t localRank = comms.Rank();
         for (std::vector<NeighbouringProcessor>::iterator itNeighProc = neighbouringProcs.begin();
             itNeighProc != neighbouringProcs.end(); ++itNeighProc)
         {
@@ -110,6 +112,8 @@ namespace hemelb
 
           blocks[blockId].SetProcessorRankForSite(localSiteId, blockReadIn.Sites[localSiteId].targetProcessor);
 
+
+	  printf("b %u, s %u, rank %u\n",blockId,localSiteId,blockReadIn.Sites[localSiteId].targetProcessor);
           // If the site is not on this processor, continue.
           if (localRank != blockReadIn.Sites[localSiteId].targetProcessor)
           {
@@ -161,7 +165,6 @@ namespace hemelb
             }
             isMidDomainSite = false;
             totalSharedFs++;
-
             // The first time, net_neigh_procs = 0, so
             // the loop is not executed.
             bool flag = true;
@@ -181,7 +184,6 @@ namespace hemelb
                 break;
               }
             }
-
             // If flag is 1, we didn't find a neighbour-proc with the neighbour-site on it
             // so we need a new neighbouring processor.
             if (flag)
@@ -205,10 +207,10 @@ namespace hemelb
                                                             latticeInfo.GetVector(l).z);
             }
           }
-
           // Set the collision type data. map_block site data is renumbered according to
           // fluid site numbers within a particular collision type.
           SiteData siteData(blockReadIn.Sites[localSiteId]);
+
           int l = -1;
           switch (siteData.GetCollisionType())
           {
@@ -232,10 +234,7 @@ namespace hemelb
               break;
           }
 
-          const util::Vector3D<float>& normal = blockReadIn.Sites[localSiteId].wallNormalAvailable ?
-            blockReadIn.Sites[localSiteId].wallNormal :
-            util::Vector3D<float>(NO_VALUE);
-
+          const util::Vector3D<float>& normal = blockReadIn.Sites[localSiteId].wallNormalAvailable ? blockReadIn.Sites[localSiteId].wallNormal : util::Vector3D<float>(NO_VALUE);
           if (isMidDomainSite)
           {
             midDomainBlockNumber[l].push_back(blockId);
@@ -258,10 +257,8 @@ namespace hemelb
               domainEdgeWallDistance[l].push_back(blockReadIn.Sites[localSiteId].links[direction - 1].distanceToIntersection);
             }
           }
-
-        }
-
-      }
+        } 
+      }            
 
       PopulateWithReadData(midDomainBlockNumber,
                            midDomainSiteNumber,
@@ -376,6 +373,8 @@ namespace hemelb
           site_t localIndex = map_block_p.GetLocalContiguousIndexForSite(siteTraverser.GetCurrentIndex());
           // Set neighbour location for the distribution component at the centre of
           // this site.
+	  printf("rwah1 %d %d\n",localIndex,BIG_NUMBER2);
+//	  if (localIndex != - BIG_NUMBER2);
           SetNeighbourLocation(localIndex, 0, localIndex * latticeInfo.GetNumVectors() + 0);
           for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); direction++)
           {
@@ -386,6 +385,7 @@ namespace hemelb
                 + util::Vector3D<site_t>(latticeInfo.GetVector(direction));
             if (!IsValidLatticeSite(neighbourCoords))
             {
+	      printf("rwah2\n");
               // Set the neighbour location to the rubbish site.
               SetNeighbourLocation(localIndex, direction, GetLocalFluidSiteCount() * latticeInfo.GetNumVectors());
               continue;
@@ -394,6 +394,7 @@ namespace hemelb
             const proc_t proc_id_p = GetProcIdFromGlobalCoords(neighbourCoords);
             if (proc_id_p == BIG_NUMBER2)
             {
+	      printf("rwah3\n");
               // initialize f_id to the rubbish site.
               SetNeighbourLocation(localIndex, direction, GetLocalFluidSiteCount() * latticeInfo.GetNumVectors());
               continue;
@@ -409,6 +410,7 @@ namespace hemelb
             {
               // Pointer to the neighbour.
               site_t contigSiteId = GetContiguousSiteId(neighbourCoords);
+  	      printf("rwah4\n");
               SetNeighbourLocation(localIndex, direction, contigSiteId * latticeInfo.GetNumVectors() + direction);
               continue;
             }

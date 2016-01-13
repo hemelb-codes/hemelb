@@ -59,6 +59,8 @@ namespace hemelb
 
         void ReadHeader(site_t blockCount);
 
+
+
         void ReadInBlocksWithHalo(Geometry& geometry,
                                   const std::vector<proc_t>& unitForEachBlock,
                                   const proc_t localRank);
@@ -88,6 +90,9 @@ namespace hemelb
          * @param blockNumber [in] The id of the block we're reading.
          * @param neededOnThisRank [in] A boolean indicating whether the block is required locally.
          */
+
+ 	void ReadInBlock(uint32_t blockId, uint32_t blockOffsetBytes, uint32_t blockCompressedBytes, uint32_t blockUncompressedBytes, uint32_t blockSiteCount, Geometry& geometry);
+
         void ReadInBlock(MPI_Offset offsetSoFar,
                          Geometry& geometry,
                          const std::vector<proc_t>& procsWantingThisBlock,
@@ -104,6 +109,9 @@ namespace hemelb
          */
         std::vector<char> DecompressBlockData(const std::vector<char>& compressed,
                                               const unsigned int uncompressedBytes);
+
+
+        void ParseBlock(Geometry& geometry, site_t blockId, uint32_t blockSiteCount, io::writers::xdr::XdrReader& reader);
 
         void ParseBlock(Geometry& geometry, const site_t block, io::writers::xdr::XdrReader& reader);
 
@@ -168,6 +176,9 @@ namespace hemelb
         const lb::lattices::LatticeInfo& latticeInfo;
         //! File accessed to read in the geometry data.
         net::MpiFile file;
+        //net::MpiFile decompositionFile;
+        FILE* decompositionFile;
+        FILE* rankFile;
         //! Information about the file, to give cues and hints to MPI.
 
         const net::IOCommunicator& hemeLbComms; //! HemeLB's main communicator

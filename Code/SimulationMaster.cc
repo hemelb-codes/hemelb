@@ -150,6 +150,7 @@ void SimulationMaster::Initialise()
   // Use a reader to read in the file.
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Loading file and decomposing geometry.");
 
+  
   hemelb::geometry::GeometryReader reader(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
                                           latticeType::GetLatticeInfo(),
                                           timings, ioComms);
@@ -158,6 +159,9 @@ void SimulationMaster::Initialise()
 
   // Create a new lattice based on that info and return it.
   latticeData = new hemelb::geometry::LatticeData(latticeType::GetLatticeInfo(), readGeometryData, ioComms);
+  
+
+  
 
   timings[hemelb::reporting::Timers::latDatInitialise].Stop();
 

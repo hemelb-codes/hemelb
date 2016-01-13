@@ -25,6 +25,7 @@
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
 #include "constants.h"
+#include <rpc/xdr.h>
 namespace hemelb
 {
   namespace geometry
@@ -86,12 +87,42 @@ namespace hemelb
           const_cast<char*> (bufferingValue.c_str()))
       );
 
-      // Open the file.
+/*
+      MPI_Info decompositionFileInfo;
+      HEMELB_MPI_CALL(MPI_Info_create, (&decompositionFileInfo));
+
+      HEMELB_MPI_CALL(MPI_Info_set, (decompositionFileInfo,
+          const_cast<char*> (accessStyle.c_str()),
+          const_cast<char*> (accessStyleValue.c_str()))
+      );
+      HEMELB_MPI_CALL(MPI_Info_set, (decompositionFileInfo,
+          const_cast<char*> (buffering.c_str()),
+          const_cast<char*> (bufferingValue.c_str()))
+      );
+*/
+
+      size_t start = dataFilePath.size();
+      size_t length = 4;
+      
+      // TODO: Read filename separately?     
+      std::string rankFilePath = dataFilePath;
+      rankFilePath.replace(start,length,"rnk");
+ 
+      // TODO: Read filename separately?     
+      std::string decompositionFilePath = dataFilePath;
+      decompositionFilePath.replace(start,length,"hgb");
+
+
+      // Open the files.
+      rankFile = fopen(rankFilePath.c_str(),"r"); 
+      decompositionFile = fopen(decompositionFilePath.c_str(),"r");      
+//      decompositionFile =  net::MpiFile::Open(hemeLbComms, decompositionFilePath, MPI_MODE_RDONLY, decompositionFileInfo);
       file = net::MpiFile::Open(hemeLbComms, dataFilePath, MPI_MODE_RDONLY, fileInfo);
-      log::Logger::Log<log::Info, log::OnePerCore>("Opened config file %s", dataFilePath.c_str());
+
+      log::Logger::Log<log::Info, log::OnePerCore>("Opened geometry file %s and decomposition file %s", dataFilePath.c_str(),decompositionFilePath.c_str());
       // TODO: Why is there this fflush?
       fflush( NULL);
-
+ 
       // Set the view to the file.
       file.SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);
 
@@ -101,9 +132,100 @@ namespace hemelb
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file header");
       ReadHeader(geometry.GetBlockCount());
 
+      uint32_t blockRank;
+      uint32_t blockId;
+      uint32_t blockOffsetBytes;
+      uint32_t blockCompressedBytes;
+      uint32_t blockUncompressedBytes;
+      uint32_t blockSiteCount;
+
+      XDR xdrs;
+      xdrstdio_create(&xdrs, rankFile, XDR_DECODE);
+      uint32_t bla = 1;
+      printf("COMM Rank is %d\n", computeComms.Rank());
+      while(bla == 1) {
+        bla *= xdr_u_int(&xdrs, &blockRank);
+        bla *= xdr_u_int(&xdrs, &blockId);
+        bla *= xdr_u_int(&xdrs, &blockOffsetBytes);
+        bla *= xdr_u_int(&xdrs, &blockCompressedBytes);
+        bla *= xdr_u_int(&xdrs, &blockUncompressedBytes);
+        bla *= xdr_u_int(&xdrs, &blockSiteCount);
+
+        if (blockRank == computeComms.Rank()) {
+                printf("Read decomposition information: Rank %u to read %u bytes of data (%u uncompressed) for block %u at byte %u of %s.\n",blockRank,blockCompressedBytes,blockUncompressedBytes,blockId,blockOffsetBytes,dataFilePath.c_str());
+                ReadInBlock(blockId,
+                            blockOffsetBytes,
+                            blockCompressedBytes,
+                            blockUncompressedBytes,
+                            blockSiteCount,
+                            geometry
+                            );
+	
+        }
+
+      }
+      xdr_destroy(&xdrs);	 
+      printf("Finished reading geometries for rank %u %d\n",blockRank,computeComms.Rank());
+
       // Close the file - only the ranks participating in the topology need to read it again.
       file.Close();
 
+      xdrstdio_create(&xdrs, decompositionFile, XDR_DECODE);
+      bla = 1;
+      uint32_t siteIndex;
+      uint32_t siteCount;
+      uint32_t siteRank;
+      uint32_t siteX;
+      uint32_t siteY;
+      uint32_t siteZ;
+      uint32_t siteType;
+      uint32_t neighbourCount;
+      uint32_t dummy;
+
+      uint32_t blockID;
+      uint32_t sitesInBlock;
+      uint32_t siteID;	
+
+      uint32_t requiringRankCount;
+      uint32_t requiringRank;
+
+      printf("Am i alive?\n");
+
+      bla *= xdr_u_int(&xdrs, &siteCount);    
+
+      while(bla == 1) {
+	
+        bla *= xdr_u_int(&xdrs, &siteIndex);
+        bla *= xdr_u_int(&xdrs, &siteRank);
+        bla *= xdr_u_int(&xdrs, &siteX);
+        bla *= xdr_u_int(&xdrs, &siteY);       
+        bla *= xdr_u_int(&xdrs, &siteZ);
+	bla *= xdr_u_int(&xdrs, &siteType);
+        bla *= xdr_u_int(&xdrs, &neighbourCount);
+	// I do not know how to skip X bytes in a XDR file in a sane fashion, so I read to dummy
+        for (int i = 0; i < neighbourCount;i++) {
+	   bla *= xdr_u_int(&xdrs, &dummy);
+	}
+
+        bla *= xdr_u_int(&xdrs, &blockID);
+        bla *= xdr_u_int(&xdrs, &sitesInBlock);
+        bla *= xdr_u_int(&xdrs, &siteID);
+
+        bla *= xdr_u_int(&xdrs, &requiringRankCount);
+        printf("Am i alive? %u %u\n",blockID,siteID);
+
+	for (int i = 0; i < requiringRankCount;i++) {
+	   bla *= xdr_u_int(&xdrs, &requiringRank);
+           if (requiringRank == computeComms.Rank()) {
+	     geometry.Blocks[blockID].Sites[siteID].targetProcessor = siteRank;
+	   }
+	}        	
+
+      }
+      xdr_destroy(&xdrs);
+      printf("Finished assigning site rank links for rank %d\n",computeComms.Rank());
+
+/*
       timings[hemelb::reporting::Timers::initialDecomposition].Start();
       log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
       principalProcForEachBlock.resize(geometry.GetBlockCount());
@@ -170,9 +292,10 @@ namespace hemelb
       }
 
       // Finish up - close the file, set the timings, deallocate memory.
+      */
       HEMELB_MPI_CALL(MPI_Info_free, (&fileInfo));
 
-      timings[hemelb::reporting::Timers::domainDecomposition].Stop();
+      //timings[hemelb::reporting::Timers::domainDecomposition].Stop();
 
       return geometry;
     }
@@ -264,6 +387,7 @@ namespace hemelb
      */
     void GeometryReader::ReadHeader(site_t blockCount)
     {
+/*
       site_t headerByteCount = GetHeaderLength(blockCount);
       std::vector<char> headerBuffer = ReadOnAllTasks(headerByteCount);
 
@@ -283,6 +407,7 @@ namespace hemelb
         bytesPerCompressedBlock.push_back(bytes);
         bytesPerUncompressedBlock.push_back(uncompressedBytes);
       }
+*/
     }
 
     /**
@@ -357,6 +482,19 @@ namespace hemelb
       timings[hemelb::reporting::Timers::readBlocksAll].Stop();
     }
 
+    void GeometryReader::ReadInBlock(
+	uint32_t blockId, uint32_t blockOffsetBytes, uint32_t blockCompressedBytes, uint32_t blockUncompressedBytes, uint32_t blockSiteCount, Geometry& geometry)
+    {
+        std::vector<char> compressedBlockData;
+        compressedBlockData.resize(blockCompressedBytes);
+        file.ReadAt(blockOffsetBytes, compressedBlockData);
+        std::vector<char> blockData = DecompressBlockData(compressedBlockData, blockUncompressedBytes);
+        io::writers::xdr::XdrMemReader lReader(&blockData.front(), blockData.size());
+        ParseBlock(geometry, blockId, blockSiteCount, lReader);
+
+   }
+
+
     void GeometryReader::ReadInBlock(MPI_Offset offsetSoFar, Geometry& geometry,
                                      const std::vector<proc_t>& procsWantingThisBlock,
                                      const site_t blockNumber, const bool neededOnThisRank)
@@ -421,6 +559,7 @@ namespace hemelb
           site_t numSitesRead = 0;
           for (site_t site = 0; site < geometry.GetSitesPerBlock(); ++site)
           {
+
             if (geometry.Blocks[blockNumber].Sites[site].targetProcessor != BIG_NUMBER2)
             {
               ++numSitesRead;
@@ -481,6 +620,22 @@ namespace hemelb
       return uncompressed;
     }
 
+    void GeometryReader::ParseBlock(Geometry& geometry, site_t block, uint32_t blockSiteCount,
+                                    io::writers::xdr::XdrReader& reader)
+    { 
+      // We start by clearing the sites on the block. We read the blocks twice (once before
+      // optimisation and once after), so there can be sites on the block from the previous read.
+      //geometry.Blocks[block].Sites.clear();
+
+      for (site_t localSiteIndex = 0; localSiteIndex <  geometry.GetSitesPerBlock(); ++localSiteIndex)
+      { 
+
+	printf("Reading block %u, site %u\t",block,localSiteIndex);
+        geometry.Blocks[block].Sites.push_back(ParseSite(reader));
+      }
+    }
+
+
     void GeometryReader::ParseBlock(Geometry& geometry, const site_t block,
                                     io::writers::xdr::XdrReader& reader)
     {
@@ -500,6 +655,7 @@ namespace hemelb
       unsigned isFluid;
       bool success = reader.readUnsignedInt(isFluid);
 
+
       if (!success)
       {
         log::Logger::Log<log::Error, log::OnePerCore>("Error reading site type");
@@ -511,9 +667,11 @@ namespace hemelb
       // If solid, there's nothing more to do.
       if (!readInSite.isFluid)
       {
+	printf(" solid\n");
         return readInSite;
       }
 
+	printf(" fluid ");
       const io::formats::geometry::DisplacementVector& neighbourhood =
           io::formats::geometry::Get().GetNeighbourhood();
       // Prepare the links array to have enough space.
@@ -527,6 +685,8 @@ namespace hemelb
         // read the type of the intersection and create a link...
         unsigned intersectionType;
         reader.readUnsignedInt(intersectionType);
+
+	printf("%u:%u\t",readDirection, intersectionType);
 
         GeometrySiteLink link;
         link.type = (GeometrySiteLink::IntersectionType) intersectionType;
@@ -566,6 +726,8 @@ namespace hemelb
         }
       }
 
+      printf("\n");
+
       unsigned normalAvailable;
       reader.readUnsignedInt(normalAvailable);
       readInSite.wallNormalAvailable = (normalAvailable
@@ -585,6 +747,8 @@ namespace hemelb
         reader.readFloat(readInSite.wallNormal[0]);
         reader.readFloat(readInSite.wallNormal[1]);
         reader.readFloat(readInSite.wallNormal[2]);
+
+	printf("wall normal: [%g,%g,%g]\n",readInSite.wallNormal[0],readInSite.wallNormal[1],readInSite.wallNormal[2]);
       }
 
       return readInSite;
