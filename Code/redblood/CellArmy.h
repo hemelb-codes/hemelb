@@ -220,7 +220,7 @@ namespace hemelb
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Fluid -> cell interations");
 
-      auto distributions = hemelb::redblood::parallel::nodeDistributions(latticeData, cells);
+      auto distributions = parallel::nodeDistributions(latticeData, cells);
 
       parallel::ExchangeCells xc(neighbourDependenciesGraph, worldCommunicator);
       auto ownership = [this](CellContainer::value_type cell) {
@@ -239,11 +239,12 @@ namespace hemelb
       auto const &lentCells = std::get<2>(distCells);
 
       // Actually perform velocity integration
-      hemelb::redblood::parallel::IntegrateVelocities integrator(neighbourDependenciesGraph);
+      parallel::IntegrateVelocities integrator(neighbourDependenciesGraph);
       integrator.PostMessageLength(lentCells);
       integrator.ComputeLocalVelocitiesAndUpdatePositions<TRAITS>(latticeData, cells);
       integrator.PostVelocities<TRAITS>(latticeData, lentCells);
       integrator.UpdatePositionsNonLocal(distributions, cells);
+      HEMELB_MPI_CALL(MPI_Barrier, (net::MpiCommunicator::World()));
 
       // Positions have changed: update Divide and Conquer stuff
       cellDnC.update(distCells);
@@ -252,14 +253,12 @@ namespace hemelb
     template<class TRAITS>
     void CellArmy<TRAITS>::Cell2FluidInteractions()
     {
-      using namespace hemelb::redblood::parallel;
-
       log::Logger::Log<log::Debug, log::OnePerCore>("Cell -> fluid interations");
       latticeData.ResetForces();
 
-      auto const distributions = nodeDistributions(latticeData, cells);
+      auto const distributions = parallel::nodeDistributions(latticeData, cells);
 
-      SpreadForces mpi_spreader(neighbourDependenciesGraph);
+      parallel::SpreadForces mpi_spreader(neighbourDependenciesGraph);
       mpi_spreader.PostMessageLength(distributions, cells);
       mpi_spreader.ComputeForces(cells);
       mpi_spreader.PostForcesAndNodes(distributions, cells);
