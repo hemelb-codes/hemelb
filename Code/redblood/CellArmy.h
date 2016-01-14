@@ -244,7 +244,6 @@ namespace hemelb
       integrator.ComputeLocalVelocitiesAndUpdatePositions<TRAITS>(latticeData, cells);
       integrator.PostVelocities<TRAITS>(latticeData, lentCells);
       integrator.UpdatePositionsNonLocal(distributions, cells);
-      HEMELB_MPI_CALL(MPI_Barrier, (net::MpiCommunicator::World()));
 
       // Positions have changed: update Divide and Conquer stuff
       cellDnC.update(distCells);
