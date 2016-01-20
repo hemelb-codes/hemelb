@@ -45,9 +45,8 @@ specifically made by you with University College London.
  
 newcopyblob = """This file is part of HemeLB and is Copyright (C)
 the HemeLB team and/or their institutions, as detailed in the
-file AUTHORS. This softwar is provided under the terms of the
-license in the file LICENSE.
-"""
+file AUTHORS. This software is provided under the terms of the
+license in the file LICENSE."""
 
 old_commented_cr = {}
 new_commented_cr = {}
@@ -104,31 +103,7 @@ def StripOldCopyright(text, comment):
         assert line[len(comment):].strip() == cr
     return main_text
 
-not_ours = set("""Tools/analysis/bak_images2gif.py
-deploy/pyNS-master/Adaptation.py
-deploy/pyNS-master/Assembler.py
-deploy/pyNS-master/Bessel.pyx
-deploy/pyNS-master/BoundaryConditions.py
-deploy/pyNS-master/DofMap.py
-deploy/pyNS-master/Elements.py
-deploy/pyNS-master/Evaluator.py
-deploy/pyNS-master/Export.py
-deploy/pyNS-master/InverseWomersley.py
-deploy/pyNS-master/License.txt
-deploy/pyNS-master/MeshGenerator.py
-deploy/pyNS-master/MeshGenerator_Script.py
-deploy/pyNS-master/ModelAdaptor.py
-deploy/pyNS-master/ModelAdaptor_Script.py
-deploy/pyNS-master/NetworkGraph.py
-deploy/pyNS-master/NetworkMesh.py
-deploy/pyNS-master/NetworkSolutions.py
-deploy/pyNS-master/Profiling.py
-deploy/pyNS-master/pyNS.py
-deploy/pyNS-master/README.md
-deploy/pyNS-master/SimulationContext.py
-deploy/pyNS-master/Solver.py
-deploy/pyNS-master/Solver_Script.py
-Tools/setuptool/HemeLbSetupTool/Model/Generation/Point_inside_polyhedron_3.h
+not_ours = set("""Tools/setuptool/HemeLbSetupTool/Model/Generation/Point_inside_polyhedron_3.h
 Tools/setuptool/HemeLbSetupTool/Model/Generation/Triangle_3_Ray_3_do_intersect.h""".split('\n'))
 
 no_cr = set("""Code/debug/linux/launchGdbs.sh
@@ -153,82 +128,7 @@ Code/lb/streamers/NashZerothOrderPressureIolet.h
 Code/unittests/util/UnitConverterTests.h
 Code/util/FlatMap.h
 deploy/myfabfile.py
-deploy/pyNS-master/Ensemble.py
-deploy/pyNS-master/EnsembleCoW.py
-deploy/pyNS-master/hemelb-jobs.py
-deploy/pyNS-master/LB-configs.py
-deploy/pyNS-master/myScript.py
-deploy/pyNS-master/pyNS-profiles.py
-deploy/pyNS-master/setup.py
-deploy/pyNS-master/test.py
 Scripts/ParameterChooser.py
-Tools/analysis/_fixpath.py
-Tools/analysis/allPlanes.py
-Tools/analysis/bak_ExtractPlaneVelocities.py
-Tools/analysis/cache.py
-Tools/analysis/correct.py
-Tools/analysis/Cylinder2.py
-Tools/analysis/display.py
-Tools/analysis/flow.py
-Tools/analysis/HemeLbRunResults.py
-Tools/analysis/images2gif.py
-Tools/analysis/maxSlope.py
-Tools/analysis/memo.py
-Tools/analysis/oneplanesnap.py
-Tools/analysis/plotConvergenceResults.py
-Tools/analysis/plotOffLatticeResults.py
-Tools/analysis/plotPoiseuilleResults.py
-Tools/analysis/PlotVelocityPlane (copy).py
-Tools/analysis/PlotVelocityPlane.py
-Tools/analysis/plotVPComparison.py
-Tools/analysis/plotWomersleyResults.py
-Tools/analysis/process.py
-Tools/analysis/SquareDuct.py
-Tools/analysis/stress.py
-Tools/analysis/test.py
-Tools/analysis/Torus.py
-Tools/analysis/velocityField.py
-Tools/analysis/velocityMag.py
-Tools/analysis/Womersley2.py
-Tools/analysis/analysis/__init__.py
-Tools/analysis/analysis/_fixpath.py
-Tools/analysis/analysis/cache.py
-Tools/analysis/analysis/Cylinder2.py
-Tools/analysis/analysis/HemeLbRunResults.py
-Tools/analysis/analysis/memo.py
-Tools/analysis/analysis/plotConvergenceResults.py
-Tools/analysis/analysis/plotOffLatticeResults.py
-Tools/analysis/analysis/plotPoiseuilleResults.py
-Tools/analysis/analysis/PlotVelocityPlane.py
-Tools/analysis/analysis/plotVPComparison.py
-Tools/analysis/analysis/plotWomersleyResults.py
-Tools/analysis/analysis/SquareDuct.py
-Tools/analysis/analysis/Torus.py
-Tools/analysis/analysis/Womersley2.py
-Tools/analysis/generation/__init__.py
-Tools/analysis/generation/_fixpath.py
-Tools/analysis/generation/CylinderGeneration.py
-Tools/analysis/generation/HemeLbParameters.py
-Tools/analysis/generation/PoiseuilleFlowCylinderGeneration.py
-Tools/analysis/generation/SquareDuctGeneration.py
-Tools/analysis/generation/StepGeneration.py
-Tools/analysis/generation/TorusGeneration.py
-Tools/analysis/generation/TorusParameters.py
-Tools/analysis/generation/WomersleyFlowCylinderGeneration.py
-Tools/analysis/generation/WriteStlTorus.py
-Tools/analysis/pvs/__init__.py
-Tools/analysis/pvs/gmy_size.py
-Tools/analysis/pvs/helpers.py
-Tools/analysis/pvs/simplify.py
-Tools/analysis/pvs/coordinates/__init__.py
-Tools/analysis/pvs/coordinates/toroidal.py
-Tools/analysis/runs/convergence.py
-Tools/analysis/runs/offlattice.py
-Tools/analysis/runs/onLatticeAndWo.py
-Tools/analysis/runs/phase2.py
-Tools/analysis/runs/phase2FineCyls.py
-Tools/analysis/runs/phase2NotSbb.py
-Tools/analysis/runs/phase2Wos.py
 Tools/analysis/test/__init__.py
 Tools/hemeTools/converters/ExtractedPropertyUnstructuredGridReader.py
 Tools/hemeTools/simconf/__init__.py
@@ -287,9 +187,12 @@ Tools/hemeTools/utils/cxdr.pxd
 Tools/hemeTools/utils/xdr.pxd
 Tools/hemeTools/utils/xdr.pyx
 dependencies/Modules/FindCPPUnit.cmake
+dependencies/Modules/FindCTemplate.cmake
 dependencies/Modules/FindMetis.cmake
 dependencies/Modules/FindMPI.cmake
+dependencies/Modules/FindMPWide.cmake
 dependencies/Modules/FindParmetis.cmake
+dependencies/Modules/FindTinyXML.cmake
 dependencies/patches/tinyxml.cmake""".split('\n'))
 
 if __name__ == '__main__':
