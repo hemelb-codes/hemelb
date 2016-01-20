@@ -240,6 +240,6 @@ if __name__ == '__main__':
             
             with open(sourceFile, 'w') as replacement:
                 replacement.write(envline + '\n')
-                replacement.write(new_cr)
+                replacement.write(new_cr + '\n')
                 replacement.write(main)
                 
