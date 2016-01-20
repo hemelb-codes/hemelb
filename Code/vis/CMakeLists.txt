@@ -1,3 +1,8 @@
+
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
 add_library(hemelb_vis
 	GlyphDrawer.cc Control.cc Screen.cc Viewpoint.cc BasicPixel.cc Rendering.cc ResultPixel.cc
 	rayTracer/ClusterNormal.cc rayTracer/ClusterWithWallNormals.cc rayTracer/HSLToRGBConverter.cc

@@ -1,3 +1,8 @@
+
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
 class default_property(object):
     """Decorator to make a property with a default value (the result
     of evaluating the method) that can be overriden by setting a
