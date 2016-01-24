@@ -99,6 +99,10 @@ namespace hemelb
         {
           return cells;
         }
+        parallel::CellParallelization::LentCells const & GetLentCells() const
+        {
+          return lentCells;
+        }
         DivideConquerCells const & GetDNC() const
         {
           return cellDnC;
@@ -110,6 +114,11 @@ namespace hemelb
         void SetCellInsertion(std::function<void(CellInserter const&)> const & f)
         {
           cellInsertionCallBack = f;
+        }
+
+        std::function<void(CellInserter const&)> GetCellInsertion() const
+        {
+          return cellInsertionCallBack;
         }
 
         //! Calls cell insertion
@@ -189,6 +198,8 @@ namespace hemelb
         geometry::LatticeData &latticeData;
         //! Contains all cells
         CellContainer cells;
+        //! Cells lent to this process
+        parallel::CellParallelization::LentCells lentCells;
         //! Divide and conquer object
         DivideConquerCells cellDnC;
         //! Divide and conquer object
@@ -236,17 +247,17 @@ namespace hemelb
       auto const distCells = xc.ReceiveCells(cellTemplates);
       xc.Update(cells, distCells);
       xc.Update(distributions, distCells, parallel::details::AssessMPIFunction<Stencil>(latticeData));
-      auto const &lentCells = std::get<2>(distCells);
 
       // Actually perform velocity integration
       parallel::IntegrateVelocities integrator(neighbourDependenciesGraph);
-      integrator.PostMessageLength(lentCells);
+      integrator.PostMessageLength(std::get<2>(distCells));
       integrator.ComputeLocalVelocitiesAndUpdatePositions<TRAITS>(latticeData, cells);
-      integrator.PostVelocities<TRAITS>(latticeData, lentCells);
+      integrator.PostVelocities<TRAITS>(latticeData, std::get<2>(distCells));
       integrator.UpdatePositionsNonLocal(distributions, cells);
 
       // Positions have changed: update Divide and Conquer stuff
       cellDnC.update(distCells);
+      lentCells = std::move(std::get<2>(distCells));
     }
 
     template<class TRAITS>
