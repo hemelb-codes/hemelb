@@ -131,17 +131,43 @@ namespace hemelb
       // 3-tuple with the newly owned cells, the disowned cells, and the lent cells
       auto const &newCells = std::get<0>(changedCells);
       auto const &disownedCells = std::get<1>(changedCells);
-      auto const &lentCells = std::get<2>(changedCells);
+      auto const &lentCells = LentCellsToSingleContainer(std::get<2>(changedCells));
 
-      auto insert_cell = std::bind(&DivideConquerCells::insert, *this, std::placeholders::_1);
-      auto remove = std::bind(&DivideConquerCells::remove, *this, std::placeholders::_1);
-      auto insert_cell_map = [&insert_cell] (std::pair<proc_t, CellContainer> const &pair){
-          std::for_each(pair.second.begin(), pair.second.end(), insert_cell);
-      };
-
+      auto insert_cell = std::bind(&DivideConquerCells::insert, this, std::placeholders::_1);
+      auto remove_cell = std::bind(&DivideConquerCells::remove, this, std::placeholders::_1);
       std::for_each(newCells.begin(), newCells.end(), insert_cell);
-      std::for_each(disownedCells.begin(), disownedCells.end(), remove);
-      std::for_each(lentCells.begin(), lentCells.end(), insert_cell_map);
+      std::for_each(disownedCells.begin(), disownedCells.end(), remove_cell);
+      std::for_each(lentCells.begin(), lentCells.end(), insert_cell);
+
+      // Compute the set of cells that were lent in the previous time step but
+      // are not in the current one and remove them
+      CellContainer cells_no_longer_lent;
+      std::set_difference(currentlyLentCells.begin(), currentlyLentCells.end(),
+                          lentCells.begin(), lentCells.end(),
+                          std::inserter(cells_no_longer_lent, cells_no_longer_lent.begin()),
+                          details::CellUUIDComparison());
+      std::for_each(cells_no_longer_lent.begin(), cells_no_longer_lent.end(), remove_cell);
+
+      // Update the container used to know which of the cells are lent
+      currentlyLentCells.clear();
+      currentlyLentCells.insert(lentCells.begin(), lentCells.end());
+
+      // currentlyLentCells must be a subset of cells
+      assert(std::includes(cells.begin(), cells.end(),
+                           currentlyLentCells.begin(), currentlyLentCells.end(),
+                           details::CellUUIDComparison()));
+    }
+
+    CellContainer DivideConquerCells::LentCellsToSingleContainer(parallel::CellParallelization::LentCells const &lentCells) const
+    {
+      CellContainer single_cell_container;
+
+      auto populate_single_cell_container = [&single_cell_container] (std::pair<proc_t, CellContainer> const &proc_container_pair){
+        single_cell_container.insert(proc_container_pair.second.begin(), proc_container_pair.second.end());
+      };
+      std::for_each(lentCells.begin(), lentCells.end(), populate_single_cell_container);
+
+      return single_cell_container;
     }
 
     DivideConquerCells::const_range DivideConquerCells::operator()(LatticeVector const &pos) const
