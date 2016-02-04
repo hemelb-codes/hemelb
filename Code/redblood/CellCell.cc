@@ -133,13 +133,18 @@ namespace hemelb
       auto const &disownedCells = std::get<1>(changedCells);
       auto const &lentCells = LentCellsToSingleContainer(std::get<2>(changedCells));
 
-      auto insert_cell = std::bind(&DivideConquerCells::insert, this, std::placeholders::_1);
+      // First remove disowned cells and previously lent cells
       auto remove_cell = std::bind(&DivideConquerCells::remove, this, std::placeholders::_1);
-      std::for_each(newCells.begin(), newCells.end(), insert_cell);
       std::for_each(disownedCells.begin(), disownedCells.end(), remove_cell);
-
-      //! Remove all lent cells and newly lent cells
       std::for_each(currentlyLentCells.begin(), currentlyLentCells.end(), remove_cell);
+
+      // Then update positions of cells that are still under the same ownership
+      // More explicilty, we update all known nodes in the following command
+      update()
+
+      // Then add newly owned and newly lent cells
+      auto insert_cell = std::bind(&DivideConquerCells::insert, this, std::placeholders::_1);
+      std::for_each(newCells.begin(), newCells.end(), insert_cell);
       std::for_each(lentCells.begin(), lentCells.end(), insert_cell);
 
       // Update the container used to know which of the cells are lent
