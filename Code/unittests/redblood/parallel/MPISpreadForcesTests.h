@@ -150,7 +150,7 @@ namespace hemelb
         std::vector<LatticeForceVector> forces;
         if (color)
         {
-          for (size_t i(0); i < latDat.GetLocalFluidSiteCount(); ++i)
+          for (std::size_t i(0); i < std::size_t(latDat.GetLocalFluidSiteCount()); ++i)
           {
             auto const site = latDat.GetSite(i);
             if (site.GetForce().GetMagnitudeSquared() > 1e-8)

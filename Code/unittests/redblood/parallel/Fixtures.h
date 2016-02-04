@@ -140,10 +140,10 @@ namespace hemelb
         // setups a graph communicator that in-practice is all-to-all
         // Simpler than setting up something realistic
         std::vector<std::vector<int>> vertices;
-        for (size_t i(0); i < comm.Size(); ++i)
+        for (std::size_t i(0); i < std::size_t(comm.Size()); ++i)
         {
           vertices.push_back(std::vector<int>());
-          for (size_t j(0); j < comm.Size(); ++j)
+          for (std::size_t j(0); j < std::size_t(comm.Size()); ++j)
           {
             if (j != i)
             {

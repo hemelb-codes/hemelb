@@ -32,6 +32,7 @@ namespace hemelb
           CPPUNIT_TEST (testRemoveCell);
           CPPUNIT_TEST (testIterator);
           CPPUNIT_TEST (testUpdate);
+          CPPUNIT_TEST (testUpdateLentCells);
           CPPUNIT_TEST (testPairIteratorNoPairs);
           CPPUNIT_TEST (testPairIteratorSameMesh);
           CPPUNIT_TEST (testPairIteratorSinglePair);
@@ -57,6 +58,7 @@ namespace hemelb
           void testPairIteratorOnePairPerBox();
           void testPairIteratorDiagonalBoxes();
           void testPairIteratorBoxHalo();
+          void testUpdateLentCells();
       };
 
       void CellCellInteractionTests::testBoxHaloTooBig()
@@ -186,7 +188,7 @@ namespace hemelb
           nodes.insert(omega.first.GetCellReference().nodeIndex);
         }
 
-        CPPUNIT_ASSERT(nodes.size() == nbNodes);
+        CPPUNIT_ASSERT(nodes.size() == std::size_t(nbNodes));
       }
 
       void CellCellInteractionTests::testAddMeshes()
@@ -288,6 +290,28 @@ namespace hemelb
         CPPUNIT_ASSERT_EQUAL(dnc(newbox).first.GetNearBorder(),
                              size_t(Borders::TOP) bitor size_t(Borders::EAST)
                                  bitor size_t(Borders::CENTER));
+      }
+
+      //! Updating lent cell does not keep extra nodes when number of nodes change in lent cells
+      void CellCellInteractionTests::testUpdateLentCells() {
+        auto mesh = redblood::pancakeSamosa();
+        auto cell = std::make_shared<redblood::Cell>(mesh);
+        CellContainer const empty;
+        DivideConquerCells dnc(empty, cutoff, halo);
+
+        parallel::ExchangeCells::LentCells lent;
+        lent[0].insert(cell);
+        dnc.update(parallel::ExchangeCells::ChangedCells(empty, empty, lent));
+        CPPUNIT_ASSERT_EQUAL(cell->GetVertices().size(), dnc.size());
+
+        cell->GetVertices().pop_back();
+        cell->GetVertices().push_back({4, 4, 4});
+        dnc.update(parallel::ExchangeCells::ChangedCells(empty, empty, lent));
+        CPPUNIT_ASSERT_EQUAL(cell->GetVertices().size(), dnc.size());
+
+        cell->GetVertices().resize(1);
+        dnc.update(parallel::ExchangeCells::ChangedCells(empty, empty, lent));
+        CPPUNIT_ASSERT_EQUAL(cell->GetVertices().size(), dnc.size());
       }
 
       void CellCellInteractionTests::testPairIteratorNoPairs()

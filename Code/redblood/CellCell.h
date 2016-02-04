@@ -168,7 +168,7 @@ namespace hemelb
 
         //! In a parallel simulation, some cells will leave/enter the domain.
         //! \param[in] 3-tuple with the newly owned cells, the disowned cells, and the lent cells
-        void update(parallel::ExchangeCells::ChangedCells changedCells);
+        void update(parallel::ExchangeCells::ChangedCells const& changedCells);
 
         //! Insert a new cell
         //! Returns true if the cell was inserted, false if it already existed.

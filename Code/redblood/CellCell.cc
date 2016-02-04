@@ -126,31 +126,29 @@ namespace hemelb
       initializeCells(*this, cells, GetHaloLength());
     }
 
-    void DivideConquerCells::update(parallel::ExchangeCells::ChangedCells changedCells)
+    void DivideConquerCells::update(parallel::ExchangeCells::ChangedCells const& changedCells)
     {
       // 3-tuple with the newly owned cells, the disowned cells, and the lent cells
       auto const &newCells = std::get<0>(changedCells);
       auto const &disownedCells = std::get<1>(changedCells);
       auto const &lentCells = LentCellsToSingleContainer(std::get<2>(changedCells));
 
-      auto insert_cell = std::bind(&DivideConquerCells::insert, this, std::placeholders::_1);
+      // First remove disowned cells and previously lent cells
       auto remove_cell = std::bind(&DivideConquerCells::remove, this, std::placeholders::_1);
-      std::for_each(newCells.begin(), newCells.end(), insert_cell);
       std::for_each(disownedCells.begin(), disownedCells.end(), remove_cell);
+      std::for_each(currentlyLentCells.begin(), currentlyLentCells.end(), remove_cell);
+
+      // Then update positions of cells that are still under the same ownership
+      // More explicilty, we update all known nodes in the following command
+      update();
+
+      // Then add newly owned and newly lent cells
+      auto insert_cell = std::bind(&DivideConquerCells::insert, this, std::placeholders::_1);
+      std::for_each(newCells.begin(), newCells.end(), insert_cell);
       std::for_each(lentCells.begin(), lentCells.end(), insert_cell);
 
-      // Compute the set of cells that were lent in the previous time step but
-      // are not in the current one and remove them
-      CellContainer cells_no_longer_lent;
-      std::set_difference(currentlyLentCells.begin(), currentlyLentCells.end(),
-                          lentCells.begin(), lentCells.end(),
-                          std::inserter(cells_no_longer_lent, cells_no_longer_lent.begin()),
-                          details::CellUUIDComparison());
-      std::for_each(cells_no_longer_lent.begin(), cells_no_longer_lent.end(), remove_cell);
-
       // Update the container used to know which of the cells are lent
-      currentlyLentCells.clear();
-      currentlyLentCells.insert(lentCells.begin(), lentCells.end());
+      currentlyLentCells = lentCells;
 
       // currentlyLentCells must be a subset of cells
       assert(std::includes(cells.begin(), cells.end(),

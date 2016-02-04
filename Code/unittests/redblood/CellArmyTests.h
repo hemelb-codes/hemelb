@@ -122,7 +122,7 @@ namespace hemelb
         CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>( (*std::next(cells.begin())))->nbcalls
             == 1);
 
-        for (size_t i(0); i < latDat->GetLocalFluidSiteCount(); ++i)
+        for (std::size_t i(0); i < std::size_t(latDat->GetLocalFluidSiteCount()); ++i)
         {
           CPPUNIT_ASSERT(helpers::is_zero(latDat->GetSite(i).GetForce()));
         }

@@ -174,7 +174,7 @@ namespace hemelb
             CPPUNIT_ASSERT(not buffer->GetJustDropped());
 
             // Now make sure drop statements yield expected result
-            for (auto i = 0; i < cells.size(); ++i)
+            for (std::size_t i = 0; i < cells.size(); ++i)
             {
               auto cell = buffer->drop();
               auto expected_pos = positions[i] + cylinder.normal * buffer->GetOffset()
