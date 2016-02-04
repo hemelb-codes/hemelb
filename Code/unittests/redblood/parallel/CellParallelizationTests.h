@@ -242,7 +242,7 @@ namespace hemelb
           graph.RankMap(net::MpiCommunicator::World()) :
           net::MpiCommunicator::World().RankMap(net::MpiCommunicator::World());
         auto const barycenter = cell->GetBarycenter();
-        for (size_t i(0); i < net::MpiCommunicator::World().Size(); ++i)
+        for (size_t i(0); i < std::size_t(net::MpiCommunicator::World().Size()); ++i)
         {
           auto const d = (GetCenter(ranks.find(i)->second) - barycenter).GetMagnitudeSquared();
           distances.push_back(d);
@@ -291,7 +291,7 @@ namespace hemelb
         CPPUNIT_ASSERT_EQUAL(neighbors.size(), sendTotalNodeCount.size());
         for (auto const item : util::zip(neighbors, sendCellCount, sendTotalNodeCount))
         {
-          auto const sending = std::get<0>(item) == sendto;
+          auto const sending = std::get<0>(item) == int(sendto);
           size_t const nCells = sending ?
             1 :
             0;
@@ -320,7 +320,7 @@ namespace hemelb
         CPPUNIT_ASSERT_EQUAL(neighbors.size(), receiveTotalNodeCount.size());
         for (auto const item : util::zip(neighbors, receiveCellCount, receiveTotalNodeCount))
         {
-          auto const receiving = std::get<0>(item) == recvfrom;
+          auto const receiving = std::get<0>(item) == int(recvfrom);
           size_t const nCells = receiving ?
             1 :
             0;

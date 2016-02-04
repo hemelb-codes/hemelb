@@ -188,7 +188,7 @@ namespace hemelb
           nodes.insert(omega.first.GetCellReference().nodeIndex);
         }
 
-        CPPUNIT_ASSERT(nodes.size() == nbNodes);
+        CPPUNIT_ASSERT(nodes.size() == std::size_t(nbNodes));
       }
 
       void CellCellInteractionTests::testAddMeshes()
@@ -298,17 +298,19 @@ namespace hemelb
         auto cell = std::make_shared<redblood::Cell>(mesh);
         DivideConquerCells dnc({}, cutoff, halo);
 
-        parallel::ExchangeCells::ChangedCells const changedCells{{}, {}, {{0, {cell}}}};
-        dnc.update(parallel::ExchangeCells::ChangedCells{{}, {}, {{0, {cell}}}});
+        CellContainer const empty;
+        parallel::ExchangeCells::LentCells lent;
+        lent[0].insert(cell);
+        dnc.update(parallel::ExchangeCells::ChangedCells(empty, empty, lent));
         CPPUNIT_ASSERT_EQUAL(cell->GetVertices().size(), dnc.size());
 
         cell->GetVertices().pop_back();
         cell->GetVertices().push_back({4, 4, 4});
-        dnc.update(parallel::ExchangeCells::ChangedCells{{}, {}, {{0, {cell}}}});
+        dnc.update(parallel::ExchangeCells::ChangedCells(empty, empty, lent));
         CPPUNIT_ASSERT_EQUAL(cell->GetVertices().size(), dnc.size());
 
         cell->GetVertices().resize(1);
-        dnc.update(parallel::ExchangeCells::ChangedCells{{}, {}, {{0, {cell}}}});
+        dnc.update(parallel::ExchangeCells::ChangedCells(empty, empty, lent));
         CPPUNIT_ASSERT_EQUAL(cell->GetVertices().size(), dnc.size());
       }
 

@@ -129,7 +129,7 @@ namespace hemelb
         helpers::ZeroOutForces(latDat);
 
         // Setup same distribution for all instances
-        for (int i = 0; i < Traits::Lattice::NUMVECTORS; ++i)
+        for (Direction i = 0; i < Traits::Lattice::NUMVECTORS; ++i)
         {
           auto func = [i](LatticePosition const &x)
           {
