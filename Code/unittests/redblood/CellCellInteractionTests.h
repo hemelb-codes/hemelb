@@ -296,9 +296,9 @@ namespace hemelb
       void CellCellInteractionTests::testUpdateLentCells() {
         auto mesh = redblood::pancakeSamosa();
         auto cell = std::make_shared<redblood::Cell>(mesh);
-        DivideConquerCells dnc({}, cutoff, halo);
-
         CellContainer const empty;
+        DivideConquerCells dnc(empty, cutoff, halo);
+
         parallel::ExchangeCells::LentCells lent;
         lent[0].insert(cell);
         dnc.update(parallel::ExchangeCells::ChangedCells(empty, empty, lent));
