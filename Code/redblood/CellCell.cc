@@ -140,7 +140,7 @@ namespace hemelb
 
       // Then update positions of cells that are still under the same ownership
       // More explicilty, we update all known nodes in the following command
-      update()
+      update();
 
       // Then add newly owned and newly lent cells
       auto insert_cell = std::bind(&DivideConquerCells::insert, this, std::placeholders::_1);
