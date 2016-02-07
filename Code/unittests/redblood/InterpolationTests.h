@@ -283,13 +283,13 @@ namespace hemelb
             LatticeVector const min(latDat->GetGlobalSiteMins());
             LatticeVector const max(latDat->GetGlobalSiteMaxes());
 
-            for (std::size_t i(min[0]); i <= std::size_t(max[0]); ++i)
-              for (std::size_t j(min[1]); j <= std::size_t(max[1]); ++j)
-                for (std::size_t k(min[2]); k <= std::size_t(max[2]); ++k)
+            for (site_t i(min[0]); i <= max[0]; ++i)
+              for (site_t j(min[1]); j <= max[1]; ++j)
+                for (site_t k(min[2]); k <= max[2]; ++k)
                 {
                   distribn_t fold[D3Q15::NUMVECTORS];
 
-                  for (size_t u(0); u < D3Q15::NUMVECTORS; ++u)
+                  for (Direction u(0); u < D3Q15::NUMVECTORS; ++u)
                   {
                     fold[u] = 0e0;
                   }

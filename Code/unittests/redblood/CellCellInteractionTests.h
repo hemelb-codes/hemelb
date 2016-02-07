@@ -188,7 +188,7 @@ namespace hemelb
           nodes.insert(omega.first.GetCellReference().nodeIndex);
         }
 
-        CPPUNIT_ASSERT(nodes.size() == std::size_t(nbNodes));
+        CPPUNIT_ASSERT(nodes.size() == static_cast<std::size_t>(nbNodes));
       }
 
       void CellCellInteractionTests::testAddMeshes()

@@ -127,7 +127,7 @@ namespace hemelb
       void Buffer::operator()(CellInserter const& insertFn)
       {
         // Add virtual cells, if necessary
-        if (virtuals.size() < NumberOfRequests())
+        if (virtuals.size() < static_cast<std::size_t>(NumberOfRequests()))
         {
           fillBuffer(NumberOfRequests() - virtuals.size());
         }

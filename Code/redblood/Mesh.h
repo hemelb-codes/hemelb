@@ -69,9 +69,9 @@ namespace hemelb
     {
       public:
         //! Type for map from vertices to facets
-        typedef std::vector<std::set<size_t> > VertexToFacets;
+        typedef std::vector<std::set<std::size_t> > VertexToFacets;
         //! Type for map from facets to its neighbors
-        typedef std::vector<std::array<size_t, 3> > FacetNeighbors;
+        typedef std::vector<std::array<std::size_t, 3> > FacetNeighbors;
         //! For each vertex, lists the facet indices
         VertexToFacets vertexToFacets;
         //! For each facet, lists the neighboring facets
