@@ -37,13 +37,14 @@ namespace hemelb
       class ParallelFixtureTests : public helpers::FolderTestFixture
       {
           CPPUNIT_TEST_SUITE (ParallelFixtureTests);
-          CPPUNIT_TEST (testMidDomainNodes);
+          CPPUNIT_TEST (testTransititiveOwnership);
           CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp();
 
-          void testMidDomainNodes();
+          //! if owner procs thinks position affects proc i, then proc i knows it as well
+          void testTransititiveOwnership();
         protected:
           std::shared_ptr<hemelb::configuration::CommandLine> options;
 
@@ -93,9 +94,9 @@ namespace hemelb
                                                                "" });
       }
 
-      void ParallelFixtureTests::testMidDomainNodes()
+      void ParallelFixtureTests::testTransititiveOwnership()
       {
-        typedef hemelb::redblood::stencil::TwoPoint Stencil;
+        typedef hemelb::redblood::stencil::FourPoint Stencil;
 
         auto const world = Comms();
         if(world.Size() < 2)
@@ -108,20 +109,49 @@ namespace hemelb
 
         auto &latDat = master->GetLatticeData();
         helpers::ZeroOutForces(latDat);
-        auto const positions = GatherSpecialPositions(latDat, 3, 0, world);
+        auto const nmid = 20;
+        auto const nedges = 20;
+        auto const positions = GatherSpecialPositions(latDat, nmid, nedges, world);
 
-        CPPUNIT_ASSERT_EQUAL(std::size_t(3 * (world.Size() - 1)), positions.size());
         for(std::size_t i(0); i < positions.size(); ++i)
         {
-          auto const procs
-            = hemelb::redblood::parallel::details::positionAffectsProcs<Stencil>(latDat, positions[i]);
-          std::ostringstream sstr;
-          sstr << world.Rank() << " - " << i << " - " << positions[i] << ": " ;
-          for(auto proc: procs)
-            sstr << proc << " ";
-          std::cout << sstr.str() << std::endl;
-          // CPPUNIT_ASSERT(procs.size() >= 1);
-          // CPPUNIT_ASSERT_EQUAL(std::size_t(1), procs.count(proc_t(i / 3 + 1)));
+          auto const procs = hemelb::redblood::parallel::details::positionAffectsProcs<Stencil>(
+              latDat, positions[i]);
+
+          // Send set of affected procs as known by owner proc
+          decltype(world.Rank()) positions_are_from_this_proc = i / (nmid + nedges) + 1;
+          int N(procs.size());
+          world.Broadcast(N, positions_are_from_this_proc);
+          std::vector<proc_t> expected(N);
+          if(world.Rank() == positions_are_from_this_proc)
+          {
+            std::copy(procs.begin(), procs.end(), expected.begin());
+          }
+          world.Broadcast(expected, positions_are_from_this_proc);
+
+          std::set<proc_t> expected_set(expected.begin(), expected.end());
+
+          // Owner knows thinks current position affects this proc
+          if(expected_set.count(world.Rank()))
+          {
+            // so this proc must know that current positions affects it
+            CPPUNIT_ASSERT(procs.count(world.Rank()));
+            // and affects owner proc
+            CPPUNIT_ASSERT(procs.count(positions_are_from_this_proc));
+          }
+          else
+          {
+            // otherwise, this proc should not think it is affected
+            CPPUNIT_ASSERT(not procs.count(world.Rank()));
+          }
+
+          // similarly, if this proc thinks current position affects owner proc
+          if(not procs.count(positions_are_from_this_proc))
+          {
+            // then owner proc must think current position affects this proc
+            CPPUNIT_ASSERT(not expected_set.count(world.Rank()));
+          }
+
         }
       }
 
