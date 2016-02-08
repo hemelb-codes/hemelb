@@ -172,6 +172,8 @@ namespace hemelb
           return Split(color, Rank());
         }
 
+        void Barrier() const;
+
       protected:
         /**
          * Constructor to get data needed from an MPI communicator
