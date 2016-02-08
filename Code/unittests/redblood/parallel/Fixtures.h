@@ -30,7 +30,7 @@ namespace hemelb
         std::random_device rd;
         std::mt19937 g(rd());
 
-        int const nMids = latDat.GetMidDomainSiteCount();
+        int const nMids = latDat.GetMidDomainCollisionCount(0);
         int const nEdges = latDat.GetDomainEdgeCollisionCount(0);
         std::vector<LatticePosition> positions(c.Size() * (mid + edges));
         std::vector<int> shuf(nMids);
@@ -48,7 +48,7 @@ namespace hemelb
         std::shuffle(shuf.begin(), shuf.end(), g);
         for (size_t i(0); i < edges; ++i)
         {
-          auto const site = latDat.GetSite(nMids + shuf[i]);
+          auto const site = latDat.GetSite(latDat.GetMidDomainSiteCount() + shuf[i]);
           positions[c.Rank() * (mid + edges) + i + mid] = site.GetGlobalSiteCoords();
         }
 
