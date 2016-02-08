@@ -13,5 +13,6 @@
 #include <unittests/redblood/parallel/CellParallelizationTests.h>
 #include <unittests/redblood/parallel/MPISpreadForcesTests.h>
 #include <unittests/redblood/parallel/MPIIntegrateVelocities.h>
+#include <unittests/redblood/parallel/ParallelFixtureTests.h>
 #undef HEMELB_DOING_UNITTESTS
 #endif
