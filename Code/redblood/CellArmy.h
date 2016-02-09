@@ -256,6 +256,8 @@ namespace hemelb
       integrator.UpdatePositionsNonLocal(distributions, cells);
 
       // Positions have changed: update Divide and Conquer stuff
+      log::Logger::Log<log::Debug, log::OnePerCore>(
+          "Number of lent cells: %i", std::get<2>(distCells).size());
       cellDnC.update(distCells);
       lentCells = std::move(std::get<2>(distCells));
     }
