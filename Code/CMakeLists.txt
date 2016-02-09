@@ -30,8 +30,10 @@ set(HEMELB_READING_GROUP_SIZE 5
   CACHE INTEGER "Number of cores to use to read geometry file.")
 set(HEMELB_LOG_LEVEL Info
 	CACHE STRING "Log level, choose 'Critical', 'Error', 'Warning', 'Info', 'Debug' or 'Trace'" )
+set_property(CACHE HEMELB_LOG_LEVEL PROPERTY STRINGS Critical Error Warning Info Debug Trace)
 set(HEMELB_STEERING_LIB basic
 	CACHE STRING "Steering library, choose 'basic' or 'none'" )
+set_property(CACHE HEMELB_STEERING_LIB PROPERTY STRINGS basic none)
 set(HEMELB_DEPENDENCIES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../dependencies"
 	CACHE FILEPATH "Path to find dependency find modules")
 set(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH}
@@ -44,6 +46,8 @@ set(HEMELB_KERNEL "LBGK"
   "Select the kernel to use
   (LBGK,EntropicAnsumali,EntropicChik,MRT,NNCY,NNCYMOUSE,NNC,NNTPL,GuoForcingLBGK)"
 )
+set_property(CACHE HEMELB_KERNEL PROPERTY STRINGS
+  LBGK EntropicAnsumali EntropicChik MRT NNCY NNCYMOUSE NNC NNTPL GuoForcingLBGK)
 set(HEMELB_WALL_BOUNDARY "SIMPLEBOUNCEBACK"
   CACHE STRING "Select the boundary conditions to be used at the walls (BFL,GZS,SIMPLEBOUNCEBACK,JUNKYANG)")
 set(HEMELB_INLET_BOUNDARY "NASHZEROTHORDERPRESSUREIOLET"
