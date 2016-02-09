@@ -33,17 +33,17 @@ namespace hemelb
       {
           CPPUNIT_TEST_SUITE (MPISpreadForcesTests);
           CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::FourPoint> );
-          // CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::FourPoint> );
-          // CPPUNIT_TEST (testAll<hemelb::redblood::stencil::FourPoint> );
-          // CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::ThreePoint> );
-          // CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::ThreePoint> );
-          // CPPUNIT_TEST (testAll<hemelb::redblood::stencil::ThreePoint> );
-          // CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::CosineApprox> );
-          // CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::CosineApprox> );
-          // CPPUNIT_TEST (testAll<hemelb::redblood::stencil::CosineApprox> );
-          // CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::TwoPoint> );
-          // CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::TwoPoint> );
-          // CPPUNIT_TEST (testAll<hemelb::redblood::stencil::TwoPoint> );
+          CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::FourPoint> );
+          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::FourPoint> );
+          CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::ThreePoint> );
+          CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::ThreePoint> );
+          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::ThreePoint> );
+          CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::CosineApprox> );
+          CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::CosineApprox> );
+          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::CosineApprox> );
+          CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::TwoPoint> );
+          CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::TwoPoint> );
+          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::TwoPoint> );
           CPPUNIT_TEST_SUITE_END();
 
         public:
@@ -139,13 +139,6 @@ namespace hemelb
                                   + (1 + split.Rank()) * nCells } :
               CellContainer { cells.begin(), cells.end() };
         auto const distributions = nodeDistributions(latDat, owned);
-        if(split.Size() > 1)
-        {
-          for(auto const & distribution: distributions)
-          {
-            CPPUNIT_ASSERT(distribution.second.IsDistributed());
-          }
-        }
 
         hemelb::redblood::parallel::SpreadForces mpi_spreader(CreateDumbGraphComm(split));
         mpi_spreader.PostMessageLength(distributions, owned);
