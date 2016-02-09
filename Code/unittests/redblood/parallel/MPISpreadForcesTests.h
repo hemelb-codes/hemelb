@@ -59,7 +59,7 @@ namespace hemelb
           }
           template<class STENCIL> void testAll()
           {
-            Check<STENCIL>(3, 3, 2);
+            Check<STENCIL>(10, 10, 2);
           }
 
         protected:
