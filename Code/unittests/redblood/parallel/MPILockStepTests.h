@@ -145,7 +145,7 @@ namespace hemelb
         for(site_t i(0); i < latDat.GetLocalFluidSiteCount(); ++i)
         {
           auto const site = latDat.GetSite(i);
-          if(site.GetForce().GetMagnitudeSquared() > 1e-12)
+          if(site.GetForce().GetMagnitude() > 1e-12)
           {
             positions.push_back(site.GetGlobalSiteCoords());
             forces.push_back(site.GetForce());
@@ -177,6 +177,7 @@ namespace hemelb
           world.Gather(positions, 0);
           world.Gather(forces, 0);
         }
+        world.Barrier();
       }
 
       template<class STENCIL>
@@ -209,7 +210,7 @@ namespace hemelb
               0x0, 0x0, 0x0, 0x0, 0x0, 0x0}};
             cell->SetTag(nbCells);
             ++*static_cast<int64_t*>(static_cast<void*>(&nbCells));
-            *cell += LatticePosition(0,0,3.0);
+            *cell += LatticePosition(0,0,3.6);
             adder(cell);
           };
           originalCellInserter(transformCell);
