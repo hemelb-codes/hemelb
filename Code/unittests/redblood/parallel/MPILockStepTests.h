@@ -80,7 +80,7 @@ namespace hemelb
         FolderTestFixture::setUp();
 
         // Have everything ready to creates simulations
-        if (net::MpiCommunicator::World().Rank() == 0)
+        if (Comms().Rank() == 0)
         {
           CopyResourceToTempdir("large_cylinder_rbc.xml");
           CopyResourceToTempdir("large_cylinder.gmy");
@@ -88,7 +88,7 @@ namespace hemelb
 
           ModifyXMLInput("large_cylinder_rbc.xml", { "simulation", "steps", "value" }, 20000);
         }
-        HEMELB_MPI_CALL(MPI_Barrier, (net::MpiCommunicator::World()));
+        HEMELB_MPI_CALL(MPI_Barrier, (Comms()));
 
         auto const result = Comms().Rank() == 0 ?
           "root_result" :
@@ -127,51 +127,57 @@ namespace hemelb
           for(std::size_t i(serial.size()); i < uuids.size(); ++i)
           {
             CPPUNIT_ASSERT_EQUAL(std::size_t(1), serial.count(uuids[i]));
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].x, serial[uuids[i]].x, 1e-8);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].y, serial[uuids[i]].y, 1e-8);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].z, serial[uuids[i]].z, 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].x, serial[uuids[i]].x, 1e-12);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].y, serial[uuids[i]].y, 1e-12);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].z, serial[uuids[i]].z, 1e-12);
           }
         }
+        world.Barrier();
       }
 
-      void checkCellNodes(
-          net::MpiCommunicator const &world, hemelb::redblood::CellContainer const &cells) {
-
-        std::vector<uint64_t> uuids;
-        std::vector<unsigned> nNodes;
-        std::vector<LatticePosition> nodes;
-        for(auto const &cell: cells)
+      void checkNonZeroForceSites(
+          net::MpiCommunicator const &world,
+          geometry::LatticeData const &latDat,
+          std::size_t &nbtests,
+          hemelb::redblood::CellContainer const &cells) {
+        std::vector<LatticePosition> positions;
+        std::vector<LatticeForceVector> forces;
+        for(site_t i(0); i < latDat.GetLocalFluidSiteCount(); ++i)
         {
-          uuids.push_back(*static_cast<uint64_t const*>(static_cast<void const*>(&cell->GetTag())));
-          nNodes.push_back(cells.size());
-          for(auto const& cell: cells)
+          auto const site = latDat.GetSite(i);
+          if(site.GetForce().GetMagnitudeSquared() > 1e-12)
           {
-            std::copy(cell->GetVertices().begin(), cell->GetVertices().end(),
-                std::back_inserter(nodes));
+            positions.push_back(site.GetGlobalSiteCoords());
+            forces.push_back(site.GetForce());
           }
         }
-        uuids = world.Gather(uuids, 0);
-        nNodes = world.Gather(nNodes, 0);
-        nodes = world.Gather(nodes, 0);
+        if(cells.size() == 0 and world.Rank() == 0)
+        {
+          CPPUNIT_ASSERT_EQUAL(std::size_t(0), positions.size());
+        }
         if(world.Rank() == 0)
         {
-          CPPUNIT_ASSERT_EQUAL(uuids.size(), 2 * cells.size());
-          std::map<uint64_t, unsigned> serial;
-          for(std::size_t i(0); i < cells.size(); ++i)
+          auto const parallel_positions = world.Gather(std::vector<LatticePosition>{}, 0);
+          auto const parallel_forces = world.Gather(std::vector<LatticeForceVector>{}, 0);
+          CPPUNIT_ASSERT_EQUAL(positions.size(), parallel_positions.size());
+          for(std::size_t i(0); i < positions.size(); ++i)
           {
-            serial[uuids[i]] = barycenters[i];
-          }
-          for(std::size_t i(serial.size()); i < uuids.size(); ++i)
-          {
-          std::cout << "YEAH I AM THERE " << barycenters[i] << std::endl;
-            CPPUNIT_ASSERT_EQUAL(std::size_t(1), serial.count(uuids[i]));
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].x, serial[uuids[i]].x, 1e-8);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].y, serial[uuids[i]].y, 1e-8);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].z, serial[uuids[i]].z, 1e-8);
+            auto const i_found = std::find(
+                parallel_positions.begin(), parallel_positions.end(), positions[i]);
+            CPPUNIT_ASSERT(i_found != parallel_positions.end());
+            auto const actual_force = parallel_forces[i_found - parallel_positions.begin()];
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(forces[i].x, actual_force.x, 1e-12);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(forces[i].y, actual_force.y, 1e-12);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(forces[i].z, actual_force.z, 1e-12);
+            ++nbtests;
           }
         }
+        else
+        {
+          world.Gather(positions, 0);
+          world.Gather(forces, 0);
+        }
       }
-
 
       template<class STENCIL>
       void MPILockStepTests::Check()
@@ -181,7 +187,7 @@ namespace hemelb
         using hemelb::redblood::CellInserter;
         typedef typename MasterSim<STENCIL>::Type::Traits Traits;
 
-        auto const world = net::MpiCommunicator::World();
+        auto const world = Comms();
         auto const color = world.Rank() == 0;
         auto const split = world.Split(color);
         if(world.Size() < 3)
@@ -203,24 +209,25 @@ namespace hemelb
               0x0, 0x0, 0x0, 0x0, 0x0, 0x0}};
             cell->SetTag(nbCells);
             ++*static_cast<int64_t*>(static_cast<void*>(&nbCells));
-            *cell += LatticePosition(0,0,3);
+            *cell += LatticePosition(0,0,3.0);
             adder(cell);
           };
           originalCellInserter(transformCell);
         };
         controller->SetCellInsertion(cellInserter);
-        controller->AddCellChangeListener(std::bind(checkBarycenter, world, std::placeholders::_1));
-        auto const checkLent = [controller](CellContainer const &) {
-          if(controller->GetLentCells().size() > 0)
-          {
-            std::cout << "doest have lent cells" << std::endl;
-          }
-        };
-        controller->AddCellChangeListener(checkLent);
+        std::size_t nbtests = 0;
+        controller->AddCellChangeListener(
+            std::bind(
+              checkNonZeroForceSites,
+              std::cref(world), std::cref(master->GetLatticeData()), std::ref(nbtests),
+              std::placeholders::_1
+            )
+        );
 
         // run the simulation
         master->RunSimulation();
         master->Finalise();
+        CPPUNIT_ASSERT(nbtests > 0 or world.Rank() != 0);
       }
 
       CPPUNIT_TEST_SUITE_REGISTRATION (MPILockStepTests);
