@@ -23,7 +23,7 @@ namespace hemelb
         auto countNodesToSend =
             [this](int index, int, NodeIndices const & indices, CellContainer::value_type const&)
             {
-              assert(sendNodeCount.GetSendBuffer().size() > index);
+              assert(int(sendNodeCount.GetSendBuffer().size()) > index);
               sendNodeCount.GetSendBuffer()[index] += indices.size();
             };
 
