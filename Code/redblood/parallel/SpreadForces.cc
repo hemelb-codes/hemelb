@@ -75,7 +75,7 @@ namespace hemelb
             auto const& node = cell->GetVertices()[item.value];
             sendPositions.SetSend(neighbor, node, offset + item.index);
 
-            auto const& force = cellForces[cell->GetTag()][item.index];
+            auto const& force = cellForces[cell->GetTag()][item.value];
             sendForces.SetSend(neighbor, force, offset + item.index);
           }
         };
