@@ -43,7 +43,8 @@ namespace hemelb
           CPPUNIT_TEST (testAll<hemelb::redblood::stencil::CosineApprox> );
           CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::TwoPoint> );
           CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::TwoPoint> );
-          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::TwoPoint> );CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::TwoPoint> );
+          CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp();
@@ -58,7 +59,7 @@ namespace hemelb
           }
           template<class STENCIL> void testAll()
           {
-            Check<STENCIL>(3, 3, 2);
+            Check<STENCIL>(10, 10, 2);
           }
 
         protected:
@@ -150,7 +151,7 @@ namespace hemelb
         std::vector<LatticeForceVector> forces;
         if (color)
         {
-          for (std::size_t i(0); i < std::size_t(latDat.GetLocalFluidSiteCount()); ++i)
+          for (site_t i(0); i < latDat.GetLocalFluidSiteCount(); ++i)
           {
             auto const site = latDat.GetSite(i);
             if (site.GetForce().GetMagnitudeSquared() > 1e-8)

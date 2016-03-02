@@ -41,10 +41,10 @@ namespace hemelb
       // setups a graph communicator that in-practice is all-to-all
       // Simpler than setting up something realistic
       std::vector<std::vector<int>> vertices;
-      for (std::size_t i(0); i < std::size_t(comm.Size()); ++i)
+      for (int i(0); i < comm.Size(); ++i)
       {
         vertices.push_back(std::vector<int>());
-        for (std::size_t j(0); j < std::size_t(comm.Size()); ++j)
+        for (int j(0); j < comm.Size(); ++j)
         {
           if (j != i)
           {
@@ -99,6 +99,10 @@ namespace hemelb
         {
           return cells;
         }
+        parallel::CellParallelization::LentCells const & GetLentCells() const
+        {
+          return lentCells;
+        }
         DivideConquerCells const & GetDNC() const
         {
           return cellDnC;
@@ -110,6 +114,11 @@ namespace hemelb
         void SetCellInsertion(std::function<void(CellInserter const&)> const & f)
         {
           cellInsertionCallBack = f;
+        }
+
+        std::function<void(CellInserter const&)> GetCellInsertion() const
+        {
+          return cellInsertionCallBack;
         }
 
         //! Calls cell insertion
@@ -189,6 +198,8 @@ namespace hemelb
         geometry::LatticeData &latticeData;
         //! Contains all cells
         CellContainer cells;
+        //! Cells lent to this process
+        parallel::CellParallelization::LentCells lentCells;
         //! Divide and conquer object
         DivideConquerCells cellDnC;
         //! Divide and conquer object
@@ -236,17 +247,19 @@ namespace hemelb
       auto const distCells = xc.ReceiveCells(cellTemplates);
       xc.Update(cells, distCells);
       xc.Update(distributions, distCells, parallel::details::AssessMPIFunction<Stencil>(latticeData));
-      auto const &lentCells = std::get<2>(distCells);
 
       // Actually perform velocity integration
       parallel::IntegrateVelocities integrator(neighbourDependenciesGraph);
-      integrator.PostMessageLength(lentCells);
+      integrator.PostMessageLength(std::get<2>(distCells));
       integrator.ComputeLocalVelocitiesAndUpdatePositions<TRAITS>(latticeData, cells);
-      integrator.PostVelocities<TRAITS>(latticeData, lentCells);
+      integrator.PostVelocities<TRAITS>(latticeData, std::get<2>(distCells));
       integrator.UpdatePositionsNonLocal(distributions, cells);
 
       // Positions have changed: update Divide and Conquer stuff
+      log::Logger::Log<log::Debug, log::OnePerCore>(
+          "Number of lent cells: %i", std::get<2>(distCells).size());
       cellDnC.update(distCells);
+      lentCells = std::move(std::get<2>(distCells));
     }
 
     template<class TRAITS>

@@ -9,6 +9,7 @@
 #ifndef HEMELB_NET_MPICOMMUNICATOR_HPP
 #define HEMELB_NET_MPICOMMUNICATOR_HPP
 
+#include <numeric>
 #include "net/MpiDataType.h"
 #include "net/MpiConstness.h"
 
@@ -85,6 +86,35 @@ namespace hemelb
       }
       HEMELB_MPI_CALL(MPI_Gather,
                       (MpiConstCast(&val), 1, MpiDataType<T>(), recvbuf, 1, MpiDataType<T>(), root, *this));
+      return ans;
+    }
+
+    template<typename T>
+    std::vector<T> MpiCommunicator::Gather(const std::vector<T>& val, const int root) const
+    {
+      std::vector<T> ans;
+      std::vector<int> offsets;
+      auto const counts = Gather(static_cast<int>(val.size()), root);
+
+      if (Rank() == root)
+      {
+        offsets.push_back(0);
+        for(auto const &c: counts)
+        {
+          offsets.push_back(offsets.back() + c);
+        }
+
+        auto const N = std::accumulate(counts.begin(), counts.end(), 0);
+        ans.reserve(N+1);
+        ans.resize(N);
+      }
+
+      HEMELB_MPI_CALL(MPI_Gatherv,
+                      (MpiConstCast(val.data()), val.size(), MpiDataType<T>(),
+                       Rank() == root ? ans.data(): nullptr,
+                       Rank() == root ? counts.data(): nullptr,
+                       Rank() == root ? offsets.data(): nullptr,
+                       MpiDataType<T>(), root, *this));
       return ans;
     }
 

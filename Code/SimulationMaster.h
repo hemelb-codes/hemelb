@@ -68,6 +68,7 @@ namespace hemelb
       //! Access to lattice data for debugging
       hemelb::geometry::LatticeData & GetLatticeData()
       {
+        assert(latticeData);
         return *latticeData;
       }
       std::shared_ptr<hemelb::net::IteratedAction> GetCellController() {

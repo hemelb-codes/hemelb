@@ -96,12 +96,12 @@ namespace hemelb
           }                                                                                      \
           int Get ## Name ## Counts(proc_t process)                                              \
           {                                                                                      \
-            assert(name ## Counts.size() > GetNeighborIndex(process));                           \
+            assert(int(name ## Counts.size()) > GetNeighborIndex(process));                      \
             return name ## Counts[GetNeighborIndex(process)];                                    \
           }                                                                                      \
           void Set ## Name ## Counts(proc_t process, int count)                                  \
           {                                                                                      \
-            assert(name ## Counts.size() > GetNeighborIndex(process));                           \
+            assert(int(name ## Counts.size()) > GetNeighborIndex(process));                      \
             name ## Counts[GetNeighborIndex(process)] = count;                                   \
             auto const N = std::accumulate(name ## Counts.begin(), name ## Counts.end(), 0);     \
             name ## Buffer.resize(N);                                                            \
@@ -110,10 +110,10 @@ namespace hemelb
           Name const & Get ## Name(int neighbor, int i) const                                    \
           {                                                                                      \
             auto const index = GetNeighborIndex(neighbor);                                       \
-            assert(name ## Counts.size() > index);                                               \
+            assert(int(name ## Counts.size()) > index);                                          \
             auto const offset = std::accumulate(                                                 \
                 name ## Counts.begin(), name ## Counts.begin() + index, 0) + i;                  \
-            assert(name ## Buffer.size() > offset);                                              \
+            assert(int(name ## Buffer.size()) > offset);                                         \
             return name ## Buffer[offset];                                                       \
           }                                                                                      \
           /** Sets specific send object **/                                                      \
@@ -129,7 +129,7 @@ namespace hemelb
           /** Uses output iterator to fill in send or receive buffer **/                         \
           void insert ## Name(int neighbor, std::vector<Name> const & input)                     \
           {                                                                                      \
-            assert(input.size() == name ## Counts[GetNeighborIndex(neighbor)]);                  \
+            assert(int(input.size()) == name ## Counts[GetNeighborIndex(neighbor)]);             \
             insert(neighbor, input.begin(), name ## Buffer, name ## Counts);                     \
           }                                                                                      \
           /** Fill buffer with specific input **/                                                \
@@ -196,9 +196,9 @@ namespace hemelb
                                                    std::vector<int> const & counts)
     {
       auto const index = GetNeighborIndex(neighbor);
-      assert(counts.size() > index);
+      assert(int(counts.size()) > index);
       auto const offset = std::accumulate(counts.begin(), counts.begin() + index, 0);
-      assert(container.size() >= counts[index] + offset);
+      assert(int(container.size()) >= counts[index] + offset);
       for (int i(offset); i < counts[index] + offset; ++i, ++input)
       {
         container[i] = *input;
@@ -211,9 +211,9 @@ namespace hemelb
                                                         std::vector<int> const & counts, int i)
     {
       auto const index = GetNeighborIndex(neighbor);
-      assert(counts.size() > index);
+      assert(int(counts.size()) > index);
       auto const offset = std::accumulate(counts.begin(), counts.begin() + index, 0) + i;
-      assert(container.size() > offset);
+      assert(int(container.size()) > offset);
       container[offset] = input;
     }
 

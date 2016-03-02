@@ -132,6 +132,15 @@ namespace hemelb
         sendPositions.receive();
         sendForces.receive();
         assert(sendPositions.GetReceiveBuffer().size() == sendForces.GetReceiveBuffer().size());
+#       ifndef NDEBUG
+        if(sendPositions.GetReceiveBuffer().size() > 0)
+        {
+          log::Logger::Log<log::Debug, log::OnePerCore>(
+              "Number of forces spread from other procs: %i",
+              sendPositions.GetReceiveBuffer().size()
+          );
+        }
+#       endif
         hrd::spreadForce2Grid<hrd::SpreadForces, Stencil>(sendPositions.GetReceiveBuffer(),
                                                           hrd::SpreadForces(sendForces.GetReceiveBuffer(),
                                                                             latticeData));

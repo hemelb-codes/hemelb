@@ -97,6 +97,11 @@ namespace hemelb
       return rank;
     }
 
+    void MpiCommunicator::Barrier() const
+    {
+      HEMELB_MPI_CALL(MPI_Barrier, (*commPtr));
+    }
+
     int MpiCommunicator::Size() const
     {
       int size;

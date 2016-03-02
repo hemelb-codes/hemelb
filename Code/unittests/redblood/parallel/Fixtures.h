@@ -30,7 +30,7 @@ namespace hemelb
         std::random_device rd;
         std::mt19937 g(rd());
 
-        int const nMids = latDat.GetMidDomainSiteCount();
+        int const nMids = latDat.GetMidDomainCollisionCount(0);
         int const nEdges = latDat.GetDomainEdgeCollisionCount(0);
         std::vector<LatticePosition> positions(c.Size() * (mid + edges));
         std::vector<int> shuf(nMids);
@@ -48,7 +48,7 @@ namespace hemelb
         std::shuffle(shuf.begin(), shuf.end(), g);
         for (size_t i(0); i < edges; ++i)
         {
-          auto const site = latDat.GetSite(nMids + shuf[i]);
+          auto const site = latDat.GetSite(latDat.GetMidDomainSiteCount() + shuf[i]);
           positions[c.Rank() * (mid + edges) + i + mid] = site.GetGlobalSiteCoords();
         }
 
@@ -140,10 +140,10 @@ namespace hemelb
         // setups a graph communicator that in-practice is all-to-all
         // Simpler than setting up something realistic
         std::vector<std::vector<int>> vertices;
-        for (std::size_t i(0); i < std::size_t(comm.Size()); ++i)
+        for (int i(0); i < comm.Size(); ++i)
         {
           vertices.push_back(std::vector<int>());
-          for (std::size_t j(0); j < std::size_t(comm.Size()); ++j)
+          for (int j(0); j < comm.Size(); ++j)
           {
             if (j != i)
             {
