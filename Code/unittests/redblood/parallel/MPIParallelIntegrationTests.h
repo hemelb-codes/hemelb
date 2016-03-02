@@ -83,15 +83,10 @@ namespace hemelb
           CopyResourceToTempdir("large_cylinder.gmy");
           CopyResourceToTempdir("red_blood_cell.txt");
 
-          ModifyXMLInput("large_cylinder_rbc.xml", { "simulation", "steps", "value" }, 20000);
-
-//          auto set_modulus_to_zero = [this](std::string const &modulus_name)
-//          {
-//            ModifyXMLInput("large_cylinder_rbc.xml", { "redbloodcells", "cells", "cell", "moduli", modulus_name, "value" }, 0.0);
-//          };
-//
-//          std::vector<std::string> moduli_list = {"bending", "surface", "volume", "dilation", "strain"};
-//          std::for_each(moduli_list.begin(), moduli_list.end(), set_modulus_to_zero);
+          // Get the RBC drop off point closer to a subdomain border so that we can test for cell communication
+          // related issues with fewer timesteps.
+          ModifyXMLInput("large_cylinder_rbc.xml", { "simulation", "steps", "value" }, 5000);
+          ModifyXMLInput("large_cylinder_rbc.xml", { "inlets", "inlet", "flowextension", "length", "value" }, 20e-6);
 
         }
         HEMELB_MPI_CALL(MPI_Barrier, (net::MpiCommunicator::World()));

@@ -86,6 +86,9 @@ namespace hemelb
           CopyResourceToTempdir("large_cylinder.gmy");
           CopyResourceToTempdir("red_blood_cell.txt");
 
+          // This simulation duration is sufficient to pick up the original force exchange
+          // issue that motivated the test. Run the test for longer in order to check other
+          // aspects of the parallel implementation against a sequential run.
           ModifyXMLInput("large_cylinder_rbc.xml", { "simulation", "steps", "value" }, 1000);
         }
         HEMELB_MPI_CALL(MPI_Barrier, (Comms()));
