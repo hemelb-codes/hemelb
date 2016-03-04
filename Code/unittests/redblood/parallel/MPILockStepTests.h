@@ -86,7 +86,7 @@ namespace hemelb
           CopyResourceToTempdir("large_cylinder.gmy");
           CopyResourceToTempdir("red_blood_cell.txt");
 
-          // This simulation duration is sufficient to pick up the original force exchange
+          // This simulation duration is sufficient to pick up the original force spreading
           // issue that motivated the test. Run the test for longer in order to check other
           // aspects of the parallel implementation against a sequential run.
           ModifyXMLInput("large_cylinder_rbc.xml", { "simulation", "steps", "value" }, 1000);
@@ -226,6 +226,13 @@ namespace hemelb
               std::cref(world), std::cref(master->GetLatticeData()), std::ref(nbtests),
               std::placeholders::_1
             )
+        );
+        controller->AddCellChangeListener(
+            std::bind(
+                checkBarycenter,
+                std::cref(world),
+                std::placeholders::_1
+                )
         );
 
         // run the simulation
