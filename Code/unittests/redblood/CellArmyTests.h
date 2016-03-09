@@ -69,6 +69,8 @@ namespace hemelb
               stencil::FourPoint>::Type Traits;
 
         public:
+          void setUp();
+          void tearDown();
           void testCell2Fluid();
           void testCell2FluidWithoutCells();
           void testFluid2Cell();
@@ -91,12 +93,26 @@ namespace hemelb
             }
             return templates;
           }
+
+          hemelb::reporting::Timers* timers;
       };
+
+      void CellArmyTests::setUp()
+      {
+        helpers::FourCubeBasedTestFixture::setUp();
+        timers = new hemelb::reporting::Timers(Comms());
+      }
+
+      void CellArmyTests::tearDown()
+      {
+        helpers::FourCubeBasedTestFixture::tearDown();
+        delete timers;
+      }
 
       void CellArmyTests::testCell2FluidWithoutCells()
       {
         CellContainer cells;
-        CellArmy<Traits> army(*latDat, cells, BuildTemplateContainer(cells), cutoff, halo);
+        CellArmy<Traits> army(*latDat, cells, BuildTemplateContainer(cells), *timers, cutoff, halo);
         army.SetCell2Cell(/* intensity */1e0, /* cutoff */0.5);
         army.SetCell2Wall(/* intensity */1e0, /* cutoff */0.5);
         army.Cell2FluidInteractions();
@@ -113,7 +129,7 @@ namespace hemelb
         helpers::ZeroOutFOld(latDat);
         helpers::ZeroOutForces(latDat);
 
-        CellArmy<Traits> army(*latDat, cells, BuildTemplateContainer(cells), cutoff, halo);
+        CellArmy<Traits> army(*latDat, cells, BuildTemplateContainer(cells), *timers, cutoff, halo);
         army.SetCell2Cell(/* intensity */1e0, /* cutoff */0.5);
         army.SetCell2Wall(/* intensity */1e0, /* cutoff */0.5);
         army.Cell2FluidInteractions();
@@ -150,7 +166,7 @@ namespace hemelb
         helpers::ZeroOutForces(latDat);
 
         auto cells = CellContainer();
-        CellArmy<Traits> army(*latDat, cells, BuildTemplateContainer(cells), cutoff, halo);
+        CellArmy<Traits> army(*latDat, cells, BuildTemplateContainer(cells), *timers, cutoff, halo);
         int called = 0;
         auto callback = [cell, &called](std::function<void(CellContainer::value_type)> inserter)
         {
@@ -181,7 +197,7 @@ namespace hemelb
                                                                                          latDat,
                                                                                          normal);
 
-        CellArmy<Traits> army(*latDat, cells, BuildTemplateContainer(cells), cutoff, halo);
+        CellArmy<Traits> army(*latDat, cells, BuildTemplateContainer(cells), *timers, cutoff, halo);
         army.Fluid2CellInteractions();
 
         for (size_t i(0); i < cells.size(); ++i)
@@ -211,7 +227,7 @@ namespace hemelb
 
         CellContainer intel;
         intel.insert(cell);
-        CellArmy<Traits> army(*latDat, intel, BuildTemplateContainer(intel), cutoff, halo);
+        CellArmy<Traits> army(*latDat, intel, BuildTemplateContainer(intel), *timers, cutoff, halo);
         army.AddCellChangeListener(callback);
 
         army.NotifyCellChangeListeners();
@@ -232,7 +248,7 @@ namespace hemelb
 
         CellContainer intel;
         intel.insert(cell);
-        CellArmy<Traits> army(*latDat, intel, BuildTemplateContainer(intel), cutoff, halo);
+        CellArmy<Traits> army(*latDat, intel, BuildTemplateContainer(intel), *timers, cutoff, halo);
         army.SetOutlets(std::vector<FlowExtension>(1, outlet));
 
         // Check status before attempting to remove cell that should *not* be removed

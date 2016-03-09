@@ -121,6 +121,17 @@ namespace hemelb
           colloidUpdateCalculations,
           colloidOutput,
           extractionWriting,
+          cellInsertion,
+          computeNodeDistributions,
+          exchangeCells,
+          computeAndPostVelocities,
+          receiveVelocitiesAndUpdate,
+          updateDNC,
+          computeAndPostForces,
+          receiveForcesAndUpdate,
+          updateCellAndWallInteractions,
+          cellRemoval,
+          cellListeners,
           last
         //!< last, this has to be the last element of the enumeration so it can be used to track cardinality
         };
@@ -254,7 +265,19 @@ namespace hemelb
       "Colloid force calculations",
       "Colloid calculations for updating",
       "Colloid outputting",
-      "Extraction writing" };
+      "Extraction writing",
+      "RBC insertion",
+      "Compute node distributions",
+      "Exchange cells",
+      "Compute local velocities and post them",
+      "Receive velocities and update non local contributions",
+      "Update divide and conquer",
+      "Compute local forces and post them",
+      "Receive forces and update non local contributions",
+      "Update cell-cell and cell-wall interactions",
+      "Remove cells",
+      "Notify cell listeners"
+    };
   }
 
 }

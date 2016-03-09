@@ -68,13 +68,14 @@ namespace hemelb
 
         CellArmy(geometry::LatticeData &_latDat, CellContainer const &cells,
                  std::shared_ptr<TemplateCellContainer> cellTemplates,
+                 hemelb::reporting::Timers &timings,
                  LatticeDistance boxsize = 10.0, Node2NodeForce const &cell2Cell = { 0e0, 1e0, 2 },
                  Node2NodeForce const &cell2Wall = { 0e0, 1e0, 2 }, net::MpiCommunicator const &worldCommunicator = net::MpiCommunicator::World()) :
             latticeData(_latDat), cells(cells), cellDnC(cells, boxsize, cell2Cell.cutoff + 1e-6),
                 wallDnC(createWallNodeDnC<Lattice>(_latDat, boxsize, cell2Wall.cutoff + 1e-6)),
                 cell2Cell(cell2Cell), cell2Wall(cell2Wall), worldCommunicator(worldCommunicator),
                 neighbourDependenciesGraph(CreateGraphComm(worldCommunicator)),
-                cellTemplates(cellTemplates)
+                cellTemplates(cellTemplates), timings(timings)
         {
         }
 
@@ -124,6 +125,7 @@ namespace hemelb
         //! Calls cell insertion
         void CallCellInsertion()
         {
+          timings[hemelb::reporting::Timers::cellInsertion].Start();
           if (cellInsertionCallBack)
           {
             auto callback = [this](CellContainer::value_type cell)
@@ -132,6 +134,7 @@ namespace hemelb
             };
             cellInsertionCallBack(callback);
           }
+          timings[hemelb::reporting::Timers::cellInsertion].Stop();
         }
 
         //! Adds a cell change listener to be notified when cell positions change
@@ -143,10 +146,12 @@ namespace hemelb
         //! Invokes the callback function to output cell positions
         void NotifyCellChangeListeners()
         {
+          timings[hemelb::reporting::Timers::cellListeners].Start();
           for (CellChangeListener ccl : cellChangeListeners)
           {
             ccl(cells);
           }
+          timings[hemelb::reporting::Timers::cellListeners].Stop();
         }
 
         //! Sets outlets within which cells disappear
@@ -223,6 +228,8 @@ namespace hemelb
         net::MpiCommunicator neighbourDependenciesGraph;
         //! Container with the templates used to create the RBC meshes
         std::shared_ptr<TemplateCellContainer> cellTemplates;
+        //! Timers object used to time different code sections
+        hemelb::reporting::Timers &timings;
 
     };
 
@@ -231,8 +238,11 @@ namespace hemelb
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Fluid -> cell interations");
 
+      timings[hemelb::reporting::Timers::computeNodeDistributions].Start();
       auto distributions = parallel::nodeDistributions(latticeData, cells);
+      timings[hemelb::reporting::Timers::computeNodeDistributions].Stop();
 
+      timings[hemelb::reporting::Timers::exchangeCells].Start();
       parallel::ExchangeCells xc(neighbourDependenciesGraph, worldCommunicator);
       auto ownership = [this](CellContainer::value_type cell) {
         auto const id = latticeData.GetProcIdFromGlobalCoords(cell->GetBarycenter());
@@ -247,18 +257,25 @@ namespace hemelb
       auto const distCells = xc.ReceiveCells(cellTemplates);
       xc.Update(cells, distCells);
       xc.Update(distributions, distCells, parallel::details::AssessMPIFunction<Stencil>(latticeData));
+      timings[hemelb::reporting::Timers::exchangeCells].Stop();
 
       // Actually perform velocity integration
+      timings[hemelb::reporting::Timers::computeAndPostVelocities].Start();
       parallel::IntegrateVelocities integrator(neighbourDependenciesGraph);
       integrator.PostMessageLength(std::get<2>(distCells));
       integrator.ComputeLocalVelocitiesAndUpdatePositions<TRAITS>(latticeData, cells);
       integrator.PostVelocities<TRAITS>(latticeData, std::get<2>(distCells));
+      timings[hemelb::reporting::Timers::computeAndPostVelocities].Stop();
+      timings[hemelb::reporting::Timers::receiveVelocitiesAndUpdate].Start();
       integrator.UpdatePositionsNonLocal(distributions, cells);
+      timings[hemelb::reporting::Timers::receiveVelocitiesAndUpdate].Stop();
 
       // Positions have changed: update Divide and Conquer stuff
       log::Logger::Log<log::Debug, log::OnePerCore>(
           "Number of lent cells: %i", std::get<2>(distCells).size());
+      timings[hemelb::reporting::Timers::updateDNC].Start();
       cellDnC.update(distCells);
+      timings[hemelb::reporting::Timers::updateDNC].Stop();
       lentCells = std::move(std::get<2>(distCells));
     }
 
@@ -268,23 +285,32 @@ namespace hemelb
       log::Logger::Log<log::Debug, log::OnePerCore>("Cell -> fluid interations");
       latticeData.ResetForces();
 
+      timings[hemelb::reporting::Timers::computeNodeDistributions].Start();
       auto const distributions = parallel::nodeDistributions(latticeData, cells);
+      timings[hemelb::reporting::Timers::computeNodeDistributions].Stop();
 
+      timings[hemelb::reporting::Timers::computeAndPostForces].Start();
       parallel::SpreadForces mpi_spreader(neighbourDependenciesGraph);
       mpi_spreader.PostMessageLength(distributions, cells);
       mpi_spreader.ComputeForces(cells);
       mpi_spreader.PostForcesAndNodes(distributions, cells);
       mpi_spreader.SpreadLocalForces<TRAITS>(latticeData, cells);
+      timings[hemelb::reporting::Timers::computeAndPostForces].Stop();
+      timings[hemelb::reporting::Timers::receiveForcesAndUpdate].Start();
       mpi_spreader.SpreadNonLocalForces<TRAITS>(latticeData);
+      timings[hemelb::reporting::Timers::receiveForcesAndUpdate].Stop();
 
       //! @todo Any changes required for these lines when running in parallel?
+      timings[hemelb::reporting::Timers::updateCellAndWallInteractions].Start();
       addCell2CellInteractions<Stencil>(cellDnC, cell2Cell, latticeData);
       addCell2WallInteractions<Stencil>(cellDnC, wallDnC, cell2Wall, latticeData);
+      timings[hemelb::reporting::Timers::updateCellAndWallInteractions].Stop();
     }
 
     template<class TRAITS>
     void CellArmy<TRAITS>::CellRemoval()
     {
+      timings[hemelb::reporting::Timers::cellRemoval].Start();
       auto i_first = cells.cbegin();
       auto const i_end = cells.cend();
       while (i_first != i_end)
@@ -308,6 +334,7 @@ namespace hemelb
           cells.erase(i_current);
         }
       }
+      timings[hemelb::reporting::Timers::cellRemoval].Stop();
     }
   }
 }
