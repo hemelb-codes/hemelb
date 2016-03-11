@@ -73,7 +73,7 @@ archer: #the ARCHER supercomputer at EPCC
   home_path_template: "/home/$project/$project/$username"
   runtime_path_template: "/work/$project/$project/$username"
   fabric_dir: "FabricHemeLb"
-  modules: ["load cmake", "swap PrgEnv-cray PrgEnv-gnu", "load anaconda"]
+  modules: ["load cmake/3.2.3", "swap PrgEnv-cray PrgEnv-gnu", "swap gcc gcc/4.9.2", "load anaconda"]
   # Tell autoconf for dependencies where the compilers are
   build_prefix_commands: ["export LDFLAGS=-dynamic","export CXX=CC","export CC=cc", "export LD=CC", "export XTPE_LINK_TYPE=dynamic" ]
   temp_path_template: "$work_path/tmp"
@@ -86,8 +86,6 @@ archer: #the ARCHER supercomputer at EPCC
     CMAKE_CXX_FLAGS: "-dynamic"
     CMAKE_C_FLAGS: "-dynamic"
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
-    CMAKE_CXX_COMPILER: "/opt/cray/craype/2.1.1/bin/CC"
-    CMAKE_C_COMPILER: "/opt/cray/craype/2.1.1/bin/cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
     CPPUNIT_PATCH_LDL: OFF
     CPPUNIT_PATCH_DYNAMIC: ON
