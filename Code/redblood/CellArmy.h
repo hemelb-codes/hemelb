@@ -30,14 +30,9 @@ namespace hemelb
 {
   namespace redblood
   {
-    //! \brief Generates a graph communicator describing the data dependencies for interpolation and spreading
-    //! @todo Move declaration somewhere more suitable
-    //! @todo This is the most conservative and inefficient implementation of the method possible
-    net::MpiCommunicator CreateGraphComm(net::MpiCommunicator const &comm)
+    //! \brief All processes are considered neighbours with each other. This is the most conservative and inefficient implementation of the method possible.
+    std::vector<std::vector<int>> ComputeProcessorNeighbourhood(net::MpiCommunicator const &comm)
     {
-      if (comm.Size() == 1)
-      {
-      }
       // setups a graph communicator that in-practice is all-to-all
       // Simpler than setting up something realistic
       std::vector<std::vector<int>> vertices;
@@ -52,7 +47,27 @@ namespace hemelb
           }
         }
       }
-      return comm.Graph(vertices);
+
+      return vertices;
+    }
+
+    //! \brief Compute neighbourhood based on the domain decomposition and the
+    std::vector<std::vector<int>> ComputeProcessorNeighbourhood(net::MpiCommunicator const &comm, geometry::LatticeData &latDat, LatticeDistance cellsEffectiveSize)
+    {
+      ///@todo NOT IMPLEMENTED YET. FAILING TEST
+      return ComputeProcessorNeighbourhood(comm);
+    }
+
+    LatticeDistance ComputeCellsEffectiveSize(std::shared_ptr<TemplateCellContainer> cellTemplates)
+    {
+      ///@todo NOT IMPLEMENTED YET. FAILING TEST
+      return std::numeric_limits<LatticeDistance>::max();
+    }
+
+    //! \brief Generates a graph communicator describing the data dependencies for interpolation and spreading
+    net::MpiCommunicator CreateGraphComm(net::MpiCommunicator const &comm, geometry::LatticeData &latDat, std::shared_ptr<TemplateCellContainer> cellTemplates)
+    {
+      return comm.Graph(ComputeProcessorNeighbourhood(comm, latDat, ComputeCellsEffectiveSize(cellTemplates)));
     }
 
     //! \brief Federates the cells together so we can apply ops simultaneously
@@ -66,15 +81,15 @@ namespace hemelb
         //! Type of callback for listening to changes to cells
         typedef std::function<void(const CellContainer &)> CellChangeListener;
 
-        CellArmy(geometry::LatticeData &_latDat, CellContainer const &cells,
+        CellArmy(geometry::LatticeData &latDat, CellContainer const &cells,
                  std::shared_ptr<TemplateCellContainer> cellTemplates,
                  hemelb::reporting::Timers &timings,
                  LatticeDistance boxsize = 10.0, Node2NodeForce const &cell2Cell = { 0e0, 1e0, 2 },
                  Node2NodeForce const &cell2Wall = { 0e0, 1e0, 2 }, net::MpiCommunicator const &worldCommunicator = net::MpiCommunicator::World()) :
-            latticeData(_latDat), cells(cells), cellDnC(cells, boxsize, cell2Cell.cutoff + 1e-6),
-                wallDnC(createWallNodeDnC<Lattice>(_latDat, boxsize, cell2Wall.cutoff + 1e-6)),
+            latticeData(latDat), cells(cells), cellDnC(cells, boxsize, cell2Cell.cutoff + 1e-6),
+                wallDnC(createWallNodeDnC<Lattice>(latDat, boxsize, cell2Wall.cutoff + 1e-6)),
                 cell2Cell(cell2Cell), cell2Wall(cell2Wall), worldCommunicator(worldCommunicator),
-                neighbourDependenciesGraph(CreateGraphComm(worldCommunicator)),
+                neighbourDependenciesGraph(CreateGraphComm(worldCommunicator, latDat, cellTemplates)),
                 cellTemplates(cellTemplates), timings(timings)
         {
         }

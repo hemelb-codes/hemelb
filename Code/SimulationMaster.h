@@ -89,6 +89,7 @@ namespace hemelb
       std::shared_ptr<hemelb::geometry::neighbouring::NeighbouringDataManager>
         neighbouringDataManager;
       const hemelb::net::IOCommunicator ioComms;
+      std::shared_ptr<hemelb::configuration::SimConfig> simConfig;
 
     private:
       void Initialise();
@@ -109,7 +110,6 @@ namespace hemelb
        */
       void LogStabilityReport();
 
-      std::shared_ptr<hemelb::configuration::SimConfig> simConfig;
       std::shared_ptr<hemelb::io::PathManager> fileManager;
       hemelb::reporting::Timers timings;
       std::shared_ptr<hemelb::reporting::Reporter> reporter;
