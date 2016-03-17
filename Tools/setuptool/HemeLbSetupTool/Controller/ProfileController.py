@@ -96,7 +96,7 @@ class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, Objec
     def LoadFromFile(self, ignored=None):
         dialog = wx.FileDialog(None,
                                style=wx.FD_OPEN,
-                               wildcard='*.pro')
+                               wildcard='*.pro|*.pr2')
         
         if dialog.ShowModal() == wx.ID_OK:
             self.delegate.LoadFromFile(dialog.GetPath())
