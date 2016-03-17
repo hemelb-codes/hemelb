@@ -25,6 +25,8 @@ namespace hemelb
       INLET_TYPE = 2U,
       OUTLET_TYPE = 3U
     };
+
   }
+
 }
 #endif // HEMELB_GEOMETRY_SITETYPE_H

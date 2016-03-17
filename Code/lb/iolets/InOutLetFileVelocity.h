@@ -27,7 +27,7 @@ namespace hemelb
           InOutLet* Clone() const;
           void Reset(SimulationState &state)
           {
-            CalculateTable(state.GetTotalTimeSteps());
+            CalculateTable(state.GetTotalTimeSteps(), state.GetTimeStepLength());
           }
 
           const std::string& GetFilePath()
@@ -50,7 +50,7 @@ namespace hemelb
         private:
           std::string velocityFilePath;
           std::string velocityWeightsFilePath;
-          void CalculateTable(LatticeTimeStep totalTimeSteps);
+          void CalculateTable(LatticeTimeStep totalTimeSteps, PhysicalTime timeStepLength);
           std::vector<LatticeSpeed> velocityTable;
           const util::UnitConverter* units;
 

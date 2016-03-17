@@ -10,7 +10,7 @@
 """
 Fabric definitions for HemeLB
 Usage:
-        With current working directory anywhere inside the HemeLB mercurial checkout, execute
+        With current working directory anywhere inside the HemeLB checkout, execute
                 "fab <machinename> <task>"
         for example:
                 "fab hector deploy_cold"
@@ -18,8 +18,7 @@ Usage:
         Do fab -l to get a list of available commands.
 
         Before use, you MUST copy deploy/machines_user_example.yml as deploy/machines_user.yml and fill in your personal details.
-        For smoothest usage, you should also ensure ssh keys are in place so the target machine can access the mercurial repository
-        of hemelb.
+        For smoothest usage, you should also ensure ssh keys are in place so the target machine can access the hemelb repository.
 """
 from templates import *
 from machines import *
@@ -37,20 +36,20 @@ from os.path import expanduser
 def clone():
     """Delete and checkout the repository afresh."""
     run(template("mkdir -p $remote_path"))
-    if env.no_ssh or env.no_hg:
+    if env.no_ssh or env.no_git:
         with cd(env.remote_path):
-            run(template("rm -rf $repository"))
-        # Some machines do not allow outgoing connections back to the mercurial server
+            run(template("rm -rf $hemelb_repo"))
+        # Some machines do not allow outgoing connections
         # so the data must be sent by a project sync instead.
         execute(sync)
          # On such machines, we cannot rely on an outgoing connection to servers to find dependencies either.
     else:
         with cd(env.remote_path):
-            run(template("rm -rf $repository"))
-            run(template("hg clone $hg/$repository"))
+            run(template("rm -rf $hemelb_repo"))
+            run(template("git clone $github:$github_user/$hemelb_repo"))
         with cd(env.repository_path):
             with prefix(env.build_prefix):
-                run("hg id -q -i > revision_info.txt")
+                run("git rev-parse HEAD > revision_info.txt")
     if env.no_ssh or env.needs_tarballs:
         execute(send_distributions)
 
@@ -87,17 +86,16 @@ def require_recopy():
 
 @task
 def update():
-    """Update the remote mercurial repository"""
-    if env.no_ssh or env.no_hg:
+    """Update the remote repository"""
+    if env.no_ssh or env.no_git:
         execute(sync)
     else:
         with cd(env.repository_path):
             with prefix(env.build_prefix):
-                run("hg pull")
-                run("hg update")
+                run("git pull")
         with cd(env.repository_path):
             with prefix(env.build_prefix):
-                run("hg id -q -i > revision_info.txt")
+                run("git rev-parse HEAD > revision_info.txt")
 
 @task
 def prepare_paths():
@@ -236,13 +234,18 @@ def install():
             run(template("chmod u+x $install_path/bin/unittests_hemelb $install_path/bin/hemelb"))
 
 @task
-def revert(args="--all"):
+def reset(args=None):
     """Revert local changes in the remote repository.
      Including those made through 'fab ... patch' and 'fab ... sync'.
     Specify a path relative to the repository root to revert only some files or directories
     """
+    if args is None:
+        command = "git reset --hard"
+    else:
+        command = "git checkout %s" % args
+        
     with cd(env.repository_path):
-        run("hg revert %s" % args)
+        run(command)
 
 @task
 def send_distributions():
@@ -267,37 +270,33 @@ def fetch_distributions():
 @task
 def clone_regression_tests():
     """Get the latest data from the repo."""
-    run(template("mkdir -p $regression_test_repo_path"))
-    if env.no_ssh or env.no_hg:
-        # Some machines do not allow outgoing connections back to the mercurial server
+    if env.no_ssh or env.no_git:
+        # Some machines do not allow outgoing connections
         # so the data must be sent by a project sync instead.
         execute(sync_regression_tests)
     else:
-        with cd(env.regression_test_repo_path):
-            # Pull and update
-            run(template("hg pull $hg/$regression_tests_repository || hg clone $hg/$regression_tests_repository ."))
-            run("hg update")
+        run(template("if [ -d $regression_test_repo_path ]; then cd $regression_test_repo_path && git pull $github:$github_user/$regression_tests_repo; else mkdir -p $regression_test_repo_path && cd $regression_test_repo_path && git clone $github:$github_user/$regression_tests_repo . ; fi"))
 
 @task
 def copy_regression_tests():
     if env.regression_test_source_path != env.regression_test_path:
-        run(template("cp -r $regression_test_source_path/* $regression_test_path"))
+        run(template("cp -r $regression_test_source_path $regression_test_path"))
 
 @task
 def sync():
     """Update the remote repository with local changes.
     Uses rysnc.
-    Respects the local .hgignore files to avoid sending unnecessary information.
+    Respects the local .gitignore files to avoid sending unnecessary information.
     """
     rsync_project(
             remote_dir=env.repository_path,
             local_dir=env.localroot + '/',
             exclude=map(lambda x: x.replace('\n', ''),
-            list(open(os.path.join(env.localroot, '.hgignore'))) + 
-            ['.hg']
+            list(open(os.path.join(env.localroot, '.gitignore'))) + 
+            ['.git']
             )
     )
-    # In the case of a sync (non-mercurial) remote, we will not be able to run mercurial on the remote to determine which code is being built.
+    # In the case of a sync (non-git) remote, we will not be able to run git on the remote to determine which code is being built.
     # We will therefore assume the id for the current repository, and store that in a separate file along with the code.
     revision_info_path = os.path.join(env.localroot, 'revision_info.txt')
     with open(revision_info_path, 'w') as revision_info:
@@ -308,25 +307,26 @@ def sync():
 def sync_regression_tests():
     """Update the remote repository with local changes.
     Uses rysnc.
-    Respects the local .hgignore files to avoid sending unnecessary information.
+    Respects the local .gitignore files to avoid sending unnecessary information.
     """
+    run(template("mkdir -p $regression_test_repo_path"))
     rsync_project(
             remote_dir=env.regression_test_repo_path,
             local_dir=env.regression_tests_root + '/',
             exclude=map(lambda x: x.replace('\n', ''),
-            list(open(os.path.join(env.localroot, '.hgignore'))) + 
-            ['.hg']
+            list(open(os.path.join(env.localroot, '.gitignore'))) + 
+            ['.git']
             )
     )
 
 @task
 def patch(args=""):
     """Update the remote repository with local changes.
-    Uses hg diff to generate patchfiles.
+    Uses git diff to generate patchfiles.
     Specify a path relative to the repository root to patch only some files or directories
     e.g 'fab legion patch Code/main.cc'
     """
-    local("hg diff %s> fabric.diff" % args)
+    local("git diff %s> fabric.diff" % args)
     put("fabric.diff", env.pather.join(env.remote_path, env.repository))
     with cd(env.repository_path):
         run("patch -p1 < fabric.diff")
@@ -567,6 +567,19 @@ def hemelbs(config, **args):
         hemeconfig.update(args)
         hemeconfig['cores'] = currentCores
         execute(hemelb, config, **hemeconfig)
+
+@task
+def hemelb_benchmark(config, min_cores, max_cores, **args):
+    """ Performs a strong scaling test from <min_cores> cores to <max_cores> cores, in steps of a factor 2. """
+    cores_used = int(min_cores)
+    while cores_used < int(max_cores):
+        args['cores'] = cores_used
+        
+        with_config(config)
+        execute(put_configs, config)
+        job(dict(script='hemelb',
+            cores=cores_used, images=10, steering=1111, wall_time='0:15:0', memory='2G'), args)
+        cores_used *= 2
 
 @task(alias='regress')
 def regression_test(**args):

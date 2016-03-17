@@ -9,7 +9,12 @@
 
 #ifndef HEMELB_IO_WRITERS_XDR_XDRREADER_H
 #define HEMELB_IO_WRITERS_XDR_XDRREADER_H
-#include <stdint.h>
+
+#if HEMELB_HAVE_CSTDINT
+# include <cstdint>
+#else
+# include <stdint.h>
+#endif
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 

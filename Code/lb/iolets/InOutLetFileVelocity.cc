@@ -1,12 +1,8 @@
-//
-// Copyright (C) University College London, 2007-2013, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
 
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 #include "lb/iolets/InOutLetFileVelocity.h"
 #include <algorithm>
 #include <fstream>
@@ -35,7 +31,7 @@ namespace hemelb
         return copy;
       }
 
-      void InOutLetFileVelocity::CalculateTable(LatticeTimeStep totalTimeSteps)
+      void InOutLetFileVelocity::CalculateTable(LatticeTimeStep totalTimeSteps, PhysicalTime timeStepLength)
       {
         // First read in values from file
         // Used to be complex code here to keep a vector unique, but this is just achieved by using a map.
@@ -66,13 +62,30 @@ namespace hemelb
         for (std::map<PhysicalTime, PhysicalSpeed>::iterator entry = timeValuePairs.begin();
             entry != timeValuePairs.end(); entry++)
         {
-//          pMin = util::NumericalFunctions::min(pMin, entry->second);
-//          pMax = util::NumericalFunctions::max(pMax, entry->second);
+
+          /* If the time value in the input file stretches BEYOND the end of the simulation, then insert an interpolated end value and exit the loop. */
+          if(entry->first > totalTimeSteps*timeStepLength) {
+  
+            PhysicalTime time_diff = totalTimeSteps*timeStepLength - times.back();
+
+            PhysicalTime time_diff_ratio = time_diff / (entry->first - times.back());
+            PhysicalSpeed vel_diff = entry->second - values.back();
+
+            PhysicalSpeed final_velocity = values.back() + time_diff_ratio * vel_diff;
+
+            times.push_back(totalTimeSteps*timeStepLength);
+            values.push_back(final_velocity);
+            break;
+          }
+
           times.push_back(entry->first);
           values.push_back(entry->second);
         }
 //        densityMin = units->ConvertPressureToLatticeUnits(pMin) / Cs2;
 //        densityMax = units->ConvertPressureToLatticeUnits(pMax) / Cs2;
+
+        /* If the time values in the input file end BEFORE the planned end of the simulation, then loop the profile afterwards (using %TimeStepsInInletVelocityProfile). */
+        int TimeStepsInInletVelocityProfile = times.back() / timeStepLength;
 
         // Check if last point's value matches the first
         if (values.back() != values.front())
@@ -84,8 +97,9 @@ namespace hemelb
         // Now convert these vectors into arrays using linear interpolation
         for (unsigned int timeStep = 0; timeStep <= totalTimeSteps; timeStep++)
         {
+          // The "% TimeStepsInInletVelocityProfile" here is to prevent profile stretching (it will loop instead).
           double point = times.front()
-              + (static_cast<double>(timeStep) / static_cast<double>(totalTimeSteps))
+              + (static_cast<double>(timeStep % TimeStepsInInletVelocityProfile) / static_cast<double>(totalTimeSteps))
                   * (times.back() - times.front());
 
           PhysicalSpeed vel = util::NumericalFunctions::LinearInterpolate(times, values, point);
