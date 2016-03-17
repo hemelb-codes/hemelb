@@ -132,6 +132,7 @@ namespace hemelb
           updateCellAndWallInteractions,
           cellRemoval,
           cellListeners,
+          graphComm,
           timer1,
           timer2,
           timer3,
@@ -283,6 +284,7 @@ namespace hemelb
       "Update cell-cell and cell-wall interactions",
       "Remove cells",
       "Notify cell listeners",
+      "Create graph communicator"
       "Timer1",
       "Timer2",
       "Timer3",

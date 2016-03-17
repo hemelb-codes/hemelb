@@ -25,13 +25,13 @@ namespace hemelb
           CPPUNIT_TEST_SUITE (CreateGraphCommTests);
           CPPUNIT_TEST (testDumbGraphCommunicator);
           CPPUNIT_TEST (testGraphCommunicator);
-          CPPUNIT_TEST (testComputeCellsEffectiveRadius);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testComputeCellsEffectiveSize);CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp();
           void testDumbGraphCommunicator();
           void testGraphCommunicator();
-          void testComputeCellsEffectiveRadius();
+          void testComputeCellsEffectiveSize();
 
         protected:
           std::shared_ptr<hemelb::configuration::CommandLine> options;
@@ -122,15 +122,19 @@ namespace hemelb
         CPPUNIT_ASSERT(master);
         auto &latticeData = master->GetLatticeData();
 
-        // Compute neighbourhoods (cylinder is 4.8e-5 long, a cell effective size of 1e-6 won't let cells span across more than two subdomains)
-        auto neighbourhoods = ComputeProcessorNeighbourhood(comms, latticeData, 1e-6);
+        // Compute neighbourhoods (cylinder is 4.8e-5 long, a cell effective size of 2e-6 won't let cells span across more than two subdomains)
+        auto neighbourhoods =
+            ComputeProcessorNeighbourhood(comms,
+                                          latticeData,
+                                          2e-6 / master->GetSimConfig()->GetVoxelSize());
 
-        // We assume that Parmetis does something sensible and divides the cylinder in four consecutive subdomains taking roughly a quarters of the sites each
+        // Parmetis divides the cylinder in four consecutive cylindrical subdomains with interfaces roughly parallel to the iolets.
+        // The ranks are ordered 0,3,1,2 along the positive direction of the z axis.
         std::vector<std::vector<int>> expected_neighbourhoods;
+        expected_neighbourhoods.push_back( { 3 });
+        expected_neighbourhoods.push_back( { 2, 3 });
         expected_neighbourhoods.push_back( { 1 });
-        expected_neighbourhoods.push_back( { 0, 2 });
-        expected_neighbourhoods.push_back( { 1, 3 });
-        expected_neighbourhoods.push_back( { 2 });
+        expected_neighbourhoods.push_back( { 0, 1 });
 
         // Compare computed vs expected neighbourhoods
         for (auto procid_neighbours : util::enumerate(neighbourhoods))
@@ -140,7 +144,7 @@ namespace hemelb
         }
       }
 
-      void CreateGraphCommTests::testComputeCellsEffectiveRadius()
+      void CreateGraphCommTests::testComputeCellsEffectiveSize()
       {
         using hemelb::redblood::ComputeCellsEffectiveSize;
 
@@ -149,8 +153,11 @@ namespace hemelb
         auto master = CreateMasterSim(comms);
         CPPUNIT_ASSERT(master);
 
-        CPPUNIT_ASSERT_EQUAL(12e-06,
-                             ComputeCellsEffectiveSize(master->GetSimConfig()->GetRBCMeshes()));
+        // Biggest cell radius in lattice units times a tolerance
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(hemelb::redblood::EFFECTIVE_SIZE_TO_RADIUS_RATIO
+                                         * (8e-06 / master->GetSimConfig()->GetVoxelSize()),
+                                     ComputeCellsEffectiveSize(master->GetSimConfig()->GetRBCMeshes()),
+                                     1e-9);
 
       }
 
