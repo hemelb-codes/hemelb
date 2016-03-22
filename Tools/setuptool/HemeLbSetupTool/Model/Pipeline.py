@@ -46,7 +46,13 @@ class Pipeline(Observable):
         self.PlacedIolets.SetItemEnabledChangeHandler(self.HandlePlacedItemEnabledChange)
         
         return
-            
+    
+    def SetSurfaceSource(self, src):
+        self.SurfaceMapper.SetInputConnection(src)
+        self.PlacedIolets.SetSurfaceSource(src)
+        return
+    
+                    
     def ResetView(self):
         """Reset the view on the current scene.
         """
