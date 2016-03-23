@@ -117,7 +117,7 @@ class SinusoidalPressureIolet(Iolet):
     """Do not instantiate
     """
     _Args = Iolet._Args.copy()
-    _Args['Pressure'] = Vector(80., 0., 0.)
+    _Args['Pressure'] = Vector(0., 0., 0.)
     
     def __init__(self, **kwargs):
         Iolet.__init__(self, **kwargs)
