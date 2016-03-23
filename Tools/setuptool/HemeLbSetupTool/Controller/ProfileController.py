@@ -12,6 +12,7 @@ import wx
 from HemeLbSetupTool.Bindings.ObjectController import ObjectController
 from HemeLbSetupTool.Bindings.Translators import QuickTranslator
 from HemeLbSetupTool.Bindings.VtkObject import HasVtkObjectKeys
+from HemeLbSetupTool.Bindings.Mappers import SimpleObservingMapper
 from HemeLbSetupTool.Controller.IoletListController import HasIoletListKeys
 from HemeLbSetupTool.Controller.VectorController import HasVectorKeys
 
@@ -23,7 +24,10 @@ class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, Objec
     def __init__(self, delegate):
         ObjectController.__init__(self, delegate)
         self.DefineVectorKey("SeedPoint")
+        
         self.DefineIoletListKey("Iolets")
+        self.BindValue('DefaultIoletRadius', SimpleObservingMapper(self.Iolets, 'DefaultIoletRadius'))
+        
         self.DefineVtkObjectKey("StlReader")
         self.DefineVtkObjectKey('SideLengthCalculator')
         
