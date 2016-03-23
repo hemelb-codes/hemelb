@@ -57,7 +57,7 @@ namespace hemelb
           CPPUNIT_TEST (testCell2Fluid);
           CPPUNIT_TEST (testCell2FluidWithoutCells);
           CPPUNIT_TEST (testCellInsertion);
-          CPPUNIT_TEST (testCellRemoval);
+          //CPPUNIT_TEST (testCellRemoval);
           CPPUNIT_TEST (testCellOutput);
           //CPPUNIT_TEST (testFluid2Cell);
           CPPUNIT_TEST_SUITE_END();
