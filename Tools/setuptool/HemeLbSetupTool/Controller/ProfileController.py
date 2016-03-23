@@ -45,6 +45,14 @@ class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, Objec
         pdb.set_trace()
         return
     
+    def Generate(self, ignored=None):
+        # Pop up the dialog
+        dialog = wx.ProgressDialog("Geometry generating",
+                                   "Sorry, progress bar not implemented")
+        self.delegate.Generate()
+        dialog.Destroy()
+        return
+    
     def ChooseStl(self, ignored=None):
         dialog = wx.FileDialog(None, style=wx.FD_OPEN, wildcard='*.stl')
         
