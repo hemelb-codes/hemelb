@@ -133,12 +133,6 @@ namespace hemelb
           cellRemoval,
           cellListeners,
           graphComm,
-          timer1,
-          timer2,
-          timer3,
-          timer4,
-          timer5,
-          timer6,
           last
         //!< last, this has to be the last element of the enumeration so it can be used to track cardinality
         };
@@ -284,13 +278,7 @@ namespace hemelb
       "Update cell-cell and cell-wall interactions",
       "Remove cells",
       "Notify cell listeners",
-      "Create graph communicator",
-      "Timer1",
-      "Timer2",
-      "Timer3",
-      "Timer4",
-      "Timer5",
-      "Timer6"
+      "Create graph communicator"
     };
   }
 
