@@ -194,7 +194,7 @@ class PlacedIolet(Observable):
         
         self._p1 -= self._o
         
-        return 0.5 * N.sqrt(N.dot(self._p1, self._p1))
+        return float(0.5 * N.sqrt(N.dot(self._p1, self._p1)))
     
     Radius = property(GetRadius, SetRadius)
     
