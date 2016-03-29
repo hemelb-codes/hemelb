@@ -500,7 +500,7 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
         clippingFunction.SetOperationTypeToIntersection()
 
         clipper = vtkClipPolyData()
-        clipper.SetInput(pd)
+        clipper.SetInputData(pd)
         clipper.SetClipFunction(clippingFunction)
 
         # Filter to get part closest to seed point
@@ -513,7 +513,7 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
 
     def _AddValue(self, pd):
         adder = IntegerAdder(Value=self.Value)
-        adder.SetInput(pd)
+        adder.SetInputData(pd)
         adder.Update()
         return adder.GetOutput()
 
@@ -535,7 +535,7 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
         newData.DeepCopy(clipped.GetCellData().GetScalars())
 
         boundaryExtractor = vtkvmtkPolyDataBoundaryExtractor()
-        boundaryExtractor.SetInput(clipped)
+        boundaryExtractor.SetInputData(clipped)
         boundaryExtractor.Update()
         boundaries = boundaryExtractor.GetOutput()
         boundariesPointIdMap = boundaries.GetPointData().GetScalars()
@@ -592,7 +592,7 @@ class PolyDataCloser(vtkProgrammableFilter):
         edger.FeatureEdgesOff()
         edger.NonManifoldEdgesOff()
         edger.ManifoldEdgesOff()
-        edger.SetInput(input)
+        edger.SetInputData(input)
 
         # Converts the edges to a polyline
         stripper = vtkStripper()
@@ -606,13 +606,13 @@ class PolyDataCloser(vtkProgrammableFilter):
 
         # Triangulate
         tri = vtkTriangleFilter()
-        tri.SetInput(boundaryPoly)
+        tri.SetInputData(boundaryPoly)
         tri.Update()
 
         # Join to the input
         merger = vtkAppendPolyData()
-        merger.AddInput(input)
-        merger.AddInput(tri.GetOutput())
+        merger.AddInputData(input)
+        merger.AddInputData(tri.GetOutput())
 
         # Clean up by merging duplicate points
         cleaner = vtkCleanPolyData()
@@ -673,7 +673,7 @@ class StageWriter(object):
             stage.Update()
             writer.SetInputConnection(stage.GetOutputPort())
         elif isinstance(stage, vtkPolyData):
-            writer.SetInput(stage)
+            writer.SetInputData(stage)
         else:
             raise ValueError(
                 'Cannot cope with instances of "%s"' % type(stage))
