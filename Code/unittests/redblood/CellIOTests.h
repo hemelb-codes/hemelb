@@ -174,6 +174,7 @@ namespace hemelb
           LatticeDistance scale;
       };
 
+
       CPPUNIT_TEST_SUITE_REGISTRATION (CellIOTests);
     }
   }

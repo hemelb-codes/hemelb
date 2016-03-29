@@ -28,6 +28,7 @@
 #include <map>
 #include <limits>
 #include <cstdlib>
+#include <boost/uuid/uuid_io.hpp>
 
 namespace hemelb
 {
@@ -186,6 +187,23 @@ namespace hemelb
       controller->SetCellInsertion(simConfig->GetInserter());
       controller->SetOutlets(*simConfig->GetRBCOutlets());
       cellController = std::static_pointer_cast<hemelb::net::IteratedAction>(controller);
+
+      auto output_callback =
+          [this](const hemelb::redblood::CellContainer & cells)
+          {
+            auto timestep = simulationState->GetTimeStep();
+            if ((timestep % simConfig->GetRBCOutputPeriod()) == 0)
+            {
+              log::Logger::Log<log::Info, log::OnePerCore>("printstep %d, num cells %d", timestep, cells.size());
+              for (auto cell: cells)
+              {
+                std::stringstream filename;
+                filename << cell->GetTag() << "_t_" << timestep << ".vtp";
+                hemelb::redblood::writeVTKMesh(filename.str(), cell, *unitConverter);
+              }
+            }
+          };
+      controller->AddCellChangeListener(output_callback);
     }
 
     // Initialise and begin the steering.

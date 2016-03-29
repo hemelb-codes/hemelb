@@ -101,6 +101,9 @@
         <scale units="m" value="6e-06" />
       </cell>
     </cells>
+    <output>
+      <period units="LB" value="100" />
+    </output>
   </redbloodcells>
   <initialconditions>
     <pressure>

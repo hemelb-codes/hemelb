@@ -97,6 +97,10 @@ namespace hemelb
         {
           return cell2Wall;
         }
+        LatticeTimeStep const & GetRBCOutputPeriod() const
+        {
+          return rbcOutputPeriod;
+        }
         lb::StressTypes GetStressType() const
         {
           return stressType;
@@ -346,6 +350,7 @@ namespace hemelb
         std::shared_ptr<std::vector<redblood::FlowExtension>> rbcOutlets;
         redblood::Node2NodeForce cell2Cell;
         redblood::Node2NodeForce cell2Wall;
+        LatticeTimeStep rbcOutputPeriod;
 
       protected:
         // These have to contain pointers because there are multiple derived types that might be

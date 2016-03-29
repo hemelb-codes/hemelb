@@ -269,6 +269,8 @@ namespace hemelb
         throw Exception() << "Box-size < cell-cell interaction size: "
           "cell-cell interactions cannot be all accounted for.";
       }
+      const io::xml::Element outputNode = rbcNode.GetChildOrThrow("output");
+      GetDimensionalValue(outputNode.GetChildOrThrow("period"), "LB", rbcOutputPeriod);
       return true;
     }
 
