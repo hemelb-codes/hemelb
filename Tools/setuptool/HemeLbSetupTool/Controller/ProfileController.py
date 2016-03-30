@@ -49,6 +49,7 @@ class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, Objec
         # Pop up the dialog
         dialog = wx.ProgressDialog("Geometry generating",
                                    "Sorry, progress bar not implemented")
+        dialog.Pulse()
         self.delegate.Generate()
         dialog.Destroy()
         return
