@@ -55,20 +55,15 @@ namespace hemelb
                                                                 geometry::LatticeData &latDat,
                                                                 LatticeDistance cellsEffectiveSize)
     {
-      std::vector<LatticeCoordinate> serialisedLocalCoords(3
-          * latDat.GetDomainEdgeCollisionCount(0));
-      std::vector<LatticeCoordinate>::size_type serialisedLocalCoordsIndex = 0;
+      std::vector<LatticeVector> serialisedLocalCoords;
+      serialisedLocalCoords.reserve(latDat.GetDomainEdgeCollisionCount(0));
 
       for (auto siteIndex = latDat.GetMidDomainSiteCount();
           siteIndex < latDat.GetMidDomainSiteCount() + latDat.GetDomainEdgeCollisionCount(0);
           ++siteIndex)
       {
-        auto borderSiteCoords = latDat.GetSite(siteIndex).GetGlobalSiteCoords();
-        serialisedLocalCoords[serialisedLocalCoordsIndex++] = borderSiteCoords[0];
-        serialisedLocalCoords[serialisedLocalCoordsIndex++] = borderSiteCoords[1];
-        serialisedLocalCoords[serialisedLocalCoordsIndex++] = borderSiteCoords[2];
+        serialisedLocalCoords.push_back(latDat.GetSite(siteIndex).GetGlobalSiteCoords());
       }
-      assert(serialisedLocalCoordsIndex == serialisedLocalCoords.size());
 
       /// @\todo refactor into a method net::MpiCommunicator::AllGatherv
       int numProcs = comm.Size();
@@ -86,19 +81,17 @@ namespace hemelb
             + allSerialisedCoordSizes[j];
       }
 
-      std::vector<LatticeCoordinate> allSerialisedCoords(totalSize);
+      std::vector<LatticeVector> allSerialisedCoords(totalSize);
       HEMELB_MPI_CALL(MPI_Allgatherv,
-                      ( net::MpiConstCast(&serialisedLocalCoords[0]), serialisedLocalCoords.size(), net::MpiDataType<LatticeCoordinate>(), &allSerialisedCoords[0], net::MpiConstCast(&allSerialisedCoordSizes[0]), net::MpiConstCast(&allSerialisedCoordDisplacements[0]), net::MpiDataType<LatticeCoordinate>(), comm ));
+                      ( net::MpiConstCast(&serialisedLocalCoords[0]), serialisedLocalCoords.size(), net::MpiDataType<LatticeVector>(), &allSerialisedCoords[0], net::MpiConstCast(&allSerialisedCoordSizes[0]), net::MpiConstCast(&allSerialisedCoordDisplacements[0]), net::MpiDataType<LatticeVector>(), comm ));
 
       std::vector<std::vector<LatticeVector>> coordsPerProc(numProcs);
       for (unsigned procIndex = 0; procIndex < numProcs; ++procIndex)
       {
         for (unsigned indexAllCoords = allSerialisedCoordDisplacements[procIndex];
-            indexAllCoords < allSerialisedCoordDisplacements[procIndex + 1]; indexAllCoords += 3)
+            indexAllCoords < allSerialisedCoordDisplacements[procIndex + 1]; ++indexAllCoords)
         {
-          coordsPerProc[procIndex].push_back( { allSerialisedCoords[indexAllCoords],
-                                                allSerialisedCoords[indexAllCoords + 1],
-                                                allSerialisedCoords[indexAllCoords + 2] });
+          coordsPerProc[procIndex].push_back(allSerialisedCoords[indexAllCoords]);
         }
       }
       /// end of refactoring
@@ -127,11 +120,12 @@ namespace hemelb
       std::vector<std::vector<int>> vertices(numProcs);
       for (int procA(0); procA < numProcs; ++procA)
       {
-        for (int procB(0); procB < numProcs; ++procB)
+        for (int procB(procA+1); procB < numProcs; ++procB)
         {
           if (areProcsNeighbours(procA, procB))
           {
             vertices[procA].push_back(procB);
+            vertices[procB].push_back(procA);
           }
         }
       }
