@@ -90,7 +90,7 @@ class PipelineController(HasVtkObjectKeys, HasPlacedIoletListKeys, ObjectControl
         profileController.BindValue('Iolets.SelectedIndex',
                                     SimpleObservingMapper(self.PlacedIolets, 'SelectedIndex'))
         
-        self.GetValueForKey('SurfaceMapper.SetInputConnection')(
+        self.GetValueForKey('SetSurfaceSource')(
             profileController.GetValueForKey('StlReader.GetOutputPort')()
             )
         
