@@ -9,8 +9,6 @@ project(HemeLB)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# Intel compilers and CMake don't play well together on this, work around.
-include(intel_cpp11)
 
 #---- OPTION switches accepted by the build -------
 
