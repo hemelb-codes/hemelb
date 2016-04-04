@@ -14,13 +14,9 @@ if(TIXML_USE_STL)
 	add_definitions(-DTIXML_USE_STL)
 endif()
 include_directories(${TINYXML_INCLUDE_DIR})
-if(HEMELB_USE_BOOST)
-	#------BOOST ------------------
-	SET(Boost_ADDITIONAL_VERSIONS "1.48" "1.48.0")
-	find_package(Boost 1.48 REQUIRED)
-	include_directories(${Boost_INCLUDE_DIRS})
-	add_definitions(-DHEMELB_USE_BOOST)
-endif()
+#------BOOST ------------------
+find_package(Boost 1.60 REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
 #------CTemplate ----------------
 find_package(CTemplate REQUIRED)
 include_directories(${CTEMPLATE_INCLUDE_DIR})
