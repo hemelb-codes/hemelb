@@ -206,8 +206,8 @@ namespace hemelb
       // obtain the rank of the processor responsible for simulating the fluid at this site
       *ownerRankForSite = gmyResult.Blocks[*blockIdForSite].Sites[*localSiteIdForSite].targetProcessor;
 
-      // if the rank is BIG_NUMBER2 then the site is solid not fluid so return invalid
-      if (*ownerRankForSite == BIG_NUMBER2)
+      // site is solid not fluid so return invalid
+      if (*ownerRankForSite == SITE_OR_BLOCK_SOLID)
         return false;
 
       // all requested information obtained and validated so return true

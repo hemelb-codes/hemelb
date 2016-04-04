@@ -418,7 +418,7 @@ namespace hemelb
           site_t numSitesRead = 0;
           for (site_t site = 0; site < geometry.GetSitesPerBlock(); ++site)
           {
-            if (geometry.Blocks[blockNumber].Sites[site].targetProcessor != BIG_NUMBER2)
+            if (geometry.Blocks[blockNumber].Sites[site].targetProcessor != SITE_OR_BLOCK_SOLID)
             {
               ++numSitesRead;
             }
@@ -617,7 +617,7 @@ namespace hemelb
         {
           for (site_t localSite = 0; localSite < geometry.GetSitesPerBlock(); ++localSite)
           {
-            myProcForSite.push_back(BIG_NUMBER2);
+            myProcForSite.push_back(SITE_OR_BLOCK_SOLID);
             dummySiteData.push_back(std::numeric_limits<unsigned>::max());
             for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); ++direction)
             {
@@ -648,7 +648,7 @@ namespace hemelb
         }
 
         // Reduce using a minimum to find the actual processor for each site (ignoring the
-        // BIG_NUMBER2 entries).
+        // invalid entries).
         std::vector<proc_t> procForSiteRecv = computeComms.AllReduce(myProcForSite, MPI_MIN);
         std::vector<unsigned> siteDataRecv = computeComms.AllReduce(dummySiteData, MPI_MIN);
 
@@ -661,7 +661,7 @@ namespace hemelb
                                                              site,
                                                              block);
           }
-          else if (myProcForSite[site] != BIG_NUMBER2 && procForSiteRecv[site]
+          else if (myProcForSite[site] != SITE_OR_BLOCK_SOLID && procForSiteRecv[site]
               != myProcForSite[site])
           {
             log::Logger::Log<log::Critical, log::OnePerCore>("This core thought that core %li has site %li on block %li but others think it's on core %li.",
@@ -843,7 +843,7 @@ namespace hemelb
           for (site_t siteIndex = 0; siteIndex < geometry.GetSitesPerBlock(); ++siteIndex)
           {
             // ... if the site is non-solid...
-            if (geometry.Blocks[block].Sites[siteIndex].targetProcessor != BIG_NUMBER2)
+            if (geometry.Blocks[block].Sites[siteIndex].targetProcessor != SITE_OR_BLOCK_SOLID)
             {
               // ... set its rank to be the rank it had before optimisation.
               geometry.Blocks[block].Sites[siteIndex].targetProcessor

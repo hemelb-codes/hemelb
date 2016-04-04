@@ -95,7 +95,7 @@ namespace hemelb
 
                   // If we have data for it, we should initialise a block in the velocity field
                   // for the neighbour site.
-                  if (neigh_proc_id == BIG_NUMBER2)
+                  if (neigh_proc_id == SITE_OR_BLOCK_SOLID)
                   {
                     continue;
                   }

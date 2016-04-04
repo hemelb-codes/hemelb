@@ -128,7 +128,7 @@ namespace hemelb
           {
             // We keep going through the sites on the block until we've passed as many fluid
             // sites as we need to.
-            if (Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor != BIG_NUMBER2)
+            if (Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor != SITE_OR_BLOCK_SOLID)
             {
               fluidSitesToPass--;
             }
@@ -152,7 +152,7 @@ namespace hemelb
             {
               break;
             }
-            else if (Blocks[fluidSiteBlock].Sites[neighSite].targetProcessor != BIG_NUMBER2)
+            else if (Blocks[fluidSiteBlock].Sites[neighSite].targetProcessor != SITE_OR_BLOCK_SOLID)
             {
               SiteId++;
             }

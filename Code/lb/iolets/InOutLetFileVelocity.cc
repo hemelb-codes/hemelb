@@ -11,7 +11,7 @@
 #include "util/utilityFunctions.h"
 #include "util/utilityStructs.h"
 #include "configuration/SimConfig.h"
-#include <math.h>
+#include <cmath>
 #include <algorithm>
 
 namespace hemelb
@@ -171,8 +171,8 @@ namespace hemelb
             /* Start with a negative residual because we already moved partially in this direction. */
             xyz_residual[0] = -(x.x - floor(x.x));
           } else {
-            xyz[0] = ceil(x.x);
-            xyz_residual[0] = -(ceil(x.x) - x.x);
+            xyz[0] = std::ceil(x.x);
+            xyz_residual[0] = -(std::ceil(x.x) - x.x);
           }
 
           if (normal.y < 0.0)
@@ -182,8 +182,8 @@ namespace hemelb
             abs_normal[1] = -abs_normal[1];
             xyz_residual[1] = -(x.y - floor(x.y));
           } else {
-            xyz[1] = ceil(x.y);
-            xyz_residual[1] = -(ceil(x.y) - x.y);
+            xyz[1] = std::ceil(x.y);
+            xyz_residual[1] = -(std::ceil(x.y) - x.y);
           }
 
           if (normal.z < 0.0)
@@ -193,8 +193,8 @@ namespace hemelb
             abs_normal[2] = -abs_normal[2];
             xyz_residual[2] = -(x.z - floor(x.z));
           } else {
-            xyz[2] = ceil(x.z);
-            xyz_residual[2] = -(ceil(x.z) - x.z);
+            xyz[2] = std::ceil(x.z);
+            xyz_residual[2] = -(std::ceil(x.z) - x.z);
           }
 
           LatticeVelocity v_tot = 0;

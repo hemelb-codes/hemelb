@@ -28,7 +28,7 @@ namespace hemelb
       initPosElem.GetAttributeOrThrow("z", globalPosition.z);
 
       lastCheckpointTimestep = 0;
-      markedForDeletionTimestep = BIG_NUMBER2;
+      markedForDeletionTimestep = SITE_OR_BLOCK_SOLID;
     };
   }
 }

@@ -228,7 +228,7 @@ namespace hemelb
                     ++m;
 
                     // ... only looking at non-solid sites...
-                    if (blockReadResult.Sites[m].targetProcessor == BIG_NUMBER2)
+                    if (blockReadResult.Sites[m].targetProcessor == SITE_OR_BLOCK_SOLID)
                     {
                       continue;
                     }
@@ -379,7 +379,7 @@ namespace hemelb
                   {
                     ++m;
                     // ... only looking at non-solid sites...
-                    if (blockReadResult.Sites[m].targetProcessor == BIG_NUMBER2)
+                    if (blockReadResult.Sites[m].targetProcessor == SITE_OR_BLOCK_SOLID)
                     {
                       continue;
                     }
@@ -420,7 +420,7 @@ namespace hemelb
                                                                 neighbourSiteJ,
                                                                 neighbourSiteK);
                       if (neighbourBlock.Sites.size() == 0
-                          || neighbourBlock.Sites[neighbourSiteId].targetProcessor == BIG_NUMBER2)
+                          || neighbourBlock.Sites[neighbourSiteId].targetProcessor == SITE_OR_BLOCK_SOLID)
                       {
                         continue;
                       }
@@ -526,7 +526,7 @@ namespace hemelb
               // print an error message.
               if (siteIndex >= geometry.GetSitesPerBlock()
                   || geometry.Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor
-                      == BIG_NUMBER2)
+                      == SITE_OR_BLOCK_SOLID)
               {
                 log::Logger::Log<log::Critical, log::OnePerCore>("Partition element %i wrongly assigned to site %u of %i (block %i%s)",
                                                                  ii,
@@ -534,7 +534,7 @@ namespace hemelb
                                                                  fluidSitesPerBlock[fluidSiteBlock],
                                                                  fluidSiteBlock,
                                                                  geometry.Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor
-                                                                     == BIG_NUMBER2 ?
+                                                                     == SITE_OR_BLOCK_SOLID ?
                                                                    " and site is solid" :
                                                                    "");
               }
@@ -872,7 +872,7 @@ namespace hemelb
         std::map<site_t, site_t> blockIdLookupByLastSiteIndex;
         for (site_t blockId = 0; blockId < geometry.GetBlockCount(); ++blockId)
         {
-          if (procForEachBlock[blockId] >= 0 && procForEachBlock[blockId] != BIG_NUMBER2)
+          if (procForEachBlock[blockId] >= 0 && procForEachBlock[blockId] != SITE_OR_BLOCK_SOLID)
           {
             site_t lastFluidSiteId = firstSiteIndexPerBlock[blockId] + fluidSitesPerBlock[blockId]
                 - 1;
@@ -998,7 +998,7 @@ namespace hemelb
         std::map<site_t, site_t> blockIdLookupByLastSiteIndex;
         for (site_t blockId = 0; blockId < geometry.GetBlockCount(); ++blockId)
         {
-          if (procForEachBlock[blockId] >= 0 && procForEachBlock[blockId] != BIG_NUMBER2)
+          if (procForEachBlock[blockId] >= 0 && procForEachBlock[blockId] != SITE_OR_BLOCK_SOLID)
           {
             site_t lastFluidSiteId = firstSiteIndexPerBlock[blockId] + fluidSitesPerBlock[blockId]
             - 1;

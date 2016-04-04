@@ -84,7 +84,7 @@ namespace hemelb
         /** unsets the deletion marker - the particle will not be deleted */
         const void SetDeletionMarker()
         {
-          markedForDeletionTimestep = BIG_NUMBER2;
+          markedForDeletionTimestep = SITE_OR_BLOCK_SOLID;
         }
 
         /** sets the deletion marker to the current timestep

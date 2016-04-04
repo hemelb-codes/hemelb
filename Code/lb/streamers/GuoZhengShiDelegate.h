@@ -80,8 +80,8 @@ namespace hemelb
                   proc_t neighbourSiteHomeProc =
                       initParams.latDat->GetProcIdFromGlobalCoords(neighbourLocation);
 
-                  // BIG_NUMBER2 means a solid site - this should have been picked up above by HasWall/HasIolet
-                  if (neighbourSiteHomeProc == BIG_NUMBER2)
+                  // A solid site - this should have been picked up above by HasWall/HasIolet
+                  if (neighbourSiteHomeProc == SITE_OR_BLOCK_SOLID)
                   {
                     hemelb::log::Logger::Log<hemelb::log::Error, hemelb::log::OnePerCore>("Inconsistent cut links/neighbour status for site [%d, %d, %d]",
                                                                                           localSiteLocation.x,

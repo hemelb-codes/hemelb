@@ -31,7 +31,7 @@ namespace hemelb
         GeometrySite(bool siteIsFluid) :
             targetProcessor(siteIsFluid ?
               -1 :
-              BIG_NUMBER2), isFluid(siteIsFluid), wallNormalAvailable(false)
+              SITE_OR_BLOCK_SOLID), isFluid(siteIsFluid), wallNormalAvailable(false)
         {
         }
 

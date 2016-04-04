@@ -121,11 +121,11 @@ namespace hemelb
               {
                 neighGlobalIdx
                     = initParams.latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(neighbourLocation);
-                // BIG_NUMBER2 means a solid site, we don't store them.
                 neighbourSiteHomeProc
                     = initParams.latDat->GetProcIdFromGlobalCoords(neighbourLocation);
 
-                if (neighbourSiteHomeProc != BIG_NUMBER2)
+                // solid site isn't stored
+                if (neighbourSiteHomeProc != SITE_OR_BLOCK_SOLID)
                   isNeighbourFluid = true;
               }
 
