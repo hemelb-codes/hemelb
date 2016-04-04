@@ -1,11 +1,8 @@
-# 
-# Copyright (C) University College London, 2007-2012, all rights reserved.
-# 
-# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-# with, install, use, duplicate, modify, redistribute or share this
-# file, or any part thereof, other than as allowed by any agreement
-# specifically made by you with University College London.
-# 
+
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
 
 from HemeLbSetupTool.Bindings.ListController import ListController, HasListKeys
 from HemeLbSetupTool.Controller.IoletController import IoletController
@@ -20,12 +17,12 @@ class IoletListController(ListController):
     
     def AddInlet(self):
         self.nInlets += 1
-        self.append(Inlet(Name='Inlet%d' % (self.nInlets)))
+        self.append(Inlet(Name='Inlet%d' % (self.nInlets), Radius=self.GetValueForKey('DefaultIoletRadius')))
         return
     
     def AddOutlet(self):
         self.nOutlets += 1
-        self.append(Outlet(Name='Outlet%d' % (self.nOutlets)))
+        self.append(Outlet(Name='Outlet%d' % (self.nOutlets), Radius=self.GetValueForKey('DefaultIoletRadius')))
         return
 
     def RemoveIolet(self):

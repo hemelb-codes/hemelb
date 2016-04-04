@@ -1,11 +1,8 @@
-# 
-# Copyright (C) University College London, 2007-2012, all rights reserved.
-# 
-# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-# with, install, use, duplicate, modify, redistribute or share this
-# file, or any part thereof, other than as allowed by any agreement
-# specifically made by you with University College London.
-# 
+
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
 
 import os.path
 import sys
@@ -326,7 +323,7 @@ if __name__ == "__main__":
     # HemeLB classes
     hemelb_cpp = [os.path.join(HemeLbDir, cpp)
                   for cpp in ['util/Vector3D.cc',
-                              'geometry/SiteData.cc',
+                              'geometry/SiteDataBare.cc',
                               'lb/lattices/D3Q27.cc',
                               'io/formats/geometry.cc',
                               'io/writers/xdr/XdrFileWriter.cc',

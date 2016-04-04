@@ -1,3 +1,8 @@
+
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
 set(HEMELB_STEERING_HOST "CCS" CACHE STRING "Use a default host suffix for steering? (CCS, NGS2Leeds, NGS2Manchester, LONI, NCSA or blank)")
 if(HEMELB_STEERING_HOST)
 	add_definitions("-D${HEMELB_STEERING_HOST}")

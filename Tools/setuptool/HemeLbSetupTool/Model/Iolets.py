@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
-# 
-# Copyright (C) University College London, 2007-2012, all rights reserved.
-# 
-# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-# with, install, use, duplicate, modify, redistribute or share this
-# file, or any part thereof, other than as allowed by any agreement
-# specifically made by you with University College London.
-# 
+
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
 
 from copy import copy
 from vtk import vtkPlaneSource
@@ -117,7 +114,7 @@ class SinusoidalPressureIolet(Iolet):
     """Do not instantiate
     """
     _Args = Iolet._Args.copy()
-    _Args['Pressure'] = Vector(80., 0., 0.)
+    _Args['Pressure'] = Vector(0., 0., 0.)
     
     def __init__(self, **kwargs):
         Iolet.__init__(self, **kwargs)

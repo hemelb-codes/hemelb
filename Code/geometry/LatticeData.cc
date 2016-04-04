@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #include <map>
 #include <limits>
@@ -142,7 +139,7 @@ namespace hemelb
             // Move on if the neighbour is in a block of solids
             // in which case the block will contain zero sites
             // Or on if the neighbour site is solid
-            // in which case the targetProcessor is BIG_NUMBER2
+            // in which case the targetProcessor is SITE_OR_BLOCK_SOLID
             // Or the neighbour is also on this processor
             // in which case the targetProcessor is localRank
             if (readResult.Blocks[neighbourBlockId].Sites.size() == 0)
@@ -155,7 +152,7 @@ namespace hemelb
                                                                              neighbourSite.z);
 
             proc_t neighbourProc = readResult.Blocks[neighbourBlockId].Sites[neighbourSiteId].targetProcessor;
-            if (neighbourProc == BIG_NUMBER2 || localRank == neighbourProc)
+            if (neighbourProc == SITE_OR_BLOCK_SOLID || localRank == neighbourProc)
             {
               continue;
             }
@@ -392,7 +389,7 @@ namespace hemelb
             }
             // Get the id of the processor which the neighbouring site lies on.
             const proc_t proc_id_p = GetProcIdFromGlobalCoords(neighbourCoords);
-            if (proc_id_p == BIG_NUMBER2)
+            if (proc_id_p == SITE_OR_BLOCK_SOLID)
             {
               // initialize f_id to the rubbish site.
               SetNeighbourLocation(localIndex, direction, GetLocalFluidSiteCount() * latticeInfo.GetNumVectors());
@@ -519,7 +516,7 @@ namespace hemelb
       // If an empty (solid) block is addressed, return a NULL pointer.
       if (block.IsEmpty())
       {
-        return BIG_NUMBER2;
+        return SITE_OR_BLOCK_SOLID;
       }
       else
       {
@@ -599,7 +596,7 @@ namespace hemelb
       procId = block.GetProcessorRankForSite(localSiteIndex);
       if (procId != comms.Rank())
         return false;
-      if (procId == BIG_NUMBER2) // means that the site is solid
+      if (procId == SITE_OR_BLOCK_SOLID) // means that the site is solid
         return false;
 
       // we only know enough information to determine solid/fluid for local sites

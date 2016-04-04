@@ -1,11 +1,8 @@
-# 
-# Copyright (C) University College London, 2007-2012, all rights reserved.
-# 
-# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-# with, install, use, duplicate, modify, redistribute or share this
-# file, or any part thereof, other than as allowed by any agreement
-# specifically made by you with University College London.
-# 
+
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
 
 from vtk import vtkPolyDataMapper, vtkActor, vtkModifiedBSPTree, \
      vtkPolygonalSurfacePointPlacer, vtkRenderer, vtkAnnotatedCubeActor, \
@@ -40,12 +37,19 @@ class Pipeline(Observable):
 
         self.PlacedSeed = PlacedSeed(self)
         self.PlacedSeed.AddObserver('Enabled', self.HandlePlacedItemEnabledChange)
+        self.AddObserver('WidgetSize', self.PlacedSeed.HandleWidgetSizeChange)
         
         self.PlacedIolets = PlacedIoletList()
         self.PlacedIolets.SetItemEnabledChangeHandler(self.HandlePlacedItemEnabledChange)
         
         return
-            
+    
+    def SetSurfaceSource(self, src):
+        self.SurfaceMapper.SetInputConnection(src)
+        self.PlacedIolets.SetSurfaceSource(src)
+        return
+    
+                    
     def ResetView(self):
         """Reset the view on the current scene.
         """
@@ -183,13 +187,11 @@ class Pipeline(Observable):
         item = change.obj
         if item.Enabled:
             if not self.IsActorAdded(item.actor):
-                self.AddObserver('WidgetSize', item.HandleWidgetSizeChange)
                 self.Renderer.AddActor(item.actor)
                 pass
         else:
             if self.IsActorAdded(item.actor):
                 self.Renderer.RemoveActor(item.actor)
-                self.RemoveObserver('WidgetSize', item.HandleWidgetSizeChange)
                 pass
             pass
         return

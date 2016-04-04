@@ -1,17 +1,15 @@
-# 
-# Copyright (C) University College London, 2007-2012, all rights reserved.
-# 
-# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-# with, install, use, duplicate, modify, redistribute or share this
-# file, or any part thereof, other than as allowed by any agreement
-# specifically made by you with University College London.
-# 
+
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
 
 import wx
 
 from HemeLbSetupTool.Bindings.ObjectController import ObjectController
 from HemeLbSetupTool.Bindings.Translators import QuickTranslator
 from HemeLbSetupTool.Bindings.VtkObject import HasVtkObjectKeys
+from HemeLbSetupTool.Bindings.Mappers import SimpleObservingMapper
 from HemeLbSetupTool.Controller.IoletListController import HasIoletListKeys
 from HemeLbSetupTool.Controller.VectorController import HasVectorKeys
 
@@ -23,7 +21,10 @@ class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, Objec
     def __init__(self, delegate):
         ObjectController.__init__(self, delegate)
         self.DefineVectorKey("SeedPoint")
+        
         self.DefineIoletListKey("Iolets")
+        self.BindValue('DefaultIoletRadius', SimpleObservingMapper(self.Iolets, 'DefaultIoletRadius'))
+        
         self.DefineVtkObjectKey("StlReader")
         self.DefineVtkObjectKey('SideLengthCalculator')
         
@@ -39,6 +40,15 @@ class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, Objec
         """Drop into the debugger.
         """
         pdb.set_trace()
+        return
+    
+    def Generate(self, ignored=None):
+        # Pop up the dialog
+        dialog = wx.ProgressDialog("Geometry generating",
+                                   "Sorry, progress bar not implemented")
+        dialog.Pulse()
+        self.delegate.Generate()
+        dialog.Destroy()
         return
     
     def ChooseStl(self, ignored=None):
@@ -96,7 +106,7 @@ class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, Objec
     def LoadFromFile(self, ignored=None):
         dialog = wx.FileDialog(None,
                                style=wx.FD_OPEN,
-                               wildcard='*.pro')
+                               wildcard='*.pro|*.pr2')
         
         if dialog.ShowModal() == wx.ID_OK:
             self.delegate.LoadFromFile(dialog.GetPath())

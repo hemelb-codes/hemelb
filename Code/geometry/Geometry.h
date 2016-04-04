@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_GEOMETRY_GEOMETRY_H
 #define HEMELB_GEOMETRY_GEOMETRY_H
@@ -131,7 +128,7 @@ namespace hemelb
           {
             // We keep going through the sites on the block until we've passed as many fluid
             // sites as we need to.
-            if (Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor != BIG_NUMBER2)
+            if (Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor != SITE_OR_BLOCK_SOLID)
             {
               fluidSitesToPass--;
             }
@@ -155,7 +152,7 @@ namespace hemelb
             {
               break;
             }
-            else if (Blocks[fluidSiteBlock].Sites[neighSite].targetProcessor != BIG_NUMBER2)
+            else if (Blocks[fluidSiteBlock].Sites[neighSite].targetProcessor != SITE_OR_BLOCK_SOLID)
             {
               SiteId++;
             }

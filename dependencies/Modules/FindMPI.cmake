@@ -1,3 +1,8 @@
+
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
 # - Find a Message Passing Interface (MPI) implementation
 # The Message Passing Interface (MPI) is a library used to write
 # high-performance distributed-memory parallel applications, and

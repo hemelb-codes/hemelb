@@ -1,12 +1,8 @@
-//
-// Copyright (C) University College London, 2007-2013, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
 
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 #include "lb/iolets/InOutLetFileVelocity.h"
 #include <algorithm>
 #include <fstream>
@@ -15,7 +11,7 @@
 #include "util/utilityFunctions.h"
 #include "util/utilityStructs.h"
 #include "configuration/SimConfig.h"
-#include <math.h>
+#include <cmath>
 #include <algorithm>
 
 namespace hemelb
@@ -170,8 +166,8 @@ namespace hemelb
             /* Start with a negative residual because we already moved partially in this direction. */
             xyz_residual[0] = -(x.x - floor(x.x));
           } else {
-            xyz[0] = ceil(x.x);
-            xyz_residual[0] = -(ceil(x.x) - x.x);
+            xyz[0] = std::ceil(x.x);
+            xyz_residual[0] = -(std::ceil(x.x) - x.x);
           }
 
           if (normal.y < 0.0)
@@ -181,8 +177,8 @@ namespace hemelb
             abs_normal[1] = -abs_normal[1];
             xyz_residual[1] = -(x.y - floor(x.y));
           } else {
-            xyz[1] = ceil(x.y);
-            xyz_residual[1] = -(ceil(x.y) - x.y);
+            xyz[1] = std::ceil(x.y);
+            xyz_residual[1] = -(std::ceil(x.y) - x.y);
           }
 
           if (normal.z < 0.0)
@@ -192,8 +188,8 @@ namespace hemelb
             abs_normal[2] = -abs_normal[2];
             xyz_residual[2] = -(x.z - floor(x.z));
           } else {
-            xyz[2] = ceil(x.z);
-            xyz_residual[2] = -(ceil(x.z) - x.z);
+            xyz[2] = std::ceil(x.z);
+            xyz_residual[2] = -(std::ceil(x.z) - x.z);
           }
 
           LatticeVelocity v_tot = 0;
