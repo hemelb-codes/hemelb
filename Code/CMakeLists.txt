@@ -3,9 +3,12 @@
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.2)
 
 project(HemeLB)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 #---- OPTION switches accepted by the build -------
 
