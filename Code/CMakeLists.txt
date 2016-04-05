@@ -96,6 +96,9 @@ if(LINUX_SCANDIR)
 endif()
 
 include(mpi)
+if(MPI_STANDARD_VERSION VERSION_LESS 3)
+  message(FATAL_ERROR "Must have MPI 3.0 or greater")
+endif()
 include(dependencies)
 
 #-------------Resources -----------------------
