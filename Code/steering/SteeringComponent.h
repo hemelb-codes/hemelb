@@ -7,7 +7,7 @@
 #ifndef HEMELB_STEERING_STEERINGCOMPONENT_H
 #define HEMELB_STEERING_STEERINGCOMPONENT_H
 
-#include "net/Net.h"
+#include "net/net.h"
 #include "net/CollectiveAction.h"
 #include "lb/SimulationState.h"
 #include "configuration/SimConfig.h"
