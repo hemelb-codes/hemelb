@@ -86,7 +86,6 @@
                     export MAKEFLAGS=-j2
                 ;;
             esac
-            with_boost=$([[ "$os" == "LegionRHEL7" ]] && echo "ON" || echo "OFF")
 
             # cpp check first -- on legion, this must be loaded without tinyxml
             cd $WORKSPACE
@@ -101,7 +100,6 @@
             mkdir -p $dep_build_dir/fake_install && cd $dep_build_dir
             cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
                   -DCMAKE_INSTALL_PREFIX=$dep_build_dir/fake_install \
-                  -DHEMELB_USE_BOOST=$with_boost \
                   $WORKSPACE/dependencies
             make
 
@@ -110,7 +108,6 @@
             mkdir -p $build_dir && cd $build_dir
             cmake -DCMAKE_BUILD_TYPE=Debug                           \
                   -DCMAKE_INSTALL_PREFIX=$dep_build_dir/fake_install \
-                  -DHEMELB_USE_BOOST=$with_boost                     \
                   -DHEMELB_USE_STREAKLINES='{streaks}'               \
                   -DHEMELB_USE_SSE3='{sse3}'                         \
                   -DHEMELB_STEERING_LIB='{steering}'                 \
