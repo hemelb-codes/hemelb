@@ -15,7 +15,7 @@ if(TIXML_USE_STL)
 endif()
 include_directories(${TINYXML_INCLUDE_DIR})
 #------BOOST ------------------
-find_package(Boost 1.60 REQUIRED)
+find_package(Boost 1.54 REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 #------CTemplate ----------------
 find_package(CTemplate REQUIRED)

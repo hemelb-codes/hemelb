@@ -160,9 +160,9 @@ else()
 endif()
 
 # ---------BOOST -----------------------
-find_package(Boost 1.60)
+find_package(Boost 1.54)
 if (Boost_FOUND)
-	message("Boost 1.60 already installed, no need to download")
+	message("Boost >= 1.54 already installed, no need to download")
 else()
 	message("Boost not installed, will build from source")
 	find_file(BOOST_TARBALL boost_1_60_0.tar.gz
