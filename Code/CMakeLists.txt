@@ -99,6 +99,7 @@ include(mpi)
 if(MPI_STANDARD_VERSION VERSION_LESS 3)
   message(FATAL_ERROR "Must have MPI 3.0 or greater")
 endif()
+set(HAVE_CONSTCORRECTMPI TRUE)
 include(dependencies)
 
 #-------------Resources -----------------------
