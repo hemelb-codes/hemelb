@@ -8,7 +8,7 @@
 #define HEMELB_STEERING_CLIENTCONNECTION_H
 
 #include <netinet/in.h>
-#include <semaphore.h>
+#include <mutex>
 #include "reporting/Timers.h"
 
 namespace hemelb
@@ -35,7 +35,7 @@ namespace hemelb
         // Use a semaphore to make sure that we don't create two new connections
         // when a broken one is reported simultaneously by two separate threads
         // (for example).
-        sem_t mIsBusy;
+        std::mutex mIsBusy;
         reporting::Timers & timers;
 
     };

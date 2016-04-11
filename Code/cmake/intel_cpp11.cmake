@@ -1,0 +1,3 @@
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
