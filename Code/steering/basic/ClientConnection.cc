@@ -24,8 +24,6 @@ namespace hemelb
     ClientConnection::ClientConnection(int iSteeringSessionId, reporting::Timers & timings)
       :mIsBusy(), timers(timings)
     {
-      sem_init(&mIsBusy, 0, 1);
-
       // Write the name of this machine to a file.
 
       {
@@ -81,15 +79,14 @@ namespace hemelb
 
     ClientConnection::~ClientConnection()
     {
-      sem_destroy(&mIsBusy);
-
       close(mCurrentSocket);
       close(mListeningSocket);
     }
 
     int ClientConnection::GetWorkingSocket()
     {
-      sem_wait(&mIsBusy);
+      // Lock the mutex and release it when this goes out of scope
+      std::lock_guard<std::mutex> lock(mIsBusy);
 
       // If we haven't yet had a socket, or the current one is broken, open a new one.
       if (mCurrentSocket < 0 || mIsBroken)
@@ -153,19 +150,17 @@ namespace hemelb
 
       int lRet = mCurrentSocket;
 
-      sem_post(&mIsBusy);
-
       return lRet;
     }
 
     void ClientConnection::ReportBroken(int iSocketNum)
     {
-      sem_wait(&mIsBusy);
+      // Lock the mutex and release it when this goes out of scope
+      std::lock_guard<std::mutex> lock(mIsBusy);
       if (mCurrentSocket == iSocketNum)
       {
         mIsBroken = true;
       }
-      sem_post(&mIsBusy);
     }
 
   }
