@@ -5,7 +5,7 @@
 
 #------Capture build environment -------------
 find_package(Git REQUIRED)
-execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
+execute_process(COMMAND ${GIT_EXECUTABLE} --git-dir ${CMAKE_SOURCE_DIR}/../.git rev-parse HEAD
   RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)
 if (NOT rev_ok EQUAL 0)
   message("Could not get revision number from Git, looking for revision_info.txt")
