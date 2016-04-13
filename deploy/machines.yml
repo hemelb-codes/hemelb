@@ -89,8 +89,8 @@ archer: #the ARCHER supercomputer at EPCC
     CMAKE_CXX_FLAGS: '"-dynamic -Wno-unused-local-typedefs"'
     CMAKE_C_FLAGS: "-dynamic"
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
-    CMAKE_CXX_COMPILER: "/opt/cray/craype/2.1.1/bin/CC"
-    CMAKE_C_COMPILER: "/opt/cray/craype/2.1.1/bin/cc"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
     CPPUNIT_PATCH_LDL: OFF
     CPPUNIT_PATCH_DYNAMIC: ON
@@ -107,16 +107,14 @@ archer_dmapp:
     CMAKE_CXX_FLAGS: '"-dynamic -Wno-unused-local-typedefs"'
     CMAKE_C_FLAGS: "-dynamic"
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
-    CMAKE_CXX_COMPILER: "/opt/cray/craype/2.1.1/bin/CC"
-    CMAKE_C_COMPILER: "/opt/cray/craype/2.1.1/bin/cc"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
     CPPUNIT_PATCH_LDL: OFF
     CPPUNIT_PATCH_DYNAMIC: ON
     HEMELB_OPTIMISATION: "-O3"
     HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
     HEMELB_USE_SSE3: "ON"
-    CTEMPLATE_PATCH_ALIGN: "ON"
-    CTEMPLATE_USE_STATIC: "OFF"
     HEMELB_COMPUTE_ARCHITECTURE: "INTELSANDYBRIDGE"
     METIS_ROOT: "$CRAY_TPSL_PREFIX_DIR"
   run_prefix_commands:
