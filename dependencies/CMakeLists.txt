@@ -179,7 +179,7 @@ else()
 		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${BOOST_TARBALL}
 		BUILD_COMMAND ""
-		INSTALL_COMMAND cp -r <SOURCE_DIR>/boost <INSTALL_DIR>/include
+		INSTALL_COMMAND "cp -r <SOURCE_DIR>/boost <INSTALL_DIR>/include"
 		CONFIGURE_COMMAND ""
 		BUILD_IN_SOURCE 1
 	)
@@ -191,37 +191,36 @@ option(CTEMPLATE_PATCH_VACOPY "Define va_copy macro through patch" OFF)
 option(CTEMPLATE_PATCH_ALIGN "Define GTL align macros as gnu" OFF)
 find_package(CTemplate)
 if (CTEMPLATE_FOUND)
-	message("Ctemplate already installed, no need to download")
+  message("Ctemplate already installed, no need to download")
 else()
-	message("Ctemplate not installed, will build from source")
-	find_file(CTEMPLATE_TARBALL ctemplate-2.2.tar.gz
-		DOC "Path to download CTemplate (can be url http://)"
-		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
-	)
-	if(NOT CTEMPLATE_TARBALL)
-		message("No ctemplate source found, will download.")
-		set(CTEMPLATE_TARBALL http://ctemplate.googlecode.com/files/ctemplate-2.2.tar.gz
-			CACHE STRING "Path to download CTemplate (can be local file://)" FORCE)
-	endif()
-	if (CTEMPLATE_PATCH_VACOPY)
-		set(PATCH_COMMAND_VACOPY patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/ctemplate_vacopy.diff)
-	else()
-		set(PATCH_COMMAND_VACOPY echo novacopy)
-	endif()
-	if (CTEMPLATE_PATCH_ALIGN)
-		set(PATCH_COMMAND_ALIGN patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/ctemplate_align.diff)
-	else()
-		set(PATCH_COMMAND_ALIGN echo noalign)
-	endif()
-	ExternalProject_Add(
-   	ctemplate
-		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
-		URL ${CTEMPLATE_TARBALL}
-		CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>  ${CTEMPLATE_CONFIGURE_OPTIONS}
-		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
-		BUILD_IN_SOURCE 1
-		PATCH_COMMAND ${PATCH_COMMAND_ALIGN} && ${PATCH_COMMAND_VACOPY}
-	)
+  message("Ctemplate not installed, will build from source")
+  
+  if (CTEMPLATE_PATCH_VACOPY)
+    set(PATCH_COMMAND_VACOPY patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/ctemplate_vacopy.diff)
+  else()
+    set(PATCH_COMMAND_VACOPY echo novacopy)
+  endif()
+  if (CTEMPLATE_PATCH_ALIGN)
+    set(PATCH_COMMAND_ALIGN patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/ctemplate_align.diff)
+  else()
+    set(PATCH_COMMAND_ALIGN echo noalign)
+  endif()
+  
+  ExternalProject_Add(ctemplate
+    # Download
+    GIT_REPOSITORY https://github.com/OlafvdSpek/ctemplate.git
+    GIT_TAG ctemplate-2.3
+    # Patch
+    PATCH_COMMAND ${PATCH_COMMAND_ALIGN} && ${PATCH_COMMAND_VACOPY}
+    # Configure
+    CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>  ${CTEMPLATE_CONFIGURE_OPTIONS}
+    # Build
+    BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
+    BUILD_IN_SOURCE 1
+    # Install
+    INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
+    INSTALL_COMMAND make install
+    )
 endif()
 
 #-----------------ZLIB --------------------------------
