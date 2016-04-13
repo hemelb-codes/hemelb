@@ -5,7 +5,6 @@
 
 include(gnu_bug)
 include(mountain_lion_scandir)
-include(intel_cpp11)
 
 include(CheckCXXSourceCompiles)
 include(CheckCXXSymbolExists)
