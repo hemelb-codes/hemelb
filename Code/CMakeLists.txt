@@ -7,10 +7,6 @@ cmake_minimum_required (VERSION 3.2)
 
 project(HemeLB)
 
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${HEMELB_DEPENDENCIES_PATH}/Modules/")
-
-include(cxx11)
-
 #---- OPTION switches accepted by the build -------
 
 option(HEMELB_BUILD_DEBUGGER "Build the built in debugger" ON)
@@ -115,6 +111,8 @@ if (HEMELB_USE_VELOCITY_WEIGHTS_FILE)
     add_definitions(-DHEMELB_USE_VELOCITY_WEIGHTS_FILE)
 endif()
 
+
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${HEMELB_DEPENDENCIES_PATH}/Modules/")
 list(APPEND CMAKE_INCLUDE_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/include)
 list(APPEND CMAKE_LIBRARY_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/lib)
 
@@ -124,6 +122,7 @@ if(HEMELB_DEPENDENCIES_SET_RPATH)
 	SET(CMAKE_INSTALL_RPATH "${HEMELB_DEPENDENCIES_INSTALL_PATH}/lib")
 endif()
 
+include(cxx11)
 include(build_environment)
 include(platform_checks)
 
