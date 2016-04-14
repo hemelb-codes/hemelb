@@ -217,6 +217,9 @@ namespace hemelb
       void CellArmyTests::testCellOutput()
       {
         auto cell = std::make_shared<FakeCell>(tetrahedron());
+        // Shift cell to be contained in flow domain
+        *cell += LatticePosition(1.1, 1.1, 1.1);
+
         MeshData::Vertices::value_type barycentre;
         CellArmy<Traits>::CellChangeListener callback =
             [&barycentre](const CellContainer & container)
@@ -241,6 +244,8 @@ namespace hemelb
                                    4,
                                    1.8);
         auto cell = std::make_shared<FakeCell>(pancakeSamosa());
+        // Shift cell to be contained in flow domain
+        *cell += LatticePosition(1.1, 1.1, 1.1);
 
         helpers::ZeroOutFOld(latDat);
         helpers::ZeroOutForces(latDat);

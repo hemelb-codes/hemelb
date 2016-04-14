@@ -37,7 +37,7 @@ namespace hemelb
 
     proc_t Block::GetProcessorRankForSite(site_t localSiteIndex) const
     {
-      return processorRankForEachBlockSite.at(localSiteIndex);
+      return processorRankForEachBlockSite[localSiteIndex];
     }
 
     site_t Block::GetLocalContiguousIndexForSite(site_t localSiteIndex) const
