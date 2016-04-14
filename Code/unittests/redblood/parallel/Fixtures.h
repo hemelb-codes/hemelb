@@ -140,24 +140,7 @@ namespace hemelb
 
       net::MpiCommunicator CreateDumbGraphComm(net::MpiCommunicator const &comm)
       {
-        if (comm.Size() == 1)
-        {
-        }
-        // setups a graph communicator that in-practice is all-to-all
-        // Simpler than setting up something realistic
-        std::vector<std::vector<int>> vertices;
-        for (int i(0); i < comm.Size(); ++i)
-        {
-          vertices.push_back(std::vector<int>());
-          for (int j(0); j < comm.Size(); ++j)
-          {
-            if (j != i)
-            {
-              vertices[i].push_back(j);
-            }
-          }
-        }
-        return comm.Graph(vertices);
+        return comm.Graph(hemelb::redblood::ComputeProcessorNeighbourhood(comm));
       }
 
     }
