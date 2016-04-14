@@ -140,7 +140,6 @@
             hemelb=$build_dir/hemelb
 
             cd $reg_dir/diffTest/
-            mpirun -n $nodes $hemelb -in config.xml -out $result_dir -i 0
+            mpirun -n $nodes $hemelb -in config.xml -out $result_dir
             export PYTHONPATH="$WORKSPACE/Tools:$PYTHONPATH"
-            python ./ImageComparison CleanImages $result_dir/Images
             python ./NumericalComparison CleanExtracted $result_dir/Extracted
