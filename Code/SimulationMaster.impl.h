@@ -180,7 +180,7 @@ namespace hemelb
       typedef hemelb::redblood::CellController<Traits> Controller;
       auto const controller = std::make_shared<Controller>(
          *latticeData, cells, simConfig->GetRBCMeshes(),
-         simConfig->GetBoxSize(),
+         timings, simConfig->GetBoxSize(),
          simConfig->GetCell2Cell(), simConfig->GetCell2Wall(),
          ioComms
       );

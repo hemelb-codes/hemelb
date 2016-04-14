@@ -30,16 +30,10 @@ namespace hemelb
 {
   namespace redblood
   {
-    //! \brief Generates a graph communicator describing the data dependencies for interpolation and spreading
-    //! @todo Move declaration somewhere more suitable
-    //! @todo This is the most conservative and inefficient implementation of the method possible
-    net::MpiCommunicator CreateGraphComm(net::MpiCommunicator const &comm)
+    //! \brief All processes are considered neighbours with each other. This is the most conservative and inefficient implementation of the method possible.
+    std::vector<std::vector<int>> ComputeProcessorNeighbourhood(net::MpiCommunicator const &comm)
     {
-      if (comm.Size() == 1)
-      {
-      }
       // setups a graph communicator that in-practice is all-to-all
-      // Simpler than setting up something realistic
       std::vector<std::vector<int>> vertices;
       for (int i(0); i < comm.Size(); ++i)
       {
@@ -52,7 +46,122 @@ namespace hemelb
           }
         }
       }
-      return comm.Graph(vertices);
+
+      return vertices;
+    }
+
+    //! \brief Compute neighbourhood based on checking the minimum distance between every pair of subdomains and declaring them neighbours if this is shorter than the RBCs effective size.
+    std::vector<std::vector<int>> ComputeProcessorNeighbourhood(net::MpiCommunicator const &comm,
+                                                                geometry::LatticeData &latDat,
+                                                                LatticeDistance cellsEffectiveSize)
+    {
+      std::vector<LatticeVector> serialisedLocalCoords;
+      serialisedLocalCoords.reserve(latDat.GetDomainEdgeCollisionCount(0));
+
+      for (auto siteIndex = latDat.GetMidDomainSiteCount();
+          siteIndex < latDat.GetMidDomainSiteCount() + latDat.GetDomainEdgeCollisionCount(0);
+          ++siteIndex)
+      {
+        serialisedLocalCoords.push_back(latDat.GetSite(siteIndex).GetGlobalSiteCoords());
+      }
+
+      /// @\todo refactor into a method net::MpiCommunicator::AllGatherv
+      int numProcs = comm.Size();
+      std::vector<int> allSerialisedCoordSizes = comm.AllGather((int) serialisedLocalCoords.size());
+      std::vector<int> allSerialisedCoordDisplacements(numProcs + 1);
+
+      site_t totalSize = std::accumulate(allSerialisedCoordSizes.begin(),
+                                         allSerialisedCoordSizes.end(),
+                                         0);
+
+      allSerialisedCoordDisplacements[0] = 0;
+      for (int j = 0; j < numProcs; ++j)
+      {
+        allSerialisedCoordDisplacements[j + 1] = allSerialisedCoordDisplacements[j]
+            + allSerialisedCoordSizes[j];
+      }
+
+      std::vector<LatticeVector> allSerialisedCoords(totalSize);
+      HEMELB_MPI_CALL(MPI_Allgatherv,
+                      ( net::MpiConstCast(&serialisedLocalCoords[0]), serialisedLocalCoords.size(), net::MpiDataType<LatticeVector>(), &allSerialisedCoords[0], net::MpiConstCast(&allSerialisedCoordSizes[0]), net::MpiConstCast(&allSerialisedCoordDisplacements[0]), net::MpiDataType<LatticeVector>(), comm ));
+
+      std::vector<std::vector<LatticeVector>> coordsPerProc(numProcs);
+      for (unsigned procIndex = 0; procIndex < numProcs; ++procIndex)
+      {
+        for (unsigned indexAllCoords = allSerialisedCoordDisplacements[procIndex];
+            indexAllCoords < allSerialisedCoordDisplacements[procIndex + 1]; ++indexAllCoords)
+        {
+          coordsPerProc[procIndex].push_back(allSerialisedCoords[indexAllCoords]);
+        }
+      }
+      /// end of refactoring
+
+      auto cellsEffectiveSizeSq = cellsEffectiveSize * cellsEffectiveSize;
+      auto areProcsNeighbours =
+          [cellsEffectiveSizeSq, &coordsPerProc] (unsigned procA, unsigned procB)
+          {
+            if (procA == procB)
+            {
+              return false;
+            }
+
+            auto distanceSqBetweenSubdomainEdges = std::numeric_limits<LatticeDistance>::max();
+            for(auto siteProcA : coordsPerProc[procA])
+            {
+              for(auto siteProcB : coordsPerProc[procB])
+              {
+                distanceSqBetweenSubdomainEdges = std::min(distanceSqBetweenSubdomainEdges, (LatticeDistance)(siteProcA-siteProcB).GetMagnitudeSquared());
+              }
+            }
+
+            return distanceSqBetweenSubdomainEdges < cellsEffectiveSizeSq;
+          };
+
+      std::vector<std::vector<int>> vertices(numProcs);
+      for (int procA(0); procA < numProcs; ++procA)
+      {
+        for (int procB(procA+1); procB < numProcs; ++procB)
+        {
+          if (areProcsNeighbours(procA, procB))
+          {
+            vertices[procA].push_back(procB);
+            vertices[procB].push_back(procA);
+          }
+        }
+      }
+
+      return vertices;
+    }
+
+    // Make effective size 1.5 times the diameter
+    static const LatticeDistance EFFECTIVE_SIZE_TO_RADIUS_RATIO = 3.0;
+
+    LatticeDistance ComputeCellsEffectiveSize(std::shared_ptr<TemplateCellContainer> cellTemplates)
+    {
+      double maxCellRadius = std::numeric_limits<LatticeDistance>::min();
+
+      for (auto cellTemplate : *cellTemplates)
+      {
+        maxCellRadius = std::max(maxCellRadius, cellTemplate.second->GetScale());
+      }
+
+      return EFFECTIVE_SIZE_TO_RADIUS_RATIO * maxCellRadius;
+    }
+
+    //! \brief Generates a graph communicator describing the data dependencies for interpolation and spreading
+    net::MpiCommunicator CreateGraphComm(net::MpiCommunicator const &comm,
+                                         geometry::LatticeData &latDat,
+                                         std::shared_ptr<TemplateCellContainer> cellTemplates,
+                                         hemelb::reporting::Timers &timings)
+    {
+      timings[hemelb::reporting::Timers::graphComm].Start();
+      auto graphComm =
+          comm.Graph(ComputeProcessorNeighbourhood(comm,
+                                                   latDat,
+                                                   ComputeCellsEffectiveSize(cellTemplates)));
+      timings[hemelb::reporting::Timers::graphComm].Stop();
+
+      return graphComm;
     }
 
     //! \brief Federates the cells together so we can apply ops simultaneously
@@ -66,15 +175,24 @@ namespace hemelb
         //! Type of callback for listening to changes to cells
         typedef std::function<void(const CellContainer &)> CellChangeListener;
 
-        CellArmy(geometry::LatticeData &_latDat, CellContainer const &cells,
+        CellArmy(geometry::LatticeData &latDat, CellContainer const &cells,
                  std::shared_ptr<TemplateCellContainer> cellTemplates,
-                 LatticeDistance boxsize = 10.0, Node2NodeForce const &cell2Cell = { 0e0, 1e0, 2 },
-                 Node2NodeForce const &cell2Wall = { 0e0, 1e0, 2 }, net::MpiCommunicator const &worldCommunicator = net::MpiCommunicator::World()) :
-            latticeData(_latDat), cells(cells), cellDnC(cells, boxsize, cell2Cell.cutoff + 1e-6),
-                wallDnC(createWallNodeDnC<Lattice>(_latDat, boxsize, cell2Wall.cutoff + 1e-6)),
+                 hemelb::reporting::Timers &timings, LatticeDistance boxsize = 10.0,
+                 Node2NodeForce const &cell2Cell = { 0e0, 1e0, 2 },
+                 Node2NodeForce const &cell2Wall = { 0e0, 1e0, 2 },
+                 net::MpiCommunicator const &worldCommunicator = net::MpiCommunicator::World()) :
+            latticeData(latDat), cells(cells), cellDnC(cells, boxsize, cell2Cell.cutoff + 1e-6),
+                wallDnC(createWallNodeDnC<Lattice>(latDat, boxsize, cell2Wall.cutoff + 1e-6)),
                 cell2Cell(cell2Cell), cell2Wall(cell2Wall), worldCommunicator(worldCommunicator),
-                neighbourDependenciesGraph(CreateGraphComm(worldCommunicator)),
-                cellTemplates(cellTemplates)
+                cellTemplates(cellTemplates), timings(timings),
+                neighbourDependenciesGraph(CreateGraphComm(worldCommunicator,
+                                                           latDat,
+                                                           cellTemplates,
+                                                           timings)),
+                exchangeCells(neighbourDependenciesGraph, worldCommunicator),
+                velocityIntegrator(neighbourDependenciesGraph),
+                forceSpreader(neighbourDependenciesGraph),
+                nodeDistributions(parallel::nodeDistributions(latticeData, cells))
         {
         }
 
@@ -124,6 +242,7 @@ namespace hemelb
         //! Calls cell insertion
         void CallCellInsertion()
         {
+          timings[hemelb::reporting::Timers::cellInsertion].Start();
           if (cellInsertionCallBack)
           {
             auto callback = [this](CellContainer::value_type cell)
@@ -132,6 +251,7 @@ namespace hemelb
             };
             cellInsertionCallBack(callback);
           }
+          timings[hemelb::reporting::Timers::cellInsertion].Stop();
         }
 
         //! Adds a cell change listener to be notified when cell positions change
@@ -143,10 +263,12 @@ namespace hemelb
         //! Invokes the callback function to output cell positions
         void NotifyCellChangeListeners()
         {
+          timings[hemelb::reporting::Timers::cellListeners].Start();
           for (CellChangeListener ccl : cellChangeListeners)
           {
             ccl(cells);
           }
+          timings[hemelb::reporting::Timers::cellListeners].Stop();
         }
 
         //! Sets outlets within which cells disappear
@@ -173,6 +295,12 @@ namespace hemelb
                                                           barycenter.z);
             cellDnC.insert(cell);
             cells.insert(cell);
+
+            nodeDistributions.emplace(std::piecewise_construct,
+                                      std::forward_as_tuple(cell->GetTag()),
+                                      std::forward_as_tuple(parallel::details::AssessMPIFunction<
+                                                                Stencil>(latticeData),
+                                                            cell));
           }
         }
 
@@ -219,10 +347,20 @@ namespace hemelb
         Node2NodeForce cell2Wall;
         //! Communicator with all the processes participating in the simulation
         net::MpiCommunicator const &worldCommunicator;
-        //! Communicator defining the data dependencies between processors for spreading/interpolation
-        net::MpiCommunicator neighbourDependenciesGraph;
         //! Container with the templates used to create the RBC meshes
         std::shared_ptr<TemplateCellContainer> cellTemplates;
+        //! Timers object used to time different code sections
+        hemelb::reporting::Timers &timings;
+        //! Communicator defining the data dependencies between processors for spreading/interpolation
+        net::MpiCommunicator neighbourDependenciesGraph;
+        //! Exchange cells object
+        parallel::ExchangeCells exchangeCells;
+        //! Velocity integrator object
+        parallel::IntegrateVelocities velocityIntegrator;
+        //! Force spreader object
+        parallel::SpreadForces forceSpreader;
+        //! Object describing how the cells affect different subdomains
+        parallel::CellParallelization::NodeDistributions nodeDistributions;
 
     };
 
@@ -231,10 +369,9 @@ namespace hemelb
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Fluid -> cell interations");
 
-      auto distributions = parallel::nodeDistributions(latticeData, cells);
-
-      parallel::ExchangeCells xc(neighbourDependenciesGraph, worldCommunicator);
-      auto ownership = [this](CellContainer::value_type cell) {
+      timings[hemelb::reporting::Timers::exchangeCells].Start();
+      auto ownership = [this](CellContainer::value_type cell)
+      {
         auto const id = latticeData.GetProcIdFromGlobalCoords(cell->GetBarycenter());
         if (id == BIG_NUMBER2)
         {
@@ -242,23 +379,40 @@ namespace hemelb
         }
         return id;
       };
-      xc.PostCellMessageLength(distributions, cells, ownership);
-      xc.PostCells(distributions, cells, ownership);
-      auto const distCells = xc.ReceiveCells(cellTemplates);
-      xc.Update(cells, distCells);
-      xc.Update(distributions, distCells, parallel::details::AssessMPIFunction<Stencil>(latticeData));
+      exchangeCells.PostCellMessageLength(nodeDistributions, cells, ownership);
+      exchangeCells.PostCells(nodeDistributions, cells, ownership);
+      auto const distCells = exchangeCells.ReceiveCells(cellTemplates);
+      exchangeCells.Update(cells, distCells);
+      exchangeCells.Update(nodeDistributions,
+                           distCells,
+                           parallel::details::AssessMPIFunction<Stencil>(latticeData));
+      timings[hemelb::reporting::Timers::exchangeCells].Stop();
 
       // Actually perform velocity integration
-      parallel::IntegrateVelocities integrator(neighbourDependenciesGraph);
-      integrator.PostMessageLength(std::get<2>(distCells));
-      integrator.ComputeLocalVelocitiesAndUpdatePositions<TRAITS>(latticeData, cells);
-      integrator.PostVelocities<TRAITS>(latticeData, std::get<2>(distCells));
-      integrator.UpdatePositionsNonLocal(distributions, cells);
+      timings[hemelb::reporting::Timers::computeAndPostVelocities].Start();
+      velocityIntegrator.PostMessageLength(std::get<2>(distCells));
+      velocityIntegrator.ComputeLocalVelocitiesAndUpdatePositions<TRAITS>(latticeData, cells);
+      velocityIntegrator.PostVelocities<TRAITS>(latticeData, std::get<2>(distCells));
+      timings[hemelb::reporting::Timers::computeAndPostVelocities].Stop();
+
+      timings[hemelb::reporting::Timers::receiveVelocitiesAndUpdate].Start();
+      velocityIntegrator.UpdatePositionsNonLocal(nodeDistributions, cells);
+      timings[hemelb::reporting::Timers::receiveVelocitiesAndUpdate].Stop();
+
+      // Positions have changed: update node distributions
+      timings[hemelb::reporting::Timers::computeNodeDistributions].Start();
+      for (auto cell : cells)
+      {
+        nodeDistributions.at(cell->GetTag()).template Reindex<Stencil>(latticeData, cell);
+      }
+      timings[hemelb::reporting::Timers::computeNodeDistributions].Stop();
 
       // Positions have changed: update Divide and Conquer stuff
-      log::Logger::Log<log::Debug, log::OnePerCore>(
-          "Number of lent cells: %i", std::get<2>(distCells).size());
+      log::Logger::Log<log::Debug, log::OnePerCore>("Number of lent cells: %i",
+                                                    std::get<2>(distCells).size());
+      timings[hemelb::reporting::Timers::updateDNC].Start();
       cellDnC.update(distCells);
+      timings[hemelb::reporting::Timers::updateDNC].Stop();
       lentCells = std::move(std::get<2>(distCells));
     }
 
@@ -268,23 +422,28 @@ namespace hemelb
       log::Logger::Log<log::Debug, log::OnePerCore>("Cell -> fluid interations");
       latticeData.ResetForces();
 
-      auto const distributions = parallel::nodeDistributions(latticeData, cells);
+      timings[hemelb::reporting::Timers::computeAndPostForces].Start();
+      forceSpreader.PostMessageLength(nodeDistributions, cells);
+      forceSpreader.ComputeForces(cells);
+      forceSpreader.PostForcesAndNodes(nodeDistributions, cells);
+      forceSpreader.SpreadLocalForces<TRAITS>(latticeData, cells);
+      timings[hemelb::reporting::Timers::computeAndPostForces].Stop();
 
-      parallel::SpreadForces mpi_spreader(neighbourDependenciesGraph);
-      mpi_spreader.PostMessageLength(distributions, cells);
-      mpi_spreader.ComputeForces(cells);
-      mpi_spreader.PostForcesAndNodes(distributions, cells);
-      mpi_spreader.SpreadLocalForces<TRAITS>(latticeData, cells);
-      mpi_spreader.SpreadNonLocalForces<TRAITS>(latticeData);
+      timings[hemelb::reporting::Timers::receiveForcesAndUpdate].Start();
+      forceSpreader.SpreadNonLocalForces<TRAITS>(latticeData);
+      timings[hemelb::reporting::Timers::receiveForcesAndUpdate].Stop();
 
       //! @todo Any changes required for these lines when running in parallel?
+      timings[hemelb::reporting::Timers::updateCellAndWallInteractions].Start();
       addCell2CellInteractions<Stencil>(cellDnC, cell2Cell, latticeData);
       addCell2WallInteractions<Stencil>(cellDnC, wallDnC, cell2Wall, latticeData);
+      timings[hemelb::reporting::Timers::updateCellAndWallInteractions].Stop();
     }
 
     template<class TRAITS>
     void CellArmy<TRAITS>::CellRemoval()
     {
+      timings[hemelb::reporting::Timers::cellRemoval].Start();
       auto i_first = cells.cbegin();
       auto const i_end = cells.cend();
       while (i_first != i_end)
@@ -308,6 +467,7 @@ namespace hemelb
           cells.erase(i_current);
         }
       }
+      timings[hemelb::reporting::Timers::cellRemoval].Stop();
     }
   }
 }

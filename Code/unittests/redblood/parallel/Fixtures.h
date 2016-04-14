@@ -13,6 +13,7 @@
 #include "redblood/Cell.h"
 #include "redblood/parallel/CellParallelization.h"
 #include "SimulationMaster.h"
+#include <random>
 
 namespace hemelb
 {
@@ -77,6 +78,11 @@ namespace hemelb
           void DoTimeStep()
           {
             SimulationMaster<TRAITS>::DoTimeStep();
+          }
+
+          std::shared_ptr<hemelb::configuration::SimConfig> GetSimConfig()
+          {
+            return this->simConfig;
           }
       };
 
