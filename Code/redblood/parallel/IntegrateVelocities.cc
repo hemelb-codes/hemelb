@@ -66,7 +66,7 @@ namespace hemelb
 
             for (auto const item : util::enumerate(dist[neighbor.value]))
             {
-              assert(item.value <= cell->GetNumberOfNodes());
+              assert(int(item.value) <= cell->GetNumberOfNodes());
               auto &pos = cell->GetVertices()[item.value];
               pos += sendVelocities.GetReceive(neighbor.value, offset + item.index);
             }

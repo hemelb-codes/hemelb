@@ -129,7 +129,7 @@ namespace hemelb
         helpers::ZeroOutForces(latDat);
 
         // Setup same distribution for all instances
-        for (int i = 0; i < Traits::Lattice::NUMVECTORS; ++i)
+        for (Direction i = 0; i < Traits::Lattice::NUMVECTORS; ++i)
         {
           auto func = [i](LatticePosition const &x)
           {
@@ -167,14 +167,14 @@ namespace hemelb
           proc_t result = i / nCells;
           return result;
         };
-        hemelb::redblood::parallel::ExchangeCells xchange(CreateGraphComm(split), split);
+        hemelb::redblood::parallel::ExchangeCells xchange(CreateDumbGraphComm(split), split);
         xchange.PostCellMessageLength(distributions, owned, ownership);
         xchange.PostCells(distributions, owned, ownership);
         auto const distCells = xchange.ReceiveCells(templates);
         auto const &lentCells = std::get<2>(distCells);
 
         // Actually perform velocity integration
-        hemelb::redblood::parallel::IntegrateVelocities integrator(CreateGraphComm(split));
+        hemelb::redblood::parallel::IntegrateVelocities integrator(CreateDumbGraphComm(split));
         integrator.PostMessageLength(lentCells);
         integrator.ComputeLocalVelocitiesAndUpdatePositions<Traits>(latDat, owned);
         integrator.PostVelocities<Traits>(latDat, lentCells);

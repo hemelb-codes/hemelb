@@ -127,6 +127,12 @@ namespace hemelb
         template<typename T>
         std::vector<T> Gather(const T& val, const int root) const;
 
+        //! \brief Specialization for a vector of variable size
+        //! \note Two collective MPI operations are made here, first to get the sizes, then to get
+        //! the values.
+        template<typename T>
+        std::vector<T> Gather(const std::vector<T>& val, const int root) const;
+
         template<typename T>
         std::vector<T> AllGather(const T& val) const;
 
@@ -165,6 +171,8 @@ namespace hemelb
         {
           return Split(color, Rank());
         }
+
+        void Barrier() const;
 
       protected:
         /**

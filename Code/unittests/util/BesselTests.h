@@ -38,7 +38,7 @@ namespace hemelb
              * The data here is generated with Mathematica using the expression
              * CForm[Table[BesselJ[0, I^(3/2) x], {x, 0, 20, 0.1}]]
              */
-            int n = 201;
+            unsigned n = 201;
             Complex mathematica[] = { Complex(1., 0.),
                                       Complex(0.9999984375000678, 0.0024999995659722293),
                                       Complex(0.9999750000173611, 0.009999972222229167),

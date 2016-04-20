@@ -235,7 +235,7 @@ namespace hemelb
                                             0);
         auto i_node = nodePositions.GetReceiveBuffer().cbegin() + offset;
         auto const Nnodes = nodeCount.GetReceiveBuffer()[index];
-        assert(Nnodes == result->GetNumberOfNodes());
+        assert(site_t(Nnodes) == result->GetNumberOfNodes());
         std::copy(i_node, i_node + Nnodes, result->GetVertices().begin());
         return std::move(result);
       }

@@ -59,15 +59,17 @@ namespace hemelb
           CPPUNIT_TEST (testCellInsertion);
           CPPUNIT_TEST (testCellRemoval);
           CPPUNIT_TEST (testCellOutput);
-          CPPUNIT_TEST (testFluid2Cell);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testFluid2Cell);
+          CPPUNIT_TEST_SUITE_END();
 
           LatticeDistance const cutoff = 5.0;
-          LatticeDistance const halo = 2.0;
           typedef lb::lattices::D3Q15 D3Q15;
           typedef hemelb::Traits<>::Reinstantiate<D3Q15, lb::GuoForcingLBGK>::Type::ChangeStencil<
               stencil::FourPoint>::Type Traits;
 
         public:
+          void setUp();
+          void tearDown();
           void testCell2Fluid();
           void testCell2FluidWithoutCells();
           void testFluid2Cell();
@@ -80,12 +82,36 @@ namespace hemelb
           {
             return 32 + 2;
           }
+
+          std::shared_ptr<TemplateCellContainer> BuildTemplateContainer(CellContainer const &cellContainer) const
+          {
+            auto templates = std::make_shared<TemplateCellContainer>();
+            for (auto cell : cellContainer)
+            {
+              templates->emplace(cell->GetTemplateName(), cell->clone());
+            }
+            return templates;
+          }
+
+          hemelb::reporting::Timers* timers;
       };
+
+      void CellArmyTests::setUp()
+      {
+        helpers::FourCubeBasedTestFixture::setUp();
+        timers = new hemelb::reporting::Timers(Comms());
+      }
+
+      void CellArmyTests::tearDown()
+      {
+        helpers::FourCubeBasedTestFixture::tearDown();
+        delete timers;
+      }
 
       void CellArmyTests::testCell2FluidWithoutCells()
       {
         CellContainer cells;
-        CellArmy<Traits> army(*latDat, cells, cutoff, halo);
+        CellArmy<Traits> army(*latDat, cells, BuildTemplateContainer(cells), *timers, cutoff);
         army.SetCell2Cell(/* intensity */1e0, /* cutoff */0.5);
         army.SetCell2Wall(/* intensity */1e0, /* cutoff */0.5);
         army.Cell2FluidInteractions();
@@ -102,7 +128,7 @@ namespace hemelb
         helpers::ZeroOutFOld(latDat);
         helpers::ZeroOutForces(latDat);
 
-        CellArmy<Traits> army(*latDat, cells, cutoff, halo);
+        CellArmy<Traits> army(*latDat, cells, BuildTemplateContainer(cells), *timers, cutoff);
         army.SetCell2Cell(/* intensity */1e0, /* cutoff */0.5);
         army.SetCell2Wall(/* intensity */1e0, /* cutoff */0.5);
         army.Cell2FluidInteractions();
@@ -111,7 +137,7 @@ namespace hemelb
         CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>( (*std::next(cells.begin())))->nbcalls
             == 1);
 
-        for (size_t i(0); i < latDat->GetLocalFluidSiteCount(); ++i)
+        for (site_t i(0); i < latDat->GetLocalFluidSiteCount(); ++i)
         {
           CPPUNIT_ASSERT(helpers::is_zero(latDat->GetSite(i).GetForce()));
         }
@@ -132,11 +158,14 @@ namespace hemelb
       void CellArmyTests::testCellInsertion()
       {
         auto cell = std::make_shared<FakeCell>(pancakeSamosa());
+        // Shift cell to be contained in flow domain
+        *cell += LatticePosition(1.1, 1.1, 1.1);
 
         helpers::ZeroOutFOld(latDat);
         helpers::ZeroOutForces(latDat);
 
-        CellArmy<Traits> army(*latDat, CellContainer(), cutoff, halo);
+        auto cells = CellContainer();
+        CellArmy<Traits> army(*latDat, cells, BuildTemplateContainer(cells), *timers, cutoff);
         int called = 0;
         auto callback = [cell, &called](std::function<void(CellContainer::value_type)> inserter)
         {
@@ -167,7 +196,7 @@ namespace hemelb
                                                                                          latDat,
                                                                                          normal);
 
-        CellArmy<Traits> army(*latDat, cells, cutoff, halo);
+        CellArmy<Traits> army(*latDat, cells, BuildTemplateContainer(cells), *timers, cutoff);
         army.Fluid2CellInteractions();
 
         for (size_t i(0); i < cells.size(); ++i)
@@ -188,6 +217,9 @@ namespace hemelb
       void CellArmyTests::testCellOutput()
       {
         auto cell = std::make_shared<FakeCell>(tetrahedron());
+        // Shift cell to be contained in flow domain
+        *cell += LatticePosition(1.1, 1.1, 1.1);
+
         MeshData::Vertices::value_type barycentre;
         CellArmy<Traits>::CellChangeListener callback =
             [&barycentre](const CellContainer & container)
@@ -197,7 +229,7 @@ namespace hemelb
 
         CellContainer intel;
         intel.insert(cell);
-        CellArmy<Traits> army(*latDat, intel, cutoff, halo);
+        CellArmy<Traits> army(*latDat, intel, BuildTemplateContainer(intel), *timers, cutoff);
         army.AddCellChangeListener(callback);
 
         army.NotifyCellChangeListeners();
@@ -212,13 +244,15 @@ namespace hemelb
                                    4,
                                    1.8);
         auto cell = std::make_shared<FakeCell>(pancakeSamosa());
+        // Shift cell to be contained in flow domain
+        *cell += LatticePosition(1.1, 1.1, 1.1);
 
         helpers::ZeroOutFOld(latDat);
         helpers::ZeroOutForces(latDat);
 
         CellContainer intel;
         intel.insert(cell);
-        CellArmy<Traits> army(*latDat, intel, cutoff, halo);
+        CellArmy<Traits> army(*latDat, intel, BuildTemplateContainer(intel), *timers, cutoff);
         army.SetOutlets(std::vector<FlowExtension>(1, outlet));
 
         // Check status before attempting to remove cell that should *not* be removed

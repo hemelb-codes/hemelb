@@ -64,7 +64,7 @@ namespace hemelb
       {
         for (auto neighbor : neighbors)
         {
-          if (neighbor > current_facet)
+          if (neighbor > static_cast<std::size_t>(current_facet))
           {
             result += hemelb::redblood::facetBending(data->vertices,
                                                      *data->templateMesh.GetData(),
@@ -87,7 +87,7 @@ namespace hemelb
       }
 
       LatticeEnergy result(0);
-      site_t current_facet(0);
+      std::size_t current_facet(0);
       for (auto const & neighbors : GetTopology()->facetNeighbors)
       {
         for (auto neighbor : neighbors)

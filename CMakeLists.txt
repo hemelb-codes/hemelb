@@ -15,8 +15,10 @@ set(HEMELB_READING_GROUP_SIZE 5
   CACHE INTEGER "Number of cores to use to read geometry file.")
 set(HEMELB_LOG_LEVEL Info
 	CACHE STRING "Log level, choose 'Critical', 'Error', 'Warning', 'Info', 'Debug' or 'Trace'" )
+set_property(CACHE HEMELB_LOG_LEVEL PROPERTY STRINGS Critical Error Warning Info Debug Trace)
 set(HEMELB_STEERING_LIB basic
 	CACHE STRING "Steering library, choose 'basic' or 'none'" )
+set_property(CACHE HEMELB_STEERING_LIB PROPERTY STRINGS basic none)
 option(HEMELB_USE_MULTIMACHINE "Use multi-level parallelism support" OFF)
 option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
 option(HEMELB_USE_STREAKLINES "Calculate streakline images" OFF)
@@ -31,6 +33,8 @@ set(HEMELB_KERNEL "LBGK"
   CACHE STRING
   "Select the kernel to use
   (LBGK,EntropicAnsumali,EntropicChik,MRT,NNCY,NNCYMOUSE,NNC,NNTPL,GuoForcingLBGK)")
+set_property(CACHE HEMELB_KERNEL PROPERTY STRINGS
+  LBGK EntropicAnsumali EntropicChik MRT NNCY NNCYMOUSE NNC NNTPL GuoForcingLBGK)
 set(HEMELB_WALL_BOUNDARY "SIMPLEBOUNCEBACK"
   CACHE STRING "Select the boundary conditions to be used at the walls (FINTERPOLATION,GZS,SIMPLEBOUNCEBACK,JUNKYANG)")
 set(HEMELB_STEERING_HOST "CCS" CACHE STRING "Use a default host suffix for steering? (CCS, NGS2Leeds, NGS2Manchester, LONI, NCSA or blank)")

@@ -29,7 +29,7 @@ namespace hemelb
   {
     namespace parallel
     {
-      //! \brief Integrates velocites across processes
+      //! \brief Integrates velocities across processes
       //! \details Uses the fact that the velocities are additive. We update the positions from the
       //! local knowledge in one step, and then from the non-local knowledge in another.
       class IntegrateVelocities

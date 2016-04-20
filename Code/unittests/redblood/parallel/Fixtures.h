@@ -13,6 +13,7 @@
 #include "redblood/Cell.h"
 #include "redblood/parallel/CellParallelization.h"
 #include "SimulationMaster.h"
+#include <random>
 
 namespace hemelb
 {
@@ -30,7 +31,7 @@ namespace hemelb
         std::random_device rd;
         std::mt19937 g(rd());
 
-        int const nMids = latDat.GetMidDomainSiteCount();
+        int const nMids = latDat.GetMidDomainCollisionCount(0);
         int const nEdges = latDat.GetDomainEdgeCollisionCount(0);
         std::vector<LatticePosition> positions(c.Size() * (mid + edges));
         std::vector<int> shuf(nMids);
@@ -48,7 +49,7 @@ namespace hemelb
         std::shuffle(shuf.begin(), shuf.end(), g);
         for (size_t i(0); i < edges; ++i)
         {
-          auto const site = latDat.GetSite(nMids + shuf[i]);
+          auto const site = latDat.GetSite(latDat.GetMidDomainSiteCount() + shuf[i]);
           positions[c.Rank() * (mid + edges) + i + mid] = site.GetGlobalSiteCoords();
         }
 
@@ -77,6 +78,11 @@ namespace hemelb
           void DoTimeStep()
           {
             SimulationMaster<TRAITS>::DoTimeStep();
+          }
+
+          std::shared_ptr<hemelb::configuration::SimConfig> GetSimConfig()
+          {
+            return this->simConfig;
           }
       };
 
@@ -132,26 +138,9 @@ namespace hemelb
         return cells;
       }
 
-      net::MpiCommunicator CreateGraphComm(net::MpiCommunicator const &comm)
+      net::MpiCommunicator CreateDumbGraphComm(net::MpiCommunicator const &comm)
       {
-        if (comm.Size() == 1)
-        {
-        }
-        // setups a graph communicator that in-practice is all-to-all
-        // Simpler than setting up something realistic
-        std::vector<std::vector<int>> vertices;
-        for (size_t i(0); i < comm.Size(); ++i)
-        {
-          vertices.push_back(std::vector<int>());
-          for (size_t j(0); j < comm.Size(); ++j)
-          {
-            if (j != i)
-            {
-              vertices[i].push_back(j);
-            }
-          }
-        }
-        return comm.Graph(vertices);
+        return comm.Graph(hemelb::redblood::ComputeProcessorNeighbourhood(comm));
       }
 
     }

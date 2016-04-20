@@ -25,6 +25,7 @@
 #include "redblood/stencil.h"
 #include "redblood/Interpolation.h"
 #include "redblood/Borders.h"
+#include "redblood/parallel/CellParallelization.h"
 
 namespace hemelb
 {
@@ -165,6 +166,10 @@ namespace hemelb
         //! recomputes using current cells
         void SetBoxSizeAndHalo(LatticeDistance boxSize, LatticeDistance halo);
 
+        //! In a parallel simulation, some cells will leave/enter the domain.
+        //! \param[in] 3-tuple with the newly owned cells, the disowned cells, and the lent cells
+        void update(parallel::ExchangeCells::ChangedCells const& changedCells);
+
         //! Insert a new cell
         //! Returns true if the cell was inserted, false if it already existed.
         bool insert(CellContainer::value_type cell);
@@ -177,6 +182,10 @@ namespace hemelb
         LatticeDistance haloLength;
         //! Container of cells
         CellContainer cells;
+        //! Keeps track of which cells in the box are lent (currentlyLentCells must always be a subset of DivideConquerCells::cells)
+        CellContainer currentlyLentCells;
+        //! Helper method that combines all the CellContainers in a LentCells object into a single CellContainer
+        CellContainer LentCellsToSingleContainer(parallel::CellParallelization::LentCells const &lentCells) const;
     };
 
     class DivideConquerCells::pair_range

@@ -126,6 +126,48 @@ namespace hemelb
       initializeCells(*this, cells, GetHaloLength());
     }
 
+    void DivideConquerCells::update(parallel::ExchangeCells::ChangedCells const& changedCells)
+    {
+      // 3-tuple with the newly owned cells, the disowned cells, and the lent cells
+      auto const &newCells = std::get<0>(changedCells);
+      auto const &disownedCells = std::get<1>(changedCells);
+      auto const &lentCells = LentCellsToSingleContainer(std::get<2>(changedCells));
+
+      // First remove disowned cells and previously lent cells
+      auto remove_cell = std::bind(&DivideConquerCells::remove, this, std::placeholders::_1);
+      std::for_each(disownedCells.begin(), disownedCells.end(), remove_cell);
+      std::for_each(currentlyLentCells.begin(), currentlyLentCells.end(), remove_cell);
+
+      // Then update positions of cells that are still under the same ownership
+      // More explicilty, we update all known nodes in the following command
+      update();
+
+      // Then add newly owned and newly lent cells
+      auto insert_cell = std::bind(&DivideConquerCells::insert, this, std::placeholders::_1);
+      std::for_each(newCells.begin(), newCells.end(), insert_cell);
+      std::for_each(lentCells.begin(), lentCells.end(), insert_cell);
+
+      // Update the container used to know which of the cells are lent
+      currentlyLentCells = lentCells;
+
+      // currentlyLentCells must be a subset of cells
+      assert(std::includes(cells.begin(), cells.end(),
+                           currentlyLentCells.begin(), currentlyLentCells.end(),
+                           details::CellUUIDComparison()));
+    }
+
+    CellContainer DivideConquerCells::LentCellsToSingleContainer(parallel::CellParallelization::LentCells const &lentCells) const
+    {
+      CellContainer single_cell_container;
+
+      auto populate_single_cell_container = [&single_cell_container] (std::pair<proc_t, CellContainer> const &proc_container_pair){
+        single_cell_container.insert(proc_container_pair.second.begin(), proc_container_pair.second.end());
+      };
+      std::for_each(lentCells.begin(), lentCells.end(), populate_single_cell_container);
+
+      return single_cell_container;
+    }
+
     DivideConquerCells::const_range DivideConquerCells::operator()(LatticeVector const &pos) const
     {
       base_type::const_range const boxrange = base_type::equal_range(pos);

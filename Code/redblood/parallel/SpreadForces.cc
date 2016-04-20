@@ -23,7 +23,7 @@ namespace hemelb
         auto countNodesToSend =
             [this](int index, int, NodeIndices const & indices, CellContainer::value_type const&)
             {
-              assert(sendNodeCount.GetSendBuffer().size() > index);
+              assert(int(sendNodeCount.GetSendBuffer().size()) > index);
               sendNodeCount.GetSendBuffer()[index] += indices.size();
             };
 
@@ -45,6 +45,9 @@ namespace hemelb
         LatticeEnergy energy(0);
         for (auto const &cell : owned)
         {
+          // Create the map entry and allocate memory
+          cellForces[cell->GetTag()].resize(cell->GetNumberOfNodes());
+
           energy += cell->Energy(cellForces[cell->GetTag()]);
         }
         return energy;
@@ -72,7 +75,7 @@ namespace hemelb
             auto const& node = cell->GetVertices()[item.value];
             sendPositions.SetSend(neighbor, node, offset + item.index);
 
-            auto const& force = cellForces[cell->GetTag()][item.index];
+            auto const& force = cellForces[cell->GetTag()][item.value];
             sendForces.SetSend(neighbor, force, offset + item.index);
           }
         };

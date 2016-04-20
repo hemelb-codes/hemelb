@@ -100,6 +100,17 @@
         <shape mesh_path="red_blood_cell.txt" />
         <scale units="m" value="6e-06" />
       </cell>
+      <cell name="biggie">
+        <moduli>
+          <bending units="Nm" value="2e-19" />
+          <surface units="LB" value="1e0" />
+          <volume units="LB" value="1e0" />
+          <dilation units="LB" value="0.75" />
+          <strain units="N/m" value="5e-6" />
+        </moduli>
+        <shape mesh_path="red_blood_cell.txt" />
+        <scale units="m" value="8e-06" />
+      </cell>
     </cells>
     <output>
       <period units="LB" value="100" />

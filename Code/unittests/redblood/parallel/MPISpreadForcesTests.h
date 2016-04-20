@@ -43,7 +43,8 @@ namespace hemelb
           CPPUNIT_TEST (testAll<hemelb::redblood::stencil::CosineApprox> );
           CPPUNIT_TEST (testMidRegion<hemelb::redblood::stencil::TwoPoint> );
           CPPUNIT_TEST (testEdgeRegion<hemelb::redblood::stencil::TwoPoint> );
-          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::TwoPoint> );CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testAll<hemelb::redblood::stencil::TwoPoint> );
+          CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp();
@@ -58,7 +59,7 @@ namespace hemelb
           }
           template<class STENCIL> void testAll()
           {
-            Check<STENCIL>(3, 3, 2);
+            Check<STENCIL>(10, 10, 2);
           }
 
         protected:
@@ -139,7 +140,7 @@ namespace hemelb
               CellContainer { cells.begin(), cells.end() };
         auto const distributions = nodeDistributions(latDat, owned);
 
-        hemelb::redblood::parallel::SpreadForces mpi_spreader(CreateGraphComm(split));
+        hemelb::redblood::parallel::SpreadForces mpi_spreader(CreateDumbGraphComm(split));
         mpi_spreader.PostMessageLength(distributions, owned);
         mpi_spreader.ComputeForces(owned);
         mpi_spreader.PostForcesAndNodes(distributions, owned);
@@ -150,7 +151,7 @@ namespace hemelb
         std::vector<LatticeForceVector> forces;
         if (color)
         {
-          for (size_t i(0); i < latDat.GetLocalFluidSiteCount(); ++i)
+          for (site_t i(0); i < latDat.GetLocalFluidSiteCount(); ++i)
           {
             auto const site = latDat.GetSite(i);
             if (site.GetForce().GetMagnitudeSquared() > 1e-8)
