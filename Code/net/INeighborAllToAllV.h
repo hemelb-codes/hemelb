@@ -48,8 +48,8 @@ namespace hemelb
         typedef std::vector<Receive> ReceiveBuffer;
 
         //! Input is a graph communicator
-        INeighborAllToAllV(MpiCommunicator const &comm, std::vector<int> sendCounts,
-                           std::vector<int> receiveCounts) :
+        INeighborAllToAllV(MpiCommunicator const &comm, std::vector<int> const &sendCounts,
+                           std::vector<int> const &receiveCounts) :
             INeighborAllToAll<Send, Receive>(comm), sendCounts(sendCounts),
                 receiveCounts(receiveCounts)
         {
