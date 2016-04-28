@@ -31,7 +31,7 @@ set(HEMELB_READING_GROUP_SIZE 5
 set(HEMELB_LOG_LEVEL Info
 	CACHE STRING "Log level, choose 'Critical', 'Error', 'Warning', 'Info', 'Debug' or 'Trace'" )
 set_property(CACHE HEMELB_LOG_LEVEL PROPERTY STRINGS Critical Error Warning Info Debug Trace)
-set(HEMELB_STEERING_LIB basic
+set(HEMELB_STEERING_LIB none
 	CACHE STRING "Steering library, choose 'basic' or 'none'" )
 set_property(CACHE HEMELB_STEERING_LIB PROPERTY STRINGS basic none)
 set(HEMELB_DEPENDENCIES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../dependencies"
