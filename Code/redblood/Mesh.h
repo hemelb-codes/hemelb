@@ -44,14 +44,8 @@ namespace hemelb
     };
     static_assert(std::is_standard_layout<MeshData>::value, "Needed for MPI data type");
     static_assert(
-        std::is_default_constructible<MeshData>::value
-        and std::is_nothrow_default_constructible<MeshData>::value
-        and std::is_move_constructible<MeshData>::value
-        and std::is_nothrow_move_constructible<MeshData>::value
-        and std::is_copy_constructible<MeshData>::value
-        and std::is_copy_assignable<MeshData>::value
-        and (not std::is_nothrow_copy_assignable<MeshData>::value)
-        and (not std::is_pod<MeshData>::value),
+        std::is_move_constructible<MeshData>::value
+        and std::is_copy_constructible<MeshData>::value,
         "Explicit type characteristics"
     );
 
