@@ -2,7 +2,7 @@ import numpy as np
 from TestResources.sphere import GetSphereNumpy
 from . import TriangleSorter
 from .HemeOct import Tree
-from nose.tools import set_trace
+
 def trees_with_triIds_equal(t1, t2, tri_level):
     if t1 != t2:
         return False

@@ -1,6 +1,6 @@
 from .Oct import Tree, NodeError
 import numpy as np
-from nose.tools import raises
+from pytest import raises
 
 def test_Octree_create():
     tree = Tree(3)
@@ -68,10 +68,10 @@ def test_Octree_simple():
     
     assert n3.children is None
     
-@raises(NodeError)
 def test_get_nonexistant():
     tree = mk_8cube_234()
-    tree.GetNode(0, np.array((0,0,0)))
+    with raises(NodeError):
+        tree.GetNode(0, np.array((0,0,0)))
     
 def test_iter():
     tree = mk_8cube_234()

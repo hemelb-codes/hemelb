@@ -6,16 +6,16 @@ from .HitFinder import HitFinder
 from .TestResources.sphere import GetSphereNumpy, InsideSphere
 from .TriangleSorter import TrianglesToTree
     
-from nose.tools import raises, set_trace
+from pytest import raises, set_trace
 
-@raises(AttributeError)
 def test_unknown_voxel():
     """If we know nothing about a voxel at all, it should be an error as it
     should never have been created.
     """
     nc = NodeClassifier()
     node = Node(0, np.array((1,1,1)))
-    nc(node)
+    with raises(AttributeError):
+        nc(node)
 
 def get_i(*direction):
     return np.all(neighbours == direction, axis=1).nonzero()[0][0]
