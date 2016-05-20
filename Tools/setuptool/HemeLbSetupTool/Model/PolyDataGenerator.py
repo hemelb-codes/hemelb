@@ -62,14 +62,13 @@ class PolyDataGenerator(object):
         normals = self.ClippedSurface.GetCellData().GetNormals()
         normals = numpy_support.vtk_to_numpy(normals)
 
-        # Sort the triangles to a sensible level on the tree
-        # Just pick the current 8x8x8 blocks for now
-        tri_box_pow = 3
-        tri_level = tri_box_pow
-        
+        # This guy will create an octree with nodes that represent the polydata
+        # surface. They are tagged with those triangles that could intersect 
+        # their 26-neighbourhood links        
         voxer = SurfaceVoxeliser(points, triangles, normals, self.TreeLevels, self.OriginWorking)
+        voxer.Execute()
         
-        pdb.set_trace()
+        # We aren't done yet, but that will do for today!
         voxer.Tree.Write(self.OutputGeometryFile)
         
         return
