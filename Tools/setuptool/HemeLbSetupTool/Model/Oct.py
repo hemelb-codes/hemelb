@@ -211,3 +211,11 @@ class Tree(object):
 
     pass
 
+def TreeToMaskArray(tree, level=0):
+    cube_size = 2**tree.levels
+    cube = np.zeros((cube_size, cube_size, cube_size), dtype=bool)
+    for node in tree.IterDepthFirst(level, level):
+        i, j, k = node.offset
+        cube[i,j,k] = True
+    
+    return cube

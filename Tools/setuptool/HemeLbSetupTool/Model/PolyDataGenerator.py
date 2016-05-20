@@ -6,9 +6,7 @@ from .Vector import Vector
 #from .GeometryGenerator import GeometryGenerator
 from .Clipper import Clipper
 
-import TriangleSorter
-from HitFinder import HitFinder
-from NodeClassifier import NodeClassifier
+from SurfaceVoxeliser import SurfaceVoxeliser
 
 import pdb
 
@@ -69,33 +67,10 @@ class PolyDataGenerator(object):
         tri_box_pow = 3
         tri_level = tri_box_pow
         
-        self.tree = TriangleSorter.TrianglesToTree(self.TreeLevels, tri_level, points, triangles)
+        voxer = SurfaceVoxeliser(points, triangles, normals, self.TreeLevels, self.OriginWorking)
         
-        hit_finder = HitFinder(points, triangles, normals)
-        classifier = NodeClassifier()
-        
-        # Iterate over all the nodes with triangles
-        for tri_node in self.tree.IterDepthFirst(tri_level, tri_level):
-            # At the moment, the finder modifies tri_node in place
-            nHits = hit_finder(tri_node)
-            if nHits > 0:
-                # OK, so we've done all the intersections.
-                # We now need to mark the nodes as solid/fluid
-                classifier(tri_node)
-            else:
-                # No hits, should delete tri_node from the tree
-                ind = tri_node.offset
-                # Zero out the parent-local bits
-                local_bits = ind & (1 << tri_level)
-                parent_ind = ind ^ (local_bits)
-                parent = self.tree.GetNode(tri_level + 1, parent_ind)
-                assert parent.children[tuple(local_bits>>tri_level)] is tri_node
-                parent.children[tuple(local_bits>>tri_level)] = None
-            continue
         pdb.set_trace()
-        # Now classify the top of the tree
-        classifier(self.tree.root, tri_level+1)
-        self.tree.Write(self.OutputGeometryFile)
+        voxer.Tree.Write(self.OutputGeometryFile)
         
         return
     
