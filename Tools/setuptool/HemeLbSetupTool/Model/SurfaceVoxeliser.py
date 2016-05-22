@@ -13,7 +13,7 @@ class SurfaceVoxeliser(object):
     could intersect (triIds)
     """
     
-    def __init__(self, points, triangles, normals, nLevels, origin):
+    def __init__(self, points, triangles, normals, nLevels):
         """
         points = a numpy array of doubles with shape == (nPoints, 3) specifying
         the vertices.
@@ -27,16 +27,13 @@ class SurfaceVoxeliser(object):
         nLevels = the number of levels in the tree (hence the box size is 
         2**nlevels voxels)
         
-        origin = coordinate, in input space of voxel (0,0,0)
-        
         """
         # Transform to index space.
-        self.Points = points - origin
+        self.Points = points
         self.Triangles = triangles
         self.Normals = normals
                 
         self.nLevels = nLevels
-        self.Origin = origin
         self.Tree = HemeOct.Tree(nLevels)
         
         # This is in units of the voxel size

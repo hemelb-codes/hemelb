@@ -52,7 +52,7 @@ def test_trivial_points():
     levels = 3
     n = 2**levels
     points, triangles, normals = mk_trivial()
-    voxer = SurfaceVoxeliser(points, triangles, normals, levels, np.zeros(3, dtype=float))
+    voxer = SurfaceVoxeliser(points, triangles, normals, levels)
     
     # Get full grid of points
     coords = np.mgrid[:n,:n,:n].reshape((3,n**3)).transpose()
@@ -74,7 +74,7 @@ def test_trivial_edges():
     levels = 3
     n = 2**levels
     points, triangles, normals = mk_trivial()
-    voxer = SurfaceVoxeliser(points, triangles, normals, levels, np.zeros(3, dtype=float))
+    voxer = SurfaceVoxeliser(points, triangles, normals, levels)
     
     # Get full grid of points
     coords = np.mgrid[:n,:n,:n].reshape((3,n**3)).transpose()
@@ -123,7 +123,7 @@ def test_trivial_plane():
     levels = 3
     n = 2**levels
     points, triangles, normals = mk_trivial()
-    voxer = SurfaceVoxeliser(points, triangles, normals, levels, np.zeros(3, dtype=float))
+    voxer = SurfaceVoxeliser(points, triangles, normals, levels)
     
     # Get full grid of points
     coords = np.mgrid[:n,:n,:n].reshape((3,n**3)).transpose()
@@ -145,7 +145,7 @@ def test_trivial():
     levels = 4
     points, triangles, normals = mk_trivial()
 
-    voxer = SurfaceVoxeliser(points, triangles, normals, levels, np.zeros(3, dtype=float))
+    voxer = SurfaceVoxeliser(points, triangles, normals, levels)
     voxer.Execute()
     tree = voxer.Tree    
     
@@ -194,9 +194,8 @@ def test_sphere_tri90():
     # Initial testing showed that this fails for some triangles, including this
     levels = 5
     n = 2**levels
-    origin = np.zeros(3, dtype=float)
     points, triangles, normals = GetSphereNumpy()
-    voxer = SurfaceVoxeliser(points, triangles, normals, levels, origin)
+    voxer = SurfaceVoxeliser(points, triangles, normals, levels)
     
     iTri = 90
     tri_pt_ids = triangles[iTri]
@@ -346,9 +345,8 @@ def test_connected2():
 def test_sphere():
     levels = 5
     n = 2**levels
-    origin = np.zeros(3, dtype=float)
     points, triangles, normals = GetSphereNumpy()
-    voxer = SurfaceVoxeliser(points, triangles, normals, levels, origin)
+    voxer = SurfaceVoxeliser(points, triangles, normals, levels)
     voxer.Execute()
     tree = voxer.Tree
 
