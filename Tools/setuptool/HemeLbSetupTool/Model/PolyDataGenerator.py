@@ -7,6 +7,7 @@ from .Vector import Vector
 from .Clipper import Clipper
 
 from SurfaceVoxeliser import SurfaceVoxeliser
+import TriangleSorter
 
 import pdb
 
@@ -58,14 +59,19 @@ class PolyDataGenerator(object):
         tridata.shape = (surf.GetNumberOfPolys(), 4)
         assert np.all(tridata[:,0]==3), "Non triangle in surface!"
         triangles = tridata[:, 1:]
-        points = numpy_support.vtk_to_numpy(surf.GetPoints().GetData())
+        # Note we convert the coords to be relative to the origin
+        points = numpy_support.vtk_to_numpy(surf.GetPoints().GetData()) - self.OriginWorking
         normals = self.ClippedSurface.GetCellData().GetNormals()
         normals = numpy_support.vtk_to_numpy(normals)
-
+        
+        # Sort the mesh onto the octree at a coarse level
+        tri_level = self.TreeLevels / 2
+        self.tree = TriangleSorter.TrianglesToTree(self.TreeLevels, tri_level, points, triangles)
+        
         # This guy will create an octree with nodes that represent the polydata
         # surface. They are tagged with those triangles that could intersect 
-        # their 26-neighbourhood links        
-        voxer = SurfaceVoxeliser(points, triangles, normals, self.TreeLevels, self.OriginWorking)
+        # their 26-neighbourhood links
+        voxer = SurfaceVoxeliser(points, triangles, normals, self.TreeLevels)
         voxer.Execute()
         
         # We aren't done yet, but that will do for today!

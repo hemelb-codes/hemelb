@@ -1,7 +1,8 @@
 import numpy as np
-from TestResouces.simple_meshes import mk_trivial
+from TestResources.simple_meshes import mk_trivial
 from TestResources.sphere import GetSphereNumpy, Radius
 from .SurfaceVoxeliser import SurfaceVoxeliser
+from . import TriangleSorter
 from .HemeOct import Tree
 import Oct
 
@@ -21,9 +22,11 @@ def trees_with_triIds_equal(t1, t2, tri_level):
 def test_trivial_points():
     # 8 cube
     levels = 3
+    tri_level = 2
     n = 2**levels
     points, triangles, normals = mk_trivial()
-    voxer = SurfaceVoxeliser(points, triangles, normals, levels)
+    tree = TriangleSorter.TrianglesToTree(levels, tri_level, points, triangles)
+    voxer = SurfaceVoxeliser(points, triangles, normals, tree, tri_level)
     
     # Get full grid of points
     coords = np.mgrid[:n,:n,:n].reshape((3,n**3)).transpose()
@@ -43,9 +46,11 @@ def test_trivial_points():
 
 def test_trivial_edges():
     levels = 3
+    tri_level = 2
     n = 2**levels
     points, triangles, normals = mk_trivial()
-    voxer = SurfaceVoxeliser(points, triangles, normals, levels)
+    tree = TriangleSorter.TrianglesToTree(levels, tri_level, points, triangles)
+    voxer = SurfaceVoxeliser(points, triangles, normals, tree, tri_level)
     
     # Get full grid of points
     coords = np.mgrid[:n,:n,:n].reshape((3,n**3)).transpose()
@@ -92,9 +97,11 @@ def test_trivial_edges():
 
 def test_trivial_plane():
     levels = 3
+    tri_level = 2
     n = 2**levels
     points, triangles, normals = mk_trivial()
-    voxer = SurfaceVoxeliser(points, triangles, normals, levels)
+    tree = TriangleSorter.TrianglesToTree(levels, tri_level, points, triangles)
+    voxer = SurfaceVoxeliser(points, triangles, normals, tree, tri_level)
     
     # Get full grid of points
     coords = np.mgrid[:n,:n,:n].reshape((3,n**3)).transpose()
@@ -114,9 +121,10 @@ def test_trivial_plane():
 def test_trivial():
     # 16 cube
     levels = 4
+    tri_level = 2
     points, triangles, normals = mk_trivial()
-
-    voxer = SurfaceVoxeliser(points, triangles, normals, levels)
+    tree = TriangleSorter.TrianglesToTree(levels, tri_level, points, triangles)
+    voxer = SurfaceVoxeliser(points, triangles, normals, tree, tri_level)
     voxer.Execute()
     tree = voxer.Tree    
     
@@ -164,9 +172,11 @@ def overlap3d(amin, amax, bmin, bmax):
 def test_sphere_tri90():
     # Initial testing showed that this fails for some triangles, including this
     levels = 5
+    tri_level = 3
     n = 2**levels
     points, triangles, normals = GetSphereNumpy()
-    voxer = SurfaceVoxeliser(points, triangles, normals, levels)
+    tree = TriangleSorter.TrianglesToTree(levels, tri_level, points, triangles)
+    voxer = SurfaceVoxeliser(points, triangles, normals, tree, tri_level)
     
     iTri = 90
     tri_pt_ids = triangles[iTri]
@@ -315,9 +325,11 @@ def test_connected2():
 
 def test_sphere():
     levels = 5
+    tri_level = 3
     n = 2**levels
     points, triangles, normals = GetSphereNumpy()
-    voxer = SurfaceVoxeliser(points, triangles, normals, levels)
+    tree = TriangleSorter.TrianglesToTree(levels, tri_level, points, triangles)
+    voxer = SurfaceVoxeliser(points, triangles, normals, tree, tri_level)
     voxer.Execute()
     tree = voxer.Tree
 
@@ -345,8 +357,10 @@ def test_sphere():
     
 def test_tovtk():
     levels = 5
+    tri_level = 3
     points, triangles, normals = GetSphereNumpy()
-    voxer = SurfaceVoxeliser(points, triangles, normals, levels)
+    tree = TriangleSorter.TrianglesToTree(levels, tri_level, points, triangles)
+    voxer = SurfaceVoxeliser(points, triangles, normals, tree, tri_level)
     voxer.Execute()
     tree = voxer.Tree
     tree.ToVtk('sphere.vtk')
