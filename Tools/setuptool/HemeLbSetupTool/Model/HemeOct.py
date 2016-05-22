@@ -1,10 +1,59 @@
 import Oct
 import numpy as np
 import os.path
+import vtk
 
 class NodeBase(Oct.NodeBase):
     """Base class for Heme-specific stuff.
     """
+    def ToVtk(self):
+        if self.levels > 1:
+            if self.children is None:
+                return None
+            
+            kids = []
+            for child in self.children.flat:
+                if child is not None:
+                    # child must be created
+                    kid = child.ToVtk()
+                    if kid is not None:
+                        kids.append(kid)
+                        pass
+                    pass
+                continue
+            
+            if len(kids) == 0:
+                return None
+            
+            myDS = vtk.vtkMultiBlockDataSet()
+            myDS.SetNumberOfBlocks(len(kids))
+            for i, kid in enumerate(kids):
+                myDS.SetBlock(i, kid)
+            return myDS
+        elif self.levels == 1:
+            # children are leaves, I therefore contain their data
+            if self.children is None:
+                return None
+            
+            myDS = vtk.vtkUniformGrid()
+            extent = np.concatenate((self.offset,
+                                     self.offset + 1)).reshape((2,3)).transpose()
+            myDS.SetExtent(extent.flatten())
+            myDS.SetScalarTypeToUnsignedChar()
+            pd = myDS.GetPointData()
+            data = vtk.vtkUnsignedCharArray()
+            data.SetNumberOfTuples(8)
+            
+            strides = np.array((1,2,4))
+            for ijk, child in np.ndenumerate(self.children):
+                i = np.sum(ijk * strides)
+                data.SetTuple1(i, child is None)
+            return myDS
+        else:
+            # am leaf  - should never be here
+            raise ValueError("Should not convert a leaf node to VTK")
+            pass
+        
     def Write(self, streamMap):
         if self.fluid_count == 0:
             return
@@ -31,7 +80,13 @@ class Node(NodeBase, Oct.Node):
 
 class Tree(Oct.Tree):
     NodeClass = Node
-    
+    def ToVtk(self, name):
+        ds = self.root.ToVtk()
+        writer = vtk.vtkXMLMultiBlockDataWriter()
+        writer.SetFileName(name)
+        writer.SetInput(ds)
+        writer.Write()
+        
     def Write(self, name):
         os.mkdir(name)
         streams = []

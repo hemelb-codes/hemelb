@@ -372,3 +372,10 @@ def test_sphere():
     nTri = len(triangles)
     assert np.all(np.arange(nTri) == seen_tris)
     
+def test_tovtk():
+    levels = 5
+    points, triangles, normals = GetSphereNumpy()
+    voxer = SurfaceVoxeliser(points, triangles, normals, levels)
+    voxer.Execute()
+    tree = voxer.Tree
+    tree.ToVtk('sphere.vtk')
