@@ -1,3 +1,12 @@
+#
+# Copyright (C) University College London, 2007-2012, all rights reserved.
+#
+# This file is part of HemeLB and is CONFIDENTIAL. You may not work
+# with, install, use, duplicate, modify, redistribute or share this
+# file, or any part thereof, other than as allowed by any agreement
+# specifically made by you with University College London.
+#
+
 import numpy as np
 from vtk import vtkTransform, vtkTransformFilter
 from vtk.util import numpy_support
@@ -63,6 +72,8 @@ class PolyDataGenerator(object):
         points = numpy_support.vtk_to_numpy(surf.GetPoints().GetData()) - self.OriginWorking
         normals = self.ClippedSurface.GetCellData().GetNormals()
         normals = numpy_support.vtk_to_numpy(normals)
+        # Also need the labels
+        labels = numpy_support.vtk_to_numpy(self.ClippedSurface.GetCellData().GetScalars())
         
         # Sort the mesh onto the octree at a coarse level
         tri_level = self.TreeLevels / 2
@@ -71,7 +82,7 @@ class PolyDataGenerator(object):
         # This guy will create an octree with nodes that represent the polydata
         # surface. They are tagged with those triangles that could intersect 
         # their 26-neighbourhood links
-        voxer = SurfaceVoxeliser(points, triangles, normals, self.TreeLevels)
+        voxer = SurfaceVoxeliser(points, triangles, normals, self.tree, self.TreeLevels)
         voxer.Execute()
         
         # We aren't done yet, but that will do for today!
