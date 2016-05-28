@@ -1,8 +1,9 @@
 import numpy as np
-from TestResources.simple_meshes import mk_trivial
+from TestResources.simple_meshes import mk_trivial, mk_duct
 from TestResources.sphere import GetSphereNumpy, Radius
 from .SurfaceVoxeliser import SurfaceVoxeliser
 from . import TriangleSorter
+from .IoletSorter import AddIoletsToTree
 from .HemeOct import Tree
 import Oct
 
@@ -126,7 +127,7 @@ def test_trivial():
     tree = TriangleSorter.TrianglesToTree(levels, tri_level, points, triangles)
     voxer = SurfaceVoxeliser(points, triangles, normals, tree, tri_level)
     voxer.Execute()
-    tree = voxer.Tree    
+    tree = voxer.Tree
     
     assert tree.levels == levels
     
@@ -159,7 +160,28 @@ def test_trivial():
             
         continue
     
-
+def test_trivial_big():
+    """We want to check that this copes with triangles much bigger than a 
+    tri_level bounding box.
+    """
+    # 16 cube
+    levels = 4
+    tri_level = 2
+    points, triangles, normals = mk_trivial()
+    # tri_level has nodes 4 voxels to a side
+    # trivial's BBox is (1.2, 1.2, 1.2) - (1.2, 2.2, 2.2)
+    points -= 1.2
+    points *= 4.0
+    points += 2.2
+    # Now (2.2, 2.2, 2.2) - (2.2, 6.2, 6.2)
+    
+    tree = TriangleSorter.TrianglesToTree(levels, tri_level, points, triangles)
+    voxer = SurfaceVoxeliser(points, triangles, normals, tree, tri_level)
+    voxer.Execute()
+    tree = voxer.Tree
+    for vox in tree.IterDepthFirst(0,0):
+        assert vox.offset[0] == 2 or vox.offset[0] == 3
+    
 def overlap1d(amin, amax, bmin, bmax):
     return np.logical_and(amin < bmax, amax > bmin)
 def overlap3d(amin, amax, bmin, bmax):
@@ -183,7 +205,7 @@ def test_sphere_tri90():
     tri_pts = points[tri_pt_ids]
     norm = normals[iTri]
     
-    lo, hi = voxer.AABB(iTri)
+    lo, hi = voxer.AABB_Tri(iTri)
     lo = lo.astype(int) - 1
     # 1 to round up, 1 to be safe, 1 to get range upper bound
     hi = hi.astype(int) + 3
@@ -334,7 +356,6 @@ def test_sphere():
     tree = voxer.Tree
 
     edge_mask = Oct.TreeToMaskArray(tree)
-    
     interior = connected_region(edge_mask, (15,15,15))
     x,y,z = interior.nonzero()
     x = x - 15.5
@@ -355,12 +376,29 @@ def test_sphere():
     nTri = len(triangles)
     assert np.all(np.arange(nTri) == seen_tris)
     
-def test_tovtk():
-    levels = 5
-    tri_level = 3
-    points, triangles, normals = GetSphereNumpy()
+def test_duct():
+    # 16 cube
+    levels = 4
+    tri_level = 2
+    points, triangles, normals, iolets = mk_duct()
     tree = TriangleSorter.TrianglesToTree(levels, tri_level, points, triangles)
+    
+    AddIoletsToTree(tree, tri_level, iolets)
+        
     voxer = SurfaceVoxeliser(points, triangles, normals, tree, tri_level)
     voxer.Execute()
     tree = voxer.Tree
-    tree.ToVtk('sphere.vtk')
+    
+    for node in tree.IterDepthFirst(0,0):
+        x,y,z = pos = node.offset
+        
+        if z == 3 or z == 14:
+            if (x-2)**2 + (y-2)**2 <= 2.5**2:
+                assert hasattr(node, 'iolet')
+                
+    edge_mask = Oct.TreeToMaskArray(tree)
+    interior = connected_region(edge_mask, (2,2,10))
+    x,y,z = interior.nonzero()
+    assert np.all(x == 2)
+    assert np.all(y == 2)
+    

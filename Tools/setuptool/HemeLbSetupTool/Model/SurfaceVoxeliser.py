@@ -39,7 +39,20 @@ class SurfaceVoxeliser(object):
         # This is in units of the voxel size
         self.Rc = np.sqrt(3.0) / 2 
         
-    def AABB(self, iTri):
+    def AABB_Disc(self, io):
+        c = np.array((io.Centre.x, io.Centre.y, io.Centre.z), dtype=float)
+        n = np.array((io.Normal.x, io.Normal.y, io.Normal.z), dtype=float)
+        r = io.Radius
+        
+        n2 = n**2 # [nx^2, ny^2, nz^2]
+        # 1 - nx^2 = nx^2 + ny^2 + nz^2 - nx^2 = ny^2 + nz^2
+        disc_half_size = r*(1.0 - n2)
+        
+        lo = c - disc_half_size
+        hi = c + disc_half_size
+        return lo, hi
+    
+    def AABB_Tri(self, iTri):
         """Return the axis-aligned bounding box for a triangle."""
         ids = self.Triangles[iTri]
         points = self.Points[ids]
@@ -177,24 +190,30 @@ class SurfaceVoxeliser(object):
         plane_offsets = np.sum(plane_normals * plane_points, axis=-1)
         
         # greater than because the normals are inwards
-        inside_mask |= np.all(np.dot(voxels, plane_normals.transpose()) > plane_offsets,
+        inside_mask |= np.all(np.dot(voxels, plane_normals.transpose()) >= plane_offsets,
                               axis=1)
         return
     
-    def DoTriangle(self, iTri):
-        """Add the voxel nodes for a single triangle to the tree
+    def DoTriangle(self, subtree, iTri):
+        """Add the voxel nodes for a single triangle to the (sub)tree
         """
-        norm = self.Normals[iTri]
+        #norm = self.Normals[iTri]
         ids = self.Triangles[iTri]
-        points = self.Points[ids]
+        #points = self.Points[ids]
         
-        lo, hi = self.AABB(iTri)
+        lo, hi = self.AABB_Tri(iTri)
         # voxels that could in principle intersect
         vlo = lo.astype(int)
+        # +2 for use as upper bound in range statement
         vhi = hi.astype(int) + 2
+        
+        # now clip this against the node's BB
+        vlo = np.where(vlo > subtree.offset, vlo, subtree.offset)
+        vmax = subtree.offset + 2**subtree.levels
+        vhi = np.where(vhi < vmax, vhi, vmax)
+        
         vshape = vhi - vlo
         vsize = np.prod(vshape)
-        # +2 for use as upper bound in range statement
         
         voxels = np.mgrid[vlo[0]:vhi[0],
                           vlo[1]:vhi[1],
@@ -216,7 +235,7 @@ class SurfaceVoxeliser(object):
         self.FilterTriangle(iTri, voxels, inside_mask)
         
         for vox in voxels[inside_mask.nonzero()]:
-            node = self.Tree.GetNode(0, vox, create=True)
+            node = subtree.GetNode(0, vox, create=True)
             try:
                 node.triIds.add(iTri)
             except AttributeError:
@@ -225,9 +244,54 @@ class SurfaceVoxeliser(object):
         
         return
     
+    def DoIolet(self, subtree, io):
+        lo, hi = self.AABB_Disc(io)
+        # voxels that could in principle intersect
+        vlo = lo.astype(int)
+        # +2 for use as upper bound in range statement
+        vhi = hi.astype(int) + 2
+        
+        # now clip this against the node's BB
+        vlo = np.where(vlo > subtree.offset, vlo, subtree.offset)
+        vmax = subtree.offset + 2**subtree.levels
+        vhi = np.where(vhi < vmax, vhi, vmax)
+        
+        vshape = vhi - vlo
+        vsize = np.prod(vshape)
+        
+        voxels = np.mgrid[vlo[0]:vhi[0],
+                          vlo[1]:vhi[1],
+                          vlo[2]:vhi[2]].reshape((3, vsize)).transpose()
+        
+        inside_mask = np.zeros(vsize, dtype=bool)
+
+        c = np.array((io.Centre.x, io.Centre.y, io.Centre.z), dtype=float)
+        n = np.array((io.Normal.x, io.Normal.y, io.Normal.z), dtype=float)
+        rad = io.Radius
+        
+        r = voxels - c
+        # z in the cylindrical coords that attach to the plane
+        z = np.dot(r, n)
+        
+        r2 = np.sum(r**2, axis=-1)
+        # rho is the dist from the disc's axis
+        rho2 = r2 - z**2
+        
+        # Inside points have z^2 < Rc^2 and rho < radius
+        inside_mask |= (z**2 <= 0.75) & (rho2 < rad**2)
+        
+        for vox in voxels[inside_mask.nonzero()]:
+            node = subtree.GetNode(0, vox, create=True)
+            node.iolet = io
+
+        return
+
+        
     def Execute(self):
         for node in self.Tree.IterDepthFirst(self.TriLevel, self.TriLevel):
             ids = node.triIds
             for iTri in ids:
-                self.DoTriangle(iTri)
+                self.DoTriangle(node, iTri)
+            for io in getattr(node, 'iolets', []):
+                self.DoIolet(node, io)
                 
