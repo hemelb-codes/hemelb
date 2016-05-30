@@ -243,55 +243,10 @@ class SurfaceVoxeliser(object):
                 
         
         return
-    
-    def DoIolet(self, subtree, io):
-        lo, hi = self.AABB_Disc(io)
-        # voxels that could in principle intersect
-        vlo = lo.astype(int)
-        # +2 for use as upper bound in range statement
-        vhi = hi.astype(int) + 2
-        
-        # now clip this against the node's BB
-        vlo = np.where(vlo > subtree.offset, vlo, subtree.offset)
-        vmax = subtree.offset + 2**subtree.levels
-        vhi = np.where(vhi < vmax, vhi, vmax)
-        
-        vshape = vhi - vlo
-        vsize = np.prod(vshape)
-        
-        voxels = np.mgrid[vlo[0]:vhi[0],
-                          vlo[1]:vhi[1],
-                          vlo[2]:vhi[2]].reshape((3, vsize)).transpose()
-        
-        inside_mask = np.zeros(vsize, dtype=bool)
-
-        c = np.array((io.Centre.x, io.Centre.y, io.Centre.z), dtype=float)
-        n = np.array((io.Normal.x, io.Normal.y, io.Normal.z), dtype=float)
-        rad = io.Radius
-        
-        r = voxels - c
-        # z in the cylindrical coords that attach to the plane
-        z = np.dot(r, n)
-        
-        r2 = np.sum(r**2, axis=-1)
-        # rho is the dist from the disc's axis
-        rho2 = r2 - z**2
-        
-        # Inside points have z^2 < Rc^2 and rho < radius
-        inside_mask |= (z**2 <= 0.75) & (rho2 < rad**2)
-        
-        for vox in voxels[inside_mask.nonzero()]:
-            node = subtree.GetNode(0, vox, create=True)
-            node.iolet = io
-
-        return
-
         
     def Execute(self):
         for node in self.Tree.IterDepthFirst(self.TriLevel, self.TriLevel):
             ids = node.triIds
             for iTri in ids:
                 self.DoTriangle(node, iTri)
-            for io in getattr(node, 'iolets', []):
-                self.DoIolet(node, io)
                 

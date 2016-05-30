@@ -3,7 +3,6 @@ from TestResources.simple_meshes import mk_trivial, mk_duct
 from TestResources.sphere import GetSphereNumpy, Radius
 from .SurfaceVoxeliser import SurfaceVoxeliser
 from . import TriangleSorter
-from .IoletSorter import AddIoletsToTree
 from .HemeOct import Tree
 import Oct
 
@@ -380,22 +379,20 @@ def test_duct():
     # 16 cube
     levels = 4
     tri_level = 2
-    points, triangles, normals, iolets = mk_duct()
+    points, triangles, normals, labels, iolets = mk_duct()
     tree = TriangleSorter.TrianglesToTree(levels, tri_level, points, triangles)
-    
-    AddIoletsToTree(tree, tri_level, iolets)
-        
+            
     voxer = SurfaceVoxeliser(points, triangles, normals, tree, tri_level)
     voxer.Execute()
     tree = voxer.Tree
     
-    for node in tree.IterDepthFirst(0,0):
-        x,y,z = pos = node.offset
-        
-        if z == 3 or z == 14:
-            if (x-2)**2 + (y-2)**2 <= 2.5**2:
-                assert hasattr(node, 'iolet')
-                
+#     for node in tree.IterDepthFirst(0,0):
+#         x,y,z = pos = node.offset
+#         
+#         if z == 3 or z == 14:
+#             if (x-2)**2 + (y-2)**2 <= 2.5**2:
+#                 assert hasattr(node, 'iolet')
+#                 
     edge_mask = Oct.TreeToMaskArray(tree)
     interior = connected_region(edge_mask, (2,2,10))
     x,y,z = interior.nonzero()

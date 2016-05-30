@@ -64,7 +64,13 @@ def mk_duct():
                           (6,7,3),
                           # -y
                           (3,7,0),
-                          (7,4,0)
+                          (7,4,0),
+                          # inlet
+                          (0,1,3),
+                          (1,2,3),
+                          # outlet
+                          (4,5,7),
+                          (5,6,7)
                           ],
                          dtype=int)
     normals = np.array([(-1,0,0),
@@ -74,13 +80,18 @@ def mk_duct():
                         (+1,0,0),
                         (+1,0,0),
                         (0,-1,0),
-                        (0,-1,0)],
+                        (0,-1,0),
+                        (0,0,-1),
+                        (0,0,-1),
+                        (0,0,+1),
+                        (0,0,+1),],
                        dtype=float)
+    labels = np.array([-1,-1, -1,-1, -1,-1, -1,-1, 0,0, 1,1])
     
-    inlet = Inlet(Centre=Vector(2,2,3),
+    inlet = Inlet(Centre=Vector(2,2,2.5),
                   Normal=Vector(0,0,1),
                   Radius=2.5)
-    outlet = Outlet(Centre=Vector(2,2,14),
+    outlet = Outlet(Centre=Vector(2,2,14.5),
                   Normal=Vector(0,0,-1),
                   Radius=2.5)
-    return points, triangles, normals, [inlet, outlet]
+    return points, triangles, normals, labels, [inlet, outlet]
