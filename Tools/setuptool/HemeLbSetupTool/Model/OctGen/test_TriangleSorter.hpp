@@ -70,9 +70,10 @@ public:
   }
 
   void Sphere() {
-    // levels = 5
-    // tri_level = 3
-    // points, triangles, normals = GetSphereNumpy()
+    TriTree::Int levels = 5;
+    TriTree::Int tri_level = 3;
+    
+    auto sphere = SimpleMeshFactory::MkSphere();
     // tree = TriangleSorter.TrianglesToTree(levels, tri_level, points, triangles)
     
     // seen_tris = set()
