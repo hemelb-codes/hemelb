@@ -2,6 +2,7 @@
 #include <cppunit/ui/text/TestRunner.h>
 
 #include "test_Oct.hpp"
+#include "test_TriangleSorter.hpp"
 
 int main( int argc, char **argv)
 {

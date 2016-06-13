@@ -1,3 +1,6 @@
+#ifndef HEMELBSETUPTOOL_TEST_OCT_HPP
+#define HEMELBSETUPTOOL_TEST_OCT_HPP
+
 #include <cppunit/extensions/HelperMacros.h>
 #include "Oct.h"
 #include <iostream>
@@ -64,12 +67,6 @@ public:
 				      {2,2,4},
 				      {0,0,4},
 				      {0,0,0}};
-    //     i = 0
-    // for node in tree.IterDepthFirst():
-    //     assert node.levels == i
-    //     assert np.all(node.offset == expected_nodes[i])
-    //     i += 1
-    
     // iterate down through all nodes
     int i = 0;
     tree->IterDepthFirst([&i, &expected_nodes](Tree::Node& node) mutable {
@@ -96,3 +93,4 @@ public:
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(OctreeTests);
+#endif

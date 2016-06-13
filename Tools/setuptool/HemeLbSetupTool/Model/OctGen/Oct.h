@@ -123,7 +123,10 @@ public:
   NodePtr Get(Int i, Int j, Int k, Int l);
   // Get a node with creating
   NodePtr GetCreate(Int i, Int j, Int k, Int l);
-  
+
+  Int Level() const {
+    return level;
+  }
 private:
   NodePtr root;
   Int level;
