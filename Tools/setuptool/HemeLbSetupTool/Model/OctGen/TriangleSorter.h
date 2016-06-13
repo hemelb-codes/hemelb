@@ -5,8 +5,9 @@
 #include "Oct.h"
 #include <vector>
 #include "Vector.h"
+#include <boost/container/flat_set.hpp>
 
-typedef std::vector<int> IdList;
+typedef boost::container::flat_set<int> IdList;
 typedef Octree<IdList> TriTree;
 
 // Create an Octree with n_levels potential number of levels.
@@ -24,5 +25,20 @@ TriTree TrianglesToTree_Worker(const int n_levels, const int tri_level,
 			       const std::vector<Vector>& points,
 			       std::vector<Index>::const_iterator triStart, std::vector<Index>::const_iterator triEnd,
 			       const int tri_index_start);
+
+
+// This guy accumulates multiple trees together, merging their id lists
+class TreeSummer {
+public:
+  TreeSummer(TriTree::Int levels, TriTree::Int tri_level);
+  void Add(const TreeSummer& source);
+
+private:
+  const TriTree::Int levels;
+  const TriTree::Int tri_level;
+  // This will be the output
+  TriTree tree;
+  
+};
 
 #endif

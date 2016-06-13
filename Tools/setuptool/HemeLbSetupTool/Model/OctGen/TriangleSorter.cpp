@@ -53,7 +53,7 @@ TriTree TrianglesToTree_Worker(const int n_levels, const int tri_level,
       for (auto j = range_min[1]; j < range_max[1]; ++j)
 	for (auto k = range_min[2]; k < range_max[2]; ++k) {
 	  auto node = tree.GetCreate(non_halo_edges[i], non_halo_edges[j], non_halo_edges[k], tri_level);
-	  node->Data().push_back(tri_it - triStart + tri_index_start);
+	  node->Data().insert(tri_it - triStart + tri_index_start);
 	}
   }
   return tree;

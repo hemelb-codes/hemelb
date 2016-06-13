@@ -38,8 +38,8 @@ public:
     auto ids = node->Data();
     std::sort(ids.begin(), ids.end());
     CPPUNIT_ASSERT(ids.size() == 2);
-    CPPUNIT_ASSERT(ids[0] == 0);
-    CPPUNIT_ASSERT(ids[1] == 1);
+    CPPUNIT_ASSERT(ids.find(0) != ids.end());
+    CPPUNIT_ASSERT(ids.find(1) != ids.end());
 
   }
 
@@ -66,8 +66,8 @@ public:
     auto ids = node->Data();
     std::sort(ids.begin(), ids.end());
     CPPUNIT_ASSERT(ids.size() == 2);
-    CPPUNIT_ASSERT(ids[0] == 0);
-    CPPUNIT_ASSERT(ids[1] == 1);
+    CPPUNIT_ASSERT(ids.find(0) != ids.end());
+    CPPUNIT_ASSERT(ids.find(1) != ids.end());
   }
 
   template <class T>
