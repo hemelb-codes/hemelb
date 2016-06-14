@@ -19,8 +19,10 @@ typedef Octree<IdList> TriTree;
 // The create nodes at tri_level will have an attribute 'triIds' added which is
 // a list of the IDs of the triangles that might intersect its voxel-voxel links.
 
-TriTree TrianglesToTree(const int n_levels, const int tri_level, const std::vector<Vector>& points, const std::vector<Index>& triangles);
-  
+TriTree TrianglesToTreeSerial(const int n_levels, const int tri_level, const std::vector<Vector>& points, const std::vector<Index>& triangles);
+
+TriTree TrianglesToTreeParallel(const int n_levels, const int tri_level, const std::vector<Vector>& points, const std::vector<Index>& triangles, int nprocs);
+
 TriTree TrianglesToTree_Worker(const int n_levels, const int tri_level,
 			       const std::vector<Vector>& points,
 			       std::vector<Index>::const_iterator triStart, std::vector<Index>::const_iterator triEnd,

@@ -2,6 +2,7 @@
 #define HEMELBSETUPTOOL_TEST_TRIANGLESORTER_HPP
 
 #include <cppunit/extensions/HelperMacros.h>
+#include "TestResources/ParameterisedTest.h"
 #include <set>
 #include "TestResources/Meshes.hpp"
 #include "TriangleSorter.h"
@@ -14,7 +15,11 @@ class TriangleSorterTests : public CppUnit::TestFixture {
   CPPUNIT_TEST(Sphere);
   CPPUNIT_TEST(MergeIdentity);
   CPPUNIT_TEST(MergeSimple);
-  
+  CPPUNIT_TEST(ParallelTrivial);
+  PARAMETERISED_TEST(ParallelSphere, int, 0);
+  PARAMETERISED_TEST(ParallelSphere, int, 2);
+  PARAMETERISED_TEST(ParallelSphere, int, 3);
+  PARAMETERISED_TEST(ParallelSphere, int, 4);
   CPPUNIT_TEST_SUITE_END();
 public:
   
@@ -25,7 +30,7 @@ public:
     TriTree::Int tri_level = 3;
     auto triv = SimpleMeshFactory::MkTrivial();
     // Sort!
-    auto tree = TrianglesToTree(levels, tri_level, triv->points, triv->triangles);
+    auto tree = TrianglesToTreeSerial(levels, tri_level, triv->points, triv->triangles);
 
     CPPUNIT_ASSERT(tree.Level() == levels);
     TriTree::Int i = tri_level;
@@ -53,7 +58,7 @@ public:
     TriTree::Int tri_level = 3;
     auto triv = SimpleMeshFactory::MkTrivial();
     // Sort!
-    auto tree = TrianglesToTree(levels, tri_level, triv->points, triv->triangles);
+    auto tree = TrianglesToTreeSerial(levels, tri_level, triv->points, triv->triangles);
     
     CPPUNIT_ASSERT(tree.Level() == levels);
     TriTree::Int i = tri_level;
@@ -92,7 +97,7 @@ public:
     TriTree::Int tri_level = 3;
     
     auto sphere = SimpleMeshFactory::MkSphere();
-    auto tree = TrianglesToTree(levels, tri_level, sphere->points, sphere->triangles);
+    auto tree = TrianglesToTreeSerial(levels, tri_level, sphere->points, sphere->triangles);
 
     std::set<int> seen_tris;
 
@@ -144,7 +149,7 @@ public:
     TriTree::Int tri_level = 3;
     auto triv = SimpleMeshFactory::MkTrivial();
     
-    auto tree = TrianglesToTree(levels, tri_level, triv->points, triv->triangles);
+    auto tree = TrianglesToTreeSerial(levels, tri_level, triv->points, triv->triangles);
     TriTree nulltree(levels);
     
     TreeSummer s(levels, tri_level);
@@ -173,10 +178,31 @@ public:
     s.Add(t2);
     auto newtree = s.GetTree();
     
-    auto tree = TrianglesToTree(levels, tri_level, triv->points, triv->triangles);
+    auto tree = TrianglesToTreeSerial(levels, tri_level, triv->points, triv->triangles);
     CPPUNIT_ASSERT(trees_with_triIds_equal(newtree, tree, tri_level));
   }
 
+  void ParallelTrivial() {
+    // 16 cube
+    TriTree::Int levels = 4;
+    // put triangles onto the 8 cube level
+    TriTree::Int tri_level = 3;
+    auto triv = SimpleMeshFactory::MkTrivial();
+    // Sort!
+    auto t1 = TrianglesToTreeSerial(levels, tri_level, triv->points, triv->triangles);
+    auto t2 = TrianglesToTreeParallel(levels, tri_level, triv->points, triv->triangles, 2);
+    CPPUNIT_ASSERT(trees_with_triIds_equal(t1, t2, tri_level));
+  }
+  
+  void ParallelSphere(int np) {
+    TriTree::Int levels = 5;
+    TriTree::Int tri_level = 3;
+    
+    auto sphere = SimpleMeshFactory::MkSphere();
+    auto t1 = TrianglesToTreeSerial(levels, tri_level, sphere->points, sphere->triangles);
+    auto t2 = TrianglesToTreeParallel(levels, tri_level, sphere->points, sphere->triangles, np);
+    CPPUNIT_ASSERT(trees_with_triIds_equal(t1, t2, tri_level));
+   }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION(TriangleSorterTests);
 

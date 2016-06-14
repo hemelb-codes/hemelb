@@ -1,4 +1,7 @@
 #include "TriangleSorter.h"
+#include <future>
+#include <deque>
+#include <algorithm>
 
 template<>
 void WriteNodeData<IdList>(std::ostream& os, const IdList& data) {
@@ -14,7 +17,7 @@ void WriteNodeData<IdList>(std::ostream& os, const IdList& data) {
   os << ']';
 }
 
-TriTree TrianglesToTree(const int n_levels, const int tri_level, const std::vector<Vector>& points, const std::vector<Index>& triangles) {
+TriTree TrianglesToTreeSerial(const int n_levels, const int tri_level, const std::vector<Vector>& points, const std::vector<Index>& triangles) {
   return TrianglesToTree_Worker(n_levels, tri_level, points, triangles.begin(), triangles.end(), 0);
 }
   
@@ -87,4 +90,42 @@ void TreeSummer::Add(TriTree& source) {
 			  src.Data().begin(), src.Data().end());
     });
   
+}
+
+TriTree TrianglesToTreeParallel(const int n_levels, const int tri_level, const std::vector<Vector>& points, const std::vector<Index>& triangles, int nprocs) {
+  if (nprocs == 0)
+    nprocs = std::thread::hardware_concurrency();
+  
+  auto n_tri = triangles.size();
+  // tris per proc 
+  auto tpp = float(n_tri) / float(nprocs);
+  
+  // procs = []
+  // # answer queue
+  // q = multiprocessing.Queue()
+  std::deque<std::future<TriTree>> futures;
+  for (auto i = 0; i < nprocs; ++i) {
+    decltype(n_tri) min_ind = i * tpp;
+    decltype(n_tri) max_ind = std::min(decltype(n_tri)((i+1)*tpp), n_tri);
+    auto triStart = triangles.begin() + min_ind;
+    auto triEnd = triangles.begin() + max_ind;
+    futures.push_back(std::async(std::launch::async, TrianglesToTree_Worker,
+				 n_levels, tri_level, points, triStart, triEnd, min_ind));
+  }
+  
+  TreeSummer summer(n_levels, tri_level);
+
+  while (!futures.empty()) {
+    // Future's are non-copyable - have to move them in & out of the queue
+    auto fut = std::move(futures.front());
+    futures.pop_front();
+    auto status = fut.wait_for(std::chrono::milliseconds(1));
+    if (status == std::future_status::ready) {
+      auto tree = fut.get();
+      summer.Add(tree);
+    } else {
+      futures.push_back(std::move(fut));
+    }
+  }
+  return summer.GetTree();
 }
