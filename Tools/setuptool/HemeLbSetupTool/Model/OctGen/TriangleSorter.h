@@ -31,8 +31,9 @@ TriTree TrianglesToTree_Worker(const int n_levels, const int tri_level,
 class TreeSummer {
 public:
   TreeSummer(TriTree::Int levels, TriTree::Int tri_level);
-  void Add(const TreeSummer& source);
-
+  void Add(TriTree& source);
+  TriTree& GetTree();
+  
 private:
   const TriTree::Int levels;
   const TriTree::Int tri_level;

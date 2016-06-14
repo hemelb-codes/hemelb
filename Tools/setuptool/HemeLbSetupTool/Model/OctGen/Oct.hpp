@@ -4,6 +4,8 @@
 
 #include "Oct.h"
 #include <stdexcept>
+#include <string>
+#include <ostream>
 
 template<class T>
 Octree<T>::Node::Node(Int i, Int j, Int k, Int l) : x(i), y(j), z(k), level(l) {
@@ -12,21 +14,25 @@ template<class T>
 T& Octree<T>::Node::Data() {
   return value;
 }
- 
 template<class T>
-auto Octree<T>::Node::X() -> Int{
+const T& Octree<T>::Node::Data() const {
+  return value;
+}
+
+template<class T>
+auto Octree<T>::Node::X() const -> Int{
   return x;
 }
 template<class T>
-auto Octree<T>::Node::Y() -> Int{
+auto Octree<T>::Node::Y() const -> Int{
   return y;
 }
 template<class T>
-auto Octree<T>::Node::Z() -> Int{
+auto Octree<T>::Node::Z() const -> Int{
   return z;
 }
 template<class T>
-auto Octree<T>::Node::Level() -> Int{
+auto Octree<T>::Node::Level() const -> Int{
   return level;
 }
 
@@ -80,6 +86,7 @@ auto Octree<T>::Branch::GetCreate(Int i, Int j, Int k, Int l) -> NodePtr {
 
 template<class T>
 void Octree<T>::Branch::Accept(Visitor& v) {
+  v.Arrive(*this);
   if (v.ShouldDescend(*this))
     for (auto i: {0, 1})
       for (auto j: {0, 1})
@@ -89,7 +96,7 @@ void Octree<T>::Branch::Accept(Visitor& v) {
 	    child->Accept(v);
 	}
   
-  v.Do(*this);
+  v.Depart(*this);
 }
 
 template<class T>
@@ -155,7 +162,8 @@ auto Octree<T>::Leaf::GetCreate(Int i, Int j, Int k, Int l) -> NodePtr {
 }
 template<class T>
 void Octree<T>::Leaf::Accept(Visitor& v) {
-  v.Do(*this);
+  v.Arrive(*this);
+  v.Depart(*this);
 }
 
 template<class T>
@@ -177,6 +185,52 @@ auto Octree<T>::Get(Int i, Int j, Int k, Int l) -> NodePtr {
 template<class T>
 auto Octree<T>::GetCreate(Int i, Int j, Int k, Int l) -> NodePtr {
   return root->GetCreate(i,j,k,l);
+}
+
+template<class T>
+void WriteNodeData(std::ostream& os, const T& data);
+
+template<class T>
+class Writer : public Octree<T>::Visitor {
+public:
+  typedef Octree<T> Tree;
+  typedef typename Tree::Node Node;
+  
+  Writer(std::ostream& stream) : os(stream), padding(0) {}
+  
+  virtual void Arrive(Node& node) {
+    os << std::string(padding, ' ') << node.X() << ", " << node.Y() << ", " << node.Z()
+       << " = ";
+    WriteNodeData(os, node.Data());
+    os << std::endl;
+    padding++;
+  }
+  virtual void Depart(Node& node) {
+    padding--;
+  }
+  
+private:
+  std::ostream& os;
+  int padding;
+};
+
+template<class T>
+std::ostream& operator<<(std::ostream& os, Octree<T>& tree) {
+  os << "Octree levels = " << tree.Level() << std::endl;
+  Writer<T> w(os);
+  tree.Root()->Accept(w);
+  return os;
+}
+template<class T>
+std::ostream& operator<<(std::ostream& os, typename Octree<T>::Node& node) {
+  Writer<T> w(os);
+  node.Accept(w);
+  return os;
+}
+
+template<class T>
+void WriteNodeData(std::ostream& os, const T& data) {
+  os << data;
 }
 
 #endif

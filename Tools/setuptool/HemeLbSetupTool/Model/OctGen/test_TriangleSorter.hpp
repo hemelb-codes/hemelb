@@ -12,6 +12,9 @@ class TriangleSorterTests : public CppUnit::TestFixture {
   CPPUNIT_TEST(Trivial);
   CPPUNIT_TEST(TrivialDeep);
   CPPUNIT_TEST(Sphere);
+  CPPUNIT_TEST(MergeIdentity);
+  CPPUNIT_TEST(MergeSimple);
+  
   CPPUNIT_TEST_SUITE_END();
 public:
   
@@ -120,7 +123,60 @@ public:
       ++i;
     }
   }
+
+  bool trees_with_triIds_equal(TriTree& t1, TriTree& t2, TriTree::Int tri_level) {
+    bool eq = true;
+    try {
+      t1.IterDepthFirst(tri_level, tri_level, [&](TriTree::Node& n1) {
+	  auto n2 = t2.Get(n1.X(), n1.Y(), n1.Z(), n1.Level());
+	  if (n1.Data() != n2->Data())
+	    throw 0;
+	});
+    } catch(int& i) {
+      eq = false;
+    }
+    return eq;
+  }
+  void MergeIdentity() {
+    // 16 cube
+    TriTree::Int levels = 4;
+    // put triangles onto the 8 cube level
+    TriTree::Int tri_level = 3;
+    auto triv = SimpleMeshFactory::MkTrivial();
     
+    auto tree = TrianglesToTree(levels, tri_level, triv->points, triv->triangles);
+    TriTree nulltree(levels);
+    
+    TreeSummer s(levels, tri_level);
+    s.Add(tree);
+    s.Add(nulltree);
+    auto newtree = s.GetTree();
+    CPPUNIT_ASSERT(trees_with_triIds_equal(newtree, tree, tri_level));
+  }
+
+  void MergeSimple() {
+    // 16
+    TriTree::Int levels = 4;
+    // put triangles onto the 8 cube level
+    TriTree::Int tri_level = 3;
+    auto triv = SimpleMeshFactory::MkTrivial();
+
+    auto start = triv->triangles.cbegin();
+    auto middle = start + 1;
+    auto end = triv->triangles.cend();
+    
+    auto t1 = TrianglesToTree_Worker(levels, tri_level, triv->points, start, middle, 0);
+    auto t2 = TrianglesToTree_Worker(levels, tri_level, triv->points, middle, end, 1);
+    
+    TreeSummer s(levels, tri_level);
+    s.Add(t1);
+    s.Add(t2);
+    auto newtree = s.GetTree();
+    
+    auto tree = TrianglesToTree(levels, tri_level, triv->points, triv->triangles);
+    CPPUNIT_ASSERT(trees_with_triIds_equal(newtree, tree, tri_level));
+  }
+
 };
 CPPUNIT_TEST_SUITE_REGISTRATION(TriangleSorterTests);
 

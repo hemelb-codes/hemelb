@@ -21,11 +21,12 @@ public:
   public:
     Node(Int i, Int j, Int k, Int l);
     T& Data();
+    const T& Data() const;
     
-    Int X();
-    Int Y();
-    Int Z();
-    Int Level();
+    Int X() const;
+    Int Y() const;
+    Int Z() const;
+    Int Level() const;
     
     // Get a node without creating
     virtual NodePtr Get(Int i, Int j, Int k, Int l) = 0;
@@ -81,7 +82,8 @@ public:
 
   class Visitor {
   public:
-    virtual void Do(Node& n) = 0;
+    virtual void Arrive(Node& n) = 0;
+    virtual void Depart(Node& n) = 0;
     virtual bool ShouldDescend(Node& n) {
       return true;
     }
@@ -94,8 +96,10 @@ public:
     Int highest;
   public:
     LevelVisitor(Int bot, Int top, FuncT func) : f(func), lowest(bot), highest(top) {}
-    virtual void Do(Node& node) {
-      f(node);
+    virtual void Arrive(Node& node) {}
+    virtual void Depart(Node& node) {
+      if (node.Level() <= highest)
+	f(node);
     }
     virtual bool ShouldDescend(Node& n) {
       return lowest < n.Level();
@@ -131,6 +135,12 @@ private:
   NodePtr root;
   Int level;
 };
+
+template<class T>
+std::ostream& operator<<(std::ostream&, const Octree<T>& obj);
+template<class T>
+std::ostream& operator<<(std::ostream&, const typename Octree<T>::Node& obj);
+
 
 #include "Oct.hpp"
 #endif

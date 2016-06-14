@@ -1,5 +1,19 @@
 #include "TriangleSorter.h"
 
+template<>
+void WriteNodeData<IdList>(std::ostream& os, const IdList& data) {
+  os << '[';
+  bool first = true;
+  for (auto id : data) {
+    if (!first)
+      os << ", ";
+    
+    os << id;
+    first = false;
+  }
+  os << ']';
+}
+
 TriTree TrianglesToTree(const int n_levels, const int tri_level, const std::vector<Vector>& points, const std::vector<Index>& triangles) {
   return TrianglesToTree_Worker(n_levels, tri_level, points, triangles.begin(), triangles.end(), 0);
 }
@@ -57,4 +71,20 @@ TriTree TrianglesToTree_Worker(const int n_levels, const int tri_level,
 	}
   }
   return tree;
+}
+
+TreeSummer::TreeSummer(TriTree::Int l, TriTree::Int tl) : levels(l), tri_level(tl), tree(l) {
+}
+
+TriTree& TreeSummer::GetTree() {
+  return tree;
+}
+
+void TreeSummer::Add(TriTree& source) {
+  source.IterDepthFirst(tri_level, tri_level, [&](TriTree::Node& src) {
+      auto dest = tree.GetCreate(src.X(), src.Y(), src.Z(), tri_level);
+      dest->Data().insert(boost::container::ordered_unique_range_t(),
+			  src.Data().begin(), src.Data().end());
+    });
+  
 }
