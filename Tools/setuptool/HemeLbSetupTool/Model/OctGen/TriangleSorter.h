@@ -2,13 +2,9 @@
 #ifndef HEMELBSETUPTOOL_TRIANGLESORTER_H
 #define HEMELBSETUPTOOL_TRIANGLESORTER_H
 
-#include "Oct.h"
+#include "TriTree.h"
 #include <vector>
 #include "Vector.h"
-#include <boost/container/flat_set.hpp>
-
-typedef boost::container::flat_set<int> IdList;
-typedef Octree<IdList> TriTree;
 
 // Create an Octree with n_levels potential number of levels.
 // Nodes will be created down to the level tri_level but only if voxel-voxel

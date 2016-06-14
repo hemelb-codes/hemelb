@@ -3,6 +3,7 @@
 
 #include "test_Oct.hpp"
 #include "test_TriangleSorter.hpp"
+#include "test_SurfaceVoxeliser.hpp"
 
 int main( int argc, char **argv)
 {
