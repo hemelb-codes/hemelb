@@ -23,7 +23,8 @@
    # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    # SOFTWARE.
 */
-
+#ifndef RANGE_ITERATOR_HPP
+#define RANGE_ITERATOR_HPP
 #include <iterator>
 
 namespace rangepp{
@@ -128,3 +129,4 @@ rangepp::range_impl<e> range(e end){
   return rangepp::range_impl<e>(0,end,1);
 }
 
+#endif
