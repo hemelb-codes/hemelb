@@ -22,16 +22,16 @@ public:
   BBox AABB_Tri(IndexT iTri);
   
   // Flag all voxels lying within Rc = sqrt(3)/2 of the point
-  std::vector<bool> FilterPoint(IndexT iPt, const std::vector<Index>& voxels);
+  void FilterPoint(IndexT iPt, const std::vector<Index>& voxels, std::vector<bool>& mask);
   // Flag all voxels lying within Rc = sqrt(3)/2 of the line segment
-  std::vector<bool> FilterEdge(IndexT iPt, IndexT jPt, const std::vector<Index>& voxels);
+  void FilterEdge(IndexT iPt, IndexT jPt, const std::vector<Index>& voxels, std::vector<bool>& mask);
   // Mark as inside all points within the triangular prism defined by
   // the following 5 planes (see Huang Fig. 12)
-  std::vector<bool> FilterTriangle(IndexT iTri, const std::vector<Index>& voxels);
+  void FilterTriangle(IndexT iTri, const std::vector<Index>& voxels, std::vector<bool>& mask);
 
   // For the triangles attached at tri_level on the inTree create the
   // voxel nodes to the outTree
-  void DoSubTree(TriTree::NodePtr inTree, TriTree::NodePtr outTree);
+  void DoSubTree(TriTree::Node& inTree, TriTree::Node& outTree);
   
   TriTree operator()(TriTree& inTree, const int tri_level);
   

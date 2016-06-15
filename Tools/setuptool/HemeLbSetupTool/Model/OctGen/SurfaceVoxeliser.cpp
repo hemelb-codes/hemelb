@@ -1,4 +1,5 @@
 #include "SurfaceVoxeliser.h"
+#include <algorithm>
 #include "range.hpp"
 #include "enumerate.hpp"
 
@@ -7,22 +8,19 @@ SurfaceVoxeliser::SurfaceVoxeliser(const std::vector<Vector>& p, const std::vect
 }
 
 // Flag all voxels lying within Rc = sqrt(3)/2 of the point
-std::vector<bool> SurfaceVoxeliser::FilterPoint(IndexT iPt, const std::vector<Index>& voxels) {
+void SurfaceVoxeliser::FilterPoint(IndexT iPt, const std::vector<Index>& voxels, std::vector<bool>& mask) {
   auto& p = points[iPt];
   
-  std::vector<bool> mask(voxels.size());
-  auto mask_i = mask.begin();
-  for (auto vox: voxels) {
-    auto dr = Vector(vox) - p;
+  //auto mask_i = mask.begin();
+  for (auto i: range(voxels.size())) {
+    auto dr = Vector(voxels[i]) - p;
     auto dr2 = dr.GetMagnitudeSquared();
-    *mask_i = dr2 < 0.75;
-    ++mask_i;
+    mask[i] = mask[i] | (dr2 < 0.75);
   }
-  return mask;
 }
 
 // Flag all voxels lying within Rc = sqrt(3)/2 of the line segment
-std::vector<bool> SurfaceVoxeliser::FilterEdge(IndexT iPt, IndexT jPt, const std::vector<Index>& voxels) {
+void SurfaceVoxeliser::FilterEdge(IndexT iPt, IndexT jPt, const std::vector<Index>& voxels, std::vector<bool>& mask) {
   /*
    * x .              . b
    *
@@ -55,10 +53,8 @@ std::vector<bool> SurfaceVoxeliser::FilterEdge(IndexT iPt, IndexT jPt, const std
   auto n = b - a;
   auto n2 = n.GetMagnitudeSquared();
   
-  std::vector<bool> mask(voxels.size());
-  auto mask_i = mask.begin();
-  for (auto vox: voxels) {
-    auto r = Vector(vox) - a;
+  for (auto i: range(voxels.size())) {
+    auto r = Vector(voxels[i]) - a;
     auto r_n = Vector::Dot(r, n);
     auto lambda = r_n / n2;
 
@@ -66,16 +62,14 @@ std::vector<bool> SurfaceVoxeliser::FilterEdge(IndexT iPt, IndexT jPt, const std
     auto rho2 = r2 - r_n*r_n / n2;
     
     // Inside points have 0 <= lamdba <= 1 and rho^2 < Rc^2
-    *mask_i = (0 <= lambda) && (lambda <= 1) && (rho2 <= 0.75);
-    ++mask_i;
+    mask[i] = mask[i] || ((0 <= lambda) && (lambda <= 1) && (rho2 <= 0.75));
   }
-  return mask;    
 }
+
 // Mark as inside all points within the triangular prism defined by
 // the following 5 planes (see Huang Fig. 12)
-std::vector<bool> SurfaceVoxeliser::FilterTriangle(IndexT iTri, const std::vector<Index>& voxels) {
+void SurfaceVoxeliser::FilterTriangle(IndexT iTri, const std::vector<Index>& voxels, std::vector<bool>& mask) {
   
-  std::vector<bool> mask(voxels.size());
   auto& ids = triangles[iTri];
   auto& norm = normals[iTri];
   const std::vector<Vector> tri_points = {points[ids.x],
@@ -130,7 +124,92 @@ std::vector<bool> SurfaceVoxeliser::FilterTriangle(IndexT iTri, const std::vecto
     for (auto j: range(5))
       tmp &= Vector::Dot(vox, plane_normals[j]) >= plane_offsets[j];
     
-    mask[i] = tmp;
+    mask[i] = mask[i] | tmp;
   }
-  return mask;
+}
+
+// Return the axis-aligned bounding box for a triangle.
+BBox SurfaceVoxeliser::AABB_Tri(IndexT iTri) {
+  auto ids = triangles[iTri];
+  // bounding box of the triangle
+  Vector min(std::numeric_limits<double>::infinity());
+  Vector max(0);
+  for (auto iPt: ids) {
+    min.UpdatePointwiseMin(points[iPt]);
+    max.UpdatePointwiseMax(points[iPt]);
+  }
+
+  return BBox(min, max);
+}
+
+void SurfaceVoxeliser::DoSubTree(TriTree::Node& inTree, TriTree::Node& outTree) {
+  const int box_size = 1 << inTree.Level();
+  
+  for (auto iTri: inTree.Data()) {
+    auto ids = triangles[iTri];
+    auto bbox = AABB_Tri(iTri);
+    // voxels that could in principle intersect
+    Index vlo(bbox.first);
+    // +2 for use as upper bound in range statement
+    Index vhi(bbox.second);
+    vhi += 2;
+    // now clip this against the node's BB
+    vlo.x = std::max(vlo.x, int(inTree.X()));
+    vlo.y = std::max(vlo.y, int(inTree.Y()));
+    vlo.z = std::max(vlo.z, int(inTree.Z()));
+
+    vhi.x = std::min(vhi.x, inTree.X() + box_size);
+    vhi.y = std::min(vhi.y, inTree.Y() + box_size);
+    vhi.z = std::min(vhi.z, inTree.Z() + box_size);
+
+    auto vshape = vhi - vlo;
+    auto vsize = vshape.x * vshape.y * vshape.z;
+    
+    // Get voxels
+    std::vector<Index> voxels(vsize);
+    auto cursor = voxels.begin();
+    for (auto i: range(vlo.x, vhi.x))
+      for (auto j: range(vlo.y, vhi.y))
+	for (auto k: range(vlo.z, vhi.z)) {
+	  *cursor = Index(i,j,k);
+	  ++cursor;
+	}
+    // Now apply the three tests:
+    // 1) within point sphere?
+    // 2) within edge cylinder?
+    // 3) within the planes?
+    std::vector<bool> mask(vsize);
+    
+    for (auto i: range(3)) {
+      auto iPt = ids[i];
+      auto jPt = ids[(i + 1) % 3];
+      FilterPoint(iPt, voxels, mask);
+      FilterEdge(iPt, jPt, voxels, mask);
+    }
+    
+    FilterTriangle(iTri, voxels, mask);
+
+    // Now add iTri to the included voxels
+    for (auto i: range(vsize))
+      if (mask[i]) {
+	auto& vox = voxels[i];
+	auto vNode = outTree.GetCreate(vox.x, vox.y, vox.z, 0);
+	vNode->Data().insert(iTri);
+      }
+	
+  }
+}
+
+
+TriTree SurfaceVoxeliser::operator()(TriTree& inTree, const int tri_level) {
+  TriTree outTree(inTree.Level());
+  inTree.IterDepthFirst(tri_level, tri_level,
+			[&](TriTree::Node& inNode){
+			  TriTree::NodePtr outNode = outTree.GetCreate(inNode.X(),
+								       inNode.Y(),
+								       inNode.Z(),
+								       inNode.Level());
+			  DoSubTree(inNode, *outNode);
+			});
+  return outTree;
 }

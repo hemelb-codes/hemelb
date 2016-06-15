@@ -14,6 +14,7 @@ class SurfaceVoxeliserTests : public CppUnit::TestFixture {
   CPPUNIT_TEST(TrivialPoints);
   CPPUNIT_TEST(TrivialEdges);
   CPPUNIT_TEST(TrivialPlane);
+  CPPUNIT_TEST(Trivial);
   CPPUNIT_TEST_SUITE_END();
 public:
   void TrivialPoints() {
@@ -38,7 +39,8 @@ public:
     CPPUNIT_ASSERT(coords[3*n*n + 4*n + 5] == Index(3,4,5));
 
     for (auto iPt: range(triv->points.size())) {
-      auto mask = voxer.FilterPoint(iPt, coords);
+      std::vector<bool> mask(coords.size());
+      voxer.FilterPoint(iPt, coords, mask);
       // innies
       for (auto i: range(coords.size())) {
 	auto dr2 = (Vector(coords[i]) - triv->points[iPt]).GetMagnitudeSquared();
@@ -84,8 +86,9 @@ public:
       auto n = pair.first;
       auto i = pair.second[0];
       auto j = pair.second[1];
-      
-      auto mask = voxer.FilterEdge(i, j, coords);
+
+      std::vector<bool> mask(coords.size());
+      voxer.FilterEdge(i, j, coords, mask);
       if (n == 0) {
 	// cylinder along z axis
 	for (auto i: range(coords.size())) {
@@ -144,18 +147,65 @@ public:
     CPPUNIT_ASSERT(coords[3*n*n + 4*n + 5] == Index(3,4,5));
     
     // This tri shouldn't get any points
-    auto mask = voxer.FilterTriangle(0, coords);
+    std::vector<bool> mask(coords.size());
+    voxer.FilterTriangle(0, coords, mask);
     for (auto flag: mask)
       CPPUNIT_ASSERT(!flag);
 
     // This one should get (1,2,2)
-    auto pt122_mask = voxer.FilterTriangle(1, coords);
+    std::vector<bool> pt122_mask(coords.size());
+    voxer.FilterTriangle(1, coords, pt122_mask);
     for (auto i: range(coords.size())) {
       if (coords[i].x == 1 && coords[i].y == 2 && coords[i].z == 2)
 	CPPUNIT_ASSERT(pt122_mask[i]);
       else
 	CPPUNIT_ASSERT(!pt122_mask[i]);
     }
+  }
+
+  void Trivial() {
+    // 16 cube
+    auto levels = 4;
+    auto tri_level = 2;
+    auto triv = SimpleMeshFactory::MkTrivial();
+    auto tree = TrianglesToTreeSerial(levels, tri_level, triv->points, triv->triangles);
+    SurfaceVoxeliser voxer(triv->points, triv->triangles, triv->normals);
+    auto vox_tree = voxer(tree, tri_level);
+
+    std::vector<Index> expected_nodes = {{1,1,1},
+  					 {1,1,2},
+  					 {1,2,1},
+  					 {1,2,2},
+					 
+  					 {2,1,1},
+  					 {2,1,2},
+  					 {2,2,1},
+  					 {2,2,2},
+					 
+  					 {1,1,3},
+  					 {1,2,3},
+  					 {1,3,1},
+  					 {1,3,2}};
+
+    vox_tree.IterDepthFirst([&](TriTree::Node& node) {
+	Index ijk(node.X(), node.Y(), node.Z());
+        if (node.Level() == 0) {
+    	  // leaf
+	  auto ijk_it = std::find(expected_nodes.begin(), expected_nodes.end(), ijk);
+    	  CPPUNIT_ASSERT(ijk_it != expected_nodes.end());
+    	  expected_nodes.erase(ijk_it);
+    	} else if (node.Level() == 1) {
+	  CPPUNIT_ASSERT(ijk.x == 0 || ijk.x == 2);
+	  CPPUNIT_ASSERT(ijk.y == 0 || ijk.y == 2);
+	  CPPUNIT_ASSERT(ijk.z == 0 || ijk.z == 2);
+	} else {
+	  // All higher levels only in the zero octant
+	  CPPUNIT_ASSERT(ijk.x == 0);
+	  CPPUNIT_ASSERT(ijk.y == 0);
+	  CPPUNIT_ASSERT(ijk.z == 0);
+    	} 
+    	});
+    CPPUNIT_ASSERT(expected_nodes.empty());
   }
 };
 
