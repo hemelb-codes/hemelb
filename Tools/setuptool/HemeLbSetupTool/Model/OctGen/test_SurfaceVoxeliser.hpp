@@ -13,6 +13,7 @@ class SurfaceVoxeliserTests : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE(SurfaceVoxeliserTests);
   CPPUNIT_TEST(TrivialPoints);
   CPPUNIT_TEST(TrivialEdges);
+  CPPUNIT_TEST(TrivialPlane);
   CPPUNIT_TEST_SUITE_END();
 public:
   void TrivialPoints() {
@@ -118,6 +119,42 @@ public:
 	  }
 	}
       }
+    }
+  }
+
+  void TrivialPlane() {
+    // 8 cube
+    auto levels = 3;
+    auto tri_level = 2;
+    auto n = 1 << levels;
+    auto triv = SimpleMeshFactory::MkTrivial();
+    auto tree = TrianglesToTreeSerial(levels, tri_level, triv->points, triv->triangles);
+    SurfaceVoxeliser voxer( triv->points, triv->triangles, triv->normals);
+    
+    // Get full grid of points
+    std::vector<Index> coords(n * n * n);
+    auto cursor = coords.begin();
+    for (auto i: range(n))
+      for (auto j: range(n))
+	for (auto k: range(n)) {
+	  *cursor = Index(i,j,k);
+	  ++cursor;
+	}
+    // sanity check 
+    CPPUNIT_ASSERT(coords[3*n*n + 4*n + 5] == Index(3,4,5));
+    
+    // This tri shouldn't get any points
+    auto mask = voxer.FilterTriangle(0, coords);
+    for (auto flag: mask)
+      CPPUNIT_ASSERT(!flag);
+
+    // This one should get (1,2,2)
+    auto pt122_mask = voxer.FilterTriangle(1, coords);
+    for (auto i: range(coords.size())) {
+      if (coords[i].x == 1 && coords[i].y == 2 && coords[i].z == 2)
+	CPPUNIT_ASSERT(pt122_mask[i]);
+      else
+	CPPUNIT_ASSERT(!pt122_mask[i]);
     }
   }
 };

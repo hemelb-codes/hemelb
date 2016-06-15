@@ -25,7 +25,8 @@ public:
   std::vector<bool> FilterPoint(IndexT iPt, const std::vector<Index>& voxels);
   // Flag all voxels lying within Rc = sqrt(3)/2 of the line segment
   std::vector<bool> FilterEdge(IndexT iPt, IndexT jPt, const std::vector<Index>& voxels);
-  std::vector<bool> FilterPlane(IndexT iTri, const std::vector<Index>& voxels);
+  // Mark as inside all points within the triangular prism defined by
+  // the following 5 planes (see Huang Fig. 12)
   std::vector<bool> FilterTriangle(IndexT iTri, const std::vector<Index>& voxels);
 
   // For the triangles attached at tri_level on the inTree create the
