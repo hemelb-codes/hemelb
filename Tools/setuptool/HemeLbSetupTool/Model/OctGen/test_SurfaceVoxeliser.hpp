@@ -5,17 +5,26 @@
 #include "TestResources/Meshes.hpp"
 #include "SurfaceVoxeliser.h"
 #include <array>
+#include <memory>
+#include <stack>
 
 #include "range.hpp"
 #include "enumerate.hpp"
 
 class SurfaceVoxeliserTests : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE(SurfaceVoxeliserTests);
+  
   CPPUNIT_TEST(TrivialPoints);
   CPPUNIT_TEST(TrivialEdges);
   CPPUNIT_TEST(TrivialPlane);
   CPPUNIT_TEST(Trivial);
+  CPPUNIT_TEST(TrivialBig);
+  CPPUNIT_TEST(SphereTri90);
+  CPPUNIT_TEST(Connected1);
+  CPPUNIT_TEST(Connected2);
+  
   CPPUNIT_TEST_SUITE_END();
+  
 public:
   void TrivialPoints() {
     // 8 cube
@@ -204,8 +213,247 @@ public:
 	  CPPUNIT_ASSERT(ijk.y == 0);
 	  CPPUNIT_ASSERT(ijk.z == 0);
     	} 
-    	});
+      });
     CPPUNIT_ASSERT(expected_nodes.empty());
+  }
+
+  void TrivialBig() {
+    // We want to check that this copes with triangles much bigger
+    // than a tri_level bounding box.
+    
+    // 16 cube
+    auto levels = 4;
+    auto tri_level = 2;
+    auto triv = SimpleMeshFactory::MkTrivial();
+    
+    // tri_level has nodes 4 voxels to a side
+    // trivial's BBox is (1.2, 1.2, 1.2) - (1.2, 2.2, 2.2)
+    for (auto& p: triv->points) {
+      p -= 1.2;
+      p *= 4.0;
+      p += 2.2;
+    }
+    // Now (2.2, 2.2, 2.2) - (2.2, 6.2, 6.2)
+    
+    auto tree = TrianglesToTreeSerial(levels, tri_level, triv->points, triv->triangles);
+    SurfaceVoxeliser voxer(triv->points, triv->triangles, triv->normals);
+    auto vox_tree = voxer(tree, tri_level);
+
+    vox_tree.IterDepthFirst(0, 0,
+			    [](TriTree::Node& vox) {
+			      CPPUNIT_ASSERT(vox.X() == 2 || vox.X() == 3);
+			    });
+  }
+  void SphereTri90() {
+    // Initial testing showed that this fails for some triangles, including this
+    TriTree::Int levels = 5;
+    TriTree::Int tri_level = 3;
+    
+    auto sphere = SimpleMeshFactory::MkSphere();
+    auto tree = TrianglesToTreeSerial(levels, tri_level, sphere->points, sphere->triangles);
+    SurfaceVoxeliser voxer(sphere->points, sphere->triangles, sphere->normals);
+    
+    auto iTri = 90;
+    auto tri_pt_ids = sphere->triangles[iTri];
+    // tri_pts = points[tri_pt_ids]
+    auto norm = sphere->normals[iTri];
+    
+    auto bb = voxer.AABB_Tri(iTri);
+    // Round down
+    auto lo = Index(bb.first) - 1;
+    // 1 to round up, 1 to be safe, 1 to get range upper bound
+    auto hi = Index(bb.second) + 3;
+    
+    // This region of interest bounds the triangle safely
+    // auto shape = hi - lo;
+    // auto size = shape.x * shape.y * shape.z;
+    
+    // std::vector<Index> voxels(size);
+    // auto flat_i = 0;
+    std::vector<Index> voxels;
+    for (auto i: range(lo.x, hi.x))
+      for (auto j: range(lo.y, hi.y))
+	for (auto k: range(lo.z, hi.z))
+	  voxels.push_back({i, j, k});
+	  
+    std::vector<bool> union_mask(voxels.size());
+    
+    std::vector<std::vector<Index>> expected_voxels = {
+      {{22,8,18}, {22,9,18}, {23,9,18}},
+      {{22,8,13}, {22,9,13}, {23,9,13}},
+      {{25,15,13}, {25,16,13}}
+    };
+    for (auto i: range(3)) {
+      auto iPt = tri_pt_ids[i];
+      std::vector<bool> inside_mask(voxels.size());
+      voxer.FilterPoint(iPt, voxels, inside_mask);
+      auto& ev = expected_voxels[i];
+      for(auto iVox: range(voxels.size())) {
+	auto ptr = std::find(ev.begin(), ev.end(), voxels[iVox]);
+	if(inside_mask[iVox]) {
+	  // Flagged as included, so must be in expected_voxels
+	  CPPUNIT_ASSERT(ptr != ev.end());
+	  // Remove
+	  ev.erase(ptr);
+	} else {
+	  // Not included, so it must NOT be in expected_voxels
+	  CPPUNIT_ASSERT(ptr == ev.end());
+	}
+      }
+      // Must be no leftover voxels
+      CPPUNIT_ASSERT(ev.empty());
+      // OR this point's flags onto the union
+      for(auto iFlag: range(inside_mask.size()))
+	union_mask[i] = union_mask[i] | inside_mask[i];
+      
+    }
+    // # Can't face working this out by hand!
+    // for i in xrange(3):
+    //     inside_mask[:] = False
+    //     iPt = tri_pt_ids[i]
+    //     jPt = tri_pt_ids[(i+1)%3]
+    //     voxer.FilterEdge(iPt, jPt, voxels, inside_mask)
+    //     union |= inside_mask
+    
+    // # or this...
+    // inside_mask[:] = False
+    // voxer.FilterTriangle(iTri, voxels, inside_mask)
+    // union |= inside_mask
+  }
+
+  template<class T>
+  struct Ar3 {
+    // quick n dirty 3d array
+      
+    const Index shape;
+    const Index strides;
+    const int size;
+
+    // shared_ptr => rule of zero
+    std::shared_ptr<T> data;
+
+    Ar3(const Index& shp) : shape(shp),
+			    strides(shp.y*shp.z, shp.z, 1),
+			    size(shp.x*shp.y*shp.z) {
+      data = std::shared_ptr<T>(new T[size], std::default_delete<T[]>());
+    }
+    Ar3(int x, int y, int z) : Ar3(Index(x,y,z)) {
+      
+    }
+
+    T& operator()(int i, int j, int k) {
+      return operator[](Index(i,j,k));
+    }
+    T& operator[](const Index& ijk) {
+      auto i = Index::Dot(ijk, strides);
+      return data.get()[i];
+    }
+  };
+
+  // Helper function that does a 6-connected flood fill to mark the
+  // continuous region with the same value as idx.
+  Ar3<char> ConnectedRegion(Ar3<char>& array, Index idx) {
+    const auto& shape = array.shape;
+    Ar3<char> ans(shape);
+    Ar3<char> checked(shape);
+    for (auto i: range(shape.x))
+      for (auto j: range(shape.y))
+	for (auto k: range(shape.z)) {
+	  ans(i,j,k) = 0;
+	  checked(i,j,k) = 0;
+	}
+      
+    auto target = array[idx];
+    
+    const std::array<Index, 6> deltas = {{
+	{ 1, 0, 0},
+	{ 0, 1, 0},
+	{ 0, 0, 1},
+	{-1, 0, 0},
+	{ 0,-1, 0},
+	{ 0, 0,-1}      
+      }};
+    std::stack<Index> stack;
+    stack.push(idx);
+    
+    while (!stack.empty()) {
+      auto xyz = stack.top();
+      stack.pop();
+      ans[xyz] = 1;
+      checked[xyz] = 1;
+      for (auto& delta: deltas) {
+	auto uvw = xyz + delta;
+	if (uvw.x < 0 || uvw.x >= shape.x)
+	  continue;
+	if (uvw.y < 0 || uvw.y >= shape.y)
+	  continue;
+	if (uvw.z < 0 || uvw.z >= shape.z)
+	  continue;
+	if (!checked[uvw] && array[uvw] == target)
+	  stack.push(uvw);
+      }
+
+    }
+
+    return ans;
+  }
+
+  void Connected1() {
+    Ar3<char> im(3,5,5);
+    const char raw[] = {
+                   0,0,0,0,0,
+                   0,1,1,1,0,
+                   0,1,1,1,0,
+                   0,1,1,1,0,
+                   0,0,0,0,0,
+                   
+                   0,0,0,0,0,
+		   0,1,1,1,0,
+		   0,1,1,1,0,
+		   0,1,1,1,0,
+		   0,0,0,0,0,
+		   
+                   0,0,0,0,0,
+		   0,1,1,1,0,
+		   0,1,1,1,0,
+		   0,1,1,1,0,
+		   0,0,0,0,0
+    };
+    std::memcpy(im.data.get(), raw, im.size);
+    auto ff = ConnectedRegion(im, Index(0,2,2));
+    for (auto i: range(3))
+      for (auto j: range(5))
+	for (auto k: range(5)) {
+	  CPPUNIT_ASSERT(ff(i,j,k) == im(i,j,k));
+	}
+  }
+
+  void Connected2() {
+    Ar3<char> im(1,5,5);
+    const char raw[] = {
+      1,1,0,0,0,
+      1,1,0,0,0,
+      0,0,0,0,0,
+      0,0,0,1,1,
+      0,0,0,1,1
+    };
+    std::memcpy(im.data.get(), raw, im.size);
+    auto ff = ConnectedRegion(im, Index(0,0,0));
+
+    Ar3<char> expected(1,5,5);
+    const char expected_raw[] = {
+      1,1,0,0,0,
+      1,1,0,0,0,
+      0,0,0,0,0,
+      0,0,0,0,0,
+      0,0,0,0,0
+    };
+    std::memcpy(expected.data.get(), expected_raw, expected.size);
+    for (auto i: range(1))
+      for (auto j: range(5))
+	for (auto k: range(5)) {
+	  CPPUNIT_ASSERT(ff(i,j,k) == expected(i,j,k));
+	}
   }
 };
 
