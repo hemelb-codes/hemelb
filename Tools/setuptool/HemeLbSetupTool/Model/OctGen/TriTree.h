@@ -8,4 +8,6 @@
 typedef boost::container::flat_set<int> IdList;
 typedef Octree<IdList> TriTree;
 
+std::ostream& operator<<(std::ostream& os, const IdList& lst);
+
 #endif
