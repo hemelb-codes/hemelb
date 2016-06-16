@@ -22,6 +22,7 @@ class SurfaceVoxeliserTests : public CppUnit::TestFixture {
   CPPUNIT_TEST(SphereTri90);
   CPPUNIT_TEST(Connected1);
   CPPUNIT_TEST(Connected2);
+  CPPUNIT_TEST(Sphere);
   
   CPPUNIT_TEST_SUITE_END();
   
@@ -340,7 +341,11 @@ public:
     Ar3(int x, int y, int z) : Ar3(Index(x,y,z)) {
       
     }
-
+    
+    void fill(const T& val) {
+      std::fill(data.get(), data.get() + size, val);
+    }
+    
     T& operator()(int i, int j, int k) {
       return operator[](Index(i,j,k));
     }
@@ -356,13 +361,9 @@ public:
     const auto& shape = array.shape;
     Ar3<char> ans(shape);
     Ar3<char> checked(shape);
-    for (auto i: range(shape.x))
-      for (auto j: range(shape.y))
-	for (auto k: range(shape.z)) {
-	  ans(i,j,k) = 0;
-	  checked(i,j,k) = 0;
-	}
-      
+    ans.fill(0);
+    checked.fill(0);
+          
     auto target = array[idx];
     
     const std::array<Index, 6> deltas = {{
@@ -454,6 +455,57 @@ public:
 	for (auto k: range(5)) {
 	  CPPUNIT_ASSERT(ff(i,j,k) == expected(i,j,k));
 	}
+  }
+  
+  Ar3<char> TreeToMaskArray(TriTree& tree) {
+    auto cube_size = 1 << tree.Level();
+    Ar3<char> cube(cube_size, cube_size, cube_size);
+    cube.fill(0);
+    
+    tree.IterDepthFirst(0,0, [&](TriTree::Node& node) {
+        cube(node.X(), node.Y(), node.Z()) = 1;
+      });
+    
+    return cube;
+  }
+  
+  void Sphere() {
+    TriTree::Int levels = 5;
+    auto box = 1 << levels;
+    TriTree::Int tri_level = 3;
+    
+    auto sphere = SimpleMeshFactory::MkSphere();
+    auto tree = TrianglesToTreeSerial(levels, tri_level, sphere->points, sphere->triangles);
+    SurfaceVoxeliser voxer(sphere->points, sphere->triangles, sphere->normals);
+
+    auto vox_tree = voxer(tree, tri_level);
+    
+    auto edge_mask = TreeToMaskArray(vox_tree);
+    auto interior = ConnectedRegion(edge_mask, Index(15,15,15));
+    
+    for (auto i: range(box))
+      for (auto j: range(box))
+	for (auto k: range(box)) {
+	  Index ijk(i,j,k);
+	  if (interior[ijk]) {
+	    auto r2 = (Vector(ijk) - 15.5).GetMagnitudeSquared();
+	    CPPUNIT_ASSERT(r2 < 100.0);
+	  }
+	}
+
+    // Make sure we've seen all the triangles
+    // First gather the list of them
+    IdList seen_tris;
+    vox_tree.IterDepthFirst(0,0, [&seen_tris](const TriTree::Node& node) {
+	seen_tris.insert(boost::container::ordered_unique_range_t(),
+			 node.Data().begin(), node.Data().end());
+      });
+
+    // Now assert that the list == 0...nTris-1
+    auto nTri = sphere->triangles.size();
+    int i = 0;
+    for (auto triId: seen_tris)
+      CPPUNIT_ASSERT(triId == i++);
   }
 };
 
