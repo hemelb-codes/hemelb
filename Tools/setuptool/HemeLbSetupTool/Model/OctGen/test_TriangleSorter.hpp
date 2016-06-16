@@ -7,7 +7,6 @@
 #include "TestResources/Meshes.hpp"
 #include "TriangleSorter.h"
 
-
 class TriangleSorterTests : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE(TriangleSorterTests);
   CPPUNIT_TEST(Trivial);
@@ -20,6 +19,7 @@ class TriangleSorterTests : public CppUnit::TestFixture {
   PARAMETERISED_TEST(ParallelSphere, int, 2);
   PARAMETERISED_TEST(ParallelSphere, int, 3);
   PARAMETERISED_TEST(ParallelSphere, int, 4);
+  CPPUNIT_TEST(Duct);
   CPPUNIT_TEST_SUITE_END();
 public:
   
@@ -203,6 +203,27 @@ public:
     auto t2 = TrianglesToTreeParallel(levels, tri_level, sphere->points, sphere->triangles, np);
     CPPUNIT_ASSERT(trees_with_triIds_equal(t1, t2, tri_level));
    }
+  
+  void Duct() {
+    // 16 cube
+    TriTree::Int levels = 4;
+    TriTree::Int tri_level = 2;
+    auto duct = SimpleMeshFactory::MkDuct();
+    auto tree = TrianglesToTreeSerial(levels, tri_level, duct->points, duct->triangles);
+
+    CPPUNIT_ASSERT(tree.Get(0, 0, 0, 3));
+    CPPUNIT_ASSERT(tree.Get(0, 0, 8, 3));
+
+    CPPUNIT_ASSERT(tree.Get(0, 0, 0, 2));
+    CPPUNIT_ASSERT(tree.Get(0, 0, 4, 2));
+    CPPUNIT_ASSERT(tree.Get(0, 4, 0, 2));
+    CPPUNIT_ASSERT(tree.Get(0, 4, 4, 2));
+    CPPUNIT_ASSERT(tree.Get(4, 0, 0, 2));
+    CPPUNIT_ASSERT(tree.Get(4, 0, 4, 2));
+    CPPUNIT_ASSERT(tree.Get(4, 4, 0, 2));
+    CPPUNIT_ASSERT(tree.Get(4, 4, 4, 2));
+
+  }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION(TriangleSorterTests);
 

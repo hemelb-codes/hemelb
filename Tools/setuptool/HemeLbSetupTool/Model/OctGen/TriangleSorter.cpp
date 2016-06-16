@@ -55,13 +55,14 @@ TriTree TrianglesToTree_Worker(const int n_levels, const int tri_level,
     Index range_min;
     Index range_max;
     for (auto iDim=0; iDim<3; ++iDim) {
-      // iterator pointing to the first element > min, then go back one
-      auto lower_ptr = std::upper_bound(lowers.cbegin(), lowers.cend(), min[iDim]) - 1;
-      // iterator pointing to the first element > max, then go forward one
-      auto upper_ptr = std::upper_bound(uppers.cbegin(), uppers.cend(), max[iDim]) + 1;
+      // Figure out the first tri box to add this tri to
+      // iterator pointing to the first element > min
+      auto upper_ptr = std::upper_bound(uppers.cbegin(), uppers.cend(), min[iDim]);
+      // iterator pointing to the first element > max
+      auto lower_ptr = std::upper_bound(lowers.cbegin(), lowers.cend(), max[iDim]);
       // convert to indices
-      range_min[iDim] = lower_ptr - lowers.cbegin();
-      range_max[iDim] = upper_ptr - uppers.cbegin();
+      range_min[iDim] = upper_ptr - uppers.cbegin();
+      range_max[iDim] = lower_ptr - lowers.cbegin();
     }
     
     // This bit is the only non-thread-safe part.

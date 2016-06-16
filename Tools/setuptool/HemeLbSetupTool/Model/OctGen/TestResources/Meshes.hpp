@@ -43,6 +43,61 @@ public:
     return sphere_mesh;
   }
   
+  static std::shared_ptr<MeshData> MkDuct() {
+    auto ans = std::make_shared<MeshData>();
+    ans->points = {
+      {0.5, 0.5, 2.5},
+      {0.5, 3.5, 2.5},
+      {3.5, 3.5, 2.5},
+      {3.5, 0.5, 2.5},
+      
+      {0.5, 0.5, 14.5},
+      {0.5, 3.5, 14.5},
+      {3.5, 3.5, 14.5},
+      {3.5, 0.5, 14.5}
+    };
+    
+    ans->triangles = {
+      // -x
+      {0,4,1},
+      {4,5,1},
+      // +y
+      {1,5,2},
+      {5,6,2},
+      // +x
+      {2,6,3},
+      {6,7,3},
+      // -y
+      {3,7,0},
+      {7,4,0},
+      // inlet
+      {0,1,3},
+      {1,2,3},
+      // outlet
+      {4,5,7},
+      {5,6,7}
+    };
+    
+    ans->normals = {
+      {-1,0,0},
+      {-1,0,0},
+      {0,+1,0},
+      {0,+1,0},
+      {+1,0,0},
+      {+1,0,0},
+      {0,-1,0},
+      {0,-1,0},
+      {0,0,-1},
+      {0,0,-1},
+      {0,0,+1},
+      {0,0,+1}
+    };
+    
+    ans->labels = {-1,-1, -1,-1, -1,-1, -1,-1, 0,0, 1,1};
+    
+    return ans;
+  };
+
 private:
   typedef vtkSmartPointer<vtkXMLPolyDataReader> PDR_ptr;
   typedef vtkSmartPointer<vtkPolyData> PD_ptr;
@@ -100,6 +155,7 @@ private:
 
     return ans;
   }
+
 };
 std::shared_ptr<MeshData> SimpleMeshFactory::sphere_mesh;
 #endif
