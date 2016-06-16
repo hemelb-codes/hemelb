@@ -15,7 +15,7 @@ void SurfaceVoxeliser::FilterPoint(IndexT iPt, const std::vector<Index>& voxels,
   for (auto i: range(voxels.size())) {
     auto dr = Vector(voxels[i]) - p;
     auto dr2 = dr.GetMagnitudeSquared();
-    mask[i] = mask[i] | (dr2 < 0.75);
+    mask[i] = mask[i] | (dr2 <= 0.75);
   }
 }
 

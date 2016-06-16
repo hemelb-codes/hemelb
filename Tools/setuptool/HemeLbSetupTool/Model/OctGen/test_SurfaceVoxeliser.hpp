@@ -4,6 +4,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include "TestResources/Meshes.hpp"
 #include "SurfaceVoxeliser.h"
+#include "TriangleSorter.h"
 #include <array>
 #include <memory>
 #include <stack>
@@ -23,7 +24,9 @@ class SurfaceVoxeliserTests : public CppUnit::TestFixture {
   CPPUNIT_TEST(Connected1);
   CPPUNIT_TEST(Connected2);
   CPPUNIT_TEST(Sphere);
-  
+  CPPUNIT_TEST(DuctPoint);
+  CPPUNIT_TEST(DuctEdge);
+  CPPUNIT_TEST(Duct);
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -463,6 +466,8 @@ public:
     cube.fill(0);
     
     tree.IterDepthFirst(0,0, [&](TriTree::Node& node) {
+	// Index ijk(node.X(), node.Y(), node.Z());
+	// std::cout << ijk << "," << std::endl;
         cube(node.X(), node.Y(), node.Z()) = 1;
       });
     
@@ -506,6 +511,102 @@ public:
     int i = 0;
     for (auto triId: seen_tris)
       CPPUNIT_ASSERT(triId == i++);
+  }
+  
+  void DuctPoint() {
+    // 16 cube
+    TriTree::Int levels = 4;
+    TriTree::Int tri_level = 2;
+    auto duct = SimpleMeshFactory::MkDuct();
+    auto tree = TrianglesToTreeSerial(levels, tri_level, duct->points, duct->triangles);
+    SurfaceVoxeliser voxer(duct->points, duct->triangles, duct->normals);
+    
+    // first 4 points all on lower face, x = 0.5/3.5, y = 0.5/3.5, z = 2.5
+    // Box is (0, 0, 2) -- (4,4,3) inclusive
+    std::vector<Index> voxels;
+    for (auto i: range(0,5))
+      for (auto j: range(0,5))
+	for (auto k: range(2,4))
+	  voxels.push_back({i,j,k});
+    
+    std::vector<bool> mask(voxels.size());
+    voxer.FilterPoint(0, voxels, mask);
+    // All 8 voxels around the point should be included
+    CPPUNIT_ASSERT(mask[10*0 + 2*0 + 0]);
+    CPPUNIT_ASSERT(mask[10*0 + 2*0 + 1]);
+    CPPUNIT_ASSERT(mask[10*0 + 2*1 + 0]);
+    CPPUNIT_ASSERT(mask[10*0 + 2*1 + 1]);
+    CPPUNIT_ASSERT(mask[10*1 + 2*0 + 0]);
+    CPPUNIT_ASSERT(mask[10*1 + 2*0 + 1]);
+    CPPUNIT_ASSERT(mask[10*1 + 2*1 + 0]);
+    CPPUNIT_ASSERT(mask[10*1 + 2*1 + 1]);
+
+    std::fill(mask.begin(), mask.end(), false);
+    voxer.FilterPoint(2, voxels, mask);
+    // All 8 voxels around the point should be included
+    CPPUNIT_ASSERT(mask[10*3 + 2*3 + 0]);
+    CPPUNIT_ASSERT(mask[10*3 + 2*3 + 1]);
+    CPPUNIT_ASSERT(mask[10*3 + 2*4 + 0]);
+    CPPUNIT_ASSERT(mask[10*3 + 2*4 + 1]);
+    CPPUNIT_ASSERT(mask[10*4 + 2*3 + 0]);
+    CPPUNIT_ASSERT(mask[10*4 + 2*3 + 1]);
+    CPPUNIT_ASSERT(mask[10*4 + 2*4 + 0]);
+    CPPUNIT_ASSERT(mask[10*4 + 2*4 + 1]);
+  }
+
+  void DuctEdge() {
+    // 16 cube
+    TriTree::Int levels = 4;
+    TriTree::Int tri_level = 2;
+    auto duct = SimpleMeshFactory::MkDuct();
+    auto tree = TrianglesToTreeSerial(levels, tri_level, duct->points, duct->triangles);
+    SurfaceVoxeliser voxer(duct->points, duct->triangles, duct->normals);
+
+    // Seen some problems with the edge (3.5, 3.5, 2.5) - (3.5, 3.5, 14.5)
+    // or edge (2, 6)
+    std::vector<Index> voxels;
+    for (auto i: range(3,5))
+      for (auto j: range(3,5))
+	for (auto k: range(2,16))
+	  voxels.push_back({i,j,k});
+    
+    std::vector<bool> mask(voxels.size());
+    voxer.FilterEdge(2, 6, voxels, mask);
+
+    for (auto i: range(3,5))
+      for (auto j: range(3,5))
+	for (auto k: range(2,16)) {
+	  auto flag = mask[(i-3)*28 + (j-3)*14 + (k-2)];
+	  if (k == 2 || k == 15)
+	    CPPUNIT_ASSERT(flag == false);
+	  else
+	    CPPUNIT_ASSERT(flag == true);
+	}
+  }
+  
+  void Duct() {
+    // 16 cube
+    TriTree::Int levels = 4;
+    TriTree::Int tri_level = 2;
+    auto duct = SimpleMeshFactory::MkDuct();
+    auto tree = TrianglesToTreeSerial(levels, tri_level, duct->points, duct->triangles);
+    SurfaceVoxeliser voxer(duct->points, duct->triangles, duct->normals);
+    auto vox_tree = voxer(tree, tri_level);
+    
+    auto edge_mask = TreeToMaskArray(vox_tree);
+    CPPUNIT_ASSERT(edge_mask(0,1,2));
+    auto interior = ConnectedRegion(edge_mask, Index(2,2,10));
+
+    auto box = 1 << levels;
+    for (auto i: range(box))
+      for (auto j: range(box))
+	for (auto k: range(box)) {
+	  Index ijk(i,j,k);
+	  if (interior[ijk]) {
+	    CPPUNIT_ASSERT(i == 2);
+	    CPPUNIT_ASSERT(j == 2);
+	  }
+	}
   }
 };
 
