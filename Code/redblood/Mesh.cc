@@ -160,7 +160,8 @@ namespace hemelb
       writeVTKMesh(stream, data.vertices, data.facets, conv);
     }
     void writeVTKMesh(std::ostream &stream, MeshData::Vertices const &vertices,
-                      MeshData::Facets const &facets, util::UnitConverter const & converter)
+                      MeshData::Facets const &facets, util::UnitConverter const & converter,
+                      PointScalarData pointScalarData)
     {
       // Write Header
       stream << "<?xml version=\"1.0\"?>\n"
@@ -179,8 +180,25 @@ namespace hemelb
         stream << vertex[0] << " " << vertex[1] << " " << vertex[2] << " ";
       }
 
-      stream << "\n        </DataArray>\n" << "      </Points>\n" << "      <Polys>\n"
-          << "        <DataArray type=\"Int32\" Name=\"connectivity\">\n";
+      stream << "\n        </DataArray>\n" << "      </Points>\n";
+
+      if (pointScalarData.size() > 0)
+      {
+        stream << "      <PointData Scalar=\"scalar_fields\">\n";
+
+        for (auto field : pointScalarData)
+        {
+          stream << "        <DataArray type=\"Float32\" Name=\"" << field.first << "\">\n";
+          stream << "        ";
+          typedef PointScalarData::value_type::second_type::value_type ScalarFieldType;
+          std::ostream_iterator<ScalarFieldType> stream_iterator(stream, " ");
+          std::copy(field.second.begin(), field.second.end(), stream_iterator);
+          stream << "\n        </DataArray>\n";
+        }
+        stream << "      </PointData>\n";
+      }
+
+      stream << "      <Polys>\n" << "        <DataArray type=\"Int32\" Name=\"connectivity\">\n";
 
       typedef MeshData::Facets::const_iterator FacetIterator;
       FacetIterator i_facet = facets.begin();
