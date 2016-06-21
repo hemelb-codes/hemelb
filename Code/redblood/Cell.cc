@@ -25,8 +25,8 @@ namespace hemelb
                           data->scale)
           + strainEnergy(data->vertices,
                          *data->templateMesh.GetData(),
-                         moduli.dilation,
                          moduli.strain,
+                         moduli.dilation,
                          data->scale);
     }
     LatticeEnergy Cell::operator()(std::vector<LatticeForceVector> &forces) const
@@ -45,8 +45,8 @@ namespace hemelb
                           data->scale)
           + strainEnergy(data->vertices,
                          *data->templateMesh.GetData(),
-                         moduli.dilation,
                          moduli.strain,
+                         moduli.dilation,
                          forces,
                          data->scale);
     }
@@ -177,8 +177,8 @@ namespace hemelb
         std::vector<LatticeForceVector> forces(cell->GetNumberOfNodes(), 0.0);
         strainEnergy(cell->GetVertices(),
                      *cell->GetTemplateMesh().GetData(),
-                     moduli.dilation,
                      moduli.strain,
+                     moduli.dilation,
                      forces,
                      cell->GetScale());
         push_back_point_data("strain", forces);
