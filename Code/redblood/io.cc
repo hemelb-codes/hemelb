@@ -189,7 +189,7 @@ namespace hemelb
           // Rotate cell to align z axis with given position, and then z axis with flow
           // If phi == 0, then cell symmetry axis is aligned with the flow
           auto const theta = GetNonDimensionalValue<Angle>(insNode, "theta", "rad", converter, 0e0);
-          auto const phi = GetNonDimensionalValue<Angle>(insNode, "theta", "rad", converter, 0e0);
+          auto const phi = GetNonDimensionalValue<Angle>(insNode, "phi", "rad", converter, 0e0);
           auto const x = GetNonDimensionalValue<LatticeDistance>(insNode, "x", "m", converter, 0e0);
           auto const y = GetNonDimensionalValue<LatticeDistance>(insNode, "y", "m", converter, 0e0);
           auto const z = GetNonDimensionalValue<LatticeDistance>(insNode, "z", "m", converter, 0e0);
