@@ -37,9 +37,9 @@ namespace hemelb
       {
           CPPUNIT_TEST_SUITE (MPILockStepTests);
           CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::FourPoint>);
-          CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::ThreePoint>);
-          CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::CosineApprox>);
-          CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::TwoPoint>);
+          //CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::ThreePoint>);
+          //CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::CosineApprox>);
+          //CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::TwoPoint>);
           CPPUNIT_TEST_SUITE_END();
 
         public:
@@ -82,14 +82,14 @@ namespace hemelb
         // Have everything ready to creates simulations
         if (Comms().Rank() == 0)
         {
-          CopyResourceToTempdir("large_cylinder_rbc.xml");
-          CopyResourceToTempdir("large_cylinder.gmy");
-          CopyResourceToTempdir("red_blood_cell.txt");
+          CopyResourceToTempdir("cyl_l100_r5.xml");
+          CopyResourceToTempdir("cyl_l100_r5.gmy");
+          CopyResourceToTempdir("rbc_ico_2880.msh");
 
           // This simulation duration is sufficient to pick up the original force spreading
           // issue that motivated the test. Run the test for longer in order to check other
           // aspects of the parallel implementation against a sequential run.
-          ModifyXMLInput("large_cylinder_rbc.xml", { "simulation", "steps", "value" }, 1000);
+          //ModifyXMLInput("large_cylinder_rbc.xml", { "simulation", "steps", "value" }, 1000);
         }
         HEMELB_MPI_CALL(MPI_Barrier, (Comms()));
 
@@ -98,7 +98,7 @@ namespace hemelb
           "others";
         options = std::make_shared<configuration::CommandLine>(configuration::CommandLine { "hemelb",
                                                               "-in",
-                                                              "large_cylinder_rbc.xml",
+                                                              "cyl_l100_r5.xml",
                                                               "-i",
                                                               "1",
                                                               "-ss",

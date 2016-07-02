@@ -83,4 +83,7 @@ add_to_resources(resources/four_cube.gmy resources/four_cube.xml
   resources/fedosov1c.xml resources/fedosov1c.gmy
   resources/sad.msh
   resources/velocity_inlet.txt.weights.txt
+  resources/cyl_l100_r5.xml
+  resources/cyl_l100_r5.gmy
+  resources/rbc_ico_2880.msh
 )
