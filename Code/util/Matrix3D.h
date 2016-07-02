@@ -82,11 +82,11 @@ namespace hemelb
     //! Rotation matrix maps one basis onto another:
     //!    - a0 (normalised a) maps to b0 (normalised b)
     //!    - a0.Cross(b0) maps to a0.Cross(b0)
-    //!    - a0.Cross(a0, Cross(b0)) maps to b0.Cross(a0.Cross(b0))
+    //!    - a0.Cross(a0.Cross(b0)) maps to b0.Cross(a0.Cross(b0))
     util::Matrix3D rotationMatrix(LatticePosition const& a, LatticePosition const& b);
 
     //! Rotation matrix around axis by theta
-    util::Matrix3D rotationMatrix(LatticePosition const& a, Dimensionless const& b);
+    util::Matrix3D rotationMatrix(LatticePosition const& axis, Dimensionless const& theta);
 
   } /* namespace util */
 } /* namespace hemelb */
