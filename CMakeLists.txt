@@ -23,7 +23,6 @@ option(HEMELB_USE_MULTIMACHINE "Use multi-level parallelism support" OFF)
 option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
 option(HEMELB_USE_STREAKLINES "Calculate streakline images" OFF)
 option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
-option(HEMELB_USE_BOOST "Use Boost" ON)
 option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
 set(HEMELB_OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
 option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
@@ -86,7 +85,6 @@ ExternalProject_Add(
 	-DMPI_C_NO_INTERROGATE=${MPI_C_NO_INTERROGATE}
 	-DMPI_CXX_NO_INTERROGATE=${MPI_CXX_NO_INTERROGATE}
 	-DHEMELB_USE_ALL_WARNINGS_GNU=${HEMELB_USE_ALL_WARNINGS_GNU}
-	-DHEMELB_USE_BOOST=${HEMELB_USE_BOOST}
 	-DHEMELB_STEERING_HOST=${HEMELB_STEERING_HOST}
 	-DCTEMPLATE_USE_STATIC=${CTEMPLATE_USE_STATIC}
 	-DCPPUNIT_USE_STATIC=${CPPUNIT_USE_STATIC}

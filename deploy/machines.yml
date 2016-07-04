@@ -68,12 +68,13 @@ archer: #the ARCHER supercomputer at EPCC
   run_command: "aprun -n $cores"
   batch_header: pbs-archer
   remote: "login.archer.ac.uk"
+  no_git: true # sync from local checkout, easier to deploy local changes for debug, DON'T MERGE IN
   # On ARCHER, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
   install_path_template: "$work_path/install"
   home_path_template: "/home/$project/$project/$username"
   runtime_path_template: "/work/$project/$project/$username"
   fabric_dir: "FabricHemeLb"
-  modules: ["load cmake/3.2.3", "swap PrgEnv-cray PrgEnv-gnu", "swap gcc gcc/4.9.2"]
+  modules: ["load cmake/3.2.3", "swap PrgEnv-cray PrgEnv-gnu", "load boost", "load cray-hdf5-parallel"]
   build_prefix_commands: ["export LDFLAGS=-dynamic"] # Required for HDF5 to compile
   temp_path_template: "$work_path/tmp"
   regression_test_path_template: "$work_path/regression"
