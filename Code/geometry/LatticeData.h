@@ -381,7 +381,7 @@ namespace hemelb
               site_t blockId = midDomainBlockNumbers[collisionType][indexInType];
               site_t siteId = midDomainSiteNumbers[collisionType][indexInType];
               blocks[blockId].SetLocalContiguousIndexForSite(siteId, localFluidSites);
-	      printf("SetLocalContiguousIndexForSite block %d, site %d, localFluidSites %d",blockId,siteId,localFluidSites);
+	      //printf("SetLocalContiguousIndexForSite block %d, site %d, localFluidSites %d",blockId,siteId,localFluidSites);
               globalSiteCoords.push_back(GetGlobalCoords(blockId, GetSiteCoordsFromSiteId(siteId)));
               localFluidSites++;
             }

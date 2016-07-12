@@ -142,7 +142,7 @@ namespace hemelb
       XDR xdrs;
       xdrstdio_create(&xdrs, rankFile, XDR_DECODE);
       uint32_t bla = 1;
-      printf("COMM Rank is %d\n", computeComms.Rank());
+     // printf("COMM Rank is %d\n", computeComms.Rank());
       while(bla == 1) {
         bla *= xdr_u_int(&xdrs, &blockRank);
         bla *= xdr_u_int(&xdrs, &blockId);
@@ -152,7 +152,7 @@ namespace hemelb
         bla *= xdr_u_int(&xdrs, &blockSiteCount);
 
         if (blockRank == computeComms.Rank()) {
-                printf("Read decomposition information: Rank %u to read %u bytes of data (%u uncompressed) for block %u at byte %u of %s.\n",blockRank,blockCompressedBytes,blockUncompressedBytes,blockId,blockOffsetBytes,dataFilePath.c_str());
+             //   printf("Read decomposition information: Rank %u to read %u bytes of data (%u uncompressed) for block %u at byte %u of %s.\n",blockRank,blockCompressedBytes,blockUncompressedBytes,blockId,blockOffsetBytes,dataFilePath.c_str());
                 ReadInBlock(blockId,
                             blockOffsetBytes,
                             blockCompressedBytes,
@@ -165,7 +165,7 @@ namespace hemelb
 
       }
       xdr_destroy(&xdrs);	 
-      printf("Finished reading geometries for rank %u %d\n",blockRank,computeComms.Rank());
+   //   printf("Finished reading geometries for rank %u %d\n",blockRank,computeComms.Rank());
 
       // Close the file - only the ranks participating in the topology need to read it again.
       file.Close();
@@ -189,7 +189,7 @@ namespace hemelb
       uint32_t requiringRankCount;
       uint32_t requiringRank;
 
-      printf("Am i alive?\n");
+  //    printf("Am i alive?\n");
 
       bla *= xdr_u_int(&xdrs, &siteCount);    
 
@@ -212,18 +212,18 @@ namespace hemelb
         bla *= xdr_u_int(&xdrs, &siteID);
 
         bla *= xdr_u_int(&xdrs, &requiringRankCount);
-        printf("Am i alive? %u %u\n",blockID,siteID);
+    //    printf("Am i alive? %u %u\n",blockID,siteID);
 
 	for (int i = 0; i < requiringRankCount;i++) {
 	   bla *= xdr_u_int(&xdrs, &requiringRank);
            if (requiringRank == computeComms.Rank()) {
-	     geometry.Blocks[blockID].Sites[siteID].targetProcessor = siteRank;
+            geometry.Blocks[blockID].Sites[siteID].targetProcessor = siteRank;  
 	   }
 	}        	
-
+ 
       }
       xdr_destroy(&xdrs);
-      printf("Finished assigning site rank links for rank %d\n",computeComms.Rank());
+   //   printf("Finished assigning site rank links for rank %d\n",computeComms.Rank());
 
 /*
       timings[hemelb::reporting::Timers::initialDecomposition].Start();
@@ -630,7 +630,7 @@ namespace hemelb
       for (site_t localSiteIndex = 0; localSiteIndex <  geometry.GetSitesPerBlock(); ++localSiteIndex)
       { 
 
-	printf("Reading block %u, site %u\t",block,localSiteIndex);
+	//printf("Reading block %u, site %u\t",block,localSiteIndex);
         geometry.Blocks[block].Sites.push_back(ParseSite(reader));
       }
     }
@@ -667,11 +667,11 @@ namespace hemelb
       // If solid, there's nothing more to do.
       if (!readInSite.isFluid)
       {
-	printf(" solid\n");
+	//printf(" solid\n");
         return readInSite;
       }
 
-	printf(" fluid ");
+	//printf(" fluid ");
       const io::formats::geometry::DisplacementVector& neighbourhood =
           io::formats::geometry::Get().GetNeighbourhood();
       // Prepare the links array to have enough space.
@@ -686,7 +686,7 @@ namespace hemelb
         unsigned intersectionType;
         reader.readUnsignedInt(intersectionType);
 
-	printf("%u:%u\t",readDirection, intersectionType);
+	//printf("%u:%u\t",readDirection, intersectionType);
 
         GeometrySiteLink link;
         link.type = (GeometrySiteLink::IntersectionType) intersectionType;
@@ -726,7 +726,7 @@ namespace hemelb
         }
       }
 
-      printf("\n");
+     // printf("\n");
 
       unsigned normalAvailable;
       reader.readUnsignedInt(normalAvailable);
@@ -748,7 +748,7 @@ namespace hemelb
         reader.readFloat(readInSite.wallNormal[1]);
         reader.readFloat(readInSite.wallNormal[2]);
 
-	printf("wall normal: [%g,%g,%g]\n",readInSite.wallNormal[0],readInSite.wallNormal[1],readInSite.wallNormal[2]);
+	//printf("wall normal: [%g,%g,%g]\n",readInSite.wallNormal[0],readInSite.wallNormal[1],readInSite.wallNormal[2]);
       }
 
       return readInSite;

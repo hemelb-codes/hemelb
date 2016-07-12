@@ -31,8 +31,8 @@ namespace hemelb
 
       if (doIo)
       {
-        if (hemelb::util::DoesDirectoryExist(outputDir.c_str()))
-          throw Exception() << "Output directory '"<< outputDir <<"' already exists.";
+        //if (hemelb::util::DoesDirectoryExist(outputDir.c_str()))
+        //  throw Exception() << "Output directory '"<< outputDir <<"' already exists.";
 
         hemelb::util::MakeDirAllRXW(outputDir);
         hemelb::util::MakeDirAllRXW(imageDirectory);

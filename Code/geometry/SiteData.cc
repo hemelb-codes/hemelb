@@ -125,7 +125,7 @@ namespace hemelb
           case SOLID_TYPE:
             throw Exception() << "Requesting collision type for solid site!";
         }
-      }
+      } 
       else
       {
         // There are solid wall intersections

@@ -44,7 +44,7 @@ namespace hemelb
       // if debugging then output beliefs regarding geometry and neighbour list
       if (log::Logger::ShouldDisplay<log::Trace>())
       {
-        //proc_t localRank = comms.Rank();
+        proc_t localRank = comms.Rank();
         for (std::vector<NeighbouringProcessor>::iterator itNeighProc = neighbouringProcs.begin();
             itNeighProc != neighbouringProcs.end(); ++itNeighProc)
         {
@@ -112,14 +112,68 @@ namespace hemelb
 
           blocks[blockId].SetProcessorRankForSite(localSiteId, blockReadIn.Sites[localSiteId].targetProcessor);
 
-
-	  printf("b %u, s %u, rank %u\n",blockId,localSiteId,blockReadIn.Sites[localSiteId].targetProcessor);
-          // If the site is not on this processor, continue.
-          if (localRank != blockReadIn.Sites[localSiteId].targetProcessor)
-          {
-            continue;
-          }
           bool isMidDomainSite = true;
+          bool keepSite = false;       
+
+	  // printf("b %u, s %u, rank %u\n",blockId,localSiteId,blockReadIn.Sites[localSiteId].targetProcessor);
+          // If the site is not on this processor, continue.
+          if (localRank != blockReadIn.Sites[localSiteId].targetProcessor) // == BIG_NUMBER2)
+          {
+
+            continue;
+
+            if  (blockReadIn.Sites[localSiteId].targetProcessor == BIG_NUMBER2) 
+                {
+                    continue;
+                }
+                            
+            for (unsigned int l = 1; l < latticeInfo.GetNumVectors(); l++)
+            {
+                util::Vector3D<site_t> neighbourGlobalCoords = blockTraverser.GetCurrentLocation()
+                * readResult.GetBlockSize() + siteTraverser.GetCurrentLocation()
+                + util::Vector3D<site_t>(latticeInfo.GetVector(l));                               
+
+                if (neighbourGlobalCoords.x < 0 || neighbourGlobalCoords.y < 0 || neighbourGlobalCoords.z < 0
+                    || neighbourGlobalCoords.x >= readResult.GetBlockDimensions().x * readResult.GetBlockSize()
+                    || neighbourGlobalCoords.y >= readResult.GetBlockDimensions().y * readResult.GetBlockSize()
+                    || neighbourGlobalCoords.z >= readResult.GetBlockDimensions().z * readResult.GetBlockSize())
+                {   
+                  continue;
+                }
+
+                util::Vector3D<site_t> neighbourBlock = neighbourGlobalCoords / readResult.GetBlockSize();
+                util::Vector3D<site_t> neighbourSite = neighbourGlobalCoords % readResult.GetBlockSize();
+                site_t neighbourBlockId = readResult.GetBlockIdFromBlockCoordinates(neighbourBlock.x,   
+                                                                                neighbourBlock.y,
+                                                                                neighbourBlock.z);                
+                                                                                
+                if (readResult.Blocks[neighbourBlockId].Sites.size() == 0)
+                {
+                    continue;
+                }    
+
+                site_t neighbourSiteId = readResult.GetSiteIdFromSiteCoordinates(neighbourSite.x,
+                                                                                 neighbourSite.y,
+                                                                                 neighbourSite.z);
+                                                                                                                                                 
+                proc_t neighbourProc = readResult.Blocks[neighbourBlockId].Sites[neighbourSiteId].targetProcessor;                                                        
+                
+                if (neighbourProc == localRank)
+                {
+                    keepSite = true;
+                    printf("Keeping site %lu on block %lu for rank %lu\n",neighbourSiteId,neighbourBlockId,localRank);
+                }
+            }    
+            if (!keepSite) {
+                continue; // SiteTraverser
+            }
+          }
+    
+//          printf("b %u, s %u, rank %u\n",blockId,localSiteId,localRank);
+//          if (blockId == 18 && localSiteId == 352 && localRank == 2){
+//            printf("culprit!");
+//            }
+
           // Iterate over all non-zero direction vectors.
           for (unsigned int l = 1; l < latticeInfo.GetNumVectors(); l++)
           {
@@ -138,6 +192,8 @@ namespace hemelb
 
             // ... (that is actually being simulated and not a solid)...
             util::Vector3D<site_t> neighbourBlock = neighbourGlobalCoords / readResult.GetBlockSize();
+         
+
             util::Vector3D<site_t> neighbourSite = neighbourGlobalCoords % readResult.GetBlockSize();
             site_t neighbourBlockId = readResult.GetBlockIdFromBlockCoordinates(neighbourBlock.x,
                                                                                 neighbourBlock.y,
@@ -209,7 +265,9 @@ namespace hemelb
           }
           // Set the collision type data. map_block site data is renumbered according to
           // fluid site numbers within a particular collision type.
+
           SiteData siteData(blockReadIn.Sites[localSiteId]);
+          
 
           int l = -1;
           switch (siteData.GetCollisionType())
@@ -373,8 +431,8 @@ namespace hemelb
           site_t localIndex = map_block_p.GetLocalContiguousIndexForSite(siteTraverser.GetCurrentIndex());
           // Set neighbour location for the distribution component at the centre of
           // this site.
-	  printf("rwah1 %d %d\n",localIndex,BIG_NUMBER2);
-//	  if (localIndex != - BIG_NUMBER2);
+          // printf("rwah1 %d %d\n",localIndex,BIG_NUMBER2);
+
           SetNeighbourLocation(localIndex, 0, localIndex * latticeInfo.GetNumVectors() + 0);
           for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); direction++)
           {
@@ -385,7 +443,7 @@ namespace hemelb
                 + util::Vector3D<site_t>(latticeInfo.GetVector(direction));
             if (!IsValidLatticeSite(neighbourCoords))
             {
-	      printf("rwah2\n");
+	      // printf("rwah2\n");
               // Set the neighbour location to the rubbish site.
               SetNeighbourLocation(localIndex, direction, GetLocalFluidSiteCount() * latticeInfo.GetNumVectors());
               continue;
@@ -394,7 +452,7 @@ namespace hemelb
             const proc_t proc_id_p = GetProcIdFromGlobalCoords(neighbourCoords);
             if (proc_id_p == BIG_NUMBER2)
             {
-	      printf("rwah3\n");
+	      //printf("rwah3\n");
               // initialize f_id to the rubbish site.
               SetNeighbourLocation(localIndex, direction, GetLocalFluidSiteCount() * latticeInfo.GetNumVectors());
               continue;
@@ -410,7 +468,7 @@ namespace hemelb
             {
               // Pointer to the neighbour.
               site_t contigSiteId = GetContiguousSiteId(neighbourCoords);
-  	      printf("rwah4\n");
+  	      // printf("rwah4\n");
               SetNeighbourLocation(localIndex, direction, contigSiteId * latticeInfo.GetNumVectors() + direction);
               continue;
             }
@@ -470,6 +528,8 @@ namespace hemelb
 
     void LatticeData::InitialiseReceiveLookup(std::vector<std::vector<site_t> >& sharedFLocationForEachProc)
     {
+    
+      // printf("In LatticeData::InitialiseReceiveLookup\n");
       proc_t localRank = comms.Rank();
       streamingIndicesForReceivedDistributions.resize(totalSharedFs);
       site_t f_count = GetLocalFluidSiteCount() * latticeInfo.GetNumVectors();
@@ -480,12 +540,14 @@ namespace hemelb
         for (site_t sharedDistributionId = 0; sharedDistributionId < neigh_proc_p->SharedDistributionCount;
             sharedDistributionId++)
         {
+         
           // Get coordinates and direction of the distribution function to be sent to another process.
           site_t* f_data_p = &sharedFLocationForEachProc[neigh_proc_p->Rank][sharedDistributionId * 4];
           site_t i = f_data_p[0];
           site_t j = f_data_p[1];
           site_t k = f_data_p[2];
           site_t l = f_data_p[3];
+           printf ("I. Site and index: %lu, %lu, %lu, %lu rank: %lu, %lu\n",i,j,k,l,localRank,neigh_proc_p->Rank);
           // Correct so that each process has the correct coordinates.
           if (neigh_proc_p->Rank < localRank)
           {
@@ -494,7 +556,14 @@ namespace hemelb
             k += latticeInfo.GetVector(l).z;
             l = latticeInfo.GetInverseIndex(l);
           }
+          printf ("II. Site and index: %lu, %lu, %lu, %lu rank: %lu, %lu\n",i,j,k,l,localRank,neigh_proc_p->Rank);
+       
           // Get the fluid site number of site that will send data to another process.
+              
+           if (i==12 && j==11&&k==24){
+              printf("WTF\n");
+               }
+
           util::Vector3D<site_t> location(i, j, k);
           site_t contigSiteId = GetContiguousSiteId(location);
           // Set f_id to the element in the send buffer that we put the updated
@@ -570,10 +639,19 @@ namespace hemelb
     site_t LatticeData::GetContiguousSiteId(util::Vector3D<site_t> location) const
     {
       // Block identifiers (i, j, k) of the site (site_i, site_j, site_k)
-      util::Vector3D<site_t> blockCoords, localSiteCoords;
+      util::Vector3D<site_t> blockCoords, localSiteCoords;      
       GetBlockAndLocalSiteCoords(location, blockCoords, localSiteCoords);
       // Pointer to the block
       const Block& lBlock = GetBlock(GetBlockIdFromBlockCoords(blockCoords));
+      if (comms.Rank() == 2 ) {
+    //  printf("Location x,y,z %ld %ld %ld\n",location.x,location.y,location.z);
+    //  printf("blockCoords %ld %ld %ld, localSiteCoords %ld %ld %ld\n",blockCoords.x,blockCoords.y,blockCoords.z,localSiteCoords.x,localSiteCoords.y,localSiteCoords.z);
+    //  printf("blockID %ld\n",GetBlockIdFromBlockCoords(blockCoords));
+    //  printf("localSiteID %ld\n",GetLocalSiteIdFromLocalSiteCoords(localSiteCoords));   
+     // printf("localContagiousIndex %ld\n",lBlock.GetLocalContiguousIndexForSite(GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)));
+      //printf("targetProc %ld\n",lBlock.GetProcessorRankForSite(GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)));
+      //printf("--------------------------------------------------------------------------------\n");
+      }
       // Return pointer to site_data[site]
       return lBlock.GetLocalContiguousIndexForSite(GetLocalSiteIdFromLocalSiteCoords(localSiteCoords));
     }
