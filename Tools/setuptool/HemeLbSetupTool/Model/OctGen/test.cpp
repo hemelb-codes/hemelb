@@ -2,7 +2,7 @@
 #include <cppunit/ui/text/TestRunner.h>
 
 #include "test_Oct.hpp"
-#include "test_BuildCGALPolygon.hpp"
+#include "test_MkCGALMesh.hpp"
 #include "test_TriangleSorter.hpp"
 #include "test_SurfaceVoxeliser.hpp"
 #include "test_VoxelClassifier.hpp"

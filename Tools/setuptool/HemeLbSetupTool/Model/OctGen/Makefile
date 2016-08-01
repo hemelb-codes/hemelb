@@ -9,7 +9,7 @@ vtk_libs = $(foreach vlib,$(vtk_needed_libs),-l$(vlib)-$(VTK_VERSION))
 
 LDLIBS = -L$(VTK_LIBRARY_DIR) -Wl,-rpath,$(VTK_LIBRARY_DIR) $(vtk_libs) -lCGAL -lcppunit
 
-objects = Vector.o Vector3D.o TriTree.o TriangleSorter.o BuildCGALPolygon.o SurfaceVoxeliser.o \
+objects = Vector.o Vector3D.o TriTree.o TriangleSorter.o MkCGALMesh.o SurfaceVoxeliser.o \
 	Neighbours.o VoxelClassifier.o test.o
 
 test : $(objects)

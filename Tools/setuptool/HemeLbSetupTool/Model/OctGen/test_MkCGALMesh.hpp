@@ -1,14 +1,14 @@
-#ifndef HEMELBSETUPTOOL_TEST_BUILDCGALPOLYGON_HPP
-#define HEMELBSETUPTOOL_TEST_BUILDCGALPOLYGON_HPP
+#ifndef HEMELBSETUPTOOL_TEST_MKCGALMESH_HPP
+#define HEMELBSETUPTOOL_TEST_MKCGALMESH_HPP
 
 #include <cppunit/extensions/HelperMacros.h>
 #include "TestResources/Meshes.hpp"
-#include "BuildCGALPolygon.h"
+#include "MkCGALMesh.h"
 
 //#include <iostream>
 
-class BuildCGALPolygonTests : public CppUnit::TestFixture {
-	  CPPUNIT_TEST_SUITE(BuildCGALPolygonTests);
+class MkCGALMeshTests : public CppUnit::TestFixture {
+	  CPPUNIT_TEST_SUITE(MkCGALMeshTests);
 	  CPPUNIT_TEST(Sphere);
 	  CPPUNIT_TEST_SUITE_END();
 public:
@@ -20,5 +20,5 @@ public:
 		  CPPUNIT_ASSERT(surface->is_valid());
 	  }
 };
-CPPUNIT_TEST_SUITE_REGISTRATION(BuildCGALPolygonTests);
+CPPUNIT_TEST_SUITE_REGISTRATION(MkCGALMeshTests);
 #endif

@@ -6,7 +6,7 @@
 // file, or any part thereof, other than as allowed by any agreement
 // specifically made by you with University College London.
 //
-#include "BuildCGALPolygon.h"
+#include "MkCGALMesh.h"
 #include <CGAL/Polyhedron_incremental_builder_3.h>
 #include <CGAL/Polyhedron_3.h>
 
