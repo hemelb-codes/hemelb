@@ -60,7 +60,7 @@ void SurfaceCreator::operator()(HalfedgeDS& hds) {
 
 }
 
-std::shared_ptr<Polyhedron> MkCGALMesh(const std::vector<Vector>& points,
+MeshPtr MkCGALMesh(const std::vector<Vector>& points,
 		const std::vector<Index>& triangles,
 		const std::vector<int>& labels) {
 	SurfaceCreator modifier(points, triangles, labels);

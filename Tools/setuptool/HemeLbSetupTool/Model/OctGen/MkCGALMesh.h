@@ -13,7 +13,7 @@
 #include "Vector.h"
 #include "CGALtypedef.h"
 
-std::shared_ptr<Polyhedron> MkCGALMesh(const std::vector<Vector>& ptsIn,
+MeshPtr MkCGALMesh(const std::vector<Vector>& ptsIn,
 		const std::vector<Index>& polysIn,
 		const std::vector<int>& labelsIn);
 

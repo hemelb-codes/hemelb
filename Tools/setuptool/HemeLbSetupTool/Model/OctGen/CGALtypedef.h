@@ -1,3 +1,4 @@
+#include <memory>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 //#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <CGAL/double.h>
@@ -37,6 +38,8 @@ typedef HalfedgeDS::Face_handle Face_handle;
 typedef Polyhedron::Facet_iterator Facet_iterator;
 typedef Polyhedron::Halfedge_iterator Halfedge_iterator;
 typedef Polyhedron::Halfedge_handle Halfedge_handle;
+
+typedef std::shared_ptr<Polyhedron> MeshPtr;
 
 //typedef std::pair<Object_and_primitive_id, double> Object_Primitive_and_distance;
 
