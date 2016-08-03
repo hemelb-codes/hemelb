@@ -194,13 +194,13 @@ if (CTEMPLATE_FOUND)
 	message("Ctemplate already installed, no need to download")
 else()
 	message("Ctemplate not installed, will build from source")
-	find_file(CTEMPLATE_TARBALL ctemplate-2.2.tar.gz
+	find_file(CTEMPLATE_TARBALL ctemplate-2.3.tar.gz
 		DOC "Path to download CTemplate (can be url http://)"
 		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 	)
 	if(NOT CTEMPLATE_TARBALL)
 		message("No ctemplate source found, will download.")
-		set(CTEMPLATE_TARBALL http://ctemplate.googlecode.com/files/ctemplate-2.2.tar.gz
+		set(CTEMPLATE_TARBALL http://github.com/OlafvdSpek/ctemplate/archive/ctemplate-2.3.tar.gz
 			CACHE STRING "Path to download CTemplate (can be local file://)" FORCE)
 	endif()
 	if (CTEMPLATE_PATCH_VACOPY)
