@@ -139,6 +139,7 @@ namespace hemelb
       uint32_t blockUncompressedBytes;
       uint32_t blockSiteCount;
 
+      // Read N:1 cores to block information from ranks file
       XDR xdrs;
       xdrstdio_create(&xdrs, rankFile, XDR_DECODE);
       uint32_t bla = 1;
@@ -152,7 +153,7 @@ namespace hemelb
         bla *= xdr_u_int(&xdrs, &blockSiteCount);
 
         if (blockRank == computeComms.Rank()) {
-             //   printf("Read decomposition information: Rank %u to read %u bytes of data (%u uncompressed) for block %u at byte %u of %s.\n",blockRank,blockCompressedBytes,blockUncompressedBytes,blockId,blockOffsetBytes,dataFilePath.c_str());
+             //   printf("Read decomposition information: Rank %u to read %u bytes of data (%u uncompressed) for block %u at byte %u of %s.\n",blockRank,blockCompressedBytes,blockUncompressedBytes,blockId,blockOffsetBytes,dataFilePath.c_str());	        
                 ReadInBlock(blockId,
                             blockOffsetBytes,
                             blockCompressedBytes,
@@ -170,6 +171,7 @@ namespace hemelb
       // Close the file - only the ranks participating in the topology need to read it again.
       file.Close();
 
+      // Read 1:1 core to site information from decomposition file
       xdrstdio_create(&xdrs, decompositionFile, XDR_DECODE);
       bla = 1;
       uint32_t siteIndex;
@@ -189,12 +191,11 @@ namespace hemelb
       uint32_t requiringRankCount;
       uint32_t requiringRank;
 
-  //    printf("Am i alive?\n");
-
+      // Read first entry containing number of sites
       bla *= xdr_u_int(&xdrs, &siteCount);    
 
       while(bla == 1) {
-	
+	// While not EOF read data sets
         bla *= xdr_u_int(&xdrs, &siteIndex);
         bla *= xdr_u_int(&xdrs, &siteRank);
         bla *= xdr_u_int(&xdrs, &siteX);
@@ -212,12 +213,13 @@ namespace hemelb
         bla *= xdr_u_int(&xdrs, &siteID);
 
         bla *= xdr_u_int(&xdrs, &requiringRankCount);
-    //    printf("Am i alive? %u %u\n",blockID,siteID);
 
+	
 	for (int i = 0; i < requiringRankCount;i++) {
 	   bla *= xdr_u_int(&xdrs, &requiringRank);
            if (requiringRank == computeComms.Rank()) {
-            geometry.Blocks[blockID].Sites[siteID].targetProcessor = siteRank;  
+		// If rank is aware of the site set "owning" core for site
+	        geometry.Blocks[blockID].Sites[siteID].targetProcessor = siteRank;  
 	   }
 	}        	
  
@@ -317,6 +319,7 @@ namespace hemelb
      */
     Geometry GeometryReader::ReadPreamble()
     {
+
       const unsigned preambleBytes = io::formats::geometry::PreambleLength;
       std::vector<char> preambleBuffer = ReadOnAllTasks(preambleBytes);
 
@@ -485,11 +488,20 @@ namespace hemelb
     void GeometryReader::ReadInBlock(
 	uint32_t blockId, uint32_t blockOffsetBytes, uint32_t blockCompressedBytes, uint32_t blockUncompressedBytes, uint32_t blockSiteCount, Geometry& geometry)
     {
-        std::vector<char> compressedBlockData;
+        // Allocate space for compressed block data
+	std::vector<char> compressedBlockData;
         compressedBlockData.resize(blockCompressedBytes);
+
+	// Read block data
         file.ReadAt(blockOffsetBytes, compressedBlockData);
+
+	// Decompress block data (calls zlib)
         std::vector<char> blockData = DecompressBlockData(compressedBlockData, blockUncompressedBytes);
+
+	// Read decompressed data as XDR formatted
         io::writers::xdr::XdrMemReader lReader(&blockData.front(), blockData.size());
+
+	// Parse data into HemeLB structures
         ParseBlock(geometry, blockId, blockSiteCount, lReader);
 
    }
