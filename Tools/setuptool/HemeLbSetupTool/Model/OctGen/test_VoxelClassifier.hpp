@@ -4,7 +4,6 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include "TestResources/Meshes.hpp"
 #include "TriangleSorter.h"
-#include "SurfaceVoxeliser.h"
 #include "VoxelClassifier.h"
 #include "Neighbours.h"
 
@@ -54,8 +53,6 @@ public:
 	    auto tri_level = 2;
 	    auto triv = SimpleMeshFactory::MkTrivial();
 	    auto tree = TrianglesToTreeSerial(levels, tri_level, triv->points, triv->triangles);
-	    SurfaceVoxeliser voxer(triv->points, triv->triangles, triv->normals);
-	    auto vox_tree = voxer(tree, tri_level);
 
 	    VoxelClassifier vc(triv->points, triv->triangles, triv->normals, triv->labels);
 //

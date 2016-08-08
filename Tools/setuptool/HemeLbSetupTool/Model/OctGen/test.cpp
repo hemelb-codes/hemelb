@@ -4,7 +4,6 @@
 #include "test_Oct.hpp"
 #include "test_MkCGALMesh.hpp"
 #include "test_TriangleSorter.hpp"
-#include "test_SurfaceVoxeliser.hpp"
 #include "test_VoxelClassifier.hpp"
 
 int main( int argc, char **argv)
