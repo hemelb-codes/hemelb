@@ -11,9 +11,9 @@
 
 #include <vector>
 #include "Vector.h"
-#include "CGALtypedef.h"
+#include "Cgal.h"
 
-MeshPtr MkCGALMesh(const std::vector<Vector>& ptsIn,
+CgalMeshPtr MkCgalMesh(const std::vector<Vector>& ptsIn,
 		const std::vector<Index>& polysIn,
 		const std::vector<int>& labelsIn);
 

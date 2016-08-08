@@ -6,18 +6,20 @@
 // file, or any part thereof, other than as allowed by any agreement
 // specifically made by you with University College London.
 //
-#include "MkCGALMesh.h"
+#include "MkCgalMesh.h"
 #include <CGAL/Polyhedron_incremental_builder_3.h>
 #include <CGAL/Polyhedron_3.h>
 
-class SurfaceCreator: public CGAL::Modifier_base<HalfedgeDS> {
+class SurfaceCreator: public CGAL::Modifier_base<CgalPolyhedron::HalfedgeDS> {
 public:
+	typedef CgalPolyhedron::HalfedgeDS HDS;
+
 	SurfaceCreator(const std::vector<Vector>& ptsIn,
 			const std::vector<Index>& polysIn,
 			const std::vector<int>& labelsIn) :
 				points(ptsIn), triangles(polysIn), labels(labelsIn) {
 		}
-	void operator()(HalfedgeDS& hds);
+	void operator()(HDS& hds);
 
 private:
 	const std::vector<Vector>& points;
@@ -26,17 +28,15 @@ private:
 
 };
 
-void SurfaceCreator::operator()(HalfedgeDS& hds) {
-	CGAL::Polyhedron_incremental_builder_3<HalfedgeDS> B(hds, true);
+void SurfaceCreator::operator()(HDS& hds) {
+	CGAL::Polyhedron_incremental_builder_3<HDS> B(hds, true);
 	B.begin_surface(points.size(), triangles.size(), 0);
 
-	typedef typename HalfedgeDS::Vertex Vertex;
+	typedef typename HDS::Vertex Vertex;
 	typedef typename Vertex::Point Point;
 
 	for (auto pt : points)
 		B.add_vertex(Point(pt.x, pt.y, pt.z));
-
-	Face_handle face;
 
 	for (size_t i = 0; i < triangles.size(); ++i) {
 		auto& tri = triangles[i];
@@ -60,11 +60,11 @@ void SurfaceCreator::operator()(HalfedgeDS& hds) {
 
 }
 
-MeshPtr MkCGALMesh(const std::vector<Vector>& points,
+CgalMeshPtr MkCgalMesh(const std::vector<Vector>& points,
 		const std::vector<Index>& triangles,
 		const std::vector<int>& labels) {
 	SurfaceCreator modifier(points, triangles, labels);
-	auto mesh = std::make_shared<Polyhedron>();
+	auto mesh = std::make_shared<CgalPolyhedron>();
 	mesh->delegate(modifier);
 	return mesh;
 }
