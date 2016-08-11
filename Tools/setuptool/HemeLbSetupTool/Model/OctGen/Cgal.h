@@ -1,12 +1,11 @@
+#ifndef HEMELBSETUPTOOL_CGAL_H
+#define HEMELBSETUPTOOL_CGAL_H
 #include <memory>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 //#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <CGAL/double.h>
 #include <CGAL/Random.h>
 #include <CGAL/Polyhedron_3.h>
-//#include <CGAL/AABB_tree.h>
-//#include <CGAL/AABB_traits.h>
-//#include <CGAL/AABB_polyhedron_triangle_primitive.h>
 //#include <CGAL/IO/Polyhedron_iostream.h>
 //#include <CGAL/IO/Verbose_ostream.h>
 //#include <CGAL/point_generators_3.h>
@@ -27,9 +26,6 @@ typedef Kernel::Ray_3 CgalRay;
 
 typedef CGAL::Polyhedron_3<Kernel,CGAL::Polyhedron_items_with_id_3> CgalPolyhedron;
 
-//typedef CGAL::AABB_polyhedron_triangle_primitive<Kernel,Polyhedron> Primitive;
-//typedef CGAL::AABB_traits<Kernel, Primitive> AABBTraits;
-//typedef CGAL::AABB_tree<AABBTraits> Tree;
 
 //typedef Tree::Object_and_primitive_id Object_and_primitive_id;
 //typedef Polyhedron::Face_handle CgalFacehandle;
@@ -43,3 +39,4 @@ typedef std::shared_ptr<CgalPolyhedron> CgalMeshPtr;
 
 //typedef std::pair<Object_and_primitive_id, double> Object_Primitive_and_distance;
 
+#endif

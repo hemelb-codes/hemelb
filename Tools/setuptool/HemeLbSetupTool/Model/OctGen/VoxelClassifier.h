@@ -2,35 +2,50 @@
 #ifndef HEMELBSETUPTOOL_VOXELCLASSIFIER_H
 #define HEMELBSETUPTOOL_VOXELCLASSIFIER_H
 
+#include <array>
+
 #include "Vector.h"
 #include "Oct.h"
 #include "TriTree.h"
+#include "Cgal.h"
+#include "CgalSearch.h"
 
-struct LinkBase {
-	typedef std::array<LinkBase*, 26> LinkArray;
-	LinkArray links;
+struct Cut {
+	Cut() : dist(std::numeric_limits<double>::infinity()), id(-1) {
+	}
+	double dist;
+	int id;
 };
-class Vox : public LinkBase {
-
-};
-class Cut : public LinkBase {
-
+struct Vox {
+	std::array<Cut, 26> closest_cut;
 };
 
-
-typedef Octree<Vox> VoxTree;
+typedef std::shared_ptr<Vox> VoxPtr;
+typedef Octree<VoxPtr> VoxTree;
 
 class VoxelClassifier {
 public:
-  VoxelClassifier(const std::vector<Vector>& points, const std::vector<Index>& triangles,
+  VoxelClassifier(const int node_size, const std::vector<Vector>& points, const std::vector<Index>& triangles,
 		  const std::vector<Vector>&normals, const std::vector<int>& labels);
+
+  // We maybe need a destructor because the order of destruction of mesh and searcher seems to matter?
+  //~VoxelClassifier();
   
-  double IntersectLinkWithTriangle(const Index& coord, const Index& disp, const int iTri) const;
-  VoxTree::NodePtr DoRegion(const TriTree::NodePtr node);
+  VoxTree::NodePtr ComputeIntersectionsForRegion(const TriTree::Node& node);
 private:
+  const static int NDIR = 13;
   const std::vector<Vector>& Points;
   const std::vector<Index>& Triangles;
   const std::vector<Vector>& Normals;
   const std::vector<int>& Labels;
+
+  CgalMeshPtr mesh;
+  std::unique_ptr<CgalSearchTree> searcher;
+
+  typedef std::pair<Index, Index> Seg;
+
+  std::vector<int> direction_indices;
+  std::vector<Index> directions;
+  std::vector<std::vector<Seg>> relative_segments;
 };
 #endif
