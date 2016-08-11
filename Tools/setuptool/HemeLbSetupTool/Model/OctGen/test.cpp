@@ -5,7 +5,7 @@
 #include "test_MkCgalMesh.hpp"
 #include "test_TriangleSorter.hpp"
 #include "test_SegmentFactory.hpp"
-#include "test_VoxelClassifier.hpp"
+#include "test_SurfaceVoxeliser.hpp"
 
 int main( int argc, char **argv)
 {

@@ -1,6 +1,6 @@
 // -*- mode: c++; -*-
-#ifndef HEMELBSETUPTOOL_VOXELCLASSIFIER_H
-#define HEMELBSETUPTOOL_VOXELCLASSIFIER_H
+#ifndef HEMELBSETUPTOOL_SURFACEVOXELISER_H
+#define HEMELBSETUPTOOL_SURFACEVOXELISER_H
 
 #include <array>
 
@@ -23,13 +23,13 @@ struct Vox {
 typedef std::shared_ptr<Vox> VoxPtr;
 typedef Octree<VoxPtr> VoxTree;
 
-class VoxelClassifier {
+class SurfaceVoxeliser {
 public:
-  VoxelClassifier(const int node_size, const std::vector<Vector>& points, const std::vector<Index>& triangles,
+  SurfaceVoxeliser(const int node_size, const std::vector<Vector>& points, const std::vector<Index>& triangles,
 		  const std::vector<Vector>&normals, const std::vector<int>& labels);
 
   // We maybe need a destructor because the order of destruction of mesh and searcher seems to matter?
-  //~VoxelClassifier();
+  //~SurfaceVoxeliser();
   
   VoxTree::NodePtr ComputeIntersectionsForRegion(const TriTree::Node& node);
 private:

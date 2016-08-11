@@ -1,10 +1,10 @@
 #include <cassert>
-#include "VoxelClassifier.h"
+#include "SurfaceVoxeliser.h"
 #include "MkCgalMesh.h"
 #include "Neighbours.h"
 #include "SegmentFactory.h"
 
-VoxelClassifier::VoxelClassifier(const int ns,
+SurfaceVoxeliser::SurfaceVoxeliser(const int ns,
 		const std::vector<Vector>& p,
 		const std::vector<Index>& t, const std::vector<Vector>&n,
 		const std::vector<int>& l) :
@@ -47,7 +47,7 @@ void AddIntersection(VoxTree::NodePtr ans,
 	}
 }
 
-VoxTree::NodePtr VoxelClassifier::ComputeIntersectionsForRegion(const TriTree::Node& node) {
+VoxTree::NodePtr SurfaceVoxeliser::ComputeIntersectionsForRegion(const TriTree::Node& node) {
 	// We're going to work on lines that span the whole node,
 	// starting from and ending at the halo voxels.
 	typedef boost::optional< CgalSearchTree::Intersection_and_primitive_id<CgalSegment>::Type > Segment_intersection;
