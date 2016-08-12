@@ -31,7 +31,9 @@ public:
   // We maybe need a destructor because the order of destruction of mesh and searcher seems to matter?
   //~SurfaceVoxeliser();
   
-  VoxTree::NodePtr ComputeIntersectionsForRegion(const TriTree::Node& node);
+  VoxTree::NodePtr ComputeIntersectionsForRegion(TriTree::ConstNodePtr node) const;
+
+  VoxTree operator()(const TriTree& inTree, TriTree::Int tri_level);
 private:
   const static int NDIR = 13;
   const std::vector<Vector>& Points;

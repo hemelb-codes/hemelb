@@ -83,11 +83,28 @@ auto Octree<T>::Branch::GetCreate(Int i, Int j, Int k, Int l) -> NodePtr {
   // OK
   return get_create_internal(i, j, k, l);
 }
+template<class T>
+void Octree<T>::Branch::Set(Int i, Int j, Int k, Int l, NodePtr n) {
+	Int pl = l + 1;
+	Int mask = ~(1 << l);
+	Int pi = i & mask;
+	Int pj = j & mask;
+	Int pk = k & mask;
+
+	auto parent = std::dynamic_pointer_cast<Branch>(GetCreate(pi, pj, pk, pl));
+	if (!parent)
+		throw std::out_of_range("parent of request index not a branch node");
+
+	Int li = (i >> l) & 1;
+	Int lj = (j >> l) & 1;
+	Int lk = (k >> l) & 1;
+	parent->children[li][lj][lk] = n;
+}
 
 template<class T>
 void Octree<T>::Branch::Accept(Visitor& v) {
-  v.Arrive(*this);
-  if (v.ShouldDescend(*this))
+  v.Arrive(this->shared_from_this());
+  if (v.ShouldDescend(this->shared_from_this()))
     for (auto i: {0, 1})
       for (auto j: {0, 1})
 	for (auto k: {0, 1}) {
@@ -96,7 +113,7 @@ void Octree<T>::Branch::Accept(Visitor& v) {
 	    child->Accept(v);
 	}
   
-  v.Depart(*this);
+  v.Depart(this->shared_from_this());
 }
 
 template<class T>
@@ -161,9 +178,14 @@ auto Octree<T>::Leaf::GetCreate(Int i, Int j, Int k, Int l) -> NodePtr {
   throw std::out_of_range("trying to get a child of a leaf node");
 }
 template<class T>
+void Octree<T>::Leaf::Set(Int i, Int j, Int k, Int l, NodePtr n) {
+	throw std::out_of_range("trying to set a child of a leaf node");
+}
+
+template<class T>
 void Octree<T>::Leaf::Accept(Visitor& v) {
-  v.Arrive(*this);
-  v.Depart(*this);
+  v.Arrive(this->shared_from_this());
+  v.Depart(this->shared_from_this());
 }
 
 template<class T>
@@ -185,6 +207,10 @@ auto Octree<T>::Get(Int i, Int j, Int k, Int l) -> NodePtr {
 template<class T>
 auto Octree<T>::GetCreate(Int i, Int j, Int k, Int l) -> NodePtr {
   return root->GetCreate(i,j,k,l);
+}
+template<class T>
+void Octree<T>::Set(Int i, Int j, Int k, Int l, NodePtr n) {
+  root->Set(i,j,k,l, n);
 }
 
 template<class T>

@@ -85,10 +85,10 @@ TriTree& TreeSummer::GetTree() {
 }
 
 void TreeSummer::Add(TriTree& source) {
-  source.IterDepthFirst(tri_level, tri_level, [&](TriTree::Node& src) {
-      auto dest = tree.GetCreate(src.X(), src.Y(), src.Z(), tri_level);
+  source.IterDepthFirst(tri_level, tri_level, [&](TriTree::NodePtr src) {
+      auto dest = tree.GetCreate(src->X(), src->Y(), src->Z(), tri_level);
       dest->Data().insert(boost::container::ordered_unique_range_t(),
-			  src.Data().begin(), src.Data().end());
+			  src->Data().begin(), src->Data().end());
     });
   
 }

@@ -34,11 +34,11 @@ public:
 
     CPPUNIT_ASSERT(tree.Level() == levels);
     TriTree::Int i = tri_level;
-    tree.IterDepthFirst([&i](TriTree::Node& node) mutable {
-	CPPUNIT_ASSERT(node.X() == 0);
-	CPPUNIT_ASSERT(node.Y() == 0);
-	CPPUNIT_ASSERT(node.Z() == 0);
-	CPPUNIT_ASSERT(node.Level() == i);
+    tree.IterDepthFirst([&i](TriTree::NodePtr node) mutable {
+	CPPUNIT_ASSERT(node->X() == 0);
+	CPPUNIT_ASSERT(node->Y() == 0);
+	CPPUNIT_ASSERT(node->Z() == 0);
+	CPPUNIT_ASSERT(node->Level() == i);
 	++i;
       });
     
@@ -62,11 +62,11 @@ public:
     
     CPPUNIT_ASSERT(tree.Level() == levels);
     TriTree::Int i = tri_level;
-    tree.IterDepthFirst([&i](TriTree::Node& node) mutable {
-	CPPUNIT_ASSERT(node.X() == 0);
-	CPPUNIT_ASSERT(node.Y() == 0);
-	CPPUNIT_ASSERT(node.Z() == 0);
-	CPPUNIT_ASSERT(node.Level() == i);
+    tree.IterDepthFirst([&i](TriTree::NodePtr node) mutable {
+	CPPUNIT_ASSERT(node->X() == 0);
+	CPPUNIT_ASSERT(node->Y() == 0);
+	CPPUNIT_ASSERT(node->Z() == 0);
+	CPPUNIT_ASSERT(node->Level() == i);
 	++i;
       });
     
@@ -101,9 +101,9 @@ public:
 
     std::set<int> seen_tris;
 
-    tree.IterDepthFirst(tri_level, tri_level, [&](TriTree::Node& node) {
-	const auto& triIds = node.Data();
-	const Vector offset(node.X(), node.Y(), node.Z());
+    tree.IterDepthFirst(tri_level, tri_level, [&](TriTree::NodePtr node) {
+	const auto& triIds = node->Data();
+	const Vector offset(node->X(), node->Y(), node->Z());
 	auto node_min = offset - 1;
 	auto node_max = offset + (1 << tri_level) + 1;
 	
@@ -132,9 +132,9 @@ public:
   bool trees_with_triIds_equal(TriTree& t1, TriTree& t2, TriTree::Int tri_level) {
     bool eq = true;
     try {
-      t1.IterDepthFirst(tri_level, tri_level, [&](TriTree::Node& n1) {
-	  auto n2 = t2.Get(n1.X(), n1.Y(), n1.Z(), n1.Level());
-	  if (n1.Data() != n2->Data())
+      t1.IterDepthFirst(tri_level, tri_level, [&](TriTree::NodePtr n1) {
+	  auto n2 = t2.Get(n1->X(), n1->Y(), n1->Z(), n1->Level());
+	  if (n1->Data() != n2->Data())
 	    throw 0;
 	});
     } catch(int& i) {

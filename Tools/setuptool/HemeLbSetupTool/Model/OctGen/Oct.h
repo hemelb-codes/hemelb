@@ -12,12 +12,14 @@ public:
     
   class Node;
   typedef std::shared_ptr<Node> NodePtr;
+  typedef std::shared_ptr<const Node> ConstNodePtr;
+
   class Branch;
   class Leaf;
   
   class Visitor;
   
-  class Node {
+  class Node : public std::enable_shared_from_this<Node> {
   public:
     Node(Int i, Int j, Int k, Int l);
     T& Data();
@@ -34,6 +36,8 @@ public:
     virtual NodePtr GetCreate(Int i, Int j, Int k, Int l) = 0;
     virtual void Accept(Visitor& v) = 0;
     
+    virtual void Set(Int i, Int j, Int k, Int l, NodePtr n) = 0;
+
     template<class FuncT>
     void IterDepthFirst(Int bot, Int top, FuncT f) {
       LevelVisitor<FuncT> v(bot, top, f);
@@ -64,6 +68,8 @@ public:
     virtual NodePtr GetCreate(Int i, Int j, Int k, Int l);
     
     virtual void Accept(Visitor& v);
+    virtual void Set(Int i, Int j, Int k, Int l, NodePtr n);
+
   private:
     NodePtr get_create_internal(Int i, Int j, Int k, Int l);
     NodePtr get_nocreate_internal(Int i, Int j, Int k, Int l);
@@ -78,13 +84,15 @@ public:
     virtual NodePtr Get(Int i, Int j, Int k, Int l);
     virtual NodePtr GetCreate(Int i, Int j, Int k, Int l);
     virtual void Accept(Visitor& v);
+    virtual void Set(Int i, Int j, Int k, Int l, NodePtr n);
+
   };
 
   class Visitor {
   public:
-    virtual void Arrive(Node& n) = 0;
-    virtual void Depart(Node& n) = 0;
-    virtual bool ShouldDescend(Node& n) {
+    virtual void Arrive(NodePtr n) = 0;
+    virtual void Depart(NodePtr n) = 0;
+    virtual bool ShouldDescend(NodePtr n) {
       return true;
     }
   };
@@ -96,13 +104,13 @@ public:
     Int highest;
   public:
     LevelVisitor(Int bot, Int top, FuncT func) : f(func), lowest(bot), highest(top) {}
-    virtual void Arrive(Node& node) {}
-    virtual void Depart(Node& node) {
-      if (node.Level() <= highest)
+    virtual void Arrive(NodePtr node) {}
+    virtual void Depart(NodePtr node) {
+      if (node->Level() <= highest)
 	f(node);
     }
-    virtual bool ShouldDescend(Node& n) {
-      return lowest < n.Level();
+    virtual bool ShouldDescend(NodePtr n) {
+      return lowest < n->Level();
     }
     
   };
@@ -119,6 +127,10 @@ public:
   void IterDepthFirst(Int bot, FuncT f) {
     IterDepthFirst(bot, level, f);
   }
+  template<class FuncT>
+  void IterDepthFirst(Int bot, Int top, FuncT f) const {
+    root->IterDepthFirst(bot, top, f);
+  }
   
   Octree(Int level_);
   //T& GetValue(Int level, Int i, Int j, Int k);
@@ -128,6 +140,7 @@ public:
   // Get a node with creating
   NodePtr GetCreate(Int i, Int j, Int k, Int l);
 
+  void Set(Int i, Int j, Int k, Int l, NodePtr n);
   Int Level() const {
     return level;
   }

@@ -69,21 +69,21 @@ public:
 				      {0,0,0}};
     // iterate down through all nodes
     int i = 0;
-    tree->IterDepthFirst([&i, &expected_nodes](Tree::Node& node) mutable {
+    tree->IterDepthFirst([&i, &expected_nodes](Tree::NodePtr node) mutable {
 	
-	CPPUNIT_ASSERT(node.Level() == i);
-	CPPUNIT_ASSERT(node.X() == expected_nodes[i][0]);
-	CPPUNIT_ASSERT(node.Y() == expected_nodes[i][1]);
-	CPPUNIT_ASSERT(node.Z() == expected_nodes[i][2]);
+	CPPUNIT_ASSERT(node->Level() == i);
+	CPPUNIT_ASSERT(node->X() == expected_nodes[i][0]);
+	CPPUNIT_ASSERT(node->Y() == expected_nodes[i][1]);
+	CPPUNIT_ASSERT(node->Z() == expected_nodes[i][2]);
     	++i;
 	
       });
     CPPUNIT_ASSERT(i == 4);
 
     i = 1;
-    tree->IterDepthFirst(1, [&i](Tree::Node& node) mutable {
+    tree->IterDepthFirst(1, [&i](Tree::NodePtr node) mutable {
 	
-	CPPUNIT_ASSERT(node.Level() == i);
+	CPPUNIT_ASSERT(node->Level() == i);
     	++i;
 	
       });

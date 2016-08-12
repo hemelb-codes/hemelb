@@ -1,8 +1,11 @@
 #include <cassert>
+#include <deque>
+
 #include "SurfaceVoxeliser.h"
 #include "MkCgalMesh.h"
 #include "Neighbours.h"
 #include "SegmentFactory.h"
+#include "ParallelApply.h"
 
 SurfaceVoxeliser::SurfaceVoxeliser(const int ns,
 		const std::vector<Vector>& p,
@@ -47,13 +50,12 @@ void AddIntersection(VoxTree::NodePtr ans,
 	}
 }
 
-VoxTree::NodePtr SurfaceVoxeliser::ComputeIntersectionsForRegion(const TriTree::Node& node) {
+VoxTree::NodePtr SurfaceVoxeliser::ComputeIntersectionsForRegion(TriTree::ConstNodePtr node) const {
 	// We're going to work on lines that span the whole node,
 	// starting from and ending at the halo voxels.
 	typedef boost::optional< CgalSearchTree::Intersection_and_primitive_id<CgalSegment>::Type > Segment_intersection;
-
-	VoxTree::NodePtr ans(new VoxTree::Branch(node.X(), node.Y(), node.Z(), node.Level()));
-	Index node_origin(node.X(), node.Y(), node.Z());
+	VoxTree::NodePtr ans(new VoxTree::Branch(node->X(), node->Y(), node->Z(), node->Level()));
+	Index node_origin(node->X(), node->Y(), node->Z());
 
 	for (int i = 0; i < NDIR; ++i) {
 		Index direction = directions[i];
@@ -87,4 +89,31 @@ VoxTree::NodePtr SurfaceVoxeliser::ComputeIntersectionsForRegion(const TriTree::
 		}
 	}
 	return ans;
+}
+
+VoxTree SurfaceVoxeliser::operator()(const TriTree& inTree, TriTree::Int tri_level) {
+	typedef ParallelApply<VoxTree::NodePtr, TriTree::ConstNodePtr> Pool;
+
+	Pool pool([this](TriTree::ConstNodePtr in) {
+		return ComputeIntersectionsForRegion(in);
+	});
+
+	std::deque<Pool::Future> result_queue;
+	inTree.IterDepthFirst(tri_level, tri_level,
+			[&](TriTree::ConstNodePtr node) {
+		result_queue.emplace_back(pool(node));
+	});
+	pool.Done();
+
+	VoxTree outTree(inTree.Level());
+
+	while (!result_queue.empty()) {
+		auto& fut = result_queue.front();
+
+		auto edge_node = fut.get();
+		outTree.Set(edge_node->X(), edge_node->Y(), edge_node->Z(), tri_level,
+				edge_node);
+		result_queue.pop_front();
+	}
+	return outTree;
 }

@@ -10,73 +10,69 @@
 #include "range.hpp"
 #include "enumerate.hpp"
 
-class SurfaceVoxeliserTests : public CppUnit::TestFixture {
-  CPPUNIT_TEST_SUITE(SurfaceVoxeliserTests);
-  
-  CPPUNIT_TEST(NeighbourInverses);
-  CPPUNIT_TEST(Intersections);
-  CPPUNIT_TEST(Trivial);
-  
-  CPPUNIT_TEST_SUITE_END();
-  
+class SurfaceVoxeliserTests: public CppUnit::TestFixture {
+	CPPUNIT_TEST_SUITE (SurfaceVoxeliserTests);
+
+	CPPUNIT_TEST (NeighbourInverses);
+	CPPUNIT_TEST (Trivial);
+	CPPUNIT_TEST (Sphere);
+
+	CPPUNIT_TEST_SUITE_END();
+
 public:
-  void NeighbourInverses() {
-    auto& vectors = Neighbours::GetDisplacements();
-    auto& opps = Neighbours::GetOpposites();
-    CPPUNIT_ASSERT(vectors.size() == 26);
-    CPPUNIT_ASSERT(opps.size() == 26);
-    for (auto i: range(26)) {
-      CPPUNIT_ASSERT(vectors[i] + vectors[opps[i]] == Index::Zero());
-    }
-  }
-  
-  void Intersections() {
-    auto triv = SimpleMeshFactory::MkTrivial();
-    SurfaceVoxeliser voxer(4, triv->points, triv->triangles, triv->normals, triv->labels);
+	void NeighbourInverses() {
+		auto& vectors = Neighbours::GetDisplacements();
+		auto& opps = Neighbours::GetOpposites();
+		CPPUNIT_ASSERT(vectors.size() == 26);
+		CPPUNIT_ASSERT(opps.size() == 26);
+		for (auto i : range(26)) {
+			CPPUNIT_ASSERT(vectors[i] + vectors[opps[i]] == Index::Zero());
+		}
+	}
 
-//    double t;
-//    // Well away from the square so def no intersection
-//    t = voxer.IntersectLinkWithTriangle({2,3,4}, {1,0,0}, 0);
-//    CPPUNIT_ASSERT(t > 1);
-//
-//    t = voxer.IntersectLinkWithTriangle({1,2,2}, {1,0,0}, 0);
-//    CPPUNIT_ASSERT(t > 1);
-//    t = voxer.IntersectLinkWithTriangle({1,2,2}, {1,0,0}, 1);
-//    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.2, t, 1e-6);
-//    t = vc.IntersectLinkWithTriangle({2,2,2}, {-1,0,0}, 1);
-//    CPPUNIT_ASSERT_DOUBLES_EQUAL(0.8, t, 1e-6);
-  }
+	void Trivial() {
+		// 16 cube
+		auto levels = 4;
+		auto tri_level = 2;
+		auto triv = SimpleMeshFactory::MkTrivial();
+		auto tree = TrianglesToTreeSerial(levels, tri_level, triv->points,
+				triv->triangles);
 
-  void Trivial() {
-	    // 16 cube
-	    auto levels = 4;
-	    auto tri_level = 2;
-	    auto triv = SimpleMeshFactory::MkTrivial();
-	    auto tree = TrianglesToTreeSerial(levels, tri_level, triv->points, triv->triangles);
+		SurfaceVoxeliser voxer(1 << tri_level, triv->points, triv->triangles, triv->normals,
+				triv->labels);
+		auto tri_node = tree.Get(0,0,0, tri_level);
+		auto edge_node = voxer.ComputeIntersectionsForRegion(tri_node);
 
-	    SurfaceVoxeliser voxer(4, triv->points, triv->triangles, triv->normals, triv->labels);
-	    VoxTree edge_tree(levels);
-	    std::list<VoxTree::NodePtr> edges;
-	    auto append = std::back_inserter(edges);
-	    tree.IterDepthFirst(tri_level, tri_level,
-	    		[&voxer, &append](TriTree::Node& node) mutable {
-	    	append = voxer.ComputeIntersectionsForRegion(node);
-	    });
-//
-//    vc = SurfaceVoxeliser(points, triangles, normals, labels)
-//    new_tree = vc(tree, tri_level)
-//
-//    for voxel in new_tree.IterDepthFirst(0,0):
-//        # Only nodes with x = 2 should exist
-//        assert voxel.offset[0] == 2
-//        # The cut distances should be ~0.8
-//        cut_mask = voxel.cut_tri >= 0
-//        real_cd = voxel.cut_dist[cut_mask]
-//        assert np.all((real_cd - 0.8)**2 < 1e-6)
-  }
+		auto dirs = Neighbours::GetDisplacements();
+		edge_node->IterDepthFirst(0, 0, [&](VoxTree::NodePtr node) {
+			// the 2 triangles are at x = 1.2
+			// with y = {1.2, 2.2}
+			//  and z = {1.2, 2.2}
+				CPPUNIT_ASSERT(node->X() == 1 || node->X() == 2);
+				auto cuts = node->Data()->closest_cut;
+				for (int i = 0; i<26; ++i)
+				if (cuts[i].id >= 0) {
+					double expected = dirs[i].x > 0 ? 0.2 : 0.8;
+					CPPUNIT_ASSERT_DOUBLES_EQUAL(expected, cuts[i].dist, 1e-9);
+				}
+			});
+	}
 
+	void Sphere() {
+		TriTree::Int levels = 5;
+		TriTree::Int tri_level = 3;
+
+		auto sphere = SimpleMeshFactory::MkSphere();
+		auto tree = TrianglesToTreeSerial(levels, tri_level, sphere->points,
+				sphere->triangles);
+
+		SurfaceVoxeliser voxer(1 << tri_level, sphere->points, sphere->triangles,
+				sphere->normals, sphere->labels);
+		auto edge_tree = voxer(tree, tri_level);
+		// Assert things...
+	}
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(SurfaceVoxeliserTests);
+CPPUNIT_TEST_SUITE_REGISTRATION (SurfaceVoxeliserTests);
 
 #endif
