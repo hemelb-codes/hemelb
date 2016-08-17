@@ -3,6 +3,7 @@
 #define HEMELBSETUPTOOL_SURFACEVOXELISER_H
 
 #include <array>
+#include <memory>
 
 #include "Vector.h"
 #include "Oct.h"
@@ -33,7 +34,7 @@ public:
   
   VoxTree::NodePtr ComputeIntersectionsForRegion(TriTree::ConstNodePtr node) const;
 
-  VoxTree operator()(const TriTree& inTree, TriTree::Int tri_level);
+  VoxTree operator()(const TriTree& inTree, const TriTree::Int tri_level);
 private:
   const static int NDIR = 13;
   const std::vector<Vector>& Points;

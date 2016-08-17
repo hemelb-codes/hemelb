@@ -11,10 +11,13 @@ template <class ReturnType, class ArgType>
 class ParallelApply {
 public:
 	typedef std::function<ReturnType(ArgType)> FunctionType;
-
 	typedef std::future<ReturnType> Future;
-	ParallelApply(FunctionType f) :func(f), all_work_queued(false) {
-		int np = std::thread::hardware_concurrency();
+
+	ParallelApply(FunctionType f, int NT = 0, int MQ = 0) :func(f),
+			nThreads(NT ? NT : std::thread::hardware_concurrency()),
+			maxQueue(MQ ? MQ : 4 * NT),
+			all_work_queued(false) {
+		int np = nThreads;
 		workers.reserve(np);
 		while (np-->0)
 			AddWorker();
@@ -26,6 +29,10 @@ public:
 		QueueItem qi = std::make_pair(Promise(), arg);
 		auto future_ans = qi.first.get_future();
 		// enqueue
+		while (queue.size() > maxQueue) {
+			// sleep
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		}
 		LockT lock(queue_access);
 		queue.push_back(std::move(qi));
 		queue_flag.notify_one();
@@ -50,6 +57,8 @@ private:
 	typedef std::unique_lock<std::mutex> LockT;
 
 	FunctionType func;
+	int nThreads;
+	int maxQueue;
 	std::vector<std::thread> workers;
 
 	std::atomic<bool> all_work_queued;

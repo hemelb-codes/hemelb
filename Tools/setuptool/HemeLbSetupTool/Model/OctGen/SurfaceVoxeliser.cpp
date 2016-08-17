@@ -91,12 +91,12 @@ VoxTree::NodePtr SurfaceVoxeliser::ComputeIntersectionsForRegion(TriTree::ConstN
 	return ans;
 }
 
-VoxTree SurfaceVoxeliser::operator()(const TriTree& inTree, TriTree::Int tri_level) {
+VoxTree SurfaceVoxeliser::operator()(const TriTree& inTree, const TriTree::Int tri_level) {
 	typedef ParallelApply<VoxTree::NodePtr, TriTree::ConstNodePtr> Pool;
 
 	Pool pool([this](TriTree::ConstNodePtr in) {
 		return ComputeIntersectionsForRegion(in);
-	});
+	}, 0, std::numeric_limits<int>::max());
 
 	std::deque<Pool::Future> result_queue;
 	inTree.IterDepthFirst(tri_level, tri_level,
