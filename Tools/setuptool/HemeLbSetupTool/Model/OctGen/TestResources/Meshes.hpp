@@ -8,6 +8,8 @@
 #include <vtkCellArray.h>
 #include <vtkSmartPointer.h>
 
+#include <cppunit/extensions/HelperMacros.h>
+
 #include "../Vector.h"
 #include "helpers.h"
 

@@ -8,7 +8,6 @@ const std::string GetResource(const Types&... paths);
 template<>
 const std::string GetResource() {
   if (const char* env_dir = std::getenv("TESTRESOURCES")) {
-    std::cout << std::endl << env_dir << std::endl;
     return std::string(env_dir);
   } else {
     throw std::runtime_error("Must set TESTRESOURCES env var");
