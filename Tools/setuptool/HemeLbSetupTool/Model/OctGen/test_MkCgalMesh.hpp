@@ -14,7 +14,7 @@ class MkCgalMeshTests : public CppUnit::TestFixture {
 public:
 	  void Sphere() {
 		  auto sphere = SimpleMeshFactory::MkSphere();
-		  auto surface = MkCgalMesh(sphere->points, sphere->triangles, sphere->labels);
+		  auto surface = MkCgalMesh(sphere->points, sphere->triangles);
 		  CPPUNIT_ASSERT(surface->is_closed());
 		  CPPUNIT_ASSERT(surface->is_pure_triangle());
 		  CPPUNIT_ASSERT(surface->is_valid());

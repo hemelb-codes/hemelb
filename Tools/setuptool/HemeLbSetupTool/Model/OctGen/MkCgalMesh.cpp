@@ -15,17 +15,14 @@ public:
 	typedef CgalPolyhedron::HalfedgeDS HDS;
 
 	SurfaceCreator(const std::vector<Vector>& ptsIn,
-			const std::vector<Index>& polysIn,
-			const std::vector<int>& labelsIn) :
-				points(ptsIn), triangles(polysIn), labels(labelsIn) {
+			const std::vector<Index>& polysIn) :
+				points(ptsIn), triangles(polysIn) {
 		}
 	void operator()(HDS& hds);
 
 private:
 	const std::vector<Vector>& points;
 	const std::vector<Index>& triangles;
-	const std::vector<int>& labels;
-
 };
 
 void SurfaceCreator::operator()(HDS& hds) {
@@ -40,16 +37,15 @@ void SurfaceCreator::operator()(HDS& hds) {
 
 	for (size_t i = 0; i < triangles.size(); ++i) {
 		auto& tri = triangles[i];
+		// VTK polygons can contain lines where two vertexes are identical. Forget these
 		if (tri[0] != tri[1] & tri[0] != tri[2] & tri[1] != tri[2]) {
-			//VTK polygons can contain lines where two vertexes are identical. Forget these
 			auto face = B.begin_facet();
 			B.add_vertex_to_facet(tri[0]);
 			B.add_vertex_to_facet(tri[1]);
 			B.add_vertex_to_facet(tri[2]);
 			B.end_facet();
-			// The face id is size_t i.e. unsigned so we shift this to
-			// positive. 1 is wall. 2,3 ... are the inlets and outlets.
-			face->id() = labels[i] + 2;
+			// Set the id to the original cell's id.
+			face->id() = i;
 		} else {
 			std::cout << "Eliminated degenerate vertex: " << tri << std::endl;
 		}
@@ -61,9 +57,8 @@ void SurfaceCreator::operator()(HDS& hds) {
 }
 
 CgalMeshPtr MkCgalMesh(const std::vector<Vector>& points,
-		const std::vector<Index>& triangles,
-		const std::vector<int>& labels) {
-	SurfaceCreator modifier(points, triangles, labels);
+		const std::vector<Index>& triangles) {
+	SurfaceCreator modifier(points, triangles);
 	auto mesh = std::make_shared<CgalPolyhedron>();
 	mesh->delegate(modifier);
 	return mesh;

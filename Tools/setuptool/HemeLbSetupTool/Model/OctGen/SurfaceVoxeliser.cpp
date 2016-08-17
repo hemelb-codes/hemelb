@@ -12,7 +12,7 @@ SurfaceVoxeliser::SurfaceVoxeliser(const int ns,
 		const std::vector<Index>& t, const std::vector<Vector>&n,
 		const std::vector<int>& l) :
 		Points(p), Triangles(t), Normals(n), Labels(l),
-		mesh(MkCgalMesh(p, t, l)),
+		mesh(MkCgalMesh(p, t)),
 		searcher(new CgalSearchTree(faces(*mesh).first, faces(*mesh).second, *mesh))
 {
 	SegmentFactory cube(ns);
