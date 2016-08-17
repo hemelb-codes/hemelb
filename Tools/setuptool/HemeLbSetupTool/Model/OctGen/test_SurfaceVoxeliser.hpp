@@ -62,6 +62,9 @@ public:
 		TriTree::Int levels = 5;
 		TriTree::Int tri_level = 3;
 
+		Vector sphere_centre(10.5);
+		double sphere_radius = 10.0;
+
 		auto sphere = SimpleMeshFactory::MkSphere();
 		auto tree = TrianglesToTreeSerial(levels, tri_level, sphere->points,
 				sphere->triangles);
@@ -70,6 +73,76 @@ public:
 				sphere->normals, sphere->labels);
 		auto edge_tree = voxer(tree, tri_level);
 		// Assert things...
+		edge_tree.IterDepthFirst([&](VoxTree::NodePtr node) {
+			// Has a valid data pointer iff a leaf node
+			if (node->Level() == 0) {
+				CPPUNIT_ASSERT(node->Data());
+			} else {
+				CPPUNIT_ASSERT(!node->Data());
+				// No further tests for non-leaf
+				return;
+			}
+			Index coord(node->X(), node->Y(), node->Z());
+			const auto& cuts = node->Data()->closest_cut;
+			int nCuts = 0;
+			for (auto& c: cuts)
+				nCuts += c.dist < 1.0 ? 1 : 0;
+
+			// All voxels must have 1 or more cuts
+			CPPUNIT_ASSERT(nCuts > 0);
+		});
+
+		// 24, 17, 20 is an arbitrary exterior point near the surface
+		auto vox = edge_tree.Get(24, 17, 20, 0);
+		CPPUNIT_ASSERT(vox);
+		Index coord(24, 17, 20);
+
+		const auto& cuts = vox->Data()->closest_cut;
+		auto directions = Neighbours::GetDisplacements();
+		for (auto i: range(26)) {
+			const Index& dir = directions[i];
+			switch (dir.x) {
+			case 1:
+				// All +x vectors must have no cut
+				CPPUNIT_ASSERT(cuts[i].dist > 1.0);
+				break;
+			case 0:
+				// x = our point, O = outside, I = inside
+				// OOO
+				// OxO
+				// IIO
+				if (dir.z == -1 && (dir.y != 1)) {
+					// only these two inside
+					CPPUNIT_ASSERT(cuts[i].dist < 1.0);
+					CPPUNIT_ASSERT(cuts[i].id == 18);
+				} else {
+					// other 6 outside
+					CPPUNIT_ASSERT(cuts[i].dist > 1.0);
+				}
+				break;
+			case -1:
+				// x = our point, O = outside, I = inside
+				// I*O
+				// IxI
+				// III
+				// * == inside but crossing tri 19
+				if (dir.y ==1 && dir.z ==1) {
+					// outside
+					CPPUNIT_ASSERT(cuts[i].dist > 1.0);
+				} else {
+					// inside
+					CPPUNIT_ASSERT(cuts[i].dist < 1.0);
+					if (dir == Index(-1, 0, 1)) {
+						CPPUNIT_ASSERT(cuts[i].id == 19);
+					} else {
+						CPPUNIT_ASSERT(cuts[i].id == 18);
+					}
+				}
+				break;
+			default:
+				CPPUNIT_FAIL("Invalid direction");
+			}
+		}
 	}
 };
 
