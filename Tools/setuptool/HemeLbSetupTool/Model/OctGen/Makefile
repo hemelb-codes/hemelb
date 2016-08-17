@@ -9,11 +9,16 @@ vtk_libs = $(foreach vlib,$(vtk_needed_libs),-l$(vlib)-$(VTK_VERSION))
 
 LDLIBS = -L$(VTK_LIBRARY_DIR) -Wl,-rpath,$(VTK_LIBRARY_DIR) $(vtk_libs) -lCGAL -lgmp -lcppunit -lboost_system
 
-objects = Vector.o Vector3D.o TriTree.o TriangleSorter.o MkCgalMesh.o \
-	Neighbours.o SegmentFactory.o SurfaceVoxeliser.o test.o
+lib_objects = Vector.o Vector3D.o TriTree.o TriangleSorter.o MkCgalMesh.o \
+	Neighbours.o SegmentFactory.o SurfaceVoxeliser.o
 
-test : $(objects)
-	$(CXX) $(LDLIBS) $(objects) -o $@
+all : test voxer_bench
+
+test : $(lib_objects) test.o
+	$(CXX) $(LDLIBS) $^ -o $@
+
+voxer_bench : $(lib_objects) voxer_bench.o
+	$(CXX) $(LDLIBS) $^ -o $@
 
 test.o : test.cpp test_*.hpp
 
@@ -26,4 +31,4 @@ TriangleSorter.o : TriangleSorter.cpp
 
 .PHONY : clean
 clean :
-	-rm test $(objects)
+	-rm test test.o voxer_bench voxer_bench.o $(lib_objects)
