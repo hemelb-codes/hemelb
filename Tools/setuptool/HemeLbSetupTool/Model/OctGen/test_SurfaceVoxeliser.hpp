@@ -157,9 +157,10 @@ public:
 		fluid_tree.IterDepthFirst([](FluidTree::ConstNodePtr node) {
 			// Has a valid data pointer iff a leaf node
 			if (node->Level() == 0) {
-				CPPUNIT_ASSERT(node->Data());
+				CPPUNIT_ASSERT(node->Data().leaf);
+				CPPUNIT_ASSERT_EQUAL(1U, node->Data().count);
 			} else {
-				CPPUNIT_ASSERT(!node->Data());
+				CPPUNIT_ASSERT(!node->Data().leaf);
 				// No further tests for non-leaf
 				return;
 			}

@@ -38,6 +38,13 @@ struct FluidSite {
 };
 
 typedef std::shared_ptr<FluidSite> FluidSitePtr;
-typedef Octree<FluidSitePtr> FluidTree;
+struct FluidData {
+	inline FluidData() : count(0), leaf() {
+	}
+
+	unsigned count;
+	FluidSitePtr leaf;
+};
+typedef Octree<FluidData> FluidTree;
 
 #endif // HEMELBSETUPTOOL_FLUIDSITETREE_H

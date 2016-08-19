@@ -92,6 +92,7 @@ EdgeSiteTree::NodePtr SurfaceVoxeliser::ComputeIntersectionsForRegion(TriTree::C
 	return ans;
 }
 
+
 FluidTree::NodePtr SurfaceVoxeliser::ClassifyRegion(EdgeSiteTree::ConstNodePtr node) const {
 	// Create output subtree
 	auto ans = std::make_shared<FluidTree::Branch>(node->X(), node->Y(),
@@ -99,7 +100,7 @@ FluidTree::NodePtr SurfaceVoxeliser::ClassifyRegion(EdgeSiteTree::ConstNodePtr n
 	const auto& dirs = Neighbours::GetDisplacements();
 
 	// Iter over leaf nodes
-	node->IterDepthFirst(0,0,
+	node->IterDepthFirst(0, 0,
 			[&](EdgeSiteTree::ConstNodePtr edge_site_node) {
 		EdgeSitePtr edge_site = edge_site_node->Data();
 		auto& cuts = edge_site->closest_cut;
@@ -170,7 +171,8 @@ FluidTree::NodePtr SurfaceVoxeliser::ClassifyRegion(EdgeSiteTree::ConstNodePtr n
 			}
 
 			auto outsite = ans->GetCreate(edge_site_node->X(), edge_site_node->Y(), edge_site_node->Z(), 0);
-			outsite->Data() = std::make_shared<FluidSite>(fsite);
+			outsite->Data().count = 1;
+			outsite->Data().leaf = std::make_shared<FluidSite>(fsite);
 		}
 	});
 	return ans;
