@@ -18,6 +18,7 @@ public:
   class Leaf;
   
   class Visitor;
+  class ConstVisitor;
   
   class Node : public std::enable_shared_from_this<Node> {
   public:
@@ -35,13 +36,19 @@ public:
     // Get a node with creating
     virtual NodePtr GetCreate(Int i, Int j, Int k, Int l) = 0;
     virtual void Accept(Visitor& v) = 0;
+    virtual void Accept(ConstVisitor& v) const = 0;
     
     virtual void Set(Int i, Int j, Int k, Int l, NodePtr n) = 0;
 
     template<class FuncT>
-    void IterDepthFirst(Int bot, Int top, FuncT f) {
-      LevelVisitor<FuncT> v(bot, top, f);
+    void IterDepthFirst(Int bot, Int top, FuncT f) const {
+      ConstLevelVisitor<FuncT> v(bot, top, f);
       Accept(v);
+    }
+    template<class FuncT>
+        void IterDepthFirst(Int bot, Int top, FuncT f) {
+          LevelVisitor<FuncT> v(bot, top, f);
+          Accept(v);
     }
     template<class FuncT>
     void IterDepthFirst(FuncT f) {
@@ -68,6 +75,7 @@ public:
     virtual NodePtr GetCreate(Int i, Int j, Int k, Int l);
     
     virtual void Accept(Visitor& v);
+    virtual void Accept(ConstVisitor& v) const;
     virtual void Set(Int i, Int j, Int k, Int l, NodePtr n);
 
   private:
@@ -84,6 +92,7 @@ public:
     virtual NodePtr Get(Int i, Int j, Int k, Int l);
     virtual NodePtr GetCreate(Int i, Int j, Int k, Int l);
     virtual void Accept(Visitor& v);
+    virtual void Accept(ConstVisitor& v) const;
     virtual void Set(Int i, Int j, Int k, Int l, NodePtr n);
 
   };
@@ -97,6 +106,15 @@ public:
     }
   };
   
+  class ConstVisitor {
+  public:
+    virtual void Arrive(ConstNodePtr n) = 0;
+    virtual void Depart(ConstNodePtr n) = 0;
+    virtual bool ShouldDescend(ConstNodePtr n) {
+      return true;
+    }
+  };
+
   template <class FuncT>
   class LevelVisitor : public Visitor {
     FuncT f;
@@ -113,6 +131,23 @@ public:
       return lowest < n->Level();
     }
     
+  };
+  template <class FuncT>
+  class ConstLevelVisitor : public ConstVisitor {
+    FuncT f;
+    Int lowest;
+    Int highest;
+  public:
+    ConstLevelVisitor(Int bot, Int top, FuncT func) : f(func), lowest(bot), highest(top) {}
+    virtual void Arrive(ConstNodePtr node) {}
+    virtual void Depart(ConstNodePtr node) {
+      if (node->Level() <= highest)
+	f(node);
+    }
+    virtual bool ShouldDescend(ConstNodePtr n) {
+      return lowest < n->Level();
+    }
+
   };
   
   template<class FuncT>

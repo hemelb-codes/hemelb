@@ -115,6 +115,20 @@ void Octree<T>::Branch::Accept(Visitor& v) {
   
   v.Depart(this->shared_from_this());
 }
+template<class T>
+void Octree<T>::Branch::Accept(ConstVisitor& v) const {
+  v.Arrive(this->shared_from_this());
+  if (v.ShouldDescend(this->shared_from_this()))
+    for (auto i: {0, 1})
+      for (auto j: {0, 1})
+	for (auto k: {0, 1}) {
+	  auto child = children[i][j][k];
+	  if (child)
+	    child->Accept(v);
+	}
+
+  v.Depart(this->shared_from_this());
+}
 
 template<class T>
 auto Octree<T>::Branch::get_create_internal(Int i, Int j, Int k, Int l) -> NodePtr {
@@ -184,6 +198,12 @@ void Octree<T>::Leaf::Set(Int i, Int j, Int k, Int l, NodePtr n) {
 
 template<class T>
 void Octree<T>::Leaf::Accept(Visitor& v) {
+  v.Arrive(this->shared_from_this());
+  v.Depart(this->shared_from_this());
+}
+
+template<class T>
+void Octree<T>::Leaf::Accept(ConstVisitor& v) const {
   v.Arrive(this->shared_from_this());
   v.Depart(this->shared_from_this());
 }

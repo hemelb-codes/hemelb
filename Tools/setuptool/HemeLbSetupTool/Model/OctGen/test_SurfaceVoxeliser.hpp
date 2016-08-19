@@ -15,6 +15,7 @@ class SurfaceVoxeliserTests: public CppUnit::TestFixture {
 
 	CPPUNIT_TEST (NeighbourInverses);
 	CPPUNIT_TEST (Trivial);
+	CPPUNIT_TEST (SphereIntersections);
 	CPPUNIT_TEST (Sphere);
 
 	CPPUNIT_TEST_SUITE_END();
@@ -38,13 +39,13 @@ public:
 		auto tree = TrianglesToTreeSerial(levels, tri_level, triv->points,
 				triv->triangles);
 
-		SurfaceVoxeliser voxer(1 << tri_level, triv->points, triv->triangles, triv->normals,
-				triv->labels);
-		auto tri_node = tree.Get(0,0,0, tri_level);
+		SurfaceVoxeliser voxer(1 << tri_level, triv->points, triv->triangles,
+				triv->normals, triv->labels);
+		auto tri_node = tree.Get(0, 0, 0, tri_level);
 		auto edge_node = voxer.ComputeIntersectionsForRegion(tri_node);
 
 		auto dirs = Neighbours::GetDisplacements();
-		edge_node->IterDepthFirst(0, 0, [&](VoxTree::NodePtr node) {
+		edge_node->IterDepthFirst(0, 0, [&](EdgeSiteTree::NodePtr node) {
 			// the 2 triangles are at x = 1.2
 			// with y = {1.2, 2.2}
 			//  and z = {1.2, 2.2}
@@ -58,7 +59,7 @@ public:
 			});
 	}
 
-	void Sphere() {
+	void SphereIntersections() {
 		TriTree::Int levels = 5;
 		TriTree::Int tri_level = 3;
 
@@ -69,37 +70,25 @@ public:
 		auto tree = TrianglesToTreeSerial(levels, tri_level, sphere->points,
 				sphere->triangles);
 
-		SurfaceVoxeliser voxer(1 << tri_level, sphere->points, sphere->triangles,
-				sphere->normals, sphere->labels);
-		auto edge_tree = voxer(tree, tri_level);
-		// Assert things...
-		edge_tree.IterDepthFirst([&](VoxTree::NodePtr node) {
-			// Has a valid data pointer iff a leaf node
-			if (node->Level() == 0) {
-				CPPUNIT_ASSERT(node->Data());
-			} else {
-				CPPUNIT_ASSERT(!node->Data());
-				// No further tests for non-leaf
-				return;
-			}
-			Index coord(node->X(), node->Y(), node->Z());
-			const auto& cuts = node->Data()->closest_cut;
-			int nCuts = 0;
-			for (auto& c: cuts)
-				nCuts += c.dist < 1.0 ? 1 : 0;
-
-			// All voxels must have 1 or more cuts
-			CPPUNIT_ASSERT(nCuts > 0);
-		});
+		SurfaceVoxeliser voxer(1 << tri_level, sphere->points,
+				sphere->triangles, sphere->normals, sphere->labels);
 
 		// 24, 17, 20 is an arbitrary exterior point near the surface
-		auto vox = edge_tree.Get(24, 17, 20, 0);
+		// Do this block containing this point
+		// Coords in binary are (11000, 10001, 10100)
+		// So tri_leve (=3) node is (24,16,16)
+		auto in_box = tree.Get(24, 16, 16, tri_level);
+
+		// Process it
+		auto edge_box = voxer.ComputeIntersectionsForRegion(in_box);
+		// Check it
+		auto vox = edge_box->Get(24, 17, 20, 0);
 		CPPUNIT_ASSERT(vox);
 		Index coord(24, 17, 20);
 
 		const auto& cuts = vox->Data()->closest_cut;
 		auto directions = Neighbours::GetDisplacements();
-		for (auto i: range(26)) {
+		for (auto i : range(26)) {
 			const Index& dir = directions[i];
 			switch (dir.x) {
 			case 1:
@@ -126,7 +115,7 @@ public:
 				// IxI
 				// III
 				// * == inside but crossing tri 19
-				if (dir.y ==1 && dir.z ==1) {
+				if (dir.y == 1 && dir.z == 1) {
 					// outside
 					CPPUNIT_ASSERT(cuts[i].dist > 1.0);
 				} else {
@@ -143,7 +132,48 @@ public:
 				CPPUNIT_FAIL("Invalid direction");
 			}
 		}
+
 	}
+
+	void Sphere() {
+		TriTree::Int levels = 5;
+		TriTree::Int tri_level = 3;
+
+		Vector sphere_centre(10.5);
+		double sphere_radius = 10.0;
+
+		auto sphere = SimpleMeshFactory::MkSphere();
+		auto tree = TrianglesToTreeSerial(levels, tri_level, sphere->points,
+				sphere->triangles);
+
+		SurfaceVoxeliser voxer(1 << tri_level, sphere->points,
+				sphere->triangles, sphere->normals, sphere->labels);
+		auto fluid_tree = voxer(tree, tri_level);
+
+		// Assert things...
+		// (24, 17, 20) is known to be outside so shouldn't exist
+		CPPUNIT_ASSERT(!fluid_tree.Get(24, 17, 20, 0));
+
+		fluid_tree.IterDepthFirst([](FluidTree::ConstNodePtr node) {
+			// Has a valid data pointer iff a leaf node
+			if (node->Level() == 0) {
+				CPPUNIT_ASSERT(node->Data());
+			} else {
+				CPPUNIT_ASSERT(!node->Data());
+				// No further tests for non-leaf
+				return;
+			}
+
+			// Get the node's coordinate
+			Vector posn(node->X(), node->Y(), node->Z());
+			// Make relative to sphere centre
+			posn -= 15.5;
+			// All fluid points must be inside the sphere
+			auto r2 = posn.GetMagnitudeSquared();
+			CPPUNIT_ASSERT(r2 < 100.);
+		});
+	}
+
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION (SurfaceVoxeliserTests);

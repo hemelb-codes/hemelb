@@ -10,6 +10,7 @@
 #include "TriTree.h"
 #include "Cgal.h"
 #include "CgalSearch.h"
+#include "FluidSiteTree.h"
 
 struct Cut {
 	Cut() : dist(std::numeric_limits<double>::infinity()), id(-1) {
@@ -17,12 +18,14 @@ struct Cut {
 	double dist;
 	int id;
 };
-struct Vox {
+// This represents a site (whether fluid or solid) that has one or more
+// links cutting the surface.
+struct EdgeSite {
 	std::array<Cut, 26> closest_cut;
 };
 
-typedef std::shared_ptr<Vox> VoxPtr;
-typedef Octree<VoxPtr> VoxTree;
+typedef std::shared_ptr<EdgeSite> EdgeSitePtr;
+typedef Octree<EdgeSitePtr> EdgeSiteTree;
 
 class SurfaceVoxeliser {
 public:
@@ -32,9 +35,10 @@ public:
   // We maybe need a destructor because the order of destruction of mesh and searcher seems to matter?
   //~SurfaceVoxeliser();
   
-  VoxTree::NodePtr ComputeIntersectionsForRegion(TriTree::ConstNodePtr node) const;
+  EdgeSiteTree::NodePtr ComputeIntersectionsForRegion(TriTree::ConstNodePtr node) const;
+  FluidTree::NodePtr ClassifyRegion(EdgeSiteTree::ConstNodePtr node) const;
 
-  VoxTree operator()(const TriTree& inTree, const TriTree::Int tri_level);
+  FluidTree operator()(const TriTree& inTree, const TriTree::Int tri_level);
 private:
   const static int NDIR = 13;
   const std::vector<Vector>& Points;
