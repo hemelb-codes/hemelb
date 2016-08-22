@@ -3,8 +3,10 @@
 #define HEMELBSETUPTOOL_FLUIDSITETREE_H
 
 #include <memory>
+#include <array>
 
 #include "Oct.h"
+#include "util/Vector3D.h"
 
 enum class Intersection {
 	None = 0,

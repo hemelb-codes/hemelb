@@ -221,6 +221,11 @@ auto Octree<T>::Root() -> NodePtr {
   return root;
 }
 template<class T>
+auto Octree<T>::Root() const -> ConstNodePtr {
+	return root;
+}
+
+template<class T>
 auto Octree<T>::Get(Int i, Int j, Int k, Int l) -> NodePtr {
   return root->Get(i,j,k,l);
 }

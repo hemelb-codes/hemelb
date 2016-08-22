@@ -170,6 +170,7 @@ public:
   Octree(Int level_);
   //T& GetValue(Int level, Int i, Int j, Int k);
   NodePtr Root();
+  ConstNodePtr Root() const;
   // Get a node without creating
   NodePtr Get(Int i, Int j, Int k, Int l);
   // Get a node with creating

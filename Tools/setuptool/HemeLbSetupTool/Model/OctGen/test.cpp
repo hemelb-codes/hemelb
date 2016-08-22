@@ -6,6 +6,7 @@
 #include "test_TriangleSorter.hpp"
 #include "test_SegmentFactory.hpp"
 #include "test_SurfaceVoxeliser.hpp"
+#include "test_FloodFill.hpp"
 
 int main( int argc, char **argv)
 {
