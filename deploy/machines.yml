@@ -70,47 +70,22 @@ archer: #the ARCHER supercomputer at EPCC
   home_path_template: "/home/$project/$project/$username"
   runtime_path_template: "/work/$project/$project/$username"
   fabric_dir: "FabricHemeLb"
-  modules: ["load cmake", "swap PrgEnv-cray PrgEnv-gnu", "load anaconda"]
-  # Tell autoconf for dependencies where the compilers are
-  build_prefix_commands: ["export LDFLAGS=-dynamic","export CXX=CC","export CC=cc", "export LD=CC", "export XTPE_LINK_TYPE=dynamic" ]
+  modules: ["load cmake/3.2.3", "swap PrgEnv-cray PrgEnv-gnu", "load boost", "load cray-hdf5-parallel", "load cray-tpsl"]
+  build_prefix_commands: ["export LDFLAGS=-dynamic"] # Required for HDF5 to compile
   temp_path_template: "$work_path/tmp"
   regression_test_path_template: "$work_path/regression"
   queue: "standard"
   python_build: "lib/python2.7"
   corespernode: 24
-#  build_prefix_command: [ "export LDFLAGS=-dynamic", "export XTPE_LINK_TYPE=dynamic" ]
   cmake_options:
-    CMAKE_CXX_FLAGS: "-dynamic"
-    CMAKE_C_FLAGS: "-dynamic"
-    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
-    CMAKE_CXX_COMPILER: "/opt/cray/craype/2.1.1/bin/CC"
-    CMAKE_C_COMPILER: "/opt/cray/craype/2.1.1/bin/cc"
-    CMAKE_CXX_FLAGS_RELEASE: ""
-    CPPUNIT_PATCH_LDL: OFF
-    CPPUNIT_PATCH_DYNAMIC: ON
     HEMELB_OPTIMISATION: "-O3"
-    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
     HEMELB_USE_SSE3: "ON"
-    CTEMPLATE_PATCH_ALIGN: "ON"
-    CTEMPLATE_USE_STATIC: "OFF"
     HEMELB_COMPUTE_ARCHITECTURE: "INTELSANDYBRIDGE"
-    #  CMAKE_VERBOSE_MAKEFILE: "TRUE"
+    METIS_INCLUDE_DIR: "$CRAY_TPSL_PREFIX_DIR/include"
+    METIS_LIBRARY: "$CRAY_TPSL_PREFIX_DIR/lib"
+    PARMETIS_INCLUDE_DIR: "$CRAY_TPSL_PREFIX_DIR/include"
+    PARMETIS_LIBRARY: "$CRAY_TPSL_PREFIX_DIR/lib"
 
-##    CMAKE_SKIP_RPATH: "TRUE"
-##    CMAKE_SKIP_INSTALL_RPATH: "TRUE"
-#    CMAKE_CXX_FLAGS: "-dynamic"
-#    CMAKE_C_FLAGS: "-dynamic"
-#    CMAKE_VERBOSE_MAKEFILE: "TRUE"
-##    CPPUNIT_USE_STATIC: "ON"
-#    CPPUNIT_PATCH_LDL: "OFF"
-#    CPPUNIT_PATCH_DYNAMIC: "OFF"
-##    CTEMPLATE_USE_STATIC: "ON"
-#    CTEMPLATE_PATCH_ALIGN: "ON"
-#    CTEMPLATE_USE_STATIC: "OFF"
-##    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
-#    HEMELB_OPTIMISATION: "-O3"
-#    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
-#    HEMELB_USE_SSE3: "ON"
 legion: 
   job_dispatch: "qsub"
   run_command: "mpirun -np $cores -machinefile $$TMPDIR/machines"

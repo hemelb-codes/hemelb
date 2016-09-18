@@ -200,7 +200,7 @@ else()
 	)
 	if(NOT CTEMPLATE_TARBALL)
 		message("No ctemplate source found, will download.")
-		set(CTEMPLATE_TARBALL http://github.com/OlafvdSpek/ctemplate/archive/ctemplate-2.3.tar.gz
+		set(CTEMPLATE_TARBALL https://github.com/OlafvdSpek/ctemplate/archive/ctemplate-2.3.tar.gz
 			CACHE STRING "Path to download CTemplate (can be local file://)" FORCE)
 	endif()
 	if (CTEMPLATE_PATCH_VACOPY)
@@ -236,7 +236,7 @@ else()
 		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 	)
 	if(NOT ZLIB_TARBALL)
-		message("No ctemplate source found, will download.")
+		message("No zlib source found, will download.")
 		set(ZLIB_TARBALL http://sourceforge.net/projects/libpng/files/zlib/1.2.6/zlib-1.2.6.tar.gz
 			CACHE STRING "Path to download ZLIB (can be local file://)" FORCE)
 	endif()
