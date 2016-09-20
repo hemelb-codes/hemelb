@@ -86,10 +86,10 @@ namespace hemelb
                       ( net::MpiConstCast(&serialisedLocalCoords[0]), serialisedLocalCoords.size(), net::MpiDataType<LatticeVector>(), &allSerialisedCoords[0], net::MpiConstCast(&allSerialisedCoordSizes[0]), net::MpiConstCast(&allSerialisedCoordDisplacements[0]), net::MpiDataType<LatticeVector>(), comm ));
 
       std::vector<std::vector<LatticeVector>> coordsPerProc(numProcs);
-      for (unsigned procIndex = 0; procIndex < numProcs; ++procIndex)
+      for (decltype(numProcs) procIndex = 0; procIndex < numProcs; ++procIndex)
       {
-        for (unsigned indexAllCoords = allSerialisedCoordDisplacements[procIndex];
-            indexAllCoords < allSerialisedCoordDisplacements[procIndex + 1]; ++indexAllCoords)
+        for (auto indexAllCoords = allSerialisedCoordDisplacements[procIndex];
+             indexAllCoords < allSerialisedCoordDisplacements[procIndex + 1]; ++indexAllCoords)
         {
           coordsPerProc[procIndex].push_back(allSerialisedCoords[indexAllCoords]);
         }
