@@ -185,7 +185,7 @@ namespace hemelb
         //! Keeps track of which cells in the box are lent (currentlyLentCells must always be a subset of DivideConquerCells::cells)
         CellContainer currentlyLentCells;
         //! Helper method that combines all the CellContainers in a LentCells object into a single CellContainer
-        CellContainer LentCellsToSingleContainer(parallel::CellParallelization::LentCells const &lentCells) const;
+        CellContainer LentCellsToSingleContainer(parallel::LentCells const &lentCells) const;
     };
 
     class DivideConquerCells::pair_range

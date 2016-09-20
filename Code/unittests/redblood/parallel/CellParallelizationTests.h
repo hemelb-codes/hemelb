@@ -97,8 +97,7 @@ namespace hemelb
           LatticePosition GetCenter(proc_t rank) const;
 
           //! Creates map of distributed nodes
-          CellParallelization::NodeDistributions GetNodeDistribution(
-              CellContainer const &cells) const;
+          NodeDistributions GetNodeDistribution(CellContainer const &cells) const;
 
           //! Get cell centered at given position
           std::shared_ptr<Cell> GetCell(LatticePosition const &pos, boost::uuids::uuid const & uuid,
@@ -130,7 +129,7 @@ namespace hemelb
           void CompareDistributions(CellContainer::value_type expected,
                                     CellContainer::value_type actual) const;
           void CompareDistributions(CellContainer const & expected,
-                                    CellParallelization::LentCells const & actual,
+                                    LentCells const & actual,
                                     proc_t proc) const;
 
         protected:
@@ -184,10 +183,10 @@ namespace hemelb
       }
       ;
 
-      CellParallelization::NodeDistributions CellParallelizationTests::GetNodeDistribution(
-          CellContainer const & ownedCells) const
+      NodeDistributions CellParallelizationTests::GetNodeDistribution(
+           CellContainer const & ownedCells) const
       {
-        CellParallelization::NodeDistributions result;
+        NodeDistributions result;
         auto const assessor = std::bind(&CellParallelizationTests::nodeLocation,
                                         *this,
                                         std::placeholders::_1);
@@ -496,7 +495,6 @@ namespace hemelb
       void CellParallelizationTests::testUpdateOwnedCells()
       {
         typedef ExchangeCells::ChangedCells Changes;
-        typedef ExchangeCells::LentCells LentCells;
         CellContainer::value_type const cells[4] = { GivenCell(0),
                                                      GivenCell(1),
                                                      GivenCell(2),
@@ -516,7 +514,6 @@ namespace hemelb
       void CellParallelizationTests::testUpdateNodeDistributions()
       {
         typedef ExchangeCells::ChangedCells Changes;
-        typedef ExchangeCells::LentCells LentCells;
         CellContainer::value_type const cells[4] = { GivenCell(0),
                                                      GivenCell(1),
                                                      GivenCell(2),
@@ -815,7 +812,7 @@ namespace hemelb
       }
 
       void CellParallelizationTests::CompareDistributions(
-          CellContainer const & expected, CellParallelization::LentCells const & actual,
+          CellContainer const & expected, LentCells const & actual,
           proc_t proc) const
       {
         auto const i_proc = actual.find(proc);

@@ -217,7 +217,7 @@ namespace hemelb
         {
           return cells;
         }
-        parallel::CellParallelization::LentCells const & GetLentCells() const
+        parallel::LentCells const & GetLentCells() const
         {
           return lentCells;
         }
@@ -327,7 +327,7 @@ namespace hemelb
         //! Contains all cells
         CellContainer cells;
         //! Cells lent to this process
-        parallel::CellParallelization::LentCells lentCells;
+        parallel::LentCells lentCells;
         //! Divide and conquer object
         DivideConquerCells cellDnC;
         //! Divide and conquer object
@@ -360,7 +360,7 @@ namespace hemelb
         //! Force spreader object
         parallel::SpreadForces forceSpreader;
         //! Object describing how the cells affect different subdomains
-        parallel::CellParallelization::NodeDistributions nodeDistributions;
+        parallel::NodeDistributions nodeDistributions;
 
     };
 
