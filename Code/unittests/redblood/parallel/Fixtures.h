@@ -11,7 +11,6 @@
 #define HEMELB_UNITTESTS_REDBLOOD_PARALLEL_FIXTURES_H
 
 #include "redblood/Cell.h"
-#include "redblood/parallel/CellParallelization.h"
 #include "SimulationMaster.h"
 #include <random>
 
