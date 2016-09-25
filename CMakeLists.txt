@@ -92,8 +92,6 @@ ExternalProject_Add(
 	BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 )
 
-# These are handled in dependencies/CMakeLists.txt. They are only
-# ExternalProject_add'ed if not found on the system. If they are found
-# the dependency target will not be created and trigger CMP0046.k
-# So this does not seem to be the clean way, hence uncommenting this line.
-#add_dependencies(hemelb cppunit parmetis tinyxml boost ctemplate zlib mpwide)
+# These are handled in dependencies/CMakeLists.txt and needed here
+# to ensure they are build in correct order.
+add_dependencies(hemelb cppunit parmetis tinyxml boost ctemplate zlib mpwide)
