@@ -70,7 +70,7 @@ archer: #the ARCHER supercomputer at EPCC
   home_path_template: "/home/$project/$project/$username"
   runtime_path_template: "/work/$project/$project/$username"
   fabric_dir: "FabricHemeLb"
-  modules: ["load cmake/3.2.3", "swap PrgEnv-cray PrgEnv-gnu"]
+  modules: ["load cmake/3.2.3", "swap PrgEnv-cray PrgEnv-gnu", "load boost", "load cray-hdf5-parallel", "load cray-tpsl"]
   # Tell autoconf for dependencies where the compilers are
   build_prefix_commands: ["export LDFLAGS=-dynamic","export CXX=CC","export CC=cc", "export LD=CC", "export XTPE_LINK_TYPE=dynamic" ]
   temp_path_template: "$work_path/tmp"
@@ -99,6 +99,10 @@ archer: #the ARCHER supercomputer at EPCC
     CTEMPLATE_PATCH_ALIGN: "ON"
     CTEMPLATE_USE_STATIC: "OFF"
     HEMELB_COMPUTE_ARCHITECTURE: "INTELSANDYBRIDGE"
+    METIS_INCLUDE_DIR: "$CRAY_TPSL_PREFIX_DIR/include"
+    METIS_LIBRARY: "$CRAY_TPSL_PREFIX_DIR/lib"
+    PARMETIS_INCLUDE_DIR: "$CRAY_TPSL_PREFIX_DIR/include"
+    PARMETIS_LIBRARY: "$CRAY_TPSL_PREFIX_DIR/lib"
 
 archer_dmapp:
   import: "archer"
@@ -118,6 +122,10 @@ archer_dmapp:
     CTEMPLATE_PATCH_ALIGN: "ON"
     CTEMPLATE_USE_STATIC: "OFF"
     HEMELB_COMPUTE_ARCHITECTURE: "INTELSANDYBRIDGE"
+    METIS_INCLUDE_DIR: "$CRAY_TPSL_PREFIX_DIR/include"
+    METIS_LIBRARY: "$CRAY_TPSL_PREFIX_DIR/lib"
+    PARMETIS_INCLUDE_DIR: "$CRAY_TPSL_PREFIX_DIR/include"
+    PARMETIS_LIBRARY: "$CRAY_TPSL_PREFIX_DIR/lib"
   run_prefix_commands:
     - export MPICH_MAX_THREAD_SAFETY=multiple
     - export MPICH_NEMESIS_ASYNC_PROGRESS=1
