@@ -513,12 +513,16 @@ namespace hemelb
             distribn_t shear_rate = 0.0;
             distribn_t strain_rate_tensor_i_j;
 
+            // Take advantage of strain rate tensor symmetry
             for (unsigned row = 0; row < 3; row++)
             {
-              for (unsigned column = 0; column < 3; column++)
+              strain_rate_tensor_i_j = CalculateStrainRateTensorComponent(row, row, iTau, iFNeq, iDensity);
+              shear_rate += strain_rate_tensor_i_j * strain_rate_tensor_i_j;
+
+              for (unsigned column = row+1; column < 3; column++)
               {
                 strain_rate_tensor_i_j = CalculateStrainRateTensorComponent(row, column, iTau, iFNeq, iDensity);
-                shear_rate += strain_rate_tensor_i_j * strain_rate_tensor_i_j;
+                shear_rate += 2*strain_rate_tensor_i_j * strain_rate_tensor_i_j;
               }
             }
 
