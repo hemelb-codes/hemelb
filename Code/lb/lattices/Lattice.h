@@ -522,7 +522,7 @@ namespace hemelb
               }
             }
 
-            shear_rate = sqrt(shear_rate);
+            shear_rate = sqrt(2*shear_rate);
 
             return shear_rate;
           }

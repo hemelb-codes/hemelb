@@ -505,8 +505,8 @@ namespace hemelb
               CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ", numSites, (site_t) lbgknn0.GetTauValues().size());
 
               distribn_t expectedTau0 = site_index % 2
-                ? 0.50009134451
-                : 0.50009285237;
+                ? 0.50009102385
+                : 0.50009217276;
 
               std::stringstream message;
               message << "Tau array [" << site_index << "] for dataset 0";
@@ -516,8 +516,8 @@ namespace hemelb
               CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ", numSites, (site_t) lbgknn1.GetTauValues().size());
 
               distribn_t expectedTau1 = site_index % 2
-                ? 0.50009013551
-                : 0.50009021207;
+                ? 0.50009010316
+                : 0.50009016145;
 
               message.str("");
               message << "Tau array [" << site_index << "] for dataset 1";
