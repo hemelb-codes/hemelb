@@ -173,7 +173,7 @@ def GetVtkLibDirLinux(aVtkSharedLibrary):
             dir, base = os.path.split(libPath)
             # Do a string split rather than os.path.splitext as the latter splits on the last dot
             base, rest = base.split('.', 1)
-            if base == 'libvtkCommon':
+            if base.startswith('libvtkCommon'):
                 return dir
             
         except ValueError:
