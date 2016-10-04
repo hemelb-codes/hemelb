@@ -66,7 +66,7 @@ namespace hemelb
       bool NodeCharacterizer::IsMidDomain(Index index) const
       {
         int found(0);
-        for (auto const process : affectedProcs)
+        for (auto const &process : affectedProcs)
         {
           if (process.second.count(index) and ++found > 1)
           {
@@ -80,7 +80,7 @@ namespace hemelb
           Index index) const
       {
         std::set<NodeCharacterizer::Process2NodesMap::key_type> result;
-        for (auto const process : affectedProcs)
+        for (auto const &process : affectedProcs)
         {
           if (process.second.count(index))
           {
