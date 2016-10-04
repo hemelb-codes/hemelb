@@ -18,7 +18,6 @@
 #include <iterator>
 
 #include "redblood/parallel/IntegrateVelocities.h"
-#include "redblood/parallel/CellParallelization.h"
 #include "redblood/parallel/NodeCharacterizer.h"
 #include "configuration/CommandLine.h"
 #include "SimulationMaster.h"

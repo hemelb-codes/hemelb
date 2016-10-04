@@ -118,6 +118,19 @@ namespace hemelb
       return std::move(result);
     }
 
+    void writeMesh(std::string const& filename, std::shared_ptr<CellBase const> cell,
+                   util::UnitConverter const& converter) {
+      log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
+          filename.c_str());
+      std::ofstream file(filename.c_str());
+      writeMesh(file, cell, converter);
+    }
+
+    void writeMesh(std::ostream & stream, std::shared_ptr<CellBase const> cell,
+                   util::UnitConverter const& converter) {
+      writeMesh(stream, cell->GetVertices(), cell->GetFacets(), converter);
+    }
+
     void writeVTKMeshWithForces(std::string const &filename, std::shared_ptr<Cell const> cell,
                                 util::UnitConverter const &converter)
     {

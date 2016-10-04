@@ -32,7 +32,7 @@ namespace hemelb
     {
       if (doesOwnMpi)
       {
-        HEMELB_MPI_CALL(MPI_Finalize, ());
+        MPI_Finalize();
       }
     }
 

@@ -150,6 +150,10 @@ namespace hemelb
         "Explicit type characteristics"
     );
 
+    //! Write cell-mesh to file in Timm's format
+    void writeMesh(std::ostream &, std::shared_ptr<CellBase const>, util::UnitConverter const&);
+    //! Write cell-mesh to file in Timm's format
+    void writeMesh(std::string const&, std::shared_ptr<CellBase const>, util::UnitConverter const&);
     //! Write cell-mesh to file in VTK XML format including individual forces
     void writeVTKMeshWithForces(std::ostream &, std::shared_ptr<Cell const>,
                                 util::UnitConverter const&);

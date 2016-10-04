@@ -60,13 +60,13 @@ namespace hemelb
       void NodeCharacterizer::Reindex(AssessNodeRange const & assessor,
                                       MeshData::Vertices const & vertices)
       {
-        affectedProcs = details::meshMessenger(assessor, vertices);
+        affectedProcs = details::meshMessenger(std::cref(assessor), vertices);
       }
 
       bool NodeCharacterizer::IsMidDomain(Index index) const
       {
         int found(0);
-        for (auto const process : affectedProcs)
+        for (auto const &process : affectedProcs)
         {
           if (process.second.count(index) and ++found > 1)
           {
@@ -76,11 +76,42 @@ namespace hemelb
         return true;
       }
 
+      std::set<MeshData::Vertices::size_type> NodeCharacterizer::BoundaryIndices() const {
+        if(affectedProcs.size() == 1)
+        {
+          return {};
+        }
+        auto i_first = affectedProcs.cbegin();
+        auto current = i_first->second;
+        for(++i_first; i_first != affectedProcs.cend(); ++i_first) {
+          std::set<MeshData::Vertices::size_type> next;
+          std::set_intersection(current.begin(), current.end(),
+                                i_first->second.begin(), i_first->second.end(),
+                                std::inserter(next, next.begin()));
+          std::swap(next, current);
+        }
+        return current;
+      }
+
+      std::set<NodeCharacterizer::Process2NodesMap::key_type>
+      NodeCharacterizer::AffectedProcs() const
+      {
+        std::set<Process2NodesMap::key_type> result;
+        for(auto const &process: affectedProcs)
+        {
+          if(process.second.size() > 0)
+          {
+            result.insert(process.first);
+          }
+        }
+        return result;
+      }
+
       std::set<NodeCharacterizer::Process2NodesMap::key_type> NodeCharacterizer::AffectedProcs(
           Index index) const
       {
         std::set<NodeCharacterizer::Process2NodesMap::key_type> result;
-        for (auto const process : affectedProcs)
+        for (auto const &process : affectedProcs)
         {
           if (process.second.count(index))
           {

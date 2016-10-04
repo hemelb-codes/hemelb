@@ -36,10 +36,6 @@ namespace hemelb
           typedef std::vector<LatticeForceVector> Forces;
           //! \brief Forces for owned cells
           typedef std::map<boost::uuids::uuid, Forces> CellForces;
-          //! Type of the object holding distributions
-          typedef CellParallelization::NodeDistributions NodeDistributions;
-          //! Container holding cells lent by other processes
-          typedef CellParallelization::LentCells LentCells;
 
           SpreadForces(net::MpiCommunicator const &graphComm) :
               sendNodeCount(graphComm), sendPositions(graphComm), sendForces(graphComm)

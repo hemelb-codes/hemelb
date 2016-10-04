@@ -98,7 +98,7 @@ namespace hemelb
 
           for (auto neighbour = 0; neighbour < comms.Size(); ++neighbour)
           {
-            if (neighbour != procid_neighbours.index)
+            if (static_cast<unsigned>(neighbour) != procid_neighbours.index)
             {
               // All other process indices must be in the std::vector
               CPPUNIT_ASSERT(find(procid_neighbours.value.begin(),

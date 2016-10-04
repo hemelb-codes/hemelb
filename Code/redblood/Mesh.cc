@@ -37,6 +37,31 @@ namespace hemelb
       return readMesh(file);
     }
 
+    std::shared_ptr<MeshData> readMesh(std::string const &filename, util::UnitConverter const &units)
+    {
+      log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from %s",
+          filename.c_str());
+
+      // Open file if it exists
+      std::ifstream file;
+
+      if (!util::file_exists(filename.c_str()))
+        throw Exception() << "Red-blood-cell mesh file '" << filename.c_str() << "' does not exist";
+
+      file.open(filename.c_str());
+      return readMesh(file, units);
+    }
+
+    std::shared_ptr<MeshData> readMesh(std::istream &stream, util::UnitConverter const &units)
+    {
+      auto result = readMesh(stream);
+      for(auto &vertex: result->vertices)
+      {
+        vertex = units.ConvertPositionToLatticeUnits(vertex);
+      }
+      return result;
+    }
+
     std::shared_ptr<MeshData> readMesh(std::istream &stream)
     {
       log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from stream");
@@ -128,13 +153,19 @@ namespace hemelb
 
     void writeMesh(std::ostream &stream, MeshData const &data, util::UnitConverter const& converter)
     {
+      writeMesh(stream, data.vertices, data.facets, converter);
+    }
+
+    void writeMesh(std::ostream &stream, MeshData::Vertices const &vertices,
+                   MeshData::Facets const & facets, util::UnitConverter const& converter)
+    {
       // Write Header
-      stream << "$MeshFormat\n2 0 8\n$EndMeshFormat\n" << "$Nodes\n" << data.vertices.size()
+      stream << "$MeshFormat\n2 0 8\n$EndMeshFormat\n" << "$Nodes\n" << vertices.size()
           << "\n";
 
       typedef MeshData::Vertices::const_iterator VertexIterator;
-      VertexIterator i_vertex = data.vertices.begin();
-      VertexIterator const i_vertex_end = data.vertices.end();
+      VertexIterator i_vertex = vertices.begin();
+      VertexIterator const i_vertex_end = vertices.end();
 
       for (unsigned i(1); i_vertex != i_vertex_end; ++i_vertex, ++i)
       {
@@ -142,11 +173,11 @@ namespace hemelb
         stream << i << " " << vertex[0] << " " << vertex[1] << " " << vertex[2] << "\n";
       }
 
-      stream << "$EndNode\n" << "$Elements\n" << data.facets.size() << "\n";
+      stream << "$EndNode\n" << "$Elements\n" << facets.size() << "\n";
 
       typedef MeshData::Facets::const_iterator FacetIterator;
-      FacetIterator i_facet = data.facets.begin();
-      FacetIterator const i_facet_end = data.facets.end();
+      FacetIterator i_facet = facets.begin();
+      FacetIterator const i_facet_end = facets.end();
 
       for (unsigned i(1); i_facet != i_facet_end; ++i_facet, ++i)
         stream << i << " 1 2 3 4 5 " << (*i_facet)[0] + 1 << " " << (*i_facet)[1] + 1 << " "
