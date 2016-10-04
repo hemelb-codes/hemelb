@@ -94,7 +94,9 @@ namespace hemelb
     std::string GetTemporaryDir()
     {
       const char *dirname;
-      dirname = std::getenv("TMP");
+      dirname = std::getenv("HEME_TMP");
+      if (nullptr == dirname)
+        dirname = std::getenv("TMP");
       if (nullptr == dirname)
         dirname = std::getenv("TMPDIR");
       if (nullptr == dirname)
