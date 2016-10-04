@@ -125,6 +125,11 @@ namespace hemelb
               result->second.size();
           }
 
+          //! Indices of nodes that affect more than one proc
+          std::set<MeshData::Vertices::size_type> BoundaryIndices() const;
+          //! Indices of nodes that affect more than one proc
+          std::set<Process2NodesMap::key_type> AffectedProcs() const;
+
           //! Updates node characterization and return change in ownership
           void Reindex(AssessNodeRange const& assessNodeRange, MeshData::Vertices const &vertices);
           //! Reindex with normal mpi function
