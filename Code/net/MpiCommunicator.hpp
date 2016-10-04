@@ -149,6 +149,39 @@ namespace hemelb
       return ans;
     }
 
+    template <typename T>
+    std::vector<T> MpiCommunicator::GatherV(const std::vector<T> senddata,
+					    const std::vector<int> recvcounts,
+					    const int root) const
+    {
+      const int np = Size();
+      const int sendcount = senddata.size();
+      std::vector<int> displs;
+      std::vector<T> ans;
+      T* recvbuf = nullptr;
+      if (Rank() == root)
+      {
+	// Compute the displacements from the counts
+	displs.resize(np);
+	int total = 0;
+	for(size_t i = 0; i < np; ++i) {
+	  displs[i] = total;
+	  total += recvcounts[i];
+	}
+	// set up recv buffer
+	ans.resize(np);
+	recvbuf = ans.data();
+      }
+
+      HEMELB_MPI_CALL(
+	  MPI_Gatherv,
+	  (MpiConstCast(senddata.data()), sendcount, MpiDataType<T>(),
+	   recvbuf, recvcounts.data(), displs.data(), MpiDataType<T>(),
+	   root, *this)
+      );
+      return ans;
+    }
+    
     template<typename T>
     std::vector<T> MpiCommunicator::AllGather(const T& val) const
     {
