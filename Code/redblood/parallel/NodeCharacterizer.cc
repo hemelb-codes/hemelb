@@ -60,7 +60,7 @@ namespace hemelb
       void NodeCharacterizer::Reindex(AssessNodeRange const & assessor,
                                       MeshData::Vertices const & vertices)
       {
-        affectedProcs = details::meshMessenger(assessor, vertices);
+        affectedProcs = details::meshMessenger(std::cref(assessor), vertices);
       }
 
       bool NodeCharacterizer::IsMidDomain(Index index) const
