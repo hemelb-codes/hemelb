@@ -148,7 +148,7 @@ namespace hemelb
           {
             vertices.push_back(std::vector<int> { });
           }
-          graph = std::move(world.Graph(vertices));
+          graph = world.Graph(vertices);
         }
       }
 
