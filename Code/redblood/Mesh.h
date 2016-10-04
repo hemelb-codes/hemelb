@@ -232,12 +232,18 @@ namespace hemelb
     //! Read mesh from file
     //! Format is from T. Krueger's thesis
     std::shared_ptr<MeshData> readMesh(std::string const &filename);
+    std::shared_ptr<MeshData> readMesh(std::string const &filename, util::UnitConverter const &);
     //! Read mesh from file
     //! Format is from T. Krueger's thesis
     std::shared_ptr<MeshData> readMesh(std::istream &stream);
+    std::shared_ptr<MeshData> readMesh(std::istream &stream, util::UnitConverter const &);
     //! Write mesh from file
     //! Format is from T. Krueger's thesis
     void writeMesh(std::ostream &stream, MeshData const &data, util::UnitConverter const &);
+    //! Write mesh from file
+    //! Format is from T. Krueger's thesis
+    void writeMesh(std::ostream &, MeshData::Vertices const &, MeshData::Facets const &,
+                   util::UnitConverter const&);
     //! Write mesh from file
     //! Format is from T. Krueger's thesis
     void writeMesh(std::string const &filename, MeshData const &data, util::UnitConverter const &);
