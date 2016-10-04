@@ -281,28 +281,7 @@ namespace hemelb
         void CellRemoval();
 
         //! Adds input cell to simulation
-        void AddCell(CellContainer::value_type cell)
-        {
-          auto const barycenter = cell->GetBarycenter();
-
-          //! @todo: #623 AddCell should only be called if the subdomain contains the relevant RBC inlet
-          auto const id = latticeData.GetProcIdFromGlobalCoords(barycenter);
-          if (id == latticeData.GetCommunicator().Rank())
-          {
-            log::Logger::Log<log::Debug, log::OnePerCore>("Adding cell at (%f, %f, %f)",
-                                                          barycenter.x,
-                                                          barycenter.y,
-                                                          barycenter.z);
-            cellDnC.insert(cell);
-            cells.insert(cell);
-
-            nodeDistributions.emplace(std::piecewise_construct,
-                                      std::forward_as_tuple(cell->GetTag()),
-                                      std::forward_as_tuple(parallel::details::AssessMPIFunction<
-                                                                Stencil>(latticeData),
-                                                            cell));
-          }
-        }
+        void AddCell(CellContainer::value_type cell);
 
         //! \brief Sets cell to cell interaction forces
         //! \details Forwards arguments to Node2NodeForce constructor.
@@ -468,6 +447,32 @@ namespace hemelb
         }
       }
       timings[hemelb::reporting::Timers::cellRemoval].Stop();
+    }
+
+    template<class TRAITS>
+    void CellArmy<TRAITS>::AddCell(CellContainer::value_type cell)
+    {
+      auto const barycenter = cell->GetBarycenter();
+
+      //! @todo: #623 AddCell should only be called if the subdomain contains the relevant RBC inlet
+      auto const id = latticeData.GetProcIdFromGlobalCoords(barycenter);
+      if (id == latticeData.GetCommunicator().Rank())
+      {
+        log::Logger::Log<log::Info, log::OnePerCore>("Adding cell at (%f, %f, %f)",
+            barycenter.x,
+            barycenter.y,
+            barycenter.z);
+        cellDnC.insert(cell);
+        cells.insert(cell);
+
+        nodeDistributions.emplace(std::piecewise_construct,
+            std::forward_as_tuple(cell->GetTag()),
+            std::forward_as_tuple(parallel::details::AssessMPIFunction<
+              Stencil>(latticeData),
+              cell));
+        log::Logger::Log<log::Info, log::OnePerCore>("Cell has %i edge nodes",
+          nodeDistributions.find(cell->GetTag())->second.BoundaryIndices().size());
+      }
     }
   }
 }
