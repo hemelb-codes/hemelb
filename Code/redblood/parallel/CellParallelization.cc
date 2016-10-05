@@ -213,9 +213,9 @@ namespace hemelb
                                             nodeCount.GetReceiveBuffer().cbegin() + index,
                                             0);
         auto i_node = nodePositions.GetReceiveBuffer().cbegin() + offset;
+        assert(nodeCount.GetReceiveBuffer().size() > index);
         auto const Nnodes = nodeCount.GetReceiveBuffer()[index];
         log::Logger::Log<log::Info, log::OnePerCore>("Receiving %i vertices", Nnodes);
-        assert(cellCount.GetSendBuffer().size() > item.index);
         for (size_t j(0); j < Nnodes; ++j)
         {
           result->addVertex(* (i_node++));
