@@ -351,7 +351,7 @@ void SimulationMaster::RunSimulation()
     
     DoTimeStep();
     
-    timeStepSyncReq.Wait();
+    syncReq.Wait();
     // Now all ranks have at least started this time step
     
     if (simulationState->IsTerminating())
