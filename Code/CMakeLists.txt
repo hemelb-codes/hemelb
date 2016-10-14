@@ -19,7 +19,6 @@ option(HEMELB_BUILD_TESTS_UNIT "Build the unit-tests (HEMELB_BUILD_TESTS_ALL tak
 option(HEMELB_BUILD_TESTS_FUNCTIONAL "Build the functional tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
 option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
-option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
 option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
@@ -90,10 +89,6 @@ endif()
 
 if (HEMELB_WAIT_ON_CONNECT)
 	add_definitions(-DHEMELB_WAIT_ON_CONNECT)
-endif()
-
-if (NOT HEMELB_STATIC_ASSERT)
-	add_definitions(-DHEMELB_NO_STATIC_ASSERT)
 endif()
 
 if (HEMELB_IMAGES_TO_NULL)

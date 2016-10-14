@@ -25,7 +25,6 @@ set(HEMELB_STEERING_LIB basic
 option(HEMELB_USE_MULTIMACHINE "Use multi-level parallelism support" OFF)
 option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
 option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
-option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
 set(HEMELB_OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
 option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 set(HEMELB_LATTICE "D3Q15"
@@ -77,7 +76,6 @@ ExternalProject_Add(
 	-DCTEMPLATE_USE_STATIC=${CTEMPLATE_USE_STATIC}
 	-DCPPUNIT_USE_STATIC=${CPPUNIT_USE_STATIC}
 	-DHEMELB_DEPENDENCIES_SET_RPATH=${HEMELB_DEPENDENCIES_SET_RPATH}
-	-DHEMELB_STATIC_ASSERT=${HEMELB_STATIC_ASSERT}
         -DHEMELB_LATTICE=${HEMELB_LATTICE}
         -DHEMELB_KERNEL=${HEMELB_KERNEL}
         -DHEMELB_WALL_BOUNDARY=${HEMELB_WALL_BOUNDARY}
