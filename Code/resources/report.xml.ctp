@@ -11,7 +11,6 @@
 	<build>
 		<revision>{{REVISION}}</revision>
 		<steering>{{STEERING}}</steering>
-		<streaklines>{{STREAKLINES}}</streaklines>
 		<type>{{TYPE}}</type>
 		<optimisation>{{OPTIMISATION}}</optimisation>
                 <use_sse3>{{USE_SSE3}}</use_sse3>
@@ -27,7 +26,6 @@
 		<communications>
 			<implementations>
 				<pointpoint>{{POINTPOINT_IMPLEMENTATION}}</pointpoint>
-				<alltoall>{{ALLTOALL_IMPLEMENTATION}}</alltoall>
 				<gathers>{{GATHERS_IMPLEMENTATION}}</gathers>
 			</implementations>
 			<separated_concerns>{{SEPARATE_CONCERNS}}</separated_concerns>

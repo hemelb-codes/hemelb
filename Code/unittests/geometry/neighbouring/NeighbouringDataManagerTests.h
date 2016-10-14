@@ -47,6 +47,17 @@ namespace hemelb
               manager = new NeighbouringDataManager(*latDat, *data, *netMock);
             }
 
+            void UseRealCommunicator()
+            {
+              delete manager;
+              delete netMock;
+              delete communicatorMock;
+
+              communicatorMock = new net::MpiCommunicator(net::MpiCommunicator::World());
+              netMock = new net::NetMock(*communicatorMock);
+              manager = new NeighbouringDataManager(*latDat, *data, *netMock);
+            }
+
             void tearDown()
             {
               delete manager;
@@ -90,26 +101,10 @@ namespace hemelb
 
             void TestShareNeedsOneProc()
             {
+              UseRealCommunicator();
               manager->RegisterNeededSite(43);
 
-              // We should receive a signal that we need one from ourselves
-              std::vector<int> countOfNeedsToZeroFromZero;
-              countOfNeedsToZeroFromZero.push_back(1); // expectation
-              std::vector<int> countOfNeedsFromZeroToZero;
-              countOfNeedsFromZeroToZero.push_back(1); //fixture
-              netMock->RequireSend(&countOfNeedsToZeroFromZero.front(), 1, 0, "CountToSelf");
-              netMock->RequireReceive(&countOfNeedsFromZeroToZero.front(), 1, 0, "CountFromSelf");
-
-              // Once we've received the signal that we need one from ourselves, we should receive that one.
-              std::vector<site_t> needsShouldBeSentToSelf;
-              std::vector<site_t> needsShouldBeReceivedFromSelf;
-              needsShouldBeSentToSelf.push_back(43); //expectation
-              needsShouldBeReceivedFromSelf.push_back(43); //fixture
-              netMock->RequireSend(&needsShouldBeSentToSelf.front(), 1, 0, "NeedToSelf");
-              netMock->RequireReceive(&needsShouldBeSentToSelf.front(), 1, 0, "NeedFromSelf");
-
               manager->ShareNeeds();
-              netMock->ExpectationsAllCompleted();
 
               CPPUNIT_ASSERT_EQUAL(manager->GetNeedsForProc(0).size(),
                                    static_cast<std::vector<int>::size_type> (1));
@@ -118,24 +113,9 @@ namespace hemelb
 
             void TestShareConstantDataOneProc()
             {
-              // As for ShareNeeds test, set up the site as needed from itself.
-              std::vector<int> countOfNeedsToZeroFromZero;
-              countOfNeedsToZeroFromZero.push_back(1); // expectation
-              std::vector<int> countOfNeedsFromZeroToZero;
-              countOfNeedsFromZeroToZero.push_back(1); //fixture
-              netMock->RequireSend(&countOfNeedsToZeroFromZero.front(), 1, 0, "CountToSelf");
-              netMock->RequireReceive(&countOfNeedsFromZeroToZero.front(), 1, 0, "CountFromSelf");
-
-              std::vector<site_t> needsShouldBeSentToSelf;
-              std::vector<site_t> needsShouldBeReceivedFromSelf;
-              needsShouldBeSentToSelf.push_back(43); //expectation
-              needsShouldBeReceivedFromSelf.push_back(43); //fixture
-              netMock->RequireSend(&needsShouldBeSentToSelf.front(), 1, 0, "NeedToSelf");
-              netMock->RequireReceive(&needsShouldBeSentToSelf.front(), 1, 0, "NeedFromSelf");
-
+              UseRealCommunicator();
               manager->RegisterNeededSite(43);
               manager->ShareNeeds();
-              netMock->ExpectationsAllCompleted();
 
               // Now, transfer the data about that site.
               Site < LatticeData > exampleSite
@@ -191,6 +171,8 @@ namespace hemelb
 
             void TestShareFieldDataOneProc()
             {
+              UseRealCommunicator();
+
               site_t targetGlobalOneDIdx = 43;
               LatticeVector targetGlobalThreeDIdx = latDat->GetSiteCoordsFromSiteId(targetGlobalOneDIdx);
               site_t targetLocalIdx = latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(targetGlobalOneDIdx);
@@ -198,24 +180,8 @@ namespace hemelb
               for (unsigned int direction = 0; direction < 3; direction++)
                 CPPUNIT_ASSERT_EQUAL(site_t(1), targetGlobalThreeDIdx[direction]);
 
-              // begin by setting up mocks for the required site
-              std::vector<int> countOfNeedsToZeroFromZero;
-              countOfNeedsToZeroFromZero.push_back(1); // expectation
-              std::vector<int> countOfNeedsFromZeroToZero;
-              countOfNeedsFromZeroToZero.push_back(1); //fixture
-              netMock->RequireSend(&countOfNeedsToZeroFromZero.front(), 1, 0, "CountToSelf");
-              netMock->RequireReceive(&countOfNeedsFromZeroToZero.front(), 1, 0, "CountFromSelf");
-
-              std::vector<site_t> needsShouldBeSentToSelf;
-              std::vector<site_t> needsShouldBeReceivedFromSelf;
-              needsShouldBeSentToSelf.push_back(targetGlobalOneDIdx); //expectation
-              needsShouldBeReceivedFromSelf.push_back(targetGlobalOneDIdx); //fixture
-              netMock->RequireSend(&needsShouldBeSentToSelf.front(), 1, 0, "NeedToSelf");
-              netMock->RequireReceive(&needsShouldBeSentToSelf.front(), 1, 0, "NeedFromSelf");
-
               manager->RegisterNeededSite(targetGlobalOneDIdx);
               manager->ShareNeeds();
-              netMock->ExpectationsAllCompleted();
 
               // Now, transfer the data about that site.
               Site < LatticeData > exampleSite = latDat->GetSite(targetLocalIdx);
@@ -246,27 +212,12 @@ namespace hemelb
 
             void TestShareFieldDataOneProcViaIterableAction()
             {
+              UseRealCommunicator();
               site_t targetGlobalOneDIdx = 43;
               site_t targetLocalIdx = latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(targetGlobalOneDIdx);
 
-              // begin by setting up mocks for the required site
-              std::vector<int> countOfNeedsToZeroFromZero;
-              countOfNeedsToZeroFromZero.push_back(1); // expectation
-              std::vector<int> countOfNeedsFromZeroToZero;
-              countOfNeedsFromZeroToZero.push_back(1); //fixture
-              netMock->RequireSend(&countOfNeedsToZeroFromZero.front(), 1, 0, "CountToSelf");
-              netMock->RequireReceive(&countOfNeedsFromZeroToZero.front(), 1, 0, "CountFromSelf");
-
-              std::vector<site_t> needsShouldBeSentToSelf;
-              std::vector<site_t> needsShouldBeReceivedFromSelf;
-              needsShouldBeSentToSelf.push_back(targetGlobalOneDIdx); //expectation
-              needsShouldBeReceivedFromSelf.push_back(targetGlobalOneDIdx); //fixture
-              netMock->RequireSend(&needsShouldBeSentToSelf.front(), 1, 0, "NeedToSelf");
-              netMock->RequireReceive(&needsShouldBeSentToSelf.front(), 1, 0, "NeedFromSelf");
-
               manager->RegisterNeededSite(targetGlobalOneDIdx);
               manager->ShareNeeds();
-              netMock->ExpectationsAllCompleted();
 
               // Now, transfer the data about that site.
               Site < LatticeData > exampleSite = latDat->GetSite(targetLocalIdx);

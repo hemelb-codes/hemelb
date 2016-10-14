@@ -18,12 +18,6 @@
       <position x="0.0" y="0.0" z="0.03" />
     </outlet>
   </outlets>
-  <visualisation>
-    <centre x="0.0" y="0.0" z="0.0" />
-    <orientation latitude="45.0" longitude="45.0" />
-    <display brightness="0.03" zoom="1.0" />
-    <range maxstress="0.1" maxvelocity="0.1" />
-  </visualisation>
   <properties>
     <propertyoutput frequency="6000" file="velocity_40mm_in.dat">
       <linegeometry>

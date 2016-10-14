@@ -24,13 +24,13 @@ namespace hemelb
         }
 
         template<class T>
-        void RequestSendV(std::vector<T> &payload, proc_t toRank)
+        void RequestSendV(const std::vector<T> &payload, proc_t toRank)
         {
           RequestSend(&payload[0], payload.size(), toRank);
         }
 
         template<class T>
-        void RequestSendR(T& value, proc_t toRank)
+        void RequestSendR(const T& value, proc_t toRank)
         {
           RequestSend(&value, 1, toRank);
         }
@@ -106,29 +106,10 @@ namespace hemelb
           RequestGatherVSend(&payload.front(), payload.size(), toRank);
         }
 
-        /***
-         * This is for a scalar all to all
-         * @param buffer vector with length same as communicator size
-         */
         template<class T>
-        void RequestAllToAllSend(std::vector<T> &buffer)
+        void RequestSend(const T* pointer, int count, proc_t rank)
         {
-          RequestAllToAllSend(&buffer.front(), 1);
-        }
-        /***
-         * This is for a scalar all to all
-         * @param buffer vector with length same as communicator size
-         */
-        template<class T>
-        void RequestAllToAllReceive(std::vector<T> &buffer)
-        {
-          RequestAllToAllReceive(&buffer.front(), 1);
-        }
-
-        template<class T>
-        void RequestSend(T* pointer, int count, proc_t rank)
-        {
-          RequestSendImpl(pointer, count, rank, MpiDataType<T>());
+          RequestSendImpl(const_cast<T*>(pointer), count, rank, MpiDataType<T>());
         }
 
         template<class T>
@@ -165,17 +146,6 @@ namespace hemelb
         void RequestGatherVReceive(T* buffer, int * displacements, int *counts)
         {
           RequestGatherVReceiveImpl(buffer, displacements, counts, MpiDataType<T>());
-        }
-
-        template<class T>
-        void RequestAllToAllSend(T* buffer, int count)
-        {
-          RequestAllToAllSendImpl(buffer, count, MpiDataType<T>());
-        }
-        template<class T>
-        void RequestAllToAllReceive(T* buffer, int count)
-        {
-          RequestAllToAllReceiveImpl(buffer, count, MpiDataType<T>());
         }
 
     }

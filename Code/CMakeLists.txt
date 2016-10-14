@@ -7,9 +7,6 @@ cmake_minimum_required (VERSION 3.2)
 
 project(HemeLB)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 #---- OPTION switches accepted by the build -------
 
 option(HEMELB_BUILD_DEBUGGER "Build the built in debugger" ON)
@@ -21,9 +18,7 @@ option(HEMELB_BUILD_TESTS_ALL "Build all the tests" ON)
 option(HEMELB_BUILD_TESTS_UNIT "Build the unit-tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
 option(HEMELB_BUILD_TESTS_FUNCTIONAL "Build the functional tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
 option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
-option(HEMELB_USE_STREAKLINES "Calculate streakline images" OFF)
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
-option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
 option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
@@ -63,8 +58,6 @@ set(HEMELB_POINTPOINT_IMPLEMENTATION Coalesce
 	CACHE STRING "Point to point comms implementation, choose 'Coalesce', 'Separated', or 'Immediate'" )
 set(HEMELB_GATHERS_IMPLEMENTATION Separated
 	CACHE STRING "Gather comms implementation, choose 'Separated', or 'ViaPointPoint'" )
-set(HEMELB_ALLTOALL_IMPLEMENTATION Separated
-	CACHE STRING "Alltoall comms implementation, choose 'Separated', or 'ViaPointPoint'" )
 option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
 	
 # Add warnings flags to development build types
@@ -94,16 +87,8 @@ if(HEMELB_VALIDATE_GEOMETRY)
   add_definitions(-DHEMELB_VALIDATE_GEOMETRY)
 endif()
 
-if (NOT HEMELB_USE_STREAKLINES)
-	add_definitions(-DNO_STREAKLINES)
-endif()
-
 if (HEMELB_WAIT_ON_CONNECT)
 	add_definitions(-DHEMELB_WAIT_ON_CONNECT)
-endif()
-
-if (NOT HEMELB_STATIC_ASSERT)
-	add_definitions(-DHEMELB_NO_STATIC_ASSERT)
 endif()
 
 if (HEMELB_IMAGES_TO_NULL)
@@ -121,6 +106,7 @@ if (HEMELB_USE_VELOCITY_WEIGHTS_FILE)
     add_definitions(-DHEMELB_USE_VELOCITY_WEIGHTS_FILE)
 endif()
 
+
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${HEMELB_DEPENDENCIES_PATH}/Modules/")
 list(APPEND CMAKE_INCLUDE_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/include)
 list(APPEND CMAKE_LIBRARY_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/lib)
@@ -131,6 +117,7 @@ if(HEMELB_DEPENDENCIES_SET_RPATH)
 	SET(CMAKE_INSTALL_RPATH "${HEMELB_DEPENDENCIES_INSTALL_PATH}/lib")
 endif()
 
+include(cxx11)
 include(build_environment)
 include(platform_checks)
 
@@ -158,6 +145,10 @@ if(NOT HAVE_XDRUINTXX_T)
 endif()
 
 include(mpi)
+if(MPI_STANDARD_VERSION VERSION_LESS 3)
+  message(FATAL_ERROR "Must have MPI 3.0 or greater")
+endif()
+set(HAVE_CONSTCORRECTMPI TRUE)
 include(dependencies)
 
 #-------------Resources -----------------------
@@ -193,7 +184,6 @@ set(package_subdirs
 	extraction
 	reporting
 	steering
-	vis
 	lb
 	geometry
 	net
@@ -240,7 +230,6 @@ if (HEMELB_BUILD_MULTISCALE)
 		extraction
 		reporting
 		steering
-		vis
 		lb
 		geometry
 		net

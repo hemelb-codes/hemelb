@@ -15,7 +15,7 @@ namespace hemelb
 
     SimulationState::SimulationState(double timeStepLength, unsigned long totalTimeSteps) :
         timeStepLength(timeStepLength), timeStep(1), totalTimeSteps(totalTimeSteps),
-            isTerminating(false), isRendering(false), stability(Stable)
+            isTerminating(false), stability(Stable)
     {
     }
 
@@ -33,10 +33,7 @@ namespace hemelb
     {
       isTerminating = value;
     }
-    void SimulationState::SetIsRendering(bool value)
-    {
-      isRendering = value;
-    }
+
     void SimulationState::SetStability(Stability value)
     {
       stability = value;
@@ -59,12 +56,12 @@ namespace hemelb
 
     bool SimulationState::IsTerminating() const
     {
+      if (timeStep >= totalTimeSteps)
+	return true;
+      
       return isTerminating;
     }
-    bool SimulationState::IsRendering() const
-    {
-      return isRendering;
-    }
+
     Stability SimulationState::GetStability() const
     {
       return stability;

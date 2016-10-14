@@ -12,6 +12,8 @@
 #include "net/MpiEnvironment.h"
 #include "net/MpiCommunicator.h"
 #include "net/MpiGroup.h"
+#include "net/MpiStatus.h"
+#include "net/MpiRequest.h"
 #include "net/MpiError.h"
 
 #endif // HEMELB_NET_MPI_H

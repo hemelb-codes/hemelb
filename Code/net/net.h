@@ -16,13 +16,12 @@ namespace hemelb
   {
     class Net : public PointPointImpl,
                 public InterfaceDelegationNet,
-                public AllToAllImpl,
                 public GathersImpl
     {
       public:
         Net(const MpiCommunicator &communicator) :
             BaseNet(communicator), StoringNet(communicator), PointPointImpl(communicator),
-                InterfaceDelegationNet(communicator), AllToAllImpl(communicator),
+                InterfaceDelegationNet(communicator),
                 GathersImpl(communicator)
         {
         }

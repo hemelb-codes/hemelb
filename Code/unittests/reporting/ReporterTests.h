@@ -25,7 +25,7 @@ namespace hemelb
       using namespace hemelb::reporting;
 
       typedef TimersBase<ClockMock, MPICommsMock> TimersMock;
-      typedef lb::IncompressibilityChecker<net::BroadcastMockRootNode> IncompressibilityCheckerMock;
+      typedef lb::IncompressibilityChecker IncompressibilityCheckerMock;
 
       class ReporterTests : public helpers::HasCommsTestFixture
       {
@@ -85,9 +85,6 @@ namespace hemelb
               }
             }
             mockTimers->Reduce(); // invoke the Timers MPI mock
-            reporter->Image();
-            reporter->Image();
-            reporter->Image();
             for (unsigned int step = 0; step < 1000; step++)
             {
               state->Increment();
@@ -101,7 +98,6 @@ namespace hemelb
                            "{{#PROCESSOR}}R{{RANK}}S{{SITES}} {{/PROCESSOR}}");
             AssertTemplate(hemelb::reporting::mercurial_revision_number, "{{#BUILD}}{{REVISION}}{{/BUILD}}");
             AssertTemplate(hemelb::reporting::build_time, "{{#BUILD}}{{TIME}}{{/BUILD}}");
-            AssertValue("3", "IMAGES");
             AssertValue("0.000100", "TIME_STEP_LENGTH");
             AssertValue("1000", "TOTAL_TIME_STEPS");
             AssertValue("1000", "STEPS");

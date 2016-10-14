@@ -137,12 +137,12 @@ namespace hemelb
 
               // Ok, now we have an inlet, check the values are right.
               CPPUNIT_ASSERT_EQUAL(std::string("./iolet.txt"), file->GetFilePath());
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(78.0,
-                                           converter.ConvertPressureToPhysicalUnits(file->GetPressureMin()),
-                                           1e-6);
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(82.0,
-                                           converter.ConvertPressureToPhysicalUnits(file->GetPressureMax()),
-                                           1e-6);
+//              CPPUNIT_ASSERT_DOUBLES_EQUAL(78.0,
+//                                           converter.ConvertPressureToPhysicalUnits(file->GetPressureMin()),
+//                                           1e-6);
+//              CPPUNIT_ASSERT_DOUBLES_EQUAL(82.0,
+//                                           converter.ConvertPressureToPhysicalUnits(file->GetPressureMax()),
+//                                           1e-6);
               PhysicalPosition expected(-1.66017717834e-05, -4.58437586355e-05, -0.05);
               PhysicalPosition actual =
                   converter.ConvertPositionToPhysicalUnits(file->GetPosition());
@@ -158,7 +158,7 @@ namespace hemelb
                   + (82.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp
                       / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
 
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(targetStartDensity, file->GetDensityMin(), 1e-6);
+//              CPPUNIT_ASSERT_DOUBLES_EQUAL(targetStartDensity, file->GetDensityMin(), 1e-6);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(targetStartDensity, file->GetDensity(0), 1e-6);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(targetMidDensity,
                                            file->GetDensity(state.GetTotalTimeSteps() / 2),
@@ -286,7 +286,7 @@ namespace hemelb
               UncheckedSimConfig config(Resource("config_file_velocity_inlet.xml").Path());
               lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
                                                               config.GetTotalTimeSteps());
-              double voxelSize = config.GetVoxelSize();
+
               const util::UnitConverter& converter = config.GetUnitConverter();
               fileVel = static_cast<InOutLetFileVelocity*>(config.GetInlets()[0]);
               // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
@@ -340,14 +340,6 @@ namespace hemelb
                 {
                   ConcreteIolet* copy = new ConcreteIolet(*this);
                   return copy;
-                }
-                virtual LatticeDensity GetDensityMin() const
-                {
-                  return 1.0;
-                }
-                virtual LatticeDensity GetDensityMax() const
-                {
-                  return 1.0;
                 }
                 virtual LatticeDensity GetDensity(hemelb::LatticeTimeStep) const
                 {

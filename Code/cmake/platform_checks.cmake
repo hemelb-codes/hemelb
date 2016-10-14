@@ -5,7 +5,6 @@
 # license in the file LICENSE.
 include(gnu_bug)
 include(mountain_lion_scandir)
-include(intel_cpp11)
 
 include(CheckCXXSourceCompiles)
 CHECK_CXX_SOURCE_COMPILES("#include <cmath>\n int main(int c,char** v){ return isnan(1.0); }" HAVE_ISNAN)

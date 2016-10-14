@@ -12,7 +12,6 @@
 #include <ostream>
 #include <algorithm>
 #include <limits>
-#include "util/static_assert.h"
 #include "util/utilityFunctions.h"
 #include "util/Vector3DArithmeticTraits.h"
 
@@ -343,8 +342,10 @@ namespace hemelb
          */
         T GetMagnitude() const
         {
-          HEMELB_STATIC_ASSERT(std::numeric_limits<T>::is_specialized);
-          HEMELB_STATIC_ASSERT(!std::numeric_limits<T>::is_integer);
+          static_assert(std::numeric_limits<T>::is_specialized,
+			"type must have std::numeric_limits specialized");
+          static_assert(!std::numeric_limits<T>::is_integer,
+			"type must not be an integer");
           return std::sqrt(GetMagnitudeSquared());
         }
 

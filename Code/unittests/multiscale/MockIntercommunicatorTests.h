@@ -207,15 +207,13 @@ namespace hemelb
             // TODO: This test is fatal if run with LADDIOLET. See ticket #605.
             LADD_FAIL();
             int argc;
-            const char* argv[7];
-            argc = 7;
+            const char* argv[5];
+            argc = 5;
             argv[0] = "hemelb";
-            argv[2] = "four_cube_multiscale.xml";
             argv[1] = "-in";
-            argv[3] = "-i";
-            argv[4] = "1";
-            argv[5] = "-ss";
-            argv[6] = "1111";
+            argv[2] = "four_cube_multiscale.xml";
+            argv[3] = "-ss";
+            argv[4] = "1111";
             CopyResourceToTempdir("four_cube_multiscale.xml");
             CopyResourceToTempdir("four_cube.gmy");
             hemelb::configuration::CommandLine options(argc, argv);

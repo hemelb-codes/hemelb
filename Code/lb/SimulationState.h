@@ -31,14 +31,12 @@ namespace hemelb
         void Increment();
         void Reset();
         void SetIsTerminating(bool value);
-        void SetIsRendering(bool value);
         void SetStability(Stability value);
 
         LatticeTimeStep GetTimeStep() const;
         LatticeTimeStep Get0IndexedTimeStep() const;
         LatticeTimeStep GetTotalTimeSteps() const;
         bool IsTerminating() const;
-        bool IsRendering() const;
         Stability GetStability() const;
 
         PhysicalTime GetTime() const {return GetTimeStepLength()*Get0IndexedTimeStep();}
@@ -51,7 +49,6 @@ namespace hemelb
         LatticeTimeStep timeStep;
         LatticeTimeStep totalTimeSteps;
         bool isTerminating;
-        bool isRendering;
         Stability stability;
     };
   }
