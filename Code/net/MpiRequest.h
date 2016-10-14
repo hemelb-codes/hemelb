@@ -12,7 +12,6 @@
 
 #include <vector>
 #include "net/MpiError.h"
-#include <boost/shared_ptr.hpp>
 
 namespace hemelb
 {
@@ -38,9 +37,8 @@ namespace hemelb
          */
         operator MPI_Request() const
         {
-          return *reqPtr;
+          return req;
         }
-
         operator bool() const;
 
         void Wait();
@@ -53,8 +51,7 @@ namespace hemelb
         static bool TestAll(ReqVec& reqs);
 
       private:
-
-        boost::shared_ptr<MPI_Request> reqPtr;
+	MPI_Request req;
     };
 
   }
