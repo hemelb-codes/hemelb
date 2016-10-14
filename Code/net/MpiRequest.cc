@@ -15,30 +15,26 @@ namespace hemelb
   namespace net
   {
     MpiRequest::MpiRequest() :
-        reqPtr()
+        req(MPI_REQUEST_NULL)
     {
     }
-    MpiRequest::MpiRequest(MPI_Request req) :
-        reqPtr()
+    MpiRequest::MpiRequest(MPI_Request req_) :
+        req(req_)
     {
-      reqPtr.reset(new MPI_Request(req));
     }
 
     MpiRequest::operator bool() const
     {
-      if ((bool)reqPtr)
-        return *reqPtr != MPI_REQUEST_NULL;
-
-      return false;
+      return req != MPI_REQUEST_NULL;
     }
 
     void MpiRequest::Wait()
     {
-      HEMELB_MPI_CALL(MPI_Wait, (reqPtr.get(), MPI_STATUS_IGNORE));
+      HEMELB_MPI_CALL(MPI_Wait, (&req, MPI_STATUS_IGNORE));
     }
     void MpiRequest::Wait(MpiStatus& stat)
     {
-      HEMELB_MPI_CALL(MPI_Wait, (reqPtr.get(), stat.statPtr.get()));
+      HEMELB_MPI_CALL(MPI_Wait, (&req, stat.statPtr.get()));
     }
 
     void MpiRequest::WaitAll(ReqVec& reqs)
@@ -114,7 +110,7 @@ namespace hemelb
     bool MpiRequest::Test()
     {
       int flag;
-      HEMELB_MPI_CALL(MPI_Test, (reqPtr.get(), &flag, MPI_STATUS_IGNORE));
+      HEMELB_MPI_CALL(MPI_Test, (&req, &flag, MPI_STATUS_IGNORE));
       return flag;
     }
 

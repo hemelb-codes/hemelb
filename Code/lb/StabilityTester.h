@@ -40,7 +40,7 @@ namespace hemelb
         /**
          * Initiate the collective.
          */
-        void Send(void);
+        virtual void Send(void);
 
         /**
          * Computes the relative difference between the densities at the beginning and end of a

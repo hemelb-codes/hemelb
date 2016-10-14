@@ -341,12 +341,21 @@ void SimulationMaster::RunSimulation()
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Beginning to run simulation.");
   timings[hemelb::reporting::Timers::simulation].Start();
 
-  while (simulationState->GetTimeStep() <= simulationState->GetTotalTimeSteps())
+  int LastTS = simulationState->GetTotalTimeSteps();
+  while (simulationState->GetTimeStep() <= LastTS)
   {
+    // We need to keep the master rank in sync with the workers
+    // Here, each rank notifies that it is beginning a time step
+    auto syncReq = ioComms.Ibarrier();
+    
     DoTimeStep();
+    
+    timeStepSyncReq.Wait();
+    // Now all ranks have at least started this time step
+    
     if (simulationState->IsTerminating())
     {
-      break;
+      LastTS = std::min(simulationState->GetTimeStep(), simulationState->GetTotalTimeSteps());
     }
   }
 
@@ -373,6 +382,20 @@ void SimulationMaster::Finalise()
 
 void SimulationMaster::DoTimeStep()
 {
+  // If the simulation is finishing, all running collective actions
+  // must wait this time step
+  if (simulationState->IsTerminating())
+  {
+    if (stabilityTester)
+      stabilityTester->MustFinishThisTimeStep();
+    if (entropyTester)
+      entropyTester->MustFinishThisTimeStep();
+    if (incompressibilityChecker)
+      incompressibilityChecker->MustFinishThisTimeStep();
+    if (steeringCpt)
+      steeringCpt->MustFinishThisTimeStep();
+  }
+  
   if (simulationState->GetTimeStep() % 100 == 0)
   {
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i",
@@ -390,7 +413,7 @@ void SimulationMaster::DoTimeStep()
   }
 
   // If the user requested to terminate converged steady flow simulations, mark
-  // simulation to be finished at the end of the current timestep.
+  // simulation to be finished ASAP.
   if ( (simulationState->GetStability() == hemelb::lb::StableAndConverged)
       && monitoringConfig->convergenceTerminate)
   {

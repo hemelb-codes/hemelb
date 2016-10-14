@@ -56,6 +56,9 @@ namespace hemelb
 
     bool SimulationState::IsTerminating() const
     {
+      if (timeStep >= totalTimeSteps)
+	return true;
+      
       return isTerminating;
     }
 
