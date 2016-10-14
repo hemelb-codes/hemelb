@@ -7,11 +7,9 @@
 #ifndef HEMELB_NET_MPICOMMUNICATOR_H
 #define HEMELB_NET_MPICOMMUNICATOR_H
 
-//#include "units.h"
-//#include "net/mpi.h"
 #include <vector>
+#include <memory>
 #include "net/MpiError.h"
-#include <boost/shared_ptr.hpp>
 
 namespace hemelb
 {
@@ -181,7 +179,7 @@ namespace hemelb
          */
         MpiCommunicator(MPI_Comm communicator, bool willOwn);
 
-        boost::shared_ptr<MPI_Comm> commPtr;
+        std::shared_ptr<MPI_Comm> commPtr;
     };
 
     bool operator==(const MpiCommunicator& comm1, const MpiCommunicator& comm2);

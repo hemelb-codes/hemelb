@@ -11,7 +11,7 @@
 #define HEMELB_NET_MPISTATUS_H
 
 #include "net/MpiError.h"
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 namespace hemelb
 {
@@ -35,7 +35,7 @@ namespace hemelb
         }
 
       private:
-        boost::shared_ptr<MPI_Status> statPtr;
+        std::shared_ptr<MPI_Status> statPtr;
         // Request needs to be able to access statPtr.
         friend class MpiRequest;
     };
