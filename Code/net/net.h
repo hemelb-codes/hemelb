@@ -15,14 +15,12 @@ namespace hemelb
   namespace net
   {
     class Net : public PointPointImpl,
-                public InterfaceDelegationNet,
-                public GathersImpl
+                public InterfaceDelegationNet
     {
       public:
         Net(const MpiCommunicator &communicator) :
             BaseNet(communicator), StoringNet(communicator), PointPointImpl(communicator),
-                InterfaceDelegationNet(communicator),
-                GathersImpl(communicator)
+                InterfaceDelegationNet(communicator)
         {
         }
     };

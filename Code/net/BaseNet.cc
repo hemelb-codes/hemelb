@@ -37,8 +37,6 @@ namespace hemelb
 
     void BaseNet::Receive()
     {
-      ReceiveGathers();
-      ReceiveGatherVs();
       // Ensure collectives are called before point-to-point, as some implementing mixins implement collectives via point-to-point
       ReceivePointToPoint();
     }
@@ -46,8 +44,6 @@ namespace hemelb
     void BaseNet::Send()
     {
 
-      SendGathers();
-      SendGatherVs();
       // Ensure collectives are called before point-to-point, as some implementing mixins implement collectives via point-to-point
       SendPointToPoint();
     }
@@ -56,8 +52,6 @@ namespace hemelb
     {
       SyncPointsCounted++; //DTMP: counter for monitoring purposes.
 
-      WaitGathers();
-      WaitGatherVs();
       WaitPointToPoint();
 
       displacementsBuffer.clear();

@@ -56,8 +56,6 @@ set(HEMELB_WALL_OUTLET_BOUNDARY "NASHZEROTHORDERPRESSURESBB"
   CACHE STRING "Select the boundary conditions to be used at corners between walls and outlets (NASHZEROTHORDERPRESSURESBB,NASHZEROTHORDERPRESSUREBFL,LADDIOLETSBB,LADDIOLETBFL)")
 set(HEMELB_POINTPOINT_IMPLEMENTATION Coalesce
 	CACHE STRING "Point to point comms implementation, choose 'Coalesce', 'Separated', or 'Immediate'" )
-set(HEMELB_GATHERS_IMPLEMENTATION Separated
-	CACHE STRING "Gather comms implementation, choose 'Separated', or 'ViaPointPoint'" )
 option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
 	
 # Add warnings flags to development build types
