@@ -7,8 +7,9 @@
 #ifndef HEMELB_GEOMETRY_NEEDS_NEEDS_H
 #define HEMELB_GEOMETRY_NEEDS_NEEDS_H
 #include <vector>
-#include "net/net.h"
-#include "net/IOCommunicator.h"
+#include "units.h"
+#include "net/MpiCommunicator.h"
+
 namespace hemelb
 {
   namespace geometry
@@ -20,6 +21,7 @@ namespace hemelb
      *  Class defining HemeLB needs communication
      Used by geometry reader to know where to send which blocks.
      */
+    
     class Needs
     {
       public:
@@ -28,12 +30,12 @@ namespace hemelb
          * @param BlockCount Count of blocks
          * @param readBlock Which cores need which blocks, as an array of booleans.
          * @param readingGroupSize Number sof cores to use for reading blocks
-         * @param net Instance of Net communication class to use.
+         * @param comm MPI communicator.
          */
        Needs(const site_t blockCount,
                           const std::vector<bool>& readBlock,
                           const proc_t readingGroupSize,
-                          net::InterfaceDelegationNet &net,
+                          net::MpiCommunicator& comm,
                           bool shouldValidate); // Temporarily during the refactor, constructed just to abstract the block sharing bit
 
         /***

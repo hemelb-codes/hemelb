@@ -313,11 +313,11 @@ namespace hemelb
 
       // Next we spread round the lists of which blocks each core needs access to.
       log::Logger::Log<log::Debug, log::OnePerCore>("Informing reading cores of block needs");
-      net::Net net = net::Net(computeComms);
+      
       Needs needs(geometry.GetBlockCount(),
                   readBlock,
                   util::NumericalFunctions::min(READING_GROUP_SIZE, computeComms.Size()),
-                  net,
+                  computeComms,
                   ShouldValidate());
 
       timings[hemelb::reporting::Timers::readBlocksPrelim].Stop();

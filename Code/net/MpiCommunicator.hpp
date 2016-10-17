@@ -195,7 +195,7 @@ namespace hemelb
 	  total += recvcounts[i];
 	}
 	// set up recv buffer
-	ans.resize(np);
+	ans.resize(total);
 	recvbuf = ans.data();
       }
 
