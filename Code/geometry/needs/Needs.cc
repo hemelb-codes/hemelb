@@ -15,9 +15,9 @@ namespace hemelb
     Needs::Needs(const site_t blockCount,
                  const std::vector<bool>& readBlock,
                  const proc_t readingGroupSize,
-                 net::InterfaceDelegationNet & net,
+                 net::MpiCommunicator& comm,
                  bool shouldValidate_) :
-        procsWantingBlocksBuffer(blockCount), communicator(net.GetCommunicator()), readingGroupSize(readingGroupSize), shouldValidate(shouldValidate_)
+        procsWantingBlocksBuffer(blockCount), communicator(comm), readingGroupSize(readingGroupSize), shouldValidate(shouldValidate_)
     {
       // Compile the blocks needed here into an array of indices, instead of an array of bools
       std::vector<std::vector<site_t> > blocksNeededHere(readingGroupSize);
@@ -31,33 +31,25 @@ namespace hemelb
 
       // Share the counts of needed blocks
       int blocksNeededSize[readingGroupSize];
-      std::vector<int> blocksNeededSizes(communicator.Size());
+      std::vector<int> blocksNeededSizes;
 
       for (proc_t readingCore = 0; readingCore < readingGroupSize; readingCore++)
       {
         blocksNeededSize[readingCore] = blocksNeededHere[readingCore].size();
-        net.RequestGatherSend(blocksNeededSize[readingCore], readingCore);
-
+	auto tmp = communicator.Gather(blocksNeededSize[readingCore], readingCore);
+	if (readingCore == communicator.Rank())
+	  blocksNeededSizes = std::move(tmp);
       }
-      if (communicator.Rank() < readingGroupSize)
-      {
-        net.RequestGatherReceive(blocksNeededSizes);
-      }
-      net.Dispatch();
+      
       // Communicate the arrays of needed blocks
-
+      std::vector<site_t> blocksNeededOn;
       for (proc_t readingCore = 0; readingCore < readingGroupSize; readingCore++)
       {
-        net.RequestGatherVSend(blocksNeededHere[readingCore], readingCore);
+	auto tmp = communicator.GatherV(blocksNeededHere[readingCore], blocksNeededSizes, readingCore);
+	if (readingCore == communicator.Rank())
+	  blocksNeededOn = std::move(tmp);
       }
 
-      std::vector<site_t> blocksNeededOn;
-
-      if (communicator.Rank() < readingGroupSize)
-      {
-        net.RequestGatherVReceive(blocksNeededOn, blocksNeededSizes);
-      }
-      net.Dispatch();
       if (communicator.Rank() < readingGroupSize)
       {
         int needsPassed = 0;
