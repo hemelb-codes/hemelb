@@ -13,8 +13,6 @@ add_library(hemelb_net
   mixins/pointpoint/CoalescePointPoint.cc
   mixins/pointpoint/SeparatedPointPoint.cc
   mixins/pointpoint/ImmediatePointPoint.cc
-  mixins/gathers/SeparatedGathers.cc 
-  mixins/gathers/ViaPointPointGathers.cc
   mixins/StoringNet.cc ProcComms.cc
   phased/StepManager.cc)
 configure_file (

@@ -41,6 +41,5 @@ Wall/iolet boundary condition: {{WALL_IOLET_BOUNDARY_CONDITION}}
 
 Communications options:
 Point to point implementation: {{POINTPOINT_IMPLEMENTATION}}
-Gathers implementation: {{GATHERS_IMPLEMENTATION}}
 Separated concerns: {{SEPARATE_CONCERNS}}
 {{/BUILD}}

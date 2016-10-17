@@ -11,7 +11,5 @@
 #include "net/mixins/pointpoint/ImmediatePointPoint.h"
 #include "net/mixins/pointpoint/SeparatedPointPoint.h"
 #include "net/mixins/StoringNet.h"
-#include "net/mixins/gathers/SeparatedGathers.h"
 #include "net/mixins/InterfaceDelegationNet.h"
-#include "net/mixins/gathers/ViaPointPointGathers.h"
 #endif

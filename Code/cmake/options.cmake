@@ -123,8 +123,6 @@ hemelb_cachevar(HEMELB_WALL_OUTLET_BOUNDARY "NASHZEROTHORDERPRESSURESBB"
   STRING "Select the boundary conditions to be used at corners between walls and outlets (NASHZEROTHORDERPRESSURESBB,NASHZEROTHORDERPRESSUREBFL,LADDIOLETSBB,LADDIOLETBFL)")
 hemelb_cachevar(HEMELB_POINTPOINT_IMPLEMENTATION Coalesce
   STRING "Point to point comms implementation, choose 'Coalesce', 'Separated', or 'Immediate'" )
-hemelb_cachevar(HEMELB_GATHERS_IMPLEMENTATION Separated
-  STRING "Gather comms implementation, choose 'Separated', or 'ViaPointPoint'" )
 
 #
 # Specify the variables requiring forwarding
