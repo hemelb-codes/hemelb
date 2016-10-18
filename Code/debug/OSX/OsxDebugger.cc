@@ -5,14 +5,14 @@
 // license in the file LICENSE.
 
 #include <string>
-
+#include "Exception.h"
 #include "debug/OSX/OsxDebugger.h"
 #include <mach-o/dyld.h>
 namespace hemelb
 {
   namespace debug
   {
-    OsxDebugger::OsxDebugger(const char* const executable, const net::MpiCommunicator& comm) :
+    OsxDebugger::OsxDebugger(const char* const executable, const comm::Communicator* comm) :
       ActiveDebugger(executable, comm)
     {
     }
