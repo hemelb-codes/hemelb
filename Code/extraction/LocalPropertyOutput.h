@@ -9,15 +9,12 @@
 
 #include "extraction/IterableDataSource.h"
 #include "extraction/PropertyOutputFile.h"
-#include "net/mpi.h"
-#include "net/MpiFile.h"
+
+#include "comm/Communicator.h"
+#include "comm/MpiFile.h"
 
 namespace hemelb
 {
-  namespace net
-  {
-    class IOCommunicator;
-  }
   namespace extraction
   {
     /**
@@ -32,7 +29,8 @@ namespace hemelb
          * @param offset
          * @return
          */
-        LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile* outputSpec, const net::IOCommunicator& ioComms);
+        LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile* outputSpec,
+			    const comm::Communicator* ioComms);
 
         /**
          * Tidies up the LocalPropertyOutput (close files etc).
@@ -72,11 +70,11 @@ namespace hemelb
          */
         double GetOffset(OutputField::FieldType field) const;
 
-        const net::IOCommunicator& comms;
+        const comm::Communicator* comms;
         /**
          * The MPI file to write into.
          */
-        net::MpiFile outputFile;
+        comm::MpiFile* outputFile;
 
         /**
          * The data source to use for file output.

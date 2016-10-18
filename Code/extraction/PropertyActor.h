@@ -31,7 +31,7 @@ namespace hemelb
                       const std::vector<PropertyOutputFile*>& propertyOutputs,
                       IterableDataSource& dataSource,
                       reporting::Timers& timers,
-                      const net::IOCommunicator& ioComms);
+                      const comm::Communicator* ioComms);
 
         ~PropertyActor();
 

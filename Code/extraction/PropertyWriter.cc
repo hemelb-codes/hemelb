@@ -12,7 +12,7 @@ namespace hemelb
   {
     PropertyWriter::PropertyWriter(IterableDataSource& dataSource,
                                    const std::vector<PropertyOutputFile*>& propertyOutputs,
-                                   const net::IOCommunicator& ioComms)
+                                   const comm::Communicator* ioComms)
     {
       for (unsigned outputNumber = 0; outputNumber < propertyOutputs.size(); ++outputNumber)
       {

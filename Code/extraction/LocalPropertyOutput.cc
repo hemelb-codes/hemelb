@@ -9,7 +9,7 @@
 #include "io/formats/formats.h"
 #include "io/formats/extraction.h"
 #include "io/writers/xdr/XdrMemWriter.h"
-#include "net/IOCommunicator.h"
+#include "comm/Communicator.h"
 #include "constants.h"
 
 namespace hemelb
@@ -18,13 +18,13 @@ namespace hemelb
   {
     LocalPropertyOutput::LocalPropertyOutput(IterableDataSource& dataSource,
                                              const PropertyOutputFile* outputSpec,
-                                             const net::IOCommunicator& ioComms) :
+                                             const comm::Communicator* ioComms) :
       comms(ioComms), dataSource(dataSource), outputSpec(outputSpec)
     {
       // Open the file as write-only, create it if it doesn't exist, don't create if the file
       // already exists.
-      outputFile = net::MpiFile::Open(comms, outputSpec->filename,
-                                      MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL);
+      outputFile = comms->OpenFile(outputSpec->filename,
+				   MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL);
       // Count sites on this task
       uint64_t siteCount = 0;
       dataSource.Reset();
@@ -53,7 +53,7 @@ namespace hemelb
       writeLength *= siteCount;
 
       // The IO proc also writes the iteration number
-      if (comms.OnIORank())
+      if (comms->OnIORank())
       {
         writeLength += 8;
       }
@@ -61,17 +61,17 @@ namespace hemelb
       //! @TODO: These two MPI calls can be replaced with one
 
       // Everyone needs to know the total length written during one iteration.
-      allCoresWriteLength = comms.AllReduce(writeLength, MPI_SUM);
+      allCoresWriteLength = comms->AllReduce(writeLength, MPI_SUM);
 
       // Only the root process needs to know the total number of sites written
       // Note this has a garbage value on other procs.
-      uint64_t allSiteCount = comms.Reduce(siteCount, MPI_SUM,
-                                           comms.GetIORank());
+      uint64_t allSiteCount = comms->Reduce(siteCount, MPI_SUM,
+					    comms->GetIORank());
 
       unsigned totalHeaderLength = 0;
 
       // Write the header information on the IO proc.
-      if (comms.OnIORank())
+      if (comms->OnIORank())
       {
         // Compute the length of the field header
         unsigned fieldHeaderLength = 0;
@@ -125,29 +125,29 @@ namespace hemelb
         }
 
         // Write from the buffer
-        outputFile.WriteAt(0, headerBuffer);
+        outputFile->WriteAt(0, headerBuffer);
       }
 
       // Calculate where each core should start writing
-      if (comms.OnIORank())
+      if (comms->OnIORank())
       {
         // For core 0 this is easy: it passes the value for core 1 to the core.
         localDataOffsetIntoFile = totalHeaderLength;
 
-        if (comms.Size() > 1)
+        if (comms->Size() > 1)
         {
-          comms.Send(localDataOffsetIntoFile+writeLength, 1, 1);
+          comms->Send(localDataOffsetIntoFile+writeLength, 1, 1);
         }
       }
       else
       {
         // Receive the writing start position from the previous core.
-        comms.Recv(localDataOffsetIntoFile, comms.Rank()-1, 1);
+        comms->Recv(localDataOffsetIntoFile, comms->Rank()-1, 1);
 
         // Send the next core its start position.
-        if (comms.Rank() != (comms.Size() - 1))
+        if (comms->Rank() != (comms->Size() - 1))
         {
-          comms.Send(localDataOffsetIntoFile+writeLength, comms.Rank() + 1, 1);
+          comms->Send(localDataOffsetIntoFile+writeLength, comms->Rank() + 1, 1);
         }
       }
 
@@ -188,7 +188,7 @@ namespace hemelb
       io::writers::xdr::XdrMemWriter xdrWriter(&buffer[0], buffer.size());
 
       // Firstly, the IO proc must write the iteration number.
-      if (comms.OnIORank())
+      if (comms->OnIORank())
       {
         xdrWriter << (uint64_t) timestepNumber;
       }
@@ -252,7 +252,7 @@ namespace hemelb
                 break;
               case OutputField::MpiRank:
                 xdrWriter
-                    << static_cast<WrittenDataType> (comms.Rank());
+                    << static_cast<WrittenDataType> (comms->Rank());
                 break;
               default:
                 // This should never trip. It only occurs when a new OutputField field is added and no
@@ -264,7 +264,7 @@ namespace hemelb
       }
 
       // Actually do the MPI writing.
-      outputFile.WriteAt(localDataOffsetIntoFile, buffer);
+      outputFile->WriteAt(localDataOffsetIntoFile, buffer);
 
       // Set the offset to the right place for writing on the next iteration.
       localDataOffsetIntoFile += allCoresWriteLength;
