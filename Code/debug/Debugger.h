@@ -8,7 +8,7 @@
 #define HEMELB_DEBUG_DEBUGGER_H
 
 #include <string>
-#include "net/MpiCommunicator.h"
+#include "comm/Communicator.h"
 
 namespace hemelb
 {
@@ -22,20 +22,20 @@ namespace hemelb
          */
       public:
         // the singleton pattern
-        static Debugger* Init(bool active, const char *const, const net::MpiCommunicator& comm);
+        static Debugger* Init(bool active, const char *const, const comm::Communicator* comm);
         static Debugger* Get(void);
 
         virtual void BreakHere(void) = 0;
         virtual void Print(const char* iFormat, ...) = 0;
 
       protected:
-        Debugger(const char* const executable, const net::MpiCommunicator& comm);
+        Debugger(const char* const executable, const comm::Communicator* comm);
         virtual ~Debugger();
 
         virtual void Attach() = 0;
 
         std::string mExecutable;
-        const net::MpiCommunicator mCommunicator;
+        const comm::Communicator* mCommunicator;
         // Singleton pattern
         static Debugger* singleton;
 

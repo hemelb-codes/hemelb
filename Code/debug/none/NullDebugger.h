@@ -21,7 +21,7 @@ namespace hemelb
 
       protected:
         void Attach(void);
-        NullDebugger(const char* const executable, const net::MpiCommunicator& comm);
+        NullDebugger(const char* const executable, const comm::Communicator* comm);
         friend class Debugger;
     };
 
