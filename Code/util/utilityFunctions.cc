@@ -4,7 +4,7 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "net/mpi.h"
+#include <mpi.h>
 namespace hemelb
 {
   namespace util

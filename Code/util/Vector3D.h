@@ -746,11 +746,11 @@ namespace hemelb
 }
 
 #ifdef HEMELB_CODE
-#include "net/MpiDataType.h"
+#include "comm/MpiDataType.h"
 
 namespace hemelb
 {
-  namespace net
+  namespace comm
   {
     template<>
     MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<float> >::RegisterMpiDataType();
