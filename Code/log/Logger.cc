@@ -13,7 +13,7 @@
 #include <sys/resource.h>
 
 #include "util/utilityFunctions.h"
-#include "net/mpi.h"
+#include "comm/MpiEnvironment.h"
 #include "log/Logger.h"
 
 namespace hemelb
@@ -31,9 +31,9 @@ namespace hemelb
       if (thisRank < 0)
       {
         // Check that MPI is ready
-        if (net::MpiEnvironment::Initialized())
+        if (comm::MpiEnvironment::Initialized())
         {
-          thisRank = net::MpiCommunicator::World().Rank();
+          thisRank = comm::MpiEnvironment::World()->Rank();
         }
         startTime = util::myClock();
       }
