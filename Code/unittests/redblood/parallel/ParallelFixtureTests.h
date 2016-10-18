@@ -36,14 +36,14 @@ namespace hemelb
       class ParallelFixtureTests : public helpers::FolderTestFixture
       {
           CPPUNIT_TEST_SUITE (ParallelFixtureTests);
-          CPPUNIT_TEST (testTransititiveOwnership);
+          CPPUNIT_TEST (testTransitiveOwnership);
           CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp();
 
           //! if owner procs thinks position affects proc i, then proc i knows it as well
-          void testTransititiveOwnership();
+          void testTransitiveOwnership();
         protected:
           std::shared_ptr<hemelb::configuration::CommandLine> options;
 
@@ -93,7 +93,7 @@ namespace hemelb
                                                                "" });
       }
 
-      void ParallelFixtureTests::testTransititiveOwnership()
+      void ParallelFixtureTests::testTransitiveOwnership()
       {
         typedef hemelb::redblood::stencil::FourPoint Stencil;
 

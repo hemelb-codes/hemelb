@@ -52,8 +52,11 @@ namespace hemelb
         {
           return [&latDat](LatticePosition const &pos)
           {
-            return details::positionAffectsProcs<STENCIL>(
+            auto const& affectedProcs = details::positionAffectsProcs<STENCIL>(
                 latDat, InterpolationIterator<STENCIL>(pos));
+            // #652 No mesh vertex should be under the influence of no rank in a valid simulation.
+            assert(affectedProcs.size() > 0);
+            return affectedProcs;
           };
         }
       } /* details */
@@ -184,10 +187,6 @@ namespace hemelb
             }
           }
 
-          // #652 In principle, no vertex should be under the influence of no rank in a valid simulation.
-          // This assert would be better placed in the relevant calling code since
-          // ParallelFixtureTests::testTransititiveOwnership seems to have a legit reason, though
-          assert(result.size() > 0);
           return result;
         }
 

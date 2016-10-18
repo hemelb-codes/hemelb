@@ -103,7 +103,7 @@ namespace hemelb
               dist.CountNodes(item.value);
             if (nVertices > 0)
             {
-              log::Logger::Log<log::Info, log::OnePerCore>("Sending %i vertices to process %i",
+              log::Logger::Log<log::Debug, log::OnePerCore>("Sending %i vertices to process %i",
                   nVertices, item.value);
               assert(cellCount.GetSendBuffer().size() > item.index);
               assert(totalNodeCount.GetSendBuffer().size() > item.index);
@@ -215,7 +215,7 @@ namespace hemelb
         auto i_node = nodePositions.GetReceiveBuffer().cbegin() + offset;
         assert(nodeCount.GetReceiveBuffer().size() > index);
         auto const Nnodes = nodeCount.GetReceiveBuffer()[index];
-        log::Logger::Log<log::Info, log::OnePerCore>("Receiving %i vertices", Nnodes);
+        log::Logger::Log<log::Debug, log::OnePerCore>("Receiving %i vertices", Nnodes);
         for (size_t j(0); j < Nnodes; ++j)
         {
           result->addVertex(* (i_node++));
