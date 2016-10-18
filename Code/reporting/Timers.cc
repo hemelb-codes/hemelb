@@ -9,6 +9,6 @@ namespace hemelb
 {
   namespace reporting
   {
-    template class TimersBase<HemeLBClockPolicy, MPICommsPolicy>; // explicit instantiate
+    template class TimersBase<HemeLBClockPolicy>; // explicit instantiate
   }
 }
