@@ -11,6 +11,8 @@
 #include "reporting/Reportable.h"
 #include "util/utilityFunctions.h"
 #include "reporting/Policies.h"
+#include "comm/Communicator.h"
+
 namespace hemelb
 {
   namespace reporting
@@ -69,10 +71,9 @@ namespace hemelb
     /**
      * Class which manages a set of timers timing aspects of a HemeLB run
      * @tparam ClockPolicy How to get the current time
-     * @tparam CommsPolicy How to share information between processes
      */
-    template<class ClockPolicy, class CommsPolicy>
-    class TimersBase : public CommsPolicy, public Reportable
+    template<class ClockPolicy>
+    class TimersBase : public Reportable
     {
       public:
         typedef TimerBase<ClockPolicy> Timer;
@@ -126,8 +127,7 @@ namespace hemelb
          */
         static const std::string timerNames[TimersBase::numberOfTimers];
 
-        TimersBase(const net::IOCommunicator& comms) :
-          CommsPolicy(comms),
+        TimersBase(const comm::Communicator* commPtr) : comms(commPtr),
             timers(numberOfTimers), maxes(numberOfTimers), mins(numberOfTimers), means(numberOfTimers)
         {
         }
@@ -202,16 +202,17 @@ namespace hemelb
         void Report(ctemplate::TemplateDictionary& dictionary);
 
       private:
+        const comm::Communicator* comms;
         std::vector<Timer> timers; //! The set of timers
         std::vector<double> maxes; //! Max across processes
         std::vector<double> mins; //! Min across processes
         std::vector<double> means; //! Average across processes
     };
     typedef TimerBase<HemeLBClockPolicy> Timer;
-    typedef TimersBase<HemeLBClockPolicy, MPICommsPolicy> Timers;
+    typedef TimersBase<HemeLBClockPolicy> Timers;
 
-    template<class ClockPolicy, class CommsPolicy>
-    const std::string TimersBase<ClockPolicy, CommsPolicy>::timerNames[TimersBase<ClockPolicy, CommsPolicy>::numberOfTimers] =
+    template<class ClockPolicy>
+    const std::string TimersBase<ClockPolicy>::timerNames[TimersBase<ClockPolicy>::numberOfTimers] =
 
     { "Total", "Seed Decomposition", "Domain Decomposition", "File Read", "Re Read", "Unzip", "Moves", "Parmetis",
       "Lattice Data initialisation", "Lattice Boltzmann", "LB calc only", "Monitoring", "MPI Send",
