@@ -4,8 +4,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_NET_MPIDATATYPE_H
-#define HEMELB_NET_MPIDATATYPE_H
+#ifndef HEMELB_COMM_MPIDATATYPE_H
+#define HEMELB_COMM_MPIDATATYPE_H
 
 #include <mpi.h>
 #if HEMELB_HAVE_CSTDINT
@@ -34,7 +34,7 @@
 		  (&(typeInstances->name), elementDisplacements + elementCounter) \
 		  ); \
   elementDisplacements[elementCounter] -= instanceAddr; \
-  elementTypes[elementCounter] = ::hemelb::net::MpiDataType(typeInstances->name); \
+  elementTypes[elementCounter] = ::hemelb::comm::MpiDataType(typeInstances->name); \
   ++elementCounter
 
 #define HEMELB_MPI_TYPE_ADD_MEMBER(name) HEMELB_MPI_TYPE_ADD_MEMBER_N(name, 1)
@@ -59,7 +59,7 @@
 
 namespace hemelb
 {
-  namespace net
+  namespace comm
   {
     /*
      * There are templated functions for getting the MPI_Datatype
@@ -73,7 +73,7 @@ namespace hemelb
      * You must specialize the template, e.g.
      *
      *     template<>
-     *     MPI_Datatype hemelb::net::MpiDataTypeTraits<Foo>::RegisterMpiDataType()
+     *     MPI_Datatype hemelb::comm::MpiDataTypeTraits<Foo>::RegisterMpiDataType()
      *     {
      *       // Create the type
      *       MPI_Type_commit(&type);
@@ -85,7 +85,7 @@ namespace hemelb
      * Important note: to ensure C++ standard compliance, you MUST declare your
      * specialisations before use and you MUST ensure that the definition
      * is compiled exactly once (standard ODR). These MUST both be in the
-     * namespace hemelb::net.
+     * namespace hemelb::comm.
      *
      * Declaration is best done in the relevant header file. These templates are
      * only used by MpiCommunicator's templated communication methods so the
@@ -162,4 +162,4 @@ namespace hemelb
 
   }
 }
-#endif // HEMELB_NET_MPIDATATYPE_H
+#endif // HEMELB_COMM_MPIDATATYPE_H

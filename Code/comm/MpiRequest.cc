@@ -7,12 +7,11 @@
 // specifically made by you with University College London.
 //
 
-#include "net/MpiRequest.h"
-#include "net/MpiStatus.h"
+#include "comm/MpiRequest.h"
 
 namespace hemelb
 {
-  namespace net
+  namespace comm
   {
     MpiRequest::MpiRequest() :
         req(MPI_REQUEST_NULL)
@@ -31,10 +30,6 @@ namespace hemelb
     void MpiRequest::Wait()
     {
       HEMELB_MPI_CALL(MPI_Wait, (&req, MPI_STATUS_IGNORE));
-    }
-    void MpiRequest::Wait(MpiStatus& stat)
-    {
-      HEMELB_MPI_CALL(MPI_Wait, (&req, stat.statPtr.get()));
     }
 
     void MpiRequest::WaitAll(ReqVec& reqs)
@@ -61,51 +56,6 @@ namespace hemelb
 
       delete[] rawreqs;
     }
-
-    void MpiRequest::WaitAll(ReqVec& reqs, StatVec& stats)
-    {
-      size_t n = reqs.size();
-      MPI_Request* rawreqs = new MPI_Request[n];
-      MPI_Status* rawstats = new MPI_Status[n];
-      try
-      {
-        for (size_t i = 0; i < n; ++i)
-        {
-          rawreqs[i] = reqs[i];
-        }
-
-        HEMELB_MPI_CALL(
-            MPI_Waitall,
-            (n, rawreqs, rawstats)
-        );
-
-        for (size_t i = 0; i < n; ++i)
-        {
-          stats[i] = MpiStatus(rawstats[i]);
-        }
-      }
-      catch (const std::exception& e)
-      {
-        delete[] rawreqs;
-        delete[] rawstats;
-        throw;
-      }
-
-      delete[] rawreqs;
-      delete[] rawstats;
-    }
-    /*
-    void MpiRequest::WaitAll(ReqVec& reqs, StatVec& stats)
-    {
-      stats.resize(reqs.size());
-      ReqVec::iterator reqIt = reqs.begin();
-      StatVec::iterator statIt = stats.begin();
-      for (; reqIt != reqs.end(); ++reqIt, ++statIt)
-      {
-        *statIt = reqIt ->Wait();
-      }
-    }
-    */
 
     bool MpiRequest::Test()
     {

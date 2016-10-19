@@ -4,19 +4,18 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_NET_MPIGROUP_H
-#define HEMELB_NET_MPIGROUP_H
+#ifndef HEMELB_COMM_MPIGROUP_H
+#define HEMELB_COMM_MPIGROUP_H
 
-#include "units.h"
-#include "net/mpi.h"
-#include "net/MpiCommunicator.h"
+#include "comm/Group.h"
+#include <mpi.h>
 #include <memory>
 
 namespace hemelb
 {
-  namespace net
+  namespace comm
   {
-    class MpiGroup
+    class MpiGroup : public Group
     {
       public:
         /**
@@ -28,26 +27,26 @@ namespace hemelb
          * Returns the local rank within the group
          * @return
          */
-        int Rank() const;
+        virtual int Rank() const;
 
         /**
          * Returns the size of the group
          * @return
          */
-        int Size() const;
+        virtual int Size() const;
 
         /**
          * Exclude the provided ranks
          * @param ranksToExclude
          * @return
          */
-        MpiGroup Exclude(const std::vector<proc_t>& ranksToExclude);
+        virtual Group* Exclude(const std::vector<proc_t>& ranksToExclude);
         /**
          * Include the provided ranks
          * @param ranksToExclude
          * @return
          */
-        MpiGroup Include(const std::vector<proc_t>& ranksToInclude);
+        virtual Group* Include(const std::vector<proc_t>& ranksToInclude);
 
         /**
          * Implicit cast to the underlying MPI_group
@@ -76,4 +75,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_NET_MPIGROUP_H */
+#endif /* HEMELB_COMM_MPIGROUP_H */

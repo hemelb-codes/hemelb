@@ -4,14 +4,14 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_NET_MPIFILE_HPP
-#define HEMELB_NET_MPIFILE_HPP
+#ifndef HEMELB_COMM_MPIFILE_HPP
+#define HEMELB_COMM_MPIFILE_HPP
 
-#include "net/MpiFile.h"
+#include "comm/MpiFile.h"
 
 namespace hemelb
 {
-  namespace net
+  namespace comm
   {
 
     template<typename T>
@@ -19,7 +19,7 @@ namespace hemelb
     {
       HEMELB_MPI_CALL(
           MPI_File_read,
-          (*filePtr, &buffer[0], buffer.size(), MpiDataType<T>(), stat)
+          (*filePtr, buffer.data(), buffer.size(), MpiDataType<T>(), stat)
       );
     }
     template<typename T>
@@ -27,7 +27,7 @@ namespace hemelb
     {
       HEMELB_MPI_CALL(
           MPI_File_read_at,
-          (*filePtr, offset, &buffer[0], buffer.size(), MpiDataType<T>(), stat)
+          (*filePtr, offset, buffer.data(), buffer.size(), MpiDataType<T>(), stat)
       );
     }
 
@@ -36,7 +36,7 @@ namespace hemelb
     {
       HEMELB_MPI_CALL(
           MPI_File_write,
-          (*filePtr, MpiConstCast(&buffer[0]), buffer.size(), MpiDataType<T>(), stat)
+          (*filePtr, buffer.data(), buffer.size(), MpiDataType<T>(), stat)
       );
     }
     template<typename T>
@@ -44,7 +44,7 @@ namespace hemelb
     {
       HEMELB_MPI_CALL(
           MPI_File_write_at,
-          (*filePtr, offset, MpiConstCast(&buffer[0]), buffer.size(), MpiDataType<T>(), stat)
+          (*filePtr, offset, buffer.data(), buffer.size(), MpiDataType<T>(), stat)
       );
 
     }

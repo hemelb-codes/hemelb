@@ -4,12 +4,12 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "net/MpiGroup.h"
-#include "net/MpiConstness.h"
+#include "comm/MpiGroup.h"
+#include "comm/MpiError.h"
 
 namespace hemelb
 {
-  namespace net
+  namespace comm
   {
     namespace
     {
@@ -41,20 +41,20 @@ namespace hemelb
       return size;
     }
 
-    MpiGroup MpiGroup::Exclude(const std::vector<int>& ranksToExclude)
+    Group* MpiGroup::Exclude(const std::vector<int>& ranksToExclude)
     {
       MPI_Group ans;
       HEMELB_MPI_CALL(MPI_Group_excl,
-          (*groupPtr, ranksToExclude.size(), MpiConstCast(&ranksToExclude.front()), &ans))
-      return MpiGroup(ans, true);
+		      (*groupPtr, ranksToExclude.size(), ranksToExclude.data(), &ans));
+      return new MpiGroup(ans, true);
     }
 
-    MpiGroup MpiGroup::Include(const std::vector<int>& ranksToInclude)
+    Group* MpiGroup::Include(const std::vector<int>& ranksToInclude)
     {
       MPI_Group ans;
       HEMELB_MPI_CALL(MPI_Group_incl,
-                      (*groupPtr, ranksToInclude.size(), MpiConstCast(&ranksToInclude.front()), &ans))
-      return MpiGroup(ans, true);
+                      (*groupPtr, ranksToInclude.size(), ranksToInclude.data(), &ans));
+      return new MpiGroup(ans, true);
     }
 
     MpiGroup::MpiGroup(MPI_Group grp, bool own)

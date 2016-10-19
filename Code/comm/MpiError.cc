@@ -4,12 +4,12 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "net/MpiError.h"
+#include "comm/MpiError.h"
 #include <sstream>
 
 namespace hemelb
 {
-  namespace net
+  namespace comm
   {
     MpiError::MpiError(const char* mpiFunc_, const int errorCode_, const char* fileName_,
                        const int lineNo_) :

@@ -4,15 +4,15 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_NET_MPIERROR_H
-#define HEMELB_NET_MPIERROR_H
+#ifndef HEMELB_COMM_MPIERROR_H
+#define HEMELB_COMM_MPIERROR_H
 
 #include <mpi.h>
 #include "Exception.h"
 
 namespace hemelb
 {
-  namespace net
+  namespace comm
   {
     /**
      * Indicate an error to do with MPI.
@@ -39,7 +39,7 @@ namespace hemelb
 { \
   int _check_result = mpiFunc args; \
   if (_check_result != MPI_SUCCESS) \
-    throw ::hemelb::net::MpiError(#mpiFunc, _check_result, __FILE__, __LINE__); \
+    throw ::hemelb::comm::MpiError(#mpiFunc, _check_result, __FILE__, __LINE__); \
 }
 
-#endif // HEMELB_NET_MPIERROR_H
+#endif // HEMELB_COMM_MPIERROR_H
