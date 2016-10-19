@@ -8,7 +8,7 @@
 #define HEMELB_NET_STOREDREQUEST_H
 #include <cstring>
 #include "constants.h"
-#include "net/mpi.h"
+#include "comm/MpiDataType.h"
 namespace hemelb
 {
   namespace net

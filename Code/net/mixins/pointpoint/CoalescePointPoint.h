@@ -8,6 +8,8 @@
 #define HEMELB_NET_MIXINS_POINTPOINT_COALESCEPOINTPOINT_H
 #include "net/BaseNet.h"
 #include "net/mixins/StoringNet.h"
+#include "comm/Request.h"
+
 namespace hemelb
 {
   namespace net
@@ -16,7 +18,7 @@ namespace hemelb
     {
 
       public:
-        CoalescePointPoint(const MpiCommunicator& comms) :
+    CoalescePointPoint(comm::Communicator::ConstPtr comms) :
             BaseNet(comms), StoringNet(comms), sendReceivePrepped(false)
         {
         }
@@ -37,8 +39,9 @@ namespace hemelb
         // initialisation and during each iteration). Code using these must make sure
         // there are enough available. We do this in a way to minimise the number created
         // on each core, but also to minimise creation / deletion overheads.
-        std::vector<MPI_Request> requests;
-        std::vector<MPI_Status> statuses;
+        //std::vector<MPI_Request> requests;
+	comm::Request::ReqVec requests;
+        //std::vector<MPI_Status> statuses;
     };
   }
 }

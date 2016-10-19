@@ -16,7 +16,7 @@ namespace hemelb
     class StoringNet : public virtual BaseNet
     {
       public:
-        StoringNet(const MpiCommunicator& comms);
+      StoringNet(comm::Communicator::ConstPtr comms);
 
         virtual void RequestSendImpl(void* pointer, int count, proc_t rank, MPI_Datatype type);
         virtual void RequestReceiveImpl(void* pointer, int count, proc_t rank, MPI_Datatype type);

@@ -90,6 +90,8 @@ namespace hemelb
 				void* recv, int recvcount, MPI_Datatype recvtype) const;
       virtual void SendImpl(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 			    int dest, int tag) const;
+      virtual void SsendImpl(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+			    int dest, int tag) const;
       virtual void RecvImpl(void* recvbuf, int recvcount, MPI_Datatype recvtype,
 			    int src, int tag, MPI_Status* stat) const;
       virtual std::shared_ptr<Request> IsendImpl(const void* sendbuf, int sendcount, MPI_Datatype sendtype,

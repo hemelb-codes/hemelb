@@ -18,7 +18,7 @@ namespace hemelb
     class InterfaceDelegationNet : public virtual BaseNet
     {
       public:
-        InterfaceDelegationNet(const MpiCommunicator& comms) :
+    InterfaceDelegationNet(comm::Communicator::ConstPtr comms) :
             BaseNet(comms)
         {
         }
@@ -50,13 +50,13 @@ namespace hemelb
         template<class T>
         void RequestSend(const T* pointer, int count, proc_t rank)
         {
-          RequestSendImpl(const_cast<T*>(pointer), count, rank, MpiDataType<T>());
+          RequestSendImpl(const_cast<T*>(pointer), count, rank, comm::MpiDataType<T>());
         }
 
         template<class T>
         void RequestReceive(T* pointer, int count, proc_t rank)
         {
-          RequestReceiveImpl(pointer, count, rank, MpiDataType<T>());
+          RequestReceiveImpl(pointer, count, rank, comm::MpiDataType<T>());
         }
 
     };

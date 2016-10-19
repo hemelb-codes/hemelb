@@ -17,7 +17,8 @@
 #include "net/BaseNet.h"
 #include "util/utilityFunctions.h"
 #include "util/Vector3D.h"
-#include "net/IOCommunicator.h"
+#include "comm/Communicator.h"
+
 namespace hemelb
 {
   namespace net
@@ -30,7 +31,7 @@ namespace hemelb
       Wait();
     }
 
-    BaseNet::BaseNet(const MpiCommunicator &commObject) :
+    BaseNet::BaseNet(comm::Communicator::ConstPtr commObject) :
         BytesSent(0), SyncPointsCounted(0), communicator(commObject)
     {
     }

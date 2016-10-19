@@ -14,8 +14,8 @@ namespace hemelb
 {
   namespace net
   {
-    CollectiveAction::CollectiveAction(const MpiCommunicator& comm, reporting::Timer& wTimer) :
-        isCollectiveRunning(false), mustWait(false), collectiveComm(comm.Duplicate()), waitTimer(wTimer), collectiveReq()
+    CollectiveAction::CollectiveAction(comm::Communicator::ConstPtr comm, reporting::Timer& wTimer) :
+        isCollectiveRunning(false), mustWait(false), collectiveComm(comm->Duplicate()), waitTimer(wTimer), collectiveReq()
     {
     }
 
@@ -65,13 +65,13 @@ namespace hemelb
     {
       waitTimer.Start();
       if (mustWait) {
-        collectiveReq.Wait();
+        collectiveReq->Wait();
         mustWait = false;
         isCollectiveRunning = false;
       }
       else
       {
-        bool done = collectiveReq.Test();
+        bool done = collectiveReq->Test();
         if (done)
           isCollectiveRunning = false;
         }

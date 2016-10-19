@@ -6,8 +6,9 @@
 
 #ifndef HEMELB_NET_PROCCOMMS_H
 #define HEMELB_NET_PROCCOMMS_H
+
 #include "constants.h"
-#include "net/mpi.h"
+#include "comm/MpiDataType.h"
 #include "net/StoredRequest.h"
 #include <deque>
 #include <vector>

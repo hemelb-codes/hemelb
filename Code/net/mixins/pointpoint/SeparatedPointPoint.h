@@ -8,6 +8,8 @@
 #define HEMELB_NET_MIXINS_POINTPOINT_SEPARATEDPOINTPOINT_H
 #include "net/BaseNet.h"
 #include "net/mixins/StoringNet.h"
+#include "comm/Request.h"
+
 namespace hemelb
 {
   namespace net
@@ -16,7 +18,7 @@ namespace hemelb
     {
 
       public:
-        SeparatedPointPoint(const MpiCommunicator& comms) :
+    SeparatedPointPoint(comm::Communicator::ConstPtr comms) :
             BaseNet(comms), StoringNet(comms), sendReceivePrepped(false), count_sends(0),
                 count_receives(0)
         {
@@ -38,8 +40,7 @@ namespace hemelb
         // initialisation and during each iteration). Code using these must make sure
         // there are enough available. We do this in a way to minimise the number created
         // on each core, but also to minimise creation / deletion overheads.
-        std::vector<MPI_Request> requests;
-        std::vector<MPI_Status> statuses;
+	comm::Request::ReqVec requests;
         unsigned int count_sends;
         unsigned int count_receives;
     };

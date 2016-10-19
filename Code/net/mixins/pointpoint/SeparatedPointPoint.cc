@@ -16,8 +16,7 @@ namespace hemelb
     {
       if (requests.size() < count)
       {
-        requests.resize(count, MPI_Request());
-        statuses.resize(count, MPI_Status());
+        requests.resize(count);
       }
     }
 
@@ -31,14 +30,11 @@ namespace hemelb
       {
         for (ProcComms::iterator request = it->second.begin(); request != it->second.end(); request++)
         {
-
-          MPI_Irecv(request->Pointer,
-                    request->Count,
-                    request->Type,
-                    it->first,
-                    10,
-                    communicator,
-                    &requests[m]);
+	  requests[m] = communicator->IrecvImpl(request->Pointer,
+						request->Count,
+						request->Type,
+						it->first,
+						10);
           ++m;
         }
       }
@@ -82,13 +78,11 @@ namespace hemelb
       {
         for (ProcComms::iterator request = it->second.begin(); request != it->second.end(); request++)
         {
-          MPI_Isend(request->Pointer,
-                    request->Count,
-                    request->Type,
-                    it->first,
-                    10,
-                    communicator,
-                    &requests[count_receives+m]);
+	  requests[count_receives+m] = communicator->IsendImpl(request->Pointer,
+							       request->Count,
+							       request->Type,
+							       it->first,
+							       10);
           ++m;
         }
       }
@@ -103,7 +97,7 @@ namespace hemelb
 
     void SeparatedPointPoint::WaitPointToPoint()
     {
-      MPI_Waitall(static_cast<int>(count_sends+count_receives), &requests[0], &statuses[0]);
+      comm::Request::WaitAll(requests);
 
       receiveProcessorComms.clear();
       sendProcessorComms.clear();
