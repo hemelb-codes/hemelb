@@ -34,7 +34,7 @@ namespace hemelb
                                          lb::MacroscopicPropertyCache& propertyCache,
                                          const hemelb::lb::LbmParameters *lbmParams,
                                          const std::string& outputPath,
-                                         const comm::Communicator* ioComms_,
+                                         comm::Communicator::ConstPtr ioComms_,
                                          reporting::Timers& timers) :
       ioComms(ioComms_), simulationState(simulationState), timers(timers)
     {

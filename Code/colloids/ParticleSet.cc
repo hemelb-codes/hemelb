@@ -43,7 +43,7 @@ namespace hemelb
                              lb::MacroscopicPropertyCache& propertyCache,
                              const hemelb::lb::LbmParameters *lbmParams,
                              std::vector<proc_t>& neighbourProcessors,
-                             const comm::Communicator* ioComms_,
+                             comm::Communicator::ConstPtr ioComms_,
                              const std::string& outputPath) :
         ioComms(ioComms_), localRank(ioComms->Rank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath), net(ioComms)
     {
