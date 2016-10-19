@@ -5,13 +5,13 @@
 // license in the file LICENSE.
 #include <mpi.h>
 
-#include "net/MpiEnvironment.h"
-#include "net/MpiError.h"
-#include "net/MpiCommunicator.h"
+#include "comm/MpiEnvironment.h"
+#include "comm/MpiError.h"
+#include "comm/MpiCommunicator.h"
 
 namespace hemelb
 {
-  namespace net
+  namespace comm
   {
 
     MpiEnvironment::MpiEnvironment(int& argc, char**& argv) :
@@ -31,6 +31,11 @@ namespace hemelb
       {
         HEMELB_MPI_CALL(MPI_Finalize, ());
       }
+    }
+
+    Communicator* MpiEnvironment::World()
+    {
+      return new MpiCommunicator(MPI_COMM_WORLD, false);
     }
 
     bool MpiEnvironment::Initialized()
@@ -53,7 +58,7 @@ namespace hemelb
 
     void MpiEnvironment::Abort(int errorCode)
     {
-      MpiCommunicator::World().Abort(errorCode);
+      World()->Abort(errorCode);
     }
 
   }

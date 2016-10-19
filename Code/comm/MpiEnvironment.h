@@ -4,13 +4,16 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_NET_MPIENVIRONMENT_H
-#define HEMELB_NET_MPIENVIRONMENT_H
+#ifndef HEMELB_COMM_MPIENVIRONMENT_H
+#define HEMELB_COMM_MPIENVIRONMENT_H
+
+#include "comm/Communicator.h"
 
 namespace hemelb
 {
-  namespace net
+  namespace comm
   {
+    
     /**
      * Manage the MPI environment and provide query/abort functions.
      *
@@ -35,6 +38,7 @@ namespace hemelb
          */
         ~MpiEnvironment();
 
+        static Communicator* World();
         /**
          * Query if MPI is initialised
          * @return
@@ -63,4 +67,4 @@ namespace hemelb
     };
   }
 }
-#endif //HEMELB_NET_MPIENVIRONMENT_H
+#endif //HEMELB_COMM_MPIENVIRONMENT_H

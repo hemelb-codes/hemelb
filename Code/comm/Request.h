@@ -7,53 +7,49 @@
 // specifically made by you with University College London.
 //
 
-#ifndef HEMELB_NET_MPIREQUEST_H
-#define HEMELB_NET_MPIREQUEST_H
+#ifndef HEMELB_COMM_REQUEST_H
+#define HEMELB_COMM_REQUEST_H
 
 #include <vector>
-#include "comm/Request.h"
-#include "comm/MpiError.h"
 
 namespace hemelb
 {
   namespace comm
   {
+    // class Status;
     /**
      *
      */
-    class MpiRequest : public Request
+    class Request
     {
-      private:
-        typedef std::vector<MpiRequest> ReqVec;
-        // typedef std::vector<MpiStatus> StatVec;
-
       public:
-        MpiRequest();
-        MpiRequest(MPI_Request req);
+        typedef std::vector<Request*> ReqVec;
+      //typedef std::vector<Status> StatVec;
+
+        Request();
+      //Request(MPI_Request req);
 
         /**
          * Allow implicit casts to MPI_Request
          * @return The underlying MPI_Request
          */
-        operator MPI_Request() const
-        {
-          return req;
-        }
+        // operator MPI_Request() const
+        // {
+        //   return req;
+        // }
         operator bool() const;
 
-        virtual void Wait();
-        // void Wait(MpiStatus& stat);
+        virtual void Wait() = 0;
+        // void Wait(Status& stat);
 
         static void WaitAll(ReqVec& reqs);
         // static void WaitAll(ReqVec& reqs, StatVec& stats);
 
-        virtual bool Test();
+        virtual bool Test() = 0;
         static bool TestAll(ReqVec& reqs);
 
-      private:
-	MPI_Request req;
     };
 
   }
 }
-#endif // HEMELB_NET_MPIREQUEST_H
+#endif // HEMELB_COMM_REQUEST_H

@@ -4,11 +4,11 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "net/MpiDataType.h"
+#include "comm/MpiDataType.h"
 
 namespace hemelb
 {
-  namespace net
+  namespace comm
   {
     // Specializations of the above getters for built in types.
     // These mappings are taken directly from the MPI standard version 2.2,

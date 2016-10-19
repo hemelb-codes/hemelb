@@ -4,32 +4,21 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_NET_MPIFILE_H
-#define HEMELB_NET_MPIFILE_H
+#ifndef HEMELB_COMM_MPIFILE_H
+#define HEMELB_COMM_MPIFILE_H
 
 #include <memory>
-#include "net/MpiError.h"
-#include "net/MpiCommunicator.h"
+#include "comm/MpiError.h"
+#include "comm/MpiCommunicator.h"
 
 namespace hemelb
 {
-  namespace net
+  namespace comm
   {
     class MpiFile
     {
       public:
         MpiFile();
-
-        /**
-         * Opens a file with MPI_File_open. A collective operation on comm.
-         * @param comm
-         * @param filename
-         * @param mode
-         * @param info
-         * @return
-         */
-        static MpiFile Open(const MpiCommunicator& comm, const std::string& filename, int mode,
-                            const MPI_Info info = MPI_INFO_NULL);
 
         /**
          * Closes the file with MPI_File_close.
@@ -56,8 +45,10 @@ namespace hemelb
         void Write(const std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
         template<typename T>
         void WriteAt(MPI_Offset offset, const std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
-      protected:
-        MpiFile(const MpiCommunicator& parentComm, MPI_File fh);
+      private:
+	friend class MpiCommunicator;
+	
+        MpiFile(const MpiCommunicator* parentComm, MPI_File fh);
 
         const MpiCommunicator* comm;
         std::shared_ptr<MPI_File> filePtr;
@@ -66,6 +57,6 @@ namespace hemelb
   }
 }
 
-#include "net/MpiFile.hpp"
+#include "comm/MpiFile.hpp"
 
-#endif /* HEMELB_NET_MPIFILE_H */
+#endif /* HEMELB_COMM_MPIFILE_H */

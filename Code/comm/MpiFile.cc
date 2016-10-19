@@ -4,13 +4,12 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "net/MpiFile.h"
-#include "net/MpiCommunicator.h"
-#include "net/MpiConstness.h"
+#include "comm/MpiFile.h"
+#include "comm/MpiCommunicator.h"
 
 namespace hemelb
 {
-  namespace net
+  namespace comm
   {
     namespace
     {
@@ -25,21 +24,10 @@ namespace hemelb
 
     }
 
-    MpiFile::MpiFile(const MpiCommunicator& parentComm, MPI_File fh) :
-        comm(&parentComm)
+    MpiFile::MpiFile(const MpiCommunicator* parentComm, MPI_File fh) :
+        comm(parentComm)
     {
       filePtr.reset(new MPI_File(fh), Deleter);
-    }
-
-    MpiFile MpiFile::Open(const MpiCommunicator& comm, const std::string& filename, int mode,
-                          const MPI_Info info)
-    {
-      MPI_File ans;
-      HEMELB_MPI_CALL(
-          MPI_File_open,
-          (comm, MpiConstCast(filename.c_str()), mode, info, &ans)
-      );
-      return MpiFile(comm, ans);
     }
 
 
@@ -65,7 +53,7 @@ namespace hemelb
     {
       HEMELB_MPI_CALL(
           MPI_File_set_view,
-          (*filePtr, disp, etype, filetype, MpiConstCast(datarep.c_str()), info)
+          (*filePtr, disp, etype, filetype, datarep.c_str(), info)
       );
     }
   }
