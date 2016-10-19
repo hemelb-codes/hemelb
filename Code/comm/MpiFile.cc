@@ -24,7 +24,7 @@ namespace hemelb
 
     }
 
-    MpiFile::MpiFile(const MpiCommunicator* parentComm, MPI_File fh) :
+    MpiFile::MpiFile(Communicator::ConstPtr parentComm, MPI_File fh) :
         comm(parentComm)
     {
       filePtr.reset(new MPI_File(fh), Deleter);
@@ -44,9 +44,9 @@ namespace hemelb
       return *filePtr;
     }
 
-    const MpiCommunicator& MpiFile::GetCommunicator() const
+    Communicator::ConstPtr MpiFile::GetCommunicator() const
     {
-      return *comm;
+      return comm;
     }
 
     void MpiFile::SetView(MPI_Offset disp, MPI_Datatype etype, MPI_Datatype filetype, const std::string& datarep, MPI_Info info)

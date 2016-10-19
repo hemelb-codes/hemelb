@@ -22,6 +22,14 @@ namespace hemelb
          * Default c'tor - initialises equivalent to MPI_GROUP_NULL
          */
         MpiGroup();
+        // Direct construction.
+        /**
+         * Construct from an MPI_Group
+         * @param grp
+         * @param own - Whether this instance is responsible for deleting the
+         * group when all copies are destroyed.
+         */
+        MpiGroup(MPI_Group grp, bool own);
 
         /**
          * Returns the local rank within the group
@@ -40,13 +48,13 @@ namespace hemelb
          * @param ranksToExclude
          * @return
          */
-        virtual Group* Exclude(const std::vector<proc_t>& ranksToExclude);
+        virtual Group::Ptr Exclude(const std::vector<proc_t>& ranksToExclude) const;
         /**
          * Include the provided ranks
          * @param ranksToExclude
          * @return
          */
-        virtual Group* Include(const std::vector<proc_t>& ranksToInclude);
+        virtual Group::Ptr Include(const std::vector<proc_t>& ranksToInclude) const;
 
         /**
          * Implicit cast to the underlying MPI_group
@@ -58,18 +66,6 @@ namespace hemelb
         }
 
       private:
-        // Allow Communicators access to the c'tor.
-        friend class MpiCommunicator;
-
-        // Direct construction.
-        /**
-         * Construct from an MPI_Group
-         * @param grp
-         * @param own - Whether this instance is responsible for deleting the
-         * group when all copies are destroyed.
-         */
-        MpiGroup(MPI_Group grp, bool own);
-
         std::shared_ptr<MPI_Group> groupPtr;
     };
   }

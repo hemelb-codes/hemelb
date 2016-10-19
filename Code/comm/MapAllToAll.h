@@ -11,22 +11,23 @@
 #define HEMELB_NET_MAPALLTOALL_H
 
 #include <map>
-#include "net/mpi.h"
+#include "comm/Communicator.h"
+#include "comm/Request.h"
 
 namespace hemelb
 {
-  namespace net
+  namespace comm
   {
     template <typename T>
-    void MapAllToAll(const MpiCommunicator& comm,
+    void MapAllToAll(Communicator::ConstPtr comm,
                      const std::map<int, T>& valsToSend,
                      std::map<int, T>& receivedVals,
                      const int tag = 1234)
     {
       receivedVals.clear();
 
-      std::vector<MpiRequest> sendReqs;
-      int localRank = comm.Rank();
+      Request::ReqVec sendReqs;
+      int localRank = comm->Rank();
       int nSends = valsToSend.size();
       // Is localRank in the map of send destinations?
       if (valsToSend.find(localRank) != valsToSend.end())
@@ -48,36 +49,36 @@ namespace hemelb
         else
         {
           // Synchronous to ensure we know when this is matched
-          sendReqs[i] = comm.Issend(val, rank, tag);
+          sendReqs[i] = comm->Issend(val, rank, tag);
           i++;
         }
       }
 
       bool allProcsHaveHadAllSendsMatched = false;
       bool mySendsMatched = false;
-      MpiRequest barrierReq;
+      Request::Ptr barrierReq;
 
       // Allocate outside of loop to ensure compiler isn't reinitialising this
       // all the time.
       MPI_Status status;
       while(!mySendsMatched || !allProcsHaveHadAllSendsMatched)
       {
-        if (comm.Iprobe(MPI_ANY_SOURCE, tag, &status)) {
+        if (comm->Iprobe(MPI_ANY_SOURCE, tag, &status)) {
           // There is a message waiting
-          comm.Recv(receivedVals[status.MPI_SOURCE], status.MPI_SOURCE, status.MPI_TAG);
+          comm->Recv(receivedVals[status.MPI_SOURCE], status.MPI_SOURCE, status.MPI_TAG);
         }
 
         if (!mySendsMatched)
         {
-          if (MpiRequest::TestAll(sendReqs))
+          if (Request::TestAll(sendReqs))
           {
             mySendsMatched = true;
-            barrierReq = comm.Ibarrier();
+            barrierReq = comm->Ibarrier();
           }
         }
         else
         {
-          allProcsHaveHadAllSendsMatched = barrierReq.Test();
+          allProcsHaveHadAllSendsMatched = barrierReq->Test();
         }
       }
     }

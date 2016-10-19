@@ -23,7 +23,8 @@ namespace hemelb
     class Request
     {
       public:
-        typedef std::vector<Request*> ReqVec;
+        typedef std::shared_ptr<Request> Ptr;
+        typedef std::vector<Ptr> ReqVec;
       //typedef std::vector<Status> StatVec;
 
         Request();

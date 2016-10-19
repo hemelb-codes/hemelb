@@ -41,20 +41,20 @@ namespace hemelb
       return size;
     }
 
-    Group* MpiGroup::Exclude(const std::vector<int>& ranksToExclude)
+    Group::Ptr MpiGroup::Exclude(const std::vector<int>& ranksToExclude) const
     {
       MPI_Group ans;
       HEMELB_MPI_CALL(MPI_Group_excl,
 		      (*groupPtr, ranksToExclude.size(), ranksToExclude.data(), &ans));
-      return new MpiGroup(ans, true);
+      return std::make_shared<MpiGroup>(ans, true);
     }
 
-    Group* MpiGroup::Include(const std::vector<int>& ranksToInclude)
+    Group::Ptr MpiGroup::Include(const std::vector<int>& ranksToInclude) const
     {
       MPI_Group ans;
       HEMELB_MPI_CALL(MPI_Group_incl,
                       (*groupPtr, ranksToInclude.size(), ranksToInclude.data(), &ans));
-      return new MpiGroup(ans, true);
+      return std::make_shared<MpiGroup>(ans, true);
     }
 
     MpiGroup::MpiGroup(MPI_Group grp, bool own)

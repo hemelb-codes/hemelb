@@ -24,12 +24,12 @@ namespace hemelb
     }
 
     template <typename T>
-    Request* Communicator::Ibcast(T& val, const int root) const
+    std::shared_ptr<Request> Communicator::Ibcast(T& val, const int root) const
     {
       return IbcastImpl(&val, 1, MpiDataType<T>(), root);
     }
     template <typename T>
-    Request* Communicator::Ibcast(std::vector<T>& vals, const int root) const
+    std::shared_ptr<Request> Communicator::Ibcast(std::vector<T>& vals, const int root) const
     {
       return IbcastImpl(vals.data(), vals.size(), MpiDataType<T>(), root);
     }
@@ -51,13 +51,13 @@ namespace hemelb
     }
 
     template <typename T>
-    Request* Communicator::Iallreduce(const T& val, const MPI_Op& op, T& out) const
+    std::shared_ptr<Request> Communicator::Iallreduce(const T& val, const MPI_Op& op, T& out) const
     {
       return IallreduceImpl(&val, &out, 1, MpiDataType<T>(), op);
     }
 
     template <typename T>
-    Request* Communicator::Ireduce(const T& val, const MPI_Op& op, const int root, T& out) const
+    std::shared_ptr<Request> Communicator::Ireduce(const T& val, const MPI_Op& op, const int root, T& out) const
     {
       return IreduceImpl(&val, &out, 1, MpiDataType<T>(), op, root);
     }
@@ -193,51 +193,51 @@ namespace hemelb
 
     // Isend implementations
     template <typename T>
-    Request* Communicator::Isend(const T* valPtr, int count, int dest, int tag) const
+    std::shared_ptr<Request> Communicator::Isend(const T* valPtr, int count, int dest, int tag) const
     {
       return IsendImpl(valPtr, count, MpiDataType<T>(), dest, tag);
     }
     template <typename T>
-    Request* Communicator::Isend(const T& val, int dest, int tag) const
+    std::shared_ptr<Request> Communicator::Isend(const T& val, int dest, int tag) const
     {
       return Isend(&val, 1, dest, tag);
     }
     template <typename T>
-    Request* Communicator::Isend(const std::vector<T>& vals, int dest, int tag) const
+    std::shared_ptr<Request> Communicator::Isend(const std::vector<T>& vals, int dest, int tag) const
     {
       return Isend(vals.data(), vals.size(), dest, tag);
     }
 
     // Issend implementations
     template <typename T>
-    Request* Communicator::Issend(const T* valPtr, int count, int dest, int tag) const
+    std::shared_ptr<Request> Communicator::Issend(const T* valPtr, int count, int dest, int tag) const
     {
      return IssendImpl(valPtr, count, MpiDataType<T>(), dest, tag);
     }
     template <typename T>
-    Request* Communicator::Issend(const T& val, int dest, int tag) const
+    std::shared_ptr<Request> Communicator::Issend(const T& val, int dest, int tag) const
     {
       return Issend(&val, 1, dest, tag);
     }
     template <typename T>
-    Request* Communicator::Issend(const std::vector<T>& vals, int dest, int tag) const
+    std::shared_ptr<Request> Communicator::Issend(const std::vector<T>& vals, int dest, int tag) const
     {
       return Issend(vals.data(), vals.size(), dest, tag);
     }
 
     // Irecv implementations
     template <typename T>
-    Request* Communicator::Irecv(T* valPtr, int count, int source, int tag) const
+    std::shared_ptr<Request> Communicator::Irecv(T* valPtr, int count, int source, int tag) const
     {
       return IrecvImpl(valPtr, count, MpiDataType<T>(), source, tag);
     }
     template <typename T>
-    Request* Communicator::Irecv(T& val, int source, int tag) const
+    std::shared_ptr<Request> Communicator::Irecv(T& val, int source, int tag) const
     {
       return Irecv(&val, 1, source, tag);
     }
     template <typename T>
-    Request* Communicator::Irecv(std::vector<T>& vals, int source, int tag) const
+    std::shared_ptr<Request> Communicator::Irecv(std::vector<T>& vals, int source, int tag) const
     {
       return Irecv(&vals[0], vals.size(), source, tag);
     }
