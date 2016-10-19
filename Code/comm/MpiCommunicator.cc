@@ -7,6 +7,7 @@
 #include "comm/MpiError.h"
 #include "comm/MpiFile.h"
 #include "comm/MpiRequest.h"
+#include "comm/MpiGroup.h"
 
 namespace hemelb
 {
@@ -71,14 +72,29 @@ namespace hemelb
       HEMELB_MPI_CALL(MPI_Abort, (*commPtr, errCode));
     }
 
-    Communicator* MpiCommunicator::Duplicate() const
+    Communicator::Ptr MpiCommunicator::Duplicate() const
     {
       MPI_Comm newComm;
       HEMELB_MPI_CALL(MPI_Comm_dup, (*commPtr, &newComm));
-      return new MpiCommunicator(newComm, true);
+      return std::make_shared<MpiCommunicator>(newComm, true);
+    }
+    Group::Ptr MpiCommunicator::GetGroup() const
+    {
+      MPI_Group grp;
+      HEMELB_MPI_CALL(MPI_Comm_group, (*commPtr, &grp));
+      return std::make_shared<MpiGroup>(grp, true);
     }
     
-    MpiFile* MpiCommunicator::OpenFile(const std::string& filename, int mode,
+    Communicator::Ptr MpiCommunicator::Create(std::shared_ptr<const Group> grp) const
+    {
+      auto mpiGrp = std::dynamic_pointer_cast<const MpiGroup>(grp);
+      
+      MPI_Comm newComm;
+      HEMELB_MPI_CALL(MPI_Comm_create, (*commPtr, *mpiGrp, &newComm));
+      return std::make_shared<MpiCommunicator>(newComm, true);
+    }
+    
+    MpiFile::Ptr MpiCommunicator::OpenFile(const std::string& filename, int mode,
 				       const MPI_Info info) const
     {
       MPI_File ans;
@@ -86,7 +102,7 @@ namespace hemelb
           MPI_File_open,
           (*this, filename.c_str(), mode, info, &ans)
       );
-      return new MpiFile(this, ans);
+      return std::make_shared<MpiFile>(shared_from_this(), ans);
     }
 
     void MpiCommunicator::Barrier() const
@@ -94,11 +110,11 @@ namespace hemelb
       HEMELB_MPI_CALL(MPI_Barrier, (*commPtr));
     }
 
-    Request* MpiCommunicator::Ibarrier() const
+    std::shared_ptr<Request> MpiCommunicator::Ibarrier() const
     {
       MPI_Request req;
       HEMELB_MPI_CALL(MPI_Ibarrier, (*commPtr, &req));
-      return new MpiRequest(req);
+      return std::make_shared<MpiRequest>(req);
     }
 
     bool MpiCommunicator::Iprobe(int source, int tag, MPI_Status* stat) const
@@ -121,7 +137,7 @@ namespace hemelb
       );
     }
     
-    Request* MpiCommunicator::IbcastImpl(void* buf, int count, MPI_Datatype dt,
+    std::shared_ptr<Request> MpiCommunicator::IbcastImpl(void* buf, int count, MPI_Datatype dt,
 					 int root) const
     {
       MPI_Request req;
@@ -129,7 +145,7 @@ namespace hemelb
           MPI_Ibcast,
           (buf, count, dt, root, *commPtr, &req)
       );
-      return new MpiRequest(req);
+      return std::make_shared<MpiRequest>(req);
     }
     
     void MpiCommunicator::AllreduceImpl(const void* send, void* ans, int count, MPI_Datatype dt,
@@ -141,7 +157,7 @@ namespace hemelb
       );
     }
     
-    Request* MpiCommunicator::IallreduceImpl(const void* send, void* ans, int count, MPI_Datatype dt,
+    std::shared_ptr<Request> MpiCommunicator::IallreduceImpl(const void* send, void* ans, int count, MPI_Datatype dt,
 					     MPI_Op op) const
     {
       MPI_Request req;
@@ -149,10 +165,10 @@ namespace hemelb
          MPI_Iallreduce,
 	 (send, ans, count, dt, op, *commPtr, &req)
       );
-      return new MpiRequest(req);
+      return std::make_shared<MpiRequest>(req);
     }
     
-    Request* MpiCommunicator::IreduceImpl(const void* send, void* ans, int count, MPI_Datatype dt,
+    std::shared_ptr<Request> MpiCommunicator::IreduceImpl(const void* send, void* ans, int count, MPI_Datatype dt,
 					  MPI_Op op, int root) const
     {
       MPI_Request req;
@@ -160,7 +176,7 @@ namespace hemelb
           MPI_Ireduce,
           (send, ans, count, dt, op, root, *commPtr, &req)
       );
-      return new MpiRequest(req);
+      return std::make_shared<MpiRequest>(req);
     }
     
     void MpiCommunicator::ReduceImpl(const void* send, void* ans, int count, MPI_Datatype dt,
@@ -236,7 +252,7 @@ namespace hemelb
 		      );
     }
     
-     Request* MpiCommunicator::IsendImpl(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
+     std::shared_ptr<Request> MpiCommunicator::IsendImpl(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 				 int dest, int tag) const
      {
        MPI_Request ans;
@@ -245,10 +261,10 @@ namespace hemelb
 		       (sendbuf, sendcount, sendtype,
 			dest, tag, *commPtr, &ans)
 		      );
-       return new MpiRequest(ans);
+       return std::make_shared<MpiRequest>(ans);
      }
     
-     Request* MpiCommunicator::IssendImpl(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
+     std::shared_ptr<Request> MpiCommunicator::IssendImpl(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 				  int dest, int tag) const
      {
        MPI_Request ans;
@@ -257,10 +273,10 @@ namespace hemelb
 		       (sendbuf, sendcount, sendtype,
 			dest, tag, *commPtr, &ans)
 		      );
-       return new MpiRequest(ans);
+       return std::make_shared<MpiRequest>(ans);
      }
     
-     Request* MpiCommunicator::IrecvImpl(void* recvbuf, int recvcount, MPI_Datatype recvtype,
+     std::shared_ptr<Request> MpiCommunicator::IrecvImpl(void* recvbuf, int recvcount, MPI_Datatype recvtype,
 				 int source, int tag) const
      {
        MPI_Request ans;
@@ -269,7 +285,7 @@ namespace hemelb
 		       (recvbuf, recvcount, recvtype,
 			source, tag, *commPtr, &ans)
 		       );
-       return new MpiRequest(ans);
+       return std::make_shared<MpiRequest>(ans);
      }
    
   }

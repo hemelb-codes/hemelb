@@ -14,7 +14,7 @@ namespace hemelb
   {
     
     // MPI communicator
-    class MpiCommunicator : public Communicator
+    class MpiCommunicator : public Communicator, public std::enable_shared_from_this<MpiCommunicator>
     {
       public:
         /**
@@ -23,6 +23,11 @@ namespace hemelb
 	 * @param communicator
 	 */
         MpiCommunicator();
+        /**
+	 * Constructor to get data needed from an MPI communicator
+	 * @param communicator
+	 */
+        MpiCommunicator(MPI_Comm communicator, bool willOwn);
 
 	operator MPI_Comm() const;
         /**
@@ -52,29 +57,26 @@ namespace hemelb
          * Duplicate the communicator - see MPI_COMM_DUP
          * @return
          */
-        virtual Communicator* Duplicate() const;
+      virtual Communicator::Ptr Duplicate() const;
 	
-        virtual MpiFile* OpenFile(const std::string& filename, int mode,
+      virtual std::shared_ptr<Group> GetGroup() const;
+      virtual Communicator::Ptr Create(std::shared_ptr<const Group> grp) const;
+
+      virtual std::shared_ptr<MpiFile> OpenFile(const std::string& filename, int mode,
 				  const MPI_Info info = MPI_INFO_NULL) const;
 
         virtual void Barrier() const;
-        virtual Request* Ibarrier() const;
+        virtual std::shared_ptr<Request> Ibarrier() const;
 
         virtual bool Iprobe(int source, int tag, MPI_Status* stat=MPI_STATUS_IGNORE) const;
 
     private:
-	friend class MpiEnvironment;
-      /**
-       * Constructor to get data needed from an MPI communicator
-       * @param communicator
-       */
-      MpiCommunicator(MPI_Comm communicator, bool willOwn);
       
       virtual void BcastImpl(void* buf, int count, MPI_Datatype dt, int root) const;
-      virtual Request* IbcastImpl(void* buf, int count, MPI_Datatype dt, int root) const;
+      virtual std::shared_ptr<Request> IbcastImpl(void* buf, int count, MPI_Datatype dt, int root) const;
       virtual void AllreduceImpl(const void* send, void* ans, int count, MPI_Datatype dt, MPI_Op op) const;
-      virtual Request* IallreduceImpl(const void* send, void* ans, int count, MPI_Datatype dt, MPI_Op op) const;
-      virtual Request* IreduceImpl(const void* send, void* ans, int count, MPI_Datatype dt, MPI_Op op, int root) const;
+      virtual std::shared_ptr<Request> IallreduceImpl(const void* send, void* ans, int count, MPI_Datatype dt, MPI_Op op) const;
+      virtual std::shared_ptr<Request> IreduceImpl(const void* send, void* ans, int count, MPI_Datatype dt, MPI_Op op, int root) const;
       virtual void ReduceImpl(const void* send, void* ans, int count, MPI_Datatype dt, MPI_Op op, int root) const;
       virtual void GatherImpl(const void* send, int sendcount, MPI_Datatype sendtype,
 			      void* recv, int recvcount, MPI_Datatype recvtype,
@@ -90,11 +92,11 @@ namespace hemelb
 			    int dest, int tag) const;
       virtual void RecvImpl(void* recvbuf, int recvcount, MPI_Datatype recvtype,
 			    int src, int tag, MPI_Status* stat) const;
-      virtual Request* IsendImpl(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
+      virtual std::shared_ptr<Request> IsendImpl(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 				 int dest, int tag) const;
-      virtual Request* IssendImpl(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
+      virtual std::shared_ptr<Request> IssendImpl(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 				  int dest, int tag) const;
-      virtual Request* IrecvImpl(void* recvbuf, int recvcount, MPI_Datatype recvtype,
+      virtual std::shared_ptr<Request> IrecvImpl(void* recvbuf, int recvcount, MPI_Datatype recvtype,
 				 int source, int tag) const;
       
       std::shared_ptr<MPI_Comm> commPtr;

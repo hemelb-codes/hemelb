@@ -22,6 +22,8 @@ namespace hemelb
     class Communicator
     {
       public:
+        typedef std::shared_ptr<Communicator> Ptr;
+        typedef std::shared_ptr<const Communicator> ConstPtr;
         /**
          * Class has virtual methods so should have virtual d'tor.
          */
@@ -59,8 +61,10 @@ namespace hemelb
          * Duplicate the communicator - see MPI_COMM_DUP
          * @return
          */
-        virtual Communicator* Duplicate() const = 0;
+        virtual Ptr Duplicate() const = 0;
 
+        virtual std::shared_ptr<Group> GetGroup() const = 0;
+        virtual Ptr Create(std::shared_ptr<const Group> grp) const = 0;
         /**
          * Opens a file with MPI_File_open. A collective operation
          * @param filename
@@ -68,11 +72,11 @@ namespace hemelb
          * @param info
          * @return
          */
-        virtual MpiFile* OpenFile(const std::string& filename, int mode,
-				  const MPI_Info info = MPI_INFO_NULL) const = 0;
+        virtual std::shared_ptr<MpiFile> OpenFile(const std::string& filename, int mode,
+						  const MPI_Info info = MPI_INFO_NULL) const = 0;
       
         virtual void Barrier() const = 0;
-        virtual Request* Ibarrier() const = 0;
+        virtual std::shared_ptr<Request> Ibarrier() const = 0;
 
         virtual bool Iprobe(int source, int tag, MPI_Status* stat=MPI_STATUS_IGNORE) const = 0;
 
@@ -82,9 +86,9 @@ namespace hemelb
         void Broadcast(std::vector<T>& vals, const int root) const;
 
         template <typename T>
-        Request* Ibcast(T& val, const int root) const;
+        std::shared_ptr<Request> Ibcast(T& val, const int root) const;
         template <typename T>
-        Request* Ibcast(std::vector<T>& vals, const int root) const;
+        std::shared_ptr<Request> Ibcast(std::vector<T>& vals, const int root) const;
 
         template <typename T>
         T AllReduce(const T& val, const MPI_Op& op) const;
@@ -92,10 +96,10 @@ namespace hemelb
         std::vector<T> AllReduce(const std::vector<T>& vals, const MPI_Op& op) const;
 
         template <typename T>
-        Request* Iallreduce(const T& val, const MPI_Op& op, T& out) const;
+        std::shared_ptr<Request> Iallreduce(const T& val, const MPI_Op& op, T& out) const;
 
         template <typename T>
-        Request* Ireduce(const T& val, const MPI_Op& op, const int root, T& out) const;
+        std::shared_ptr<Request> Ireduce(const T& val, const MPI_Op& op, const int root, T& out) const;
 
         template <typename T>
         T Reduce(const T& val, const MPI_Op& op, const int root) const;
@@ -130,33 +134,33 @@ namespace hemelb
         void Recv(T* val, int count, int src, int tag=0, MPI_Status* stat=MPI_STATUS_IGNORE) const;
 
         template <typename T>
-        Request* Isend(const T& val, int dest, int tag=0) const;
+        std::shared_ptr<Request> Isend(const T& val, int dest, int tag=0) const;
         template <typename T>
-        Request* Isend(const std::vector<T>& vals, int dest, int tag=0) const;
+        std::shared_ptr<Request> Isend(const std::vector<T>& vals, int dest, int tag=0) const;
         template <typename T>
-        Request* Isend(const T* valPtr, int count, int dest, int tag=0) const;
+        std::shared_ptr<Request> Isend(const T* valPtr, int count, int dest, int tag=0) const;
 
         template <typename T>
-        Request* Issend(const T& val, int dest, int tag=0) const;
+        std::shared_ptr<Request> Issend(const T& val, int dest, int tag=0) const;
         template <typename T>
-        Request* Issend(const std::vector<T>& vals, int dest, int tag=0) const;
+        std::shared_ptr<Request> Issend(const std::vector<T>& vals, int dest, int tag=0) const;
         template <typename T>
-        Request* Issend(const T* valPtr, int count, int dest, int tag=0) const;
+        std::shared_ptr<Request> Issend(const T* valPtr, int count, int dest, int tag=0) const;
 
         template <typename T>
-        Request* Irecv(T& val, int source, int tag=0) const;
+        std::shared_ptr<Request> Irecv(T& val, int source, int tag=0) const;
         template <typename T>
-        Request* Irecv(std::vector<T>& vals, int source, int tag=0) const;
+        std::shared_ptr<Request> Irecv(std::vector<T>& vals, int source, int tag=0) const;
         template <typename T>
-        Request* Irecv(T* valPtr, int count, int source, int tag=0) const;
+        std::shared_ptr<Request> Irecv(T* valPtr, int count, int source, int tag=0) const;
 
 
     protected:
       virtual void BcastImpl(void* buf, int count, MPI_Datatype dt, int root) const = 0;
-      virtual Request* IbcastImpl(void* buf, int count, MPI_Datatype dt, int root) const = 0;
+      virtual std::shared_ptr<Request> IbcastImpl(void* buf, int count, MPI_Datatype dt, int root) const = 0;
       virtual void AllreduceImpl(const void* send, void* ans, int count, MPI_Datatype dt, MPI_Op op) const = 0;
-      virtual Request* IallreduceImpl(const void* send, void* ans, int count, MPI_Datatype dt, MPI_Op op) const = 0;
-      virtual Request* IreduceImpl(const void* send, void* ans, int count, MPI_Datatype dt, MPI_Op op, int root) const = 0;
+      virtual std::shared_ptr<Request> IallreduceImpl(const void* send, void* ans, int count, MPI_Datatype dt, MPI_Op op) const = 0;
+      virtual std::shared_ptr<Request> IreduceImpl(const void* send, void* ans, int count, MPI_Datatype dt, MPI_Op op, int root) const = 0;
       virtual void ReduceImpl(const void* send, void* ans, int count, MPI_Datatype dt, MPI_Op op, int root) const = 0;
       virtual void GatherImpl(const void* send, int sendcount, MPI_Datatype sendtype,
 			      void* recv, int recvcount, MPI_Datatype recvtype,
@@ -172,11 +176,11 @@ namespace hemelb
 			    int dest, int tag) const = 0;
       virtual void RecvImpl(void* recvbuf, int recvcount, MPI_Datatype recvtype,
 			    int src, int tag, MPI_Status* stat) const = 0;
-      virtual Request* IsendImpl(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
+      virtual std::shared_ptr<Request> IsendImpl(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 				 int dest, int tag) const = 0;
-      virtual Request* IssendImpl(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
+      virtual std::shared_ptr<Request> IssendImpl(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
 				  int dest, int tag) const = 0;
-      virtual Request* IrecvImpl(void* recvbuf, int recvcount, MPI_Datatype recvtype,
+      virtual std::shared_ptr<Request> IrecvImpl(void* recvbuf, int recvcount, MPI_Datatype recvtype,
 				 int source, int tag) const = 0;
     };
 

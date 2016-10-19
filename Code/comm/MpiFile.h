@@ -9,7 +9,7 @@
 
 #include <memory>
 #include "comm/MpiError.h"
-#include "comm/MpiCommunicator.h"
+#include "comm/Communicator.h"
 
 namespace hemelb
 {
@@ -18,7 +18,10 @@ namespace hemelb
     class MpiFile
     {
       public:
+        typedef std::shared_ptr<MpiFile> Ptr;
+        typedef std::shared_ptr<const MpiFile> ConstPtr;
         MpiFile();
+        MpiFile(Communicator::ConstPtr parentComm, MPI_File fh);
 
         /**
          * Closes the file with MPI_File_close.
@@ -37,7 +40,7 @@ namespace hemelb
 
 	MPI_Offset GetSize() const;
 
-        const MpiCommunicator& GetCommunicator() const;
+        Communicator::ConstPtr GetCommunicator() const;
 
         template<typename T>
         void Read(std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
@@ -51,9 +54,8 @@ namespace hemelb
       private:
 	friend class MpiCommunicator;
 	
-        MpiFile(const MpiCommunicator* parentComm, MPI_File fh);
 
-        const MpiCommunicator* comm;
+        Communicator::ConstPtr comm;
         std::shared_ptr<MPI_File> filePtr;
     };
 

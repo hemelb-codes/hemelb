@@ -9,6 +9,7 @@
 
 #include "units.h"
 #include <vector>
+#include <memory>
 
 namespace hemelb
 {
@@ -17,6 +18,7 @@ namespace hemelb
     class Group
     {
       public:
+      typedef std::shared_ptr<Group> Ptr;
         /**
          * Default c'tor - initialises equivalent to an empty group
          * (i.e. MPI_GROUP_NULL)
@@ -40,13 +42,13 @@ namespace hemelb
          * @param ranksToExclude
          * @return
          */
-        virtual Group* Exclude(const std::vector<proc_t>& ranksToExclude) = 0;
+        virtual Group::Ptr Exclude(const std::vector<proc_t>& ranksToExclude) const = 0;
         /**
          * Include the provided ranks
          * @param ranksToExclude
          * @return
          */
-        virtual Group* Include(const std::vector<proc_t>& ranksToInclude) = 0;
+        virtual Group::Ptr Include(const std::vector<proc_t>& ranksToInclude) const = 0;
     };
   }
 }
