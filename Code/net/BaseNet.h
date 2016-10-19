@@ -13,8 +13,7 @@
 #include <iostream>
 
 #include "constants.h"
-#include "net/mpi.h"
-#include "net/MpiCommunicator.h"
+#include "comm/Communicator.h"
 
 namespace hemelb
 {
@@ -24,7 +23,7 @@ namespace hemelb
     class BaseNet
     {
       public:
-        BaseNet(const MpiCommunicator &communicator);
+        BaseNet(comm::Communicator::ConstPtr communicator);
 
         virtual ~BaseNet()
         {
@@ -44,18 +43,18 @@ namespace hemelb
          */
         void Dispatch();
 
-        inline const MpiCommunicator &GetCommunicator() const
+        inline comm::Communicator::ConstPtr GetCommunicator() const
         {
           return communicator;
         }
 
         inline int Rank() const
         {
-          return communicator.Rank();
+          return communicator->Rank();
         }
         inline int Size() const
         {
-          return communicator.Size();
+          return communicator->Size();
         }
       protected:
         virtual void SendPointToPoint()=0;
@@ -71,7 +70,7 @@ namespace hemelb
         std::vector<int> & GetDisplacementsBuffer();
         std::vector<int> & GetCountsBuffer();
 
-        const MpiCommunicator &communicator;
+        comm::Communicator::ConstPtr communicator;
       private:
         /***
          * Buffers which can be used to store displacements and counts for cleaning up interfaces

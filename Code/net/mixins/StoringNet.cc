@@ -9,7 +9,7 @@ namespace hemelb
 {
   namespace net
   {
-    StoringNet::StoringNet(const MpiCommunicator& comms) :
+    StoringNet::StoringNet(comm::Communicator::ConstPtr comms) :
         BaseNet(comms)
     {
     }

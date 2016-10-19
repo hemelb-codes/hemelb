@@ -242,6 +242,16 @@ namespace hemelb
 		       dest, tag, *commPtr)
 		      );
     }
+    
+    void MpiCommunicator::SsendImpl(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+				    int dest, int tag) const
+    {
+      HEMELB_MPI_CALL(
+		      MPI_Ssend,
+		      (sendbuf, sendcount, sendtype,
+		       dest, tag, *commPtr)
+		      );
+    }
     void MpiCommunicator::RecvImpl(void* recvbuf, int recvcount, MPI_Datatype recvtype,
 				   int src, int tag, MPI_Status* stat) const
     {

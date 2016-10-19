@@ -12,7 +12,7 @@
 
 #include "net/IteratedAction.h"
 #include "reporting/Timers.h"
-#include "net/mpi.h"
+#include "comm/Request.h"
 
 namespace hemelb
 {
@@ -30,7 +30,7 @@ namespace hemelb
         }
 
       protected:
-        CollectiveAction(const MpiCommunicator& comm, reporting::Timer& waitTimer);
+        CollectiveAction(comm::Communicator::ConstPtr comm, reporting::Timer& waitTimer);
         /**
          * Initiate the collective.
          */
@@ -47,7 +47,7 @@ namespace hemelb
         /**
          * Private communicator for non-blocking collectives.
          */
-        MpiCommunicator collectiveComm;
+	comm::Communicator::Ptr collectiveComm;
         /**
          * Timings for the wait etc.
          */
@@ -55,7 +55,7 @@ namespace hemelb
         /**
          * Request object for the collective
          */
-        MpiRequest collectiveReq;
+	comm::Request::Ptr collectiveReq;
      };
 
   }

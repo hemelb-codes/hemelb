@@ -18,7 +18,7 @@ namespace hemelb
                 public InterfaceDelegationNet
     {
       public:
-        Net(const MpiCommunicator &communicator) :
+        Net(comm::Communicator::ConstPtr communicator) :
             BaseNet(communicator), StoringNet(communicator), PointPointImpl(communicator),
                 InterfaceDelegationNet(communicator)
         {

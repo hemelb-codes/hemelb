@@ -12,6 +12,13 @@
 
 namespace hemelb
 {
+  // TODO: remove when net is dead
+  namespace net
+  {
+    class CoalescePointPoint;
+    class SeparatedPointPoint;
+    class ImmediatePointPoint;
+  }
   namespace comm
   {
     class Group;
@@ -156,6 +163,11 @@ namespace hemelb
 
 
     protected:
+      // TODO: remove when net is dead.
+      friend class net::CoalescePointPoint;
+      friend class net::SeparatedPointPoint;
+      friend class net::ImmediatePointPoint;
+      
       virtual void BcastImpl(void* buf, int count, MPI_Datatype dt, int root) const = 0;
       virtual std::shared_ptr<Request> IbcastImpl(void* buf, int count, MPI_Datatype dt, int root) const = 0;
       virtual void AllreduceImpl(const void* send, void* ans, int count, MPI_Datatype dt, MPI_Op op) const = 0;
@@ -174,6 +186,8 @@ namespace hemelb
 				void* recv, int recvcount, MPI_Datatype recvtype) const = 0;
       virtual void SendImpl(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 			    int dest, int tag) const = 0;
+      virtual void SsendImpl(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+			     int dest, int tag) const = 0;
       virtual void RecvImpl(void* recvbuf, int recvcount, MPI_Datatype recvtype,
 			    int src, int tag, MPI_Status* stat) const = 0;
       virtual std::shared_ptr<Request> IsendImpl(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
