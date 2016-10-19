@@ -34,7 +34,7 @@ namespace hemelb
                           lb::MacroscopicPropertyCache& propertyCache,
                           const hemelb::lb::LbmParameters *lbmParams,
                           const std::string& outputPath,
-                          const net::IOCommunicator& ioComms_,
+                          const comm::Communicator* ioComms_,
                           reporting::Timers& timers);
 
         /** destructor - releases resources allocated by this class */
@@ -50,7 +50,7 @@ namespace hemelb
 
       private:
         /** Main code communicator */
-        const net::IOCommunicator& ioComms;
+        const comm::Communicator* ioComms;
 
         const lb::SimulationState& simulationState;
 

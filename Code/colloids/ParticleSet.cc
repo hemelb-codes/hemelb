@@ -43,16 +43,16 @@ namespace hemelb
                              lb::MacroscopicPropertyCache& propertyCache,
                              const hemelb::lb::LbmParameters *lbmParams,
                              std::vector<proc_t>& neighbourProcessors,
-                             const net::IOCommunicator& ioComms_,
+                             const comm::Communicator* ioComms_,
                              const std::string& outputPath) :
-        ioComms(ioComms_), localRank(ioComms.Rank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath), net(ioComms)
+        ioComms(ioComms_), localRank(ioComms->Rank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath), net(ioComms)
     {
       /**
        * Open the file, unless it already exists, for writing only, creating it if it doesn't exist.
        */
-      file = net::MpiFile::Open(ioComms, path, MPI_MODE_EXCL | MPI_MODE_WRONLY | MPI_MODE_CREATE);
+      file = ioComms->OpenFile(path, MPI_MODE_EXCL | MPI_MODE_WRONLY | MPI_MODE_CREATE);
 
-      if (ioComms.OnIORank())
+      if (ioComms->OnIORank())
       {
         // Write out the header information from core 0
         buffer.resize(io::formats::colloids::MagicLength);
@@ -60,10 +60,10 @@ namespace hemelb
         writer << (uint32_t) io::formats::HemeLbMagicNumber;
         writer << (uint32_t) io::formats::colloids::MagicNumber;
         writer << (uint32_t) io::formats::colloids::VersionNumber;
-        file.Write(buffer);
+        file->Write(buffer);
       }
 
-      HEMELB_MPI_CALL(MPI_File_seek_shared, (file, 0, MPI_SEEK_END));
+      HEMELB_MPI_CALL(MPI_File_seek_shared, (*file, 0, MPI_SEEK_END));
 
       // add an element into scanMap for each neighbour rank with zero for both counts
       // sorting the list of neighbours allows the position in the map to be predicted
@@ -132,35 +132,35 @@ namespace hemelb
 
       // Find how far we currently are into the file.
       MPI_Offset positionBeforeWriting;
-      HEMELB_MPI_CALL(MPI_File_get_position_shared, (file, &positionBeforeWriting));
+      HEMELB_MPI_CALL(MPI_File_get_position_shared, (*file, &positionBeforeWriting));
 
       log::Logger::Log<log::Debug, log::OnePerCore>("from offsetEOF: %i\n", positionBeforeWriting);
 
       // Go past the header (which we'll write at the end)
       unsigned int sizeOfHeader = io::formats::colloids::HeaderLength;
-      HEMELB_MPI_CALL(MPI_File_seek_shared, (file, sizeOfHeader, MPI_SEEK_END));
+      HEMELB_MPI_CALL(MPI_File_seek_shared, (*file, sizeOfHeader, MPI_SEEK_END));
 
       // Collective write: the effect is as though all writes are done
       // in serialised order, i.e. as if rank 0 writes first, followed
       // by rank 1, and so on, until all ranks have written their data
-      HEMELB_MPI_CALL(MPI_File_write_ordered, (file, &buffer.front(), count, MPI_CHAR, MPI_STATUS_IGNORE));
+      HEMELB_MPI_CALL(MPI_File_write_ordered, (*file, &buffer.front(), count, MPI_CHAR, MPI_STATUS_IGNORE));
 
       // the collective ordered write modifies the shared file pointer
       // it should point to the byte following the highest rank's data
       // (should be true for all ranks but) we only need it for rank 0
       MPI_Offset positionAferWriting;
-      HEMELB_MPI_CALL(MPI_File_get_position_shared, (file, &positionAferWriting));
+      HEMELB_MPI_CALL(MPI_File_get_position_shared, (*file, &positionAferWriting));
 
       log::Logger::Log<log::Debug, log::OnePerCore>("new offsetEOF: %i\n", positionBeforeWriting);
 
       // Now write the header section, only on rank 0.
-      if (ioComms.OnIORank())
+      if (ioComms->OnIORank())
       {
         writer << (uint32_t) io::formats::colloids::HeaderLength;
         writer << (uint32_t) io::formats::colloids::RecordLength;
         writer << (uint64_t) (positionAferWriting - positionBeforeWriting - io::formats::colloids::HeaderLength);
         writer << (uint64_t) timestep;
-        HEMELB_MPI_CALL(MPI_File_write_at, (file, positionBeforeWriting, &buffer[count], sizeOfHeader, MPI_CHAR, MPI_STATUS_IGNORE));
+        HEMELB_MPI_CALL(MPI_File_write_at, (*file, positionBeforeWriting, &buffer[count], sizeOfHeader, MPI_CHAR, MPI_STATUS_IGNORE));
       }
 
       for (scanMapConstIterType iterMap = scanMap.begin(); iterMap != scanMap.end(); iterMap++)
