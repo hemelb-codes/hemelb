@@ -36,7 +36,7 @@ namespace hemelb
 
     void SteeringComponent::PreSend()
     {
-      if (collectiveComm.Rank() != RootRank)
+      if (collectiveComm->Rank() != RootRank)
         return;
 
       // Create a buffer for the data received.
@@ -84,7 +84,7 @@ namespace hemelb
     }
     void SteeringComponent::Send()
     {
-      collectiveReq = collectiveComm.Ibcast(privateSteeringParams, RootRank);
+      collectiveReq = collectiveComm->Ibcast(privateSteeringParams, RootRank);
     }
 
     void SteeringComponent::PostReceive()

@@ -8,7 +8,7 @@
 #define HEMELB_GEOMETRY_NEEDS_NEEDS_H
 #include <vector>
 #include "units.h"
-#include "net/MpiCommunicator.h"
+#include "comm/Communicator.h"
 
 namespace hemelb
 {
@@ -33,10 +33,10 @@ namespace hemelb
          * @param comm MPI communicator.
          */
        Needs(const site_t blockCount,
-                          const std::vector<bool>& readBlock,
-                          const proc_t readingGroupSize,
-                          net::MpiCommunicator& comm,
-                          bool shouldValidate); // Temporarily during the refactor, constructed just to abstract the block sharing bit
+	     const std::vector<bool>& readBlock,
+	     const proc_t readingGroupSize,
+	     comm::Communicator::ConstPtr comm,
+	     bool shouldValidate); // Temporarily during the refactor, constructed just to abstract the block sharing bit
 
         /***
          * Which processors need a given block?
@@ -58,7 +58,7 @@ namespace hemelb
         proc_t GetReadingCoreForBlock(const site_t blockNumber) const;
       private:
         std::vector<std::vector<proc_t> > procsWantingBlocksBuffer;
-        const net::MpiCommunicator & communicator;
+        comm::Communicator::ConstPtr communicator;
         const proc_t readingGroupSize;
         bool shouldValidate;
         void Validate(const site_t blockCount, const std::vector<bool>& readBlock);

@@ -17,10 +17,11 @@
 #include "geometry/GeometryReader.h"
 #include "lb/lattices/D3Q27.h"
 #include "net/net.h"
-#include "net/IOCommunicator.h"
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
 #include "constants.h"
+#include "comm/Group.h"
+
 namespace hemelb
 {
   namespace geometry
@@ -28,7 +29,7 @@ namespace hemelb
 
     GeometryReader::GeometryReader(const bool reserveSteeringCore,
                                    const lb::lattices::LatticeInfo& latticeInfo,
-                                   reporting::Timers &atimings, const net::IOCommunicator& ioComm) :
+                                   reporting::Timers &atimings, comm::Communicator::ConstPtr ioComm) :
       latticeInfo(latticeInfo), hemeLbComms(ioComm), timings(atimings)
     {
       // This rank should participate in the domain decomposition if
@@ -37,15 +38,15 @@ namespace hemelb
       //  - there's only one processor (so core 0 has to participate)
 
       // Create our own group, without the root node if we're not running with it.
-      if (reserveSteeringCore && ioComm.Size() > 1)
+      if (reserveSteeringCore && ioComm->Size() > 1)
       {
-        participateInTopology = !ioComm.OnIORank();
+        participateInTopology = !ioComm->OnIORank();
 
         std::vector<int> lExclusions(1);
         lExclusions[0] = 0;
-        net::MpiGroup computeGroup = hemeLbComms.Group().Exclude(lExclusions);
+        comm::Group::Ptr computeGroup = hemeLbComms->GetGroup()->Exclude(lExclusions);
         // Create a communicator just for the domain decomposition.
-        computeComms = ioComm.Create(computeGroup);
+        computeComms = ioComm->Create(computeGroup);
         // Note that on the steering core, this is a null communicator.
       }
       else
@@ -83,13 +84,13 @@ namespace hemelb
       );
 
       // Open the file.
-      file = net::MpiFile::Open(hemeLbComms, dataFilePath, MPI_MODE_RDONLY, fileInfo);
+      file = hemeLbComms->OpenFile(dataFilePath, MPI_MODE_RDONLY, fileInfo);
       log::Logger::Log<log::Info, log::OnePerCore>("Opened config file %s", dataFilePath.c_str());
       // TODO: Why is there this fflush?
       fflush( NULL);
 
       // Set the view to the file.
-      file.SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);
+      file->SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
       Geometry geometry = ReadPreamble();
@@ -98,7 +99,7 @@ namespace hemelb
       ReadHeader(geometry.GetBlockCount());
 
       // Close the file - only the ranks participating in the topology need to read it again.
-      file.Close();
+      file->Close();
 
       timings[hemelb::reporting::Timers::initialDecomposition].Start();
       log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
@@ -135,9 +136,9 @@ namespace hemelb
       {
         // Reopen in the file just between the nodes in the topology decomposition. Read in blocks
         // local to this node.
-        file = net::MpiFile::Open(computeComms, dataFilePath, MPI_MODE_RDONLY, fileInfo);
+        file = computeComms->OpenFile(dataFilePath, MPI_MODE_RDONLY, fileInfo);
 
-        ReadInBlocksWithHalo(geometry, principalProcForEachBlock, computeComms.Rank());
+        ReadInBlocksWithHalo(geometry, principalProcForEachBlock, computeComms->Rank());
 
         if (ShouldValidate())
         {
@@ -162,7 +163,7 @@ namespace hemelb
         {
           ValidateGeometry(geometry);
         }
-        file.Close();
+        file->Close();
       }
 
       // Finish up - close the file, set the timings, deallocate memory.
@@ -176,12 +177,12 @@ namespace hemelb
     std::vector<char> GeometryReader::ReadOnAllTasks(unsigned nBytes)
     {
       std::vector<char> buffer(nBytes);
-      const net::MpiCommunicator& comm = file.GetCommunicator();
-      if (comm.Rank() == HEADER_READING_RANK)
+      auto comm = file->GetCommunicator();
+      if (comm->Rank() == HEADER_READING_RANK)
       {
-        file.Read(buffer);
+        file->Read(buffer);
       }
-      comm.Broadcast(buffer, HEADER_READING_RANK);
+      comm->Broadcast(buffer, HEADER_READING_RANK);
       return buffer;
     }
 
@@ -316,7 +317,7 @@ namespace hemelb
       
       Needs needs(geometry.GetBlockCount(),
                   readBlock,
-                  util::NumericalFunctions::min(READING_GROUP_SIZE, computeComms.Size()),
+                  util::NumericalFunctions::min(READING_GROUP_SIZE, computeComms->Size()),
                   computeComms,
                   ShouldValidate());
 
@@ -360,18 +361,18 @@ namespace hemelb
 
       net::Net net = net::Net(computeComms);
 
-      if (readingCore == computeComms.Rank())
+      if (readingCore == computeComms->Rank())
       {
         timings[hemelb::reporting::Timers::readBlock].Start();
         // Read the data.
         compressedBlockData.resize(bytesPerCompressedBlock[blockNumber]);
-        file.ReadAt(offsetSoFar, compressedBlockData);
+        file->ReadAt(offsetSoFar, compressedBlockData);
 
         // Spread it.
         for (std::vector<proc_t>::const_iterator receiver = procsWantingThisBlock.begin(); receiver
             != procsWantingThisBlock.end(); receiver++)
         {
-          if (*receiver != computeComms.Rank())
+          if (*receiver != computeComms->Rank())
           {
 
             net.RequestSendV(compressedBlockData, *receiver);
@@ -582,7 +583,7 @@ namespace hemelb
     proc_t GeometryReader::GetReadingCoreForBlock(site_t blockNumber)
     {
       return proc_t(blockNumber % util::NumericalFunctions::min(READING_GROUP_SIZE,
-                                                                computeComms.Size()));
+                                                                computeComms->Size()));
     }
 
     /**
@@ -641,13 +642,13 @@ namespace hemelb
 
         // Reduce using a minimum to find the actual processor for each site (ignoring the
         // invalid entries).
-        std::vector<proc_t> procForSiteRecv = computeComms.AllReduce(myProcForSite, MPI_MIN);
-        std::vector<unsigned> siteDataRecv = computeComms.AllReduce(dummySiteData, MPI_MIN);
+        std::vector<proc_t> procForSiteRecv = computeComms->AllReduce(myProcForSite, MPI_MIN);
+        std::vector<unsigned> siteDataRecv = computeComms->AllReduce(dummySiteData, MPI_MIN);
 
         for (site_t site = 0; site < geometry.GetSitesPerBlock(); ++site)
         {
-          if (procForSiteRecv[site] == ConvertTopologyRankToGlobalRank(computeComms.Rank())
-              && (myProcForSite[site] != ConvertTopologyRankToGlobalRank(computeComms.Rank())))
+          if (procForSiteRecv[site] == ConvertTopologyRankToGlobalRank(computeComms->Rank())
+              && (myProcForSite[site] != ConvertTopologyRankToGlobalRank(computeComms->Rank())))
           {
             log::Logger::Log<log::Critical, log::OnePerCore>("Other cores think this core has site %li on block %li but it disagrees.",
                                                              site,
@@ -796,7 +797,7 @@ namespace hemelb
       // going to be moved to the current proc.
       idx_t moveIndex = 0;
 
-      for (proc_t fromProc = 0; fromProc < computeComms.Size(); ++fromProc)
+      for (proc_t fromProc = 0; fromProc < computeComms->Size(); ++fromProc)
       {
         for (idx_t moveNumber = 0; moveNumber < movesPerProc[fromProc]; ++moveNumber)
         {
@@ -804,15 +805,15 @@ namespace hemelb
           idx_t toProc = movesList[3 * moveIndex + 2];
           ++moveIndex;
 
-          if (toProc == (idx_t) computeComms.Rank())
+          if (toProc == (idx_t) computeComms->Rank())
           {
-            newProcForEachBlock[block] = computeComms.Rank();
+            newProcForEachBlock[block] = computeComms->Rank();
           }
         }
       }
 
       // Reread the blocks into the GlobalLatticeData now.
-      ReadInBlocksWithHalo(geometry, newProcForEachBlock, computeComms.Rank());
+      ReadInBlocksWithHalo(geometry, newProcForEachBlock, computeComms->Rank());
     }
 
     void GeometryReader::ImplementMoves(Geometry& geometry,
@@ -849,7 +850,7 @@ namespace hemelb
       idx_t moveIndex = 0;
 
       // For each source proc, go through as many moves as it had.
-      for (proc_t fromProc = 0; fromProc < computeComms.Size(); ++fromProc)
+      for (proc_t fromProc = 0; fromProc < computeComms->Size(); ++fromProc)
       {
         for (idx_t moveNumber = 0; moveNumber < movesFromEachProc[fromProc]; ++moveNumber)
         {
@@ -891,7 +892,7 @@ namespace hemelb
     {
       // If the global rank is not equal to the topology rank, we are not using rank 0 for
       // LBM.
-      return (hemeLbComms.Rank() == computeComms.Rank())
+      return (hemeLbComms->Rank() == computeComms->Rank())
         ? topologyRankIn
         : (topologyRankIn + 1);
     }

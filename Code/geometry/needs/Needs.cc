@@ -15,7 +15,7 @@ namespace hemelb
     Needs::Needs(const site_t blockCount,
                  const std::vector<bool>& readBlock,
                  const proc_t readingGroupSize,
-                 net::MpiCommunicator& comm,
+                 comm::Communicator::ConstPtr comm,
                  bool shouldValidate_) :
         procsWantingBlocksBuffer(blockCount), communicator(comm), readingGroupSize(readingGroupSize), shouldValidate(shouldValidate_)
     {
@@ -36,8 +36,8 @@ namespace hemelb
       for (proc_t readingCore = 0; readingCore < readingGroupSize; readingCore++)
       {
         blocksNeededSize[readingCore] = blocksNeededHere[readingCore].size();
-	auto tmp = communicator.Gather(blocksNeededSize[readingCore], readingCore);
-	if (readingCore == communicator.Rank())
+	auto tmp = communicator->Gather(blocksNeededSize[readingCore], readingCore);
+	if (readingCore == communicator->Rank())
 	  blocksNeededSizes = std::move(tmp);
       }
       
@@ -45,16 +45,16 @@ namespace hemelb
       std::vector<site_t> blocksNeededOn;
       for (proc_t readingCore = 0; readingCore < readingGroupSize; readingCore++)
       {
-	auto tmp = communicator.GatherV(blocksNeededHere[readingCore], blocksNeededSizes, readingCore);
-	if (readingCore == communicator.Rank())
+	auto tmp = communicator->GatherV(blocksNeededHere[readingCore], blocksNeededSizes, readingCore);
+	if (readingCore == communicator->Rank())
 	  blocksNeededOn = std::move(tmp);
       }
 
-      if (communicator.Rank() < readingGroupSize)
+      if (communicator->Rank() < readingGroupSize)
       {
         int needsPassed = 0;
         // Transpose the blocks needed on cores matrix
-        for (proc_t sendingCore = 0; sendingCore < communicator.Size(); sendingCore++)
+        for (proc_t sendingCore = 0; sendingCore < communicator->Size(); sendingCore++)
         {
           for (int needForThisSendingCore = 0; needForThisSendingCore < blocksNeededSizes[sendingCore];
               ++needForThisSendingCore)
@@ -79,12 +79,12 @@ namespace hemelb
       {
         int neededHere = readBlock[block];
         proc_t readingCore = GetReadingCoreForBlock(block);
-        std::vector<int> procsWantingThisBlockBuffer = communicator.Gather(neededHere, readingCore);
+        std::vector<int> procsWantingThisBlockBuffer = communicator->Gather(neededHere, readingCore);
 
-        if (communicator.Rank() == readingCore)
+        if (communicator->Rank() == readingCore)
         {
 
-          for (proc_t needingProcOld = 0; needingProcOld < communicator.Size(); needingProcOld++)
+          for (proc_t needingProcOld = 0; needingProcOld < communicator->Size(); needingProcOld++)
           {
             bool found = false;
             for (std::vector<proc_t>::iterator needingProc = procsWantingBlocksBuffer[block].begin();
