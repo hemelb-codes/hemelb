@@ -8,7 +8,7 @@
 
 namespace hemelb
 {
-  namespace net
+  namespace comm
   {
     template<>
     MPI_Datatype MpiDataTypeTraits<geometry::SiteType>::RegisterMpiDataType()

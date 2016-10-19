@@ -74,7 +74,7 @@ namespace hemelb
         /**
          * The MPI file to write into.
          */
-        comm::MpiFile* outputFile;
+        comm::MpiFile::Ptr outputFile;
 
         /**
          * The data source to use for file output.

@@ -13,7 +13,6 @@
 #include "io/writers/xdr/XdrReader.h"
 #include "lb/lattices/LatticeInfo.h"
 #include "lb/LbmParameters.h"
-#include "net/mpi.h"
 #include "geometry/ParmetisHeader.h"
 #include "reporting/Timers.h"
 #include "util/Vector3D.h"
@@ -21,7 +20,7 @@
 #include "geometry/Geometry.h"
 #include "geometry/needs/Needs.h"
 
-#include "net/MpiFile.h"
+#include "comm/MpiFile.h"
 
 namespace hemelb
 {
@@ -34,7 +33,7 @@ namespace hemelb
         typedef util::Vector3D<site_t> BlockLocation;
 
         GeometryReader(const bool reserveSteeringCore, const lb::lattices::LatticeInfo&,
-                       reporting::Timers &timings, const net::IOCommunicator& ioComm);
+                       reporting::Timers &timings, comm::Communicator::ConstPtr ioComm);
         ~GeometryReader();
 
         Geometry LoadAndDecompose(const std::string& dataFilePath);
@@ -164,11 +163,11 @@ namespace hemelb
         //! Info about the connectivity of the lattice.
         const lb::lattices::LatticeInfo& latticeInfo;
         //! File accessed to read in the geometry data.
-        net::MpiFile file;
+        comm::MpiFile::Ptr file;
         //! Information about the file, to give cues and hints to MPI.
 
-        const net::IOCommunicator& hemeLbComms; //! HemeLB's main communicator
-        net::MpiCommunicator computeComms; //! Communication info for all ranks that will need a slice of the geometry (i.e. all non-steering cores)
+        comm::Communicator::ConstPtr hemeLbComms; //! HemeLB's main communicator
+        comm::Communicator::ConstPtr computeComms; //! Communication info for all ranks that will need a slice of the geometry (i.e. all non-steering cores)
         //! True iff this rank is participating in the domain decomposition.
         bool participateInTopology;
 

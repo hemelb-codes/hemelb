@@ -9,6 +9,8 @@
 #include "lb/lattices/D3Q27.h"
 #include "log/Logger.h"
 #include "net/net.h"
+#include "comm/MpiCommunicator.h"
+#include "Exception.h"
 
 namespace hemelb
 {
@@ -17,7 +19,7 @@ namespace hemelb
     namespace decomposition
     {
       OptimisedDecomposition::OptimisedDecomposition(
-          reporting::Timers& timers, net::MpiCommunicator& comms, const Geometry& geometry,
+          reporting::Timers& timers, comm::Communicator::ConstPtr comms, const Geometry& geometry,
           const lb::lattices::LatticeInfo& latticeInfo, const std::vector<proc_t>& procForEachBlock,
           const std::vector<site_t>& fluidSitesOnEachBlock) :
           timers(timers), comms(comms), geometry(geometry), latticeInfo(latticeInfo),
@@ -42,7 +44,7 @@ namespace hemelb
         }
 
         // Populate the adjacency data arrays (for ParMetis) and validate if appropriate
-        idx_t localVertexCount = vtxDistribn[comms.Rank() + 1] - vtxDistribn[comms.Rank()];
+        idx_t localVertexCount = vtxDistribn[comms->Rank() + 1] - vtxDistribn[comms->Rank()];
 
         PopulateAdjacencyData(localVertexCount);
 
@@ -111,7 +113,7 @@ namespace hemelb
         // comm* is a pointer to the MPI communicator of the processes involved
 
         // Initialise the partition vector.
-        partitionVector = std::vector<idx_t>(localVertexCount, comms.Rank());
+        partitionVector = std::vector<idx_t>(localVertexCount, comms->Rank());
 
         // Weight all vertices evenly.
         //std::vector < idx_t > vertexWeight(localVertexCount, 1);
@@ -120,7 +122,7 @@ namespace hemelb
         PopulateVertexWeightData(localVertexCount);
 
         // Set the weights of each partition to be even, and to sum to 1.
-        idx_t desiredPartitionSize = comms.Size();
+        idx_t desiredPartitionSize = comms->Size();
 
         std::vector<real_t> domainWeights(desiredPartitionSize,
                                           (real_t) (1.0) / ((real_t) (desiredPartitionSize)));
@@ -156,7 +158,8 @@ namespace hemelb
         adjacenciesPerVertex.reserve(1);
         localAdjacencies.reserve(1);
         vertexWeights.reserve(1);
-        MPI_Comm communicator = comms;
+	auto mpi_comms = std::dynamic_pointer_cast<const comm::MpiCommunicator>(comms);
+        MPI_Comm communicator = *mpi_comms;
         ParMETIS_V3_PartKway(&vtxDistribn[0],
                              &adjacenciesPerVertex[0],
                              &localAdjacencies[0],
@@ -174,10 +177,10 @@ namespace hemelb
                              &communicator);
 
         log::Logger::Log<log::Debug, log::OnePerCore>("ParMetis returned.");
-        if (comms.Rank() == comms.Size() - 1)
+        if (comms->Rank() == comms->Size() - 1)
         {
           log::Logger::Log<log::Info, log::OnePerCore>("ParMetis cut %d edges.", edgesCut);
-          if (edgesCut < 1 && comms.Size() > 2)
+          if (edgesCut < 1 && comms->Size() > 2)
           {
             throw Exception()
                 << "The decomposition using ParMetis returned an edge cut of 0 even though there are multiple processes. "
@@ -204,7 +207,7 @@ namespace hemelb
                                                                                  blockK);
 
               // Only consider sites on this processor.
-              if (procForEachBlock[blockNumber] != comms.Rank())
+              if (procForEachBlock[blockNumber] != comms->Rank())
               {
                 continue;
               }
@@ -300,14 +303,14 @@ namespace hemelb
                                                       WallSiteCounter,
                                                       IOSiteCounter,
                                                       WallIOSiteCounter,
-                                                      comms.Rank(),
+                                                      comms->Rank(),
                                                       TotalSites,
                                                       TotalCoreWeight);
       }
 
       void OptimisedDecomposition::PopulateSiteDistribution()
       {
-        vtxDistribn.resize(comms.Size() + 1, 0);
+        vtxDistribn.resize(comms->Size() + 1, 0);
         // Firstly, count the sites per processor. Do this off-by-one
         // to be compatible with ParMetis.
         for (site_t block = 0; block < geometry.GetBlockCount(); ++block)
@@ -319,7 +322,7 @@ namespace hemelb
         }
 
         // Now make the count cumulative, again off-by-one.
-        for (proc_t rank = 0; rank < comms.Size(); ++rank)
+        for (proc_t rank = 0; rank < comms->Size(); ++rank)
         {
           vtxDistribn[rank + 1] += vtxDistribn[rank];
         }
@@ -363,7 +366,7 @@ namespace hemelb
                                                                                  blockJ,
                                                                                  blockK);
               // ... considering only the ones which live on this proc...
-              if (procForEachBlock[blockNumber] != comms.Rank())
+              if (procForEachBlock[blockNumber] != comms->Rank())
               {
                 continue;
               }
@@ -450,14 +453,14 @@ namespace hemelb
         // Right. Let's count how many sites we're going to have to move. Count the local number of
         // sites to be moved, and collect the site id and the destination processor.
         std::vector<idx_t> moveData;
-        const idx_t myLowest = vtxDistribn[comms.Rank()];
-        const idx_t myHighest = vtxDistribn[comms.Rank() + 1] - 1;
+        const idx_t myLowest = vtxDistribn[comms->Rank()];
+        const idx_t myHighest = vtxDistribn[comms->Rank() + 1] - 1;
 
         // For each local fluid site...
         for (idx_t ii = 0; ii <= (myHighest - myLowest); ++ii)
         {
           // ... if it's going elsewhere...
-          if (partitionVector[ii] != comms.Rank())
+          if (partitionVector[ii] != comms->Rank())
           {
             // ... get its id on the local processor...
             idx_t localFluidSiteId = myLowest + ii;
@@ -513,7 +516,7 @@ namespace hemelb
               // If we've ended up on an impossible block, or one that doesn't live on this rank,
               // inform the user.
               if (fluidSiteBlock >= geometry.GetBlockCount()
-                  || procForEachBlock[fluidSiteBlock] != comms.Rank())
+                  || procForEachBlock[fluidSiteBlock] != comms->Rank())
               {
                 log::Logger::Log<log::Critical, log::OnePerCore>("Partition element %i wrongly assigned to block %u of %i (block on processor %i)",
                                                                  ii,
@@ -561,7 +564,7 @@ namespace hemelb
         // We also need to force some data upon blocks, i.e. when they're receiving data from a new
         // block they didn't previously want to know about.
         std::map<proc_t, std::vector<site_t> > blockForcedUponX;
-        std::vector<proc_t> numberOfBlocksIForceUponX(comms.Size(), 0);
+        std::vector<proc_t> numberOfBlocksIForceUponX(comms->Size(), 0);
         for (idx_t moveNumber = 0; moveNumber < (idx_t) (moveData.size()); moveNumber += 3)
         {
           proc_t target_proc = moveData[moveNumber + 2];
@@ -580,13 +583,13 @@ namespace hemelb
 
         // Now find how many blocks are being forced upon us from every other core.
         log::Logger::Log<log::Debug, log::OnePerCore>("Moving forcing block numbers");
-        std::vector<proc_t> blocksForcedOnMe = comms.AllToAll(numberOfBlocksIForceUponX);
+        std::vector<proc_t> blocksForcedOnMe = comms->AllToAll(numberOfBlocksIForceUponX);
         timers[hemelb::reporting::Timers::moveForcingNumbers].Stop();
 
         timers[hemelb::reporting::Timers::moveForcingData].Start();
         // Now get all the blocks being forced upon me.
         std::map<proc_t, std::vector<site_t> > blocksForcedOnMeByEachProc;
-        for (proc_t otherProc = 0; otherProc < proc_t(comms.Size()); ++otherProc)
+        for (proc_t otherProc = 0; otherProc < proc_t(comms->Size()); ++otherProc)
         {
           if (blocksForcedOnMe[otherProc] > 0)
           {
@@ -606,7 +609,7 @@ namespace hemelb
         log::Logger::Log<log::Debug, log::OnePerCore>("Moving forcing block ids");
         netForMoveSending.Dispatch();
         // Now go through every block forced upon me and add it to the list of ones I want.
-        for (proc_t otherProc = 0; otherProc < proc_t(comms.Size()); ++otherProc)
+        for (proc_t otherProc = 0; otherProc < proc_t(comms->Size()); ++otherProc)
         {
           if (blocksForcedOnMe[otherProc] > 0)
           {
@@ -680,7 +683,7 @@ namespace hemelb
         log::Logger::Log<log::Debug, log::OnePerCore>("Calculating block requirements");
         timers[hemelb::reporting::Timers::blockRequirements].Start();
         // Populate numberOfBlocksRequiredFrom
-        for (proc_t otherProc = 0; otherProc < proc_t(comms.Size()); ++otherProc)
+        for (proc_t otherProc = 0; otherProc < proc_t(comms->Size()); ++otherProc)
         {
           numberOfBlocksRequiredFrom[otherProc] = blockIdsIRequireFromX.count(otherProc) == 0 ?
             0 :
@@ -691,12 +694,12 @@ namespace hemelb
         }
         // Now perform the exchange s.t. each core knows how many blocks are required of it from
         // each other core.
-        numberOfBlocksXRequiresFromMe = comms.AllToAll(numberOfBlocksRequiredFrom);
+        numberOfBlocksXRequiresFromMe = comms->AllToAll(numberOfBlocksRequiredFrom);
 
         // Awesome. Now we need to get a list of all the blocks wanted from each core by each other
         // core.
         net::Net netForMoveSending(comms);
-        for (proc_t otherProc = 0; otherProc < proc_t(comms.Size()); ++otherProc)
+        for (proc_t otherProc = 0; otherProc < proc_t(comms->Size()); ++otherProc)
         {
           blockIdsXRequiresFromMe[otherProc] =
               std::vector<site_t>(numberOfBlocksXRequiresFromMe[otherProc]);
@@ -723,13 +726,13 @@ namespace hemelb
         // block has no moves.
         for (site_t blockId = 0; blockId < geometry.GetBlockCount(); ++blockId)
         {
-          if (procForEachBlock[blockId] == comms.Rank())
+          if (procForEachBlock[blockId] == comms->Rank())
           {
             movesForEachLocalBlock[blockId] = 0;
           }
         }
 
-        for (proc_t otherProc = 0; otherProc < proc_t(comms.Size()); ++otherProc)
+        for (proc_t otherProc = 0; otherProc < proc_t(comms->Size()); ++otherProc)
         {
           for (site_t blockNum = 0;
               blockNum < site_t(blockIdsXRequiresFromMe[otherProc].size());
@@ -763,7 +766,7 @@ namespace hemelb
         }
 
         net::Net netForMoveSending(comms);
-        for (proc_t otherProc = 0; otherProc < proc_t(comms.Size()); ++otherProc)
+        for (proc_t otherProc = 0; otherProc < proc_t(comms->Size()); ++otherProc)
         {
           for (std::vector<site_t>::iterator it = blockIdsIRequireFromX[otherProc].begin();
               it != blockIdsIRequireFromX[otherProc].end(); ++it)
@@ -809,7 +812,7 @@ namespace hemelb
 
         net::Net netForMoveSending(comms);
 
-        for (proc_t otherProc = 0; otherProc < proc_t(comms.Size()); ++otherProc)
+        for (proc_t otherProc = 0; otherProc < proc_t(comms->Size()); ++otherProc)
         {
           allMoves[otherProc] = 0;
           for (std::vector<site_t>::iterator it = blockIdsIRequireFromX[otherProc].begin();
@@ -864,7 +867,7 @@ namespace hemelb
        */
       void OptimisedDecomposition::PopulateMovesList()
       {
-        allMoves = std::vector<idx_t>(comms.Size());
+        allMoves = std::vector<idx_t>(comms->Size());
 
         // Create a map for looking up block Ids: the map is from the contiguous site index
         // of the last fluid site on the block, to the block id.
@@ -908,8 +911,8 @@ namespace hemelb
 
         // Now we want to spread this info around so that each core knows which blocks each other
         // requires from it.
-        std::vector<site_t> numberOfBlocksRequiredFrom(comms.Size(), 0);
-        std::vector<site_t> numberOfBlocksXRequiresFromMe(comms.Size(), 0);
+        std::vector<site_t> numberOfBlocksRequiredFrom(comms->Size(), 0);
+        std::vector<site_t> numberOfBlocksXRequiresFromMe(comms->Size(), 0);
         std::map<proc_t, std::vector<site_t> > blockIdsXRequiresFromMe;
         GetBlockRequirements(numberOfBlocksRequiredFrom,
                              blockIdsIRequireFromX,
@@ -944,14 +947,14 @@ namespace hemelb
         // Right. Let's count how many sites we're going to have to move. Count the local number of
         // sites to be moved, and collect the site id and the destination processor.
         std::vector<idx_t> moveData;
-        const idx_t myLowest = vtxDistribn[comms.Rank()];
-        const idx_t myHighest = vtxDistribn[comms.Rank() + 1] - 1;
+        const idx_t myLowest = vtxDistribn[comms->Rank()];
+        const idx_t myHighest = vtxDistribn[comms->Rank() + 1] - 1;
 
         // For each local fluid site...
         for (idx_t ii = 0; ii <= (myHighest - myLowest); ++ii)
         {
           // ... if it's going elsewhere...
-          if (partitionVector[ii] != comms.Rank())
+          if (partitionVector[ii] != comms->Rank())
           {
             // ... get its id on the local processor...
             idx_t localFluidSiteId = myLowest + ii;
@@ -990,7 +993,7 @@ namespace hemelb
       /* Below is a modified version of PopulateMovesList(). */
       void OptimisedDecomposition::LoadDecomposition()
       {
-        allMoves = std::vector<idx_t>(comms.Size());
+        allMoves = std::vector<idx_t>(comms->Size());
 
         // Create a map for looking up block Ids: the map is from the contiguous site index
         // of the last fluid site on the block, to the block id.
@@ -1034,8 +1037,8 @@ namespace hemelb
 
         // Now we want to spread this info around so that each core knows which blocks each other
         // requires from it.
-        std::vector<site_t> numberOfBlocksRequiredFrom(comms.Size(), 0);
-        std::vector<site_t> numberOfBlocksXRequiresFromMe(comms.Size(), 0);
+        std::vector<site_t> numberOfBlocksRequiredFrom(comms->Size(), 0);
+        std::vector<site_t> numberOfBlocksXRequiresFromMe(comms->Size(), 0);
         std::map<proc_t, std::vector<site_t> > blockIdsXRequiresFromMe;
         GetBlockRequirements(numberOfBlocksRequiredFrom,
             blockIdsIRequireFromX,
@@ -1077,9 +1080,9 @@ namespace hemelb
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Validating the vertex distribution.");
         // vtxDistribn should be the same on all cores.
-        std::vector<idx_t> vtxDistribnRecv = comms.AllReduce(vtxDistribn, MPI_MIN);
+        std::vector<idx_t> vtxDistribnRecv = comms->AllReduce(vtxDistribn, MPI_MIN);
 
-        for (proc_t rank = 0; rank < comms.Size() + 1; ++rank)
+        for (proc_t rank = 0; rank < comms->Size() + 1; ++rank)
         {
           if (vtxDistribn[rank] != vtxDistribnRecv[rank])
           {
@@ -1101,12 +1104,12 @@ namespace hemelb
           log::Logger::Log<log::Debug, log::OnePerCore>("Validating the graph adjacency structure");
           // Create an array of lists to store all of this node's adjacencies, arranged by the
           // proc the adjacent vertex is on.
-          std::vector<std::multimap<idx_t, idx_t> > adjByNeighProc(comms.Size(),
+          std::vector<std::multimap<idx_t, idx_t> > adjByNeighProc(comms->Size(),
                                                                    std::multimap<idx_t, idx_t>());
           // The adjacency data should correspond across all cores.
           for (idx_t index = 0; index < localVertexCount; ++index)
           {
-            idx_t vertex = vtxDistribn[comms.Rank()] + index;
+            idx_t vertex = vtxDistribn[comms->Rank()] + index;
             // Iterate over each adjacency (of each vertex).
             for (idx_t adjNumber = 0;
                 adjNumber < (adjacenciesPerVertex[index + 1] - adjacenciesPerVertex[index]);
@@ -1115,7 +1118,7 @@ namespace hemelb
               idx_t adjacentVertex = localAdjacencies[adjacenciesPerVertex[index] + adjNumber];
               proc_t adjacentProc = -1;
               // Calculate the proc of the neighbouring vertex.
-              for (proc_t proc = 0; proc < comms.Size(); ++proc)
+              for (proc_t proc = 0; proc < comms->Size(); ++proc)
               {
                 if (vtxDistribn[proc] <= adjacentVertex && vtxDistribn[proc + 1] > adjacentVertex)
                 {
@@ -1139,18 +1142,18 @@ namespace hemelb
           }
 
           // Create variables for the neighbour data to go into.
-          std::vector<idx_t> counts(comms.Size());
-          std::vector<std::vector<idx_t> > data(comms.Size());
+          std::vector<idx_t> counts(comms->Size());
+          std::vector<std::vector<idx_t> > data(comms->Size());
           log::Logger::Log<log::Debug, log::OnePerCore>("Validating neighbour data");
           // Now spread and compare the adjacency information. Larger ranks send data to smaller
           // ranks which receive the data and compare it.
-          for (proc_t neigh = 0; neigh < proc_t(comms.Size()); ++neigh)
+          for (proc_t neigh = 0; neigh < proc_t(comms->Size()); ++neigh)
           {
             SendAdjacencyDataToLowerRankedProc(neigh,
                                                counts[neigh],
                                                data[neigh],
                                                adjByNeighProc[neigh]);
-            if (neigh < comms.Rank())
+            if (neigh < comms->Rank())
             {
               // Sending arrays don't perform comparison.
               continue;
@@ -1167,11 +1170,11 @@ namespace hemelb
           std::vector<idx_t>& neighboursAdjacencyData,
           std::multimap<idx_t, idx_t>& expectedAdjacencyData)
       {
-        if (neighbouringProc < comms.Rank())
+        if (neighbouringProc < comms->Rank())
         {
           // Send the array length.
           neighboursAdjacencyCount = 2 * expectedAdjacencyData.size();
-          comms.Send(neighboursAdjacencyCount, neighbouringProc, 42);
+          comms->Send(neighboursAdjacencyCount, neighbouringProc, 42);
           // Create a sendable array (std::lists aren't organised in a sendable format).
           neighboursAdjacencyData.resize(neighboursAdjacencyCount);
           unsigned int adjacencyIndex = 0;
@@ -1183,15 +1186,15 @@ namespace hemelb
             ++adjacencyIndex;
           }
           // Send the data to the neighbouringProc.
-          comms.Send(neighboursAdjacencyData, neighbouringProc, 43);
+          comms->Send(neighboursAdjacencyData, neighbouringProc, 43);
         }
         else
         // If this is a greater rank number than the neighbouringProc, receive the data.
-        if (neighbouringProc > comms.Rank())
+        if (neighbouringProc > comms->Rank())
         {
-          comms.Recv(neighboursAdjacencyCount, neighbouringProc, 42);
+          comms->Recv(neighboursAdjacencyCount, neighbouringProc, 42);
           neighboursAdjacencyData.resize(neighboursAdjacencyCount);
-          comms.Recv(neighboursAdjacencyData, neighbouringProc, 43);
+          comms->Recv(neighboursAdjacencyData, neighbouringProc, 43);
         }
         else // Neigh == mTopologyRank, i.e. neighbouring vertices on the same proc
         // Duplicate the data.
@@ -1268,7 +1271,7 @@ namespace hemelb
         // Reduce finding the maximum across all nodes. Note that we have to use the maximum
         // because some cores will have -1 for a block (indicating that it has no neighbours on
         // that block.
-        std::vector<idx_t> firstSiteIndexPerBlockRecv = comms.AllReduce(firstSiteIndexPerBlock,
+        std::vector<idx_t> firstSiteIndexPerBlockRecv = comms->AllReduce(firstSiteIndexPerBlock,
                                                                         MPI_MAX);
 
         for (site_t block = 0; block < geometry.GetBlockCount(); ++block)

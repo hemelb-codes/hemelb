@@ -9,7 +9,7 @@
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "geometry/LatticeData.h"
 #include "log/Logger.h"
-#include "net/MapAllToAll.h"
+#include "comm/MapAllToAll.h"
 
 namespace hemelb
 {
@@ -167,17 +167,17 @@ namespace hemelb
         // This will store the numbers of sites other ranks need from this rank
         CountMap countOfNeedsOnEachProcFromMe;
         // This is collective
-        const net::MpiCommunicator& comms = net.GetCommunicator();
-        net::MapAllToAll(comms, countOfNeedsIHaveFromEachProc, countOfNeedsOnEachProcFromMe, 1234);
+        comm::Communicator::ConstPtr comms = net.GetCommunicator();
+        comm::MapAllToAll(comms, countOfNeedsIHaveFromEachProc, countOfNeedsOnEachProcFromMe, 1234);
 
-        std::vector<net::MpiRequest> requestQueue;
+	comm::Request::ReqVec requestQueue;
         // Now, for every rank, which I need something from, send the ids of those
         for (CountMap::const_iterator countIt = countOfNeedsIHaveFromEachProc.begin();
             countIt != countOfNeedsIHaveFromEachProc.end();
             ++countIt)
         {
           int other = countIt->first;
-          requestQueue.push_back(comms.Isend(needsIHaveFromEachProc[other], other));
+          requestQueue.push_back(comms->Isend(needsIHaveFromEachProc[other], other));
         }
 
         // And for every rank, which needs something from me, receive those ids
@@ -189,10 +189,10 @@ namespace hemelb
           int size = countIt->second;
           IdVec& otherNeeds = needsEachProcHasFromMe[other];
           otherNeeds.resize(size);
-          requestQueue.push_back(comms.Irecv(otherNeeds, other));
+          requestQueue.push_back(comms->Irecv(otherNeeds, other));
         }
 
-        net::MpiRequest::WaitAll(requestQueue);
+	comm::Request::WaitAll(requestQueue);
         needsHaveBeenShared = true;
       }
     }

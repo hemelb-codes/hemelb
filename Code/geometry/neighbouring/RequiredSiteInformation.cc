@@ -5,7 +5,7 @@
 // license in the file LICENSE.
 
 #include "geometry/neighbouring/RequiredSiteInformation.h"
-#include "net/mpi.h"
+
 namespace hemelb
 {
   namespace geometry

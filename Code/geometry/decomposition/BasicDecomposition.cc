@@ -5,7 +5,6 @@
 // license in the file LICENSE.
 
 #include "geometry/decomposition/BasicDecomposition.h"
-#include "net/mpi.h"
 
 namespace hemelb
 {
@@ -16,7 +15,7 @@ namespace hemelb
 
       BasicDecomposition::BasicDecomposition(const Geometry& geometry,
                                              const lb::lattices::LatticeInfo& latticeInfo,
-                                             const net::MpiCommunicator& communicator,
+                                             comm::Communicator::ConstPtr communicator,
                                              const std::vector<site_t>& fluidSitesOnEachBlock) :
         geometry(geometry), latticeInfo(latticeInfo), communicator(communicator),
             fluidSitesOnEachBlock(fluidSitesOnEachBlock)
@@ -42,7 +41,7 @@ namespace hemelb
         DivideBlocks(procAssignedToEachBlock,
                      unvisitedFluidBlockCount,
                      geometry,
-                     communicator.Size(),
+                     communicator->Size(),
                      fluidSitesOnEachBlock);
       }
 
@@ -50,7 +49,7 @@ namespace hemelb
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Validating procForEachBlock");
 
-        std::vector<proc_t> procForEachBlockRecv = communicator.AllReduce(procAssignedToEachBlock, MPI_MAX);
+        std::vector<proc_t> procForEachBlockRecv = communicator->AllReduce(procAssignedToEachBlock, MPI_MAX);
 
         for (site_t block = 0; block < geometry.GetBlockCount(); ++block)
         {
@@ -74,7 +73,7 @@ namespace hemelb
         // required on each unit.
         proc_t currentUnit = 0;
 
-        site_t targetBlocksPerUnit = (site_t) ceil((double) unassignedBlocks / (double) (communicator.Size()));
+        site_t targetBlocksPerUnit = (site_t) ceil((double) unassignedBlocks / (double) (communicator->Size()));
 
         // Create an array to monitor whether each block has been assigned yet.
         std::vector<bool> blockAssigned(geometry.GetBlockCount(), false);
