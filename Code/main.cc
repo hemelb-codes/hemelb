@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
       hemelb::configuration::CommandLine options = hemelb::configuration::CommandLine(argc, argv);
 
       // Start the debugger (if requested)
-      hemelb::debug::Debugger::Init(options.GetDebug(), argv[0], commWorld.get());
+      hemelb::debug::Debugger::Init(options.GetDebug(), argv[0], commWorld);
 
       // Prepare main simulation object...
       SimulationMaster master = SimulationMaster(options, commWorld);

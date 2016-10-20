@@ -26,7 +26,7 @@ namespace hemelb
   namespace debug
   {
 
-    ActiveDebugger::ActiveDebugger(const char* const executable, const comm::Communicator* comm) :
+    ActiveDebugger::ActiveDebugger(const char* const executable, comm::Communicator::ConstPtr comm) :
       Debugger(executable, comm), mAmAttached(false), mPIds()
     {
     }

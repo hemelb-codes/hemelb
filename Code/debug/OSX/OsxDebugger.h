@@ -22,7 +22,7 @@ namespace hemelb
       const std::string GetPlatformScript(void) const;
 
       // C'tor...
-      OsxDebugger(const char* const executable, const comm::Communicator* comm);
+      OsxDebugger(const char* const executable, comm::Communicator::ConstPtr comm);
       // ... which the factory function needs to be able to get at.
       friend class Debugger;
       

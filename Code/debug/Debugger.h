@@ -22,20 +22,20 @@ namespace hemelb
          */
       public:
         // the singleton pattern
-        static Debugger* Init(bool active, const char *const, const comm::Communicator* comm);
+        static Debugger* Init(bool active, const char *const, comm::Communicator::ConstPtr comm);
         static Debugger* Get(void);
 
         virtual void BreakHere(void) = 0;
         virtual void Print(const char* iFormat, ...) = 0;
 
       protected:
-        Debugger(const char* const executable, const comm::Communicator* comm);
+        Debugger(const char* const executable, comm::Communicator::ConstPtr comm);
         virtual ~Debugger();
 
         virtual void Attach() = 0;
 
         std::string mExecutable;
-        const comm::Communicator* mCommunicator;
+        comm::Communicator::ConstPtr mCommunicator;
         // Singleton pattern
         static Debugger* singleton;
 
