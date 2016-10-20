@@ -136,6 +136,28 @@ namespace hemelb
 		  root);
       return ans;
     }
+
+    template <typename T>
+    std::vector<T> Communicator::AllGatherV(const std::vector<T> senddata,
+					    const std::vector<int> recvcounts) const
+    {
+      const int np = Size();
+      const int sendcount = senddata.size();
+      std::vector<int> displs;
+      // Compute the displacements from the counts
+      displs.resize(np);
+      int total = 0;
+      for(size_t i = 0; i < np; ++i) {
+	displs[i] = total;
+	total += recvcounts[i];
+      }
+      // set up recv buffer
+      std::vector<T> ans(total);
+      
+      AllgathervImpl(senddata.data(), sendcount, MpiDataType<T>(),
+		     ans.data(), recvcounts.data(), displs.data(), MpiDataType<T>());
+      return ans;
+    }
     
     template<typename T>
     std::vector<T> Communicator::AllGather(const T& val) const

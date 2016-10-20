@@ -216,6 +216,16 @@ namespace hemelb
 	   root, *commPtr)
       );
     }
+    void MpiCommunicator::AllgathervImpl(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+					 void *recvbuf, const int* recvcounts, const int* displs, MPI_Datatype recvtype) const
+    {
+      HEMELB_MPI_CALL(
+          MPI_Allgatherv,
+          (sendbuf, sendcount, sendtype,
+	   recvbuf, recvcounts, displs, recvtype,
+	   *commPtr)
+      );
+    }
     void MpiCommunicator::AllgatherImpl(const void* send, int sendcount, MPI_Datatype sendtype,
 					void* recv, int recvcount, MPI_Datatype recvtype) const
     {

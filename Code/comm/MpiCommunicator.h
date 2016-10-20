@@ -87,6 +87,8 @@ namespace hemelb
 			       int root) const;
       virtual void AllgatherImpl(const void* send, int sendcount, MPI_Datatype sendtype,
 				 void* recv, int recvcount, MPI_Datatype recvtype) const;
+      virtual void AllgathervImpl(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+			       void *recvbuf, const int* recvcounts, const int* displs, MPI_Datatype recvtype) const;
       virtual void AlltoallImpl(const void* send, int sendcount, MPI_Datatype sendtype,
 				void* recv, int recvcount, MPI_Datatype recvtype) const;
       virtual void SendImpl(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
