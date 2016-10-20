@@ -38,7 +38,7 @@ namespace hemelb
          */
         ~MpiEnvironment();
 
-        static Communicator* World();
+        static Communicator::Ptr World();
         /**
          * Query if MPI is initialised
          * @return

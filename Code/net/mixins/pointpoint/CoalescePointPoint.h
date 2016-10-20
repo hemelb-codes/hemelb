@@ -40,7 +40,7 @@ namespace hemelb
         // there are enough available. We do this in a way to minimise the number created
         // on each core, but also to minimise creation / deletion overheads.
         //std::vector<MPI_Request> requests;
-	comm::Request::ReqVec requests;
+        comm::RequestList::Ptr requests;
         //std::vector<MPI_Status> statuses;
     };
   }

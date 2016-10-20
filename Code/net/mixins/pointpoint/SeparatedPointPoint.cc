@@ -14,9 +14,9 @@ namespace hemelb
 
     void SeparatedPointPoint::EnsureEnoughRequests(size_t count)
     {
-      if (requests.size() < count)
+      if (requests->size() < count)
       {
-        requests.resize(count);
+        requests->resize(count);
       }
     }
 
@@ -30,11 +30,12 @@ namespace hemelb
       {
         for (ProcComms::iterator request = it->second.begin(); request != it->second.end(); request++)
         {
-	  requests[m] = communicator->IrecvImpl(request->Pointer,
-						request->Count,
-						request->Type,
-						it->first,
-						10);
+	  requests->set(m,
+			std::move(*communicator->IrecvImpl(request->Pointer,
+							   request->Count,
+							   request->Type,
+							   it->first,
+							   10)));
           ++m;
         }
       }
@@ -78,11 +79,12 @@ namespace hemelb
       {
         for (ProcComms::iterator request = it->second.begin(); request != it->second.end(); request++)
         {
-	  requests[count_receives+m] = communicator->IsendImpl(request->Pointer,
-							       request->Count,
-							       request->Type,
-							       it->first,
-							       10);
+	  requests->set(count_receives+m,
+			std::move(*communicator->IsendImpl(request->Pointer,
+							   request->Count,
+							   request->Type,
+							   it->first,
+							   10)));
           ++m;
         }
       }
@@ -97,7 +99,7 @@ namespace hemelb
 
     void SeparatedPointPoint::WaitPointToPoint()
     {
-      comm::Request::WaitAll(requests);
+      requests->WaitAll();
 
       receiveProcessorComms.clear();
       sendProcessorComms.clear();

@@ -32,67 +32,53 @@ namespace hemelb
       HEMELB_MPI_CALL(MPI_Wait, (&req, MPI_STATUS_IGNORE));
     }
 
-    void MpiRequest::WaitAll(ReqVec& reqs)
-    {
-      size_t n = reqs.size();
-      MPI_Request* rawreqs = new MPI_Request[n];
-      try
-      {
-        for (size_t i = 0; i < n; ++i)
-        {
-          rawreqs[i] = reqs[i];
-        }
-
-        HEMELB_MPI_CALL(
-            MPI_Waitall,
-            (n, rawreqs, MPI_STATUSES_IGNORE)
-        );
-      }
-      catch (const std::exception& e)
-      {
-        delete[] rawreqs;
-        throw;
-      }
-
-      delete[] rawreqs;
-    }
-
     bool MpiRequest::Test()
     {
       int flag;
       HEMELB_MPI_CALL(MPI_Test, (&req, &flag, MPI_STATUS_IGNORE));
       return flag;
     }
-
-    bool MpiRequest::TestAll(ReqVec& reqs)
+    
+    size_t MpiRequestList::size() const
+    {
+      return reqs.size();
+    }
+    
+    void MpiRequestList::resize(size_t i)
+    {
+      reqs.resize(i);
+    }
+    
+    void MpiRequestList::push_back(Request&& r)
+    {
+      MpiRequest&& mr = dynamic_cast<MpiRequest&&>(r);
+      reqs.push_back(mr.req);
+      mr.req = MPI_REQUEST_NULL;
+    }
+    
+    void MpiRequestList::set(size_t i, Request&& r) {
+      MpiRequest&& mr = dynamic_cast<MpiRequest&&>(r);
+      reqs[i] = mr.req;
+      mr.req = MPI_REQUEST_NULL;      
+    }
+    
+    void MpiRequestList::WaitAll()
+    {
+      HEMELB_MPI_CALL(
+		      MPI_Waitall,
+		      (reqs.size(), reqs.data(), MPI_STATUSES_IGNORE)
+		      );
+    }
+    
+    bool MpiRequestList::TestAll()
     {
       int flag;
-      size_t n = reqs.size();
-      if (n == 0)
-        return true;
-
-      MPI_Request* rawreqs = new MPI_Request[n];
-      try
-      {
-        for (size_t i = 0; i < n; ++i)
-        {
-          rawreqs[i] = reqs[i];
-        }
-
-        HEMELB_MPI_CALL(
-            MPI_Testall,
-            (n, rawreqs, &flag, MPI_STATUSES_IGNORE)
-        );
-      }
-      catch (const std::exception& e)
-      {
-        delete[] rawreqs;
-        throw;
-      }
-
-      delete[] rawreqs;
+      HEMELB_MPI_CALL(
+		      MPI_Testall,
+		      (reqs.size(), reqs.data(), &flag, MPI_STATUSES_IGNORE)
+		      );
       return flag;
     }
-
+    
   }
 }

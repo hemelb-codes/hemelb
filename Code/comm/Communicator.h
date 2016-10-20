@@ -23,6 +23,7 @@ namespace hemelb
   {
     class Group;
     class Request;
+    class RequestList;
     class MpiFile;
 
     // Base class for communicators (MPI, null, and mock)
@@ -34,7 +35,7 @@ namespace hemelb
         /**
          * Class has virtual methods so should have virtual d'tor.
          */
-        virtual ~Communicator();
+        virtual ~Communicator() {};
 
         /**
          * Returns the local rank on the communicator
@@ -82,6 +83,7 @@ namespace hemelb
         virtual std::shared_ptr<MpiFile> OpenFile(const std::string& filename, int mode,
 						  const MPI_Info info = MPI_INFO_NULL) const = 0;
       
+        virtual std::shared_ptr<RequestList> MakeRequestList() const = 0;
         virtual void Barrier() const = 0;
         virtual std::shared_ptr<Request> Ibarrier() const = 0;
 
