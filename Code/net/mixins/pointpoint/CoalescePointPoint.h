@@ -18,8 +18,8 @@ namespace hemelb
     {
 
       public:
-    CoalescePointPoint(comm::Communicator::ConstPtr comms) :
-            BaseNet(comms), StoringNet(comms), sendReceivePrepped(false)
+        CoalescePointPoint(comm::Communicator::ConstPtr comms) :
+          BaseNet(comms), StoringNet(comms), sendReceivePrepped(false), requests(comms->MakeRequestList())
         {
         }
         ~CoalescePointPoint();

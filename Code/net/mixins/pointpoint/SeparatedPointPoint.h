@@ -19,8 +19,9 @@ namespace hemelb
 
       public:
     SeparatedPointPoint(comm::Communicator::ConstPtr comms) :
-            BaseNet(comms), StoringNet(comms), sendReceivePrepped(false), count_sends(0),
-                count_receives(0)
+      BaseNet(comms), StoringNet(comms), sendReceivePrepped(false),
+	requests(comms->MakeRequestList()), count_sends(0),
+	count_receives(0)
         {
         }
         ~SeparatedPointPoint();
