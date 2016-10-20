@@ -99,7 +99,7 @@ include(mpi)
 if(MPI_STANDARD_VERSION VERSION_LESS 3)
   message(FATAL_ERROR "Must have MPI 3.0 or greater")
 endif()
-set(HAVE_CONSTCORRECTMPI TRUE)
+
 include(dependencies)
 
 #-------------Resources -----------------------
@@ -132,6 +132,7 @@ add_executable(${HEMELB_EXECUTABLE} main.cc ${root_sources})
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
   configuration
+  comm
   extraction
   reporting
   steering
@@ -174,6 +175,7 @@ if (HEMELB_BUILD_MULTISCALE)
   
   include_directories(${PROJECT_SOURCE_DIR})
   set(package_subdirs
+    comm
     configuration
     extraction
     reporting
