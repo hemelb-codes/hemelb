@@ -16,7 +16,7 @@ namespace hemelb
 {
   namespace comm
   {
-    // class Status;
+    class RequestList;
     /**
      *
      */
@@ -24,33 +24,31 @@ namespace hemelb
     {
       public:
         typedef std::shared_ptr<Request> Ptr;
-        typedef std::vector<Ptr> ReqVec;
-      //typedef std::vector<Status> StatVec;
 
-        Request();
-      //Request(MPI_Request req);
-
-        /**
-         * Allow implicit casts to MPI_Request
-         * @return The underlying MPI_Request
-         */
-        // operator MPI_Request() const
-        // {
-        //   return req;
-        // }
+        Request() = default;
+        Request(Request&& req) = default;
+        Request& operator=(Request&& req) = default;
+        Request(const Request&) = delete;
+        Request& operator=(const Request&) = delete;
         operator bool() const;
 
         virtual void Wait() = 0;
-        // void Wait(Status& stat);
-
-        static void WaitAll(ReqVec& reqs);
-        // static void WaitAll(ReqVec& reqs, StatVec& stats);
-
         virtual bool Test() = 0;
-        static bool TestAll(ReqVec& reqs);
-
     };
 
+    class RequestList
+    {
+    public:
+      typedef std::shared_ptr<RequestList> Ptr;
+      
+      virtual size_t size() const = 0;
+      virtual void resize(size_t i) = 0;
+      virtual void push_back(Request&&) = 0;
+      virtual void set(size_t i, Request&&) = 0;
+      
+      virtual void WaitAll() = 0;
+      virtual bool TestAll() = 0;
+    };
   }
 }
 #endif // HEMELB_COMM_REQUEST_H

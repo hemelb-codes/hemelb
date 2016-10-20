@@ -170,14 +170,16 @@ namespace hemelb
         comm::Communicator::ConstPtr comms = net.GetCommunicator();
         comm::MapAllToAll(comms, countOfNeedsIHaveFromEachProc, countOfNeedsOnEachProcFromMe, 1234);
 
-	comm::Request::ReqVec requestQueue;
+	//comm::Request::ReqVec requestQueue;
+	auto requestQueue = comms->MakeRequestList();
+	
         // Now, for every rank, which I need something from, send the ids of those
         for (CountMap::const_iterator countIt = countOfNeedsIHaveFromEachProc.begin();
             countIt != countOfNeedsIHaveFromEachProc.end();
             ++countIt)
         {
           int other = countIt->first;
-          requestQueue.push_back(comms->Isend(needsIHaveFromEachProc[other], other));
+          requestQueue->push_back(std::move(*comms->Isend(needsIHaveFromEachProc[other], other)));
         }
 
         // And for every rank, which needs something from me, receive those ids
@@ -189,10 +191,10 @@ namespace hemelb
           int size = countIt->second;
           IdVec& otherNeeds = needsEachProcHasFromMe[other];
           otherNeeds.resize(size);
-          requestQueue.push_back(comms->Irecv(otherNeeds, other));
+          requestQueue->push_back(std::move(*comms->Irecv(otherNeeds, other)));
         }
 
-	comm::Request::WaitAll(requestQueue);
+	requestQueue->WaitAll();
         needsHaveBeenShared = true;
       }
     }

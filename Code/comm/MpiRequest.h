@@ -23,14 +23,14 @@ namespace hemelb
      */
     class MpiRequest : public Request
     {
-      private:
-        typedef std::vector<MpiRequest> ReqVec;
-        // typedef std::vector<MpiStatus> StatVec;
-
       public:
         MpiRequest();
         MpiRequest(MPI_Request req);
-
+        MpiRequest(MpiRequest&& req);
+        MpiRequest& operator=(MpiRequest&& req);
+        MpiRequest(const MpiRequest&) = delete;
+        MpiRequest& operator=(const MpiRequest&) = delete;
+      
         /**
          * Allow implicit casts to MPI_Request
          * @return The underlying MPI_Request
@@ -42,18 +42,28 @@ namespace hemelb
         operator bool() const;
 
         virtual void Wait();
-        // void Wait(MpiStatus& stat);
-
-        static void WaitAll(ReqVec& reqs);
-        // static void WaitAll(ReqVec& reqs, StatVec& stats);
 
         virtual bool Test();
-        static bool TestAll(ReqVec& reqs);
 
       private:
+        friend class MpiRequestList;
 	MPI_Request req;
     };
 
+    class MpiRequestList : public RequestList
+    {
+    public:
+      virtual size_t size() const;
+      virtual void resize(size_t i);
+      virtual void push_back(Request&&);
+      virtual void set(size_t i, Request&&);
+      
+      virtual void WaitAll();
+      virtual bool TestAll();
+    private:
+      std::vector<MPI_Request> reqs;
+    };
+    
   }
 }
 #endif // HEMELB_NET_MPIREQUEST_H

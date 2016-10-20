@@ -20,12 +20,6 @@ namespace hemelb
       public:
       typedef std::shared_ptr<Group> Ptr;
         /**
-         * Default c'tor - initialises equivalent to an empty group
-         * (i.e. MPI_GROUP_NULL)
-         */
-        Group();
-
-        /**
          * Returns the local rank within the group
          * @return
          */

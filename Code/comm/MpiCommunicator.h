@@ -57,14 +57,15 @@ namespace hemelb
          * Duplicate the communicator - see MPI_COMM_DUP
          * @return
          */
-      virtual Communicator::Ptr Duplicate() const;
-	
-      virtual std::shared_ptr<Group> GetGroup() const;
-      virtual Communicator::Ptr Create(std::shared_ptr<const Group> grp) const;
+        virtual Communicator::Ptr Duplicate() const;
+      
+        virtual std::shared_ptr<Group> GetGroup() const;
+        virtual Communicator::Ptr Create(std::shared_ptr<const Group> grp) const;
 
-      virtual std::shared_ptr<MpiFile> OpenFile(const std::string& filename, int mode,
-				  const MPI_Info info = MPI_INFO_NULL) const;
-
+        virtual std::shared_ptr<MpiFile> OpenFile(const std::string& filename, int mode,
+						  const MPI_Info info = MPI_INFO_NULL) const;
+        virtual std::shared_ptr<RequestList> MakeRequestList() const;
+      
         virtual void Barrier() const;
         virtual std::shared_ptr<Request> Ibarrier() const;
 

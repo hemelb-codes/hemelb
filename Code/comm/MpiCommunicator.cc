@@ -105,6 +105,11 @@ namespace hemelb
       return std::make_shared<MpiFile>(shared_from_this(), ans);
     }
 
+    RequestList::Ptr MpiCommunicator::MakeRequestList() const
+    {
+      return std::make_shared<MpiRequestList>();
+    }
+    
     void MpiCommunicator::Barrier() const
     {
       HEMELB_MPI_CALL(MPI_Barrier, (*commPtr));

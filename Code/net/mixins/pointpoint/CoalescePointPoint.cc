@@ -14,9 +14,9 @@ namespace hemelb
 
     void CoalescePointPoint::EnsureEnoughRequests(size_t count)
     {
-      if (requests.size() < count)
+      if (requests->size() < count)
       {
-        requests.resize(count);
+        requests->resize(count);
       }
     }
 
@@ -30,11 +30,11 @@ namespace hemelb
       for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin(); it != receiveProcessorComms.end();
           ++it)
       {
-	requests[m] = communicator->IrecvImpl(it->second.front().Pointer,
-					      1,
-					      it->second.Type,
-					      it->first,
-					      10);
+	requests->set(m, std::move(*communicator->IrecvImpl(it->second.front().Pointer,
+							    1,
+							    it->second.Type,
+							    it->first,
+							    10)));
         ++m;
       }
 
@@ -83,14 +83,13 @@ namespace hemelb
         MPI_Type_size(it->second.Type, &TypeSizeStorage); //DTMP:
         BytesSent += TypeSizeStorage; //DTMP:
 
-	requests[receiveProcessorComms.size() + m] =
-	  communicator->IsendImpl(it->second.front().Pointer,
-				  1,
-				  it->second.Type,
-				  it->first,
-				  10);
-
-        ++m;
+	requests->set(receiveProcessorComms.size() + m,
+		      std::move(*communicator->IsendImpl(it->second.front().Pointer,
+							 1,
+							 it->second.Type,
+							 it->first,
+							 10)));
+	++m;
       }
     }
 
@@ -118,7 +117,7 @@ namespace hemelb
 
     void CoalescePointPoint::WaitPointToPoint()
     {
-      comm::Request::WaitAll(requests);
+      requests->WaitAll();
       
       for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin(); it != receiveProcessorComms.end();
           ++it)

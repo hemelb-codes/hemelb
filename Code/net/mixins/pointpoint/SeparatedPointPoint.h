@@ -40,7 +40,7 @@ namespace hemelb
         // initialisation and during each iteration). Code using these must make sure
         // there are enough available. We do this in a way to minimise the number created
         // on each core, but also to minimise creation / deletion overheads.
-	comm::Request::ReqVec requests;
+	comm::RequestList::Ptr requests;
         unsigned int count_sends;
         unsigned int count_receives;
     };

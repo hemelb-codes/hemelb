@@ -26,7 +26,7 @@ namespace hemelb
     {
       receivedVals.clear();
 
-      Request::ReqVec sendReqs;
+      auto sendReqs = comm->MakeRequestList();
       int localRank = comm->Rank();
       int nSends = valsToSend.size();
       // Is localRank in the map of send destinations?
@@ -34,7 +34,7 @@ namespace hemelb
         // If so, reduce the number of sends by 1.
         nSends -= 1;
       // Set up a container for all the Status objs
-      sendReqs.resize(nSends);
+      sendReqs->resize(nSends);
 
       typename std::map<int, T>::const_iterator iter = valsToSend.begin(),
           end = valsToSend.end();
@@ -49,7 +49,7 @@ namespace hemelb
         else
         {
           // Synchronous to ensure we know when this is matched
-          sendReqs[i] = comm->Issend(val, rank, tag);
+          sendReqs->set(i, std::move(*comm->Issend(val, rank, tag)));
           i++;
         }
       }
@@ -70,7 +70,7 @@ namespace hemelb
 
         if (!mySendsMatched)
         {
-          if (Request::TestAll(sendReqs))
+          if (sendReqs->TestAll())
           {
             mySendsMatched = true;
             barrierReq = comm->Ibarrier();

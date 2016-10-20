@@ -33,9 +33,9 @@ namespace hemelb
       }
     }
 
-    Communicator* MpiEnvironment::World()
+    Communicator::Ptr MpiEnvironment::World()
     {
-      return new MpiCommunicator(MPI_COMM_WORLD, false);
+      return std::make_shared<MpiCommunicator>(MPI_COMM_WORLD, false);
     }
 
     bool MpiEnvironment::Initialized()
