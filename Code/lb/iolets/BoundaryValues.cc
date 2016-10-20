@@ -21,7 +21,7 @@ namespace hemelb
                                      geometry::LatticeData* latticeData,
                                      const std::vector<iolets::InOutLet*> &incoming_iolets,
                                      SimulationState* simulationState,
-                                     const net::MpiCommunicator& comms,
+                                     comm::Communicator::ConstPtr comms,
                                      const util::UnitConverter& units) :
         net::IteratedAction(), ioletType(ioletType), totalIoletCount(incoming_iolets.size()), localIoletCount(0),
             state(simulationState), unitConverter(units), bcComms(comms)
@@ -105,8 +105,8 @@ namespace hemelb
         // For each inlet/outlet there is an array of length equal to total number of procs.
         // Each stores true/false value. True if proc of rank equal to the index contains
         // the given inlet/outlet.
-
-        std::vector<int> processorsNeedingIoletFlags = bcComms.Gather(isIOletOnThisProc, bcComms.GetBCProcRank());
+	
+        std::vector<int> processorsNeedingIoletFlags = bcComms.GetComm()->Gather(isIOletOnThisProc, bcComms.GetBCProcRank());
 
         if (bcComms.IsCurrentProcTheBCProc())
         {

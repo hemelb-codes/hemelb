@@ -9,7 +9,7 @@
 
 #include "net/net.h"
 #include "net/IteratedAction.h"
-#include "net/IOCommunicator.h"
+#include "comm/Communicator.h"
 #include "lb/SimulationState.h"
 #include "lb/iolets/BoundaryValues.h"
 #include "lb/MacroscopicPropertyCache.h"

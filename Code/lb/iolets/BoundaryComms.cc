@@ -6,7 +6,7 @@
 
 #include "lb/iolets/BoundaryComms.h"
 #include "lb/iolets/BoundaryValues.h"
-#include "net/IOCommunicator.h"
+#include "comm/MpiCommunicator.h"
 #include "util/utilityFunctions.h"
 
 namespace hemelb
@@ -46,6 +46,8 @@ namespace hemelb
 
       void BoundaryComms::Wait()
       {
+	// TODO: refactor the raw MPI calls into the wrapped stuff
+
         if (hasBoundary)
         {
           HEMELB_MPI_CALL(
@@ -56,6 +58,8 @@ namespace hemelb
 
       void BoundaryComms::WaitAllComms()
       {
+	// TODO: refactor the raw MPI calls into the wrapped stuff
+
         // Now wait for all to complete
         if (bcComm.IsCurrentProcTheBCProc())
         {
@@ -80,16 +84,19 @@ namespace hemelb
       // It is up to the caller to make sure only BCproc calls send
       void BoundaryComms::Send(distribn_t* density)
       {
+	// TODO: refactor the raw MPI calls into the wrapped stuff
+	auto mpi = std::dynamic_pointer_cast<const comm::MpiCommunicator>(bcComm.GetComm());
+	MPI_Comm mpi_comm = *mpi;
         for (int proc = 0; proc < nProcs; proc++)
         {
           HEMELB_MPI_CALL(
               MPI_Isend, (
                   density,
                   1,
-                  net::MpiDataType(*density),
+                  comm::MpiDataType(*density),
                   procsList[proc],
                   100,
-                  bcComm,
+                  mpi_comm,
                   &sendRequest[proc]
               ));
         }
@@ -97,16 +104,19 @@ namespace hemelb
 
       void BoundaryComms::Receive(distribn_t* density)
       {
+	// TODO: refactor the raw MPI calls into the wrapped stuff
+	auto mpi = std::dynamic_pointer_cast<const comm::MpiCommunicator>(bcComm.GetComm());
+	MPI_Comm mpi_comm = *mpi;
         if (hasBoundary)
         {
           HEMELB_MPI_CALL(
               MPI_Irecv, (
                   density,
                   1,
-                  net::MpiDataType(*density),
+                  comm::MpiDataType(*density),
                   bcComm.GetBCProcRank(),
                   100,
-                  bcComm,
+                  mpi_comm,
                   &receiveRequest
               ));
         }
@@ -114,6 +124,8 @@ namespace hemelb
 
       void BoundaryComms::FinishSend()
       {
+	// TODO: refactor the raw MPI calls into the wrapped stuff
+	
         // Don't move on to next step with BC proc until all messages have been sent
         // Precautionary measure to make sure proc doesn't overwrite, before message is sent
         if (bcComm.IsCurrentProcTheBCProc())

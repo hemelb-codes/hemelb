@@ -8,7 +8,7 @@
 
 namespace hemelb
 {
-  namespace net
+  namespace comm
   {
     template<>
     MPI_Datatype MpiDataTypeTraits<lb::DensityEtc>::RegisterMpiDataType()
@@ -115,7 +115,7 @@ namespace hemelb
     void IncompressibilityChecker::Send(void)
     {
       // Begin collective.
-      collectiveReq = collectiveComm.Iallreduce(localDensity, reduction, globalDensity);
+      collectiveReq = collectiveComm->Iallreduce(localDensity, reduction, globalDensity);
     }
 
     bool IncompressibilityChecker::IsDensityDiffWithinRange() const

@@ -14,7 +14,7 @@ namespace hemelb
                                  const std::vector<PropertyOutputFile*>& propertyOutputs,
                                  IterableDataSource& dataSource,
                                  reporting::Timers& timers,
-                                 const comm::Communicator* ioComms) :
+                                 comm::Communicator::ConstPtr ioComms) :
         simulationState(simulationState), timers(timers)
     {
       propertyWriter = new PropertyWriter(dataSource, propertyOutputs, ioComms);

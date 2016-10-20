@@ -30,7 +30,7 @@ namespace hemelb
          * @return
          */
         LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile* outputSpec,
-			    const comm::Communicator* ioComms);
+			    comm::Communicator::ConstPtr ioComms);
 
         /**
          * Tidies up the LocalPropertyOutput (close files etc).
@@ -77,7 +77,7 @@ namespace hemelb
       private:
 	typedef hemelb::lb::lattices:: HEMELB_LATTICE latticeType;
 
-        const comm::Communicator* comms;
+        comm::Communicator::ConstPtr comms;
         /**
          * The MPI file to write into.
          */

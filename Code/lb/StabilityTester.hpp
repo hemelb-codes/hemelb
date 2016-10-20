@@ -103,7 +103,7 @@ namespace hemelb
     void StabilityTester<LatticeType>::Send(void)
     {
       // Begin collective.
-      collectiveReq = collectiveComm.Iallreduce(localStability, MPI_MIN, globalStability);
+      collectiveReq = collectiveComm->Iallreduce(localStability, MPI_MIN, globalStability);
     }
 
     /**

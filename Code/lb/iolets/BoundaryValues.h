@@ -7,7 +7,7 @@
 #ifndef HEMELB_LB_IOLETS_BOUNDARYVALUES_H
 #define HEMELB_LB_IOLETS_BOUNDARYVALUES_H
 
-#include "net/IOCommunicator.h"
+#include "comm/Communicator.h"
 #include "net/IteratedAction.h"
 #include "lb/iolets/InOutLet.h"
 #include "geometry/LatticeData.h"
@@ -27,7 +27,7 @@ namespace hemelb
                          geometry::LatticeData* latticeData,
                          const std::vector<iolets::InOutLet*> &iolets,
                          SimulationState* simulationState,
-                         const net::MpiCommunicator& comms,
+                         comm::Communicator::ConstPtr comms,
                          const util::UnitConverter& units);
           ~BoundaryValues();
 
