@@ -127,7 +127,7 @@ namespace hemelb
          */
         static const std::string timerNames[TimersBase::numberOfTimers];
 
-        TimersBase(const comm::Communicator* commPtr) : comms(commPtr),
+    TimersBase(comm::Communicator::ConstPtr commPtr) : comms(commPtr),
             timers(numberOfTimers), maxes(numberOfTimers), mins(numberOfTimers), means(numberOfTimers)
         {
         }
@@ -202,7 +202,7 @@ namespace hemelb
         void Report(ctemplate::TemplateDictionary& dictionary);
 
       private:
-        const comm::Communicator* comms;
+        comm::Communicator::ConstPtr comms;
         std::vector<Timer> timers; //! The set of timers
         std::vector<double> maxes; //! Max across processes
         std::vector<double> mins; //! Min across processes

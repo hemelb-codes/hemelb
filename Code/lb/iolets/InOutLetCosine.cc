@@ -6,7 +6,6 @@
 
 #include "lb/iolets/InOutLetCosine.h"
 #include "configuration/SimConfig.h"
-#include "net/IOCommunicator.h"
 
 namespace hemelb
 {

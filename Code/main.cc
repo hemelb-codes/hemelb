@@ -4,8 +4,7 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "net/mpi.h"
-#include "net/IOCommunicator.h"
+#include "comm/MpiEnvironment.h"
 #include "configuration/CommandLine.h"
 #include "SimulationMaster.h"
 
@@ -16,23 +15,22 @@ int main(int argc, char *argv[])
   // standard output
 
   // Bring up MPI
-  hemelb::net::MpiEnvironment mpi(argc, argv);
+  hemelb::comm::MpiEnvironment mpi(argc, argv);
   hemelb::log::Logger::Init();
   try
   {
-    hemelb::net::MpiCommunicator commWorld = hemelb::net::MpiCommunicator::World();
-
-    hemelb::net::IOCommunicator hemelbCommunicator(commWorld);
+    auto commWorld = mpi.World();
+    
     try
     {
       // Parse command line
       hemelb::configuration::CommandLine options = hemelb::configuration::CommandLine(argc, argv);
 
       // Start the debugger (if requested)
-      hemelb::debug::Debugger::Init(options.GetDebug(), argv[0], commWorld);
+      hemelb::debug::Debugger::Init(options.GetDebug(), argv[0], commWorld.get());
 
       // Prepare main simulation object...
-      SimulationMaster master = SimulationMaster(options, hemelbCommunicator);
+      SimulationMaster master = SimulationMaster(options, commWorld);
 
       // ..and run it.
       master.RunSimulation();

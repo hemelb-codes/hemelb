@@ -18,9 +18,9 @@
 #include "io/xml/XmlAbstractionLayer.h"
 #include "colloids/ColloidController.h"
 #include "net/BuildInfo.h"
-#include "net/IOCommunicator.h"
 #include "colloids/BodyForces.h"
 #include "colloids/BoundaryConditions.h"
+#include "comm/MpiEnvironment.h"
 
 #include <map>
 #include <limits>
@@ -32,7 +32,7 @@
  * Initialises member variables including the network topology
  * object.
  */
-SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options, const hemelb::net::IOCommunicator& ioComm) :
+SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options, hemelb::comm::Communicator::ConstPtr ioComm) :
   ioComms(ioComm), timings(ioComm), build_info(), communicationNet(ioComm)
 {
   timings[hemelb::reporting::Timers::total].Start();
@@ -111,7 +111,7 @@ SimulationMaster::~SimulationMaster()
  */
 bool SimulationMaster::IsCurrentProcTheIOProc()
 {
-  return ioComms.OnIORank();
+  return ioComms->OnIORank();
 }
 
 /**
@@ -119,7 +119,7 @@ bool SimulationMaster::IsCurrentProcTheIOProc()
  */
 int SimulationMaster::GetProcessorCount()
 {
-  return ioComms.Size();
+  return ioComms->Size();
 }
 
 /**
@@ -193,7 +193,7 @@ void SimulationMaster::Initialise()
   timings[hemelb::reporting::Timers::colloidInitialisation].Stop();
 
   // Initialise and begin the steering.
-  if (ioComms.OnIORank())
+  if (ioComms->OnIORank())
   {
     network = new hemelb::steering::Network(steeringSessionId, timings);
   }
@@ -251,7 +251,7 @@ void SimulationMaster::Initialise()
   propertyDataSource =
       new hemelb::extraction::LbDataSourceIterator(latticeBoltzmannModel->GetPropertyCache(),
                                                    *latticeData,
-                                                   ioComms.Rank(),
+                                                   ioComms->Rank(),
                                                    *unitConverter);
 
   if (simConfig->PropertyOutputCount() > 0)
@@ -301,7 +301,7 @@ void SimulationMaster::Initialise()
     stepManager->RegisterIteratedActorSteps(*propertyExtractor, 1);
   }
 
-  if (ioComms.OnIORank())
+  if (ioComms->OnIORank())
   {
     stepManager->RegisterIteratedActorSteps(*network, 1);
   }
@@ -346,11 +346,11 @@ void SimulationMaster::RunSimulation()
   {
     // We need to keep the master rank in sync with the workers
     // Here, each rank notifies that it is beginning a time step
-    auto syncReq = ioComms.Ibarrier();
+    auto syncReq = ioComms->Ibarrier();
     
     DoTimeStep();
     
-    syncReq.Wait();
+    syncReq->Wait();
     // Now all ranks have at least started this time step
     
     if (simulationState->IsTerminating())
@@ -459,7 +459,7 @@ void SimulationMaster::Abort()
   // This gives us something to work from when we have an error - we get the rank
   // that calls abort, and we get a stack-trace from the exception having been thrown.
   hemelb::log::Logger::Log<hemelb::log::Critical, hemelb::log::OnePerCore>("Aborting");
-  hemelb::net::MpiEnvironment::Abort(1);
+  hemelb::comm::MpiEnvironment::Abort(1);
 
   exit(1);
 }

@@ -6,7 +6,6 @@
 
 #include "lb/iolets/InOutLetMultiscale.h"
 #include "configuration/SimConfig.h"
-#include "net/IOCommunicator.h"
 #include "lb/iolets/BoundaryComms.h"
 #include "lb/iolets/BoundaryValues.h"
 
@@ -123,7 +122,7 @@ namespace hemelb
         pressure_array[1] = minPressure.GetPayload();
         pressure_array[2] = maxPressure.GetPayload();
 
-        net::Net commsNet(bcComms);
+        net::Net commsNet(bcComms.GetComm());
 
         const std::vector<int>& procList = comms->GetListOfProcs(); //TODO: CHECK + IMPROVE!
 

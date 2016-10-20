@@ -7,7 +7,7 @@
 #ifndef HEMELB_LB_IOLETS_BOUNDARYCOMMUNICATOR_H
 #define HEMELB_LB_IOLETS_BOUNDARYCOMMUNICATOR_H
 
-#include "net/MpiCommunicator.h"
+#include "comm/Communicator.h"
 
 namespace hemelb
 {
@@ -15,12 +15,16 @@ namespace hemelb
   {
     namespace iolets
     {
-      class BoundaryCommunicator : public net::MpiCommunicator
+      class BoundaryCommunicator
       {
         public:
-          BoundaryCommunicator(const net::MpiCommunicator& parent);
+	BoundaryCommunicator(comm::Communicator::ConstPtr parent);
           bool IsCurrentProcTheBCProc() const;
           int GetBCProcRank() const;
+	  comm::Communicator::ConstPtr GetComm() const;
+        private:
+	  comm::Communicator::Ptr comm;
+	
       };
     }
   }

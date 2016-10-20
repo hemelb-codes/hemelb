@@ -18,7 +18,7 @@ namespace hemelb
   {
     LocalPropertyOutput::LocalPropertyOutput(IterableDataSource& dataSource,
                                              const PropertyOutputFile* outputSpec,
-                                             const comm::Communicator* ioComms) :
+                                             comm::Communicator::ConstPtr ioComms) :
       comms(ioComms), dataSource(dataSource), outputSpec(outputSpec)
     {
       // Open the file as write-only, create it if it doesn't exist, don't create if the file

@@ -135,7 +135,7 @@ namespace hemelb
         }
         void Send(void)
         {
-          collectiveReq = collectiveComm.Ireduce(localHTheorem, MPI_MAX, RootRank, globalHTheorem);
+          collectiveReq = collectiveComm->Ireduce(localHTheorem, MPI_MAX, RootRank, globalHTheorem);
         }
         /**
          * Take the combined stability information (an int, with a value of hemelb::lb::Unstable
@@ -143,7 +143,7 @@ namespace hemelb
          */
         void PostReceive()
         {
-          if (collectiveComm.Rank() == RootRank && globalHTheorem == DISOBEYED)
+          if (collectiveComm->Rank() == RootRank && globalHTheorem == DISOBEYED)
           {
             log::Logger::Log<log::Error, log::Singleton>("H Theorem violated.");
           }
