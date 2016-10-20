@@ -121,6 +121,8 @@ namespace hemelb
         template <typename T>
         std::vector<T> GatherV(const std::vector<T> senddata, const std::vector<int> recvcounts,
 			       const int root) const;
+        template <typename T>
+        std::vector<T> AllGatherV(const std::vector<T> senddata, const std::vector<int> recvcounts) const;
 	      
         template <typename T>
         std::vector<T> AllGather(const T& val) const;
@@ -184,6 +186,8 @@ namespace hemelb
 			       int root) const = 0;
       virtual void AllgatherImpl(const void* send, int sendcount, MPI_Datatype sendtype,
 				 void* recv, int recvcount, MPI_Datatype recvtype) const = 0;
+      virtual void AllgathervImpl(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+				  void *recvbuf, const int* recvcounts, const int* displs, MPI_Datatype recvtype) const = 0;
       virtual void AlltoallImpl(const void* send, int sendcount, MPI_Datatype sendtype,
 				void* recv, int recvcount, MPI_Datatype recvtype) const = 0;
       virtual void SendImpl(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
