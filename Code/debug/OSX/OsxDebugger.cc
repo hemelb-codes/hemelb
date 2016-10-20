@@ -12,7 +12,7 @@ namespace hemelb
 {
   namespace debug
   {
-    OsxDebugger::OsxDebugger(const char* const executable, const comm::Communicator* comm) :
+    OsxDebugger::OsxDebugger(const char* const executable, comm::Communicator::ConstPtr comm) :
       ActiveDebugger(executable, comm)
     {
     }
