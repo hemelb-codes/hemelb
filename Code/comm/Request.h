@@ -43,8 +43,8 @@ namespace hemelb
       
       virtual size_t size() const = 0;
       virtual void resize(size_t i) = 0;
-      virtual void push_back(Request&&) = 0;
-      virtual void set(size_t i, Request&&) = 0;
+      virtual void push_back(Request::Ptr) = 0;
+      virtual void set(size_t i, Request::Ptr) = 0;
       
       virtual void WaitAll() = 0;
       virtual bool TestAll() = 0;

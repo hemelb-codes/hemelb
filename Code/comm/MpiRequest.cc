@@ -49,17 +49,19 @@ namespace hemelb
       reqs.resize(i);
     }
     
-    void MpiRequestList::push_back(Request&& r)
+    void MpiRequestList::push_back(Request::Ptr r)
     {
-      MpiRequest&& mr = dynamic_cast<MpiRequest&&>(r);
-      reqs.push_back(mr.req);
-      mr.req = MPI_REQUEST_NULL;
+      auto mr = std::dynamic_pointer_cast<MpiRequest>(r);
+      //MpiRequest&& mr = dynamic_cast<MpiRequest&&>(r);
+      reqs.push_back(mr->req);
+      mr->req = MPI_REQUEST_NULL;
     }
     
-    void MpiRequestList::set(size_t i, Request&& r) {
-      MpiRequest&& mr = dynamic_cast<MpiRequest&&>(r);
-      reqs[i] = mr.req;
-      mr.req = MPI_REQUEST_NULL;      
+    void MpiRequestList::set(size_t i, Request::Ptr r) {
+      auto mr = std::dynamic_pointer_cast<MpiRequest>(r);
+      //MpiRequest&& mr = dynamic_cast<MpiRequest&&>(r);
+      reqs[i] = mr->req;
+      mr->req = MPI_REQUEST_NULL;      
     }
     
     void MpiRequestList::WaitAll()

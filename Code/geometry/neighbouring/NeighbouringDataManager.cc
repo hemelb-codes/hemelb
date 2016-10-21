@@ -179,7 +179,7 @@ namespace hemelb
             ++countIt)
         {
           int other = countIt->first;
-          requestQueue->push_back(std::move(*comms->Isend(needsIHaveFromEachProc[other], other)));
+          requestQueue->push_back(comms->Isend(needsIHaveFromEachProc[other], other));
         }
 
         // And for every rank, which needs something from me, receive those ids
@@ -191,7 +191,7 @@ namespace hemelb
           int size = countIt->second;
           IdVec& otherNeeds = needsEachProcHasFromMe[other];
           otherNeeds.resize(size);
-          requestQueue->push_back(std::move(*comms->Irecv(otherNeeds, other)));
+          requestQueue->push_back(comms->Irecv(otherNeeds, other));
         }
 
 	requestQueue->WaitAll();

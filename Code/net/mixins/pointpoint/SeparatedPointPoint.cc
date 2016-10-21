@@ -31,11 +31,11 @@ namespace hemelb
         for (ProcComms::iterator request = it->second.begin(); request != it->second.end(); request++)
         {
 	  requests->set(m,
-			std::move(*communicator->IrecvImpl(request->Pointer,
-							   request->Count,
-							   request->Type,
-							   it->first,
-							   10)));
+			communicator->IrecvImpl(request->Pointer,
+						request->Count,
+						request->Type,
+						it->first,
+						10));
           ++m;
         }
       }
@@ -80,11 +80,11 @@ namespace hemelb
         for (ProcComms::iterator request = it->second.begin(); request != it->second.end(); request++)
         {
 	  requests->set(count_receives+m,
-			std::move(*communicator->IsendImpl(request->Pointer,
-							   request->Count,
-							   request->Type,
-							   it->first,
-							   10)));
+			communicator->IsendImpl(request->Pointer,
+						request->Count,
+						request->Type,
+						it->first,
+						10));
           ++m;
         }
       }
