@@ -30,11 +30,11 @@ namespace hemelb
       for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin(); it != receiveProcessorComms.end();
           ++it)
       {
-	requests->set(m, std::move(*communicator->IrecvImpl(it->second.front().Pointer,
-							    1,
-							    it->second.Type,
-							    it->first,
-							    10)));
+	requests->set(m, communicator->IrecvImpl(it->second.front().Pointer,
+						 1,
+						 it->second.Type,
+						 it->first,
+						 10));
         ++m;
       }
 
@@ -84,11 +84,11 @@ namespace hemelb
         BytesSent += TypeSizeStorage; //DTMP:
 
 	requests->set(receiveProcessorComms.size() + m,
-		      std::move(*communicator->IsendImpl(it->second.front().Pointer,
-							 1,
-							 it->second.Type,
-							 it->first,
-							 10)));
+		      communicator->IsendImpl(it->second.front().Pointer,
+					      1,
+					      it->second.Type,
+					      it->first,
+					      10));
 	++m;
       }
     }

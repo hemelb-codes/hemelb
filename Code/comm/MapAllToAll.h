@@ -49,7 +49,7 @@ namespace hemelb
         else
         {
           // Synchronous to ensure we know when this is matched
-          sendReqs->set(i, std::move(*comm->Issend(val, rank, tag)));
+          sendReqs->set(i, comm->Issend(val, rank, tag));
           i++;
         }
       }
