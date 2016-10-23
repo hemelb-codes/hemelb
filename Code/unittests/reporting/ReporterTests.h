@@ -25,7 +25,7 @@ namespace hemelb
     {
       using namespace hemelb::reporting;
 
-      typedef TimersBase<ClockMock, MPICommsMock> TimersMock;
+      typedef TimersBase<ClockMock> TimersMock;
       typedef lb::IncompressibilityChecker IncompressibilityCheckerMock;
 
       class ReporterTests : public helpers::HasCommsTestFixture
@@ -132,8 +132,8 @@ namespace hemelb
             expectation << std::setprecision(3);
             for (unsigned int row = 0; row < Timers::numberOfTimers; row++)
             {
-              expectation << "N" << TimersMock::timerNames[row] << "L" << row * 10.0 << "MI" << row * 15.0 << "ME"
-                  << row * 2.0 << "MA" << row * 5.0 << " " << std::flush;
+              expectation << "N" << TimersMock::timerNames[row] << "L" << row * 10.0 << "MI" << row * 10.0 << "ME"
+                  << row * 10.0 << "MA" << row * 10.0 << " " << std::flush;
             }
             AssertTemplate(expectation.str(), "{{#TIMER}}N{{NAME}}L{{LOCAL}}MI{{MIN}}ME{{MEAN}}MA{{MAX}} {{/TIMER}}");
           }

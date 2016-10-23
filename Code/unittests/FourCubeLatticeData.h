@@ -58,7 +58,7 @@ namespace hemelb
          *
          * @return
          */
-        static FourCubeLatticeData* Create(const net::IOCommunicator& comm, site_t sitesPerBlockUnit = 6, proc_t rankCount = 1)
+        static FourCubeLatticeData* Create(comm::Communicator::ConstPtr comm, site_t sitesPerBlockUnit = 6, proc_t rankCount = 1)
         {
           hemelb::geometry::Geometry readResult(util::Vector3D<site_t>::Ones(),
                                                 sitesPerBlockUnit);
@@ -228,7 +228,7 @@ namespace hemelb
         }
 
       protected:
-        FourCubeLatticeData(hemelb::geometry::Geometry& readResult, const net::IOCommunicator& comms) :
+        FourCubeLatticeData(hemelb::geometry::Geometry& readResult, comm::Communicator::ConstPtr comms) :
           hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), readResult, comms)
         {
 

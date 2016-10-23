@@ -10,6 +10,7 @@
 #include "net/phased/NetConcern.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "unittests/helpers/MockNetHelper.h"
+#include "comm/MpiEnvironment.h"
 
 namespace hemelb
 {
@@ -51,10 +52,9 @@ namespace hemelb
             {
               delete manager;
               delete netMock;
-              delete communicatorMock;
 
-              communicatorMock = new net::MpiCommunicator(net::MpiCommunicator::World());
-              netMock = new net::NetMock(*communicatorMock);
+              communicatorMock = comm::MpiEnvironment::World();
+              netMock = new net::NetMock(communicatorMock);
               manager = new NeighbouringDataManager(*latDat, *data, *netMock);
             }
 

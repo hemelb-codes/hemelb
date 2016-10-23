@@ -13,7 +13,6 @@
 #include <sstream>
 
 #include "multiscale/Intercommunicator.h"
-#include "net/mpi.h"
 
 namespace hemelb
 {
@@ -30,7 +29,7 @@ namespace hemelb
           typedef MPI_Datatype RuntimeType;
           template<class T> static RuntimeType GetType()
           {
-            return net::MpiDataTypeTraits<T>::GetMpiDataType();
+            return comm::MpiDataTypeTraits<T>::GetMpiDataType();
           }
       };
 
