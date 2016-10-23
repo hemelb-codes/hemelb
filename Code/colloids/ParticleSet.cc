@@ -12,6 +12,7 @@
 #include "io/writers/xdr/XdrMemWriter.h"
 #include "io/formats/formats.h"
 #include "io/formats/colloids.h"
+#include "comm/Async.h"
 
 namespace hemelb
 {
@@ -45,7 +46,7 @@ namespace hemelb
                              std::vector<proc_t>& neighbourProcessors,
                              comm::Communicator::ConstPtr ioComms_,
                              const std::string& outputPath) :
-        ioComms(ioComms_), localRank(ioComms->Rank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath), net(ioComms)
+        ioComms(ioComms_), localRank(ioComms->Rank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath)
     {
       /**
        * Open the file, unless it already exists, for writing only, creating it if it doesn't exist.
@@ -285,19 +286,22 @@ namespace hemelb
       {
         return;
       }
-
-      for (scanMapIterType iterMap = scanMap.begin(); iterMap != scanMap.end(); iterMap++)
+      
       {
-        const proc_t& neighbourRank = iterMap->first;
-        if (neighbourRank != localRank)
-        {
-          unsigned int& numberOfParticlesToRecv = iterMap->second.first;
-          net.RequestSendR(numberOfParticlesToSend, neighbourRank);
-          net.RequestReceiveR(numberOfParticlesToRecv, neighbourRank);
-        }
+	comm::Async commQ(ioComms);
+      
+	for (scanMapIterType iterMap = scanMap.begin(); iterMap != scanMap.end(); iterMap++)
+	  {
+	    const proc_t& neighbourRank = iterMap->first;
+	    if (neighbourRank != localRank)
+	      {
+		unsigned int& numberOfParticlesToRecv = iterMap->second.first;
+		commQ.Isend(numberOfParticlesToSend, neighbourRank);
+		commQ.Irecv(numberOfParticlesToRecv, neighbourRank);
+	  }
       }
-      net.Dispatch();
-
+    }
+    
       unsigned int numberOfParticles = 0;
       for (scanMapConstIterType iterMap = scanMap.begin(); iterMap != scanMap.end(); iterMap++)
         numberOfParticles += iterMap->second.first;
@@ -305,18 +309,21 @@ namespace hemelb
 
       std::vector<Particle>::iterator iterSendBegin = particles.begin();
       std::vector<Particle>::iterator iterRecvBegin = particles.begin() + numberOfParticlesToSend;
+      // Handle the request list ourselves to force the template instaniation to be correct.
+      auto commQ = ioComms->MakeRequestList();
       for (scanMapConstIterType iterMap = scanMap.begin(); iterMap != scanMap.end(); iterMap++)
       {
         const proc_t& neighbourRank = iterMap->first;
         if (neighbourRank != localRank)
         {
           const unsigned int& numberOfParticlesToRecv = iterMap->second.first;
-          net.RequestSend(& ((PersistedParticle&) *iterSendBegin), numberOfParticlesToSend, neighbourRank);
-          net.RequestReceive(& ((PersistedParticle&) * (iterRecvBegin)), numberOfParticlesToRecv, neighbourRank);
+	  commQ->push_back(ioComms->Isend<PersistedParticle>(&*iterSendBegin, numberOfParticlesToSend, neighbourRank));
+	  commQ->push_back(ioComms->Irecv<PersistedParticle>(&*iterRecvBegin, numberOfParticlesToRecv, neighbourRank));
+          
           iterRecvBegin += numberOfParticlesToRecv;
         }
       }
-      net.Dispatch();
+      commQ->WaitAll();
 
       // remove particles owned by unknown ranks
       std::vector<Particle>::iterator newEndOfParticles =
@@ -351,20 +358,22 @@ namespace hemelb
       {
         return;
       }
-
-      // exchange counts
-      for (scanMapIterType iterMap = scanMap.begin(); iterMap != scanMap.end(); iterMap++)
+      
       {
-        const proc_t& neighbourRank = iterMap->first;
-        if (neighbourRank != localRank)
-        {
-          unsigned int& numberOfVelocitiesToSend = iterMap->second.first;
-          unsigned int& numberOfVelocitiesToRecv = iterMap->second.second;
-          net.RequestSendR(numberOfVelocitiesToSend, neighbourRank);
-          net.RequestReceiveR(numberOfVelocitiesToRecv, neighbourRank);
-        }
+	comm::Async commQ(ioComms);
+	// exchange counts
+	for (scanMapIterType iterMap = scanMap.begin(); iterMap != scanMap.end(); iterMap++)
+	  {
+	    const proc_t& neighbourRank = iterMap->first;
+	    if (neighbourRank != localRank)
+	      {
+		unsigned int& numberOfVelocitiesToSend = iterMap->second.first;
+		unsigned int& numberOfVelocitiesToRecv = iterMap->second.second;
+		commQ.Isend(numberOfVelocitiesToSend, neighbourRank);
+		commQ.Irecv(numberOfVelocitiesToRecv, neighbourRank);
+	      }
+	  }
       }
-      net.Dispatch();
 
       // sum counts
       unsigned int numberOfIncomingVelocities = 0;
@@ -373,6 +382,7 @@ namespace hemelb
       velocityBuffer.resize(numberOfIncomingVelocities);
 
       // exchange velocities
+      auto commQ = ioComms->MakeRequestList();
       std::vector<Particle>::iterator iterSendBegin = particles.begin();
       std::vector<std::pair<unsigned long, util::Vector3D<double> > >::iterator iterRecvBegin = velocityBuffer.begin();
       for (scanMapConstIterType iterMap = scanMap.begin(); iterMap != scanMap.end(); iterMap++)
@@ -382,12 +392,12 @@ namespace hemelb
         {
           const unsigned int& numberOfVelocitiesToSend = iterMap->second.first;
           const unsigned int& numberOfVelocitiesToRecv = iterMap->second.second;
-          net.RequestSend(& ((Particle&) *iterSendBegin), numberOfVelocitiesToSend, neighbourRank);
-          net.RequestReceive(& (* (iterRecvBegin)), numberOfVelocitiesToRecv, neighbourRank);
+	  commQ->push_back(ioComms->Isend<Particle>(&*iterSendBegin, numberOfVelocitiesToSend, neighbourRank));
+	  commQ->push_back(ioComms->Irecv(&*iterRecvBegin, numberOfVelocitiesToRecv, neighbourRank));
           iterRecvBegin += numberOfVelocitiesToRecv;
         }
       }
-      net.Dispatch();
+      commQ->WaitAll();
 
       // sum velocities
       velocityMap.clear();

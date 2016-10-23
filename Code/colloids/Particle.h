@@ -27,7 +27,7 @@ namespace hemelb
      * all persisted properties, i.e. those that are read in from a config file,
      * are inherited from the PersistedParticle class (which handles the I/O)
      */
-    class Particle : PersistedParticle
+    class Particle : public PersistedParticle
     {
       public:
         /** constructor - gets initial values from an xml configuration file */
