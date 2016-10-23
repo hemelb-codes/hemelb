@@ -12,7 +12,6 @@
 #include <iostream>
 
 #include "constants.h"
-#include "net/mpi.h"
 #include "net/net.h"
 #include "unittests/net/LabelledRequest.h"
 
@@ -41,7 +40,7 @@ namespace hemelb
       class RecordingNet : public virtual StoringNet
       {
         public:
-          RecordingNet(const MpiCommunicator& comms) :
+          RecordingNet(comm::Communicator::ConstPtr comms) :
               BaseNet(comms), StoringNet(comms), requiredReceipts(), requiredSends()
           {
           }
@@ -58,7 +57,7 @@ namespace hemelb
           {
             requiredReceipts[rank].push_back(LabelledRequest(pointer,
                                                              count,
-                                                             MpiDataType<T>(),
+                                                             comm::MpiDataType<T>(),
                                                              rank,
                                                              label));
           }
@@ -74,7 +73,7 @@ namespace hemelb
           {
             requiredSends[rank].push_back(LabelledRequest(pointer,
                                                           count,
-                                                          MpiDataType<T>(),
+                                                          comm::MpiDataType<T>(),
                                                           rank,
                                                           label));
           }

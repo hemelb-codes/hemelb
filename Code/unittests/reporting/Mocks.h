@@ -30,7 +30,7 @@ namespace hemelb
           double fakeTime;
       };
 
-      class MPICommsMock
+      /*      class MPICommsMock
       {
         public:
           MPICommsMock(const net::IOCommunicator& ignored) :
@@ -61,7 +61,7 @@ namespace hemelb
           }
         private:
           unsigned int calls;
-      };
+	  };*/
     }
   }
 }

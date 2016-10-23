@@ -12,7 +12,6 @@
 #include <iostream>
 
 #include "constants.h"
-#include "net/mpi.h"
 #include "net/net.h"
 #include "unittests/net/RecordingNet.h"
 
@@ -24,13 +23,12 @@ namespace hemelb
     {
       using namespace hemelb::net;
 
-      class NetMock : public InterfaceDelegationNet,public RecordingNet,
-                      public ViaPointPointGathers
+      class NetMock : public InterfaceDelegationNet,public RecordingNet
       {
         public:
-          NetMock(net::MpiCommunicator & communicator) :
+          NetMock(comm::Communicator::ConstPtr communicator) :
               BaseNet(communicator), StoringNet(communicator), InterfaceDelegationNet(communicator),
-                  RecordingNet(communicator), ViaPointPointGathers(communicator)
+                  RecordingNet(communicator)
           {
           }
 

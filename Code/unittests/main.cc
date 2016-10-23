@@ -32,10 +32,10 @@
 int main(int argc, char **argv)
 {
   // Start MPI and the logger.
-  hemelb::net::MpiEnvironment mpi(argc, argv);
+  hemelb::comm::MpiEnvironment mpi(argc, argv);
   hemelb::log::Logger::Init();
 
-  hemelb::net::MpiCommunicator commWorld = hemelb::net::MpiCommunicator::World();
+  hemelb::comm::Communicator::Ptr commWorld = mpi.World();
 
   // Read options
   std::ostream * reportto = &std::cerr;
@@ -59,7 +59,7 @@ int main(int argc, char **argv)
   hemelb::debug::Debugger::Init(debug, argv[0], commWorld);
 
   // Initialise the global IOCommunicator.
-  hemelb::net::IOCommunicator testCommunicator(commWorld);
+  hemelb::comm::Communicator::Ptr testCommunicator = commWorld;
   hemelb::unittests::helpers::HasCommsTestFixture::Init(testCommunicator);
 
   std::string testPath = (optind < argc)

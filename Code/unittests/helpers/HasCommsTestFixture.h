@@ -7,7 +7,7 @@
 #ifndef HEMELB_UNITTESTS_HELPERS_HASCOMMSTESTFIXTURE_H
 #define HEMELB_UNITTESTS_HELPERS_HASCOMMSTESTFIXTURE_H
 #include <cppunit/TestFixture.h>
-#include "net/IOCommunicator.h"
+#include "comm/Communicator.h"
 
 namespace hemelb
 {
@@ -29,21 +29,21 @@ namespace hemelb
             //hemelbCommunicator = NULL;
           }
 
-          static void Init(const net::IOCommunicator& inst)
+          static void Init(comm::Communicator::ConstPtr inst)
           {
-            hemelbCommunicator = &inst;
+            hemelbCommunicator = inst;
           }
 
         protected:
-          static const net::IOCommunicator& Comms()
+          static comm::Communicator::ConstPtr Comms()
           {
-            return *hemelbCommunicator;
+            return hemelbCommunicator;
           }
         private:
-          static const net::IOCommunicator* hemelbCommunicator;
+	static comm::Communicator::ConstPtr hemelbCommunicator;
       };
 
-      const net::IOCommunicator* HasCommsTestFixture::hemelbCommunicator = NULL;
+      comm::Communicator::ConstPtr HasCommsTestFixture::hemelbCommunicator = NULL;
     }
   }
 }
