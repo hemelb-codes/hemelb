@@ -17,11 +17,11 @@
 #include "geometry/decomposition/OptimisedDecomposition.h"
 #include "geometry/GeometryReader.h"
 #include "lb/lattices/D3Q27.h"
-#include "net/net.h"
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
 #include "constants.h"
 #include "comm/Group.h"
+#include "comm/Async.h"
 
 namespace hemelb
 {
@@ -367,40 +367,38 @@ namespace hemelb
       std::vector<char> compressedBlockData;
       proc_t readingCore = GetReadingCoreForBlock(blockNumber);
 
-      net::Net net = net::Net(computeComms);
-
-      if (readingCore == computeComms->Rank())
       {
-        timings[hemelb::reporting::Timers::readBlock].Start();
-        // Read the data.
-        compressedBlockData.resize(bytesPerCompressedBlock[blockNumber]);
-        file->ReadAt(offsetSoFar, compressedBlockData);
+	comm::Async requestQ(computeComms);
+	
+	if (readingCore == computeComms->Rank())
+	  {
+	    timings[hemelb::reporting::Timers::readBlock].Start();
+	    // Read the data.
+	    compressedBlockData.resize(bytesPerCompressedBlock[blockNumber]);
+	    file->ReadAt(offsetSoFar, compressedBlockData);
 
-        // Spread it.
-        for (std::vector<proc_t>::const_iterator receiver = procsWantingThisBlock.begin(); receiver
-            != procsWantingThisBlock.end(); receiver++)
-        {
-          if (*receiver != computeComms->Rank())
-          {
-
-            net.RequestSendV(compressedBlockData, *receiver);
-          }
-        }
-        timings[hemelb::reporting::Timers::readBlock].Stop();
+	    // Spread it.
+	    for (std::vector<proc_t>::const_iterator receiver = procsWantingThisBlock.begin(); receiver
+		   != procsWantingThisBlock.end(); receiver++)
+	      {
+		if (*receiver != computeComms->Rank())
+		  {
+		    requestQ.Isend(compressedBlockData, *receiver);
+		  }
+	      }
+	    timings[hemelb::reporting::Timers::readBlock].Stop();
+	  }
+	else if (neededOnThisRank)
+	  {
+	    compressedBlockData.resize(bytesPerCompressedBlock[blockNumber]);
+	    requestQ.Irecv(compressedBlockData, readingCore);
+	  }
+	else
+	  {
+	    return;
+	  }
+	timings[hemelb::reporting::Timers::readNet].Start();
       }
-      else if (neededOnThisRank)
-      {
-        compressedBlockData.resize(bytesPerCompressedBlock[blockNumber]);
-
-        net.RequestReceiveV(compressedBlockData, readingCore);
-
-      }
-      else
-      {
-        return;
-      }
-      timings[hemelb::reporting::Timers::readNet].Start();
-      net.Dispatch();
       timings[hemelb::reporting::Timers::readNet].Stop();
       timings[hemelb::reporting::Timers::readParse].Start();
       if (neededOnThisRank)

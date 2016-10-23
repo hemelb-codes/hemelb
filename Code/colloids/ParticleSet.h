@@ -93,8 +93,6 @@ namespace hemelb
          */
         lb::MacroscopicPropertyCache& propertyCache;
 
-        /** abstracts communication via MPI */
-        net::Net net;
         /**
          * Reusable output buffer.
          */
