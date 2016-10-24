@@ -14,6 +14,7 @@
 #include "geometry/LatticeData.h"
 #include "geometry/neighbouring/NeighbouringLatticeData.h"
 #include "util/utilityFunctions.h"
+#include "comm/Async.h"
 
 namespace hemelb
 {
@@ -441,7 +442,7 @@ namespace hemelb
       // propagate to different partitions is avoided (only their values
       // will be communicated). It's here!
       // Allocate the request variable.
-      net::Net tempNet(comms);
+      comm::Async commQ(comms);
       for (size_t neighbourId = 0; neighbourId < neighbouringProcs.size(); neighbourId++)
       {
         NeighbouringProcessor* neigh_proc_p = &neighbouringProcs[neighbourId];
@@ -451,16 +452,14 @@ namespace hemelb
         // other processor.
         if (neigh_proc_p->Rank > localRank)
         {
-          tempNet.RequestSendV(sharedFLocationForEachProc[neigh_proc_p->Rank], neigh_proc_p->Rank);
+	  commQ.Isend(sharedFLocationForEachProc[neigh_proc_p->Rank], neigh_proc_p->Rank);
         }
         else
         {
           sharedFLocationForEachProc[neigh_proc_p->Rank].resize(neigh_proc_p->SharedDistributionCount * 4);
-          tempNet.RequestReceiveV(sharedFLocationForEachProc[neigh_proc_p->Rank], neigh_proc_p->Rank);
+          commQ.Irecv(sharedFLocationForEachProc[neigh_proc_p->Rank], neigh_proc_p->Rank);
         }
       }
-
-      tempNet.Dispatch();
     }
 
     void LatticeData::InitialiseReceiveLookup(std::vector<std::vector<site_t> >& sharedFLocationForEachProc)
