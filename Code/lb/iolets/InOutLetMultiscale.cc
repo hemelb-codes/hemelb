@@ -8,6 +8,7 @@
 #include "configuration/SimConfig.h"
 #include "lb/iolets/BoundaryComms.h"
 #include "lb/iolets/BoundaryValues.h"
+#include "comm/Async.h"
 
 namespace hemelb
 {
@@ -122,27 +123,27 @@ namespace hemelb
         pressure_array[1] = minPressure.GetPayload();
         pressure_array[2] = maxPressure.GetPayload();
 
-        net::Net commsNet(bcComms.GetComm());
-
-        const std::vector<int>& procList = comms->GetListOfProcs(); //TODO: CHECK + IMPROVE!
-
-        // If this proc is to do IO, send the pressure array list to all cores that require it.
-        if (isIoProc && procList[0] != bcComms.GetBCProcRank())
-        {
-          for (std::vector<int>::const_iterator it = procList.begin(); it != procList.end(); it++)
-          {
-            commsNet.RequestSend(pressure_array, 3, *it);
-          }
+	{
+	  comm::Async commsNet(bcComms.GetComm());
+	  const std::vector<int>& procList = comms->GetListOfProcs(); //TODO: CHECK + IMPROVE!
+	  
+	  // If this proc is to do IO, send the pressure array list to all cores that require it.
+	  if (isIoProc && procList[0] != bcComms.GetBCProcRank())
+	  {
+	    for (std::vector<int>::const_iterator it = procList.begin(); it != procList.end(); it++)
+	    {
+	      commsNet.Isend(pressure_array, 3, *it, 0);
+	    }
+	  }
+	  // Otherwise, receive the pressure array list from the core.
+	  else if (procList[0] != bcComms.GetBCProcRank())
+	  {
+	    commsNet.Irecv(pressure_array, 3, bcComms.GetBCProcRank(), 0);
+	  }
+	  
+	  // Perform the send / receive when the Async destructs
         }
-        // Otherwise, receive the pressure array list from the core.
-        else if (procList[0] != bcComms.GetBCProcRank())
-        {
-          commsNet.RequestReceive(pressure_array, 3, bcComms.GetBCProcRank());
-        }
-
-        // Perform the send / receive.
-        commsNet.Dispatch();
-
+	
         if (!isIoProc)
         {
           pressure.SetPayload(static_cast<PhysicalPressure> (pressure_array[0]));
