@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 //
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_PARALLEL_CREATEGRAPHCOMMTEST_H
-#define HEMELB_UNITTESTS_REDBLOOD_PARALLEL_CREATEGRAPHCOMMTEST_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_PARALLEL_GRAPHCOMMSTEST_H
+#define HEMELB_UNITTESTS_REDBLOOD_PARALLEL_GRAPHCOMMSTEST_H
 
 #include "unittests/helpers/FolderTestFixture.h"
 #include "unittests/redblood/Fixtures.h"
@@ -20,9 +20,9 @@ namespace hemelb
   {
     namespace redblood
     {
-      class CreateGraphCommTests : public helpers::FolderTestFixture
+      class GraphCommsTests : public helpers::FolderTestFixture
       {
-          CPPUNIT_TEST_SUITE (CreateGraphCommTests);
+          CPPUNIT_TEST_SUITE (GraphCommsTests);
           CPPUNIT_TEST (testDumbGraphCommunicator);
           CPPUNIT_TEST (testGraphCommunicator);
           CPPUNIT_TEST (testComputeCellsEffectiveSize);CPPUNIT_TEST_SUITE_END();
@@ -56,7 +56,7 @@ namespace hemelb
 
       };
 
-      void CreateGraphCommTests::setUp()
+      void GraphCommsTests::setUp()
       {
         FolderTestFixture::setUp();
 
@@ -84,7 +84,7 @@ namespace hemelb
                                                                                       "1111" });
       }
 
-      void CreateGraphCommTests::testDumbGraphCommunicator()
+      void GraphCommsTests::testDumbGraphCommunicator()
       {
         using hemelb::redblood::ComputeProcessorNeighbourhood;
 
@@ -109,7 +109,7 @@ namespace hemelb
         }
       }
 
-      void CreateGraphCommTests::testGraphCommunicator()
+      void GraphCommsTests::testGraphCommunicator()
       {
         using hemelb::redblood::ComputeProcessorNeighbourhood;
 
@@ -144,7 +144,7 @@ namespace hemelb
         }
       }
 
-      void CreateGraphCommTests::testComputeCellsEffectiveSize()
+      void GraphCommsTests::testComputeCellsEffectiveSize()
       {
         using hemelb::redblood::ComputeCellsEffectiveSize;
 
@@ -161,7 +161,7 @@ namespace hemelb
 
       }
 
-      CPPUNIT_TEST_SUITE_REGISTRATION (CreateGraphCommTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (GraphCommsTests);
     }
   }
 }
