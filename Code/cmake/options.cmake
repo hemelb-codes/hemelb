@@ -77,7 +77,6 @@ hemelb_option(HEMELB_BUILD_TESTS_FUNCTIONAL "Build the functional tests (HEMELB_
 hemelb_option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 hemelb_option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
 hemelb_option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
-hemelb_option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 hemelb_option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 hemelb_option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
 hemelb_option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" ON)
@@ -94,8 +93,6 @@ hemelb_cachevar(HEMELB_READING_GROUP_SIZE 5
   STRING "Number of cores to use to read geometry file.")
 hemelb_cachevar(HEMELB_LOG_LEVEL Info
   STRING "Log level, choose 'Critical', 'Error', 'Warning', 'Info', 'Debug' or 'Trace'" )
-hemelb_cachevar(HEMELB_STEERING_LIB basic
-  STRING "Steering library, choose 'basic' or 'none'" )
 hemelb_cachevar(HEMELB_DEPENDENCIES_PATH "${HEMELB_ROOT_DIR}/dependencies"
   FILEPATH "Path to find dependency find modules")
 hemelb_cachevar(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH}

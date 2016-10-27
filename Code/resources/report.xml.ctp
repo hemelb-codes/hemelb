@@ -10,7 +10,6 @@
 	{{#BUILD}}
 	<build>
 		<revision>{{REVISION}}</revision>
-		<steering>{{STEERING}}</steering>
 		<type>{{TYPE}}</type>
 		<optimisation>{{OPTIMISATION}}</optimisation>
                 <use_sse3>{{USE_SSE3}}</use_sse3>

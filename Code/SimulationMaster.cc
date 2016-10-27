@@ -41,14 +41,12 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options,
 
   colloidController = NULL;
   latticeBoltzmannModel = NULL;
-  steeringCpt = NULL;
   propertyDataSource = NULL;
   propertyExtractor = NULL;
   simulationState = NULL;
   stepManager = NULL;
   netConcern = NULL;
   neighbouringDataManager = NULL;
-  steeringSessionId = options.GetSteeringSessionId();
 
   fileManager = new hemelb::io::PathManager(options, IsCurrentProcTheIOProc(), GetProcessorCount());
   simConfig = hemelb::configuration::SimConfig::New(fileManager->GetInputFile());
@@ -85,8 +83,6 @@ SimulationMaster::~SimulationMaster()
   delete latticeBoltzmannModel;
   delete inletValues;
   delete outletValues;
-  delete network;
-  delete steeringCpt;
   delete propertyExtractor;
   delete propertyDataSource;
   delete stabilityTester;
@@ -123,7 +119,7 @@ int SimulationMaster::GetProcessorCount()
 }
 
 /**
- * Initialises various elements of the simulation if necessary - steering,
+ * Initialises various elements of the simulation if necessary -
  * domain decomposition, and LBM.
  */
 void SimulationMaster::Initialise()
@@ -140,8 +136,7 @@ void SimulationMaster::Initialise()
   // Use a reader to read in the file.
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Loading file and decomposing geometry.");
 
-  hemelb::geometry::GeometryReader reader(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
-                                          latticeType::GetLatticeInfo(),
+  hemelb::geometry::GeometryReader reader(latticeType::GetLatticeInfo(),
                                           timings, ioComms);
   hemelb::geometry::Geometry readGeometryData =
       reader.LoadAndDecompose(simConfig->GetDataFilePath());
@@ -192,15 +187,6 @@ void SimulationMaster::Initialise()
   }
   timings[hemelb::reporting::Timers::colloidInitialisation].Stop();
 
-  // Initialise and begin the steering.
-  if (ioComms->OnIORank())
-  {
-    network = new hemelb::steering::Network(steeringSessionId, timings);
-  }
-  else
-  {
-    network = NULL;
-  }
 
   stabilityTester = new hemelb::lb::StabilityTester<latticeType>(latticeData,
                                                                  ioComms,
@@ -242,13 +228,6 @@ void SimulationMaster::Initialise()
   neighbouringDataManager->ShareNeeds();
   neighbouringDataManager->TransferNonFieldDependentInformation();
 
-  steeringCpt = new hemelb::steering::SteeringComponent(network,
-                                                        &communicationNet,
-                                                        simulationState,
-                                                        simConfig,
-                                                        unitConverter,
-                                                        timings);
-
   propertyDataSource =
       new hemelb::extraction::LbDataSourceIterator(latticeBoltzmannModel->GetPropertyCache(),
                                                    *latticeData,
@@ -283,7 +262,6 @@ void SimulationMaster::Initialise()
 
   stepManager->RegisterIteratedActorSteps(*inletValues, 1);
   stepManager->RegisterIteratedActorSteps(*outletValues, 1);
-  stepManager->RegisterIteratedActorSteps(*steeringCpt, 1);
   stepManager->RegisterIteratedActorSteps(*stabilityTester, 1);
   stepManager->RegisterCommsSteps(*stabilityTester, 1);
   if (entropyTester != NULL)
@@ -302,10 +280,6 @@ void SimulationMaster::Initialise()
     stepManager->RegisterIteratedActorSteps(*propertyExtractor, 1);
   }
 
-  if (ioComms->OnIORank())
-  {
-    stepManager->RegisterIteratedActorSteps(*network, 1);
-  }
   stepManager->RegisterCommsForAllPhases(*netConcern);
 }
 
@@ -393,8 +367,6 @@ void SimulationMaster::DoTimeStep()
       entropyTester->MustFinishThisTimeStep();
     if (incompressibilityChecker)
       incompressibilityChecker->MustFinishThisTimeStep();
-    if (steeringCpt)
-      steeringCpt->MustFinishThisTimeStep();
   }
   
   if (simulationState->GetTimeStep() % 100 == 0)

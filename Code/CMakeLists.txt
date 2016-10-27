@@ -135,7 +135,6 @@ set(package_subdirs
   comm
   extraction
   reporting
-  steering
   lb
   geometry
   net
@@ -179,7 +178,6 @@ if (HEMELB_BUILD_MULTISCALE)
     configuration
     extraction
     reporting
-    steering
     lb
     geometry
     net

@@ -11,7 +11,6 @@
 #include "lb/lb.hpp"
 #include "lb/StabilityTester.h"
 #include "net/net.h"
-#include "steering/SteeringComponent.h"
 #include "lb/EntropyTester.h"
 #include "lb/iolets/BoundaryValues.h"
 #include "util/UnitConverter.h"
@@ -81,9 +80,6 @@ class SimulationMaster
     hemelb::reporting::BuildInfo build_info;
     typedef std::multimap<unsigned long, unsigned long> MapType;
 
-    hemelb::steering::Network* network;
-    hemelb::steering::SteeringComponent* steeringCpt;
-
     hemelb::lb::SimulationState* simulationState;
 
     /** Struct containing the configuration of various checkers/testers */
@@ -104,7 +100,6 @@ class SimulationMaster
     hemelb::net::phased::StepManager* stepManager;
     hemelb::net::phased::NetConcern* netConcern;
 
-    int steeringSessionId;
     static const hemelb::LatticeTimeStep FORCE_FLUSH_PERIOD=1000;
 };
 

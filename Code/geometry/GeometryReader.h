@@ -32,7 +32,7 @@ namespace hemelb
       public:
         typedef util::Vector3D<site_t> BlockLocation;
 
-        GeometryReader(const bool reserveSteeringCore, const lb::lattices::LatticeInfo&,
+        GeometryReader(const lb::lattices::LatticeInfo&,
                        reporting::Timers &timings, comm::Communicator::ConstPtr ioComm);
         ~GeometryReader();
 
@@ -147,8 +147,6 @@ namespace hemelb
                             const std::vector<idx_t>& movesFromEachProc,
                             const std::vector<idx_t>& movesList) const;
 
-        proc_t ConvertTopologyRankToGlobalRank(proc_t topologyRank) const;
-
         /**
          * True if we should validate the geometry.
          * @return
@@ -167,10 +165,7 @@ namespace hemelb
         //! Information about the file, to give cues and hints to MPI.
 
         comm::Communicator::ConstPtr hemeLbComms; //! HemeLB's main communicator
-        comm::Communicator::ConstPtr computeComms; //! Communication info for all ranks that will need a slice of the geometry (i.e. all non-steering cores)
-        //! True iff this rank is participating in the domain decomposition.
-        bool participateInTopology;
-
+	
         //! The number of fluid sites on each block in the geometry
         std::vector<site_t> fluidSitesOnEachBlock;
         //! The number of bytes each block takes up while still compressed.
