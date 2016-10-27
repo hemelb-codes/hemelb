@@ -48,6 +48,10 @@ namespace hemelb
     {
       reqs.resize(i);
     }
+    void MpiRequestList::clear()
+    {
+      reqs.clear();
+    }
     
     void MpiRequestList::push_back(Request::Ptr r)
     {

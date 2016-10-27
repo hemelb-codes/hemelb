@@ -19,11 +19,12 @@ namespace hemelb
      */
     template<class LatticeType>
     StabilityTester<LatticeType>::StabilityTester(const geometry::LatticeData * iLatDat,
-                                                  net::Net* net, SimulationState* simState,
+                                                  comm::Communicator::ConstPtr comms,
+						  SimulationState* simState,
                                                   reporting::Timers& timings,
                                                   bool checkForConvergence,
                                                   double relativeTolerance) :
-        CollectiveAction(net->GetCommunicator(), timings[reporting::Timers::monitoring]),
+        CollectiveAction(comms, timings[reporting::Timers::monitoring]),
             mLatDat(iLatDat), mSimState(simState), checkForConvergence(checkForConvergence),
             relativeTolerance(relativeTolerance), workTimer(timings[reporting::Timers::monitoring])
     {

@@ -29,12 +29,12 @@ namespace hemelb
 
     template<class LatticeType>
     LBM<LatticeType>::LBM(configuration::SimConfig *iSimulationConfig,
-                          net::Net* net,
+                          comm::Async::Ptr commQ,
                           geometry::LatticeData* latDat,
                           SimulationState* simState,
                           reporting::Timers &atimings,
                           geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager) :
-      mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), 
+      mSimConfig(iSimulationConfig), mCommQ(commQ), mLatDat(latDat), mState(simState), 
           mParams(iSimulationConfig->GetTimeStepLength(), iSimulationConfig->GetVoxelSize()), timings(atimings),
           propertyCache(*simState, *latDat), neighbouringDataManager(neighbouringDataManager)
     {
@@ -175,7 +175,7 @@ namespace hemelb
       // (via the Net object).
       // NOTE that this doesn't actually *perform* the sends and receives, it asks the Net
       // to include them in the ISends and IRecvs that happen later.
-      mLatDat->SendAndReceive(mNet);
+      mLatDat->SendAndReceive(mCommQ);
 
       timings[hemelb::reporting::Timers::lb].Stop();
     }

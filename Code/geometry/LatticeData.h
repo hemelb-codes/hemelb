@@ -10,7 +10,7 @@
 #include <cstdio>
 #include <vector>
 
-#include "net/net.h"
+#include "comm/Async.h"
 #include "constants.h"
 #include "configuration/SimConfig.h"
 #include "geometry/Block.h"
@@ -51,7 +51,7 @@ namespace hemelb
           oldDistributions.swap(newDistributions);
         }
 
-        void SendAndReceive(net::Net* net);
+        void SendAndReceive(comm::Async::Ptr commQ);
         void CopyReceived();
 
         /**

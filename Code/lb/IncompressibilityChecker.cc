@@ -51,11 +51,13 @@ namespace hemelb
       }
     }
 
-    IncompressibilityChecker::IncompressibilityChecker(
-        const geometry::LatticeData * latticeData, net::Net* net, SimulationState* simState,
-        lb::MacroscopicPropertyCache& propertyCache, reporting::Timers& timings,
-        distribn_t maximumRelativeDensityDifferenceAllowed) :
-        net::CollectiveAction(net->GetCommunicator(), timings[reporting::Timers::mpiWait]),
+    IncompressibilityChecker::IncompressibilityChecker(const geometry::LatticeData * latticeData,
+						       comm::Communicator::ConstPtr comms,
+						       SimulationState* simState,
+						       lb::MacroscopicPropertyCache& propertyCache,
+						       reporting::Timers& timings,
+						       distribn_t maximumRelativeDensityDifferenceAllowed) :
+        net::CollectiveAction(comms, timings[reporting::Timers::mpiWait]),
             mLatDat(latticeData), propertyCache(propertyCache), mSimState(simState),
             maximumRelativeDensityDifferenceAllowed(maximumRelativeDensityDifferenceAllowed),
             workTimer(timings[reporting::Timers::monitoring])

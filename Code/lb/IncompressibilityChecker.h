@@ -6,7 +6,7 @@
 
 #ifndef HEMELB_LB_INCOMPRESSIBILITYCHECKER_H
 #define HEMELB_LB_INCOMPRESSIBILITYCHECKER_H
-
+#include "comm/Communicator.h"
 #include "net/CollectiveAction.h"
 #include "geometry/LatticeData.h"
 #include "lb/MacroscopicPropertyCache.h"
@@ -37,11 +37,11 @@ namespace hemelb
          * Constructor
          *
          * @param latticeData geometry object
-         * @param net network interface object
+         * @param comms communicator object
          * @param simState simulation state
          * @param maximumRelativeDensityDifferenceAllowed maximum density difference allowed in the domain (relative to reference density, default 5%)
          */
-        IncompressibilityChecker(const geometry::LatticeData * latticeData, net::Net* net,
+      IncompressibilityChecker(const geometry::LatticeData * latticeData, comm::Communicator::ConstPtr comms,
                                  SimulationState* simState,
                                  lb::MacroscopicPropertyCache& propertyCache,
                                  reporting::Timers& timings,

@@ -29,12 +29,15 @@ namespace hemelb
         public:
           NeighbouringDataManager(const LatticeData & localLatticeData,
                                   NeighbouringLatticeData & neighbouringLatticeData,
-                                  net::InterfaceDelegationNet & net);
+                                  comm::Async::Ptr cq);
           // Initially, the required site information will not be used -- we just transfer everything.
           // This considerably simplifies matters.
           // Nevertheless, we provide the interface here in its final form
           void RegisterNeededSite(site_t globalId,
                                   RequiredSiteInformation requirements = RequiredSiteInformation(true));
+	  
+	  // This is collective across the communicator used by the
+	  // communication queue given to the constructor
           void ShareNeeds();
           std::vector<site_t> &GetNeedsForProc(proc_t proc)
           {
@@ -53,8 +56,7 @@ namespace hemelb
         private:
           const LatticeData & localLatticeData;
           NeighbouringLatticeData & neighbouringLatticeData;
-          net::InterfaceDelegationNet & net;
-
+	  comm::Async::Ptr commQ;
           typedef std::vector<site_t> IdVec;
           typedef std::map<int, int> CountMap;
           typedef std::map<proc_t, IdVec > IdsMap;

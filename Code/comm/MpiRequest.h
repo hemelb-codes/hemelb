@@ -57,7 +57,7 @@ namespace hemelb
       virtual void resize(size_t i);
       virtual void push_back(Request::Ptr);
       virtual void set(size_t i, Request::Ptr);
-      
+      virtual void clear();
       virtual void WaitAll();
       virtual bool TestAll();
     private:
