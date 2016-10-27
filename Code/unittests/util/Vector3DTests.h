@@ -42,7 +42,8 @@ namespace hemelb
       class Vector3DTests : public CppUnit::TestFixture
       {
           CPPUNIT_TEST_SUITE (Vector3DTests);
-          CPPUNIT_TEST (TestCastsInVector3DProduct);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (TestCastsInVector3DProduct);
+          CPPUNIT_TEST (TestVector3DComparison);CPPUNIT_TEST_SUITE_END();
         public:
           void TestCastsInVector3DProduct()
           {
@@ -79,6 +80,25 @@ namespace hemelb
               CPPUNIT_ASSERT_EQUAL(uintMax, baz[1] + uintMax % 2);
               CPPUNIT_ASSERT_EQUAL(uintMax, baz[2] + uintMax % 2);
             }
+          }
+
+          void TestVector3DComparison()
+          {
+            hemelb::util::Vector3D<int> foo(0, 0, 0);
+            hemelb::util::Vector3D<int> bar(1, 0, 0);
+            CPPUNIT_ASSERT(foo<bar);
+
+            bar = {0, 1, 0};
+            CPPUNIT_ASSERT(foo<bar);
+
+            bar = {0, 0, 1};
+            CPPUNIT_ASSERT(foo<bar);
+
+            bar = {0, 0, 0};
+            CPPUNIT_ASSERT(!(foo<bar));
+
+            foo = {0, 0, 1};
+            CPPUNIT_ASSERT(!(foo<bar));
           }
       };
 

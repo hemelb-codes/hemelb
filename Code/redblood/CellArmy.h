@@ -30,6 +30,51 @@ namespace hemelb
 {
   namespace redblood
   {
+    //! @todo #668 Should this be a std::unordered_map instead? The map is to be created once (and never modified again) and look-up heavy later on.
+    typedef std::map<LatticeVector, proc_t> GlobalCoordsToProcMap;
+
+    /**
+     * Computes a map that allows looking up the process owning certain lattice sites (by global lattice coordinate).
+     * The map is restricted to the local lattices sites and those owned by the neighbours defined in the input graph MPI communicator.
+     * @param comm graph MPI communicator
+     * @param latDat object with distributed information about the lattice
+     * @return map between lattice coordinates and process owning that lattice (restricted to graph neighbours)
+     */
+    GlobalCoordsToProcMap ComputeGlobalCoordsToProcMap(net::MpiCommunicator const &comm,
+                                                       const geometry::LatticeData &latDat)
+    {
+      GlobalCoordsToProcMap coordsToProcMap;
+
+      // Populate map with coordinates of locally owned lattice sites first
+      std::vector<LatticeVector> locallyOwnedSites;
+      locallyOwnedSites.reserve(latDat.GetLocalFluidSiteCount());
+      auto myRank = comm.Rank();
+      for (site_t localSiteId = 0; localSiteId < latDat.GetLocalFluidSiteCount(); ++localSiteId)
+      {
+        auto const& globalSiteCoords = latDat.GetSite(localSiteId).GetGlobalSiteCoords();
+        locallyOwnedSites.push_back(globalSiteCoords);
+        coordsToProcMap[globalSiteCoords] = myRank;
+      }
+
+      // Exchange coordinates of locally owned lattice sites with neighbours in comms graph
+      auto const& neighbouringProcs = comm.GetNeighbors();
+      std::vector<std::vector<LatticeVector>> neighSites = comm.AllNeighGatherV(locallyOwnedSites);
+      assert(neighSites.size() == comm.GetNeighborsCount());
+
+      // Finish populating map with knowledge comming from neighbours
+      for (auto const& neighbour : util::enumerate(neighbouringProcs))
+      {
+        for (auto const& globalCoord : neighSites[neighbour.index])
+        {
+          // lattice sites are uniquely owned, so no chance of coordinates being repeated across processes
+          assert(coordsToProcMap.count(globalCoord) == 0);
+          coordsToProcMap[globalCoord] = neighbour.value;
+        }
+      }
+
+      return coordsToProcMap;
+    }
+
     //! \brief All processes are considered neighbours with each other. This is the most conservative and inefficient implementation of the method possible.
     std::vector<std::vector<int>> ComputeProcessorNeighbourhood(net::MpiCommunicator const &comm)
     {

@@ -25,13 +25,16 @@ namespace hemelb
           CPPUNIT_TEST_SUITE (GraphCommsTests);
           CPPUNIT_TEST (testDumbGraphCommunicator);
           CPPUNIT_TEST (testGraphCommunicator);
-          CPPUNIT_TEST (testComputeCellsEffectiveSize);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testComputeCellsEffectiveSize);
+          CPPUNIT_TEST (testComputeGlobalCoordsToProcMap);
+          CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp();
           void testDumbGraphCommunicator();
           void testGraphCommunicator();
           void testComputeCellsEffectiveSize();
+          void testComputeGlobalCoordsToProcMap();
 
         protected:
           std::shared_ptr<hemelb::configuration::CommandLine> options;
@@ -158,6 +161,52 @@ namespace hemelb
                                          * (8e-06 / master->GetSimConfig()->GetVoxelSize()),
                                      ComputeCellsEffectiveSize(master->GetSimConfig()->GetRBCMeshes()),
                                      1e-9);
+      }
+
+      void GraphCommsTests::testComputeGlobalCoordsToProcMap()
+      {
+        using hemelb::redblood::ComputeGlobalCoordsToProcMap;
+        using hemelb::redblood::ComputeProcessorNeighbourhood;
+
+        // Test only makes sense if run with 4 cores
+        auto comms = Comms();
+        CPPUNIT_ASSERT_EQUAL(4, comms.Size());
+
+        // Setup simulation with cylinder
+        auto master = CreateMasterSim(comms);
+        CPPUNIT_ASSERT(master);
+        auto &latticeData = master->GetLatticeData();
+
+        auto graphComm =
+            comms.Graph(ComputeProcessorNeighbourhood(comms,
+                                                      latticeData,
+                                                      2e-6 / master->GetSimConfig()->GetVoxelSize()));
+
+
+        auto const& map = ComputeGlobalCoordsToProcMap(graphComm, latticeData);
+
+        // The first lattice site for each rank is
+        std::vector<LatticeVector> lattice_coords;
+        lattice_coords.push_back({2,6,2});
+        lattice_coords.push_back({2,6,19});
+        lattice_coords.push_back({2,6,29});
+        lattice_coords.push_back({2,6,9});
+
+        // Parmetis divides the cylinder in four consecutive cylindrical subdomains.
+        // The ranks are ordered 0,3,1,2 along the positive direction of the z axis.
+        // The cell size is such that only ranks to the left and right are neighbours.
+        std::vector<std::vector<proc_t>> neighs_to_know_about;
+        neighs_to_know_about.push_back({0, 3});
+        neighs_to_know_about.push_back({1, 2, 3});
+        neighs_to_know_about.push_back({1, 2});
+        neighs_to_know_about.push_back({0, 1, 3});
+
+        // Each process should know who is the owner of a local lattice and a lattice belonging to each neighbour
+        for (auto neigh : neighs_to_know_about[comms.Rank()])
+        {
+          // Use map::at to throw when the lattice coordinates are not known
+          CPPUNIT_ASSERT_EQUAL(map.at(lattice_coords[neigh]), neigh);
+        }
 
       }
 
