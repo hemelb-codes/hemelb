@@ -21,9 +21,9 @@ namespace hemelb
     {
       public:
         EntropyTester(int* collisionTypes, unsigned int typesTested,
-                      const geometry::LatticeData * iLatDat, net::Net* net,
+                      const geometry::LatticeData * iLatDat, comm::Communicator::ConstPtr comm,
                       SimulationState* simState, reporting::Timers& timings) :
-            net::CollectiveAction(net->GetCommunicator(), timings[reporting::Timers::mpiWait]),
+            net::CollectiveAction(comm, timings[reporting::Timers::mpiWait]),
                 mLatDat(iLatDat), mHPreCollision(mLatDat->GetLocalFluidSiteCount()),
                 workTimer(timings[reporting::Timers::monitoring])
         {

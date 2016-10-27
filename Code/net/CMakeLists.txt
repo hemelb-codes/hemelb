@@ -4,12 +4,9 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 add_library(hemelb_net
- IteratedAction.cc BaseNet.cc 
+ IteratedAction.cc
  CollectiveAction.cc
-mixins/pointpoint/CoalescePointPoint.cc
-mixins/pointpoint/SeparatedPointPoint.cc
-mixins/pointpoint/ImmediatePointPoint.cc
-mixins/StoringNet.cc ProcComms.cc
+ ProcComms.cc
 phased/StepManager.cc)
 configure_file (
   "${PROJECT_SOURCE_DIR}/net/BuildInfo.h.in"

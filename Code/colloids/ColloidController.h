@@ -8,7 +8,6 @@
 #define HEMELB_COLLOIDS_COLLOIDCONTROLLER_H
 
 #include <vector>
-#include "net/net.h"
 #include "net/IteratedAction.h"
 #include "geometry/LatticeData.h"
 #include "geometry/Geometry.h"

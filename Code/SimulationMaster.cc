@@ -33,7 +33,7 @@
  * object.
  */
 SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options, hemelb::comm::Communicator::ConstPtr ioComm) :
-  ioComms(ioComm), timings(ioComm), build_info(), communicationNet(ioComm), asyncCommQ(hemelb::comm::Async::New(ioComm))
+  ioComms(ioComm), timings(ioComm), build_info(), asyncCommQ(hemelb::comm::Async::New(ioComm))
 {
   timings[hemelb::reporting::Timers::total].Start();
 
@@ -251,7 +251,7 @@ void SimulationMaster::Initialise()
   stepManager = new hemelb::net::phased::StepManager(2,
                                                      &timings,
                                                      hemelb::net::separate_communications);
-  netConcern = new hemelb::net::phased::NetConcern(communicationNet);
+  netConcern = new hemelb::comm::AsyncConcern(asyncCommQ);
   stepManager->RegisterIteratedActorSteps(*neighbouringDataManager, 0);
   if (colloidController != NULL)
   {
@@ -346,11 +346,7 @@ void SimulationMaster::Finalise()
     reporter->FillDictionary();
     reporter->Write();
   }
-  // DTMP: Logging output on communication as debug output for now.
-  hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("sync points: %lld, bytes sent: %lld",
-                                                                        communicationNet.SyncPointsCounted,
-                                                                        communicationNet.BytesSent);
-
+  
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Finish running simulation.");
 }
 
