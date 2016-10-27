@@ -21,7 +21,6 @@ namespace hemelb
      * Arguments should be:
      * - -in input xml configuration file (default input.xml)
      * - -out output folder (empty default, but the hemelb::io::PathManager will guess a value from the input file if not given.)
-     * - -ss steering session i.d. (default 1)
      */
     class CommandLine
     {
@@ -53,13 +52,6 @@ namespace hemelb
         std::string const & GetInputFile() const
         {
           return (inputFile);
-        }
-        /**
-         * @return A unique integer representing the steering session to which to attach.
-         */
-        int GetSteeringSessionId() const
-        {
-          return (steeringSessionId);
         }
 
         /**
@@ -95,7 +87,6 @@ namespace hemelb
       private:
         std::string inputFile; //! local or full path to input file
         std::string outputDir; //! local or full path to input file
-        int steeringSessionId; //! unique identifier for steering session
         bool debugMode; //! Use debugger
         int argc; //! count of command line arguments, including program name
         const char * const * const argv; //! command line arguments

@@ -102,7 +102,6 @@ namespace hemelb
           readBlock,
           readBlocksPrelim,
           readBlocksAll,
-          steeringWait, //!< Time spent waiting for a steering client in wait on connect mode.
           moveForcingNumbers,
           moveForcingData,
           blockRequirements,
@@ -217,7 +216,7 @@ namespace hemelb
     { "Total", "Seed Decomposition", "Domain Decomposition", "File Read", "Re Read", "Unzip", "Moves", "Parmetis",
       "Lattice Data initialisation", "Lattice Boltzmann", "LB calc only", "Monitoring", "MPI Send",
       "MPI Wait", "Simulation total", "Reading communications", "Parsing", "Read IO", "Read Blocks prelim",
-      "Read blocks all", "Steering Client Wait", "Move Forcing Counts", "Move Forcing Data", "Block Requirements",
+      "Read blocks all", "Move Forcing Counts", "Move Forcing Data", "Block Requirements",
       "Move Counts Sending", "Move Data Sending", "Populating moves list for decomposition optimisation",
       "Initial geometry reading", "Colloid initialisation", "Colloid position communication",
       "Colloid velocity communication", "Colloid force calculations", "Colloid calculations for updating",

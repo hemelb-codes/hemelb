@@ -28,34 +28,10 @@ namespace hemelb
   namespace geometry
   {
 
-    GeometryReader::GeometryReader(const bool reserveSteeringCore,
-                                   const lb::lattices::LatticeInfo& latticeInfo,
+    GeometryReader::GeometryReader(const lb::lattices::LatticeInfo& latticeInfo,
                                    reporting::Timers &atimings, comm::Communicator::ConstPtr ioComm) :
       latticeInfo(latticeInfo), hemeLbComms(ioComm), timings(atimings)
     {
-      // This rank should participate in the domain decomposition if
-      //  - there's no steering core (then all ranks are involved)
-      //  - we're not on core 0 (the only core that might ever not participate)
-      //  - there's only one processor (so core 0 has to participate)
-
-      // Create our own group, without the root node if we're not running with it.
-      if (reserveSteeringCore && ioComm->Size() > 1)
-      {
-        participateInTopology = !ioComm->OnIORank();
-
-        std::vector<int> lExclusions(1);
-        lExclusions[0] = 0;
-        comm::Group::Ptr computeGroup = hemeLbComms->GetGroup()->Exclude(lExclusions);
-        // Create a communicator just for the domain decomposition.
-        computeComms = ioComm->Create(computeGroup);
-        // Note that on the steering core, this is a null communicator.
-      }
-      else
-      {
-        participateInTopology = true;
-        computeComms = ioComm;
-      }
-
     }
 
     GeometryReader::~GeometryReader()
@@ -99,54 +75,43 @@ namespace hemelb
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file header");
       ReadHeader(geometry.GetBlockCount());
 
-      // Close the file - only the ranks participating in the topology need to read it again.
+      // Close the file
       file->Close();
 
       timings[hemelb::reporting::Timers::initialDecomposition].Start();
       log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
       principalProcForEachBlock.resize(geometry.GetBlockCount());
 
-      if (!participateInTopology)
+      // Get an initial base-level decomposition of the domain macro-blocks over processors.
+      // This will later be improved upon by ParMetis.
+      decomposition::BasicDecomposition basicDecomposer(geometry,
+							latticeInfo,
+							hemeLbComms,
+							fluidSitesOnEachBlock);
+      basicDecomposer.Decompose(principalProcForEachBlock);
+      
+      if (ShouldValidate())
       {
-        // If we are the steering core, mark them all as unknown.
-        for (site_t block = 0; block < geometry.GetBlockCount(); ++block)
-        {
-          principalProcForEachBlock[block] = -1;
-        }
+	basicDecomposer.Validate(principalProcForEachBlock);
       }
-      else
-      {
-        // Get an initial base-level decomposition of the domain macro-blocks over processors.
-        // This will later be improved upon by ParMetis.
-        decomposition::BasicDecomposition basicDecomposer(geometry,
-                                                          latticeInfo,
-                                                          computeComms,
-                                                          fluidSitesOnEachBlock);
-        basicDecomposer.Decompose(principalProcForEachBlock);
-
-        if (ShouldValidate())
-        {
-          basicDecomposer.Validate(principalProcForEachBlock);
-        }
-      }
+      
       timings[hemelb::reporting::Timers::initialDecomposition].Stop();
       // Perform the initial read-in.
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading in my blocks");
 
-      if (participateInTopology)
+      // TODO: can we remove the close/reopen? As far as I can tell,
+      // it's only the set view we are changing
+      
+      // Reopen in the file. Read in blocks local to this node.
+      file = hemeLbComms->OpenFile(dataFilePath, MPI_MODE_RDONLY, fileInfo);
+      
+      ReadInBlocksWithHalo(geometry, principalProcForEachBlock, hemeLbComms->Rank());
+      
+      if (ShouldValidate())
       {
-        // Reopen in the file just between the nodes in the topology decomposition. Read in blocks
-        // local to this node.
-        file = computeComms->OpenFile(dataFilePath, MPI_MODE_RDONLY, fileInfo);
-
-        ReadInBlocksWithHalo(geometry, principalProcForEachBlock, computeComms->Rank());
-
-        if (ShouldValidate())
-        {
-          ValidateGeometry(geometry);
-        }
+	ValidateGeometry(geometry);
       }
-
+      
       timings[hemelb::reporting::Timers::fileRead].Stop();
 
       hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Begin optimising the domain decomposition.");
@@ -154,19 +119,16 @@ namespace hemelb
 
       // Having done an initial decomposition of the geometry, and read in the data, we optimise the
       // domain decomposition.
-      if (participateInTopology)
+      log::Logger::Log<log::Debug, log::OnePerCore>("Beginning domain decomposition optimisation");
+      OptimiseDomainDecomposition(geometry, principalProcForEachBlock);
+      log::Logger::Log<log::Debug, log::OnePerCore>("Ending domain decomposition optimisation");
+      
+      if (ShouldValidate())
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Beginning domain decomposition optimisation");
-        OptimiseDomainDecomposition(geometry, principalProcForEachBlock);
-        log::Logger::Log<log::Debug, log::OnePerCore>("Ending domain decomposition optimisation");
-
-        if (ShouldValidate())
-        {
-          ValidateGeometry(geometry);
-        }
-        file->Close();
+	ValidateGeometry(geometry);
       }
-
+      file->Close();
+      
       // Finish up - close the file, set the timings, deallocate memory.
       HEMELB_MPI_CALL(MPI_Info_free, (&fileInfo));
 
@@ -325,8 +287,8 @@ namespace hemelb
       
       Needs needs(geometry.GetBlockCount(),
                   readBlock,
-                  util::NumericalFunctions::min(READING_GROUP_SIZE, computeComms->Size()),
-                  computeComms,
+                  util::NumericalFunctions::min(READING_GROUP_SIZE, hemeLbComms->Size()),
+                  hemeLbComms,
                   ShouldValidate());
 
       timings[hemelb::reporting::Timers::readBlocksPrelim].Stop();
@@ -368,9 +330,9 @@ namespace hemelb
       proc_t readingCore = GetReadingCoreForBlock(blockNumber);
 
       {
-	comm::Async requestQ(computeComms);
+	comm::Async requestQ(hemeLbComms);
 	
-	if (readingCore == computeComms->Rank())
+	if (readingCore == hemeLbComms->Rank())
 	  {
 	    timings[hemelb::reporting::Timers::readBlock].Start();
 	    // Read the data.
@@ -381,7 +343,7 @@ namespace hemelb
 	    for (std::vector<proc_t>::const_iterator receiver = procsWantingThisBlock.begin(); receiver
 		   != procsWantingThisBlock.end(); receiver++)
 	      {
-		if (*receiver != computeComms->Rank())
+		if (*receiver != hemeLbComms->Rank())
 		  {
 		    requestQ.Isend(compressedBlockData, *receiver);
 		  }
@@ -589,7 +551,7 @@ namespace hemelb
     proc_t GeometryReader::GetReadingCoreForBlock(site_t blockNumber)
     {
       return proc_t(blockNumber % util::NumericalFunctions::min(READING_GROUP_SIZE,
-                                                                computeComms->Size()));
+                                                                hemeLbComms->Size()));
     }
 
     /**
@@ -648,13 +610,13 @@ namespace hemelb
 
         // Reduce using a minimum to find the actual processor for each site (ignoring the
         // invalid entries).
-        std::vector<proc_t> procForSiteRecv = computeComms->AllReduce(myProcForSite, MPI_MIN);
-        std::vector<unsigned> siteDataRecv = computeComms->AllReduce(dummySiteData, MPI_MIN);
+        std::vector<proc_t> procForSiteRecv = hemeLbComms->AllReduce(myProcForSite, MPI_MIN);
+        std::vector<unsigned> siteDataRecv = hemeLbComms->AllReduce(dummySiteData, MPI_MIN);
 
         for (site_t site = 0; site < geometry.GetSitesPerBlock(); ++site)
         {
-          if (procForSiteRecv[site] == ConvertTopologyRankToGlobalRank(computeComms->Rank())
-              && (myProcForSite[site] != ConvertTopologyRankToGlobalRank(computeComms->Rank())))
+          if (procForSiteRecv[site] == hemeLbComms->Rank()
+              && (myProcForSite[site] != hemeLbComms->Rank()))
           {
             log::Logger::Log<log::Critical, log::OnePerCore>("Other cores think this core has site %li on block %li but it disagrees.",
                                                              site,
@@ -756,7 +718,7 @@ namespace hemelb
                                                      const std::vector<proc_t>& procForEachBlock)
     {
       decomposition::OptimisedDecomposition optimiser(timings,
-                                                      computeComms,
+                                                      hemeLbComms,
                                                       geometry,
                                                       latticeInfo,
                                                       procForEachBlock,
@@ -803,7 +765,7 @@ namespace hemelb
       // going to be moved to the current proc.
       idx_t moveIndex = 0;
 
-      for (proc_t fromProc = 0; fromProc < computeComms->Size(); ++fromProc)
+      for (proc_t fromProc = 0; fromProc < hemeLbComms->Size(); ++fromProc)
       {
         for (idx_t moveNumber = 0; moveNumber < movesPerProc[fromProc]; ++moveNumber)
         {
@@ -811,15 +773,15 @@ namespace hemelb
           idx_t toProc = movesList[3 * moveIndex + 2];
           ++moveIndex;
 
-          if (toProc == (idx_t) computeComms->Rank())
+          if (toProc == (idx_t) hemeLbComms->Rank())
           {
-            newProcForEachBlock[block] = computeComms->Rank();
+            newProcForEachBlock[block] = hemeLbComms->Rank();
           }
         }
       }
 
       // Reread the blocks into the GlobalLatticeData now.
-      ReadInBlocksWithHalo(geometry, newProcForEachBlock, computeComms->Rank());
+      ReadInBlocksWithHalo(geometry, newProcForEachBlock, hemeLbComms->Rank());
     }
 
     void GeometryReader::ImplementMoves(Geometry& geometry,
@@ -845,8 +807,7 @@ namespace hemelb
             if (geometry.Blocks[block].Sites[siteIndex].targetProcessor != SITE_OR_BLOCK_SOLID)
             {
               // ... set its rank to be the rank it had before optimisation.
-              geometry.Blocks[block].Sites[siteIndex].targetProcessor
-                  = ConvertTopologyRankToGlobalRank(originalProc);
+              geometry.Blocks[block].Sites[siteIndex].targetProcessor = originalProc;
             }
           }
         }
@@ -856,7 +817,7 @@ namespace hemelb
       idx_t moveIndex = 0;
 
       // For each source proc, go through as many moves as it had.
-      for (proc_t fromProc = 0; fromProc < computeComms->Size(); ++fromProc)
+      for (proc_t fromProc = 0; fromProc < hemeLbComms->Size(); ++fromProc)
       {
         for (idx_t moveNumber = 0; moveNumber < movesFromEachProc[fromProc]; ++moveNumber)
         {
@@ -872,8 +833,7 @@ namespace hemelb
             // lFromProc.
             if (ShouldValidate())
             {
-              if (geometry.Blocks[block].Sites[site].targetProcessor
-                  != ConvertTopologyRankToGlobalRank((proc_t) fromProc))
+              if (geometry.Blocks[block].Sites[site].targetProcessor != proc_t(fromProc))
               {
                 log::Logger::Log<log::Error, log::OnePerCore>("Block %ld, site %ld from move %u was originally on proc %i, not proc %u.",
                                                               block,
@@ -885,22 +845,12 @@ namespace hemelb
             }
 
             // Implement the move.
-            geometry.Blocks[block].Sites[site].targetProcessor
-                = ConvertTopologyRankToGlobalRank((proc_t) toProc);
+            geometry.Blocks[block].Sites[site].targetProcessor = proc_t(toProc);
           }
 
           ++moveIndex;
         }
       }
-    }
-
-    proc_t GeometryReader::ConvertTopologyRankToGlobalRank(proc_t topologyRankIn) const
-    {
-      // If the global rank is not equal to the topology rank, we are not using rank 0 for
-      // LBM.
-      return (hemeLbComms->Rank() == computeComms->Rank())
-        ? topologyRankIn
-        : (topologyRankIn + 1);
     }
 
     bool GeometryReader::ShouldValidate() const

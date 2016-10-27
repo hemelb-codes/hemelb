@@ -19,7 +19,6 @@ option(HEMELB_BUILD_TESTS_UNIT "Build the unit-tests (HEMELB_BUILD_TESTS_ALL tak
 option(HEMELB_BUILD_TESTS_FUNCTIONAL "Build the functional tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
 option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
-option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
 option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" OFF)
@@ -31,8 +30,6 @@ set(HEMELB_READING_GROUP_SIZE 5
   CACHE INTEGER "Number of cores to use to read geometry file.")
 set(HEMELB_LOG_LEVEL Info
 	CACHE STRING "Log level, choose 'Critical', 'Error', 'Warning', 'Info', 'Debug' or 'Trace'" )
-set(HEMELB_STEERING_LIB basic
-	CACHE STRING "Steering library, choose 'basic' or 'none'" )
 set(HEMELB_DEPENDENCIES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../dependencies"
 	CACHE FILEPATH "Path to find dependency find modules")
 set(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH}
@@ -182,7 +179,6 @@ set(package_subdirs
 	comm
 	extraction
 	reporting
-	steering
 	lb
 	geometry
 	net
@@ -229,7 +225,6 @@ if (HEMELB_BUILD_MULTISCALE)
 		configuration
 		extraction
 		reporting
-		steering
 		lb
 		geometry
 		net
