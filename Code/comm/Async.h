@@ -34,6 +34,15 @@ namespace hemelb
 	q->WaitAll();
       }
 
+      inline void Wait() {
+	q->WaitAll();
+	q->clear();
+      }
+      
+      inline Communicator::ConstPtr GetComm() const {
+	return comms;
+      }
+      
       template <typename... Ts>
       void Isend(Ts... args)
       {

@@ -651,20 +651,21 @@ namespace hemelb
       blockCoords.x = blockIJData / blockCounts.y;
     }
 
-    void LatticeData::SendAndReceive(hemelb::net::Net* net)
+    void LatticeData::SendAndReceive(comm::Async::Ptr commQ)
     {
       for (std::vector<NeighbouringProcessor>::const_iterator it = neighbouringProcs.begin();
           it != neighbouringProcs.end(); ++it)
       {
         // Request the receive into the appropriate bit of FOld.
-        net->RequestReceive<distribn_t>(GetFOld( (*it).FirstSharedDistribution),
-                                        (int) ( ( (*it).SharedDistributionCount)),
-                                        (*it).Rank);
+        commQ->Irecv(GetFOld( (*it).FirstSharedDistribution),
+		     (int) ( ( (*it).SharedDistributionCount)),
+		     (*it).Rank,
+		     1);
         // Request the send from the right bit of FNew.
-        net->RequestSend<distribn_t>(GetFNew( (*it).FirstSharedDistribution),
-                                     (int) ( ( (*it).SharedDistributionCount)),
-                                     (*it).Rank);
-
+        commQ->Isend(GetFNew( (*it).FirstSharedDistribution),
+		     (int) ( ( (*it).SharedDistributionCount)),
+		     (*it).Rank,
+		     1);
       }
     }
 

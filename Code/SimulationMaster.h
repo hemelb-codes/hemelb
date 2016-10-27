@@ -95,7 +95,7 @@ class SimulationMaster
 
     hemelb::colloids::ColloidController* colloidController;
     hemelb::net::Net communicationNet;
-
+    hemelb::comm::Async::Ptr asyncCommQ;
     const hemelb::util::UnitConverter* unitConverter;
 
     hemelb::extraction::IterableDataSource* propertyDataSource;

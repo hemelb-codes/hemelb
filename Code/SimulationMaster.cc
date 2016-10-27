@@ -33,7 +33,7 @@
  * object.
  */
 SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options, hemelb::comm::Communicator::ConstPtr ioComm) :
-  ioComms(ioComm), timings(ioComm), build_info(), communicationNet(ioComm)
+  ioComms(ioComm), timings(ioComm), build_info(), communicationNet(ioComm), asyncCommQ(hemelb::comm::Async::New(ioComm))
 {
   timings[hemelb::reporting::Timers::total].Start();
 
@@ -154,10 +154,10 @@ void SimulationMaster::Initialise()
   neighbouringDataManager =
       new hemelb::geometry::neighbouring::NeighbouringDataManager(*latticeData,
                                                                   latticeData->GetNeighbouringData(),
-                                                                  communicationNet);
+                                                                  asyncCommQ);
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising LBM.");
   latticeBoltzmannModel = new hemelb::lb::LBM<latticeType>(simConfig,
-                                                           &communicationNet,
+                                                           asyncCommQ,
                                                            latticeData,
                                                            simulationState,
                                                            timings,
@@ -203,7 +203,7 @@ void SimulationMaster::Initialise()
   }
 
   stabilityTester = new hemelb::lb::StabilityTester<latticeType>(latticeData,
-                                                                 &communicationNet,
+                                                                 ioComms,
                                                                  simulationState,
                                                                  timings,
                                                    monitoringConfig->doConvergenceCheck,
@@ -213,7 +213,7 @@ void SimulationMaster::Initialise()
   if (monitoringConfig->doIncompressibilityCheck)
   {
     incompressibilityChecker = new hemelb::lb::IncompressibilityChecker(latticeData,
-                                                &communicationNet,
+                                                ioComms,
                                                 simulationState,
                                                 latticeBoltzmannModel->GetPropertyCache(),
                                                 timings);

@@ -7,7 +7,6 @@
 #ifndef HEMELB_LB_LB_H
 #define HEMELB_LB_LB_H
 
-#include "net/net.h"
 #include "net/IteratedAction.h"
 #include "comm/Communicator.h"
 #include "lb/SimulationState.h"
@@ -56,7 +55,7 @@ namespace hemelb
          * the partially initialized LBM in order to initialize the arguments to the second construction phase.
          */
         LBM(hemelb::configuration::SimConfig *iSimulationConfig,
-            net::Net* net,
+            comm::Async::Ptr commQ,
             geometry::LatticeData* latDat,
             SimulationState* simState,
             reporting::Timers &atimings,
@@ -132,7 +131,7 @@ namespace hemelb
         unsigned int outletCount;
 
         configuration::SimConfig *mSimConfig;
-        net::Net* mNet;
+        comm::Async::Ptr mCommQ;
         geometry::LatticeData* mLatDat;
         SimulationState* mState;
         iolets::BoundaryValues *mInletValues, *mOutletValues;

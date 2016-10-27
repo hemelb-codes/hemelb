@@ -21,7 +21,7 @@ namespace hemelb
     class StabilityTester : public net::CollectiveAction
     {
       public:
-        StabilityTester(const geometry::LatticeData * iLatDat, net::Net* net,
+        StabilityTester(const geometry::LatticeData * iLatDat, comm::Communicator::ConstPtr comms,
                         SimulationState* simState, reporting::Timers& timings,
                         bool checkForConvergence, double relativeTolerance);
 
