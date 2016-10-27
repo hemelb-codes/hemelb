@@ -6,7 +6,6 @@
 add_library(hemelb_net
   IteratedAction.cc
   CollectiveAction.cc
-  ProcComms.cc
   phased/StepManager.cc)
 configure_file (
   "${PROJECT_SOURCE_DIR}/net/BuildInfo.h.in"
