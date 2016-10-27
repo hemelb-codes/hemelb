@@ -10,7 +10,6 @@
 #include "geometry/LatticeData.h"
 #include "geometry/neighbouring/NeighbouringLatticeData.h"
 #include "geometry/neighbouring/RequiredSiteInformation.h"
-#include "net/net.h"
 #include "net/IteratedAction.h"
 #include <vector>
 #include <map>

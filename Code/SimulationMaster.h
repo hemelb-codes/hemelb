@@ -10,7 +10,6 @@
 #include "extraction/PropertyActor.h"
 #include "lb/lb.hpp"
 #include "lb/StabilityTester.h"
-#include "net/net.h"
 #include "lb/EntropyTester.h"
 #include "lb/iolets/BoundaryValues.h"
 #include "util/UnitConverter.h"
@@ -22,7 +21,7 @@
 #include "lb/IncompressibilityChecker.h"
 #include "colloids/ColloidController.h"
 #include "net/phased/StepManager.h"
-#include "net/phased/NetConcern.h"
+#include "comm/AsyncConcern.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 
 class SimulationMaster
@@ -90,7 +89,6 @@ class SimulationMaster
     hemelb::lb::IncompressibilityChecker* incompressibilityChecker;
 
     hemelb::colloids::ColloidController* colloidController;
-    hemelb::net::Net communicationNet;
     hemelb::comm::Async::Ptr asyncCommQ;
     const hemelb::util::UnitConverter* unitConverter;
 
@@ -98,7 +96,7 @@ class SimulationMaster
     hemelb::extraction::PropertyActor* propertyExtractor;
 
     hemelb::net::phased::StepManager* stepManager;
-    hemelb::net::phased::NetConcern* netConcern;
+    hemelb::comm::AsyncConcern* netConcern;
 
     static const hemelb::LatticeTimeStep FORCE_FLUSH_PERIOD=1000;
 };
