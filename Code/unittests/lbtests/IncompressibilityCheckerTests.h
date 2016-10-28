@@ -55,7 +55,7 @@ namespace hemelb
             eps = 1e-9;
 
             timings = new hemelb::reporting::Timers(Comms());
-            net = new net::Net(Comms());
+	    commQ = comm::Async::New(Comms());
           }
 
           void tearDown()
@@ -75,7 +75,7 @@ namespace hemelb
           void TestIncompressibilityCheckerRootNode()
           {
             hemelb::lb::IncompressibilityChecker incompChecker(latDat,
-                                                               net,
+                                                               Comms(),
                                                                simState,
                                                                *cache,
                                                                *timings,
@@ -138,7 +138,7 @@ namespace hemelb
           void TestIncompressibilityCheckerLeafNode()
           {
             hemelb::lb::IncompressibilityChecker incompChecker(latDat,
-                                                               net,
+                                                               Comms(),
                                                                simState,
                                                                *cache,
                                                                *timings,
@@ -169,7 +169,7 @@ namespace hemelb
           distribn_t largestDefaultDensity;
           distribn_t largestDefaultVelocityMagnitude;
           hemelb::reporting::Timers* timings;
-          net::Net* net;
+	  comm::Async::Ptr commQ;
           distribn_t eps;
       };
 

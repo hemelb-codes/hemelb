@@ -6,6 +6,7 @@
 #ifndef HEMELB_COMM_ASYNC_H
 #define HEMELB_COMM_ASYNC_H
 
+#include <utility>
 #include "comm/Communicator.h"
 #include "comm/Request.h"
 
@@ -44,19 +45,19 @@ namespace hemelb
       }
       
       template <typename... Ts>
-      void Isend(Ts... args)
+      void Isend(Ts&&... args)
       {
-	q->push_back(comms->Isend(args...));
+	q->push_back(comms->Isend(std::forward<Ts>(args)...));
       }
       template <typename... Ts>
-      void Issend(Ts... args)
+      void Issend(Ts&&... args)
       {
-	q->push_back(comms->Issend(args...));
+	q->push_back(comms->Issend(std::forward<Ts>(args)...));
       }
       template <typename... Ts>
-      void Irecv(Ts... args)
+      void Irecv(Ts&&... args)
       {
-	q->push_back(comms->Irecv(args...));
+	q->push_back(comms->Irecv(std::forward<Ts>(args)...));
       }
       
     private:

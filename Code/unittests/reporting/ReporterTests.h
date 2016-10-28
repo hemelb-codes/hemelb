@@ -41,14 +41,13 @@ namespace hemelb
             realTimers = new reporting::Timers(Comms());
             buildInfo = new reporting::BuildInfo();
             state = new hemelb::lb::SimulationState(0.0001, 1000);
-            net = new net::Net(Comms());
             latticeData = FourCubeLatticeData::Create(Comms(), 6, 5); // The 5 here is to match the topology size in the MPICommsMock
             lbtests::LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(latticeData);
             latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
             cache = new lb::MacroscopicPropertyCache(*state, *latticeData);
             cache->densityCache.SetRefreshFlag();
             lbtests::LbTestsHelper::UpdatePropertyCache<lb::lattices::D3Q15>(*latticeData, *cache, *state);
-            incompChecker = new IncompressibilityCheckerMock(latticeData, net, state, *cache, *realTimers, 10.0);
+            incompChecker = new IncompressibilityCheckerMock(latticeData, Comms(), state, *cache, *realTimers, 10.0);
             reporter = new Reporter("mock_path", "exampleinputfile");
             reporter->AddReportable(incompChecker);
             reporter->AddReportable(mockTimers);
@@ -64,7 +63,6 @@ namespace hemelb
             delete realTimers;
             delete cache;
             delete incompChecker;
-            delete net;
             delete buildInfo;
             helpers::HasCommsTestFixture::tearDown();
           }
@@ -149,7 +147,6 @@ namespace hemelb
           lb::MacroscopicPropertyCache* cache;
           IncompressibilityCheckerMock *incompChecker;
 
-          net::Net *net;
           hemelb::unittests::FourCubeLatticeData* latticeData;
           reporting::BuildInfo *buildInfo;
       };

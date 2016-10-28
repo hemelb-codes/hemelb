@@ -208,12 +208,10 @@ namespace hemelb
             LADD_FAIL();
             int argc;
             const char* argv[5];
-            argc = 5;
+            argc = 3;
             argv[0] = "hemelb";
             argv[1] = "-in";
             argv[2] = "four_cube_multiscale.xml";
-            argv[3] = "-ss";
-            argv[4] = "1111";
             CopyResourceToTempdir("four_cube_multiscale.xml");
             CopyResourceToTempdir("four_cube.gmy");
             hemelb::configuration::CommandLine options(argc, argv);
