@@ -138,7 +138,8 @@ namespace hemelb
               CellContainer { cells.begin() + split.Rank() * nCells, cells.begin()
                                   + (1 + split.Rank()) * nCells } :
               CellContainer { cells.begin(), cells.end() };
-        auto const distributions = nodeDistributions(latDat, owned);
+        auto const& graphComm = CreateDumbGraphComm(split);
+        auto const distributions = nodeDistributions(hemelb::redblood::parallel::ComputeGlobalCoordsToProcMap(graphComm, latDat), owned);
 
         hemelb::redblood::parallel::SpreadForces mpi_spreader(CreateDumbGraphComm(split));
         mpi_spreader.PostMessageLength(distributions, owned);

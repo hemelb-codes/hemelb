@@ -30,185 +30,6 @@ namespace hemelb
 {
   namespace redblood
   {
-    //! @todo #668 Should this be a std::unordered_map instead? The map is to be created once (and never modified again) and look-up heavy later on.
-    typedef std::map<LatticeVector, proc_t> GlobalCoordsToProcMap;
-
-    /**
-     * Computes a map that allows looking up the process owning certain lattice sites (by global lattice coordinate).
-     * The map is restricted to the local lattices sites and those owned by the neighbours defined in the input graph MPI communicator.
-     * @param comm graph MPI communicator
-     * @param latDat object with distributed information about the lattice
-     * @return map between lattice coordinates and process owning that lattice (restricted to graph neighbours)
-     */
-    GlobalCoordsToProcMap ComputeGlobalCoordsToProcMap(net::MpiCommunicator const &comm,
-                                                       const geometry::LatticeData &latDat)
-    {
-      GlobalCoordsToProcMap coordsToProcMap;
-
-      // Populate map with coordinates of locally owned lattice sites first
-      std::vector<LatticeVector> locallyOwnedSites;
-      locallyOwnedSites.reserve(latDat.GetLocalFluidSiteCount());
-      auto myRank = comm.Rank();
-      for (site_t localSiteId = 0; localSiteId < latDat.GetLocalFluidSiteCount(); ++localSiteId)
-      {
-        auto const& globalSiteCoords = latDat.GetSite(localSiteId).GetGlobalSiteCoords();
-        locallyOwnedSites.push_back(globalSiteCoords);
-        coordsToProcMap[globalSiteCoords] = myRank;
-      }
-
-      // Exchange coordinates of locally owned lattice sites with neighbours in comms graph
-      auto const& neighbouringProcs = comm.GetNeighbors();
-      std::vector<std::vector<LatticeVector>> neighSites = comm.AllNeighGatherV(locallyOwnedSites);
-      assert(neighSites.size() == comm.GetNeighborsCount());
-
-      // Finish populating map with knowledge comming from neighbours
-      for (auto const& neighbour : util::enumerate(neighbouringProcs))
-      {
-        for (auto const& globalCoord : neighSites[neighbour.index])
-        {
-          // lattice sites are uniquely owned, so no chance of coordinates being repeated across processes
-          assert(coordsToProcMap.count(globalCoord) == 0);
-          coordsToProcMap[globalCoord] = neighbour.value;
-        }
-      }
-
-      return coordsToProcMap;
-    }
-
-    //! \brief All processes are considered neighbours with each other. This is the most conservative and inefficient implementation of the method possible.
-    std::vector<std::vector<int>> ComputeProcessorNeighbourhood(net::MpiCommunicator const &comm)
-    {
-      // setups a graph communicator that in-practice is all-to-all
-      std::vector<std::vector<int>> vertices;
-      for (int i(0); i < comm.Size(); ++i)
-      {
-        vertices.push_back(std::vector<int>());
-        for (int j(0); j < comm.Size(); ++j)
-        {
-          if (j != i)
-          {
-            vertices[i].push_back(j);
-          }
-        }
-      }
-
-      return vertices;
-    }
-
-    //! \brief Compute neighbourhood based on checking the minimum distance between every pair of subdomains and declaring them neighbours if this is shorter than the RBCs effective size.
-    std::vector<std::vector<int>> ComputeProcessorNeighbourhood(net::MpiCommunicator const &comm,
-                                                                geometry::LatticeData &latDat,
-                                                                LatticeDistance cellsEffectiveSize)
-    {
-      std::vector<LatticeVector> serialisedLocalCoords;
-      serialisedLocalCoords.reserve(latDat.GetDomainEdgeCollisionCount(0));
-
-      for (auto siteIndex = latDat.GetMidDomainSiteCount();
-          siteIndex < latDat.GetMidDomainSiteCount() + latDat.GetDomainEdgeCollisionCount(0);
-          ++siteIndex)
-      {
-        serialisedLocalCoords.push_back(latDat.GetSite(siteIndex).GetGlobalSiteCoords());
-      }
-
-      /// @\todo refactor into a method net::MpiCommunicator::AllGatherv
-      int numProcs = comm.Size();
-      std::vector<int> allSerialisedCoordSizes = comm.AllGather((int) serialisedLocalCoords.size());
-      std::vector<int> allSerialisedCoordDisplacements(numProcs + 1);
-
-      site_t totalSize = std::accumulate(allSerialisedCoordSizes.begin(),
-                                         allSerialisedCoordSizes.end(),
-                                         0);
-
-      allSerialisedCoordDisplacements[0] = 0;
-      for (int j = 0; j < numProcs; ++j)
-      {
-        allSerialisedCoordDisplacements[j + 1] = allSerialisedCoordDisplacements[j]
-            + allSerialisedCoordSizes[j];
-      }
-
-      std::vector<LatticeVector> allSerialisedCoords(totalSize);
-      HEMELB_MPI_CALL(MPI_Allgatherv,
-                      ( net::MpiConstCast(&serialisedLocalCoords[0]), serialisedLocalCoords.size(), net::MpiDataType<LatticeVector>(), &allSerialisedCoords[0], net::MpiConstCast(&allSerialisedCoordSizes[0]), net::MpiConstCast(&allSerialisedCoordDisplacements[0]), net::MpiDataType<LatticeVector>(), comm ));
-
-      std::vector<std::vector<LatticeVector>> coordsPerProc(numProcs);
-      for (decltype(numProcs) procIndex = 0; procIndex < numProcs; ++procIndex)
-      {
-        for (auto indexAllCoords = allSerialisedCoordDisplacements[procIndex];
-             indexAllCoords < allSerialisedCoordDisplacements[procIndex + 1]; ++indexAllCoords)
-        {
-          coordsPerProc[procIndex].push_back(allSerialisedCoords[indexAllCoords]);
-        }
-      }
-      /// end of refactoring
-
-      auto cellsEffectiveSizeSq = cellsEffectiveSize * cellsEffectiveSize;
-      auto areProcsNeighbours =
-          [cellsEffectiveSizeSq, &coordsPerProc] (unsigned procA, unsigned procB)
-          {
-            if (procA == procB)
-            {
-              return false;
-            }
-
-            auto distanceSqBetweenSubdomainEdges = std::numeric_limits<LatticeDistance>::max();
-            for(auto siteProcA : coordsPerProc[procA])
-            {
-              for(auto siteProcB : coordsPerProc[procB])
-              {
-                distanceSqBetweenSubdomainEdges = std::min(distanceSqBetweenSubdomainEdges, (LatticeDistance)(siteProcA-siteProcB).GetMagnitudeSquared());
-              }
-            }
-
-            return distanceSqBetweenSubdomainEdges < cellsEffectiveSizeSq;
-          };
-
-      std::vector<std::vector<int>> vertices(numProcs);
-      for (int procA(0); procA < numProcs; ++procA)
-      {
-        for (int procB(procA+1); procB < numProcs; ++procB)
-        {
-          if (areProcsNeighbours(procA, procB))
-          {
-            vertices[procA].push_back(procB);
-            vertices[procB].push_back(procA);
-          }
-        }
-      }
-
-      return vertices;
-    }
-
-    // Make effective size 1.5 times the diameter
-    static const LatticeDistance EFFECTIVE_SIZE_TO_RADIUS_RATIO = 3.0;
-
-    LatticeDistance ComputeCellsEffectiveSize(std::shared_ptr<TemplateCellContainer> cellTemplates)
-    {
-      double maxCellRadius = std::numeric_limits<LatticeDistance>::min();
-
-      for (auto cellTemplate : *cellTemplates)
-      {
-        maxCellRadius = std::max(maxCellRadius, cellTemplate.second->GetScale());
-      }
-
-      return EFFECTIVE_SIZE_TO_RADIUS_RATIO * maxCellRadius;
-    }
-
-    //! \brief Generates a graph communicator describing the data dependencies for interpolation and spreading
-    net::MpiCommunicator CreateGraphComm(net::MpiCommunicator const &comm,
-                                         geometry::LatticeData &latDat,
-                                         std::shared_ptr<TemplateCellContainer> cellTemplates,
-                                         hemelb::reporting::Timers &timings)
-    {
-      timings[hemelb::reporting::Timers::graphComm].Start();
-      auto graphComm =
-          comm.Graph(ComputeProcessorNeighbourhood(comm,
-                                                   latDat,
-                                                   ComputeCellsEffectiveSize(cellTemplates)));
-      timings[hemelb::reporting::Timers::graphComm].Stop();
-
-      return graphComm;
-    }
-
     //! \brief Federates the cells together so we can apply ops simultaneously
     //! \tparam TRAITS holds type of kernel and stencil
     template<class TRAITS> class CellArmy
@@ -230,14 +51,15 @@ namespace hemelb
                 wallDnC(createWallNodeDnC<Lattice>(latDat, boxsize, cell2Wall.cutoff + 1e-6)),
                 cell2Cell(cell2Cell), cell2Wall(cell2Wall), worldCommunicator(worldCommunicator),
                 cellTemplates(cellTemplates), timings(timings),
-                neighbourDependenciesGraph(CreateGraphComm(worldCommunicator,
-                                                           latDat,
-                                                           cellTemplates,
-                                                           timings)),
+                neighbourDependenciesGraph(parallel::CreateGraphComm(worldCommunicator,
+                                                                    latDat,
+                                                                    cellTemplates,
+                                                                    timings)),
                 exchangeCells(neighbourDependenciesGraph, worldCommunicator),
                 velocityIntegrator(neighbourDependenciesGraph),
                 forceSpreader(neighbourDependenciesGraph),
-                nodeDistributions(parallel::nodeDistributions(latticeData, cells))
+                globalCoordsToProcMap(parallel::ComputeGlobalCoordsToProcMap(neighbourDependenciesGraph, latticeData)),
+                nodeDistributions(parallel::nodeDistributions(globalCoordsToProcMap, cells))
         {
         }
 
@@ -383,6 +205,8 @@ namespace hemelb
         parallel::IntegrateVelocities velocityIntegrator;
         //! Force spreader object
         parallel::SpreadForces forceSpreader;
+        //! Map allowing to look up which of the neighbours in neighbourDependenciesGraph owns a given lattice site (given by global coordinates)
+        parallel::GlobalCoordsToProcMap globalCoordsToProcMap;
         //! Object describing how the cells affect different subdomains
         parallel::NodeDistributions nodeDistributions;
 
@@ -409,7 +233,7 @@ namespace hemelb
       exchangeCells.Update(cells, distCells);
       exchangeCells.Update(nodeDistributions,
                            distCells,
-                           parallel::details::AssessMPIFunction<Stencil>(latticeData));
+                           parallel::details::AssessMPIFunction<Stencil>(globalCoordsToProcMap));
       timings[hemelb::reporting::Timers::exchangeCells].Stop();
 
       // Actually perform velocity integration
@@ -427,7 +251,7 @@ namespace hemelb
       timings[hemelb::reporting::Timers::computeNodeDistributions].Start();
       for (auto cell : cells)
       {
-        nodeDistributions.at(cell->GetTag()).template Reindex<Stencil>(latticeData, cell);
+        nodeDistributions.at(cell->GetTag()).template Reindex<Stencil>(globalCoordsToProcMap, cell);
       }
       timings[hemelb::reporting::Timers::computeNodeDistributions].Stop();
 
@@ -513,7 +337,7 @@ namespace hemelb
         nodeDistributions.emplace(std::piecewise_construct,
             std::forward_as_tuple(cell->GetTag()),
             std::forward_as_tuple(parallel::details::AssessMPIFunction<
-              Stencil>(latticeData),
+              Stencil>(globalCoordsToProcMap),
               cell));
         log::Logger::Log<log::Info, log::OnePerCore>("Cell has %i edge nodes",
           nodeDistributions.find(cell->GetTag())->second.BoundaryIndices().size());

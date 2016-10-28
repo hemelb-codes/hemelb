@@ -183,10 +183,10 @@ namespace hemelb
       //! \brief Creates a map from uuids to node distributions over MPI domains
       //! \details This version uses standard assessor that loops over interpolated fluid sites.
       template<class STENCIL = Traits<>::Stencil>
-      NodeDistributions nodeDistributions(geometry::LatticeData const &latDat,
+      NodeDistributions nodeDistributions(GlobalCoordsToProcMap const &globalCoordsToProcMap,
                                           CellContainer const & ownedCells)
       {
-        return nodeDistributions(details::AssessMPIFunction<STENCIL>(latDat), ownedCells);
+        return nodeDistributions(details::AssessMPIFunction<STENCIL>(globalCoordsToProcMap), ownedCells);
       }
 
     } /* parallel */

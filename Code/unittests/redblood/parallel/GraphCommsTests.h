@@ -89,7 +89,7 @@ namespace hemelb
 
       void GraphCommsTests::testDumbGraphCommunicator()
       {
-        using hemelb::redblood::ComputeProcessorNeighbourhood;
+        using hemelb::redblood::parallel::ComputeProcessorNeighbourhood;
 
         auto comms = Comms();
         auto neighbourhoods = ComputeProcessorNeighbourhood(comms);
@@ -114,7 +114,7 @@ namespace hemelb
 
       void GraphCommsTests::testGraphCommunicator()
       {
-        using hemelb::redblood::ComputeProcessorNeighbourhood;
+        using hemelb::redblood::parallel::ComputeProcessorNeighbourhood;
 
         // Test only makes sense if run with 4 cores
         auto comms = Comms();
@@ -149,7 +149,7 @@ namespace hemelb
 
       void GraphCommsTests::testComputeCellsEffectiveSize()
       {
-        using hemelb::redblood::ComputeCellsEffectiveSize;
+        using hemelb::redblood::parallel::ComputeCellsEffectiveSize;
 
         // Setup simulation with cylinder
         auto comms = Comms();
@@ -157,7 +157,7 @@ namespace hemelb
         CPPUNIT_ASSERT(master);
 
         // Biggest cell radius in lattice units times a tolerance
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(hemelb::redblood::EFFECTIVE_SIZE_TO_RADIUS_RATIO
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(hemelb::redblood::parallel::EFFECTIVE_SIZE_TO_RADIUS_RATIO
                                          * (8e-06 / master->GetSimConfig()->GetVoxelSize()),
                                      ComputeCellsEffectiveSize(master->GetSimConfig()->GetRBCMeshes()),
                                      1e-9);
@@ -165,8 +165,8 @@ namespace hemelb
 
       void GraphCommsTests::testComputeGlobalCoordsToProcMap()
       {
-        using hemelb::redblood::ComputeGlobalCoordsToProcMap;
-        using hemelb::redblood::ComputeProcessorNeighbourhood;
+        using hemelb::redblood::parallel::ComputeGlobalCoordsToProcMap;
+        using hemelb::redblood::parallel::ComputeProcessorNeighbourhood;
 
         // Test only makes sense if run with 4 cores
         auto comms = Comms();
@@ -176,14 +176,10 @@ namespace hemelb
         auto master = CreateMasterSim(comms);
         CPPUNIT_ASSERT(master);
         auto &latticeData = master->GetLatticeData();
-
-        auto graphComm =
-            comms.Graph(ComputeProcessorNeighbourhood(comms,
-                                                      latticeData,
-                                                      2e-6 / master->GetSimConfig()->GetVoxelSize()));
-
-
-        auto const& map = ComputeGlobalCoordsToProcMap(graphComm, latticeData);
+        auto graphComm = comms.Graph(hemelb::redblood::parallel::ComputeProcessorNeighbourhood(comms,
+                                                                                               latticeData,
+                                                                                               2e-6 / master->GetSimConfig()->GetVoxelSize()));
+        auto const& globalCoordsToProcMap = hemelb::redblood::parallel::ComputeGlobalCoordsToProcMap(graphComm, latticeData);
 
         // The first lattice site for each rank is
         std::vector<LatticeVector> lattice_coords;
@@ -205,7 +201,7 @@ namespace hemelb
         for (auto neigh : neighs_to_know_about[comms.Rank()])
         {
           // Use map::at to throw when the lattice coordinates are not known
-          CPPUNIT_ASSERT_EQUAL(map.at(lattice_coords[neigh]), neigh);
+          CPPUNIT_ASSERT_EQUAL(globalCoordsToProcMap.at(lattice_coords[neigh]), neigh);
         }
 
       }

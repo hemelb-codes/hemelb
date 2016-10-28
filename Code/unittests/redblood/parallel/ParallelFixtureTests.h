@@ -112,10 +112,17 @@ namespace hemelb
         auto const nedges = 20;
         auto const positions = GatherSpecialPositions(latDat, nmid, nedges, world);
 
+        auto graphComm =
+            world.Graph(redblood_parallel::ComputeProcessorNeighbourhood(world,
+                                                                         latDat,
+                                                                         2e-6 / master->GetSimConfig()->GetVoxelSize()));
+
+        auto const& globalCoordsToProcMap = hemelb::redblood::parallel::ComputeGlobalCoordsToProcMap(graphComm, latDat);
+
         for(std::size_t i(0); i < positions.size(); ++i)
         {
           auto const procs = hemelb::redblood::parallel::details::positionAffectsProcs<Stencil>(
-              latDat, positions[i]);
+              globalCoordsToProcMap, positions[i]);
 
           // Send set of affected procs as known by owner proc
           decltype(world.Rank()) positions_are_from_this_proc = i / (nmid + nedges) + 1;
