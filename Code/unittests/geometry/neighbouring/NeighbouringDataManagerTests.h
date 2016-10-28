@@ -48,14 +48,6 @@ namespace hemelb
               manager = new NeighbouringDataManager(*latDat, *data, commQ);
             }
 
-            void UseRealCommunicator()
-            {
-              // delete manager;
-
-              // communicator = comm::MpiEnvironment::World();
-	      // commQ = comm::Async::New(communicator);
-              // manager = new NeighbouringDataManager(*latDat, *data, commQ);
-            }
 
             void tearDown()
             {
