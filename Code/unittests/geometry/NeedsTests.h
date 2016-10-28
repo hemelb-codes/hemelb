@@ -7,7 +7,7 @@
 #ifndef HEMELB_UNITTESTS_GEOMETRY_NEEDSTESTS_H
 #define HEMELB_UNITTESTS_GEOMETRY_NEEDSTESTS_H
 #include "geometry/needs/Needs.h"
-#include "unittests/helpers/MockNetHelper.h"
+#include "unittests/helpers/MockCommsHelper.h"
 #include "unittests/helpers/CppUnitCompareVectors.h"
 #include <cppunit/TestFixture.h>
 
@@ -19,7 +19,7 @@ namespace hemelb
     {
       using namespace hemelb::geometry;
       using namespace hemelb::unittests::helpers;
-      class NeedsTests : public CppUnit::TestFixture, MockNetHelper
+      class NeedsTests : public CppUnit::TestFixture, MockCommsHelper
       {
           CPPUNIT_TEST_SUITE (NeedsTests);
           CPPUNIT_TEST (TestReadingOne);
@@ -38,22 +38,21 @@ namespace hemelb
           void tearDown()
           {
             delete mockedNeeds;
-            MockNetHelper::tearDown();
+            MockCommsHelper::tearDown();
           }
 
           void TestReadingOne()
           {
             SetupMocks(6, 2, 5, 0);
-            CPPUNIT_ASSERT_EQUAL(communicatorMock->Size(),5);
+            CPPUNIT_ASSERT_EQUAL(communicator->Size(), 5);
             // Start to record the expected communications calls.
 	    // First we gather the counts of blocks needed on each reading core
-	    auto mock = std::dynamic_pointer_cast<MockMpiCommunicator>(communicatorMock);
 	    const std::vector<int> block_size_reading_core_0 = {1, 2, 1, 2, 1};
 	    // We don't really care about what the other ranks need from RC1
 	    const std::vector<int> block_size_reading_core_1 = {1, 0, 2, 0, 0};
 	    
-	    mock->AddGatherResult(block_size_reading_core_0);
-	    mock->AddGatherResult(block_size_reading_core_1);
+	    MockComms()->RequireGather(block_size_reading_core_0, 0);
+	    MockComms()->RequireGather(block_size_reading_core_1, 1);
 	    
 	    // Now we list the blocks needed from reading core 0 (us)
 	    // Note counts match above
@@ -64,10 +63,10 @@ namespace hemelb
 	      2, 4,
 	      4
 	    };
-	    mock->AddGatherVResult(blocks_needed_from_reading_core_0);
+	    MockComms()->RequireGatherV(blocks_needed_from_reading_core_0, block_size_reading_core_0, 0);
 	    // Blocks needed from RC1
-	    const std::vector<site_t> blocks_needed_from_reading_core_1 = {1};
-	    mock->AddGatherVResult(blocks_needed_from_reading_core_1);
+	    const std::vector<site_t> blocks_needed_from_reading_core_1 = {1, 0, 0};
+	    MockComms()->RequireGatherV(blocks_needed_from_reading_core_1, block_size_reading_core_1, 1);
 	    
             ShareMockNeeds();
 	    
@@ -95,7 +94,6 @@ namespace hemelb
             CPPUNIT_ASSERT_EQUAL(needing_block_4, mockedNeeds->ProcessorsNeedingBlock(4));
             CPPUNIT_ASSERT_EQUAL(needing_block_5, mockedNeeds->ProcessorsNeedingBlock(5));
 	    // I guess this means that no comms went through the net
-            netMock->ExpectationsAllCompleted();
           }
 
           void TestNonReading()
@@ -103,10 +101,9 @@ namespace hemelb
 	    // We are core 2 - a no reading one
             SetupMocks(6, 2, 5, 2);
 	    
-	    CPPUNIT_ASSERT_EQUAL(communicatorMock->Size(),5);
+	    CPPUNIT_ASSERT_EQUAL(communicator->Size(),5);
 
 	    // Record the expected communications calls.
-	    auto mock = std::dynamic_pointer_cast<MockMpiCommunicator>(communicatorMock);
 	    
 	    // First we gather the counts of blocks needed on each reading core
 	    // For RC0 we know this from above
@@ -114,8 +111,8 @@ namespace hemelb
 	    // We don't really care about what the other ranks need from RC1
 	    const std::vector<int> block_size_reading_core_1 = {0, 0, 2, 0, 0};
 	    
-	    mock->AddGatherResult(block_size_reading_core_0);
-	    mock->AddGatherResult(block_size_reading_core_1);
+	    MockComms()->RequireGather(block_size_reading_core_0, 0);
+	    MockComms()->RequireGather(block_size_reading_core_1, 1);
 	    
 	    // Now we list the blocks needed from RC0
 	    // Note counts match above
@@ -126,10 +123,10 @@ namespace hemelb
 	      2, 4,
 	      4
 	    };
-	    mock->AddGatherVResult(blocks_needed_from_reading_core_0);
+	    MockComms()->RequireGatherV(blocks_needed_from_reading_core_0, block_size_reading_core_0, 0);
 	    // Blocks needed from RC1
 	    const std::vector<site_t> blocks_needed_from_reading_core_1 = {1 ,3};
-	    mock->AddGatherVResult(blocks_needed_from_reading_core_1);
+	    MockComms()->RequireGatherV(blocks_needed_from_reading_core_1, block_size_reading_core_1, 1);
 
             ShareMockNeeds();
             // Finally, I would expect the resulting array of needs to be empty
@@ -142,7 +139,6 @@ namespace hemelb
             CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedNeeds->ProcessorsNeedingBlock(4));
             CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedNeeds->ProcessorsNeedingBlock(5));
 
-            netMock->ExpectationsAllCompleted();
           }
 
           void SetupMocks(const site_t block_count,
@@ -154,7 +150,7 @@ namespace hemelb
             readingCores = reading_cores;
             rank = current_core;
             size = core_count;
-            MockNetHelper::setUp(core_count,current_core);
+            MockCommsHelper::setUp(core_count,current_core);
 
             inputNeededBlocks = std::vector<bool>(block_count);
 
@@ -170,7 +166,7 @@ namespace hemelb
             mockedNeeds = new Needs(blockCount,
                                           inputNeededBlocks,
                                           readingCores,
-				          communicatorMock,
+				          communicator,
                                           false);
           }
 

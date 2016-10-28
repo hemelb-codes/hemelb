@@ -7,10 +7,10 @@
 #ifndef HEMELB_UNITTESTS_GEOMETRY_NEIGHBOURING_NEIGHBOURINGDATAMANAGERTESTS_H
 #define HEMELB_UNITTESTS_GEOMETRY_NEIGHBOURING_NEIGHBOURINGDATAMANAGERTESTS_H
 #include "net/phased/StepManager.h"
-#include "net/phased/NetConcern.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
-#include "unittests/helpers/MockNetHelper.h"
+#include "unittests/helpers/MockCommsHelper.h"
 #include "comm/MpiEnvironment.h"
+#include "comm/AsyncConcern.h"
 
 namespace hemelb
 {
@@ -22,7 +22,7 @@ namespace hemelb
       {
         using namespace hemelb::geometry::neighbouring;
         class NeighbouringDataManagerTests : public FourCubeBasedTestFixture,
-                                             public MockNetHelper
+                                             public MockCommsHelper
         {
             CPPUNIT_TEST_SUITE ( NeighbouringDataManagerTests);
             CPPUNIT_TEST ( TestConstruct);
@@ -44,25 +44,24 @@ namespace hemelb
             {
               FourCubeBasedTestFixture::setUp();
               data = &latDat->GetNeighbouringData();
-              MockNetHelper::setUp(1, 0);
-              manager = new NeighbouringDataManager(*latDat, *data, *netMock);
+              MockCommsHelper::setUp(1, 0);
+              manager = new NeighbouringDataManager(*latDat, *data, commQ);
             }
 
             void UseRealCommunicator()
             {
-              delete manager;
-              delete netMock;
+              // delete manager;
 
-              communicatorMock = comm::MpiEnvironment::World();
-              netMock = new net::NetMock(communicatorMock);
-              manager = new NeighbouringDataManager(*latDat, *data, *netMock);
+              // communicator = comm::MpiEnvironment::World();
+	      // commQ = comm::Async::New(communicator);
+              // manager = new NeighbouringDataManager(*latDat, *data, commQ);
             }
 
             void tearDown()
             {
               delete manager;
               FourCubeBasedTestFixture::tearDown();
-              MockNetHelper::tearDown();
+              MockCommsHelper::tearDown();
             }
 
             void TestConstruct()
@@ -101,11 +100,18 @@ namespace hemelb
 
             void TestShareNeedsOneProc()
             {
-              UseRealCommunicator();
-              manager->RegisterNeededSite(43);
+	      std::vector<site_t> neededsites = {43};
+              manager->RegisterNeededSite(neededsites[0]);
+	      
+	      // The MapA2A needs a barrier but as the only needs are
+	      // local this is true immediately
+	      MockComms()->RequireIbarrier([]() { return true; });
 
+	      // We then send this need to ourself
+	      MockComms()->RequireSend(neededsites, 0, 0);
+	      MockComms()->RequireRecv(neededsites, 0, 0);
               manager->ShareNeeds();
-
+	      MockComms()->ExpectationsAllCompleted();
               CPPUNIT_ASSERT_EQUAL(manager->GetNeedsForProc(0).size(),
                                    static_cast<std::vector<int>::size_type> (1));
               CPPUNIT_ASSERT_EQUAL(manager->GetNeedsForProc(0).front(), static_cast<site_t> (43));
@@ -113,8 +119,12 @@ namespace hemelb
 
             void TestShareConstantDataOneProc()
             {
-              UseRealCommunicator();
-              manager->RegisterNeededSite(43);
+	      std::vector<site_t> neededsites = {43};
+              manager->RegisterNeededSite(neededsites[0]);
+	      
+	      MockComms()->RequireIbarrier([]() { return true; });
+	      MockComms()->RequireSend(neededsites, 0, 0);
+	      MockComms()->RequireRecv(neededsites, 0, 0);
               manager->ShareNeeds();
 
               // Now, transfer the data about that site.
@@ -126,39 +136,37 @@ namespace hemelb
               SiteData expectedData = exampleSite.GetSiteData();
               SiteData fixtureData = exampleSite.GetSiteData();
 
-              netMock->RequireSend(&expectedData.GetWallIntersectionData(),
-                                   1,
-                                   0,
-                                   "WallIntersectionDataToSelf");
-              netMock->RequireReceive(&fixtureData.GetWallIntersectionData(),
-                                      1,
-                                      0,
-                                      "WallIntersectionDataFromSelf");
-              netMock->RequireSend(&expectedData.GetIoletIntersectionData(),
-                                   1,
-                                   0,
-                                   "IoletIntersectionDataToSelf");
-              netMock->RequireReceive(&fixtureData.GetIoletIntersectionData(),
-                                      1,
-                                      0,
-                                      "IoletIntersectionDataFromSelf");
-              netMock->RequireSend(&expectedData.GetIoletId(), 1, 0, "IoletIdToSelf");
-              netMock->RequireReceive(&fixtureData.GetIoletId(), 1, 0, "IoletIdFromSelf");
-              netMock->RequireSend(&expectedData.GetSiteType(), 1, 0, "SiteTypeToSelf");
-              netMock->RequireReceive(&fixtureData.GetSiteType(), 1, 0, "SiteTypeFromSelf");
+	      MockComms()->RequireSend(expectedData.GetWallIntersectionData(),
+				       0, 0);
+              MockComms()->RequireRecv(fixtureData.GetWallIntersectionData(),
+				       0, 0);
+              MockComms()->RequireSend(&expectedData.GetIoletIntersectionData(),
+				       1,
+				       0,
+				       0);
+              MockComms()->RequireRecv(&fixtureData.GetIoletIntersectionData(),
+				       1,
+				       0,
+				       0);
+              MockComms()->RequireSend(&expectedData.GetIoletId(), 1, 0, 0);
+              MockComms()->RequireRecv(&fixtureData.GetIoletId(), 1, 0, 0);
+              MockComms()->RequireSend(&expectedData.GetSiteType(), 1, 0, 0);
+              MockComms()->RequireRecv(&fixtureData.GetSiteType(), 1, 0, 0);
 
-              netMock->RequireSend(exampleSite.GetWallDistances(),
+              MockComms()->RequireSend(exampleSite.GetWallDistances(),
                                    lb::lattices::D3Q15::NUMVECTORS - 1,
                                    0,
-                                   "WallToSelf");
-              netMock->RequireReceive(exampleSite.GetWallDistances(),
+                                   0);
+              MockComms()->RequireRecv(exampleSite.GetWallDistances(),
                                       lb::lattices::D3Q15::NUMVECTORS - 1,
                                       0,
-                                      "WallFromSelf");
-              netMock->RequireSend(&exampleSite.GetWallNormal(), 1, 0, "NormalToSelf");
-              netMock->RequireReceive(&exampleSite.GetWallNormal(), 1, 0, "NormalFromSelf");
+                                      0);
+              MockComms()->RequireSend(&exampleSite.GetWallNormal(), 1, 0, 0);
+              MockComms()->RequireRecv(&exampleSite.GetWallNormal(), 1, 0, 0);
               manager->TransferNonFieldDependentInformation();
-              netMock->ExpectationsAllCompleted();
+	      
+              MockComms()->ExpectationsAllCompleted();
+	      
               NeighbouringSite transferredSite = data->GetSite(43);
               CPPUNIT_ASSERT_EQUAL(exampleSite.GetSiteData(), transferredSite.GetSiteData());
               for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1; direction++)
@@ -171,7 +179,7 @@ namespace hemelb
 
             void TestShareFieldDataOneProc()
             {
-              UseRealCommunicator();
+              
 
               site_t targetGlobalOneDIdx = 43;
               LatticeVector targetGlobalThreeDIdx = latDat->GetSiteCoordsFromSiteId(targetGlobalOneDIdx);
@@ -179,6 +187,11 @@ namespace hemelb
 
               for (unsigned int direction = 0; direction < 3; direction++)
                 CPPUNIT_ASSERT_EQUAL(site_t(1), targetGlobalThreeDIdx[direction]);
+	      
+	      MockComms()->RequireIbarrier([]() { return true; });
+	      std::vector<site_t> neededsites = {targetGlobalOneDIdx};
+	      MockComms()->RequireSend(neededsites, 0, 0);
+	      MockComms()->RequireRecv(neededsites, 0, 0);
 
               manager->RegisterNeededSite(targetGlobalOneDIdx);
               manager->ShareNeeds();
@@ -188,19 +201,19 @@ namespace hemelb
 
               // It should arrive in the NeighbouringDataManager, from the values sent from the localLatticeData
 
-              netMock->RequireSend(const_cast<distribn_t*> (exampleSite.GetFOld<lb::lattices::D3Q15> ()),
-                                   lb::lattices::D3Q15::NUMVECTORS,
-                                   0,
-                                   "IntersectionDataToSelf");
+              MockComms()->RequireSend(const_cast<distribn_t*> (exampleSite.GetFOld<lb::lattices::D3Q15> ()),
+				       lb::lattices::D3Q15::NUMVECTORS,
+				       0,
+				       0);
 
               std::vector<distribn_t> receivedFOld(lb::lattices::D3Q15::NUMVECTORS, 53.0);
-              netMock->RequireReceive(&(receivedFOld[0]),
-                                      lb::lattices::D3Q15::NUMVECTORS,
-                                      0,
-                                      "IntersectionDataFromSelf");
+              MockComms()->RequireRecv(&(receivedFOld[0]),
+				       lb::lattices::D3Q15::NUMVECTORS,
+				       0,
+				       0);
 
               manager->TransferFieldDependentInformation();
-              netMock->ExpectationsAllCompleted();
+	      MockComms()->ExpectationsAllCompleted();
 
               NeighbouringSite transferredSite = data->GetSite(targetGlobalOneDIdx);
               for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++)
@@ -212,33 +225,38 @@ namespace hemelb
 
             void TestShareFieldDataOneProcViaIterableAction()
             {
-              UseRealCommunicator();
               site_t targetGlobalOneDIdx = 43;
               site_t targetLocalIdx = latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(targetGlobalOneDIdx);
+	      
+	      MockComms()->RequireIbarrier([]() { return true; });
+	      std::vector<site_t> neededsites = {targetGlobalOneDIdx};
+	      MockComms()->RequireSend(neededsites, 0, 0);
+	      MockComms()->RequireRecv(neededsites, 0, 0);
 
               manager->RegisterNeededSite(targetGlobalOneDIdx);
               manager->ShareNeeds();
 
               // Now, transfer the data about that site.
               Site < LatticeData > exampleSite = latDat->GetSite(targetLocalIdx);
-              // It should arrive in the NeighbouringDataManager, from the values sent from the localLatticeData
+              // It should arrive in the NeighbouringDataManager, from
+              // the values sent from the localLatticeData
 
-              netMock->RequireSend(const_cast<distribn_t*> (exampleSite.GetFOld<lb::lattices::D3Q15> ()),
-                                   lb::lattices::D3Q15::NUMVECTORS,
-                                   0,
-                                   "IntersectionDataToSelf");
+              MockComms()->RequireSend(const_cast<distribn_t*> (exampleSite.GetFOld<lb::lattices::D3Q15> ()),
+				       lb::lattices::D3Q15::NUMVECTORS,
+				       0,
+				       0);
               std::vector<distribn_t> receivedFOld(lb::lattices::D3Q15::NUMVECTORS, 53.0);
-              netMock->RequireReceive(&(receivedFOld[0]),
-                                      lb::lattices::D3Q15::NUMVECTORS,
-                                      0,
-                                      "IntersectionDataFromSelf");
-
+              MockComms()->RequireRecv(&(receivedFOld[0]),
+				       lb::lattices::D3Q15::NUMVECTORS,
+				       0,
+				       0);
+	      
               net::phased::StepManager stepManager;
               stepManager.RegisterIteratedActorSteps(*manager, 0);
-              net::phased::NetConcern netConcern = net::phased::NetConcern(*netMock);
+	      comm::AsyncConcern netConcern = comm::AsyncConcern(commQ);
               stepManager.RegisterCommsForAllPhases(netConcern);
               stepManager.CallActions();
-              netMock->ExpectationsAllCompleted();
+              MockComms()->ExpectationsAllCompleted();
 
               NeighbouringSite transferredSite = data->GetSite(targetGlobalOneDIdx);
               for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++)

@@ -27,12 +27,10 @@ namespace hemelb
       public:
         void setUp()
         {
-          argc = 5;
+          argc = 3;
           argv[0] = "hemelb";
           argv[1] = "-in";
           argv[2] = "four_cube.xml";
-          argv[3] = "-ss";
-          argv[4] = "1111";
           FolderTestFixture::setUp();
           CopyResourceToTempdir("four_cube.xml");
           CopyResourceToTempdir("four_cube.gmy");
