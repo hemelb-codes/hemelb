@@ -220,12 +220,12 @@ namespace hemelb
       timings[hemelb::reporting::Timers::exchangeCells].Start();
       auto ownership = [this](CellContainer::value_type cell)
       {
-        auto const id = latticeData.GetProcIdFromGlobalCoords(cell->GetBarycenter());
-        if (id == BIG_NUMBER2)
+        auto const iter = globalCoordsToProcMap.find(cell->GetBarycenter());
+        if (iter == globalCoordsToProcMap.end())
         {
           throw Exception() << "Cell nobody owns";
         }
-        return id;
+        return iter->second;
       };
       exchangeCells.PostCellMessageLength(nodeDistributions, cells, ownership);
       exchangeCells.PostCells(nodeDistributions, cells, ownership);
@@ -324,8 +324,8 @@ namespace hemelb
       auto const barycenter = cell->GetBarycenter();
 
       //! @todo: #623 AddCell should only be called if the subdomain contains the relevant RBC inlet
-      auto const id = latticeData.GetProcIdFromGlobalCoords(barycenter);
-      if (id == latticeData.GetCommunicator().Rank())
+      auto const iter = globalCoordsToProcMap.find(barycenter);
+      if ((iter != globalCoordsToProcMap.end()) && (iter->second == latticeData.GetCommunicator().Rank()))
       {
         log::Logger::Log<log::Info, log::OnePerCore>("Adding cell at (%f, %f, %f)",
             barycenter.x,

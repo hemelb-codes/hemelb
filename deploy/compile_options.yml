@@ -113,3 +113,4 @@ hemerbc:
   HEMELB_KERNEL: "GuoForcingLBGK"
   HEMELB_STEERING_LIB : "none"
   HEMELB_LATTICE: "D3Q19"
+  HEMELB_STENCIL: "ThreePoint"

@@ -1,4 +1,5 @@
 #include "redblood/parallel/GraphBasedCommunication.h"
+#include "util/Iterator.h"
 
 namespace hemelb
 {
@@ -155,7 +156,7 @@ namespace hemelb
             maxCellRadius = std::max(maxCellRadius, cellTemplate.second->GetScale());
           }
 
-          return EFFECTIVE_SIZE_TO_RADIUS_RATIO * maxCellRadius;
+          return MAXIMUM_SIZE_TO_RADIUS_RATIO * maxCellRadius;
         }
 
         //! \brief Generates a graph communicator describing the data dependencies for interpolation and spreading

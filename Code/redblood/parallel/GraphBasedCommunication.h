@@ -10,7 +10,6 @@
 #define HEMELB_REDBLOOD_PARALLELIZATION_GRAPH_BASED_COMMUNICATION_H
 
 #include "geometry/LatticeData.h"
-#include "util/iterator.h"
 
 namespace hemelb
 {
@@ -39,8 +38,8 @@ namespace hemelb
                                                                   geometry::LatticeData &latDat,
                                                                   LatticeDistance cellsEffectiveSize);
 
-      // Make effective size 1.5 times the diameter
-      static const LatticeDistance EFFECTIVE_SIZE_TO_RADIUS_RATIO = 3.0;
+      // In order to compute the graph neighbourhood we assume that cells elongate maximum MAXIMUM_SIZE_TO_RADIUS_RATIO times the radius
+      static const LatticeDistance MAXIMUM_SIZE_TO_RADIUS_RATIO = 5.0;
 
       LatticeDistance ComputeCellsEffectiveSize(std::shared_ptr<TemplateCellContainer> cellTemplates);
 

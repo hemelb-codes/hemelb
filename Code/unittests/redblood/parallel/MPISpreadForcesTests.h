@@ -141,7 +141,7 @@ namespace hemelb
         auto const& graphComm = CreateDumbGraphComm(split);
         auto const distributions = nodeDistributions(hemelb::redblood::parallel::ComputeGlobalCoordsToProcMap(graphComm, latDat), owned);
 
-        hemelb::redblood::parallel::SpreadForces mpi_spreader(CreateDumbGraphComm(split));
+        hemelb::redblood::parallel::SpreadForces mpi_spreader(graphComm);
         mpi_spreader.PostMessageLength(distributions, owned);
         mpi_spreader.ComputeForces(owned);
         mpi_spreader.PostForcesAndNodes(distributions, owned);

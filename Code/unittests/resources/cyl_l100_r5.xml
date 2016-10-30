@@ -12,12 +12,8 @@
   </geometry>
   <inlets>
     <inlet>
-      <!-- <condition subtype="parabolic" type="velocity"> -->
-      <!--   <radius units="m" value="5e-6" /> -->
-      <!--   <maximum units="m/s" value="0.36" /> -->
-      <!-- </condition> -->
       <condition subtype="cosine" type="pressure">
-        <mean units="mmHg" value="43.20" />
+        <mean units="mmHg" value="108.01" />
         <amplitude units="mmHg" value="0.0" />
         <phase units="rad" value="0.0" />
         <period units="s" value="1" />
@@ -81,23 +77,23 @@
       <boxsize units="LB" value="3" />
     </controller>
     <cell2Cell>
-      <intensity units="LB" value="0.0004174" />
+      <intensity units="LB" value="0.002087" />
       <cutoffdistance units="LB" value="1.0" />
       <exponent value="2"/>
     </cell2Cell>
     <cell2Wall>
-      <intensity units="LB" value="0.0004174" />
+      <intensity units="LB" value="0.002087" />
       <cutoffdistance units="LB" value="1.0" />
       <exponent value="2"/>
     </cell2Wall>
     <cells>
       <cell name="default">
         <moduli>
-          <bending units="LB" value="0.0004174" />
+          <bending units="LB" value="0.002087" />
           <surface units="LB" value="1.0" />
           <volume units="LB" value="1.0" />
           <dilation units="LB" value="0.5" />
-          <strain units="LB" value="0.001159" />
+          <strain units="LB" value="0.005797" />
         </moduli>
         <shape mesh_path="rbc_ico_2880.msh" />
         <scale units="m" value="4e-06" />
@@ -124,7 +120,7 @@
       <geometry type="whole" />
       <field type="velocity" />
     </propertyoutput>
-    <propertyoutput file="mpirank-velocity.xtr" period="1000">
+    <propertyoutput file="wholegeometry-mpirank.xtr" period="1000">
       <geometry type="whole" />
       <field type="mpirank" />
     </propertyoutput>

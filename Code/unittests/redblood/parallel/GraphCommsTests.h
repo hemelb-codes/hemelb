@@ -157,7 +157,7 @@ namespace hemelb
         CPPUNIT_ASSERT(master);
 
         // Biggest cell radius in lattice units times a tolerance
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(hemelb::redblood::parallel::EFFECTIVE_SIZE_TO_RADIUS_RATIO
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(hemelb::redblood::parallel::MAXIMUM_SIZE_TO_RADIUS_RATIO
                                          * (8e-06 / master->GetSimConfig()->GetVoxelSize()),
                                      ComputeCellsEffectiveSize(master->GetSimConfig()->GetRBCMeshes()),
                                      1e-9);

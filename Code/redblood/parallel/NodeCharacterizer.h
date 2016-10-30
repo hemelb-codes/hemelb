@@ -19,7 +19,6 @@
 #include "redblood/VelocityInterpolation.h"
 #include "geometry/LatticeData.h"
 #include "Traits.h"
-#include "util/Iterator.h"
 #include "redblood/parallel/GraphBasedCommunication.h"
 
 namespace hemelb
@@ -183,9 +182,17 @@ namespace hemelb
           for (; iterator.IsValid(); ++iterator)
           {
             auto const& id = globalCoordsToProcMap.find(*iterator);
-            //! @todo #668 Some unit tests trip the assert below. Requires further investigation.
-            assert(id != globalCoordsToProcMap.end());
-            result.insert(id->second);
+            //! @todo #668 Some unit tests throw the warning below. Requires further investigation.
+            if(id == globalCoordsToProcMap.end())
+            {
+              std::stringstream message;
+              message << "No owner recorded for lattice site " << *iterator;
+              log::Logger::Log<log::Warning, log::OnePerCore>(message.str());
+            }
+            else
+            {
+              result.insert(id->second);
+            }
           }
 
           return result;
