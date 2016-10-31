@@ -105,6 +105,8 @@ namespace hemelb
 				 int source, int tag) const;
       
       std::shared_ptr<MPI_Comm> commPtr;
+      int rank;
+      int size;
     };
 
     // bool operator==(const Communicator& comm1, const Communicator& comm2);
