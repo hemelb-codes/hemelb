@@ -26,15 +26,15 @@ namespace hemelb
       }
     }
 
-    MpiCommunicator::MpiCommunicator() : commPtr()
+    MpiCommunicator::MpiCommunicator() : commPtr(), rank(0), size(0)
     {
     }
 
-    MpiCommunicator::MpiCommunicator(MPI_Comm communicator, bool owner) : commPtr()
+    MpiCommunicator::MpiCommunicator(MPI_Comm communicator, bool owner) : commPtr(), rank(0), size(0)
     {
       if (communicator == MPI_COMM_NULL)
         return;
-
+      
       if (owner)
       {
         commPtr.reset(new MPI_Comm(communicator), Deleter);
@@ -43,6 +43,9 @@ namespace hemelb
       {
         commPtr.reset(new MPI_Comm(communicator));
       }
+      
+      HEMELB_MPI_CALL(MPI_Comm_rank, (*commPtr, &rank));
+      HEMELB_MPI_CALL(MPI_Comm_size, (*commPtr, &size));      
     }
     
     MpiCommunicator::operator MPI_Comm() const
@@ -55,15 +58,11 @@ namespace hemelb
     }
     int MpiCommunicator::Rank() const
     {
-      int rank;
-      HEMELB_MPI_CALL(MPI_Comm_rank, (*commPtr, &rank));
       return rank;
     }
 
     int MpiCommunicator::Size() const
     {
-      int size;
-      HEMELB_MPI_CALL(MPI_Comm_size, (*commPtr, &size));
       return size;
     }
 

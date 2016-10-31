@@ -217,6 +217,11 @@ namespace hemelb
     template <typename T>
     std::shared_ptr<Request> Communicator::Isend(const T* valPtr, int count, int dest, int tag) const
     {
+      static_assert(!std::is_pointer<T>::value,
+		    "You are trying to communicate a pointer type");
+      static_assert(!is_std_vector<T>::value,
+		    "You are trying to communicate a std::vector type");
+      
       return IsendImpl(valPtr, count, MpiDataType<T>(), dest, tag);
     }
     template <typename T>
@@ -234,6 +239,11 @@ namespace hemelb
     template <typename T>
     std::shared_ptr<Request> Communicator::Issend(const T* valPtr, int count, int dest, int tag) const
     {
+      static_assert(!std::is_pointer<T>::value,
+		    "You are trying to communicate a pointer type");
+      static_assert(!is_std_vector<T>::value,
+		    "You are trying to communicate a std::vector type");
+
      return IssendImpl(valPtr, count, MpiDataType<T>(), dest, tag);
     }
     template <typename T>
@@ -251,6 +261,11 @@ namespace hemelb
     template <typename T>
     std::shared_ptr<Request> Communicator::Irecv(T* valPtr, int count, int source, int tag) const
     {
+      static_assert(!std::is_pointer<T>::value,
+		    "You are trying to communicate a pointer type");
+      static_assert(!is_std_vector<T>::value,
+		    "You are trying to communicate a std::vector type");
+      
       return IrecvImpl(valPtr, count, MpiDataType<T>(), source, tag);
     }
     template <typename T>

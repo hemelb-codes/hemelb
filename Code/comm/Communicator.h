@@ -207,6 +207,10 @@ namespace hemelb
     // bool operator==(const Communicator& comm1, const Communicator& comm2);
     // bool operator!=(const Communicator& comm1, const Communicator& comm2);
 
+    template <class T>
+    struct is_std_vector : public std::false_type {};
+    template <class T>
+    struct is_std_vector<std::vector<T> > : public std::true_type {};
   }
 }
 
