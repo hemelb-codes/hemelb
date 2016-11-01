@@ -181,7 +181,7 @@ set(package_subdirs
 	reporting
 	lb
 	geometry
-	net
+	timestep
 	debug
 	util
 	io
@@ -227,7 +227,7 @@ if (HEMELB_BUILD_MULTISCALE)
 		reporting
 		lb
 		geometry
-		net
+		timestep
 		debug
 		util
 		io

@@ -7,7 +7,7 @@
 #ifndef HEMELB_LB_INCOMPRESSIBILITYCHECKER_H
 #define HEMELB_LB_INCOMPRESSIBILITYCHECKER_H
 #include "comm/Communicator.h"
-#include "net/CollectiveAction.h"
+#include "timestep/CollectiveActor.h"
 #include "geometry/LatticeData.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "reporting/Reportable.h"
@@ -29,7 +29,7 @@ namespace hemelb
         double maxVel;
     };
 
-    class IncompressibilityChecker : public net::CollectiveAction,
+    class IncompressibilityChecker : public timestep::CollectiveActor,
                                      public reporting::Reportable
     {
       public:
@@ -107,15 +107,16 @@ namespace hemelb
         static MPI_Datatype GetDensityMpiDatatype();
 
       protected:
-        /**
-          * Compute the local state.
-          */
-         void PreSend(void);
-
-         /**
-          * Initiate the collective.
-          */
-         void Send(void);
+      
+      inline virtual void BeginAll() {}
+      inline virtual void Begin() {}
+      // Compute the local state
+      virtual void PreSend();
+      // Initiate the collective
+      virtual void Send();
+      inline virtual void PreWait() {}
+      inline virtual void End() {}
+      inline virtual void EndAll() {}
 
       private:
         static void UpdateDensityEtc(const DensityEtc& in, DensityEtc& inout);
