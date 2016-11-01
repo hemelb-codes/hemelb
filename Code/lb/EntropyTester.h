@@ -7,7 +7,7 @@
 #ifndef HEMELB_LB_ENTROPYTESTER_H
 #define HEMELB_LB_ENTROPYTESTER_H
 
-#include "net/CollectiveAction.h"
+#include "timestep/CollectiveActor.h"
 #include "geometry/LatticeData.h"
 #include "lb/HFunction.h"
 #include "log/Logger.h"
@@ -17,13 +17,13 @@ namespace hemelb
   namespace lb
   {
     template<class LatticeType>
-    class EntropyTester : public net::CollectiveAction
+    class EntropyTester : public timestep::CollectiveActor
     {
       public:
         EntropyTester(int* collisionTypes, unsigned int typesTested,
                       const geometry::LatticeData * iLatDat, comm::Communicator::ConstPtr comm,
                       SimulationState* simState, reporting::Timers& timings) :
-            net::CollectiveAction(comm, timings[reporting::Timers::mpiWait]),
+            timestep::CollectiveActor(comm, timings[reporting::Timers::mpiWait]),
                 mLatDat(iLatDat), mHPreCollision(mLatDat->GetLocalFluidSiteCount()),
                 workTimer(timings[reporting::Timers::monitoring])
         {

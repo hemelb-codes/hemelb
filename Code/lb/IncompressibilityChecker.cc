@@ -58,7 +58,7 @@ namespace hemelb
 						       lb::MacroscopicPropertyCache& propertyCache,
 						       reporting::Timers& timings,
 						       distribn_t maximumRelativeDensityDifferenceAllowed) :
-        net::CollectiveAction(comms, timings[reporting::Timers::mpiWait]),
+        timestep::CollectiveActor(comms, timings[reporting::Timers::mpiWait]),
             mLatDat(latticeData), propertyCache(propertyCache), mSimState(simState),
             maximumRelativeDensityDifferenceAllowed(maximumRelativeDensityDifferenceAllowed),
             workTimer(timings[reporting::Timers::monitoring])
