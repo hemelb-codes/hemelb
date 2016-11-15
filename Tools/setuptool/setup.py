@@ -289,16 +289,11 @@ if __name__ == "__main__":
     # numpy, vtk
     HemeLbDir = os.path.abspath('../../Code')
     BoostDir = GetBoostDir(HemeLbDir)
-    vtkLibDir=os.path.abspath('/users/yousefi/vmtk-build/Install/lib')
-    vtkIncludeDir = os.path.abspath('/users/yousefi/vmtk-build/Install/include/vtk-7.0')
-    #if os.getenv('VTK_LIB_DIR'):
-    #    vtkLibDir=os.getenv('VTK_LIB_DIR')
-    #else:
-    #    vtkLibDir = GetVtkLibDir()
-    #if os.getenv('VTKINCLUDE'):
-    #    vtkIncludeDir = os.getenv('VTKINCLUDE')
-    #else:
-    #    vtkIncludeDir = LibToInclude(vtkLibDir)
+    vtkLibDir = GetVtkLibDir()
+    if os.getenv('VTKINCLUDE'):
+        vtkIncludeDir = os.getenv('VTKINCLUDE')
+    else:
+        vtkIncludeDir = LibToInclude(vtkLibDir)
     include_dirs = [vtkIncludeDir, HemeLbDir, BoostDir]
     
     libraries = []
