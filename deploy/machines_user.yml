@@ -1,0 +1,23 @@
+
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
+
+# Copy this file as machines_user.yml, and fill in your details.
+# Details given in the default dictionary will override default settings in machines.yml
+# Details given in per-machine dictionaries will override machine settings in machines.yml
+default:
+  local_results: "~/Downloads/previous_sim//results"
+  local_configs: "~/Downloads/previous_sim//config_files"
+  local_profiles: "~/Downloads/previous_sim//config_profiles"
+  username: "yousefi"
+palmetto:
+  username: "yousefi"
+  project: "hemelb-test"
+  cmake_options:
+    HEMELB_INLET_BOUNDARY: "LADDIOLET"
+    HEMELB_OUTLET_BOUNDARY: "NASHZEROTHORDERPRESSUREIOLET"
+
+
+
