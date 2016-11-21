@@ -56,7 +56,13 @@ namespace hemelb
             auto const& affectedProcs = details::positionAffectsProcs<STENCIL>(
                 globalCoordsToProcMap, InterpolationIterator<STENCIL>(pos));
             // #652 No mesh vertex should be under the influence of no rank in a valid simulation.
-            assert(affectedProcs.size() > 0);
+            if (affectedProcs.size() == 0)
+            {
+              std::stringstream message;
+              message << "Mesh vertex at " << pos << " is not affected by any flow subdomain.";
+              log::Logger::Log<log::Error, log::OnePerCore>(message.str());
+              hemelb::net::MpiEnvironment::Abort(-1);
+            }
             return affectedProcs;
           };
         }
@@ -186,8 +192,8 @@ namespace hemelb
             if(id == globalCoordsToProcMap.end())
             {
               std::stringstream message;
-              message << "No owner recorded for lattice site " << *iterator;
-              log::Logger::Log<log::Warning, log::OnePerCore>(message.str());
+              message << "No owner recorded for lattice site " << *iterator << ". Not a problem iff outside flow domain.";
+              log::Logger::Log<log::Debug, log::OnePerCore>(message.str());
             }
             else
             {
