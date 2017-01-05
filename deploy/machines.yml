@@ -65,7 +65,7 @@ archer: #the ARCHER supercomputer at EPCC
   make_jobs: 4
   verbose: 1
   job_dispatch: "qsub"
-  run_command: "aprun -n $cores"
+  run_command: "aprun -n $cores > stdout.txt 2> stderr.txt"
   batch_header: pbs-archer
   remote: "login.archer.ac.uk"
   no_git: true # sync from local checkout, easier to deploy local changes for debug, DON'T MERGE IN

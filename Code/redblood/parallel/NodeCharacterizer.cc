@@ -121,6 +121,22 @@ namespace hemelb
         return result;
       }
 
+      NodeCharacterizer::Process2NodesMap::key_type NodeCharacterizer::DominantAffectedProc() const
+      {
+        NodeCharacterizer::Process2NodesMap::key_type dominant_proc(-1);
+        Index max_num_affected_nodes(0);
+
+        for (auto const &process : affectedProcs)
+        {
+          if (process.second.size() > max_num_affected_nodes)
+          {
+            dominant_proc = process.first;
+            max_num_affected_nodes = process.second.size();
+          }
+        }
+        return dominant_proc;
+      }
+
       void NodeCharacterizer::ReduceFrom(MeshData::Vertices &consolidated,
                                          Process2NodesMap::key_type node,
                                          MeshData::Vertices const& incoming) const

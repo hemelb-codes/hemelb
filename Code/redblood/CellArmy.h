@@ -220,12 +220,14 @@ namespace hemelb
       timings[hemelb::reporting::Timers::exchangeCells].Start();
       auto ownership = [this](CellContainer::value_type cell)
       {
-        auto const iter = globalCoordsToProcMap.find(cell->GetBarycenter());
-        if (iter == globalCoordsToProcMap.end())
+        auto owner = nodeDistributions.at(cell->GetTag()).DominantAffectedProc();
+        if (owner == -1)
         {
-          throw Exception() << "Cell nobody owns";
+          throw Exception() << "Process " << latticeData.GetCommunicator().Rank()
+              << " cannot determine the owner of cell " << cell->GetTag()
+              << " with barycenter " << cell->GetBarycenter();
         }
-        return iter->second;
+        return owner;
       };
       exchangeCells.PostCellMessageLength(nodeDistributions, cells, ownership);
       exchangeCells.PostCells(nodeDistributions, cells, ownership);
@@ -307,7 +309,7 @@ namespace hemelb
         ++i_first;
         if (std::find_if(outlets.begin(), outlets.end(), checkCell) != outlets.end())
         {
-          log::Logger::Log<log::Debug, log::OnePerCore>("Removing cell at (%f, %f, %f)",
+          log::Logger::Log<log::Info, log::OnePerCore>("Removing cell at (%f, %f, %f)",
                                                         barycenter.x,
                                                         barycenter.y,
                                                         barycenter.z);

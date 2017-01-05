@@ -34,13 +34,13 @@ namespace hemelb
         //! Functions returning the set of affected procs for a given node
         typedef std::function<std::set<proc_t>(LatticePosition const&)> AssessNodeRange;
         //! Set of procs affected by this position
-        //! \param[in] latDat will tell us which site belongs to which proc
+        //! \param[in] globalCoordsToProcMap will tell us which site belongs to which proc
         //! \param[in] iterator a  stencil iterator going over affected lattice points
         template<class STENCIL>
         std::set<proc_t> positionAffectsProcs(GlobalCoordsToProcMap const &globalCoordsToProcMap,
                                               InterpolationIterator<STENCIL> &&iterator);
         //! Set of procs affected by this position
-        //! \param[in] latDat will tell us which site belongs to which proc
+        //! \param[in] globalCoordsToProcMap will tell us which site belongs to which proc
         //! \param[in] position for which to figure out affected processes
         //! \param[in] stencil giving interaction range
         template<class STENCIL>
@@ -68,6 +68,10 @@ namespace hemelb
         }
       } /* details */
 
+      //! NodeCharacterizer computes which processes are affected by each node
+      //! in a RBC mesh, keeps a map between process rank and node indices, and
+      //! provides methods to query it. Mesh node and vertex refer to the same
+      //! concept here.
       class NodeCharacterizer
       {
         public:
@@ -108,7 +112,7 @@ namespace hemelb
           {
           }
 
-          //! Whether the node affects more than one processor
+          //! Whether the node affects only one processor
           bool IsMidDomain(Index index) const;
           //! Whether the node affects more than one processor
           bool IsBoundary(Index index) const
@@ -137,8 +141,13 @@ namespace hemelb
 
           //! Indices of nodes that affect more than one proc
           std::set<MeshData::Vertices::size_type> BoundaryIndices() const;
-          //! Indices of nodes that affect more than one proc
+          //! Indices of the processors affected by any node in the mesh
           std::set<Process2NodesMap::key_type> AffectedProcs() const;
+
+          //! The process affected by the largest number of nodes
+          //! \return The rank of the process affected by the largest number of
+          //! mesh nodes or -1 if this could not be determined
+          Process2NodesMap::key_type DominantAffectedProc() const;
 
           //! Updates node characterization and return change in ownership
           void Reindex(AssessNodeRange const& assessNodeRange, MeshData::Vertices const &vertices);
@@ -174,7 +183,7 @@ namespace hemelb
           }
 
         protected:
-          //! Processes affected by a given processor
+          //! Nodes affected by a given processor
           Process2NodesMap affectedProcs;
       };
 
