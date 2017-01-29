@@ -76,10 +76,10 @@ namespace hemelb
         return true;
       }
 
-      std::set<MeshData::Vertices::size_type> NodeCharacterizer::BoundaryIndices() const {
+      NodeCharacterizer::Process2NodesMap::value_type::second_type NodeCharacterizer::BoundaryIndices() const {
         if(affectedProcs.size() == 1)
         {
-          return {};
+          return decltype(BoundaryIndices())();
         }
         auto i_first = affectedProcs.cbegin();
         auto current = i_first->second;

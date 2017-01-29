@@ -140,7 +140,7 @@ namespace hemelb
           }
 
           //! Indices of nodes that affect more than one proc
-          std::set<MeshData::Vertices::size_type> BoundaryIndices() const;
+          Process2NodesMap::value_type::second_type BoundaryIndices() const;
           //! Indices of the processors affected by any node in the mesh
           std::set<Process2NodesMap::key_type> AffectedProcs() const;
 
