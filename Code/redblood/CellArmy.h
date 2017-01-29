@@ -52,9 +52,9 @@ namespace hemelb
                 cell2Cell(cell2Cell), cell2Wall(cell2Wall), worldCommunicator(worldCommunicator),
                 cellTemplates(cellTemplates), timings(timings),
                 neighbourDependenciesGraph(parallel::CreateGraphComm(worldCommunicator,
-                                                                    latDat,
-                                                                    cellTemplates,
-                                                                    timings)),
+                                                                     latDat,
+                                                                     cellTemplates,
+                                                                     timings)),
                 exchangeCells(neighbourDependenciesGraph, worldCommunicator),
                 velocityIntegrator(neighbourDependenciesGraph),
                 forceSpreader(neighbourDependenciesGraph),
@@ -327,7 +327,7 @@ namespace hemelb
 
       //! @todo: #623 AddCell should only be called if the subdomain contains the relevant RBC inlet
       auto const iter = globalCoordsToProcMap.find(barycenter);
-      if ((iter != globalCoordsToProcMap.end()) && (iter->second == latticeData.GetCommunicator().Rank()))
+      if ((iter != globalCoordsToProcMap.end()) && (iter->second == neighbourDependenciesGraph.Rank()))
       {
         log::Logger::Log<log::Info, log::OnePerCore>("Adding cell at (%f, %f, %f)",
             barycenter.x,

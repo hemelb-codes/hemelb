@@ -89,7 +89,7 @@ namespace hemelb
           // This simulation duration is sufficient to pick up the original force spreading
           // issue that motivated the test. Run the test for longer in order to check other
           // aspects of the parallel implementation against a sequential run.
-          //ModifyXMLInput("cyl_l100_r5.xml", { "simulation", "steps", "value" }, 1000);
+          ModifyXMLInput("cyl_l100_r5.xml", { "simulation", "steps", "value" }, 1000);
         }
         HEMELB_MPI_CALL(MPI_Barrier, (Comms()));
 

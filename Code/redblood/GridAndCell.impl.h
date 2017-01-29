@@ -48,6 +48,7 @@ namespace details
         proc_t procid;
         site_t siteid;
 
+        /// @todo: investigate if logic below suffers from bug in #668
         if (latticeData.GetContiguousSiteId(site, procid, siteid))
         {
           if (procid == latticeData.GetCommunicator().Rank())
