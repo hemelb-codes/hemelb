@@ -54,7 +54,8 @@ message("${PROJECT_SOURCE_DIR}/Code")
 ExternalProject_Add(
    hemelb
 	URL ${PROJECT_SOURCE_DIR}/Code	
-	CONFIGURE_COMMAND cmake <SOURCE_DIR> 
+	CONFIGURE_COMMAND ${CMAKE_COMMAND} <SOURCE_DIR>
+        -DBOOST_ROOT=${BOOST_ROOT}
 	-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} 
 	-DHEMELB_DEPENDENCIES_PATH=${CMAKE_CURRENT_SOURCE_DIR}/dependencies
 	-DHEMELB_DEPENDENCIES_INSTALL_PATH=${HEMELB_DEPENDENCIES_INSTALL_PATH}
@@ -92,4 +93,6 @@ ExternalProject_Add(
 	BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 )
 
+# These are handled in dependencies/CMakeLists.txt and needed here
+# to ensure they are build in correct order.
 add_dependencies(hemelb cppunit parmetis tinyxml boost ctemplate zlib mpwide)

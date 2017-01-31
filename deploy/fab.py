@@ -218,9 +218,9 @@ def build(verbose=False):
         run(template("rm -rf hemelb_prefix/build"))
         with prefix(env.build_prefix):
             if verbose or env.verbose:
-                run("make VERBOSE=1")
+                run("make -j$make_jobs VERBOSE=1")
             else:
-                run("make")
+                run("make -j$make_jobs")
 
 @task
 def install():
