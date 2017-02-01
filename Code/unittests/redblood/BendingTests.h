@@ -61,8 +61,8 @@ namespace hemelb
             {
               std::fill(forces.begin(), forces.end(), 0e0);
               vertices.back() = bending(mesh.vertices.back(), theta);
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(0.5 * theta * theta * moduli, energy(), 1e-10);
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(0.5 * theta * theta * moduli, energy(), 1e-10);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(std::sqrt(3.) * theta * theta * moduli, energy(), 1e-10);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(std::sqrt(3.) * theta * theta * moduli, energy(), 1e-10);
             }
           }
 
@@ -73,7 +73,7 @@ namespace hemelb
             mesh.vertices.back() = bending(LatticePosition(1, 1, 0), theta);
             // Now go to flat geometry, check energy and forces
             vertices.back() = LatticePosition(1, 1, 0);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.5 * moduli * theta * theta, energyAndForces(), 1e-10);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(std::sqrt(3.) * moduli * theta * theta, energyAndForces(), 1e-10);
             for (auto const &force : forces)
             {
               CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, force.x, 1e-8);

@@ -28,7 +28,7 @@ namespace hemelb
         Angle const theta = orientedAngle(facetA, facetB);
         Angle const theta0 = orientedAngle(facetA_eq, facetB_eq);
         // forces on nodes that are in common
-        return 0.5 * intensity * (theta - theta0) * (theta - theta0);
+        return std::sqrt(3.) * intensity * (theta - theta0) * (theta - theta0);
       }
 
       // Facet bending energy and force between neighboring facets
@@ -62,7 +62,7 @@ namespace hemelb
 
         Angle const theta = orientedAngle(facetA, facetB);
         Angle const theta0 = orientedAngle(facetA_eq, facetB_eq);
-        const LatticeModulus strength = 5e-1 * intensity * (theta - theta0) * (theta < 0e0 ?
+        const LatticeModulus strength = std::sqrt(3.) * intensity * (theta - theta0) * (theta < 0e0 ?
           1e0 :
           -1e0);
         n_ij = n_ij * (strength / facetB.area());
@@ -91,7 +91,7 @@ namespace hemelb
         f3 += (n1 - n2).Cross(n_ji) + (n4 - n1).Cross(n_ij);
         f4 += (n1 - n3).Cross(n_ij);
 
-        return 0.5 * intensity * (theta - theta0) * (theta - theta0);
+        return std::sqrt(3.) * intensity * (theta - theta0) * (theta - theta0);
       }
 
       LatticeEnergy facetBending(MeshData::Vertices const &vertices, MeshData const &orig,

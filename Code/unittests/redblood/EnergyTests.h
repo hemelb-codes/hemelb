@@ -54,7 +54,7 @@ namespace hemelb
             mesh.vertices.back()[2] = 1e0;
 
             LatticeEnergy const expected(std::pow( (PI / 4e0 - std::acos(1. / std::sqrt(3.))), 2));
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.5 * expected, actual1, 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(std::sqrt(3.) * expected, actual1, 1e-8);
           }
 
           void testVolume()
