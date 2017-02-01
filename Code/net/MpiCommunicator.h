@@ -136,6 +136,22 @@ namespace hemelb
         template<typename T>
         std::vector<T> AllGather(const T& val) const;
 
+        /**
+         * Performs an all gather operation of fixed size among the neighbours defined in a MPI graph communicator
+         * @param val local contribution to all gather operation
+         * @return vector with contributions from each neighbour. Use GetNeighbors() to map zero-based indices of the vector to MPI ranks
+         */
+        template<typename T>
+        std::vector<T> AllNeighGather(const T& val) const;
+
+        /**
+         * Performs an all gather operation with vectors of variable size among the neighbours defined in a MPI graph communicator
+         * @param val vector with local contribution to all gather operation
+         * @return vector of vectors with contributions from each neighbour. Use GetNeighbors() to map zero-based indices of outermost vector to MPI ranks
+         */
+        template<typename T>
+        std::vector<std::vector<T>> AllNeighGatherV(const std::vector<T>& val) const;
+
         template<typename T>
         std::vector<T> AllToAll(const std::vector<T>& vals) const;
 

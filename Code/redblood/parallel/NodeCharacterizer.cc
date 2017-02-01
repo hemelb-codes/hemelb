@@ -76,10 +76,10 @@ namespace hemelb
         return true;
       }
 
-      std::set<MeshData::Vertices::size_type> NodeCharacterizer::BoundaryIndices() const {
+      NodeCharacterizer::Process2NodesMap::value_type::second_type NodeCharacterizer::BoundaryIndices() const {
         if(affectedProcs.size() == 1)
         {
-          return {};
+          return decltype(BoundaryIndices())();
         }
         auto i_first = affectedProcs.cbegin();
         auto current = i_first->second;
@@ -119,6 +119,17 @@ namespace hemelb
           }
         }
         return result;
+      }
+
+      NodeCharacterizer::Process2NodesMap::key_type NodeCharacterizer::DominantAffectedProc() const
+      {
+        typedef NodeCharacterizer::Process2NodesMap::const_reference Arg;
+        auto const max = std::max_element(affectedProcs.begin(), affectedProcs.end(), [](Arg a, Arg b) { return a.second.size() < b.second.size(); });
+        if (affectedProcs.empty() or max->second.size() == 0)
+        {
+          return -1;
+        }
+        return max->first;
       }
 
       void NodeCharacterizer::ReduceFrom(MeshData::Vertices &consolidated,

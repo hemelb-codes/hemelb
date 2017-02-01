@@ -4,5 +4,5 @@ add_library(hemelb_redblood Mesh.h Mesh.cc CellBase.cc Cell.cc Interpolation.cc
   WallCellPairIterator.cc
   buffer/Buffer.cc buffer/Columns.cc
   parallel/NodeCharacterizer.cc parallel/CellParallelization.cc parallel/SpreadForces.cc
-  parallel/IntegrateVelocities.cc
+  parallel/IntegrateVelocities.cc parallel/GraphBasedCommunication.cc
 )

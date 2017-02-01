@@ -37,9 +37,9 @@ namespace hemelb
       {
           CPPUNIT_TEST_SUITE (MPILockStepTests);
           CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::FourPoint>);
-          //CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::ThreePoint>);
-          //CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::CosineApprox>);
-          //CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::TwoPoint>);
+          CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::ThreePoint>);
+          CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::CosineApprox>);
+          CPPUNIT_TEST (testIntegration<hemelb::redblood::stencil::TwoPoint>);
           CPPUNIT_TEST_SUITE_END();
 
         public:
@@ -89,7 +89,7 @@ namespace hemelb
           // This simulation duration is sufficient to pick up the original force spreading
           // issue that motivated the test. Run the test for longer in order to check other
           // aspects of the parallel implementation against a sequential run.
-          //ModifyXMLInput("large_cylinder_rbc.xml", { "simulation", "steps", "value" }, 1000);
+          ModifyXMLInput("cyl_l100_r5.xml", { "simulation", "steps", "value" }, 1000);
         }
         HEMELB_MPI_CALL(MPI_Barrier, (Comms()));
 
@@ -207,10 +207,11 @@ namespace hemelb
         auto controller = std::static_pointer_cast<hemelb::redblood::CellController<Traits>>(
             master->GetCellController());
         auto const originalCellInserter = controller->GetCellInsertion();
-        auto cellInserter = [&originalCellInserter](CellInserter const &adder) {
-          auto const transformCell = [adder, originalCellInserter](CellContainer::value_type cell) {
+        auto rank = world.Rank();
+        auto cellInserter = [&originalCellInserter, rank](CellInserter const &adder) {
+          auto const transformCell = [adder, originalCellInserter, rank](CellContainer::value_type cell) {
             static boost::uuids::uuid nbCells = {{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-              0x0, 0x0, 0x0, 0x0, 0x0, 0x0}};
+              0x0, 0x0, 0x0, 0x0, 0x0, static_cast<uint8_t>(rank)}};
             cell->SetTag(nbCells);
             ++*static_cast<int64_t*>(static_cast<void*>(&nbCells));
             *cell += LatticePosition(0,0,3.6);

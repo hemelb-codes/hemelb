@@ -139,9 +139,8 @@ namespace hemelb
 
       net::MpiCommunicator CreateDumbGraphComm(net::MpiCommunicator const &comm)
       {
-        return comm.Graph(hemelb::redblood::ComputeProcessorNeighbourhood(comm));
+        return comm.Graph(hemelb::redblood::parallel::ComputeProcessorNeighbourhood(comm));
       }
-
     }
   }
 }

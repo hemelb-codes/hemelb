@@ -159,7 +159,7 @@ namespace hemelb
       {
         auto cell = std::make_shared<FakeCell>(pancakeSamosa());
         // Shift cell to be contained in flow domain
-        *cell += LatticePosition(1.1, 1.1, 1.1);
+        *cell += LatticePosition(2, 2, 2);
 
         helpers::ZeroOutFOld(latDat);
         helpers::ZeroOutForces(latDat);
@@ -218,7 +218,7 @@ namespace hemelb
       {
         auto cell = std::make_shared<FakeCell>(tetrahedron());
         // Shift cell to be contained in flow domain
-        *cell += LatticePosition(1.1, 1.1, 1.1);
+        *cell += LatticePosition(2, 2, 2);
 
         MeshData::Vertices::value_type barycentre;
         CellArmy<Traits>::CellChangeListener callback =
@@ -238,14 +238,15 @@ namespace hemelb
 
       void CellArmyTests::testCellRemoval()
       {
-        FlowExtension const outlet(util::Vector3D<Dimensionless>(1, 0, 0),
-                                   LatticePosition(8, 2, 2),
-                                   4.0,
-                                   4,
-                                   1.8);
+        // The flow extension takes the z > CubeSize()/2 half of the cube
+        FlowExtension const outlet(util::Vector3D<Dimensionless>(0, 0, 1),
+                                   LatticePosition(CubeSize()/2, CubeSize()/2, CubeSize()/2),
+                                   CubeSize()/2,
+                                   CubeSize()/2,
+                                   CubeSize()/4);
         auto cell = std::make_shared<FakeCell>(pancakeSamosa());
         // Shift cell to be contained in flow domain
-        *cell += LatticePosition(1.1, 1.1, 1.1);
+        *cell += LatticePosition(2, 2, 2);
 
         helpers::ZeroOutFOld(latDat);
         helpers::ZeroOutForces(latDat);
@@ -264,8 +265,9 @@ namespace hemelb
         CPPUNIT_ASSERT_EQUAL(3ul, army.GetDNC().size());
         CPPUNIT_ASSERT_EQUAL(1ul, army.GetCells().size());
 
-        // Check status after attempting to remove cell that should be removed
-        *cell += LatticePosition(outlet.origin + outlet.normal * outlet.length * 0.5);
+        // Check status after attempting to remove cell that should be removed.
+        // Move the cell beyond the fading section of the flow extension.
+        *cell += LatticePosition(outlet.origin + outlet.normal * outlet.fadeLength * 1.1);
         army.CellRemoval();
         CPPUNIT_ASSERT_EQUAL(0ul, army.GetDNC().size());
         CPPUNIT_ASSERT_EQUAL(0ul, army.GetCells().size());
