@@ -48,14 +48,11 @@ namespace details
         proc_t procid;
         site_t siteid;
 
-        /// @todo: investigate if logic below suffers from bug in #668
         if (latticeData.GetContiguousSiteId(site, procid, siteid))
         {
-          if (procid == latticeData.GetCommunicator().Rank())
-          {
-            auto siteOb = latticeData.GetSite(site);
-            siteOb.AddToForce(* (i_force + vertex) * weight);
-          }
+          assert (procid == latticeData.GetCommunicator().Rank());
+          auto siteOb = latticeData.GetSite(site);
+          siteOb.AddToForce(* (i_force + vertex) * weight);
         }
       }
 
