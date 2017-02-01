@@ -34,10 +34,10 @@ namespace hemelb
           using namespace log;
           Logger::Log<Debug, Singleton>("Cell insertion");
           CellArmy<TRAITS>::CallCellInsertion();
-          Logger::Log<Debug, Singleton>("Fluid interaction with cells");
-          CellArmy<TRAITS>::Fluid2CellInteractions();
           Logger::Log<Debug, Singleton>("Cell interaction with fluid");
           CellArmy<TRAITS>::Cell2FluidInteractions();
+          Logger::Log<Debug, Singleton>("Fluid interaction with cells");
+          CellArmy<TRAITS>::Fluid2CellInteractions();
         }
         void EndIteration() override
         {
