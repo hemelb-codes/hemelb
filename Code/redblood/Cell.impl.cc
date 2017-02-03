@@ -137,6 +137,7 @@ namespace hemelb
         }
 
         assert(orig.vertices.size() == vertices.size());
+        auto const & barycenter = redblood::barycenter(vertices);
         LatticeVolume const vol0 = volume(orig) * origMesh_scale * origMesh_scale * origMesh_scale;
         LatticeVolume const deltaV = volume(vertices, orig.facets) - vol0;
         double const strength(intensity / 6.0 * deltaV / vol0);
@@ -145,9 +146,9 @@ namespace hemelb
         {
           // Come aliases to make it easier to refer to vertices
           size_t const i0(facet[0]), i1(facet[1]), i2(facet[2]);
-          LatticePosition const &a(vertices[i0]);
-          LatticePosition const &b(vertices[i1]);
-          LatticePosition const &c(vertices[i2]);
+          LatticePosition const &a(vertices[i0] - barycenter);
+          LatticePosition const &b(vertices[i1] - barycenter);
+          LatticePosition const &c(vertices[i2] - barycenter);
 
           forces[i0] += b.Cross(c) * strength;
           forces[i1] += c.Cross(a) * strength;
