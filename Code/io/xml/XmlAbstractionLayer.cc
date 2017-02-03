@@ -27,16 +27,16 @@ namespace hemelb
       Document::~Document()
       {
         delete xmlDoc;
-        xmlDoc = NULL;
+        xmlDoc = nullptr;
       }
 
-      Element Document::GetRoot() const
+      Element Document::GetRoot()
       {
         return Element(xmlDoc->RootElement());
       }
 
       Element::Element(TiXmlElement* el_) :
-        el(el_)
+          el(el_)
       {
       }
 
@@ -45,7 +45,7 @@ namespace hemelb
       }
       const Element Element::Missing()
       {
-        return Element(NULL);
+        return Element(nullptr);
       }
       const std::string& Element::GetName() const
       {
@@ -57,78 +57,56 @@ namespace hemelb
         return el->Row();
       }
 
-      // Get the first child
-      const Element Element::GetChildOrNull() const
+      Element Element::GetChildOrNull(const std::string& name)
       {
-        TiXmlElement* ans = el->FirstChildElement();
+        TiXmlElement* ans = el->FirstChildElement(name);
         return Element(ans);
       }
-      const Element Element::GetChildOrThrow() const
-      {
-        TiXmlElement* ans = el->FirstChildElement();
-        if (ans == NULL)
-          throw ChildError(*this, "*any*");
-
-        return Element(ans);
-      }
-
-      // Get the first child with the given name
       const Element Element::GetChildOrNull(const std::string& name) const
       {
         TiXmlElement* ans = el->FirstChildElement(name);
         return Element(ans);
       }
+
+      Element Element::GetChildOrThrow(const std::string& name)
+      {
+        TiXmlElement* ans = el->FirstChildElement(name);
+        if (ans == nullptr)
+          throw ChildError(*this, name);
+
+        return Element(ans);
+      }
       const Element Element::GetChildOrThrow(const std::string& name) const
       {
         TiXmlElement* ans = el->FirstChildElement(name);
-        if (ans == NULL)
+        if (ans == nullptr)
           throw ChildError(*this, name);
 
         return Element(ans);
       }
 
-      // Iterator over all children
-      ChildIterator Element::IterChildren() const
-      {
-        return ChildIterator(*this);
-      }
-      // Iterator over children with the given name
       ChildIterator Element::IterChildren(const std::string& name) const
       {
         return ChildIterator(*this, name);
       }
 
-      // Next sibling with any name
-      const Element Element::NextSiblingOrNull() const
+      Element Element::NextSiblingOrNull(const std::string name)
       {
-        TiXmlElement* ans = el->NextSiblingElement();
-        return Element(ans);
-      }
-      const Element Element::NextSiblingOrThrow() const
-      {
-        TiXmlElement* ans = el->NextSiblingElement();
-        if (ans == NULL)
-          throw SiblingError(*this, "*any*");
+        TiXmlElement* ans = el->NextSiblingElement(name);
+        if (ans == nullptr)
+          return nullptr;
 
         return Element(ans);
       }
 
-      // Next sibling with the given name.
-      const Element Element::NextSiblingOrNull(const std::string name) const
+      Element Element::NextSiblingOrThrow(const std::string name)
       {
         TiXmlElement* ans = el->NextSiblingElement(name);
-        return Element(ans);
-      }
-      const Element Element::NextSiblingOrThrow(const std::string name) const
-      {
-        TiXmlElement* ans = el->NextSiblingElement(name);
-        if (ans == NULL)
+        if (ans == nullptr)
           throw SiblingError(*this, name);
 
         return Element(ans);
       }
-
-      // Get the named attribute.
       const std::string* Element::GetAttributeOrNull(const std::string& name) const
       {
         return el->Attribute(name);
@@ -136,21 +114,20 @@ namespace hemelb
       const std::string& Element::GetAttributeOrThrow(const std::string& name) const
       {
         const std::string* ans = el->Attribute(name);
-        if (ans == NULL)
+        if (ans == nullptr)
           throw AttributeError(*this, name);
 
         return *ans;
       }
 
-      // Get the parent element.
-      const Element Element::GetParentOrNull() const
+      Element Element::GetParentOrNull()
       {
         return Element(el->Parent()->ToElement());
       }
-      const Element Element::GetParentOrThrow() const
+      Element Element::GetParentOrThrow()
       {
         TiXmlElement* parent = el->Parent()->ToElement();
-        if (parent == NULL)
+        if (parent == nullptr)
           throw ParentError(*this);
         return Element(parent);
       }
@@ -174,14 +151,14 @@ namespace hemelb
       {
         const TiXmlNode* parent = el->Parent();
         const TiXmlElement* parentEl = parent->ToElement();
-        if (parentEl != NULL)
+        if (parentEl != nullptr)
         {
           GetPathWorker(parentEl, ans);
         }
         else
         {
           const TiXmlDocument* doc = parent->ToDocument();
-          if (doc != NULL)
+          if (doc != nullptr)
           {
             ans << doc->Value() << ":";
           }
@@ -198,15 +175,7 @@ namespace hemelb
        * Default constructor
        */
       ChildIterator::ChildIterator() :
-        parent(Element::Missing()), current(Element::Missing()), name()
-      {
-      }
-      /**
-       * Constructor to iterate over all subelements.
-       * @param elem
-       */
-      ChildIterator::ChildIterator(const Element& elem) :
-        parent(elem), current(elem.GetChildOrNull()), name()
+          parent(Element::Missing()), current(Element::Missing()), name()
       {
       }
 
@@ -216,7 +185,7 @@ namespace hemelb
        * @param subElemName
        */
       ChildIterator::ChildIterator(const Element& elem, const std::string& subElemName) :
-        parent(elem), current(elem.GetChildOrNull(subElemName)), name(subElemName)
+          parent(elem), current(elem.GetChildOrNull(subElemName)), name(subElemName)
       {
       }
 
@@ -225,7 +194,7 @@ namespace hemelb
        * @param other
        */
       ChildIterator::ChildIterator(const ChildIterator& other) :
-        parent(other.parent), current(other.current), name(other.name)
+          parent(other.parent), current(other.current), name(other.name)
       {
       }
 
@@ -287,10 +256,7 @@ namespace hemelb
       ChildIterator& ChildIterator::operator++()
       {
         // increment and return the updated version
-        if (name == "")
-          current = current.NextSiblingOrNull();
-        else
-          current = current.NextSiblingOrNull(name);
+        current = current.NextSiblingOrNull(name);
         return *this;
       }
 
@@ -303,7 +269,7 @@ namespace hemelb
       {
         // increment and return the value pre-increment
         ChildIterator ans = *this;
-        ++(*this);
+        ++ (*this);
         return ans;
       }
 
@@ -314,14 +280,14 @@ namespace hemelb
 
       // XML exception base class
       XmlError::XmlError(const Element& el) :
-        elem(el), elemPath(el.GetPath())
+          elem(el), elemPath(el.GetPath())
       {
         *this << "xml::";
       }
 
       // Missing attribute
       AttributeError::AttributeError(const Element& n, const std::string& attr_) :
-        XmlError(n), attr(attr_)
+          XmlError(n), attr(attr_)
       {
         *this << "AttributeError: '" << elemPath << "' has no attribute '" << attr << "'";
       }
@@ -329,30 +295,30 @@ namespace hemelb
       // Attribute parsing error
       ParseError::ParseError(const Element& el, const std::string& attrName,
                              const std::string& attrVal) :
-        XmlError(el), name(attrName), val(attrVal)
+          XmlError(el), name(attrName), val(attrVal)
       {
         *this << "ParseError: '" << elemPath << "' Cannot convert attribute '" << name << "=\""
             << val << "\"'";
       }
 
       ElementError::ElementError(const Element& el, const std::string& elName) :
-        XmlError(el), elemName(elName)
+          XmlError(el), elemName(elName)
       {
       }
       ChildError::ChildError(const Element& elem, const std::string& subElemName) :
-        ElementError(elem, subElemName)
+          ElementError(elem, subElemName)
       {
         *this << "ChildError: '" << elemPath << "' has no child '" << elemName << "'";
       }
 
       ParentError::ParentError(const Element& elem) :
-        ElementError(elem, "")
+          ElementError(elem, "")
       {
         *this << "ParentError: '" << elemPath << "' is root element";
       }
 
       SiblingError::SiblingError(const Element& elem, const std::string& subElemName) :
-        ElementError(elem, subElemName)
+          ElementError(elem, subElemName)
       {
         *this << "SiblingError: '" << elemPath << "' has no later sibling '" << elemName << "'";
       }

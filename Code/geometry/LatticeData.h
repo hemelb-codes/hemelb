@@ -25,13 +25,22 @@
 #include "reporting/Reportable.h"
 #include "reporting/Timers.h"
 #include "util/Vector3D.h"
+#include "log/Logger.h"
 
 namespace hemelb
 {
+  namespace unittests
+  {
+    namespace helpers
+    {
+      // Friend class to access all of LatticeData's internals in tests
+      class LatticeDataAccess;
+    }
+  }
   namespace lb
   {
     // Ugly forward definition is currently necessary.
-    template<class LatticeType> class LBM;
+    template<class TRAITS> class LBM;
   }
 
   namespace geometry
@@ -39,10 +48,12 @@ namespace hemelb
     class LatticeData : public reporting::Reportable
     {
       public:
-        template<class Lattice> friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
+        friend class unittests::helpers::LatticeDataAccess;
+        template<class TRAITS> friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
         template<class LatticeData> friend class Site; //! Let the inner classes have access to site-related data that's otherwise private.
 
-        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult);
+        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult,
+                    const net::IOCommunicator& comms);
 
         virtual ~LatticeData();
 
@@ -75,7 +86,34 @@ namespace hemelb
         {
           return Site<LatticeData>(localIndex, *this);
         }
-
+        /**
+         * Get a site object for the given position.
+         */
+        inline Site<LatticeData> GetSite(LatticeVector const &pos)
+        {
+          return GetSite(GetContiguousSiteId(pos));
+        }
+        /**
+         * Get a site object for the given position.
+         */
+        inline Site<const LatticeData> GetSite(LatticeVector const &pos) const
+        {
+          return GetSite(GetContiguousSiteId(pos));
+        }
+        /**
+         * Get a site object for the given position.
+         */
+        inline Site<LatticeData> GetSite(site_t x, site_t y, site_t z)
+        {
+          return GetSite(LatticeVector(x, y, z));
+        }
+        /**
+         * Get a site object for the given position.
+         */
+        inline Site<const LatticeData> GetSite(site_t x, site_t y, site_t z) const
+        {
+          return GetSite(LatticeVector(x, y, z));
+        }
         /**
          * Get a const site object for the given index.
          * @param localIndex
@@ -128,7 +166,8 @@ namespace hemelb
          * @param blockCoords
          * @return
          */
-        inline site_t GetLocalSiteIdFromLocalSiteCoords(const util::Vector3D<site_t>& siteCoords) const
+        inline site_t GetLocalSiteIdFromLocalSiteCoords(
+            const util::Vector3D<site_t>& siteCoords) const
         {
           return ( (siteCoords.x * blockSize) + siteCoords.y) * blockSize + siteCoords.z;
         }
@@ -190,7 +229,6 @@ namespace hemelb
         }
 
         /**
-         * Get the block data for the given block id.
          * @param blockNumber
          * @return
          */
@@ -209,6 +247,10 @@ namespace hemelb
         }
 
         site_t GetContiguousSiteId(util::Vector3D<site_t> location) const;
+        site_t GetContiguousSiteId(site_t x, site_t y, site_t z) const
+        {
+          return GetContiguousSiteId(LatticeVector(x, y, z));
+        }
 
         /**
          * Get both the owner processor id and the local site id (if local)
@@ -217,7 +259,8 @@ namespace hemelb
          * @param siteId (out) the index of the site for the property cache
          * @return true when globalLocation is local fluid, false otherwise
          */
-        bool GetContiguousSiteId(const util::Vector3D<site_t>& globalLocation, proc_t& procId, site_t& siteId) const;
+        bool GetContiguousSiteId(const util::Vector3D<site_t>& globalLocation, proc_t& procId,
+                                 site_t& siteId) const;
 
         /**
          * Get the global site coordinates from block coordinates and the site's local coordinates
@@ -226,13 +269,15 @@ namespace hemelb
          * @param localSiteCoords
          * @return
          */
-        inline const util::Vector3D<site_t> GetGlobalCoords(const util::Vector3D<site_t>& blockCoords,
-                                                            const util::Vector3D<site_t>& localSiteCoords) const
+        inline const util::Vector3D<site_t> GetGlobalCoords(
+            const util::Vector3D<site_t>& blockCoords,
+            const util::Vector3D<site_t>& localSiteCoords) const
         {
           return blockCoords * blockSize + localSiteCoords;
         }
 
-        inline site_t GetGlobalNoncontiguousSiteIdFromGlobalCoords(const util::Vector3D<site_t>&globalCoords) const
+        inline site_t GetGlobalNoncontiguousSiteIdFromGlobalCoords(
+            const util::Vector3D<site_t>&globalCoords) const
         {
           return (globalCoords.x * sites.y + globalCoords.y) * sites.z + globalCoords.z;
         }
@@ -244,7 +289,8 @@ namespace hemelb
           return GetContiguousSiteId(location);
         }
 
-        void GetGlobalCoordsFromGlobalNoncontiguousSiteId(site_t globalId, util::Vector3D<site_t>& globalCoords) const
+        void GetGlobalCoordsFromGlobalNoncontiguousSiteId(
+            site_t globalId, util::Vector3D<site_t>& globalCoords) const
         {
           globalCoords.z = globalId % sites.z;
           site_t blockIJData = globalId / sites.z;
@@ -333,30 +379,40 @@ namespace hemelb
         neighbouring::NeighbouringLatticeData &GetNeighbouringData();
         neighbouring::NeighbouringLatticeData const &GetNeighbouringData() const;
 
+        int GetLocalRank() const;
+
+        //! Reset forces to some constant value
+        //! Could be zero. Or could be something like a constant term for gravity.
+        void ResetForces(LatticeForceVector const &force = LatticeForceVector(0, 0, 0))
+        {
+          std::fill(forceAtSite.begin(), forceAtSite.end(), force);
+        }
       protected:
         /**
          * The protected default constructor does nothing. It exists to allow derivation from this
          * class for the purpose of testing.
          * @return
          */
-        LatticeData(const lb::lattices::LatticeInfo& latticeInfo);
+        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const net::IOCommunicator& comms);
 
-        void SetBasicDetails(util::Vector3D<site_t> blocks,
-                             site_t blockSize);
+        void SetBasicDetails(util::Vector3D<site_t> blocks, site_t blockSize);
 
         void ProcessReadSites(const Geometry& readResult);
 
-        void PopulateWithReadData(const std::vector<site_t> midDomainBlockNumbers[COLLISION_TYPES],
-                                  const std::vector<site_t> midDomainSiteNumbers[COLLISION_TYPES],
-                                  const std::vector<SiteData> midDomainSiteData[COLLISION_TYPES],
-                                  const std::vector<util::Vector3D<float> > midDomainWallNormals[COLLISION_TYPES],
-                                  const std::vector<float> midDomainWallDistance[COLLISION_TYPES],
-                                  const std::vector<site_t> domainEdgeBlockNumbers[COLLISION_TYPES],
-                                  const std::vector<site_t> domainEdgeSiteNumbers[COLLISION_TYPES],
-                                  const std::vector<SiteData> domainEdgeSiteData[COLLISION_TYPES],
-                                  const std::vector<util::Vector3D<float> > domainEdgeWallNormals[COLLISION_TYPES],
-                                  const std::vector<float> domainEdgeWallDistance[COLLISION_TYPES])
+        void PopulateWithReadData(
+            const std::vector<site_t> midDomainBlockNumbers[COLLISION_TYPES],
+            const std::vector<site_t> midDomainSiteNumbers[COLLISION_TYPES],
+            const std::vector<SiteData> midDomainSiteData[COLLISION_TYPES],
+            const std::vector<util::Vector3D<float> > midDomainWallNormals[COLLISION_TYPES],
+            const std::vector<float> midDomainWallDistance[COLLISION_TYPES],
+            const std::vector<site_t> domainEdgeBlockNumbers[COLLISION_TYPES],
+            const std::vector<site_t> domainEdgeSiteNumbers[COLLISION_TYPES],
+            const std::vector<SiteData> domainEdgeSiteData[COLLISION_TYPES],
+            const std::vector<util::Vector3D<float> > domainEdgeWallNormals[COLLISION_TYPES],
+            const std::vector<float> domainEdgeWallDistance[COLLISION_TYPES])
         {
+
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>(".");
           // Populate the collision count arrays.
           for (unsigned collisionType = 0; collisionType < COLLISION_TYPES; collisionType++)
           {
@@ -368,9 +424,11 @@ namespace hemelb
           // Data about contiguous local sites. First midDomain stuff, then domainEdge.
           for (unsigned collisionType = 0; collisionType < COLLISION_TYPES; collisionType++)
           {
-            for (unsigned indexInType = 0; indexInType < midDomainProcCollisions[collisionType]; indexInType++)
+            for (unsigned indexInType = 0; indexInType < midDomainProcCollisions[collisionType];
+                indexInType++)
             {
               siteData.push_back(midDomainSiteData[collisionType][indexInType]);
+
               wallNormalAtSite.push_back(midDomainWallNormals[collisionType][indexInType]);
               for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); direction++)
               {
@@ -388,10 +446,12 @@ namespace hemelb
 
           for (unsigned collisionType = 0; collisionType < COLLISION_TYPES; collisionType++)
           {
-            for (unsigned indexInType = 0; indexInType < domainEdgeProcCollisions[collisionType]; indexInType++)
+            for (unsigned indexInType = 0; indexInType < domainEdgeProcCollisions[collisionType];
+                indexInType++)
             {
               siteData.push_back(domainEdgeSiteData[collisionType][indexInType]);
               wallNormalAtSite.push_back(domainEdgeWallNormals[collisionType][indexInType]);
+
               for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); direction++)
               {
                 distanceToWall.push_back(domainEdgeWallDistance[collisionType][indexInType
@@ -406,16 +466,22 @@ namespace hemelb
 
           }
 
-          oldDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
-          newDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
+          oldDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1
+              + totalSharedFs);
+          newDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1
+              + totalSharedFs);
+
         }
+
         void CollectFluidSiteDistribution();
         void CollectGlobalSiteExtrema();
 
         void InitialiseNeighbourLookups();
 
-        void InitialiseNeighbourLookup(std::vector<std::vector<site_t> >& sharedFLocationForEachProc);
-        void InitialisePointToPointComms(std::vector<std::vector<site_t> >& sharedFLocationForEachProc);
+        void InitialiseNeighbourLookup(
+            std::vector<std::vector<site_t> >& sharedFLocationForEachProc);
+        void InitialisePointToPointComms(
+            std::vector<std::vector<site_t> >& sharedFLocationForEachProc);
         void InitialiseReceiveLookup(std::vector<std::vector<site_t> >& sharedFLocationForEachProc);
 
         sitedata_t GetSiteData(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
@@ -427,8 +493,7 @@ namespace hemelb
          * @param iDirection
          * @param iValue
          */
-        inline void SetNeighbourLocation(const site_t siteIndex,
-                                         const unsigned int direction,
+        inline void SetNeighbourLocation(const site_t siteIndex, const unsigned int direction,
                                          const site_t distributionIndex)
         {
           neighbourIndices[siteIndex * latticeInfo.GetNumVectors() + direction] = distributionIndex;
@@ -531,6 +596,44 @@ namespace hemelb
           return wallNormalAtSite[iSiteIndex];
         }
 
+        // Method should remain protected, intent is to access this information via Site
+        LatticeForceVector const& GetForceAtSite(site_t iSiteIndex) const
+        {
+          return forceAtSite[iSiteIndex];
+        }
+        /**
+         * Set the force vector at the given site
+         * @param iSiteIndex
+         * @param force
+         * @return
+         */
+        // Method should remain protected, intent is to set this information via Site
+        void SetForceAtSite(site_t iSiteIndex, LatticeForceVector const & force)
+        {
+          assert(iSiteIndex >= site_t(0));
+          assert(forceAtSite.size() > size_t(iSiteIndex));
+          forceAtSite[iSiteIndex] = force;
+        }
+        void AddToForceAtSite(site_t iSiteIndex, LatticeForceVector const &force)
+        {
+          assert(iSiteIndex >= site_t(0));
+          assert(forceAtSite.size() > size_t(iSiteIndex));
+          forceAtSite[iSiteIndex] += force;
+        }
+        /**
+         * Set a vertical force vector at the given site
+         * @param iSiteIndex
+         * @param force
+         * @return
+         */
+        // Method should remain protected, intent is to set this information via Site
+        void SetForceAtSite(site_t iSiteIndex, LatticeForce force)
+        {
+          assert(iSiteIndex >= site_t(0));
+          assert(forceAtSite.size() > size_t(iSiteIndex));
+          forceAtSite[iSiteIndex] = util::Vector3D<distribn_t>(0.0, 0.0, force);
+        }
+
         /**
          * Get the global site coordinates from a contiguous site id.
          * @param siteIndex
@@ -564,6 +667,7 @@ namespace hemelb
         site_t localFluidSites; //! The number of local fluid sites.
         std::vector<distribn_t> oldDistributions; //! The distribution values for the previous time step.
         std::vector<distribn_t> newDistributions; //! The distribution values for the next time step.
+        std::vector<LatticeForceVector> forceAtSite; //! Holds the force vector at a fluid site
         std::vector<Block> blocks; //! Data where local fluid sites are stored contiguously.
 
         std::vector<distribn_t> distanceToWall; //! Hold the distance to the wall for each fluid site.
@@ -576,6 +680,7 @@ namespace hemelb
         std::vector<site_t> neighbourIndices; //! Data about neighbouring fluid sites.
         std::vector<site_t> streamingIndicesForReceivedDistributions; //! The indices to stream to for distributions received from other processors.
         neighbouring::NeighbouringLatticeData *neighbouringData;
+        const net::IOCommunicator& comms;
     };
   }
 }

@@ -15,14 +15,14 @@ namespace hemelb
   namespace vis
   {
     // Constructor
-    GlyphDrawer::GlyphDrawer(geometry::LatticeData* iLatDat,
-                             Screen* iScreen,
-                             DomainStats* iDomainStats,
-                             Viewpoint* iViewpoint,
+    GlyphDrawer::GlyphDrawer(geometry::LatticeData* iLatDat, Screen* iScreen,
+                             DomainStats* iDomainStats, Viewpoint* iViewpoint,
                              VisSettings* iVisSettings) :
-        mLatDat(iLatDat), mScreen(iScreen), mDomainStats(iDomainStats), mViewpoint(iViewpoint), mVisSettings(iVisSettings)
+        mLatDat(iLatDat), mScreen(iScreen), mDomainStats(iDomainStats), mViewpoint(iViewpoint),
+            mVisSettings(iVisSettings)
     {
-      for (geometry::BlockTraverser blockTrav(*mLatDat); blockTrav.CurrentLocationValid(); blockTrav.TraverseOne())
+      for (geometry::BlockTraverser blockTrav(*mLatDat); blockTrav.CurrentLocationValid();
+          blockTrav.TraverseOne())
       {
         // Get the block data for this block - if it has no site data, move on.
         const geometry::Block& block = blockTrav.GetCurrentBlockData();
@@ -33,7 +33,8 @@ namespace hemelb
         }
 
         // We put the glyph at the site at the centre of the block...
-        const util::Vector3D<site_t> midBlockSite = util::Vector3D<site_t>(mLatDat->GetBlockSize()) / (site_t) 2;
+        const util::Vector3D<site_t> midBlockSite = util::Vector3D<site_t>(mLatDat->GetBlockSize())
+            / (site_t) 2;
 
         const site_t siteIdOnBlock = mLatDat->GetLocalSiteIdFromLocalSiteCoords(midBlockSite);
 
@@ -46,8 +47,8 @@ namespace hemelb
         // Create a glyph at the desired location
         Glyph lGlyph;
 
-        util::Vector3D<site_t> globalSiteCoords = mLatDat->GetGlobalCoords(blockTrav.GetCurrentLocation(),
-                                                                           midBlockSite);
+        util::Vector3D<site_t> globalSiteCoords =
+            mLatDat->GetGlobalCoords(blockTrav.GetCurrentLocation(), midBlockSite);
 
         lGlyph.x = float(globalSiteCoords.x) - 0.5F * float(mLatDat->GetSiteDimensions().x);
         lGlyph.y = float(globalSiteCoords.y) - 0.5F * float(mLatDat->GetSiteDimensions().y);
@@ -76,8 +77,7 @@ namespace hemelb
      */
     void GlyphDrawer::RenderLine(const XYCoordinates<float>& endPoint1,
                                  const XYCoordinates<float>& endPoint2,
-                                 const VisSettings* visSettings,
-                                 PixelSet<BasicPixel>* pixelSet)
+                                 const VisSettings* visSettings, PixelSet<BasicPixel>* pixelSet)
     {
       // Store end points of the line and 'current' point (x and y).
       int x = int(endPoint1.x);
@@ -134,11 +134,8 @@ namespace hemelb
      * @param limit Maximal value in the limiting direction
      */
     template<bool xLimited>
-    void GlyphDrawer::RenderLineHelper(int x,
-                                       int y,
-                                       const int smallerDelta,
-                                       const int deltaDifference,
-                                       const int limit,
+    void GlyphDrawer::RenderLineHelper(int x, int y, const int smallerDelta,
+                                       const int deltaDifference, const int limit,
                                        const VisSettings* visSettings,
                                        PixelSet<BasicPixel>* pixelSet)
     {
@@ -190,7 +187,8 @@ namespace hemelb
       for (site_t n = 0; n < (site_t) mGlyphs.size(); n++)
       {
         // ... get the velocity at that point...
-        const util::Vector3D<distribn_t>& velocity = propertyCache.velocityCache.Get(mGlyphs[n].siteId);
+        const util::Vector3D<distribn_t>& velocity =
+            propertyCache.velocityCache.Get(mGlyphs[n].siteId);
 
         // ... calculate the velocity vector multiplier...
         const double temp = mVisSettings->glyphLength * ((distribn_t) mLatDat->GetBlockSize())
@@ -199,7 +197,9 @@ namespace hemelb
         // ... calculate the two ends of the line we're going to draw...
         util::Vector3D<float> p1 = util::Vector3D<float>(mGlyphs[n].x, mGlyphs[n].y, mGlyphs[n].z);
         util::Vector3D<float> p2 = p1
-            + util::Vector3D<float>(float(velocity.x * temp), float(velocity.y * temp), float(velocity.z * temp));
+            + util::Vector3D<float>(float(velocity.x * temp),
+                                    float(velocity.y * temp),
+                                    float(velocity.z * temp));
 
         // ... transform to the location on the screen, and render.
         XYCoordinates<float> p3 = mViewpoint->FlatProject(p1);

@@ -18,7 +18,7 @@ class LatticeFixture(object):
     # Versioning constants
     hemelb_magic_number = 0x686c6221
     geometry_magic_number = 0x676d7904
-    hemelb_geometry_file_format_version_number = 3
+    hemelb_geometry_file_format_version_number = 4
 
     def __init__(self):
         # Assuming zero lattice site is at the origin of coordinates (0,0,0)
@@ -39,17 +39,10 @@ class LatticeFixture(object):
         # Number of lattice sites along the side of a block
         preamble_encoder.pack_uint(self.sites_along_block)
 
-        # Grid space step
-        preamble_encoder.pack_double(self.space_step)
-
-        # Origin of coordinates
-        for origin_coordinate in self.origin:
-            preamble_encoder.pack_double(origin_coordinate)
-
         # Pad the length of the preamble to 64 bytes
         preamble_encoder.pack_uint(0)
         self.outfile.write(preamble_encoder.get_buffer())
-        
+
     def write_dummy_header(self):
         header_encoder = xdrlib.Packer()
         for block in self.blocks:
@@ -57,12 +50,12 @@ class LatticeFixture(object):
             header_encoder.pack_uint(0)
             header_encoder.pack_uint(0)
             continue
-        
+
         self._header_start = self.outfile.tell()
         self.outfile.write(header_encoder.get_buffer())
         self._header_end = self.outfile.tell()
         return
-    
+
     def rewrite_header(self):
         header_encoder = xdrlib.Packer()
         for block in self.blocks:
@@ -70,32 +63,32 @@ class LatticeFixture(object):
             header_encoder.pack_uint(block.compressed_bytes)
             header_encoder.pack_uint(block.uncompressed_bytes)
             continue
-        
+
         self.outfile.seek(self._header_start)
         self.outfile.write(header_encoder.get_buffer())
         assert self.outfile.tell() == self._header_end
         return
-    
+
     def write_blocks(self):
         for block in self.blocks:
             if block.get_number_of_fluid_sites() == 0:
                 block.compressed_bytes = 0
                 block.uncompressed_bytes = 0
                 continue
-            
+
             block_encoder = xdrlib.Packer()
             for site in block.sites:
                 self.pack_site(site, block_encoder)
                 continue
-            
+
             compressed = zlib.compress(block_encoder.get_buffer())
             block.compressed_bytes = len(compressed)
             block.uncompressed_bytes = len(block_encoder.get_buffer())
-            
+
             self.outfile.write(compressed)
             continue
         return
-    
+
     def pack_site(self, site, block_encoder):
         block_encoder.pack_uint(site.site_type)
         # If the site is solid, nothing else is packed. Otherwise, pack information about the links
@@ -128,7 +121,7 @@ class LatticeFixture(object):
         self.rewrite_header()
         self.outfile.close()
         return
-    
+
     lattice_directions = (
         (-1, -1, -1),
         (-1, -1, 0),

@@ -18,7 +18,7 @@
 
 #include "debug/Debugger.h"
 #include "geometry/LatticeData.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 #include "vis/PixelSet.h"
 #include "vis/PixelSetStore.h"
 #include "vis/streaklineDrawer/NeighbouringProcessor.h"
@@ -44,11 +44,10 @@ namespace hemelb
       {
         public:
           // Constructor and destructor.
-          StreaklineDrawer(const geometry::LatticeData& iLatDat,
-                           const Screen& iScreen,
-                           const Viewpoint& iViewpoint,
-                           const VisSettings& iVisSettings,
-                           const lb::MacroscopicPropertyCache& propertyCache);
+          StreaklineDrawer(const geometry::LatticeData& iLatDat, const Screen& iScreen,
+                           const Viewpoint& iViewpoint, const VisSettings& iVisSettings,
+                           const lb::MacroscopicPropertyCache& propertyCache,
+                           const net::MpiCommunicator& comms);
           ~StreaklineDrawer();
 
           // Method to reset streakline drawer
@@ -83,6 +82,7 @@ namespace hemelb
           VelocityField velocityField;
 
           std::vector<Particle> particleSeeds;
+          net::Net* streakNet;
       };
     }
   }

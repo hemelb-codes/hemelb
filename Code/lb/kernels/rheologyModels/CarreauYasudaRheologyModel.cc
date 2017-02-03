@@ -27,7 +27,7 @@ namespace hemelb
       namespace rheologyModels
       {
         CY_FIT_INIT(HumanCYFit, 0.0035, 0.16, 8.2, 0.64, 0.2128);
-        CY_FIT_INIT(MouseCYFit, 3.85e-3, 18.94e-3, 4.330e-8, 0.4647, -336.9);
+        CY_FIT_INIT(MouseCYFit, 3.265e-3, 14.49e-3, 0.1829, 2.707, 0.4136);
 
         template<class CYFIT>
         double CarreauYasudaRheologyModel<CYFIT>::CalculateViscosityForShearRate(

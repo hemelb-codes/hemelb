@@ -19,8 +19,9 @@ namespace hemelb
     {
 
       public:
-      SeparatedPointPoint() :
-            sendReceivePrepped(false),count_sends(0),count_receives(0)
+        SeparatedPointPoint(const MpiCommunicator& comms) :
+            BaseNet(comms), StoringNet(comms), sendReceivePrepped(false), count_sends(0),
+                count_receives(0)
         {
         }
         ~SeparatedPointPoint();

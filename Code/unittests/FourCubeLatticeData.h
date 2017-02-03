@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include "units.h"
 #include "geometry/LatticeData.h"
+#include "lb/lattices/D3Q15.h"
 #include "io/formats/geometry.h"
 #include "util/Vector3D.h"
 
@@ -24,7 +25,7 @@ namespace hemelb
     {
       public:
         TestSiteData(geometry::SiteData& siteData) :
-          geometry::SiteData(siteData)
+            geometry::SiteData(siteData)
         {
 
         }
@@ -61,10 +62,10 @@ namespace hemelb
          *
          * @return
          */
-        static FourCubeLatticeData* Create(site_t sitesPerBlockUnit = 6, proc_t rankCount = 1)
+        static FourCubeLatticeData* Create(const net::IOCommunicator& comm,
+                                           site_t sitesPerBlockUnit = 6, proc_t rankCount = 1)
         {
-          hemelb::geometry::Geometry readResult(util::Vector3D<site_t>::Ones(),
-                                                sitesPerBlockUnit);
+          hemelb::geometry::Geometry readResult(util::Vector3D<site_t>::Ones(), sitesPerBlockUnit);
 // VoxelSize                                               0.01,
 // Origin                                               util::Vector3D<PhysicalDistance>::Zero());
           site_t sitesAlongCube = sitesPerBlockUnit - 2;
@@ -82,8 +83,8 @@ namespace hemelb
               {
                 ++index;
 
-                if (i < minInd || i > maxInd || j < minInd || j > maxInd || k < minInd || k
-                    > maxInd)
+                if (i < minInd || i > maxInd || j < minInd || j > maxInd || k < minInd
+                    || k > maxInd)
                   continue;
 
                 hemelb::geometry::GeometrySite& site = block.Sites[index];
@@ -91,7 +92,8 @@ namespace hemelb
                 site.isFluid = true;
                 site.targetProcessor = 0;
 
-                for (Direction direction = 1; direction < lb::lattices::D3Q15::NUMVECTORS; ++direction)
+                for (Direction direction = 1; direction < lb::lattices::D3Q15::NUMVECTORS;
+                    ++direction)
                 {
                   site_t neighI = i + lb::lattices::D3Q15::CX[direction];
                   site_t neighJ = j + lb::lattices::D3Q15::CY[direction];
@@ -155,7 +157,7 @@ namespace hemelb
             }
           }
 
-          FourCubeLatticeData* returnable = new FourCubeLatticeData(readResult);
+          FourCubeLatticeData* returnable = new FourCubeLatticeData(readResult, comm);
 
           // First, fiddle with the fluid site count, for tests that require this set.
           returnable->fluidSitesOnEachProcessor.resize(rankCount);
@@ -231,14 +233,9 @@ namespace hemelb
         }
 
       protected:
-        FourCubeLatticeData(hemelb::geometry::Geometry& readResult) :
-          hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), readResult)
-        {
-
-        }
-
-        FourCubeLatticeData() :
-          hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo())
+        FourCubeLatticeData(hemelb::geometry::Geometry& readResult,
+                            const net::IOCommunicator& comms) :
+            hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), readResult, comms)
         {
 
         }

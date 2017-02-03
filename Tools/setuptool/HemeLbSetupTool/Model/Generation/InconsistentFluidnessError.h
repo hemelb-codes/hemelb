@@ -27,4 +27,19 @@ private:
 	std::string msg;
 };
 
+struct InconsistentIntersectRayError: public GenerationError {
+  InconsistentIntersectRayError(const Site& s1, const Site& s2, const int nHits,
+			     const bool sinside, const bool ninside);
+	~InconsistentIntersectRayError() throw () {
+	}
+	virtual const char* what() const throw ();
+	const Site& s1;
+	const Site& s2;
+	const int nHits;
+	const bool sinside;
+	const bool ninside;
+private:
+	std::string msg;
+};
+
 #endif // HEMELBSETUPTOOL_INCONSISTENTFLUIDNESSERROR_H

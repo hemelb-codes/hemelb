@@ -10,6 +10,7 @@
 #ifndef HEMELB_COLLOIDS_BOUNDARYCONDITIONS_H
 #define HEMELB_COLLOIDS_BOUNDARYCONDITIONS_H
 
+#include "io/xml/XmlAbstractionLayer.h"
 #include "units.h"
 #include <vector>
 #include <map>
@@ -18,14 +19,6 @@
 
 namespace hemelb
 {
-  namespace io
-  {
-    namespace xml
-    {
-      class Element;
-    }
-  }
-
   namespace colloids
   {
     /** base class for all representations of a boundary condition */
@@ -57,37 +50,37 @@ namespace hemelb
         ;
     };
 
-    /** container for all colloids boundary conditions currently active in the simulation */
+    /** container for all body forces currently active in the simulation */
     class BoundaryConditions
     {
       public:
         /** factory method - gets initial values from xml configuration file */
-        static BoundaryConditions* Load(const geometry::LatticeData& latDat,
-                                                          const io::xml::Element& bcEl);
+        static const void InitBoundaryConditions(const geometry::LatticeData* const latticeData,
+                                                 io::xml::Document& xml);
 
-        void AddBoundaryCondition(const std::string name, const BoundaryCondition* const );
+        static const void AddBoundaryCondition(const std::string name,
+                                               const BoundaryCondition* const);
 
         /** allows all registered boundary conditions to do something to this particle
          returns false if the particle should be deleted, true otherwise
          */
-        bool DoSomeThingsToParticle(const LatticeTimeStep currentTimestep,
-                                    Particle& particle);
+        static const bool DoSomeThingsToParticle(const LatticeTimeStep currentTimestep,
+                                                 Particle& particle);
 
         /** allows all registered boundary conditions to create new particles */
-        const std::vector<Particle> CreateNewParticles();
+        static const std::vector<Particle> CreateNewParticles();
 
       private:
-        BoundaryConditions(const geometry::LatticeData& latDat);
         /**
          * stores the details of all known body forces
          * the value type must be a base class pointer
          * as only pointers are type-compatible in C++
          */
-        std::vector<BoundaryCondition*> boundaryConditionsWall;
-        std::vector<BoundaryCondition*> boundaryConditionsInlet;
-        std::vector<BoundaryCondition*> boundaryConditionsOutlet;
+        static std::vector<BoundaryCondition*> boundaryConditionsWall;
+        static std::vector<BoundaryCondition*> boundaryConditionsInlet;
+        static std::vector<BoundaryCondition*> boundaryConditionsOutlet;
 
-        const geometry::LatticeData& latticeData;
+        const static geometry::LatticeData* latticeData;
     };
   }
 }

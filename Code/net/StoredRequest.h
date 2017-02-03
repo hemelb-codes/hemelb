@@ -34,7 +34,7 @@ namespace hemelb
     {
       public:
         ScalarRequest(void *pointer, MPI_Datatype type, proc_t rank) :
-          SimpleRequest(pointer, 1, type, rank)
+            SimpleRequest(pointer, 1, type, rank)
         {
         }
     };
@@ -45,7 +45,7 @@ namespace hemelb
         int * Counts;
         int * Displacements;
         GatherVReceiveRequest(void *pointer, int *displacements, int *counts, MPI_Datatype type) :
-          SimpleRequest(pointer, 0, type, 0), Counts(counts), Displacements(displacements)
+            SimpleRequest(pointer, 0, type, 0), Counts(counts), Displacements(displacements)
         {
         }
     };

@@ -17,8 +17,9 @@ namespace hemelb
           typedef CollisionImpl CollisionType;
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
-          NashZerothOrderPressureDelegate(CollisionType& delegatorCollider, kernels::InitParams& initParams) :
-            collider(delegatorCollider), iolet(*initParams.boundaryObject)
+          NashZerothOrderPressureDelegate(CollisionType& delegatorCollider,
+                                          kernels::InitParams& initParams) :
+              collider(delegatorCollider), iolet(*initParams.boundaryObject)
           {
           }
 
@@ -44,7 +45,7 @@ namespace hemelb
             // TODO having to give 0 as an argument is also ugly.
             // TODO it's ugly that we have to give hydroVars a nonsense distribution vector
             // that doesn't get used.
-            kernels::HydroVars<typename CollisionType::CKernel> ghostHydrovars(site.GetFOld<LatticeType> ());
+            kernels::HydroVars<typename CollisionType::CKernel> ghostHydrovars(site);
 
             ghostHydrovars.density = ghostDensity;
             ghostHydrovars.momentum = ioletNormal * component * ghostDensity;
@@ -53,8 +54,8 @@ namespace hemelb
 
             Direction unstreamed = LatticeType::INVERSEDIRECTIONS[direction];
 
-            *latticeData->GetFNew(site.GetIndex() * LatticeType::NUMVECTORS + unstreamed)
-                = ghostHydrovars.GetFEq()[unstreamed];
+            *latticeData->GetFNew(site.GetIndex() * LatticeType::NUMVECTORS + unstreamed) =
+                ghostHydrovars.GetFEq()[unstreamed];
           }
         protected:
           CollisionType& collider;

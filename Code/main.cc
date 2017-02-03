@@ -8,7 +8,7 @@
 // 
 
 #include "net/mpi.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 #include "configuration/CommandLine.h"
 #include "SimulationMaster.h"
 
@@ -23,18 +23,19 @@ int main(int argc, char *argv[])
   hemelb::log::Logger::Init();
   try
   {
-    hemelb::net::MpiCommunicator hemelbCommunicator = hemelb::net::MpiCommunicator::World();
-    // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
-    hemelb::debug::Debugger::Init(argv[0], hemelbCommunicator);
+    hemelb::net::MpiCommunicator commWorld = hemelb::net::MpiCommunicator::World();
 
-    hemelb::net::NetworkTopology::Instance()->Init(hemelbCommunicator);
+    hemelb::net::IOCommunicator hemelbCommunicator(commWorld);
     try
     {
       // Parse command line
       hemelb::configuration::CommandLine options = hemelb::configuration::CommandLine(argc, argv);
 
+      // Start the debugger (if requested)
+      hemelb::debug::Debugger::Init(options.GetDebug(), argv[0], commWorld);
+
       // Prepare main simulation object...
-      SimulationMaster master = SimulationMaster(options);
+      hemelb::SimulationMaster<> master(options, hemelbCommunicator);
 
       // ..and run it.
       master.RunSimulation();

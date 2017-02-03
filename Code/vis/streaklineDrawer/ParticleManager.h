@@ -17,7 +17,7 @@
 #include "net/mpi.h"
 
 #include "geometry/LatticeData.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 
 #include "vis/streaklineDrawer/NeighbouringProcessor.h"
 #include "vis/streaklineDrawer/Particle.h"
@@ -47,7 +47,7 @@ namespace hemelb
           void ProcessParticleMovement();
 
           // Function for moving the particles between cores.
-          void CommunicateParticles(const geometry::LatticeData& iLatDat,
+          void CommunicateParticles(net::Net& streakNet, const geometry::LatticeData& iLatDat,
                                     VelocityField& iVelocityField);
 
         private:

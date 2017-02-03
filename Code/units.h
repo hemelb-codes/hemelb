@@ -58,16 +58,23 @@ namespace hemelb
   typedef double PhysicalLength_deprecated;
 
   typedef double PhysicalDistance; // continuous distance in physical units
+  typedef double LatticeVolume; // continuous volume in physical units
+  typedef double LatticeArea; // continuous area in physical units
   typedef double LatticeDistance; // continuous distance in lattice units
   typedef int64_t LatticeCoordinate; // discrete distance in lattice units
 
   typedef util::Vector3D<LatticeDistance> LatticePosition; // origin of lattice is at {0.0,0.0,0.0}
   typedef util::Vector3D<LatticeCoordinate> LatticeVector; // origin of lattice is at {0,0,0}
 
+  typedef util::Vector3D<Angle> ParticleOrientation; // Particle orientation used to compute dipolar interactions
+
   typedef util::Vector3D<PhysicalDistance> PhysicalPosition;
 
+  typedef double PhysicalEnergy; // type for energy
   typedef double PhysicalForce; // continuous scalar force in physical units
+  typedef double LatticeEnergy; // continuous scalar energy in lattice units
   typedef double LatticeForce; // continuous scalar force in lattice units
+  typedef double LatticeModulus; // placeholder for any moduli, though actual dimension may differ
   typedef util::Vector3D<LatticeForce> LatticeForceVector; // continuous force in lattice units
 
   // TODO: xxxVelocity is a Vector3D<xxxSpeed> not a scalar - should be fixed as part of ticket #437
@@ -78,17 +85,8 @@ namespace hemelb
   typedef util::Vector3D<PhysicalSpeed> PhysicalVelocity;
   typedef util::Vector3D<LatticeSpeed> LatticeVelocity;
 
-  typedef double PhysicalAcceleration;
-  typedef double LatticeAcceleration;
-  typedef util::Vector3D<PhysicalAcceleration> PhysicalAccelerationVector;
-  typedef util::Vector3D<LatticeAcceleration> LatticeAccelerationVector;
-
   typedef double PhysicalPressureGradient;
   typedef double LatticePressureGradient;
-
-  // For the force constant of the 1/r^2 force field.
-  typedef double PhysicalForceLengthSquared;
-  typedef double LatticeForceLengthSquared;
 
   typedef double Dimensionless;
 }

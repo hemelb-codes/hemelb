@@ -187,7 +187,7 @@ int main(int count, char** v){
         try:
             with file('test.cpp', 'w') as cSrc:
                 cSrc.write(prog)
-            compile = 'g++ -c test.cpp 2> /dev/null > /dev/null'
+            compile = 'g++ -std=gnu++0x -c test.cpp 2> /dev/null > /dev/null'
             returnCode = subprocess.call(compile, shell=True)
         finally:
             os.chdir(curDir)
@@ -219,7 +219,7 @@ if __name__ == "__main__":
     
     libraries = []
     library_dirs = []
-    extra_compile_args = GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags()
+    extra_compile_args = GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags() + ['-std=gnu++0x']
     extra_link_args = ['-lCGAL', '-lgmp']
     
     # Create the list of extension modules

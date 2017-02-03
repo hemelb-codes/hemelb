@@ -14,9 +14,9 @@ namespace hemelb
   namespace extraction
   {
     LbDataSourceIterator::LbDataSourceIterator(const lb::MacroscopicPropertyCache& propertyCache,
-                                               const geometry::LatticeData& data,
+                                               const geometry::LatticeData& data, int rank_,
                                                const util::UnitConverter& converter) :
-        propertyCache(propertyCache), data(data), converter(converter), position(-1)
+        propertyCache(propertyCache), data(data), rank(rank_), converter(converter), position(-1)
     {
 
     }
@@ -40,7 +40,8 @@ namespace hemelb
 
     FloatingType LbDataSourceIterator::GetPressure() const
     {
-      return converter.ConvertPressureToPhysicalUnits(propertyCache.densityCache.Get(position) * Cs2);
+      return converter.ConvertPressureToPhysicalUnits(propertyCache.densityCache.Get(position)
+          * Cs2);
     }
 
     util::Vector3D<FloatingType> LbDataSourceIterator::GetVelocity() const
@@ -91,7 +92,7 @@ namespace hemelb
 
     bool LbDataSourceIterator::IsAvailable(const util::Vector3D<site_t>& location) const
     {
-      return data.GetProcIdFromGlobalCoords(location) == net::NetworkTopology::Instance()->GetLocalRank();
+      return data.GetProcIdFromGlobalCoords(location) == rank;
     }
 
     PhysicalDistance LbDataSourceIterator::GetVoxelSize() const

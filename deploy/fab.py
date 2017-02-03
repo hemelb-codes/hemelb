@@ -154,28 +154,29 @@ def wait_complete():
         time.sleep(30)
 
 def configure_cmake(configurations, extras):
-    #Read additional configurations from the available options
-    if not configurations:
-        configurations = ['default']
-    options = {}
-    for configuration in configurations:
-        options.update(cmake_options[configuration])
-    options.update(extras)
-    options.update(env.cmake_options)
-    options.update({'CMAKE_INSTALL_PREFIX':env.install_path,
-        "HEMELB_DEPENDENCIES_INSTALL_PATH":env.install_path,
-        "HEMELB_SUBPROJECT_MAKE_JOBS":env.make_jobs})
-    env.total_cmake_options = options
-    env.cmake_flags = ' '.join(["-D%s=%s" % option for option in env.total_cmake_options.iteritems()])
+      #Read additional configurations from the available options
+      if not configurations:
+          configurations = ['default']
+      options = {}
+      for configuration in configurations:
+          options.update(cmake_options[configuration])
+      options.update(extras)
+      options.update(env.cmake_options)
+      options.update({'CMAKE_INSTALL_PREFIX':env.install_path,
+          "HEMELB_DEPENDENCIES_INSTALL_PATH":env.install_path,
+          "HEMELB_SUBPROJECT_MAKE_JOBS":env.make_jobs})
+      env.total_cmake_options = options
+      env.cmake_flags = ' '.join(["-D%s=%s" % option for option in env.total_cmake_options.iteritems()])
 
 @task
 def configure(*configurations, **extras):
     """CMake configure step for HemeLB and dependencies."""
     configure_cmake(configurations, extras)
-
     with cd(env.build_path):
         with prefix(env.build_prefix):
             run(template("rm -f $build_path/CMakeCache.txt"))
+	    run(template("pwd"))
+            run('echo $PATH')
             run(template("cmake $repository_path $cmake_flags"))
 
 @task
@@ -218,7 +219,7 @@ def install_code_only():
 def build(verbose=False):
     """CMake build step for HemeLB and dependencies."""
     with cd(env.build_path):
-        run(template("rm -rf hemelb_prefix/build"))
+        #run(template("rm -rf hemelb_prefix/build"))
         with prefix(env.build_prefix):
             if verbose or env.verbose:
                 run("make VERBOSE=1")

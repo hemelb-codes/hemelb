@@ -10,10 +10,11 @@
 #ifndef HEMELB_LB_IOLETS_BOUNDARYVALUES_H
 #define HEMELB_LB_IOLETS_BOUNDARYVALUES_H
 
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 #include "net/IteratedAction.h"
 #include "lb/iolets/InOutLet.h"
 #include "geometry/LatticeData.h"
+#include "lb/iolets/BoundaryCommunicator.h"
 
 namespace hemelb
 {
@@ -25,10 +26,9 @@ namespace hemelb
       class BoundaryValues : public net::IteratedAction
       {
         public:
-          BoundaryValues(geometry::SiteType ioletType,
-                         geometry::LatticeData* latticeData,
+          BoundaryValues(geometry::SiteType ioletType, geometry::LatticeData* latticeData,
                          const std::vector<iolets::InOutLet*> &iolets,
-                         SimulationState* simulationState,
+                         SimulationState* simulationState, const net::MpiCommunicator& comms,
                          const util::UnitConverter& units);
           ~BoundaryValues();
 
@@ -43,7 +43,6 @@ namespace hemelb
           LatticeDensity GetDensityMin(int boundaryId);
           LatticeDensity GetDensityMax(int boundaryId);
 
-          static bool IsCurrentProcTheBCProc();
           static proc_t GetBCProcRank();
           iolets::InOutLet* GetLocalIolet(unsigned int index)
           {
@@ -63,7 +62,8 @@ namespace hemelb
           }
 
         private:
-          bool IsIOletOnThisProc(geometry::SiteType ioletType, geometry::LatticeData* latticeData, int boundaryId);
+          bool IsIOletOnThisProc(geometry::SiteType ioletType, geometry::LatticeData* latticeData,
+                                 int boundaryId);
           std::vector<int> GatherProcList(bool hasBoundary);
           void HandleComms(iolets::InOutLet* iolet);
           geometry::SiteType ioletType;
@@ -76,6 +76,7 @@ namespace hemelb
 
           SimulationState* state;
           const util::UnitConverter& unitConverter;
+          BoundaryCommunicator bcComms;
       }
       ;
     }

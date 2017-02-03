@@ -9,18 +9,12 @@
 
 #ifndef HEMELB_COLLOIDS_PERSISTEDPARTICLE_H
 #define HEMELB_COLLOIDS_PERSISTEDPARTICLE_H
-
+#include "util/Vector3D.h"
+#include "io/xml/XmlAbstractionLayer.h"
 #include "units.h"
 
 namespace hemelb
 {
-  namespace io
-  {
-    namespace xml
-    {
-      class Element;
-    }
-  }
   namespace colloids
   {
     /** represents a particle as stored in the xml configuration file */
@@ -28,14 +22,14 @@ namespace hemelb
     {
       public:
         /** constructor - gets initial values from xml configuration file */
-        PersistedParticle(const io::xml::Element& xml);
+        PersistedParticle(io::xml::Element& xml, LatticeDistance voxelSize, LatticePosition geometryOrigin);
 
       protected:
         /** constructor - uses explicitly supplied values */
         PersistedParticle(unsigned long particleId, LatticeDistance a0, LatticeDistance ah,
                           PhysicalMass mass, LatticePosition globalPosition) :
-          particleId(particleId), smallRadius_a0(a0), largeRadius_ah(ah), mass(mass),
-              globalPosition(globalPosition)
+            particleId(particleId), smallRadius_a0(a0), largeRadius_ah(ah), mass(mass),
+                globalPosition(globalPosition)
         {
         }
         ;
@@ -70,6 +64,12 @@ namespace hemelb
 
         /** the global position of the particle in lattice units */
         LatticePosition globalPosition;
+
+        util::Vector3D<double> fieldStrength;
+
+        double diffusiveTemp;
+
+        double softcoreTemp;
     };
   }
 }

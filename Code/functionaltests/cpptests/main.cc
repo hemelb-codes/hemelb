@@ -19,21 +19,23 @@
 
 int main(int argc, char **argv)
 {
-  std::ostream * reportto=&std::cerr;
+  std::ostream * reportto = &std::cerr;
   std::ofstream reportfile;
   int opt;
-  while((opt=getopt(argc,argv,"o:"))!=-1){
-    switch (opt) {
+  while ( (opt = getopt(argc, argv, "o:")) != -1)
+  {
+    switch (opt)
+    {
       case 'o':
         reportfile.open(optarg);
-        reportto=&reportfile;
+        reportto = &reportfile;
         break;
     }
   }
 
-  std::string testPath = (optind < argc)
-    ? std::string(argv[optind])
-    : "";
+  std::string testPath = (optind < argc) ?
+    std::string(argv[optind]) :
+    "";
   // Create the event manager and test controller
   CppUnit::TestResult controller;
 
@@ -49,7 +51,7 @@ int main(int argc, char **argv)
   CppUnit::TestRunner runner;
 
   CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
-  runner.addTest( registry.makeTest() );
+  runner.addTest(registry.makeTest());
 
   try
   {
@@ -67,8 +69,8 @@ int main(int argc, char **argv)
     return 1;
   }
   reportfile.close();
-  return result.wasSuccessful()
-    ? 0
-    : 1;
+  return result.wasSuccessful() ?
+    0 :
+    1;
 }
 

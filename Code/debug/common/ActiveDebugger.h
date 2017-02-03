@@ -33,22 +33,22 @@ namespace hemelb
 
       protected:
         typedef std::vector<int> VoI; // Vector of Ints
-        typedef std::vector<std::string> VoS;// Vector of Strings
+        typedef std::vector<std::string> VoS; // Vector of Strings
 
         // C'tor
         ActiveDebugger(const char* const executable, const net::MpiCommunicator& comm);
 
-        bool mAmAttached;// Indicate attachment state
-        VoI mPIds;// vector of process IDs
+        bool mAmAttached; // Indicate attachment state
+        VoI mPIds; // vector of process IDs
 
         void Attach(void);
         void GatherProcessIds(void);
         void SpawnDebuggers(void);
 
         // Platform specific stuff
+        virtual const std::string GetBinaryPath(void) const = 0;
         virtual const std::string GetPlatformInterpreter(void) const = 0;
         virtual const std::string GetPlatformScript(void) const = 0;
-        virtual const std::string GetPlatformGdbScript(void) const = 0;
 
         // Helper function
         static std::string ConvertIntToString(int i);

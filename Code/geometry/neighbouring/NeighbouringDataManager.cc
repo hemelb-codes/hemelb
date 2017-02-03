@@ -24,8 +24,7 @@ namespace hemelb
           const LatticeData & localLatticeData, NeighbouringLatticeData & neighbouringLatticeData,
           net::InterfaceDelegationNet & net) :
           localLatticeData(localLatticeData), neighbouringLatticeData(neighbouringLatticeData),
-              net(net), needsEachProcHasFromMe(net.GetCommunicator().Size()),
-              needsHaveBeenShared(false)
+              net(net), needsEachProcHasFromMe(net.Size()), needsHaveBeenShared(false)
       {
       }
       void NeighbouringDataManager::RegisterNeededSite(site_t globalId,
@@ -68,7 +67,7 @@ namespace hemelb
                              source);
           net.RequestReceiveR(site.GetWallNormal(), source);
         }
-        for (proc_t other = 0; other < net.GetCommunicator().Size(); other++)
+        for (proc_t other = 0; other < net.Size(); other++)
         {
           for (std::vector<site_t>::iterator needOnProcFromMe =
               needsEachProcHasFromMe[other].begin();
@@ -102,11 +101,10 @@ namespace hemelb
       void NeighbouringDataManager::RequestComms()
       {
         /*if (needsHaveBeenShared == false)
-        {
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("NDM needs are shared now.");
-          ShareNeeds();
-        }*/ ///TODO: Re-enable!
-
+         {
+         hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("NDM needs are shared now.");
+         ShareNeeds();
+         }*/ ///TODO: Re-enable!
         // Ordering is important here, to ensure the requests are registered in the same order
         // on the sending and receiving procs.
         // But, the needsEachProcHasFromMe is always ordered,
@@ -121,7 +119,7 @@ namespace hemelb
                              source);
 
         }
-        for (proc_t other = 0; other < net.GetCommunicator().Size(); other++)
+        for (proc_t other = 0; other < net.Size(); other++)
         {
           for (std::vector<site_t>::iterator needOnProcFromMe =
               needsEachProcHasFromMe[other].begin();
@@ -147,8 +145,8 @@ namespace hemelb
         //  return; //TODO: Fix!
 
         // build a table of which procs needs can be achieved from which proc
-        std::vector<std::vector<site_t> > needsIHaveFromEachProc(net.GetCommunicator().Size());
-        std::vector<int> countOfNeedsIHaveFromEachProc(net.GetCommunicator().Size(), 0);
+        std::vector<std::vector<site_t> > needsIHaveFromEachProc(net.Size());
+        std::vector<int> countOfNeedsIHaveFromEachProc(net.Size(), 0);
         for (std::vector<site_t>::iterator localNeed = neededSites.begin();
             localNeed != neededSites.end(); localNeed++)
         {
@@ -161,11 +159,11 @@ namespace hemelb
         net.RequestAllToAllSend(countOfNeedsIHaveFromEachProc);
 
         // every proc must receive from all procs, how many it needs to give that proc
-        std::vector<int> countOfNeedsOnEachProcFromMe(net.GetCommunicator().Size(), 0);
+        std::vector<int> countOfNeedsOnEachProcFromMe(net.Size(), 0);
         net.RequestAllToAllReceive(countOfNeedsOnEachProcFromMe);
         net.Dispatch();
 
-        for (proc_t other = 0; other < net.GetCommunicator().Size(); other++)
+        for (proc_t other = 0; other < net.Size(); other++)
         {
 
           // now, for every proc, which I need something from,send the ids of those

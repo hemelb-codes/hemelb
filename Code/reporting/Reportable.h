@@ -22,11 +22,12 @@ namespace hemelb
     class Reportable
     {
       public:
-        virtual ~Reportable() {}
+        virtual ~Reportable()
+        {
+        }
         virtual void Report(ctemplate::TemplateDictionary& dictionary) = 0;
     };
   }
 }
-
 
 #endif /* HEMELB_REPORTING_REPORTABLE_H */

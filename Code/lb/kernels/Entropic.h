@@ -44,14 +44,17 @@ namespace hemelb
           template<typename HydroVarsType>
           inline void DoCollide(const LbmParameters* const lbmParams, HydroVarsType& hydroVars)
           {
-            distribn_t alpha = CalculateAlpha(lbmParams->GetTau(), hydroVars, oldAlpha[hydroVars.index]);
+            distribn_t alpha = CalculateAlpha(lbmParams->GetTau(),
+                                              hydroVars,
+                                              oldAlpha[hydroVars.index]);
             oldAlpha[hydroVars.index] = alpha;
 
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
             {
               hydroVars.SetFPostCollision(direction,
                                           hydroVars.f[direction]
-                                              + (alpha * lbmParams->GetBeta()) * hydroVars.f_neq.f[direction]);
+                                              + (alpha * lbmParams->GetBeta())
+                                                  * hydroVars.f_neq.f[direction]);
             }
           }
 
@@ -78,7 +81,8 @@ namespace hemelb
            * @return
            */
           template<typename HydroVarsType>
-          double CalculateAlpha(const distribn_t tau, const HydroVarsType& hydroVars, double prevAlpha)
+          double CalculateAlpha(const distribn_t tau, const HydroVarsType& hydroVars,
+                                double prevAlpha)
           {
             bool big = false;
             double deviation = 0.0;
@@ -88,7 +92,8 @@ namespace hemelb
               // Papers suggest f_eq - f < 0.001 or (f_eq - f)/f < 0.01 for the point to have approx alpha = 2
               // Accuracy can change depending on stability requirements, because the more NR evaluations it skips
               // the more of the simulation is in the LBGK limit.
-              deviation = util::NumericalFunctions::max(fabs( (hydroVars.f_eq.f[i] - hydroVars.f[i]) / hydroVars.f[i]),
+              deviation = util::NumericalFunctions::max(fabs( (hydroVars.f_eq.f[i] - hydroVars.f[i])
+                                                            / hydroVars.f[i]),
                                                         deviation);
               if (deviation > 1.0E-2)
               {

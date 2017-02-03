@@ -10,20 +10,13 @@
 #ifndef HEMELB_COLLOIDS_BODYFORCES_H
 #define HEMELB_COLLOIDS_BODYFORCES_H
 
+#include "io/xml/XmlAbstractionLayer.h"
 #include "units.h"
 #include <map>
 #include "colloids/Particle.h"
 
 namespace hemelb
 {
-  namespace io
-  {
-    namespace xml
-    {
-      class Element;
-    }
-  }
-
   namespace colloids
   {
     /** base class for all representations of a body force stored in the xml configuration file */
@@ -38,13 +31,13 @@ namespace hemelb
         ;
     };
 
-    typedef BodyForce*(*BodyForceFactory_Create)(const io::xml::Element& xml);
+    typedef BodyForce*(*BodyForceFactory_Create)(io::xml::Element& xml);
 
     template<class TClass>
     class BodyForceFactory
     {
       public:
-        static BodyForce* Create(const io::xml::Element& xml)
+        static BodyForce* Create(io::xml::Element& xml)
         {
           return TClass::ReadFromXml(xml);
         }
@@ -56,41 +49,36 @@ namespace hemelb
     {
       public:
         /** factory method - gets initial values from xml configuration file */
-        static BodyForces* Load(const io::xml::Element& xml);
+        static const void InitBodyForces(io::xml::Document& xml);
 
-        //void AddBodyForce(const std::string name, const BodyForce* const );
+        static const void AddBodyForce(const std::string name, const BodyForce* const);
 
         /** accumulates the effects of all known body forces on the particle */
-        LatticeForceVector GetBodyForcesForParticle(const Particle& particle) const;
+        static const LatticeForceVector GetBodyForcesForParticle(const Particle& particle);
 
-        void ClearBodyForcesForAllSiteIds()
+        static void ClearBodyForcesForAllSiteIds()
         {
           forceForEachSite.clear();
         }
 
-        void SetBodyForcesForSiteId(const site_t siteId, const LatticeForceVector force)
+        static void SetBodyForcesForSiteId(const site_t siteId, const LatticeForceVector force)
         {
           forceForEachSite[siteId] = force;
         }
 
-        const LatticeForceVector GetBodyForcesForSiteId(const site_t siteId)
+        static const LatticeForceVector GetBodyForcesForSiteId(const site_t siteId)
         {
           return forceForEachSite[siteId];
         }
 
-        // Protected to let test subclasses at the members.
-      protected:
-        // Does the actual work of initialisation
-        void Init(const io::xml::Element& xml);
-
-        typedef std::map<std::string, const BodyForce* const > BodyForceMap;
+      private:
         /**
          * stores the details of all known body forces
          * the value type must be a base class pointer
          * as only pointers are type-compatible in C++
          */
-        BodyForceMap bodyForces;
-        std::map<site_t, LatticeForceVector> forceForEachSite;
+        static std::map<std::string, const BodyForce* const > bodyForces;
+        static std::map<site_t, LatticeForceVector> forceForEachSite;
     };
   }
 }

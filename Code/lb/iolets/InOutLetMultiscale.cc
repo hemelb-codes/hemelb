@@ -9,7 +9,7 @@
 
 #include "lb/iolets/InOutLetMultiscale.h"
 #include "configuration/SimConfig.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 #include "lb/iolets/BoundaryComms.h"
 #include "lb/iolets/BoundaryValues.h"
 
@@ -21,13 +21,11 @@ namespace hemelb
     {
 
       InOutLetMultiscale::InOutLetMultiscale() :
-        multiscale::Intercommunicand(), InOutLet(),
-            units(NULL),
-            numberOfFieldPoints(1),
-            pressure(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE),
-            minPressure(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE),
-            maxPressure(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE),
-            velocity(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_VELOCITY)
+          multiscale::Intercommunicand(), InOutLet(), units(nullptr), numberOfFieldPoints(1),
+              pressure(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE),
+              minPressure(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE),
+              maxPressure(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE),
+              velocity(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_VELOCITY)
       {
       }
       /***
@@ -37,9 +35,10 @@ namespace hemelb
        * preserve the single-scale code.
        */
       InOutLetMultiscale::InOutLetMultiscale(const InOutLetMultiscale &other) :
-        Intercommunicand(other), label(other.label), units(other.units), commsRequired(false),
-            pressure(this, other.maxPressure.GetPayload()), minPressure(this, other.minPressure.GetPayload()),
-            maxPressure(this, other.maxPressure.GetPayload()), velocity(this, other.GetVelocity())
+          Intercommunicand(other), label(other.label), units(other.units), commsRequired(false),
+              pressure(this, other.maxPressure.GetPayload()),
+              minPressure(this, other.minPressure.GetPayload()),
+              maxPressure(this, other.maxPressure.GetPayload()), velocity(this, other.GetVelocity())
       {
       }
 
@@ -121,24 +120,26 @@ namespace hemelb
       }
 
       /* Distribution of internal pressure values */
-      void InOutLetMultiscale::DoComms(bool isIoProc, LatticeTimeStep time_step)
+      void InOutLetMultiscale::DoComms(const BoundaryCommunicator& bcComms,
+                                       LatticeTimeStep time_step)
       {
+        bool isIoProc = bcComms.IsCurrentProcTheBCProc();
         hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("DoComms in IoletMultiscale triggered: %s",
-                                                                              isIoProc
-                                                                                ? "true"
-                                                                                : "false");
+                                                                              isIoProc ?
+                                                                                "true" :
+                                                                                "false");
         double pressure_array[3];
         //TODO: Change these operators on SharedValue.
         pressure_array[0] = pressure.GetPayload();
         pressure_array[1] = minPressure.GetPayload();
         pressure_array[2] = maxPressure.GetPayload();
 
-        net::Net commsNet;
+        net::Net commsNet(bcComms);
 
         const std::vector<int>& procList = comms->GetListOfProcs(); //TODO: CHECK + IMPROVE!
 
         // If this proc is to do IO, send the pressure array list to all cores that require it.
-        if (isIoProc && procList[0] != BoundaryValues::GetBCProcRank())
+        if (isIoProc && procList[0] != bcComms.GetBCProcRank())
         {
           for (std::vector<int>::const_iterator it = procList.begin(); it != procList.end(); it++)
           {
@@ -146,9 +147,9 @@ namespace hemelb
           }
         }
         // Otherwise, receive the pressure array list from the core.
-        else if (procList[0] != BoundaryValues::GetBCProcRank())
+        else if (procList[0] != bcComms.GetBCProcRank())
         {
-          commsNet.RequestReceive(pressure_array, 3, BoundaryValues::GetBCProcRank());
+          commsNet.RequestReceive(pressure_array, 3, bcComms.GetBCProcRank());
         }
 
         // Perform the send / receive.
@@ -156,9 +157,9 @@ namespace hemelb
 
         if (!isIoProc)
         {
-          pressure.SetPayload(static_cast<PhysicalPressure> (pressure_array[0]));
-          minPressure.SetPayload(static_cast<PhysicalPressure> (pressure_array[1]));
-          maxPressure.SetPayload(static_cast<PhysicalPressure> (pressure_array[2]));
+          pressure.SetPayload(static_cast<PhysicalPressure>(pressure_array[0]));
+          minPressure.SetPayload(static_cast<PhysicalPressure>(pressure_array[1]));
+          maxPressure.SetPayload(static_cast<PhysicalPressure>(pressure_array[2]));
           hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Received: %f %f %f",
                                                                                 pressure.GetPayload(),
                                                                                 minPressure.GetPayload(),

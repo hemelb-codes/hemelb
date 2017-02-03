@@ -71,6 +71,15 @@ namespace hemelb
         {
           return (steeringSessionId);
         }
+
+        /**
+         * @return Whether the user requested a debug mode.
+         */
+        bool GetDebug() const
+        {
+          return debugMode;
+        }
+
         /**
          * @return  Total count of command line arguments.
          */
@@ -98,6 +107,7 @@ namespace hemelb
         std::string outputDir; //! local or full path to input file
         unsigned int images; //! images to produce
         int steeringSessionId; //! unique identifier for steering session
+        bool debugMode; //! Use debugger
         int argc; //! count of command line arguments, including program name
         const char * const * const argv; //! command line arguments
     };

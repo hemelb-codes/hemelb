@@ -326,9 +326,14 @@ namespace hemelb
          * @param other
          * @return
          */
-        Vector3D Cross(const Vector3D& other)
+        Vector3D Cross(const Vector3D& other) const
         {
           return Cross(*this, other);
+        }
+
+        template<class OTHER> Vector3D<OTHER> cast() const
+        {
+          return Vector3D<OTHER>(*this);
         }
 
         /**
@@ -413,11 +418,15 @@ namespace hemelb
          * @return
          */
         template<class MultiplierT>
-        Vector3D<typename Vector3DArithmeticTraits<T, MultiplierT>::operatorReturnType> operator*(const MultiplierT multiplier) const
+        Vector3D<typename Vector3DArithmeticTraits<T, MultiplierT>::operatorReturnType> operator*(
+            const MultiplierT multiplier) const
         {
-          return Vector3D<typename Vector3DArithmeticTraits<T, MultiplierT>::operatorReturnType>(x * multiplier,
-                                                                                                 y * multiplier,
-                                                                                                 z * multiplier);
+          return Vector3D<typename Vector3DArithmeticTraits<T, MultiplierT>::operatorReturnType>(x
+                                                                                                     * multiplier,
+                                                                                                 y
+                                                                                                     * multiplier,
+                                                                                                 z
+                                                                                                     * multiplier);
         }
 
         /**
@@ -440,11 +449,15 @@ namespace hemelb
          * @return
          */
         template<class DivisorT>
-        Vector3D<typename Vector3DArithmeticTraits<T, DivisorT>::operatorReturnType> operator/(const DivisorT divisor) const
+        Vector3D<typename Vector3DArithmeticTraits<T, DivisorT>::operatorReturnType> operator/(
+            const DivisorT divisor) const
         {
-          return Vector3D<typename Vector3DArithmeticTraits<T, DivisorT>::operatorReturnType>(x / divisor,
-                                                                                              y / divisor,
-                                                                                              z / divisor);
+          return Vector3D<typename Vector3DArithmeticTraits<T, DivisorT>::operatorReturnType>(x
+                                                                                                  / divisor,
+                                                                                              y
+                                                                                                  / divisor,
+                                                                                              z
+                                                                                                  / divisor);
         }
 
         /**
@@ -600,7 +613,7 @@ namespace hemelb
          * Default constructor
          */
         Vector3DIterator() :
-            vec(NULL), i(0)
+            vec(nullptr), i(0)
         {
         }
 

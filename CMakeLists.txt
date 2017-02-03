@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.1)
 Project(HemeLBMaster)
 include(ExternalProject)
 
@@ -28,7 +28,9 @@ option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 set(HEMELB_LATTICE "D3Q15"
   CACHE STRING "Select the lattice type to use (D3Q15,D3Q19,D3Q27)")
 set(HEMELB_KERNEL "LBGK"
-  CACHE STRING "Select the kernel to use (LBGK,EntropicAnsumali,EntropicChik,MRT,NNCY,NNC,NNTPL)")
+  CACHE STRING
+  "Select the kernel to use
+  (LBGK,EntropicAnsumali,EntropicChik,MRT,NNCY,NNCYMOUSE,NNC,NNTPL,GuoForcingLBGK)")
 set(HEMELB_WALL_BOUNDARY "SIMPLEBOUNCEBACK"
   CACHE STRING "Select the boundary conditions to be used at the walls (FINTERPOLATION,GZS,SIMPLEBOUNCEBACK,JUNKYANG)")
 set(HEMELB_STEERING_HOST "CCS" CACHE STRING "Use a default host suffix for steering? (CCS, NGS2Leeds, NGS2Manchester, LONI, NCSA or blank)")
@@ -48,8 +50,9 @@ add_subdirectory(dependencies)
 message("${PROJECT_SOURCE_DIR}/Code")
 ExternalProject_Add(
    hemelb
-	URL ${PROJECT_SOURCE_DIR}/Code	
-	CONFIGURE_COMMAND cmake <SOURCE_DIR> 
+   DOWNLOAD_COMMAND ""
+    SOURCE_DIR "${PROJECT_SOURCE_DIR}/Code"
+    CMAKE_ARGS
 	-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} 
 	-DHEMELB_DEPENDENCIES_PATH=${CMAKE_CURRENT_SOURCE_DIR}/dependencies
 	-DHEMELB_DEPENDENCIES_INSTALL_PATH=${HEMELB_DEPENDENCIES_INSTALL_PATH}
@@ -84,7 +87,10 @@ ExternalProject_Add(
 	-DHEMELB_IMAGES_TO_NULL=${HEMELB_IMAGES_TO_NULL}
         -DHEMELB_USE_SSE3=${HEMELB_USE_SSE3}
     -DHEMELB_COMPUTE_ARCHITECTURE=${HEMELB_COMPUTE_ARCHITECTURE}
-	BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 )
 
-add_dependencies(hemelb cppunit parmetis tinyxml boost ctemplate zlib mpwide)
+foreach(dep cppunit parmetis tinyxml boost ctemplate zlib mpwide cookoff hdf5)
+  if(TARGET ${dep})
+    add_dependencies(hemelb ${dep})
+  endif()
+endforeach()

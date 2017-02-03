@@ -18,8 +18,8 @@ namespace hemelb
     {
       namespace rheologyModels
       {
-        double TruncatedPowerLawRheologyModel::CalculateViscosityForShearRate(const double &iShearRate,
-                                                                              const distribn_t &iDensity)
+        double TruncatedPowerLawRheologyModel::CalculateViscosityForShearRate(
+            const double &iShearRate, const distribn_t &iDensity)
         {
           // Don't allow shear rates outside [GAMMA_ZERO, GAMMA_INF]
           double gamma = util::NumericalFunctions::enforceBounds(iShearRate, GAMMA_ZERO, GAMMA_INF);

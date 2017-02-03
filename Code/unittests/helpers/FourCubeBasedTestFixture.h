@@ -13,7 +13,7 @@
 #include "configuration/SimConfig.h"
 #include "lb/collisions/Collisions.h"
 #include "lb/SimulationState.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 #include "unittests/FourCubeLatticeData.h"
 #include "unittests/OneInOneOutSimConfig.h"
 #include "unittests/helpers/FolderTestFixture.h"
@@ -31,14 +31,16 @@ namespace hemelb
 
         public:
           FourCubeBasedTestFixture() :
-            initParams()
+              initParams()
           {
           }
           void setUp()
           {
-            latDat = FourCubeLatticeData::Create();
+            helpers::FolderTestFixture::setUp();
 
-            simConfig = new OneInOneOutSimConfig();
+            latDat = FourCubeLatticeData::Create(Comms(), CubeSize());
+            std::string path("");
+            simConfig = new OneInOneOutSimConfig(path);
             simState = new hemelb::lb::SimulationState(simConfig->GetTimeStepLength(),
                                                        simConfig->GetTotalTimeSteps());
             lbmParams = new lb::LbmParameters(simState->GetTimeStepLength(),
@@ -57,6 +59,7 @@ namespace hemelb
             delete lbmParams;
             delete simState;
             delete simConfig;
+            helpers::FolderTestFixture::tearDown();
           }
 
         protected:
@@ -67,6 +70,12 @@ namespace hemelb
           configuration::SimConfig* simConfig;
           lb::SimulationState* simState;
           const util::UnitConverter* unitConverter;
+
+          // Parameterizes the size according to test where fixuter is used
+          virtual size_t CubeSize() const
+          {
+            return 6;
+          }
         private:
 
       };

@@ -30,6 +30,7 @@ class LengthUnit(Observable):
     pass
 
 metre = LengthUnit(1., 'metre', 'm')
+centimetre = LengthUnit(1e-2, 'centimetre', 'cm')
 millimetre = LengthUnit(1e-3, 'millimetre', 'mm')
 micrometre = micron = LengthUnit(1e-6, 'micrometre', u'µm')
 
@@ -52,7 +53,7 @@ class Profile(Observable):
              'SeedPoint': Vector(),
              'OutputGeometryFile': None,
              'OutputXmlFile': None}
-    _UnitChoices = [metre, millimetre, micrometre]
+    _UnitChoices = [metre, centimetre, millimetre, micrometre]
     
     def __init__(self, **kwargs):
         """Required arguments may be set here through keyword arguments.

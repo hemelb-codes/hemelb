@@ -12,7 +12,10 @@ namespace hemelb
 {
   namespace net
   {
-
+    StoringNet::StoringNet(const MpiCommunicator& comms) :
+        BaseNet(comms)
+    {
+    }
     void StoringNet::RequestSendImpl(void* pointer, int count, proc_t rank, MPI_Datatype type)
     {
       if (count > 0)
@@ -35,7 +38,8 @@ namespace hemelb
      * nonblocking collectives.
      */
 
-    void StoringNet::RequestGatherVSendImpl(void* buffer, int count, proc_t toRank, MPI_Datatype type)
+    void StoringNet::RequestGatherVSendImpl(void* buffer, int count, proc_t toRank,
+                                            MPI_Datatype type)
     {
       gatherVSendProcessorComms[toRank].push_back(SimpleRequest(buffer, count, type, toRank));
     }
@@ -54,16 +58,22 @@ namespace hemelb
       gatherSendProcessorComms[toRank].push_back(ScalarRequest(buffer, type, toRank));
     }
 
-    void StoringNet::RequestGatherVReceiveImpl(void* buffer, int * displacements, int *counts, MPI_Datatype type)
+    void StoringNet::RequestGatherVReceiveImpl(void* buffer, int * displacements, int *counts,
+                                               MPI_Datatype type)
     {
-      gatherVReceiveProcessorComms.push_back(GatherVReceiveRequest(buffer, displacements, counts, type));
+      gatherVReceiveProcessorComms.push_back(GatherVReceiveRequest(buffer,
+                                                                   displacements,
+                                                                   counts,
+                                                                   type));
     }
 
-    void StoringNet::RequestAllToAllReceiveImpl(void * buffer, int count, MPI_Datatype type){
-      allToAllReceiveProcComms.push_back(SimpleRequest(buffer,count,type,0));
+    void StoringNet::RequestAllToAllReceiveImpl(void * buffer, int count, MPI_Datatype type)
+    {
+      allToAllReceiveProcComms.push_back(SimpleRequest(buffer, count, type, 0));
     }
-    void StoringNet::RequestAllToAllSendImpl(void * buffer, int count, MPI_Datatype type){
-      allToAllSendProcComms.push_back(SimpleRequest(buffer,count,type,0));
+    void StoringNet::RequestAllToAllSendImpl(void * buffer, int count, MPI_Datatype type)
+    {
+      allToAllSendProcComms.push_back(SimpleRequest(buffer, count, type, 0));
     }
   }
 }

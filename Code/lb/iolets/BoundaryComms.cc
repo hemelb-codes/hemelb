@@ -9,7 +9,7 @@
 
 #include "lb/iolets/BoundaryComms.h"
 #include "lb/iolets/BoundaryValues.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 #include "util/utilityFunctions.h"
 
 namespace hemelb
@@ -19,28 +19,30 @@ namespace hemelb
     namespace iolets
     {
 
-      BoundaryComms::BoundaryComms(SimulationState* iSimState, std::vector<int> &iProcsList, bool iHasBoundary) :
-          hasBoundary(iHasBoundary), nProcs((int) iProcsList.size()), procsList(iProcsList)
+      BoundaryComms::BoundaryComms(SimulationState* iSimState, std::vector<int> &iProcsList,
+                                   const BoundaryCommunicator& boundaryComm, bool iHasBoundary) :
+          hasBoundary(iHasBoundary), nProcs((int) iProcsList.size()), procsList(iProcsList),
+              bcComm(boundaryComm)
       {
         /* iProcsList contains the procs containing said Boundary/iolet, but NOT proc 0 (the BoundaryControlling/BC proc)! */
 
         // Only BC proc sends
-        if (BoundaryValues::IsCurrentProcTheBCProc())
+        if (bcComm.IsCurrentProcTheBCProc())
         {
           sendRequest = new MPI_Request[nProcs];
           sendStatus = new MPI_Status[nProcs];
         }
         else
         {
-          sendRequest = NULL;
-          sendStatus = NULL;
+          sendRequest = nullptr;
+          sendStatus = nullptr;
         }
       }
 
       BoundaryComms::~BoundaryComms()
       {
 
-        if (BoundaryValues::IsCurrentProcTheBCProc())
+        if (bcComm.IsCurrentProcTheBCProc())
         {
           delete[] sendRequest;
           delete[] sendStatus;
@@ -51,23 +53,23 @@ namespace hemelb
       {
         if (hasBoundary)
         {
-          MPI_Wait(&receiveRequest, &receiveStatus);
+          HEMELB_MPI_CALL(MPI_Wait, (&receiveRequest, &receiveStatus));
         }
       }
 
       void BoundaryComms::WaitAllComms()
       {
         // Now wait for all to complete
-        if (BoundaryValues::IsCurrentProcTheBCProc())
+        if (bcComm.IsCurrentProcTheBCProc())
         {
-          MPI_Waitall(nProcs, sendRequest, sendStatus);
+          HEMELB_MPI_CALL(MPI_Waitall, (nProcs, sendRequest, sendStatus));
 
           if (hasBoundary)
-            MPI_Wait(&receiveRequest, &receiveStatus);
+            HEMELB_MPI_CALL(MPI_Wait, (&receiveRequest, &receiveStatus));
         }
         else
         {
-          MPI_Wait(&receiveRequest, &receiveStatus);
+          HEMELB_MPI_CALL(MPI_Wait, (&receiveRequest, &receiveStatus));
         }
 
       }
@@ -77,13 +79,8 @@ namespace hemelb
       {
         for (int proc = 0; proc < nProcs; proc++)
         {
-          MPI_Isend(density,
-                    1,
-                    net::MpiDataType(*density),
-                    procsList[proc],
-                    100,
-                    net::NetworkTopology::Instance()->GetComms(),
-                    &sendRequest[proc]);
+          HEMELB_MPI_CALL(MPI_Isend,
+                          ( density, 1, net::MpiDataType(*density), procsList[proc], 100, bcComm, &sendRequest[proc] ));
         }
       }
 
@@ -91,13 +88,8 @@ namespace hemelb
       {
         if (hasBoundary)
         {
-          MPI_Irecv(density,
-                    1,
-                    net::MpiDataType(*density),
-                    BoundaryValues::GetBCProcRank(),
-                    100,
-                    net::NetworkTopology::Instance()->GetComms(),
-                    &receiveRequest);
+          HEMELB_MPI_CALL(MPI_Irecv,
+                          ( density, 1, net::MpiDataType(*density), bcComm.GetBCProcRank(), 100, bcComm, &receiveRequest ));
         }
       }
 
@@ -105,9 +97,9 @@ namespace hemelb
       {
         // Don't move on to next step with BC proc until all messages have been sent
         // Precautionary measure to make sure proc doesn't overwrite, before message is sent
-        if (BoundaryValues::IsCurrentProcTheBCProc())
+        if (bcComm.IsCurrentProcTheBCProc())
         {
-          MPI_Waitall(nProcs, sendRequest, sendStatus);
+          HEMELB_MPI_CALL(MPI_Waitall, (nProcs, sendRequest, sendStatus));
         }
       }
 

@@ -17,8 +17,9 @@ namespace hemelb
   {
     namespace streaklinedrawer
     {
-      ParticleManager::ParticleManager(std::map<proc_t, NeighbouringProcessor>& iNeighbouringProcessors) :
-        neighbouringProcessors(iNeighbouringProcessors)
+      ParticleManager::ParticleManager(
+          std::map<proc_t, NeighbouringProcessor>& iNeighbouringProcessors) :
+          neighbouringProcessors(iNeighbouringProcessors)
       {
       }
 
@@ -39,7 +40,7 @@ namespace hemelb
 
       void ParticleManager::DeleteParticle(site_t iIndex)
       {
-        assert(particles.size() > static_cast<size_t> (iIndex));
+        assert(particles.size() > static_cast<size_t>(iIndex));
 
         //Move the particle at the end to position
         particles[iIndex] = particles.back();
@@ -63,12 +64,13 @@ namespace hemelb
       }
 
       // Communicate the particles' current state to other processors.
-      void ParticleManager::CommunicateParticles(const geometry::LatticeData& latticeData,
+      void ParticleManager::CommunicateParticles(net::Net& streakNet,
+                                                 const geometry::LatticeData& latticeData,
                                                  VelocityField& velocityField)
       {
         unsigned int particles_temp = GetNumberOfLocalParticles();
 
-        proc_t thisRank = net::NetworkTopology::Instance()->GetLocalRank();
+        proc_t thisRank = streakNet.Rank();
 
         for (int n = (int) (particles_temp - 1); n >= 0; n--)
         {
@@ -77,7 +79,7 @@ namespace hemelb
                                                 util::Vector3D<site_t>(particles[n].position));
 
           // TODO can we get rid of the first test?
-          if (siteVelocityData == NULL || siteVelocityData->proc_id == -1)
+          if (siteVelocityData == nullptr || siteVelocityData->proc_id == -1)
           {
             continue;
           }
@@ -90,27 +92,20 @@ namespace hemelb
           DeleteParticle(n);
         }
 
-        net::Net net;
+        for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
+            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); ++proc)
+        {
+          (*proc).second.ExchangeParticleCounts(streakNet);
+        }
+        streakNet.Dispatch();
 
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
             neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); ++proc)
         {
-          (*proc).second.ExchangeParticleCounts(net);
+          (*proc).second.ExchangeParticles(streakNet);
         }
 
-        net.Receive();
-        net.Send();
-        net.Wait();
-
-        for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
-            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); ++proc)
-        {
-          (*proc).second.ExchangeParticles(net);
-        }
-
-        net.Receive();
-        net.Send();
-        net.Wait();
+        streakNet.Dispatch();
 
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
             neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); ++proc)

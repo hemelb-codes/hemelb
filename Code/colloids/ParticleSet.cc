@@ -1,11 +1,11 @@
-// 
+//
 // Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+//
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work
 // with, install, use, duplicate, modify, redistribute or share this
 // file, or any part thereof, other than as allowed by any agreement
 // specifically made by you with University College London.
-// 
+//
 
 #include "colloids/ParticleSet.h"
 #include "colloids/BodyForces.h"
@@ -20,26 +20,44 @@ namespace hemelb
 {
   namespace colloids
   {
-    ParticleSet::ParticleSet(const geometry::LatticeData& latDatLBM,
-                             const io::xml::Element& particlesElem,
+    struct ParticleSorter
+    {
+        int localRank;
+        ParticleSorter(int rank) :
+            localRank(rank)
+        {
+        }
+
+        bool operator()(const Particle& a, const Particle& b)
+        {
+          // ORDER BY isLocal, ownerRank, particleId
+          if (a.ownerRank == b.ownerRank)
+            return (a.particleId < b.particleId);
+          else if (a.ownerRank == localRank)
+            return true;
+          else if (b.ownerRank == localRank)
+            return false;
+          else
+            return (a.ownerRank < b.ownerRank);
+        }
+    };
+
+    ParticleSet::ParticleSet(geometry::LatticeData& latDatLBM,
+                             io::xml::Element& particlesElem,
                              lb::MacroscopicPropertyCache& propertyCache,
                              const hemelb::lb::LbmParameters *lbmParams,
+                             const configuration::SimConfig* simConfig,
                              std::vector<proc_t>& neighbourProcessors,
-                             BodyForces& bodyForces,
-                             BoundaryConditions& BCs,
-                             const std::string& outputPath) :
-        localRank(net::NetworkTopology::Instance()->GetLocalRank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath), forces(bodyForces), bcs(BCs)
+                             const net::IOCommunicator& ioComms_, const std::string& outputPath) :
+        ioComms(ioComms_), localRank(ioComms.Rank()), latDatLBM(latDatLBM),
+            propertyCache(propertyCache), net(ioComms), path(outputPath)
     {
       /**
        * Open the file, unless it already exists, for writing only, creating it if it doesn't exist.
        */
-      MPI_File_open(net::MpiCommunicator::World(),
-                    const_cast<char*>(path.c_str()),
-                    MPI_MODE_EXCL | MPI_MODE_WRONLY | MPI_MODE_CREATE,
-                    MPI_INFO_NULL,
-                    &file);
+      file = net::MpiFile::Open(ioComms, path, MPI_MODE_EXCL | MPI_MODE_WRONLY | MPI_MODE_CREATE);
 
-      if (localRank == 0)
+      if (ioComms.OnIORank())
       {
         // Write out the header information from core 0
         buffer.resize(io::formats::colloids::MagicLength);
@@ -47,26 +65,26 @@ namespace hemelb
         writer << (uint32_t) io::formats::HemeLbMagicNumber;
         writer << (uint32_t) io::formats::colloids::MagicNumber;
         writer << (uint32_t) io::formats::colloids::VersionNumber;
-        MPI_File_write(file, &buffer.front(), io::formats::colloids::MagicLength, MPI_CHAR, MPI_STATUS_IGNORE);
+        file.Write(buffer);
       }
 
-      MPI_File_seek_shared(file, 0, MPI_SEEK_END);
+      HEMELB_MPI_CALL(MPI_File_seek_shared, (file, 0, MPI_SEEK_END));
 
       // add an element into scanMap for each neighbour rank with zero for both counts
       // sorting the list of neighbours allows the position in the map to be predicted
       // & giving the correct position in the map makes insertion significantly faster
       // the local rank is added last, because its position cannot be easily predicted
       std::sort(neighbourProcessors.begin(), neighbourProcessors.end());
-      for (std::vector<proc_t>::const_iterator iter = neighbourProcessors.begin(); iter != neighbourProcessors.end();
-          iter++)
+      for (std::vector<proc_t>::const_iterator iter = neighbourProcessors.begin();
+          iter != neighbourProcessors.end(); iter++)
         scanMap.insert(scanMap.end(), scanMapContentType(*iter, scanMapElementType(0, 0)));
       scanMap.insert(scanMapContentType(localRank, scanMapElementType(0, 0)));
 
       // assume we are at the <Particles> node
       bool first = true;
       for (io::xml::Element particleElem = particlesElem.GetChildOrNull("subgridParticle");
-           particleElem != io::xml::Element::Missing();
-           particleElem = particleElem.NextSiblingOrNull("subgridParticle"))
+          particleElem != io::xml::Element::Missing(); particleElem =
+              particleElem.NextSiblingOrNull("subgridParticle"))
       {
         if (first)
         {
@@ -74,7 +92,20 @@ namespace hemelb
           first = false;
         }
         // create the particle object from the settings in the config file
-        Particle nextParticle(latDatLBM, lbmParams, particleElem);
+        Particle nextParticle(latDatLBM, lbmParams, simConfig, particleElem);
+
+        uint64_t particleId = nextParticle.GetParticleId();
+        LatticePosition globalPosition = nextParticle.GetGlobalPosition();
+        proc_t ownerRank = nextParticle.GetOwnerRank();
+
+if (ownerRank != 1073741824) {
+        printf("%lu %lu %g %g %g\n",
+        particleId,
+        ownerRank,
+        globalPosition.x,
+        globalPosition.y,
+        globalPosition.z);
+      }
         // check the particle is valid, i.e. in fluid, and is locally owned
         if (nextParticle.IsValid() && nextParticle.GetOwnerRank() == localRank)
         {
@@ -82,13 +113,13 @@ namespace hemelb
           particles.push_back(nextParticle);
           // ... and keep the count of local particles up-to-date
           scanMap[localRank].first++;
+
         }
       }
     }
 
     ParticleSet::~ParticleSet()
     {
-      MPI_File_close(&file);
       particles.clear();
     }
 
@@ -105,7 +136,8 @@ namespace hemelb
       // Create an XDR writer and write all the particles for this processor.
       io::writers::xdr::XdrMemWriter writer(&buffer.front(), maxSize);
 
-      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end(); iter++)
+      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end();
+          iter++)
       {
         Particle& particle = *iter;
         if (particle.GetOwnerRank() == localRank)
@@ -120,35 +152,39 @@ namespace hemelb
 
       // Find how far we currently are into the file.
       MPI_Offset positionBeforeWriting;
-      MPI_File_get_position_shared(file, &positionBeforeWriting);
+      HEMELB_MPI_CALL(MPI_File_get_position_shared, (file, &positionBeforeWriting));
 
       log::Logger::Log<log::Debug, log::OnePerCore>("from offsetEOF: %i\n", positionBeforeWriting);
 
       // Go past the header (which we'll write at the end)
       unsigned int sizeOfHeader = io::formats::colloids::HeaderLength;
-      MPI_File_seek_shared(file, sizeOfHeader, MPI_SEEK_END);
+      HEMELB_MPI_CALL(MPI_File_seek_shared, (file, sizeOfHeader, MPI_SEEK_END));
 
       // Collective write: the effect is as though all writes are done
       // in serialised order, i.e. as if rank 0 writes first, followed
       // by rank 1, and so on, until all ranks have written their data
-      MPI_File_write_ordered(file, &buffer.front(), count, MPI_CHAR, MPI_STATUS_IGNORE);
+      HEMELB_MPI_CALL(MPI_File_write_ordered,
+                      (file, &buffer.front(), count, MPI_CHAR, MPI_STATUS_IGNORE));
 
       // the collective ordered write modifies the shared file pointer
       // it should point to the byte following the highest rank's data
       // (should be true for all ranks but) we only need it for rank 0
       MPI_Offset positionAferWriting;
-      MPI_File_get_position_shared(file, &positionAferWriting);
+      HEMELB_MPI_CALL(MPI_File_get_position_shared, (file, &positionAferWriting));
 
       log::Logger::Log<log::Debug, log::OnePerCore>("new offsetEOF: %i\n", positionBeforeWriting);
 
       // Now write the header section, only on rank 0.
-      if (localRank == 0)
+      if (ioComms.OnIORank())
       {
         writer << (uint32_t) io::formats::colloids::HeaderLength;
         writer << (uint32_t) io::formats::colloids::RecordLength;
-        writer << (uint64_t) (positionAferWriting - positionBeforeWriting - io::formats::colloids::HeaderLength);
+        writer
+            << (uint64_t) (positionAferWriting - positionBeforeWriting
+                - io::formats::colloids::HeaderLength);
         writer << (uint64_t) timestep;
-        MPI_File_write_at(file, positionBeforeWriting, &buffer[count], sizeOfHeader, MPI_CHAR, MPI_STATUS_IGNORE);
+        HEMELB_MPI_CALL(MPI_File_write_at,
+                        (file, positionBeforeWriting, &buffer[count], sizeOfHeader, MPI_CHAR, MPI_STATUS_IGNORE));
       }
 
       for (scanMapConstIterType iterMap = scanMap.begin(); iterMap != scanMap.end(); iterMap++)
@@ -167,12 +203,13 @@ namespace hemelb
     {
       if (log::Logger::ShouldDisplay<log::Debug>())
         log::Logger::Log<log::Debug, log::OnePerCore>("In colloids::ParticleSet::UpdatePositions #particles == %i ...\n",
-                                                      net::NetworkTopology::Instance()->GetLocalRank(),
+                                                      localRank,
                                                       particles.size());
 
       // only update the position for particles that are locally owned because
       // only the owner has velocity contributions from all neighbouring ranks
-      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end(); iter++)
+      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end();
+          iter++)
       {
         Particle& particle = *iter;
         if (particle.GetOwnerRank() == localRank)
@@ -180,24 +217,93 @@ namespace hemelb
       }
     }
 
-    const void ParticleSet::CalculateBodyForces()
+    const void ParticleSet::UpdateNoises()
     {
-      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end(); iter++)
+      if (log::Logger::ShouldDisplay<log::Debug>())
+        log::Logger::Log<log::Debug, log::OnePerCore>("In colloids::ParticleSet::UpdateNoises #particles == %i ...\n",
+                                                      localRank,
+                                                      particles.size());
+
+      // only update the noise for particles that are locally owned to avoid duplicate treatment
+      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end();
+          iter++)
       {
         Particle& particle = *iter;
         if (particle.GetOwnerRank() == localRank)
-          particle.CalculateBodyForces(forces);
+          particle.UpdateNoise();
       }
     }
 
+    const void ParticleSet::UpdateOrientations()
+    {
+      if (log::Logger::ShouldDisplay<log::Debug>())
+        log::Logger::Log<log::Debug, log::OnePerCore>("In colloids::ParticleSet::UpdateOrientations #particles == %i ...\n",
+                                                      localRank,
+                                                      particles.size());
+
+      // only update the orientation for particles that are locally owned to avoid duplicate treatment
+      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end();
+          iter++)
+      {
+        Particle& particle = *iter;
+        if (particle.GetOwnerRank() == localRank)
+          particle.UpdateOrientation();
+      }
+    }
+
+    const void ParticleSet::CalculateBodyForces(const LatticeTimeStep timestep)
+    {
+      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end();
+          iter++)
+      {
+        Particle& particle = *iter;
+        if (particle.GetOwnerRank() == localRank)
+          particle.CalculateBodyForces(timestep);
+      }
+    }
+
+
+    const void ParticleSet::CalculateParticleParticleInteractions()
+    {
+      for (std::vector<Particle>::iterator part1iter = particles.begin(); part1iter != particles.end();
+           part1iter++)
+        {
+//          for (std::vector<Particle>::iterator part2iter = particles.begin(); part2iter != particles.end(); part2iter++)
+            for (std::vector<Particle>::iterator part2iter = part1iter; part2iter != particles.end(); part2iter++)
+            {
+
+
+              Particle& part1 = *part1iter;
+              Particle& part2 = *part2iter;
+
+              if (part1.GetOwnerRank() == localRank)
+                {
+                if (part1.GetParticleId() != part2.GetParticleId())
+                    {
+                      part1.CalculateSoftCoreInteractions(part2.GetGlobalPosition(),part2.GetNormalisedRadius());
+                      part1.CalculateDipolarInteractions(part2.GetGlobalPosition(),part2.GetNormalisedRadius());
+                    }
+                  }
+            }
+        }
+
+    }
+
+    // const void ParticleSet::CalculateParticleSeparation(Particle& part1, Particle& part2, LatticePostiion& separation, LatticeDistance& distance)
+    // {
+    //   separation = part1.GetGlobalPosition() - part2.GetGlobalPosition();
+    //   distance = separation.GetMagnitudeSquared();
+    // }
+
     const void ParticleSet::ApplyBoundaryConditions(const LatticeTimeStep currentTimestep)
     {
-      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end(); iter++)
+      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end();
+          iter++)
       {
         Particle& particle = *iter;
         if (particle.GetOwnerRank() == localRank)
         {
-          bcs.DoSomeThingsToParticle(currentTimestep, particle);
+          BoundaryConditions::DoSomeThingsToParticle(currentTimestep, particle);
           if (particle.IsReadyToBeDeleted())
             log::Logger::Log<log::Trace, log::OnePerCore>("In ParticleSet::ApplyBoundaryConditions - timestep: %lu, particleId: %lu, IsReadyToBeDeleted: %s, markedForDeletion: %lu, lastCheckpoint: %lu\n",
                                                           currentTimestep,
@@ -233,18 +339,22 @@ namespace hemelb
 
     const void ParticleSet::CalculateFeedbackForces()
     {
-      forces.ClearBodyForcesForAllSiteIds();
-      for (std::vector<Particle>::const_iterator iter = particles.begin(); iter != particles.end(); iter++)
+      BodyForces::ClearBodyForcesForAllSiteIds();
+      for (std::vector<Particle>::const_iterator iter = particles.begin(); iter != particles.end();
+          iter++)
       {
         const Particle& particle = *iter;
-        if (particle.GetOwnerRank() == localRank)
-          particle.CalculateFeedbackForces(latDatLBM, forces);
+        if (particle.GetOwnerRank() == localRank) {
+          particle.CalculateFeedbackForces(latDatLBM);
+//	  printf("Calc Feedback\n");
+	}
       }
     }
 
     const void ParticleSet::InterpolateFluidVelocity()
     {
-      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end(); iter++)
+      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end();
+          iter++)
       {
         Particle& particle = *iter;
         particle.InterpolateFluidVelocity(latDatLBM, propertyCache);
@@ -265,7 +375,7 @@ namespace hemelb
        *  The global position of each particle is updated by the ownerRank process.
        *  The ownerRank for each particle is verified when its position is updated.
        *  Some (previously locally owned) particles may no longer be locally owned.
-       *  
+       *
        */
 
       unsigned int& numberOfParticlesToSend = scanMap[localRank].first;
@@ -299,8 +409,12 @@ namespace hemelb
         if (neighbourRank != localRank)
         {
           const unsigned int& numberOfParticlesToRecv = iterMap->second.first;
-          net.RequestSend(& ((PersistedParticle&) *iterSendBegin), numberOfParticlesToSend, neighbourRank);
-          net.RequestReceive(& ((PersistedParticle&) * (iterRecvBegin)), numberOfParticlesToRecv, neighbourRank);
+          net.RequestSend(& ((PersistedParticle&) *iterSendBegin),
+                          numberOfParticlesToSend,
+                          neighbourRank);
+          net.RequestReceive(& ((PersistedParticle&) * (iterRecvBegin)),
+                             numberOfParticlesToRecv,
+                             neighbourRank);
           iterRecvBegin += numberOfParticlesToRecv;
         }
       }
@@ -314,13 +428,13 @@ namespace hemelb
       particles.erase(newEndOfParticles, particles.end());
 
       // sort the particles - local first, then in order of increasing owner rank
-      std::sort(particles.begin(), particles.end());
+      std::sort(particles.begin(), particles.end(), ParticleSorter(latDatLBM.GetLocalRank()));
 
       // re-build the scanMap
       for (scanMapIterType iterMap = scanMap.begin(); iterMap != scanMap.end(); iterMap++)
         iterMap->second.first = 0;
-      for (std::vector<Particle>::const_iterator iterParticles = particles.begin(); iterParticles != particles.end();
-          iterParticles++)
+      for (std::vector<Particle>::const_iterator iterParticles = particles.begin();
+          iterParticles != particles.end(); iterParticles++)
         scanMap[iterParticles->GetOwnerRank()].first++;
     }
 
@@ -362,7 +476,8 @@ namespace hemelb
 
       // exchange velocities
       std::vector<Particle>::iterator iterSendBegin = particles.begin();
-      std::vector<std::pair<unsigned long, util::Vector3D<double> > >::iterator iterRecvBegin = velocityBuffer.begin();
+      std::vector<std::pair<unsigned long, util::Vector3D<double> > >::iterator iterRecvBegin =
+          velocityBuffer.begin();
       for (scanMapConstIterType iterMap = scanMap.begin(); iterMap != scanMap.end(); iterMap++)
       {
         const proc_t& neighbourRank = iterMap->first;
@@ -388,7 +503,8 @@ namespace hemelb
       }
 
       // update local particles
-      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end(); iter++)
+      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end();
+          iter++)
       {
         Particle& particle = *iter;
         if (particle.GetOwnerRank() == localRank)

@@ -44,8 +44,8 @@ namespace hemelb
       class RecordingNet : public virtual StoringNet
       {
         public:
-          RecordingNet() :
-              requiredReceipts(), requiredSends()
+          RecordingNet(const MpiCommunicator& comms) :
+              BaseNet(comms), StoringNet(comms), requiredReceipts(), requiredSends()
           {
           }
 
@@ -56,10 +56,14 @@ namespace hemelb
            * @param rank - of the source of the message
            * @param label - used in error reporting (should be unique)
            */
-          template<class T> void RequireReceive(T* pointer, unsigned int count, proc_t rank, const std::string &label =
-                                                    "")
+          template<class T> void RequireReceive(T* pointer, unsigned int count, proc_t rank,
+                                                const std::string &label = "")
           {
-            requiredReceipts[rank].push_back(LabelledRequest(pointer, count, MpiDataType<T>(), rank, label));
+            requiredReceipts[rank].push_back(LabelledRequest(pointer,
+                                                             count,
+                                                             MpiDataType<T>(),
+                                                             rank,
+                                                             label));
           }
           /**
            * Specify that this rank should send a message
@@ -68,9 +72,14 @@ namespace hemelb
            * @param rank - of the destination of the message
            * @param label - used in error reporting (should be unique)
            */
-          template<class T> void RequireSend(T* pointer, unsigned int count, proc_t rank, const std::string &label = "")
+          template<class T> void RequireSend(T* pointer, unsigned int count, proc_t rank,
+                                             const std::string &label = "")
           {
-            requiredSends[rank].push_back(LabelledRequest(pointer, count, MpiDataType<T>(), rank, label));
+            requiredSends[rank].push_back(LabelledRequest(pointer,
+                                                          count,
+                                                          MpiDataType<T>(),
+                                                          rank,
+                                                          label));
           }
 
           /**
@@ -85,7 +94,8 @@ namespace hemelb
             for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin();
                 it != receiveProcessorComms.end(); ++it)
             {
-              for (ProcComms::iterator message = it->second.begin(); message != it->second.end(); message++)
+              for (ProcComms::iterator message = it->second.begin(); message != it->second.end();
+                  message++)
               {
 
                 if (requiredReceipts[message->Rank].size() == 0)
@@ -120,10 +130,11 @@ namespace hemelb
           void SendPointToPoint()
           {
 
-            for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end();
-                ++it)
+            for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin();
+                it != sendProcessorComms.end(); ++it)
             {
-              for (ProcComms::iterator message = it->second.begin(); message != it->second.end(); message++)
+              for (ProcComms::iterator message = it->second.begin(); message != it->second.end();
+                  message++)
               {
 
                 if (requiredSends[message->Rank].size() == 0)
@@ -154,24 +165,23 @@ namespace hemelb
           void ExpectationsAllCompleted()
           {
             for (std::map<proc_t, BaseProcComms<LabelledRequest> >::iterator receipts_from_core =
-                requiredReceipts.begin(); receipts_from_core != requiredReceipts.end(); receipts_from_core++)
+                requiredReceipts.begin(); receipts_from_core != requiredReceipts.end();
+                receipts_from_core++)
             {
               CPPUNIT_ASSERT(0 == receipts_from_core->second.size());
             }
-            for (std::map<proc_t, BaseProcComms<LabelledRequest> >::iterator sends_to_core = requiredSends.begin();
-                sends_to_core != requiredSends.end(); sends_to_core++)
+            for (std::map<proc_t, BaseProcComms<LabelledRequest> >::iterator sends_to_core =
+                requiredSends.begin(); sends_to_core != requiredSends.end(); sends_to_core++)
             {
               CPPUNIT_ASSERT(0 == sends_to_core->second.size());
             }
           }
         private:
 
-
           std::map<proc_t, BaseProcComms<LabelledRequest> > requiredReceipts;
           std::map<proc_t, BaseProcComms<LabelledRequest> > requiredSends;
       }
       ;
-
 
     }
   }

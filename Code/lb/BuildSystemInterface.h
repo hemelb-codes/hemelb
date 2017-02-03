@@ -32,6 +32,16 @@ namespace hemelb
     };
 
     /**
+     * LBGK with GuoForcing
+     */
+    template<class LATTICE>
+    class GuoForcingLBGK
+    {
+      public:
+        typedef lb::kernels::GuoForcingLBGK<LATTICE> Type;
+    };
+
+    /**
      * The entropic implementation by Ansumali et al.
      */
     template<class Lattice>

@@ -11,7 +11,7 @@
 #define HEMELB_GEOMETRY_NEEDS_NEEDS_H
 #include <vector>
 #include "net/net.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 namespace hemelb
 {
   namespace geometry
@@ -33,11 +33,8 @@ namespace hemelb
          * @param readingGroupSize Number sof cores to use for reading blocks
          * @param net Instance of Net communication class to use.
          */
-       Needs(const site_t blockCount,
-                          const std::vector<bool>& readBlock,
-                          const proc_t readingGroupSize,
-                          net::InterfaceDelegationNet &net,
-                          bool shouldValidate); // Temporarily during the refactor, constructed just to abstract the block sharing bit
+        Needs(const site_t blockCount, const std::vector<bool>& readBlock,
+              const proc_t readingGroupSize, net::InterfaceDelegationNet &net, bool shouldValidate); // Temporarily during the refactor, constructed just to abstract the block sharing bit
 
         /***
          * Which processors need a given block?

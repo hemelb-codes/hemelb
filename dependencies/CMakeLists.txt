@@ -7,9 +7,33 @@ set(HEMELB_SUBPROJECT_MAKE_JOBS 1 CACHE INTEGER "Number of jobs to use for subpr
 set(CMAKE_MODULE_PATH "${HEMELB_DEPENDENCIES_PATH}/Modules/" ${CMAKE_MODULE_PATH})
 set(CPPUNIT_CONFIGURE_OPTIONS "" CACHE STRING "Extra configuration options for CPPUNIT")
 option(CPPUNIT_PATCH_LDL "Add -ldl option to cppunit" OFF)
+option(CPPUNIT_PATCH_DYNAMIC "Add -dynamic option to cppunit. Only works if CPPUNIT_PATCH_LDL is OFF." OFF)
 set(CTEMPLATE_CONFIGURE_OPTIONS "" CACHE STRING "Extra configurations options for CTEMPLATE")
 option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 find_package(MPI REQUIRED) # Do this *after* we include the patched find MPI module
+
+
+# cmake often compiled without SSL support, so can't download over https
+# Download by hand using Wget if possible
+find_package(Wget)
+function(get_tarball URL OUTPUT_VAR)
+    if(WGET_FOUND AND NOT APPLE)
+        # By default, cmake can't work with https. So work around...
+        get_filename_component(filename "${URL}" NAME)
+        set(output ${CMAKE_CURRENT_BINARY_DIR}/${filename})
+        if(NOT EXISTS "${output}")
+            execute_process(COMMAND ${WGET_EXECUTABLE} ${URL} -O ${output}
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                ERROR_VARIABLE got_tarball
+            )
+        endif()
+        if(got_tarball OR EXISTS "${output}")
+            set(URL ${output})
+        endif()
+    endif()
+    set(${OUTPUT_VAR} "${URL}" PARENT_SCOPE)
+endfunction()
+
 
 # --------- tinyxml -------------------
 find_package(TinyXML QUIET)
@@ -132,6 +156,8 @@ else()
 	option(RECONFIGURE_CPPUNIT "Include Reconfigure step for CPPUNIT" ${RECONFIGURE_CPPUNIT_DEFAULT})
 	if (CPPUNIT_PATCH_LDL)
 		set(PATCH_COMMAND_LDL patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/cppunit_ldl.diff)
+    elseif (CPPUNIT_PATCH_DYNAMIC)
+        set(PATCH_COMMAND_LDL patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/cppunit_dynamic.diff)
 	else()
 		set(PATCH_COMMAND_LDL echo noldl)
 	endif()
@@ -205,7 +231,11 @@ else()
 	)
 	if(NOT CTEMPLATE_TARBALL)
 		message("No ctemplate source found, will download.")
-		set(CTEMPLATE_TARBALL http://ctemplate.googlecode.com/files/ctemplate-2.2.tar.gz
+        get_tarball(
+                     https://github.com/OlafvdSpek/ctemplate/archive/ctemplate-2.3.tar.gz
+                     ctemptar
+        )
+        set(CTEMPLATE_TARBALL "${ctemptar}"
 			CACHE STRING "Path to download CTemplate (can be local file://)" FORCE)
 	endif()
 	if (CTEMPLATE_PATCH_VACOPY)
@@ -253,4 +283,56 @@ else()
 		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 		BUILD_IN_SOURCE 1
 	)
+endif()
+
+find_package(GreatCMakeCookOff QUIET)
+get_tarball(
+       https://github.com/UCL/GreatCMakeCookOff/archive/v2.0.4.tar.gz
+       cooktar
+)
+if(GreatCMakeCookOff_FOUND)
+    message("Found cmake cookoff.")
+else()
+    message("CMake cookoff not installed, will build from source")
+    ExternalProject_Add(
+        cookoff
+        INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
+        URL ${cooktar}
+        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${HEMELB_DEPENDENCIES_INSTALL_PATH}
+               -Dtests=OFF
+    )
+endif()
+
+#-----------------HDF5---------------------------------
+#
+find_package(HDF5 1.8 QUIET COMPONENTS C HL)
+if (HDF5_FOUND AND HDF5_IS_PARALLEL)
+    message("HDF5 with MPI support found, no need to download")
+else()
+    message("HDF5 with MPI support not installed, will build from source")
+    find_file(HDF5_TARBALL hdf5-1.8.15-patch1.tar.gz
+        DOC "Path to download HDF5 (can be url http://)"
+        PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
+    )
+    if (NOT HDF5_TARBALL)
+        message("No HDF5 source found, will download")
+        set(HDF5_TARBALL http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.15-patch1/src/hdf5-1.8.15-patch1.tar.gz
+            CACHE STRING "Path to download HDF5 (can be local file://)" FORCE)
+    endif()
+    ExternalProject_Add(
+        hdf5
+        INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
+        URL ${HDF5_TARBALL}
+        CONFIGURE_COMMAND cmake <SOURCE_DIR>
+        -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_CXX_FLAGS_RELEASE=${CMAKE_CXX_FLAGS_RELEASE}
+        -DBUILD_SHARED_LIBS=ON
+        -DBUILD_TESTING=OFF
+        -DHDF5_BUILD_CPP_LIB=OFF
+        -DHDF5_BUILD_EXAMPLES=OFF
+        -DHDF5_ENABLE_PARALLEL=ON
+        -DHDF5_ENABLE_Z_LIB_SUPPORT=ON
+        BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
+    )
 endif()

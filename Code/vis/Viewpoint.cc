@@ -19,29 +19,27 @@ namespace hemelb
   namespace vis
   {
     Viewpoint::Viewpoint() :
-      mViewpointLocationInWorldCoordinates(0.0F)
+        mViewpointLocationInWorldCoordinates(0.0F)
     {
     }
 
-    util::Vector3D<float> Viewpoint::RotateCameraCoordinatesToWorldCoordinates(const util::Vector3D<
-        float>& iVector) const
+    util::Vector3D<float> Viewpoint::RotateCameraCoordinatesToWorldCoordinates(
+        const util::Vector3D<float>& iVector) const
     {
       // A rotation of iThetaX clockwise looking up the x-axis (increasing)
       // Followed by a rotation of iThetaY anticlockwise looking up the y-axis.
       return Rotate(mSinLatitude, mCosLatitude, mSinLongitude, mCosLongitude, iVector);
     }
 
-    util::Vector3D<float> Viewpoint::RotateWorldToCameraCoordinates(const util::Vector3D<float>& iVector) const
+    util::Vector3D<float> Viewpoint::RotateWorldToCameraCoordinates(
+        const util::Vector3D<float>& iVector) const
     {
       // The reverse of the above
       return UnRotate(mSinLatitude, mCosLatitude, mSinLongitude, mCosLongitude, iVector);
     }
 
-    util::Vector3D<float> Viewpoint::Rotate(float iSinThetaX,
-                                            float iCosThetaX,
-                                            float iSinThetaY,
-                                            float iCosThetaY,
-                                            const util::Vector3D<float>& iVector)
+    util::Vector3D<float> Viewpoint::Rotate(float iSinThetaX, float iCosThetaX, float iSinThetaY,
+                                            float iCosThetaY, const util::Vector3D<float>& iVector)
     {
       // A rotation of iThetaX clockwise looking down the x-axis
       // Followed by a rotation of iThetaY anticlockwise looking down the y-axis.
@@ -61,9 +59,7 @@ namespace hemelb
                                    lTemp * iCosThetaY - iVector.x * iSinThetaY);
     }
 
-    util::Vector3D<float> Viewpoint::UnRotate(float iSinThetaX,
-                                              float iCosThetaX,
-                                              float iSinThetaY,
+    util::Vector3D<float> Viewpoint::UnRotate(float iSinThetaX, float iCosThetaX, float iSinThetaY,
                                               float iCosThetaY,
                                               const util::Vector3D<float>& iVector)
     {
@@ -104,16 +100,14 @@ namespace hemelb
       util::Vector3D<float> lLocationCamCoordinates =
           GetLocationInCameraCoordinates(iWorldLocation);
 
-      return XYCoordinates<float> (mDistanceFromCameraToScreen / (-lLocationCamCoordinates.z)
-                                       * lLocationCamCoordinates.x,
-                                   mDistanceFromCameraToScreen / (-lLocationCamCoordinates.z)
-                                       * lLocationCamCoordinates.y);
+      return XYCoordinates<float>(mDistanceFromCameraToScreen / (-lLocationCamCoordinates.z)
+                                      * lLocationCamCoordinates.x,
+                                  mDistanceFromCameraToScreen / (-lLocationCamCoordinates.z)
+                                      * lLocationCamCoordinates.y);
     }
 
-    void Viewpoint::SetViewpointPosition(float iLongitude,
-                                         float iLatitude,
-                                         const util::Vector3D<float>& iLocalCentre,
-                                         float iRadius,
+    void Viewpoint::SetViewpointPosition(float iLongitude, float iLatitude,
+                                         const util::Vector3D<float>& iLocalCentre, float iRadius,
                                          float iDistanceFromCameraToScreen)
     {
 
@@ -124,8 +118,8 @@ namespace hemelb
       mCosLatitude = cosf(iLatitude);
 
       //The camera is located at 0,0,radius from the world centre in camera co-ordinates 
-      mViewpointLocationInWorldCoordinates
-          = RotateCameraCoordinatesToWorldCoordinates(util::Vector3D<float>(0., 0., iRadius));
+      mViewpointLocationInWorldCoordinates =
+          RotateCameraCoordinatesToWorldCoordinates(util::Vector3D<float>(0., 0., iRadius));
 
       //Translate the camera location to allow it to point at 
       //a local centre rather than the world centre
@@ -144,7 +138,8 @@ namespace hemelb
       return mDistanceFromCameraToScreen;
     }
 
-    util::Vector3D<float> Viewpoint::GetLocationInCameraCoordinates(const util::Vector3D<float>& iWorldLocation) const
+    util::Vector3D<float> Viewpoint::GetLocationInCameraCoordinates(
+        const util::Vector3D<float>& iWorldLocation) const
     {
       //Calculate the location of the point relative to the viewpoint 
       util::Vector3D<float> lLocationRelativeToViewPoint = iWorldLocation

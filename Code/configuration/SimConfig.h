@@ -17,6 +17,10 @@
 #include "extraction/PropertyOutputFile.h"
 #include "extraction/GeometrySelectors.h"
 #include "io/xml/XmlAbstractionLayer.h"
+#include "redblood/Cell.h"
+#include "redblood/Mesh.h"
+#include "redblood/RBCInserter.h"
+#include "redblood/stencil.h"
 
 namespace hemelb
 {
@@ -38,7 +42,26 @@ namespace hemelb
     class SimConfig
     {
       public:
+        /**
+         * Bundles together various configuration parameters concerning simulation monitoring
+         */
+        struct MonitoringConfig
+        {
+            MonitoringConfig() :
+                doConvergenceCheck(false), convergenceRelativeTolerance(0),
+                    convergenceTerminate(false), doIncompressibilityCheck(false)
+            {
+            }
+            bool doConvergenceCheck; ///< Whether to turn on the convergence check or not
+            extraction::OutputField::FieldType convergenceVariable; ///< Macroscopic variable used to check for convergence
+            double convergenceReferenceValue; ///< Reference value used to normalise an absolute error (making it relative)
+            double convergenceRelativeTolerance; ///< Convergence check relative tolerance
+            bool convergenceTerminate; ///< Whether to terminate a converged run or not
+            bool doIncompressibilityCheck; ///< Whether to turn on the IncompressibilityChecker or not
+        };
+
         static SimConfig* New(const std::string& path);
+
       protected:
         SimConfig(const std::string& path);
         void Init();
@@ -60,6 +83,10 @@ namespace hemelb
         const std::vector<lb::iolets::InOutLet*> & GetOutlets() const
         {
           return outlets;
+        }
+        std::shared_ptr<std::vector<redblood::FlowExtension>> GetRBCOutlets() const
+        {
+          return rbcOutlets;
         }
         lb::StressTypes GetStressType() const
         {
@@ -143,11 +170,49 @@ namespace hemelb
 
         const util::UnitConverter& GetUnitConverter() const;
 
-      protected:
         /**
-         * Protected default ctor to allow derived test fixture classes to create mocks.
+         * Return the configuration of various checks/test
+         * @return monitoring configuration
          */
-        SimConfig();
+        const MonitoringConfig* GetMonitoringConfiguration() const;
+
+        /**
+         * True if the XML file has a section specifying red blood cells.
+         * @return
+         */
+        bool HasRBCSection() const
+        {
+          return hasRBCSection;
+        }
+
+        /**
+         * Returns the object used to insert red blood cells into the simulation.
+         * @return
+         */
+        std::function<void(redblood::CellInserter const&)> GetInserter() const
+        {
+          return rbcinserter;
+        }
+
+        /**
+         * Gets the box size for the RBC CellController.
+         * @return
+         */
+        LatticeDistance GetBoxSize() const
+        {
+          return boxSize;
+        }
+
+        /**
+         * Gets the halo for the RBC CellController.
+         * @return
+         */
+        LatticeDistance GetHalo() const
+        {
+          return halo;
+        }
+
+      protected:
         /**
          * Create the unit converter - virtual so that mocks can override it.
          */
@@ -158,10 +223,12 @@ namespace hemelb
          * @param ioletEl
          * @param requiredBC
          */
-        virtual void CheckIoletMatchesCMake(const io::xml::Element& ioletEl, const std::string& requiredBC);
+        virtual void CheckIoletMatchesCMake(const io::xml::Element& ioletEl,
+                                            const std::string& requiredBC);
 
         template<typename T>
-        void GetDimensionalValueInLatticeUnits(const io::xml::Element& elem, const std::string& units, T& value)
+        void GetDimensionalValueInLatticeUnits(const io::xml::Element& elem,
+                                               const std::string& units, T& value)
         {
           GetDimensionalValue(elem, units, value);
           value = unitConverter->ConvertToLatticeUnits(units, value);
@@ -179,20 +246,22 @@ namespace hemelb
         void DoIO(const io::xml::Element xmlNode);
         void DoIOForSimulation(const io::xml::Element simEl);
         void DoIOForGeometry(const io::xml::Element geometryEl);
+        bool DoIOForRedBloodCells(const io::xml::Element & rbcNode);
 
         std::vector<lb::iolets::InOutLet*> DoIOForInOutlets(const io::xml::Element xmlNode);
+        void DoIOForFlowExtension(lb::iolets::InOutLet *, const io::xml::Element &);
 
         void DoIOForBaseInOutlet(const io::xml::Element& ioletEl, lb::iolets::InOutLet* value);
 
         lb::iolets::InOutLet* DoIOForPressureInOutlet(const io::xml::Element& ioletEl);
         lb::iolets::InOutLetCosine* DoIOForCosinePressureInOutlet(const io::xml::Element& ioletEl);
         lb::iolets::InOutLetFile* DoIOForFilePressureInOutlet(const io::xml::Element& ioletEl);
-        lb::iolets::InOutLetMultiscale
-            * DoIOForMultiscalePressureInOutlet(const io::xml::Element& ioletEl);
+        lb::iolets::InOutLetMultiscale* DoIOForMultiscalePressureInOutlet(
+            const io::xml::Element& ioletEl);
 
         lb::iolets::InOutLet* DoIOForVelocityInOutlet(const io::xml::Element& ioletEl);
-        lb::iolets::InOutLetParabolicVelocity
-            * DoIOForParabolicVelocityInOutlet(const io::xml::Element& ioletEl);
+        lb::iolets::InOutLetParabolicVelocity* DoIOForParabolicVelocityInOutlet(
+            const io::xml::Element& ioletEl);
         /**
          * Reads a Womersley velocity iolet definition from the XML config file and returns
          * an InOutLetWomersleyVelocity object
@@ -200,8 +269,8 @@ namespace hemelb
          * @param ioletEl in memory representation of <inlet> or <outlet> xml element
          * @return InOutLetWomersleyVelocity object
          */
-        lb::iolets::InOutLetWomersleyVelocity
-            * DoIOForWomersleyVelocityInOutlet(const io::xml::Element& ioletEl);
+        lb::iolets::InOutLetWomersleyVelocity* DoIOForWomersleyVelocityInOutlet(
+            const io::xml::Element& ioletEl);
 
         /**
          * Reads a file velocity iolet definition from the XML config file and returns
@@ -210,20 +279,42 @@ namespace hemelb
          * @param ioletEl in memory representation of <inlet> or <outlet> xml element
          * @return InOutLetFileVelocity object
          */
-        lb::iolets::InOutLetFileVelocity* DoIOForFileVelocityInOutlet(const io::xml::Element& ioletEl);
+        lb::iolets::InOutLetFileVelocity* DoIOForFileVelocityInOutlet(
+            const io::xml::Element& ioletEl);
 
         void DoIOForProperties(const io::xml::Element& xmlNode);
         void DoIOForProperty(io::xml::Element xmlNode, bool isLoading);
         extraction::OutputField DoIOForPropertyField(const io::xml::Element& xmlNode);
-        extraction::PropertyOutputFile
-            * DoIOForPropertyOutputFile(const io::xml::Element& propertyoutputEl);
-        extraction::StraightLineGeometrySelector
-            * DoIOForLineGeometry(const io::xml::Element& xmlNode);
+        extraction::PropertyOutputFile* DoIOForPropertyOutputFile(
+            const io::xml::Element& propertyoutputEl);
+        extraction::StraightLineGeometrySelector* DoIOForLineGeometry(
+            const io::xml::Element& xmlNode);
         extraction::PlaneGeometrySelector* DoIOForPlaneGeometry(const io::xml::Element&);
         extraction::SurfacePointSelector* DoIOForSurfacePoint(const io::xml::Element&);
 
         void DoIOForInitialConditions(io::xml::Element parent);
         void DoIOForVisualisation(const io::xml::Element& visEl);
+
+        /**
+         * Reads monitoring configuration from XML file
+         *
+         * @param monEl in memory representation of <monitoring> xml element
+         */
+        void DoIOForMonitoring(const io::xml::Element& monEl);
+
+        /**
+         * Reads configuration of steady state flow convergence check from XML file
+         *
+         * @param convEl in memory representation of the <steady_flow_convergence> XML element
+         */
+        void DoIOForSteadyFlowConvergence(const io::xml::Element& convEl);
+
+        /**
+         * Reads the configuration of one of the possible several converge criteria provided
+         *
+         * @param criterionEl in memory representation of the <criterion> XML element
+         */
+        void DoIOForConvergenceCriterion(const io::xml::Element& criterionEl);
 
         const std::string& xmlFilePath;
         io::xml::Document* rawXmlDoc;
@@ -244,6 +335,15 @@ namespace hemelb
          */
         bool hasColloidSection;
         PhysicalPressure initialPressure_mmHg; ///< Pressure used to initialise the domain
+        MonitoringConfig monitoringConfig; ///< Configuration of various checks/tests
+        /**
+         * True if the file has a redbloodcells section.
+         */
+        bool hasRBCSection;
+        std::function<void(redblood::CellInserter const&)> rbcinserter;
+        LatticeDistance boxSize, halo;
+        std::shared_ptr<redblood::TemplateCellContainer> rbcMeshes;
+        std::shared_ptr<std::vector<redblood::FlowExtension>> rbcOutlets;
 
       protected:
         // These have to contain pointers because there are multiple derived types that might be

@@ -27,9 +27,9 @@ namespace hemelb
 
       class UnitConverterTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE(UnitConverterTests);
-          CPPUNIT_TEST(TestSimpleStressTensor);
-          CPPUNIT_TEST(TestSimpleTractionVector);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (UnitConverterTests);
+          CPPUNIT_TEST (TestSimpleStressTensor);
+          CPPUNIT_TEST (TestSimpleTractionVector);CPPUNIT_TEST_SUITE_END();
 
         public:
 
@@ -50,7 +50,8 @@ namespace hemelb
           void TestPressure()
           {
             CPPUNIT_ASSERT_DOUBLES_EQUAL(pressMmHg,
-                                         unitConverter->ConvertPressureToPhysicalUnits(densityLatt * Cs2),
+                                         unitConverter->ConvertPressureToPhysicalUnits(densityLatt
+                                             * Cs2),
                                          epsilon);
           }
 
@@ -59,12 +60,22 @@ namespace hemelb
             std::vector<distribn_t> fNonEquilibrium(lb::lattices::D3Q15::NUMVECTORS, 0.0);
 
             util::Matrix3D stressTensor;
-            lb::lattices::D3Q15::CalculateStressTensor(densityLatt, tau, fNonEquilibrium.data(), stressTensor);
-            util::Matrix3D stressTensorPhys = unitConverter->ConvertFullStressTensorToPhysicalUnits(stressTensor);
+            lb::lattices::D3Q15::CalculateStressTensor(densityLatt,
+                                                       tau,
+                                                       fNonEquilibrium.data(),
+                                                       stressTensor);
+            util::Matrix3D stressTensorPhys =
+                unitConverter->ConvertFullStressTensorToPhysicalUnits(stressTensor);
 
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(pressMmHg, stressTensorPhys[0][0] / mmHg_TO_PASCAL, epsilon);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(pressMmHg, stressTensorPhys[1][1] / mmHg_TO_PASCAL, epsilon);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(pressMmHg, stressTensorPhys[2][2] / mmHg_TO_PASCAL, epsilon);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(pressMmHg,
+                                         stressTensorPhys[0][0] / mmHg_TO_PASCAL,
+                                         epsilon);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(pressMmHg,
+                                         stressTensorPhys[1][1] / mmHg_TO_PASCAL,
+                                         epsilon);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(pressMmHg,
+                                         stressTensorPhys[2][2] / mmHg_TO_PASCAL,
+                                         epsilon);
             CPPUNIT_ASSERT_DOUBLES_EQUAL((distribn_t) 0., stressTensorPhys[1][0], epsilon);
           }
 
@@ -80,8 +91,8 @@ namespace hemelb
                                                            fNonEquilibrium.data(),
                                                            wallNormal,
                                                            traction);
-            util::Vector3D<PhysicalStress> tractionPhys = unitConverter->ConvertTractionToPhysicalUnits(traction,
-                                                                                                        wallNormal);
+            util::Vector3D<PhysicalStress> tractionPhys =
+                unitConverter->ConvertTractionToPhysicalUnits(traction, wallNormal);
 
             CPPUNIT_ASSERT_DOUBLES_EQUAL(pressMmHg, tractionPhys[0] / mmHg_TO_PASCAL, epsilon);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, tractionPhys[1] / mmHg_TO_PASCAL, epsilon);
@@ -98,7 +109,7 @@ namespace hemelb
 
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION(UnitConverterTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (UnitConverterTests);
 
     }
   }

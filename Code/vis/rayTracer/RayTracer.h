@@ -22,7 +22,7 @@
 #include "geometry/LatticeData.h"
 #include "lb/LbmParameters.h"
 #include "log/Logger.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 #include "util/utilityFunctions.h" 
 #include "util/Vector3D.h"
 #include "vis/DomainStats.h"
@@ -50,13 +50,11 @@ namespace hemelb
       {
         public:
           // Constructor and destructor do all the usual stuff.
-          RayTracer(const geometry::LatticeData* iLatDat,
-                    const DomainStats* iDomainStats,
-                    Screen* iScreen,
-                    Viewpoint* iViewpoint,
-                    VisSettings* iVisSettings) :
-            mClusterBuilder(iLatDat), mLatDat(iLatDat), mDomainStats(iDomainStats),
-                mScreen(iScreen), mViewpoint(iViewpoint), mVisSettings(iVisSettings)
+          RayTracer(const geometry::LatticeData* iLatDat, const DomainStats* iDomainStats,
+                    Screen* iScreen, Viewpoint* iViewpoint, VisSettings* iVisSettings) :
+              mClusterBuilder(iLatDat, iLatDat->GetLocalRank()), mLatDat(iLatDat),
+                  mDomainStats(iDomainStats), mScreen(iScreen), mViewpoint(iViewpoint),
+                  mVisSettings(iVisSettings)
           {
             mClusterBuilder.BuildClusters();
           }
@@ -79,7 +77,8 @@ namespace hemelb
                                                                          *mLatDat,
                                                                          propertyCache);
 
-            for (unsigned int clusterId = 0; clusterId < mClusterBuilder.GetClusters().size(); clusterId++)
+            for (unsigned int clusterId = 0; clusterId < mClusterBuilder.GetClusters().size();
+                clusterId++)
             {
               lClusterRayTracer.RenderCluster(mClusterBuilder.GetClusters()[clusterId], *pixels);
             }

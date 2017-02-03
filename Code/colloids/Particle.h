@@ -13,23 +13,17 @@
 #include "net/mpi.h"
 #include "colloids/PersistedParticle.h"
 #include "geometry/LatticeData.h"
+#include "io/xml/XmlAbstractionLayer.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "util/Vector3D.h"
 #include "io/writers/Writer.h"
 
 namespace hemelb
 {
-  namespace io
-  {
-    namespace xml
-    {
-      class Element;
-    }
-  }
-
   namespace colloids
   {
-    class BodyForces;
+    struct ParticleSorter;
+
     /**
      * represents a single simulated biocolloid particle
      *
@@ -40,24 +34,43 @@ namespace hemelb
     {
       public:
         /** constructor - gets initial values from an xml configuration file */
-        Particle(const geometry::LatticeData& latDatLBM,
-                 const hemelb::lb::LbmParameters *lbmParams,
-                 const io::xml::Element& xml);
+        Particle(geometry::LatticeData& latDatLBM, const hemelb::lb::LbmParameters *lbmParams, const configuration::SimConfig *simConfig, io::xml::Element& xml);
 
         /** constructor - gets an invalid particle for making MPI data types */
-        Particle() {};
+        Particle()
+        {
+        }
+        ;
 
         /** property getter for particleId */
-        const unsigned long GetParticleId() const { return particleId; }
-        const LatticePosition& GetGlobalPosition() const { return globalPosition; }
+        const unsigned long GetParticleId() const
+        {
+          return particleId;
+        }
+        const LatticePosition& GetGlobalPosition() const
+        {
+          return globalPosition;
+        }
 
         const LatticeVelocity GetVelocity() const
         {
-          return velocity + bodyForces * CalculateDragCoefficient() + lubricationVelocityAdjustment;
+//          printf("particle %lu, drag %g, velocity: {%g,%g,%g}, bodyForces {%g,%g,%g}, lubrication {%g,%g,%g}, softCore {%g,%g,%g}, dipoleDipole {%g,%g,%g}, thermalNoise {%g,%g,%g}\n",GetParticleId(),CalculateDragCoefficient(),velocity.x,velocity.y,velocity.z,bodyForces.x,bodyForces.y,bodyForces.z,lubricationVelocityAdjustment.x,lubricationVelocityAdjustment.y,lubricationVelocityAdjustment.z,softcoreVel.x,softcoreVel.y,softcoreVel.z,dipoleDipoleVel.x,dipoleDipoleVel.y,dipoleDipoleVel.z,thermalNoise.x,thermalNoise.y,thermalNoise.z);
+          return velocity + (bodyForces+dipoleDipoleVel+softcoreVel) * CalculateDragCoefficient() + lubricationVelocityAdjustment + thermalNoise;
+//          return velocity + bodyForces * CalculateDragCoefficient() + lubricationVelocityAdjustment + thermalNoise;
         }
 
-        const PhysicalMass GetMass() const { return mass; }
-        const LatticeDistance GetRadius() const { return smallRadius_a0; }
+        const PhysicalMass GetMass() const
+        {
+          return mass;
+        }
+        const LatticeDistance GetRadius() const
+        {
+          return smallRadius_a0;
+        }
+//        const ParticleOrientation GetOrientation() const
+//        {
+//          return orientation;
+//        }
 
         /**
          * normalised particle radius
@@ -66,8 +79,7 @@ namespace hemelb
          */
         const LatticeDistance GetNormalisedRadius() const
         {
-          return ( smallRadius_a0 * largeRadius_ah )
-               / ( largeRadius_ah - smallRadius_a0 );
+          return (smallRadius_a0 * largeRadius_ah) / (largeRadius_ah - smallRadius_a0);
         }
 
         /**
@@ -77,8 +89,7 @@ namespace hemelb
          */
         const LatticeDistance GetInverseNormalisedRadius() const
         {
-          return ( largeRadius_ah - smallRadius_a0 )
-               / ( smallRadius_a0 * largeRadius_ah );
+          return (largeRadius_ah - smallRadius_a0) / (smallRadius_a0 * largeRadius_ah);
         }
 
         const LatticeTimeStep& GetLastCheckpointTimestep() const
@@ -106,10 +117,16 @@ namespace hemelb
         }
 
         /** property getter for ownerRank */
-        const proc_t GetOwnerRank() const { return ownerRank; }
+        const proc_t GetOwnerRank() const
+        {
+          return ownerRank;
+        }
 
         /** property getter for isValid */
-        const bool IsValid() const { return isValid; }
+        const bool IsValid() const
+        {
+          return isValid;
+        }
 
         /**
          * less than operator for comparing particle objects
@@ -120,10 +137,10 @@ namespace hemelb
          * - grouped by owner rank
          * - with local rank first
          */
-        const bool operator<(const Particle& other) const;
-
+        //const bool operator<(const Particle& other) const;
         /** determines if the owner rank of this particle is an existing key in map */
-        const bool IsOwnerRankKnown(std::map<proc_t, std::pair<unsigned int, unsigned int> > map) const;
+        const bool IsOwnerRankKnown(
+            std::map<proc_t, std::pair<unsigned int, unsigned int> > map) const;
 
         const bool IsReadyToBeDeleted() const;
 
@@ -131,9 +148,8 @@ namespace hemelb
         const void OutputInformation() const;
 
         /** for serialisation into output file */
-        const void WriteToStream(
-                     const LatticeTimeStep currentTimestep,
-                     io::writers::Writer& writer);
+        const void WriteToStream(const LatticeTimeStep currentTimestep,
+                                 io::writers::Writer& writer);
 
         /** obtains the fluid viscosity at the position of this particle */
         // TODO: currently returns BLOOD_VISCOSITY_Pa_s, which has the wrong units
@@ -145,22 +161,36 @@ namespace hemelb
         /** updates the position of this particle using body forces and fluid velocity */
         const void UpdatePosition(const geometry::LatticeData& latDatLBM);
 
+        /** updates the "thermalNoise" of this particle using a random term */
+        const void UpdateNoise();
+
+        /** updates the orientation of this particle using a random term */
+        const void UpdateOrientation();
+
         /** calculates the effects of all body forces on this particle */
-        const void CalculateBodyForces(const BodyForces& forces);
+        const void CalculateBodyForces(LatticeTimeStep timestep);
+
+        /** calculates the effects of soft-core potential on this particle */
+        const void CalculateSoftCoreInteractions(const LatticePosition& partnerPosition, 
+                                                 LatticeDistance partnerRadius);
+
+        /** calculates the effects dipolar interactions on this particle */
+        const void CalculateDipolarInteractions(const LatticePosition& partnerPosition, 
+                                                LatticeDistance partnerRadius);
 
         /** calculates the effects of this particle on each lattice site */
-        const void CalculateFeedbackForces(const geometry::LatticeData& latDatLBM, BodyForces& forces) const;
+        const void CalculateFeedbackForces(geometry::LatticeData& latDatLBM) const;
 
         /** interpolates the fluid velocity to the location of each particle */
-        const void InterpolateFluidVelocity(
-                     const geometry::LatticeData& latDatLBM,
-                     const lb::MacroscopicPropertyCache& propertyCache);
+        const void InterpolateFluidVelocity(const geometry::LatticeData& latDatLBM,
+                                            const lb::MacroscopicPropertyCache& propertyCache);
 
         /** accumulate contributions to velocity from remote processes */
         const void AccumulateVelocity(util::Vector3D<double>& contribution)
         {
           velocity += contribution;
-        };
+        }
+        ;
 
         /** sets the value for the velocity adjustment due to the lubrication BC */
         const void SetLubricationVelocityAdjustment(const LatticeVelocity adjustment)
@@ -185,11 +215,28 @@ namespace hemelb
         const MPI_Datatype CreateMpiDatatypeWithVelocity() const;
 
       private:
+ 	/** Scaling of particle output */
+	LatticeDistance voxelSize;
+	LatticePosition geometryOrigin;
+
         /** partial interpolation of fluid velocity - temporary value only */
         LatticeVelocity velocity;
 
+	/** Particle orientation to compute dipolar interactions **/
+	//ParticleOrientation orientation;
+        
+        /** The effect of all particle-particle interactions - used for book-keeping only for now**/
+        LatticeVelocity softcoreVel;        
+        LatticeDistance softcoreCutoff;
+
+        LatticeVelocity dipoleDipoleVel;
+
+
         /** the effect of all body forces on this particle - this is NOT a force vector */
         LatticeVelocity bodyForces;
+
+        /** the effect of random thermal velocity contributions */
+        LatticeVelocity thermalNoise;
 
         /* an adjustment to the velocity from the LubricationBC boundary condition */
         LatticeVelocity lubricationVelocityAdjustment;
@@ -200,6 +247,8 @@ namespace hemelb
         proc_t ownerRank;
 
         bool isValid;
+        // Allow the sorter class to see our private members.
+        friend struct ParticleSorter;
     };
   }
 }

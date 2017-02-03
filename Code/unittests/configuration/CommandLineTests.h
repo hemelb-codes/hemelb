@@ -27,9 +27,8 @@ namespace hemelb
     using namespace helpers;
     class CommandLineTests : public FolderTestFixture
     {
-        CPPUNIT_TEST_SUITE(CommandLineTests);
-        CPPUNIT_TEST(TestConstruct);
-        CPPUNIT_TEST_SUITE_END();
+        CPPUNIT_TEST_SUITE (CommandLineTests);
+        CPPUNIT_TEST (TestConstruct);CPPUNIT_TEST_SUITE_END();
       public:
         void setUp()
         {
@@ -64,7 +63,7 @@ namespace hemelb
         const char* argv[7];
 
     };
-    CPPUNIT_TEST_SUITE_REGISTRATION(CommandLineTests);
+    CPPUNIT_TEST_SUITE_REGISTRATION (CommandLineTests);
   }
 }
 

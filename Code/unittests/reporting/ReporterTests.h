@@ -15,8 +15,10 @@
 #include "reporting/Timers.h"
 #include "unittests/FourCubeLatticeData.h"
 #include "unittests/lbtests/LbTestsHelper.h"
+#include "unittests/helpers/HasCommsTestFixture.h"
 #include "reporting/BuildInfo.h"
 #include <iomanip>
+
 namespace hemelb
 {
   namespace unittests
@@ -28,7 +30,7 @@ namespace hemelb
       typedef TimersBase<ClockMock, MPICommsMock> TimersMock;
       typedef lb::IncompressibilityChecker<net::BroadcastMockRootNode> IncompressibilityCheckerMock;
 
-      class ReporterTests : public CppUnit::TestFixture
+      class ReporterTests : public helpers::HasCommsTestFixture
       {
           CPPUNIT_TEST_SUITE (ReporterTests);
           CPPUNIT_TEST (TestInit);
@@ -36,19 +38,26 @@ namespace hemelb
         public:
           void setUp()
           {
-            communicator = new MPICommsMock();
-            mockTimers = new TimersMock();
-            realTimers = new reporting::Timers();
+            helpers::HasCommsTestFixture::setUp();
+            mockTimers = new TimersMock(Comms());
+            realTimers = new reporting::Timers(Comms());
             buildInfo = new reporting::BuildInfo();
             state = new hemelb::lb::SimulationState(0.0001, 1000);
-            net = new net::Net();
-            latticeData = FourCubeLatticeData::Create(6, 5); // The 5 here is to match the topology size in the MPICommsMock
+            net = new net::Net(Comms());
+            latticeData = FourCubeLatticeData::Create(Comms(), 6, 5); // The 5 here is to match the topology size in the MPICommsMock
             lbtests::LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(latticeData);
             latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
             cache = new lb::MacroscopicPropertyCache(*state, *latticeData);
             cache->densityCache.SetRefreshFlag();
-            lbtests::LbTestsHelper::UpdatePropertyCache<lb::lattices::D3Q15>(*latticeData, *cache, *state);
-            incompChecker = new IncompressibilityCheckerMock(latticeData, net, state, *cache, *realTimers, 10.0);
+            lbtests::LbTestsHelper::UpdatePropertyCache<lb::lattices::D3Q15>(*latticeData,
+                                                                             *cache,
+                                                                             *state);
+            incompChecker = new IncompressibilityCheckerMock(latticeData,
+                                                             net,
+                                                             state,
+                                                             *cache,
+                                                             *realTimers,
+                                                             10.0);
             reporter = new Reporter("mock_path", "exampleinputfile");
             reporter->AddReportable(incompChecker);
             reporter->AddReportable(mockTimers);
@@ -66,6 +75,7 @@ namespace hemelb
             delete incompChecker;
             delete net;
             delete buildInfo;
+            helpers::HasCommsTestFixture::tearDown();
           }
 
           void TestInit()
@@ -99,15 +109,14 @@ namespace hemelb
             AssertTemplate("", "{{#UNSTABLE}} unstable{{/UNSTABLE}}");
             AssertTemplate("R0S64 R1S1000 R2S2000 R3S3000 R4S4000 ",
                            "{{#PROCESSOR}}R{{RANK}}S{{SITES}} {{/PROCESSOR}}");
-            AssertTemplate(hemelb::reporting::mercurial_revision_number, "{{#BUILD}}{{REVISION}}{{/BUILD}}");
+            AssertTemplate(hemelb::reporting::mercurial_revision_number,
+                           "{{#BUILD}}{{REVISION}}{{/BUILD}}");
             AssertTemplate(hemelb::reporting::build_time, "{{#BUILD}}{{TIME}}{{/BUILD}}");
             AssertValue("3", "IMAGES");
             AssertValue("0.000100", "TIME_STEP_LENGTH");
             AssertValue("1000", "TOTAL_TIME_STEPS");
             AssertValue("1000", "STEPS");
             AssertValue("64", "SITES");
-            AssertValue("3", "DEPTHS");
-            AssertValue("4", "MACHINES");
             AssertValue("1", "BLOCKS");
             AssertValue("216", "SITESPERBLOCK");
           }
@@ -121,7 +130,9 @@ namespace hemelb
 
           void AssertTemplate(const std::string &expectation, const std::string &ttemplate)
           {
-            ctemplate::StringToTemplateCache("TestFor" + ttemplate, ttemplate, ctemplate::DO_NOT_STRIP);
+            ctemplate::StringToTemplateCache("TestFor" + ttemplate,
+                                             ttemplate,
+                                             ctemplate::DO_NOT_STRIP);
             std::string result;
             CPPUNIT_ASSERT(ctemplate::ExpandTemplate("TestFor" + ttemplate,
                                                      ctemplate::DO_NOT_STRIP,
@@ -137,10 +148,11 @@ namespace hemelb
             expectation << std::setprecision(3);
             for (unsigned int row = 0; row < Timers::numberOfTimers; row++)
             {
-              expectation << "N" << TimersMock::timerNames[row] << "L" << row * 10.0 << "MI" << row * 15.0 << "ME"
-                  << row * 10.0 << "MA" << row * 5.0 << " " << std::flush;
+              expectation << "N" << TimersMock::timerNames[row] << "L" << row * 10.0 << "MI"
+                  << row * 15.0 << "ME" << row * 2.0 << "MA" << row * 5.0 << " " << std::flush;
             }
-            AssertTemplate(expectation.str(), "{{#TIMER}}N{{NAME}}L{{LOCAL}}MI{{MIN}}ME{{MEAN}}MA{{MAX}} {{/TIMER}}");
+            AssertTemplate(expectation.str(),
+                           "{{#TIMER}}N{{NAME}}L{{LOCAL}}MI{{MIN}}ME{{MEAN}}MA{{MAX}} {{/TIMER}}");
           }
 
         private:
@@ -149,7 +161,6 @@ namespace hemelb
           // We need two sets of timers because the incompressibility checker is not templated over timing policy.
           TimersMock *mockTimers;
           reporting::Timers* realTimers;
-          MPICommsMock* communicator;
 
           lb::SimulationState *state;
           lb::MacroscopicPropertyCache* cache;

@@ -58,8 +58,8 @@ namespace hemelb
 
       private:
         // Make copy c'tor and copy assign private to ensure uncopyable.
-        MpiEnvironment( const MpiEnvironment& );
-        const MpiEnvironment& operator=( const MpiEnvironment& );
+        MpiEnvironment(const MpiEnvironment&);
+        const MpiEnvironment& operator=(const MpiEnvironment&);
 
         /// Whether this instance called MPI_Init
         bool doesOwnMpi;

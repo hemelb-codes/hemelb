@@ -48,16 +48,6 @@ namespace hemelb
            * @return
            */
           int GetLine() const;
-
-          /**
-           * Gets the first child element
-           *
-           * @return
-           *   returns the child element if any exist or
-           *   Element::Missing() if not
-           */
-          const Element GetChildOrNull() const;
-
           /**
            * Gets the first child element with the specified name
            *
@@ -68,6 +58,7 @@ namespace hemelb
            *   returns the child element if it was found or
            *   Element::Missing() if not
            */
+          Element GetChildOrNull(const std::string& name);
           const Element GetChildOrNull(const std::string& name) const;
           /**
            * Gets the first child element with the specified name or throw
@@ -79,22 +70,9 @@ namespace hemelb
            * @return
            *   returns the child element
            */
+          Element GetChildOrThrow(const std::string& name);
           const Element GetChildOrThrow(const std::string& name) const;
 
-          /**
-           * Gets the first child element or throw
-           * ChildError if it does not exist.
-           *
-           * @return
-           *   returns the child element
-           */
-          const Element GetChildOrThrow() const;
-
-          /**
-           * Return iterator over all children.
-           * @return
-           */
-          ChildIterator IterChildren() const;
           /**
            * Return iterator over children with the specified name.
            * @param name
@@ -103,25 +81,6 @@ namespace hemelb
           ChildIterator IterChildren(const std::string& name) const;
 
           /**
-           * Return the next sibling element, if any
-           * If no suitable sibling element exists then return Element::Missing()
-           *
-           * @return
-           *   Next sibling or Element::Missing()
-           */
-          const Element NextSiblingOrNull() const;
-
-          /**
-           * Return the next sibling element, if any
-           * If no suitable sibling element exists then throw SiblingError
-           *
-           * @return
-           *   Next sibling.
-           */
-
-          const Element NextSiblingOrThrow() const;
-
-          /**
            * Return the next sibling element with the specified name, if any
            * If no suitable sibling element exists then return Element::Missing()
            *
@@ -131,7 +90,7 @@ namespace hemelb
            * @return
            *   Next sibling or Element::Missing()
            */
-          const Element NextSiblingOrNull(const std::string name) const;
+          Element NextSiblingOrNull(const std::string name);
 
           /**
            * Return the next sibling element with the specified name, if any
@@ -143,7 +102,7 @@ namespace hemelb
            * @return
            *   Next sibling.
            */
-          const Element NextSiblingOrThrow(const std::string name) const;
+          Element NextSiblingOrThrow(const std::string name);
 
           /**
            * Return the parent element unless this is the root element.
@@ -152,7 +111,7 @@ namespace hemelb
            * @return
            *   Parent or Element::Missing()
            */
-          const Element GetParentOrNull() const;
+          Element GetParentOrNull();
           /**
            * Return the parent element unless this is the root element.
            * If so then throws ParentError
@@ -160,15 +119,15 @@ namespace hemelb
            * @return
            *   Parent
            */
-          const Element GetParentOrThrow() const;
+          Element GetParentOrThrow();
 
           /**
            * Get the value (as a string) contained in the specified attribute.
-           * If it does not exist, return NULL
+           * If it does not exist, return nullptr
            * @param $name
            *   The name of the attribute to get
            * @return
-           *   A pointer to a string containing the attribute value (or NULL
+           *   A pointer to a string containing the attribute value (or nullptr
            *   on failure)
            */
           const std::string* GetAttributeOrNull(const std::string& name) const;
@@ -181,6 +140,15 @@ namespace hemelb
            *   A reference to a string containing the attribute value
            */
           const std::string& GetAttributeOrThrow(const std::string& name) const;
+
+          /**
+           * Get the value (as a string) contained in the specified attribute.
+           * If it does not exist, return nullptr
+           * @param $name
+           *   The name of the attribute to get
+           * @return
+           *   A pointer to a string containing the attribute value
+           */
 
           /**
            * Get the value contained in the specified attribute. This function
@@ -205,7 +173,7 @@ namespace hemelb
            * @param $out
            *   Variable in which to store the converted attribute.
            * @return
-           *   A pointer to a string containing the attribute value (or NULL
+           *   A pointer to a string containing the attribute value (or nullptr
            *   if it does not exist)
            */
           template<class T>
@@ -246,6 +214,10 @@ namespace hemelb
            */
           std::string GetPath() const;
 
+          operator bool() const
+          {
+            return el != nullptr;
+          }
 
         private:
           TiXmlElement* el;
@@ -279,11 +251,7 @@ namespace hemelb
            * Default constructor
            */
           ChildIterator();
-          /**
-           * Constructor to iterate over all subelements.
-           * @param elem
-           */
-          ChildIterator(const Element& elem);
+
           /**
            * Constructor that will iterate over subelements with the given name.
            * @param elem
@@ -309,7 +277,6 @@ namespace hemelb
            * @return
            */
           ChildIterator& operator=(const ChildIterator& other);
-
 
           /**
            * Dereference
@@ -374,7 +341,7 @@ namespace hemelb
 
           /** destructor */
           ~Document();
-          Element GetRoot() const;
+          Element GetRoot();
         private:
           TiXmlDocument* xmlDoc;
       };
@@ -419,7 +386,7 @@ namespace hemelb
           template<typename T>
           XmlError& operator<<(const T& t)
           {
-            return static_cast<XmlError&> (Exception::operator<<(t));
+            return static_cast<XmlError&>(Exception::operator<<(t));
           }
 
         protected:
@@ -442,7 +409,7 @@ namespace hemelb
           template<typename T>
           AttributeError& operator<<(const T& t)
           {
-            return static_cast<AttributeError&> (XmlError::operator<<(t));
+            return static_cast<AttributeError&>(XmlError::operator<<(t));
           }
 
         private:
@@ -460,7 +427,7 @@ namespace hemelb
           template<typename T>
           ParseError& operator<<(const T& t)
           {
-            return static_cast<ParseError&> (XmlError::operator<<(t));
+            return static_cast<ParseError&>(XmlError::operator<<(t));
           }
 
         private:
@@ -483,7 +450,7 @@ namespace hemelb
           template<typename T>
           ElementError& operator<<(const T& t)
           {
-            return static_cast<ElementError&> (XmlError::operator<<(t));
+            return static_cast<ElementError&>(XmlError::operator<<(t));
           }
 
         protected:
@@ -499,7 +466,7 @@ namespace hemelb
           template<typename T>
           ChildError& operator<<(const T& t)
           {
-            return static_cast<ChildError&> (ElementError::operator<<(t));
+            return static_cast<ChildError&>(ElementError::operator<<(t));
           }
 
       };
@@ -514,7 +481,7 @@ namespace hemelb
           template<typename T>
           ParentError& operator<<(const T& t)
           {
-            return static_cast<ParentError&> (ElementError::operator<<(t));
+            return static_cast<ParentError&>(ElementError::operator<<(t));
           }
 
       };
@@ -529,7 +496,7 @@ namespace hemelb
           template<typename T>
           SiblingError& operator<<(const T& t)
           {
-            return static_cast<SiblingError&> (ElementError::operator<<(t));
+            return static_cast<SiblingError&>(ElementError::operator<<(t));
           }
 
       };
@@ -540,7 +507,7 @@ namespace hemelb
       const std::string* Element::GetAttributeOrNull(const std::string& name, T& out) const
       {
         const std::string* attrString = GetAttributeOrNull(name);
-        if (attrString != NULL)
+        if (attrString != nullptr)
         {
           /*
            * So, basically parsing of unsigned values varies across platforms
@@ -587,7 +554,7 @@ namespace hemelb
       const std::string& Element::GetAttributeOrThrow(const std::string& name, T& out) const
       {
         const std::string* ans = GetAttributeOrNull(name, out);
-        if (ans == NULL)
+        if (ans == nullptr)
           throw AttributeError(*this, name);
         return *ans;
       }

@@ -7,9 +7,11 @@
 // specifically made by you with University College London.
 // 
 
+#include "boost/random.hpp"
+#include "boost/generator_iterator.hpp"
+#include "boost/math/distributions/normal.hpp"
+  using boost::math::normal;
 #include "colloids/ColloidController.h"
-#include "colloids/BodyForces.h"
-#include "colloids/BoundaryConditions.h"
 #include "geometry/BlockTraverser.h"
 #include "geometry/SiteTraverser.h"
 #include "log/Logger.h"
@@ -32,21 +34,18 @@ namespace hemelb
     }
 
     // constructor - called by SimulationMaster::Initialise()
-    ColloidController::ColloidController(const geometry::LatticeData& latDatLBM,
+    ColloidController::ColloidController(geometry::LatticeData& latDatLBM,
                                          const lb::SimulationState& simulationState,
+                                         const configuration::SimConfig* simConfig,
                                          const geometry::Geometry& gmyResult,
-                                         const io::xml::Element& colloidsEl,
+                                         io::xml::Document& xml,
                                          lb::MacroscopicPropertyCache& propertyCache,
                                          const hemelb::lb::LbmParameters *lbmParams,
                                          const std::string& outputPath,
+                                         const net::IOCommunicator& ioComms_,
                                          reporting::Timers& timers) :
-      localRank(net::NetworkTopology::Instance()->GetLocalRank()),
-      simulationState(simulationState), timers(timers)
+        ioComms(ioComms_), simulationState(simulationState), timers(timers)
     {
-      // Initialise the BodyForces on the particles.
-      forces = BodyForces::Load(colloidsEl.GetChildOrThrow("bodyForces"));
-      bcs = BoundaryConditions::Load(latDatLBM, colloidsEl.GetChildOrThrow("boundaryConditions"));
-
       // The neighbourhood used here is different to the latticeInfo used to create latDatLBM
       // The portion of the geometry input file that was read in by this proc, i.e. gmyResult
       // contains more information than was used when creating the LB lattice, i.e. latDatLBM
@@ -59,21 +58,31 @@ namespace hemelb
       // determine information about neighbour sites and processors for all local fluid sites
       InitialiseNeighbourList(latDatLBM, gmyResult, neighbourhood);
 
-      bool allGood = (localRank == 0) || (neighbourProcessors.size() > 0);
-      log::Logger::Log<log::Debug, log::OnePerCore>(
-        "[Rank %i]: ColloidController - neighbourhood %i, neighbours %i, allGood %i\n",
-        localRank, neighbourhood.size(), neighbourProcessors.size(), allGood);
 
-      const io::xml::Element& particlesElem = colloidsEl.GetChildOrThrow("particles");
-      particleSet = new ParticleSet(latDatLBM, particlesElem, propertyCache,
+
+      bool allGood = ioComms.OnIORank() || (neighbourProcessors.size() > 0);
+      log::Logger::Log<log::Debug, log::OnePerCore>("[Rank %i]: ColloidController - neighbourhood %i, neighbours %i, allGood %i\n",
+                                                    ioComms.Rank(),
+                                                    neighbourhood.size(),
+                                                    neighbourProcessors.size(),
+                                                    allGood);
+
+      io::xml::Element particlesElem =
+          xml.GetRoot().GetChildOrThrow("colloids").GetChildOrThrow("particles");
+      particleSet = new ParticleSet(latDatLBM,
+                                    particlesElem,
+                                    propertyCache,
                                     lbmParams,
-                                    neighbourProcessors, *forces, *bcs, outputPath);
+                                    simConfig,
+                                    neighbourProcessors,
+                                    ioComms,
+                                    outputPath);
+
     }
 
-    void ColloidController::InitialiseNeighbourList(
-            const geometry::LatticeData& latDatLBM,
-            const geometry::Geometry& gmyResult,
-            const Neighbourhood& neighbourhood)
+    void ColloidController::InitialiseNeighbourList(const geometry::LatticeData& latDatLBM,
+                                                    const geometry::Geometry& gmyResult,
+                                                    const Neighbourhood& neighbourhood)
     {
       // PLAN
       // foreach block in gmyResult (i.e. each block that may have been read from the input file)
@@ -88,71 +97,67 @@ namespace hemelb
 
       // foreach block in geometry
       for (geometry::BlockTraverser blockTraverser(latDatLBM);
-           blockTraverser.CurrentLocationValid();
-           blockTraverser.TraverseOne())
+          blockTraverser.CurrentLocationValid(); blockTraverser.TraverseOne())
       {
-        util::Vector3D<site_t> globalLocationForBlock =
-              blockTraverser.GetCurrentLocation() * gmyResult.GetBlockSize();
+        util::Vector3D<site_t> globalLocationForBlock = blockTraverser.GetCurrentLocation()
+            * gmyResult.GetBlockSize();
 
         // if block has sites
         site_t blockId = blockTraverser.GetCurrentIndex();
         if (gmyResult.Blocks[blockId].Sites.size() == 0)
         {
-          log::Logger::Log<log::Trace, log::OnePerCore>(
-            "ColloidController: block with id %i and coords (%i,%i,%i) is solid.\n",
-            blockId,
-            blockTraverser.GetCurrentLocation().x,
-            blockTraverser.GetCurrentLocation().y,
-            blockTraverser.GetCurrentLocation().z);
+          log::Logger::Log<log::Trace, log::OnePerCore>("ColloidController: block with id %i and coords (%i,%i,%i) is solid.\n",
+                                                        blockId,
+                                                        blockTraverser.GetCurrentLocation().x,
+                                                        blockTraverser.GetCurrentLocation().y,
+                                                        blockTraverser.GetCurrentLocation().z);
           continue;
         }
 
         // foreach site in block
         for (geometry::SiteTraverser siteTraverser = blockTraverser.GetSiteTraverser();
-             siteTraverser.CurrentLocationValid();
-             siteTraverser.TraverseOne())
+            siteTraverser.CurrentLocationValid(); siteTraverser.TraverseOne())
         {
-          util::Vector3D<site_t> globalLocationForSite =
-                globalLocationForBlock + siteTraverser.GetCurrentLocation();
+          util::Vector3D<site_t> globalLocationForSite = globalLocationForBlock
+              + siteTraverser.GetCurrentLocation();
 
           // if site is local
           site_t siteId = siteTraverser.GetCurrentIndex();
-          if (gmyResult.Blocks[blockId].Sites[siteId].targetProcessor != this->localRank)
+          if (gmyResult.Blocks[blockId].Sites[siteId].targetProcessor != this->ioComms.Rank())
           {
-            log::Logger::Log<log::Trace, log::OnePerCore>(
-              "ColloidController: site with id %i and coords (%i,%i,%i) has proc %i (non-local).\n",
-              siteId,
-              siteTraverser.GetCurrentLocation().x,
-              siteTraverser.GetCurrentLocation().y,
-              siteTraverser.GetCurrentLocation().z,
-              gmyResult.Blocks[blockId].Sites[siteId].targetProcessor);
+            log::Logger::Log<log::Trace, log::OnePerCore>("ColloidController: site with id %i and coords (%i,%i,%i) has proc %i (non-local).\n",
+                                                          siteId,
+                                                          siteTraverser.GetCurrentLocation().x,
+                                                          siteTraverser.GetCurrentLocation().y,
+                                                          siteTraverser.GetCurrentLocation().z,
+                                                          gmyResult.Blocks[blockId].Sites[siteId].targetProcessor);
             continue;
           }
 
-          log::Logger::Log<log::Trace, log::OnePerCore>(
-            "ColloidController: site with id %i and coords (%i,%i,%i) is local.\n",
-            siteId,
-            siteTraverser.GetCurrentLocation().x,
-            siteTraverser.GetCurrentLocation().y,
-            siteTraverser.GetCurrentLocation().z);
+          log::Logger::Log<log::Trace, log::OnePerCore>("ColloidController: site with id %i and coords (%i,%i,%i) is local.\n",
+                                                        siteId,
+                                                        siteTraverser.GetCurrentLocation().x,
+                                                        siteTraverser.GetCurrentLocation().y,
+                                                        siteTraverser.GetCurrentLocation().z);
 
           // foreach neighbour of site
           for (Neighbourhood::const_iterator itDirectionVector = neighbourhood.begin();
-               itDirectionVector != neighbourhood.end();
-               itDirectionVector++)
+              itDirectionVector != neighbourhood.end(); itDirectionVector++)
           {
-            util::Vector3D<site_t> globalLocationForNeighbourSite = globalLocationForSite +
-                                                                    *itDirectionVector;
+            util::Vector3D<site_t> globalLocationForNeighbourSite = globalLocationForSite
+                + *itDirectionVector;
 
             // if neighbour is valid
             site_t neighbourBlockId, neighbourSiteId;
             proc_t neighbourRank;
-            bool isValid = GetLocalInformationForGlobalSite(
-                  gmyResult, globalLocationForNeighbourSite,
-                  &neighbourBlockId, &neighbourSiteId, &neighbourRank);
+            bool isValid = GetLocalInformationForGlobalSite(gmyResult,
+                                                            globalLocationForNeighbourSite,
+                                                            &neighbourBlockId,
+                                                            &neighbourSiteId,
+                                                            &neighbourRank);
 
             // if neighbour is remote
-            if (!isValid || neighbourRank == this->localRank)
+            if (!isValid || neighbourRank == this->ioComms.Rank())
               continue;
 
             // if new neighbourRank
@@ -166,12 +171,16 @@ namespace hemelb
             this->neighbourProcessors.push_back(neighbourRank);
 
             // debug message so this neighbour list can be compared to the LatticeData one
-            log::Logger::Log<log::Trace, log::OnePerCore>(
-                "ColloidController: added %i as neighbour for %i because site %i in block %i is neighbour to site %i in block %i in direction (%i,%i,%i)\n",
-                (int)neighbourRank, (int)(this->localRank),
-                (int)neighbourSiteId, (int)neighbourBlockId,
-                (int)siteId, (int)blockId,
-                (*itDirectionVector).x, (*itDirectionVector).y, (*itDirectionVector).z);
+            log::Logger::Log<log::Trace, log::OnePerCore>("ColloidController: added %i as neighbour for %i because site %i in block %i is neighbour to site %i in block %i in direction (%i,%i,%i)\n",
+                                                          (int) neighbourRank,
+                                                          (int) (this->ioComms.Rank()),
+                                                          (int) neighbourSiteId,
+                                                          (int) neighbourBlockId,
+                                                          (int) siteId,
+                                                          (int) blockId,
+                                                          (*itDirectionVector).x,
+                                                          (*itDirectionVector).y,
+                                                          (*itDirectionVector).z);
 
           } // end for itDirectionVector
         } // end for siteTraverser
@@ -181,14 +190,12 @@ namespace hemelb
 
     //DJH// this function should probably be in geometry::ReadResult
     bool ColloidController::GetLocalInformationForGlobalSite(
-                                      const geometry::Geometry& gmyResult,
-                                      const util::Vector3D<site_t>& globalLocationForSite,
-                                      site_t* blockIdForSite,
-                                      site_t* localSiteIdForSite,
-                                      proc_t* ownerRankForSite)
+        const geometry::Geometry& gmyResult, const util::Vector3D<site_t>& globalLocationForSite,
+        site_t* blockIdForSite, site_t* localSiteIdForSite, proc_t* ownerRankForSite)
     {
       // obtain block information (3D location vector and 1D id number) for the site
-      util::Vector3D<site_t> blockLocationForSite = globalLocationForSite / gmyResult.GetBlockSize();
+      util::Vector3D<site_t> blockLocationForSite = globalLocationForSite
+          / gmyResult.GetBlockSize();
       // check for global location being outside the simulation entirely
       if (!gmyResult.AreBlockCoordinatesValid(blockLocationForSite))
         return false;
@@ -213,7 +220,8 @@ namespace hemelb
                                                                    localSiteLocation.z);
 
       // obtain the rank of the processor responsible for simulating the fluid at this site
-      *ownerRankForSite = gmyResult.Blocks[*blockIdForSite].Sites[*localSiteIdForSite].targetProcessor;
+      *ownerRankForSite =
+          gmyResult.Blocks[*blockIdForSite].Sites[*localSiteIdForSite].targetProcessor;
 
       // if the rank is BIG_NUMBER2 then the site is solid not fluid so return invalid
       if (*ownerRankForSite == BIG_NUMBER2)
@@ -227,7 +235,8 @@ namespace hemelb
     // produces a relative vector two all sites within distance site units in all 3 directions
     // examples: if distance==1 then the vectors will describe D3Q27 lattice pattern
     //           if distance==2 then the vectors will describe a 5x5 cube pattern
-    const ColloidController::Neighbourhood ColloidController::GetNeighbourhoodVectors(site_t distance)
+    const ColloidController::Neighbourhood ColloidController::GetNeighbourhoodVectors(
+        site_t distance)
     {
       Neighbourhood vectors;
 
@@ -243,6 +252,7 @@ namespace hemelb
 
     void ColloidController::RequestComms()
     {
+      const LatticeTimeStep currentTimestep = simulationState.GetTimeStep();
       // communication from step 2
       log::Logger::Log<log::Debug, log::OnePerCore>("Communicating colloid particle positions");
       timers[reporting::Timers::colloidCommunicatePositions].Start();
@@ -252,7 +262,9 @@ namespace hemelb
       timers[reporting::Timers::colloidCalculateForces].Start();
       log::Logger::Log<log::Debug, log::OnePerCore>("Calculating colloid body forces");
       // step 3
-      particleSet->CalculateBodyForces();
+      particleSet->CalculateBodyForces(currentTimestep);
+
+      particleSet->CalculateParticleParticleInteractions();
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Calculating feedback forces for colloids");
       // steps 1 & 4 combined
@@ -281,6 +293,9 @@ namespace hemelb
       log::Logger::Log<log::Debug, log::OnePerCore>("Apply boundary conditions for colloids");
       timers[reporting::Timers::colloidUpdateCalculations].Start();
       particleSet->ApplyBoundaryConditions(currentTimestep);
+
+      particleSet->UpdateNoises();
+      // particleSet->UpdateOrientations();
 
       // steps 7 & 2 combined
       log::Logger::Log<log::Debug, log::OnePerCore>("Updating colloid positions");

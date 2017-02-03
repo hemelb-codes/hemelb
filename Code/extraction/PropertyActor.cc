@@ -15,11 +15,11 @@ namespace hemelb
   {
     PropertyActor::PropertyActor(const lb::SimulationState& simulationState,
                                  const std::vector<PropertyOutputFile*>& propertyOutputs,
-                                 IterableDataSource& dataSource,
-                                 reporting::Timers& timers) :
+                                 IterableDataSource& dataSource, reporting::Timers& timers,
+                                 const net::IOCommunicator& ioComms) :
         simulationState(simulationState), timers(timers)
     {
-      propertyWriter = new PropertyWriter(dataSource, propertyOutputs);
+      propertyWriter = new PropertyWriter(dataSource, propertyOutputs, ioComms);
     }
 
     PropertyActor::~PropertyActor()
@@ -29,7 +29,8 @@ namespace hemelb
 
     void PropertyActor::SetRequiredProperties(lb::MacroscopicPropertyCache& propertyCache)
     {
-      const std::vector<LocalPropertyOutput*>& propertyOutputs = propertyWriter->GetPropertyOutputs();
+      const std::vector<LocalPropertyOutput*>& propertyOutputs =
+          propertyWriter->GetPropertyOutputs();
 
       // Iterate over each property output spec.
       for (unsigned output = 0; output < propertyOutputs.size(); ++output)

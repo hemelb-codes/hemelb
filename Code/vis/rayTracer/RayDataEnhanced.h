@@ -48,8 +48,8 @@ namespace hemelb
               //the mimimum lightness and 1.0F based on the normalised distance between
               //the viewpoint and the first cluster hit
               //Add onto this the surface normal lightness
-              float lightnessValue = LowestLightness + (1.0F - LowestLightness)
-                  * normalisedDistance + surfaceNormalLightness * SurfaceNormalLightnessRange;
+              float lightnessValue = LowestLightness + (1.0F - LowestLightness) * normalisedDistance
+                  + surfaceNormalLightness * SurfaceNormalLightnessRange;
 
               if (lightnessValue > 1.0F)
               {
@@ -96,8 +96,8 @@ namespace hemelb
               //Set the maximum lightness to be between 0.8F and mLowestLighness
               //based on the normalised distance and take off the surface normal
               //lightness
-              float lightnessValue = 0.8F * (1.0F - normalisedDistance) + (surfaceNormalLightness
-                  - 1.0F) * SurfaceNormalLightnessRange;
+              float lightnessValue = 0.8F * (1.0F - normalisedDistance)
+                  + (surfaceNormalLightness - 1.0F) * SurfaceNormalLightnessRange;
 
               if (lightnessValue < LowestLightness)
               {
@@ -118,8 +118,8 @@ namespace hemelb
       {
         public:
           RayDataEnhanced(int i, int j) :
-            RayData<RayDataEnhanced> (i, j), mSurfaceNormalLightness(1.0F), mVelocitySum(0.0F),
-                mStressSum(0.0F)
+              RayData<RayDataEnhanced>(i, j), mSurfaceNormalLightness(1.0F), mVelocitySum(0.0F),
+                  mStressSum(0.0F)
           {
           }
 
@@ -163,8 +163,8 @@ namespace hemelb
             // Scale the surface normal lightness between mParallelSurfaceAttenuation
             // and 1.0F
             // Keep a copy for the special case
-            mLastSurfaceNormalLightnessMultiplier = (depthCuing::ParallelSurfaceAttenuation + (1.0F
-                - depthCuing::ParallelSurfaceAttenuation) * fabs(lDotProduct));
+            mLastSurfaceNormalLightnessMultiplier = (depthCuing::ParallelSurfaceAttenuation
+                + (1.0F - depthCuing::ParallelSurfaceAttenuation) * fabs(lDotProduct));
 
             mSurfaceNormalLightness *= mLastSurfaceNormalLightnessMultiplier;
           }
@@ -202,14 +202,13 @@ namespace hemelb
                                  const float iNormalisedDistanceToFirstCluster,
                                  const DomainStats& iDomainStats) const
           {
-            float
-                lStressSaturation =
-                    util::NumericalFunctions::enforceBounds<float>(depthCuing::StressSaturationMin
-                                                                       + depthCuing::StressSaturationRange
-                                                                           * GetAverageStress()
-                                                                           * (float) (iDomainStats.stress_threshold_max_inv),
-                                                                   0.0F,
-                                                                   1.0F);
+            float lStressSaturation =
+                util::NumericalFunctions::enforceBounds<float>(depthCuing::StressSaturationMin
+                                                                   + depthCuing::StressSaturationRange
+                                                                       * GetAverageStress()
+                                                                       * (float) (iDomainStats.stress_threshold_max_inv),
+                                                               0.0F,
+                                                               1.0F);
 
             HSLToRGBConverter::Convert(depthCuing::StressHue,
                                        lStressSaturation,
@@ -256,57 +255,20 @@ namespace hemelb
 
           static MPI_Datatype GetMpiType()
           {
-            const int rayDataEnhancedCount = 11;
-            int rayDataEnhancedBlocklengths[rayDataEnhancedCount] = { 1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1 };
-            MPI_Datatype rayDataEnhancedTypes[rayDataEnhancedCount] = { MPI_LB,
-                                                                        net::MpiDataType<int>(),
-                                                                        net::MpiDataType<int>(),
-                                                                        net::MpiDataType<float>(),
-                                                                        net::MpiDataType<float>(),
-                                                                        net::MpiDataType<float>(),
-                                                                        net::MpiDataType<float>(),
-                                                                        net::MpiDataType<float>(),
-                                                                        net::MpiDataType<float>(),
-                                                                        net::MpiDataType<float>(),
-                                                                        MPI_UB };
+            HEMELB_MPI_TYPE_BEGIN(type, RayDataEnhanced, 9);
 
-            MPI_Aint rayDataEnhancedDisps[rayDataEnhancedCount];
+            HEMELB_MPI_TYPE_ADD_MEMBER(i);
+            HEMELB_MPI_TYPE_ADD_MEMBER(j);
+            HEMELB_MPI_TYPE_ADD_MEMBER(mLengthBeforeRayFirstCluster);
+            HEMELB_MPI_TYPE_ADD_MEMBER(mCumulativeLengthInFluid);
+            HEMELB_MPI_TYPE_ADD_MEMBER(mDensityAtNearestPoint);
+            HEMELB_MPI_TYPE_ADD_MEMBER(mStressAtNearestPoint);
+            HEMELB_MPI_TYPE_ADD_MEMBER(mSurfaceNormalLightness);
+            HEMELB_MPI_TYPE_ADD_MEMBER(mVelocitySum);
+            HEMELB_MPI_TYPE_ADD_MEMBER(mStressSum);
 
-            RayDataEnhanced example[2];
+            HEMELB_MPI_TYPE_END(type, RayDataEnhanced);
 
-            MPI_Get_address(&example[0], &rayDataEnhancedDisps[0]);
-            MPI_Get_address(&example[0].i, &rayDataEnhancedDisps[1]);
-            MPI_Get_address(&example[0].j, &rayDataEnhancedDisps[2]);
-            MPI_Get_address(&example[0].mLengthBeforeRayFirstCluster, &rayDataEnhancedDisps[3]);
-            MPI_Get_address(&example[0].mCumulativeLengthInFluid, &rayDataEnhancedDisps[4]);
-            MPI_Get_address(&example[0].mDensityAtNearestPoint, &rayDataEnhancedDisps[5]);
-            MPI_Get_address(&example[0].mStressAtNearestPoint, &rayDataEnhancedDisps[6]);
-            MPI_Get_address(&example[0].mSurfaceNormalLightness, &rayDataEnhancedDisps[7]);
-            MPI_Get_address(&example[0].mVelocitySum, &rayDataEnhancedDisps[8]);
-            MPI_Get_address(&example[0].mStressSum, &rayDataEnhancedDisps[9]);
-            MPI_Get_address(&example[1], &rayDataEnhancedDisps[10]);
-
-            for (int index = rayDataEnhancedCount - 1; index >= 0; index--)
-            {
-              rayDataEnhancedDisps[index] -= rayDataEnhancedDisps[0];
-            }
-
-            MPI_Datatype type;
-            MPI_Type_struct(rayDataEnhancedCount,
-                            rayDataEnhancedBlocklengths,
-                            rayDataEnhancedDisps,
-                            rayDataEnhancedTypes,
-                            &type);
             return type;
           }
 

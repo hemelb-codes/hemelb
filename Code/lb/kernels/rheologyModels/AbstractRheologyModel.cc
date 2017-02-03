@@ -19,10 +19,9 @@ namespace hemelb
       namespace rheologyModels
       {
         template<class tRheologyImplementation>
-        double AbstractRheologyModel<tRheologyImplementation>::CalculateTauForShearRate(const double &iShearRate,
-                                                                               const distribn_t &iDensity,
-                                                                               const double &iVoxelSize,
-                                                                               const double &iTimeStep)
+        double AbstractRheologyModel<tRheologyImplementation>::CalculateTauForShearRate(
+            const double &iShearRate, const distribn_t &iDensity, const double &iVoxelSize,
+            const double &iTimeStep)
         {
           double nu = tRheologyImplementation::CalculateViscosityForShearRate(iShearRate, iDensity);
           return 0.5 + (iTimeStep * nu) / (Cs2 * iVoxelSize * iVoxelSize);

@@ -49,13 +49,13 @@ namespace hemelb
          */
         class InOutLetTests : public helpers::FolderTestFixture
         {
-            CPPUNIT_TEST_SUITE(InOutLetTests);
-            CPPUNIT_TEST(TestCosineConstruct);
-            CPPUNIT_TEST(TestFileConstruct);
-            CPPUNIT_TEST(TestIoletCoordinates);
-            CPPUNIT_TEST(TestParabolicVelocityConstruct);
-            CPPUNIT_TEST(TestWomersleyVelocityConstruct);
-            CPPUNIT_TEST(TestFileVelocityConstruct);CPPUNIT_TEST_SUITE_END();
+            CPPUNIT_TEST_SUITE (InOutLetTests);
+            CPPUNIT_TEST (TestCosineConstruct);
+            CPPUNIT_TEST (TestFileConstruct);
+            CPPUNIT_TEST (TestIoletCoordinates);
+            CPPUNIT_TEST (TestParabolicVelocityConstruct);
+            CPPUNIT_TEST (TestWomersleyVelocityConstruct);
+            CPPUNIT_TEST (TestFileVelocityConstruct);CPPUNIT_TEST_SUITE_END();
           public:
             void setUp()
             {
@@ -174,7 +174,7 @@ namespace hemelb
               // Bootstrap ourselves a in inoutlet, by loading config.xml.
               UncheckedSimConfig config(Resource("config-velocity-iolet.xml").Path());
               p_vel = dynamic_cast<InOutLetParabolicVelocity*>(config.GetInlets()[0]);
-              CPPUNIT_ASSERT(p_vel != NULL);
+              CPPUNIT_ASSERT(p_vel != nullptr);
 
               // Bootstrap ourselves a unit converter, which the cosine needs in initialisation
               lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
@@ -288,7 +288,6 @@ namespace hemelb
               UncheckedSimConfig config(Resource("config_file_velocity_inlet.xml").Path());
               lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
                                                               config.GetTotalTimeSteps());
-              double voxelSize = config.GetVoxelSize();
               const util::UnitConverter& converter = config.GetUnitConverter();
               fileVel = static_cast<InOutLetFileVelocity*>(config.GetInlets()[0]);
               // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
@@ -399,7 +398,7 @@ namespace hemelb
             InOutLetWomersleyVelocity* womersVel;
             InOutLetFileVelocity* fileVel;
         };
-        CPPUNIT_TEST_SUITE_REGISTRATION(InOutLetTests);
+        CPPUNIT_TEST_SUITE_REGISTRATION (InOutLetTests);
       }
     }
   }

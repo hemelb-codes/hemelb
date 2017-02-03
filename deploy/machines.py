@@ -37,6 +37,7 @@ from functools import *
 from pprint import PrettyPrinter
 pp = PrettyPrinter()
 
+fabric.context_managers.path("/home/schmie/local/cmake-3.3.1/bin", behavior='append')
 
 
 #Root of local HemeLB checkout.

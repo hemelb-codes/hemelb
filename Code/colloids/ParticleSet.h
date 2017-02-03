@@ -12,39 +12,27 @@
 
 #include <vector>
 #include "geometry/LatticeData.h"
+#include "io/xml/XmlAbstractionLayer.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "net/mpi.h"
 #include "colloids/Particle.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 #include "units.h"
 
 namespace hemelb
 {
-  namespace io
-  {
-    namespace xml
-    {
-      class Element;
-    }
-  }
-
   namespace colloids
   {
-    class BodyForces;
-    class BoundaryConditions;
-
     /** represents the set of all particles known to the local process */
     class ParticleSet
     {
       public:
         /** constructor - gets local particle information from xml config file */
-        ParticleSet(const geometry::LatticeData& latDatLBM,
-                    const io::xml::Element& xml,
+        ParticleSet(geometry::LatticeData& latDatLBM, io::xml::Element& xml,
                     lb::MacroscopicPropertyCache& propertyCache,
                     const hemelb::lb::LbmParameters *lbmParams,
-                    std::vector<proc_t>& neighbourProcessors,
-                    BodyForces& forces,
-                    BoundaryConditions& BCs,
+                    const configuration::SimConfig* simConfig,
+                    std::vector<proc_t>& neighbourProcessors, const net::IOCommunicator& ioComms_,
                     const std::string& outputPath);
 
         /** destructor - de-allocates all Particle objects created by this Set */
@@ -53,15 +41,23 @@ namespace hemelb
         /** updates the position of each particle using body forces and fluid velocity */
         const void UpdatePositions();
 
+        /** re-roll dice for Brownian terms */
+        const void UpdateNoises();
+
+        /** update particle orientations used to calculate magnetic moment (currently random) */
+        const void UpdateOrientations();       
+
         /** calculates the effect of all body forces on each particle */
-        const void CalculateBodyForces();
+        const void CalculateBodyForces(const LatticeTimeStep timestep);
 
         /** calculates the effects of all particles on each lattice site */
         const void CalculateFeedbackForces();
 
+        /** calculates the effects of all particles on each other */
+        const void CalculateParticleParticleInteractions();
+
         /** applies boundary conditions to all particles **/
-        const void ApplyBoundaryConditions(
-                     const LatticeTimeStep currentTimestep);
+        const void ApplyBoundaryConditions(const LatticeTimeStep currentTimestep);
 
         /** interpolates the fluid velocity to the location of each particle */
         const void InterpolateFluidVelocity();
@@ -75,11 +71,12 @@ namespace hemelb
         const void OutputInformation(const LatticeTimeStep timestep);
 
       private:
+        const net::IOCommunicator& ioComms;
         /** cached copy of local rank (obtained from topology) */
         const proc_t localRank;
 
         /**
-         * conatins all particles known to this process
+         * contains all particles known to this process
          * they are sorted using the less than operator
          */
         std::vector<Particle> particles;
@@ -90,7 +87,7 @@ namespace hemelb
         typedef std::map<proc_t, scanMapElementType>::const_iterator scanMapConstIterType;
         typedef std::map<proc_t, scanMapElementType>::iterator scanMapIterType;
         typedef std::pair<proc_t, scanMapElementType> scanMapContentType;
-        
+
         /** contiguous buffer into which MPI can write all the velocities from neighbours */
         std::vector<std::pair<unsigned long, util::Vector3D<double> > > velocityBuffer;
 
@@ -98,7 +95,7 @@ namespace hemelb
         std::map<unsigned long, util::Vector3D<double> > velocityMap;
 
         /** contains useful geometry manipulation functions */
-        const geometry::LatticeData& latDatLBM;
+        geometry::LatticeData& latDatLBM;
 
         /**
          * primary mechanism for interacting with the LB simulation
@@ -120,9 +117,8 @@ namespace hemelb
         /**
          * MPI File handle to write with
          */
-        MPI_File file;
-        BodyForces& forces;
-        BoundaryConditions& bcs;
+        net::MpiFile file;
+
     };
   }
 }

@@ -9,7 +9,7 @@
 
 #include "lb/iolets/InOutLetCosine.h"
 #include "configuration/SimConfig.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 
 namespace hemelb
 {
@@ -19,10 +19,8 @@ namespace hemelb
     {
 
       InOutLetCosine::InOutLetCosine() :
-        InOutLet(), densityMean(1.0), densityAmp(0.0), phase(0.0), period(1.0),
-            warmUpLength(0)
+          InOutLet(), densityMean(1.0), densityAmp(0.0), phase(0.0), period(1.0), warmUpLength(0)
       {
-
       }
 
       InOutLet* InOutLetCosine::Clone() const

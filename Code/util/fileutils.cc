@@ -43,8 +43,6 @@ namespace hemelb
       return true;
     }
 
-
-
     // Check the existence of a critical file - exit if it's not there
     void check_file(const char * filename)
     {
@@ -97,11 +95,11 @@ namespace hemelb
     {
       const char *dirname;
       dirname = std::getenv("TMP");
-      if (NULL == dirname)
+      if (nullptr == dirname)
         dirname = std::getenv("TMPDIR");
-      if (NULL == dirname)
+      if (nullptr == dirname)
         dirname = std::getenv("TEMP");
-      if (NULL == dirname)
+      if (nullptr == dirname)
       {
         //assert(false); // no temp directory found
         return GetCurrentDir();
@@ -119,7 +117,7 @@ namespace hemelb
       for (int i = 0; i < file_count; i++)
       {
         std::stringstream filename;
-        filename << pathname.c_str() << "/" << files[i]->d_name <<std::flush;
+        filename << pathname.c_str() << "/" << files[i]->d_name << std::flush;
         unlink(filename.str().c_str());
       }
       return 0;
@@ -156,7 +154,7 @@ namespace hemelb
 
     // Function to create the directory of given path, which user group and anyone
     // can read write and execute.
-    void MakeDirAllRXW(std::string &dirPath)
+    void MakeDirAllRXW(std::string const &dirPath)
     {
       mkdir(dirPath.c_str(), 0777);
     }

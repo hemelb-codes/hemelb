@@ -24,7 +24,8 @@ namespace hemelb
     class UnitConverter
     {
       public:
-        UnitConverter(PhysicalTime timeStep, PhysicalDistance voxelSize, PhysicalPosition latticeOrigin);
+        UnitConverter(PhysicalTime timeStep, PhysicalDistance voxelSize,
+                      PhysicalPosition latticeOrigin);
 
         LatticePressure ConvertPressureToLatticeUnits(PhysicalPressure pressure) const;
         LatticeStress ConvertPressureDifferenceToLatticeUnits(PhysicalStress pressure_grad) const;
@@ -81,10 +82,11 @@ namespace hemelb
          * @return traction vector in physical units
          */
         template<class VectorType>
-        Vector3D<VectorType> ConvertTractionToPhysicalUnits(Vector3D<VectorType> traction,
-                                                            const Vector3D<Dimensionless>& wallNormal) const
+        Vector3D<VectorType> ConvertTractionToPhysicalUnits(
+            Vector3D<VectorType> traction, const Vector3D<Dimensionless>& wallNormal) const
         {
-          Vector3D<VectorType> ret = traction * (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
+          Vector3D<VectorType> ret = traction
+              * (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
           ret += wallNormal * REFERENCE_PRESSURE_mmHg * mmHg_TO_PASCAL;
           return ret;
         }
@@ -122,7 +124,8 @@ namespace hemelb
          * @param shearRate shear rate in lattice units (1/time_step_length)
          * @return shear rate in physical units (1/s)
          */
-        PhysicalReciprocalTime ConvertShearRateToPhysicalUnits(LatticeReciprocalTime shearRate) const;
+        PhysicalReciprocalTime ConvertShearRateToPhysicalUnits(
+            LatticeReciprocalTime shearRate) const;
 
         const PhysicalDistance& GetVoxelSize() const
         {
@@ -138,7 +141,7 @@ namespace hemelb
           return LatticePosition() - (latticeOrigin / latticeDistance);
         }
 
-        template <typename T>
+        template<typename T>
         T ConvertToLatticeUnits(std::string units, const T& value) const
         {
           double scale_factor;
@@ -149,12 +152,21 @@ namespace hemelb
           }
           else if (units == "m/s/s")
           {
-            scale_factor = latticeDistance/ (latticeTime * latticeTime);
+            scale_factor = latticeDistance / (latticeTime * latticeTime);
           }
           else if (units == "N")
           {
             // F = ma so Force = mass * length / time / time and Newton = Kg * metre / second / second
             scale_factor = latticeMass * latticeDistance / (latticeTime * latticeTime);
+          }
+          else if (units == "N/m")
+          {
+            scale_factor = latticeMass / (latticeTime * latticeTime);
+          }
+          else if (units == "Nm")
+          {
+            scale_factor = latticeMass * latticeDistance
+              * latticeDistance / (latticeTime * latticeTime);
           }
           else if (units == "s")
           {
@@ -170,7 +182,8 @@ namespace hemelb
           }
           else if (units == "mmHg")
           {
-            scale_factor = latticeMass / (latticeDistance * latticeTime * latticeTime) / mmHg_TO_PASCAL;
+            scale_factor = latticeMass / (latticeDistance * latticeTime * latticeTime)
+                / mmHg_TO_PASCAL;
           }
           else if (units == "Pa")
           {
@@ -178,11 +191,13 @@ namespace hemelb
           }
           else if (units == "mmHg/m")
           {
-            scale_factor = latticeMass / (latticeDistance * latticeDistance * latticeTime * latticeTime) / mmHg_TO_PASCAL;
+            scale_factor = latticeMass
+                / (latticeDistance * latticeDistance * latticeTime * latticeTime) / mmHg_TO_PASCAL;
           }
           else if (units == "Pa/m")
           {
-            scale_factor = latticeMass / (latticeDistance * latticeDistance * latticeTime * latticeTime);
+            scale_factor = latticeMass
+                / (latticeDistance * latticeDistance * latticeTime * latticeTime);
           }
           else
           {

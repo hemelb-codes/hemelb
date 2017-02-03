@@ -82,9 +82,9 @@ namespace hemelb
         // Processor Pi holds ni consecutive vertices and mi corresponding edges
         //
         // xadj[ni+1] has the cumulative number of adjacencies per vertex (with a leading 0 on each processor)
-        // vwgt[ni] has vertex weight coefficients and can be NULL
+        // vwgt[ni] has vertex weight coefficients and can be nullptr
         // adjncy[mi] has the adjacent vertices for each edge (using a global index, starting at 0)
-        // adjwgt[mi] has edge weights and can be NULL
+        // adjwgt[mi] has edge weights and can be nullptr
         // vtxdist[P+1] has an identical array of the number of the vertices on each processor, cumulatively.
         //           So Pi has vertices from vtxdist[i] to vtxdist[i+1]-1
         // wgtflag* is 0 with no weights (1 on edges, 2 on vertices, 3 on edges & vertices)
@@ -112,13 +112,12 @@ namespace hemelb
         idx_t desiredPartitionSize = comms.Size();
 
         std::vector<real_t> domainWeights(desiredPartitionSize,
-                                          (real_t)(1.0) / ( (real_t)(desiredPartitionSize)));
+                                          (real_t) (1.0) / ((real_t) (desiredPartitionSize)));
         // A bunch of values ParMetis needs.
         idx_t noConstraints = 1;
         idx_t weightFlag = 2;
         idx_t numberingFlag = 0;
         idx_t edgesCut = 0;
-        idx_t nDims = 3;
         idx_t options[4] = { 0, 0, 0, 0 };
         if (ShouldValidate())
         {
@@ -147,30 +146,13 @@ namespace hemelb
         localAdjacencies.reserve(1);
         vertexWeights.reserve(1);
         MPI_Comm communicator = comms;
-        /*ParMETIS_V3_PartKway(&vtxDistribn[0],
+        ParMETIS_V3_PartKway(&vtxDistribn[0],
                              &adjacenciesPerVertex[0],
                              &localAdjacencies[0],
                              &vertexWeights[0],
-                             NULL,
+                             nullptr,
                              &weightFlag,
                              &numberingFlag,
-                             &noConstraints,
-                             &desiredPartitionSize,
-                             &domainWeights[0],
-                             &tolerance,
-                             options,
-                             &edgesCut,
-                             &partitionVector[0],
-                             &communicator);*/
-        ParMETIS_V3_PartGeomKway(&vtxDistribn[0],
-                             &adjacenciesPerVertex[0],
-                             &localAdjacencies[0],
-                             &vertexWeights[0],
-                             NULL,
-                             &weightFlag,
-                             &numberingFlag,
-                             &nDims,
-                             &vertexCoordinates[0],
                              &noConstraints,
                              &desiredPartitionSize,
                              &domainWeights[0],
@@ -179,27 +161,55 @@ namespace hemelb
                              &edgesCut,
                              &partitionVector[0],
                              &communicator);
+                             
+        if (comms.Rank() == 0) {
+            
+        }
+        /*ParMETIS_V3_PartGeomKway(&vtxDistribn[0],
+         &adjacenciesPerVertex[0],
+         &localAdjacencies[0],
+         &vertexWeights[0],
+         nullptr,
+         &weightFlag,
+         &numberingFlag,
+         &nDims,
+         &vertexCoordinates[0],
+         &noConstraints,
+         &desiredPartitionSize,
+         &domainWeights[0],
+         &tolerance,
+         options,
+         &edgesCut,
+         &partitionVector[0],
+         &communicator);*/
 
         /** Preliminary development code to create a group communicator
-        std::vector<int> localRanksInNode;
-        int localBaseRank = comms.Rank() - (comms.Rank() % hemelbCoresPerNode);
-        int coresInNodePartition = hemelbCoresPerNode;
-        log::Logger::Log<log::Info, log::OnePerCore>("Cores per node %d.", hemelbCoresPerNode);
+         std::vector<int> localRanksInNode;
+         int localBaseRank = comms.Rank() - (comms.Rank() % hemelbCoresPerNode);
+         int coresInNodePartition = hemelbCoresPerNode;
+         log::Logger::Log<log::Info, log::OnePerCore>("Cores per node %d.", hemelbCoresPerNode);
 
-        if(localBaseRank + hemelbCoresPerNode > comms.Size()) {
-          coresInNodePartition = comms.Size() - localBaseRank;
-        }
+         if(localBaseRank + hemelbCoresPerNode > comms.Size()) {
+         coresInNodePartition = comms.Size() - localBaseRank;
+         }
 
-        for(int i=0; i<coresInNodePartition; i++) {
-          localRanksInNode.push_back(localBaseRank + i);
-        }
+         for(int i=0; i<coresInNodePartition; i++) {
+         localRanksInNode.push_back(localBaseRank + i);
+         }
 
-        net::MpiGroup GroupIntraNode = comms.Group().Include(localRanksInNode);
-        net::MpiCommunicator CommsIntraNode = comms.Create(GroupIntraNode);*/
+         net::MpiGroup GroupIntraNode = comms.Group().Include(localRanksInNode);
+         net::MpiCommunicator CommsIntraNode = comms.Create(GroupIntraNode);*/
 
         log::Logger::Log<log::Debug, log::OnePerCore>("ParMetis returned.");
-        if(comms.Rank() == comms.Size() - 1) {
+        if (comms.Rank() == comms.Size() - 1)
+        {
           log::Logger::Log<log::Info, log::OnePerCore>("ParMetis cut %d edges.", edgesCut);
+          if (edgesCut < 1 && comms.Size() > 2)
+          {
+            throw Exception()
+                << "The decomposition using ParMetis returned an edge cut of 0 even though there are multiple processes. "
+                << "This means/implies that ParMETIS cannot properly decompose the system, and no properly load-balanced parallel simulation can be started.";
+          }
         }
       }
 
@@ -211,106 +221,96 @@ namespace hemelb
         //vertexWeights.push_back(0);
 
         //We define every architecture that we will switch on:
-        std::string INTELSANDYBRIDGE="INTELSANDYBRIDGE";
+        std::string INTELSANDYBRIDGE = "INTELSANDYBRIDGE";
         std::string AMDBULLDOZER = "AMDBULLDOZER";
         std::string NEUTRAL = "NEUTRAL";
 
-        if (HEMELB_COMPUTE_ARCHITECTURE.compare(NEUTRAL) == 0)
+        // For each block (counting up by lowest site id)...
+        for (site_t blockI = 0; blockI < geometry.GetBlockDimensions().x; blockI++)
         {
-          for(int i=0; i < localVertexCount; i++) {
-            vertexWeights.push_back(1);
-          }
-        }
-        else
-        {
-          // For each block (counting up by lowest site id)...
-          for (site_t blockI = 0; blockI < geometry.GetBlockDimensions().x; blockI++)
+          for (site_t blockJ = 0; blockJ < geometry.GetBlockDimensions().y; blockJ++)
           {
-            for (site_t blockJ = 0; blockJ < geometry.GetBlockDimensions().y; blockJ++)
+            for (site_t blockK = 0; blockK < geometry.GetBlockDimensions().z; blockK++)
             {
-              for (site_t blockK = 0; blockK < geometry.GetBlockDimensions().z; blockK++)
+              const site_t blockNumber = geometry.GetBlockIdFromBlockCoordinates(blockI,
+                                                                                 blockJ,
+                                                                                 blockK);
+
+              // Only consider sites on this processor.
+              if (procForEachBlock[blockNumber] != comms.Rank())
               {
-                const site_t blockNumber = geometry.GetBlockIdFromBlockCoordinates(blockI,
-                                                                                   blockJ,
-                                                                                   blockK);
+                continue;
+              }
 
-                // Only consider sites on this processor.
-                if (procForEachBlock[blockNumber] != comms.Rank())
+              const BlockReadResult& blockReadResult = geometry.Blocks[blockNumber];
+
+              site_t m = -1;
+              const int block_size = geometry.GetBlockSize();
+              const int blockXCoord = blockI * block_size;
+              const int blockYCoord = blockJ * block_size;
+              const int blockZCoord = blockK * block_size;
+
+              // ... iterate over sites within the block...
+              for (site_t localSiteI = 0; localSiteI < block_size; localSiteI++)
+              {
+                for (site_t localSiteJ = 0; localSiteJ < block_size; localSiteJ++)
                 {
-                  continue;
-                }
-
-                const BlockReadResult& blockReadResult = geometry.Blocks[blockNumber];
-
-                site_t m = -1;
-                const int block_size = geometry.GetBlockSize();
-                const int blockXCoord = blockI * block_size;
-                const int blockYCoord = blockJ * block_size;
-                const int blockZCoord = blockK * block_size;
-
-                // ... iterate over sites within the block...
-                for (site_t localSiteI = 0; localSiteI < block_size; localSiteI++)
-                {
-                  for (site_t localSiteJ = 0; localSiteJ < block_size; localSiteJ++)
+                  for (site_t localSiteK = 0; localSiteK < block_size; localSiteK++)
                   {
-                    for (site_t localSiteK = 0; localSiteK < block_size; localSiteK++)
+                    ++m;
+
+                    // ... only looking at non-solid sites...
+                    if (blockReadResult.Sites[m].targetProcessor == BIG_NUMBER2)
                     {
-                      ++m;
-
-                      // ... only looking at non-solid sites...
-                      if (blockReadResult.Sites[m].targetProcessor == BIG_NUMBER2)
-                      {
-                        continue;
-                      }
-
-                      //Getting Site ID to be able to identify site type
-                      site_t localSiteId = geometry.GetSiteIdFromSiteCoordinates(localSiteI,
-                                                                                 localSiteJ,
-                                                                                 localSiteK);
-
-                      //Switch structure which identifies site type and assigns the proper weight to each vertex
-
-                      SiteData siteData(blockReadResult.Sites[localSiteId]);
-
-                      switch (siteData.GetCollisionType())
-                      {
-                        case FLUID:
-                          localweight = hemelbSiteWeights[0];
-                          ++FluidSiteCounter;
-                          break;
-
-                        case WALL:
-                          localweight = hemelbSiteWeights[1];
-                          ++WallSiteCounter;
-                          break;
-
-                        case INLET:
-                          localweight = hemelbSiteWeights[2];
-                          ++IOSiteCounter;
-                          break;
-
-                        case OUTLET:
-                          localweight = hemelbSiteWeights[3];
-                          ++IOSiteCounter;
-                          break;
-
-                        case (INLET | WALL):
-                          localweight = hemelbSiteWeights[4];
-                          ++WallIOSiteCounter;
-                          break;
-
-                        case (OUTLET | WALL):
-                          localweight = hemelbSiteWeights[5];
-                          ++WallIOSiteCounter;
-                          break;
-                      }
-
-                      vertexWeights.push_back(localweight);
-                      vertexCoordinates.push_back(blockXCoord + localSiteI);
-                      vertexCoordinates.push_back(blockYCoord + localSiteJ);
-                      vertexCoordinates.push_back(blockZCoord + localSiteK);
-
+                      continue;
                     }
+
+                    //Getting Site ID to be able to identify site type
+                    site_t localSiteId = geometry.GetSiteIdFromSiteCoordinates(localSiteI,
+                                                                               localSiteJ,
+                                                                               localSiteK);
+
+                    //Switch structure which identifies site type and assigns the proper weight to each vertex
+
+                    SiteData siteData(blockReadResult.Sites[localSiteId]);
+
+                    switch (siteData.GetCollisionType())
+                    {
+                      case FLUID:
+                        localweight = hemelbSiteWeights[0];
+                        ++FluidSiteCounter;
+                        break;
+
+                      case WALL:
+                        localweight = hemelbSiteWeights[1];
+                        ++WallSiteCounter;
+                        break;
+
+                      case INLET:
+                        localweight = hemelbSiteWeights[2];
+                        ++IOSiteCounter;
+                        break;
+
+                      case OUTLET:
+                        localweight = hemelbSiteWeights[3];
+                        ++IOSiteCounter;
+                        break;
+
+                      case (INLET | WALL):
+                        localweight = hemelbSiteWeights[4];
+                        ++WallIOSiteCounter;
+                        break;
+
+                      case (OUTLET | WALL):
+                        localweight = hemelbSiteWeights[5];
+                        ++WallIOSiteCounter;
+                        break;
+                    }
+
+                    vertexWeights.push_back(1);//localweight);
+                    vertexCoordinates.push_back(blockXCoord + localSiteI);
+                    vertexCoordinates.push_back(blockYCoord + localSiteJ);
+                    vertexCoordinates.push_back(blockZCoord + localSiteK);
 
                   }
 
@@ -329,13 +329,13 @@ namespace hemelb
         int TotalSites = FluidSiteCounter + WallSiteCounter + WallIOSiteCounter;
 
         log::Logger::Log<log::Debug, log::OnePerCore>("There are %u Bulk Flow Sites, %u Wall Sites, %u IO Sites, %u WallIO Sites on core %u. Total: %u (Weighted %u Points)",
-                                                     FluidSiteCounter,
-                                                     WallSiteCounter,
-                                                     IOSiteCounter,
-                                                     WallIOSiteCounter,
-                                                     comms.Rank(),
-                                                     TotalSites,
-                                                     TotalCoreWeight);
+                                                      FluidSiteCounter,
+                                                      WallSiteCounter,
+                                                      IOSiteCounter,
+                                                      WallIOSiteCounter,
+                                                      comms.Rank(),
+                                                      TotalSites,
+                                                      TotalCoreWeight);
       }
 
       void OptimisedDecomposition::PopulateSiteDistribution()
@@ -347,7 +347,7 @@ namespace hemelb
         {
           if (procForEachBlock[block] >= 0)
           {
-            vtxDistribn[1 + procForEachBlock[block]] += (idx_t)(fluidSitesPerBlock[block]);
+            vtxDistribn[1 + procForEachBlock[block]] += (idx_t) (fluidSitesPerBlock[block]);
           }
         }
 
@@ -375,7 +375,7 @@ namespace hemelb
           else
           {
             firstSiteIndexPerBlock.push_back(firstSiteOnProc[proc]);
-            firstSiteOnProc[proc] += (idx_t)(fluidSitesPerBlock[block]);
+            firstSiteOnProc[proc] += (idx_t) (fluidSitesPerBlock[block]);
           }
         }
 
@@ -473,7 +473,7 @@ namespace hemelb
                       }
 
                       // then add this to the list of adjacencies.
-                      localAdjacencies.push_back( (idx_t)(neighGlobalSiteId));
+                      localAdjacencies.push_back((idx_t) (neighGlobalSiteId));
                     }
 
                     // The cumulative count of adjacencies for this vertex is equal to the total
@@ -626,7 +626,7 @@ namespace hemelb
         // block they didn't previously want to know about.
         std::map<proc_t, std::vector<site_t> > blockForcedUponX;
         std::vector<proc_t> numberOfBlocksIForceUponX(comms.Size(), 0);
-        for (idx_t moveNumber = 0; moveNumber < (idx_t)(moveData.size()); moveNumber += 3)
+        for (idx_t moveNumber = 0; moveNumber < (idx_t) (moveData.size()); moveNumber += 3)
         {
           proc_t target_proc = moveData[moveNumber + 2];
           site_t blockId = moveData[moveNumber];
@@ -643,16 +643,10 @@ namespace hemelb
         }
 
         // Now find how many blocks are being forced upon us from every other core.
-        std::vector<proc_t> blocksForcedOnMe(comms.Size(), 0);
         log::Logger::Log<log::Debug, log::OnePerCore>("Moving forcing block numbers");
-        MPI_Alltoall(&numberOfBlocksIForceUponX[0],
-                     1,
-                     net::MpiDataType<proc_t>(),
-                     &blocksForcedOnMe[0],
-                     1,
-                     net::MpiDataType<proc_t>(),
-                     comms);
+        std::vector<proc_t> blocksForcedOnMe = comms.AllToAll(numberOfBlocksIForceUponX);
         timers[hemelb::reporting::Timers::moveForcingNumbers].Stop();
+
         timers[hemelb::reporting::Timers::moveForcingData].Start();
         // Now get all the blocks being forced upon me.
         std::map<proc_t, std::vector<site_t> > blocksForcedOnMeByEachProc;
@@ -761,13 +755,8 @@ namespace hemelb
         }
         // Now perform the exchange s.t. each core knows how many blocks are required of it from
         // each other core.
-        MPI_Alltoall(&numberOfBlocksRequiredFrom[0],
-                     1,
-                     net::MpiDataType<site_t>(),
-                     &numberOfBlocksXRequiresFromMe[0],
-                     1,
-                     net::MpiDataType<site_t>(),
-                     comms);
+        numberOfBlocksXRequiresFromMe = comms.AllToAll(numberOfBlocksRequiredFrom);
+
         // Awesome. Now we need to get a list of all the blocks wanted from each core by each other
         // core.
         net::Net netForMoveSending(comms);
@@ -1119,12 +1108,7 @@ namespace hemelb
         {
           // Send the array length.
           neighboursAdjacencyCount = 2 * expectedAdjacencyData.size();
-          MPI_Send(&neighboursAdjacencyCount,
-                   1,
-                   net::MpiDataType(neighboursAdjacencyCount),
-                   neighbouringProc,
-                   42,
-                   comms);
+          comms.Send(neighboursAdjacencyCount, neighbouringProc, 42);
           // Create a sendable array (std::lists aren't organised in a sendable format).
           neighboursAdjacencyData.resize(neighboursAdjacencyCount);
           unsigned int adjacencyIndex = 0;
@@ -1136,32 +1120,15 @@ namespace hemelb
             ++adjacencyIndex;
           }
           // Send the data to the neighbouringProc.
-          MPI_Send(&neighboursAdjacencyData[0],
-                   (int) ( ( ( ( (neighboursAdjacencyCount))))),
-                   net::MpiDataType<idx_t>(),
-                   neighbouringProc,
-                   43,
-                   comms);
+          comms.Send(neighboursAdjacencyData, neighbouringProc, 43);
         }
         else
         // If this is a greater rank number than the neighbouringProc, receive the data.
         if (neighbouringProc > comms.Rank())
         {
-          MPI_Recv(&neighboursAdjacencyCount,
-                   1,
-                   net::MpiDataType(neighboursAdjacencyCount),
-                   neighbouringProc,
-                   42,
-                   comms,
-                   MPI_STATUS_IGNORE);
+          comms.Receive(neighboursAdjacencyCount, neighbouringProc, 42);
           neighboursAdjacencyData.resize(neighboursAdjacencyCount);
-          MPI_Recv(&neighboursAdjacencyData[0],
-                   (int) ( ( ( ( (neighboursAdjacencyCount))))),
-                   net::MpiDataType<idx_t>(),
-                   neighbouringProc,
-                   43,
-                   comms,
-                   MPI_STATUS_IGNORE);
+          comms.Receive(neighboursAdjacencyData, neighbouringProc, 43);
         }
         else // Neigh == mTopologyRank, i.e. neighbouring vertices on the same proc
         // Duplicate the data.
@@ -1238,7 +1205,8 @@ namespace hemelb
         // Reduce finding the maximum across all nodes. Note that we have to use the maximum
         // because some cores will have -1 for a block (indicating that it has no neighbours on
         // that block.
-        std::vector<idx_t> firstSiteIndexPerBlockRecv = comms.AllReduce(firstSiteIndexPerBlock, MPI_MAX);
+        std::vector<idx_t> firstSiteIndexPerBlockRecv = comms.AllReduce(firstSiteIndexPerBlock,
+        MPI_MAX);
 
         for (site_t block = 0; block < geometry.GetBlockCount(); ++block)
         {

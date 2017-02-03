@@ -35,7 +35,7 @@ namespace hemelb
            */
           static inline const geometry& Get()
           {
-            if (geometry::singleton == NULL)
+            if (geometry::singleton == nullptr)
               geometry::singleton = new geometry();
 
             return *geometry::singleton;
@@ -160,7 +160,8 @@ namespace hemelb
            */
           static inline unsigned int GetMaxBlockRecordLength(unsigned int blockSideLength)
           {
-            return blockSideLength * blockSideLength * blockSideLength * geometry::MaxFluidSiteRecordLength;
+            return blockSideLength * blockSideLength * blockSideLength
+                * geometry::MaxFluidSiteRecordLength;
           }
 
           /**
@@ -170,10 +171,13 @@ namespace hemelb
            * @param nFluidSites
            * @return max length in bytes
            */
-          static inline unsigned int GetMaxBlockRecordLength(unsigned int blockSideLength, unsigned int nFluidSites)
+          static inline unsigned int GetMaxBlockRecordLength(unsigned int blockSideLength,
+                                                             unsigned int nFluidSites)
           {
-            unsigned int nSolidSites = blockSideLength * blockSideLength * blockSideLength - nFluidSites;
-            return (nFluidSites * geometry::MaxFluidSiteRecordLength + nSolidSites * geometry::MaxSolidSiteRecordLength);
+            unsigned int nSolidSites = blockSideLength * blockSideLength * blockSideLength
+                - nFluidSites;
+            return (nFluidSites * geometry::MaxFluidSiteRecordLength
+                + nSolidSites * geometry::MaxSolidSiteRecordLength);
           }
 
           /**

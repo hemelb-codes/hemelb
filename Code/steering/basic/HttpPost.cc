@@ -77,7 +77,7 @@ namespace hemelb
       for (int address_id = 0; address_id < 4; address_id++)
       {
         // If no address, break.
-        if (host->h_addr_list[address_id] == NULL)
+        if (host->h_addr_list[address_id] == nullptr)
           break;
 
         std::printf("checking Address ID %i...\n", address_id);
@@ -133,7 +133,8 @@ namespace hemelb
       std::sprintf(rank_0_host_details, "%s:%i (IP %s)", host->h_name, MYPORT, ip_addr);
 #endif
 
-      log::Logger::Log<log::Info, log::Singleton>("MPI public interface details - %s", rank_0_host_details);
+      log::Logger::Log<log::Info, log::Singleton>("MPI public interface details - %s",
+                                                  rank_0_host_details);
     }
 
     ssize_t HttpPost::Send_Request(int iSocket, const char *iMessage)
@@ -141,7 +142,8 @@ namespace hemelb
       return send(iSocket, iMessage, strlen(iMessage), 0);
     }
 
-    int HttpPost::request(const char* hostname, const in_port_t port, const char* api, const char* resourceid)
+    int HttpPost::request(const char* hostname, const in_port_t port, const char* api,
+                          const char* resourceid)
     {
       // Get the host name to communicate with.
       char host_name[1024];
@@ -156,12 +158,12 @@ namespace hemelb
 
       sockaddr_in sin;
       sin.sin_family = AF_INET;
-      sin.sin_port = htons((in_port_t) port);
+      sin.sin_port = htons((in_port_t ) port);
 
       // Get name for the other end of the connection.
       struct hostent * host_addr = gethostbyname(hostname);
 
-      if (host_addr == NULL)
+      if (host_addr == nullptr)
       {
         return -103;
       }
@@ -191,7 +193,7 @@ namespace hemelb
       Send_Request(sock, "User-Agent: Mozilla/4.0\r\n");
 
       char content_header[100];
-      std::sprintf(content_header, "Content-Length: %d\r\n", int (std::strlen(host_name)));
+      std::sprintf(content_header, "Content-Length: %d\r\n", int(std::strlen(host_name)));
 
       Send_Request(sock, content_header);
       Send_Request(sock, "Accept-Language: en-us\r\n");

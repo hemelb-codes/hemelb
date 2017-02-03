@@ -54,7 +54,8 @@ namespace hemelb
             {
               calls << "Reset, " << std::flush;
             }
-            std::string CallsSoFar(){
+            std::string CallsSoFar()
+            {
               return calls.str();
             }
 

@@ -21,6 +21,7 @@
 #include "extraction/OutputField.h"
 #include "extraction/WholeGeometrySelector.h"
 
+#include "unittests/helpers/HasCommsTestFixture.h"
 #include "unittests/extraction/DummyDataSource.h"
 
 namespace hemelb
@@ -29,7 +30,7 @@ namespace hemelb
   {
     namespace extraction
     {
-      class LocalPropertyOutputTests : public CppUnit::TestFixture
+      class LocalPropertyOutputTests : public helpers::HasCommsTestFixture
       {
           CPPUNIT_TEST_SUITE (LocalPropertyOutputTests);
           CPPUNIT_TEST (TestStringWrittenLength);
@@ -38,6 +39,7 @@ namespace hemelb
         public:
           void setUp()
           {
+            helpers::HasCommsTestFixture::setUp();
             epsilon = 1e-5;
 
             simpleOutFile.filename = tempOutFileName;
@@ -60,8 +62,8 @@ namespace hemelb
 
             simpleDataSource = new DummyDataSource();
 
-            writtenFile = NULL;
-            propertyWriter = NULL;
+            writtenFile = nullptr;
+            propertyWriter = nullptr;
             writtenMainHeader = new char[hemelb::io::formats::extraction::MainHeaderLength];
 
             fieldHeaderLength = 0x30;
@@ -76,40 +78,47 @@ namespace hemelb
             delete[] writtenFieldHeader;
 
             // Delete the LocalPropertyOutput
-            if (propertyWriter != NULL)
+            if (propertyWriter != nullptr)
               delete propertyWriter;
             // Close the file and delete it
-            if (writtenFile != NULL)
+            if (writtenFile != nullptr)
               std::fclose(writtenFile);
             std::remove(tempOutFileName);
+
+            helpers::HasCommsTestFixture::tearDown();
           }
 
           void TestStringWrittenLength()
           {
             // Check the zero length string
             std::string s0;
-            CPPUNIT_ASSERT_EQUAL(size_t(4), hemelb::io::formats::extraction::GetStoredLengthOfString(s0));
+            CPPUNIT_ASSERT_EQUAL(size_t(4),
+                                 hemelb::io::formats::extraction::GetStoredLengthOfString(s0));
 
             // This should have no padding
             std::string s1("Fish");
-            CPPUNIT_ASSERT_EQUAL(size_t(8), hemelb::io::formats::extraction::GetStoredLengthOfString(s1));
+            CPPUNIT_ASSERT_EQUAL(size_t(8),
+                                 hemelb::io::formats::extraction::GetStoredLengthOfString(s1));
 
             // This must be padded up to 8 bytes
             std::string s2("A");
-            CPPUNIT_ASSERT_EQUAL(size_t(8), hemelb::io::formats::extraction::GetStoredLengthOfString(s2));
+            CPPUNIT_ASSERT_EQUAL(size_t(8),
+                                 hemelb::io::formats::extraction::GetStoredLengthOfString(s2));
 
           }
 
           void TestWrite()
           {
             // Create the writer object; this should write the headers.
-            propertyWriter = new hemelb::extraction::LocalPropertyOutput(*simpleDataSource, &simpleOutFile);
+            propertyWriter = new hemelb::extraction::LocalPropertyOutput(*simpleDataSource,
+                                                                         &simpleOutFile,
+                                                                         Comms());
 
             // Open the file
             writtenFile = std::fopen(simpleOutFile.filename.c_str(), "r");
 
             // Assert that the file is there
-            CPPUNIT_ASSERT(writtenFile != NULL);
+            CPPUNIT_ASSERT(writtenFile != nullptr);
 
             // Read the main header.
             size_t nRead = std::fread(writtenMainHeader,
@@ -238,7 +247,9 @@ namespace hemelb
               float pressure;
               reader.readFloat(pressure);
 
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(datasource->GetPressure(), (REFERENCE_PRESSURE_mmHg + (double) pressure), epsilon);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(datasource->GetPressure(),
+                                           (REFERENCE_PRESSURE_mmHg + (double) pressure),
+                                           epsilon);
 
               // Read the velocity and compare
               PhysicalVelocity velocity = datasource->GetVelocity();

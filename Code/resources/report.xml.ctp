@@ -12,7 +12,6 @@
 		<revision>{{REVISION}}</revision>
 		<steering>{{STEERING}}</steering>
 		<streaklines>{{STREAKLINES}}</streaklines>
-		<multimachine>{{MULTIMACHINE}}</multimachine>
 		<type>{{TYPE}}</type>
 		<optimisation>{{OPTIMISATION}}</optimisation>
                 <use_sse3>{{USE_SSE3}}</use_sse3>
@@ -37,8 +36,6 @@
 	{{/BUILD}}
 	<nodes>
 		<threads>{{THREADS}}</threads>
-		<machines>{{MACHINES}}</machines>
-		<depths>{{DEPTHS}}</depths>
 	</nodes>
 	<geometry>
 		<sites>{{SITES}}</sites>
@@ -66,6 +63,10 @@
 		{{#UNSTABLE}}
 			<stability_problem/>
 		{{/UNSTABLE}}
+		{{#SOLUTIONCONVERGED}}
+		<convergence_achieved/>
+        {{/SOLUTIONCONVERGED}}
+		
 	</checks>
 	<timings>
 		{{#TIMER}}

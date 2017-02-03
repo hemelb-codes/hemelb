@@ -44,7 +44,7 @@ namespace hemelb
       Mode = 17,
       StreaklinePerSimulation = 18,
       StreaklineLength = 19,
-      MaxFramerate=20,
+      MaxFramerate = 20,
       SetDoRendering = 21
     };
 
@@ -58,12 +58,9 @@ namespace hemelb
     class SteeringComponent : public net::PhasedBroadcastRegular<false, 1, 0, true, false>
     {
       public:
-        SteeringComponent(Network* iNetwork,
-                          vis::Control* iVisControl,
-                          steering::ImageSendComponent* imageSendComponent,
-                          net::Net * iNet,
-                          lb::SimulationState * iSimState,
-                          configuration::SimConfig* iSimConfig,
+        SteeringComponent(Network* iNetwork, vis::Control* iVisControl,
+                          steering::ImageSendComponent* imageSendComponent, net::Net * iNet,
+                          lb::SimulationState * iSimState, configuration::SimConfig* iSimConfig,
                           const util::UnitConverter* iUnits);
 
         static bool RequiresSeparateSteeringCore();

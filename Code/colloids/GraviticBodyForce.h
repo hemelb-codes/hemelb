@@ -19,7 +19,7 @@ namespace hemelb
     /** THIS CLASS SHOULD NOT BE USED IN ITS CURRENT FORM
      *
      *  It is intended to approximate the external force of gravity on colloid particles.
-     *  However, the calculation should take into account the buoyancy caused by the fluid
+     *  However, the calculation should take into account the boyancy caused by the fluid
      *  so the "mass" of the particle should really be the difference between its density
      *  and the density of the surrounding fluid, which can be calculated from viscosity?
      *  This needs changes to PersistedParticle, config.xml and MPI types (mass->density)
@@ -27,32 +27,38 @@ namespace hemelb
     class GraviticBodyForce : public BodyForce
     {
       public:
-        static BodyForce* ReadFromXml(const io::xml::Element& xml)
+        static BodyForce* ReadFromXml(io::xml::Element& xml)
         {
-          LatticeAccelerationVector g;
+          LatticeForceVector field;
           // TODO: convert to lattice units
-          io::xml::Element gEl = xml.GetChildOrThrow("acceleration");
-          configuration::GetDimensionalValue(gEl, "m s^-2", g);
+          io::xml::Element fieldElem = xml.GetChildOrThrow("field");
+          fieldElem.GetAttributeOrThrow("x", field.x);
+          fieldElem.GetAttributeOrThrow("y", field.y);
+          fieldElem.GetAttributeOrThrow("z", field.z);
 
-          return new GraviticBodyForce(g);
-        };
+          return new GraviticBodyForce(field);
+        }
+        ;
 
         virtual const LatticeForceVector GetForceForParticle(const Particle& particle) const
         {
-          return accelerationDueToGravity * particle.GetMass();
-        };
-        const LatticeAccelerationVector& GetAccelerationDueToGravity() const
-        {
-          return accelerationDueToGravity;
+          return graviticForce * particle.GetMass();
         }
+        ;
+
       protected:
         GraviticBodyForce(const LatticeForceVector constantForce) :
-          accelerationDueToGravity(constantForce) {};
+            graviticForce(constantForce)
+        {
+        }
+        ;
 
-        const LatticeAccelerationVector accelerationDueToGravity;
+        const LatticeForceVector graviticForce;
     };
 
-    class GraviticBodyForceFactory : public BodyForceFactory<GraviticBodyForce> { };
+    class GraviticBodyForceFactory : public BodyForceFactory<GraviticBodyForce>
+    {
+    };
   }
 }
 #endif /* HEMELB_COLLOIDS_GRAVITICBODYFORCE_H */

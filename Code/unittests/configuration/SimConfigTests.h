@@ -43,9 +43,18 @@ namespace hemelb
             SimConfig* config = SimConfig::New(Resource("config0_2_0.xml").Path());
             CPPUNIT_ASSERT_EQUAL(3000lu, config->GetTotalTimeSteps());
             CPPUNIT_ASSERT_EQUAL(0.0001, config->GetTimeStepLength());
-            lb::iolets::InOutLetCosine* inlet = dynamic_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0]);
-            CPPUNIT_ASSERT(inlet != NULL);
+            lb::iolets::InOutLetCosine* inlet =
+                dynamic_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0]);
+            CPPUNIT_ASSERT(inlet != nullptr);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(6000.0, inlet->GetPeriod(), 1e-6);
+
+            // Check that in the absence of the <monitoring> XML element things get initiliased properly
+            const hemelb::configuration::SimConfig::MonitoringConfig* monConfig =
+                config->GetMonitoringConfiguration();
+            CPPUNIT_ASSERT(!monConfig->doConvergenceCheck);
+            CPPUNIT_ASSERT(!monConfig->doIncompressibilityCheck);
+            CPPUNIT_ASSERT(!monConfig->convergenceTerminate);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0., monConfig->convergenceRelativeTolerance, 1e-6);
           }
 
           void Test_0_2_1_Read()
@@ -54,9 +63,19 @@ namespace hemelb
             SimConfig* config = SimConfig::New(Resource("config.xml").Path());
             CPPUNIT_ASSERT_EQUAL(3000lu, config->GetTotalTimeSteps());
             CPPUNIT_ASSERT_EQUAL(0.0001, config->GetTimeStepLength());
-            lb::iolets::InOutLetCosine* inlet = dynamic_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0]);
-            CPPUNIT_ASSERT(inlet != NULL);
+            lb::iolets::InOutLetCosine* inlet =
+                dynamic_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0]);
+            CPPUNIT_ASSERT(inlet != nullptr);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(6000.0, inlet->GetPeriod(), 1e-6);
+
+            const hemelb::configuration::SimConfig::MonitoringConfig* monConfig =
+                config->GetMonitoringConfiguration();
+            CPPUNIT_ASSERT(monConfig->doConvergenceCheck);
+            CPPUNIT_ASSERT(monConfig->doIncompressibilityCheck);
+            CPPUNIT_ASSERT(monConfig->convergenceTerminate);
+            CPPUNIT_ASSERT_EQUAL(1e-9, monConfig->convergenceRelativeTolerance);
+            CPPUNIT_ASSERT_EQUAL(monConfig->convergenceVariable, extraction::OutputField::Velocity);
+            CPPUNIT_ASSERT_EQUAL(0.01, monConfig->convergenceReferenceValue); // 1 m/s * (delta_t / delta_x) = 0.01
           }
 
           void TestXMLFileContent()

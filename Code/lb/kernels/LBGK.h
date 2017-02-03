@@ -11,6 +11,7 @@
 #define HEMELB_LB_KERNELS_LBGK_H
 
 #include <cstdlib>
+#include <cmath>
 #include "lb/HFunction.h"
 #include "util/utilityFunctions.h"
 #include "lb/kernels/BaseKernel.h"
@@ -32,7 +33,8 @@ namespace hemelb
           {
           }
 
-          inline void DoCalculateDensityMomentumFeq(HydroVars<LBGK<LatticeType> >& hydroVars, site_t index)
+          inline void DoCalculateDensityMomentumFeq(HydroVars<LBGK<LatticeType> >& hydroVars,
+                                                    site_t index)
           {
             LatticeType::CalculateDensityMomentumFEq(hydroVars.f,
                                                      hydroVars.density,
@@ -67,11 +69,10 @@ namespace hemelb
           inline void DoCollide(const LbmParameters* const lbmParams, HydroVars<LBGK>& hydroVars)
           {
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
-            {
               hydroVars.SetFPostCollision(direction,
                                           hydroVars.f[direction]
-                                              + hydroVars.f_neq.f[direction] * lbmParams->GetOmega());
-            }
+                                              + hydroVars.f_neq.f[direction]
+                                                  * lbmParams->GetOmega());
           }
 
       };

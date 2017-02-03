@@ -13,7 +13,7 @@
 #include "units.h"
 #include "net/mpi.h"
 #include "net/MpiCommunicator.h"
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 namespace hemelb
 {
@@ -74,7 +74,7 @@ namespace hemelb
          */
         MpiGroup(MPI_Group grp, bool own);
 
-        boost::shared_ptr<MPI_Group> groupPtr;
+        std::shared_ptr<MPI_Group> groupPtr;
     };
   }
 }

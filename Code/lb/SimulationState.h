@@ -20,6 +20,7 @@ namespace hemelb
   {
     enum Stability
     {
+      UndefinedStability = -1,
       Unstable = 0,
       Stable = 1,
       StableAndConverged = 2
@@ -43,8 +44,14 @@ namespace hemelb
         bool IsRendering() const;
         Stability GetStability() const;
 
-        PhysicalTime GetTime() const {return GetTimeStepLength()*Get0IndexedTimeStep();}
-        PhysicalTime GetTimeStepLength() const {return timeStepLength;}
+        PhysicalTime GetTime() const
+        {
+          return GetTimeStepLength() * Get0IndexedTimeStep();
+        }
+        PhysicalTime GetTimeStepLength() const
+        {
+          return timeStepLength;
+        }
 
         void Report(ctemplate::TemplateDictionary& dictionary);
 

@@ -63,7 +63,7 @@ namespace hemelb
       {
         public:
           VSExtra(InOutLet& iolet) :
-            iolets::IoletExtraData(iolet)
+              iolets::IoletExtraData(iolet)
           {
 
           }
@@ -97,7 +97,7 @@ namespace hemelb
 
           VirtualSite(kernels::InitParams& initParams, VSExtra<LatticeType>& extra,
                       const LatticeVector& location) :
-            sumQiSq(0.)
+              sumQiSq(0.)
           {
             hv.t = 0;
             hv.rho = 1.;
@@ -122,11 +122,11 @@ namespace hemelb
               if (neighbourLocation.IsInRange(initParams.latDat->GetGlobalSiteMins(),
                                               initParams.latDat->GetGlobalSiteMaxes()))
               {
-                neighGlobalIdx
-                    = initParams.latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(neighbourLocation);
+                neighGlobalIdx =
+                    initParams.latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(neighbourLocation);
                 // BIG_NUMBER2 means a solid site, we don't store them.
-                neighbourSiteHomeProc
-                    = initParams.latDat->GetProcIdFromGlobalCoords(neighbourLocation);
+                neighbourSiteHomeProc =
+                    initParams.latDat->GetProcIdFromGlobalCoords(neighbourLocation);
 
                 if (neighbourSiteHomeProc != BIG_NUMBER2)
                   isNeighbourFluid = true;
@@ -142,11 +142,10 @@ namespace hemelb
                 // in this direction? If not, we must skip it for consistency.
 
                 // TODO: this really must cope with neigh being off process.
-                if (neighbourSiteHomeProc == net::NetworkTopology::Instance()->GetLocalRank())
+                if (neighbourSiteHomeProc == initParams.latDat->GetLocalRank())
                 {
-                  site_t
-                      neighLocalIdx =
-                          initParams.latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(neighGlobalIdx);
+                  site_t neighLocalIdx =
+                      initParams.latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(neighGlobalIdx);
                   const geometry::Site<const geometry::LatticeData> neigh =
                       initParams.latDat->GetSite(neighLocalIdx);
                   unsigned inverse = lattice.GetInverseIndex(i);
@@ -155,8 +154,7 @@ namespace hemelb
                 }
                 else
                 {
-                  log::Logger::Log<log::Critical, log::OnePerCore>("Need off core site data for VirtualSite neighbour.");
-                  std::exit(1);
+                  throw Exception() << "Need off core site data for VirtualSite neighbour.";
                 }
               }
 
@@ -190,16 +188,15 @@ namespace hemelb
                 extra.hydroVarsCache.insert(RSHV::Map::value_type(neighGlobalIdx, neighHV));
               }
 
-              if (neighbourSiteHomeProc == net::NetworkTopology::Instance()->GetLocalRank())
+              if (neighbourSiteHomeProc == initParams.latDat->GetLocalRank())
               {
                 // Store the cut distance from neigh to the iolet
                 // I.e along the direction opposite to i
-                site_t
-                    neighLocalIdx =
-                        initParams.latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(neighGlobalIdx);
+                site_t neighLocalIdx =
+                    initParams.latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(neighGlobalIdx);
                 const geometry::Site<const geometry::LatticeData> neigh =
                     initParams.latDat->GetSite(neighLocalIdx);
-                AddQ(neigh.GetWallDistance<LatticeType> (lattice.GetInverseIndex(i)));
+                AddQ(neigh.GetWallDistance<LatticeType>(lattice.GetInverseIndex(i)));
 
                 // Local sites don't need communication, so we're done here.
               }
@@ -211,11 +208,12 @@ namespace hemelb
                 requirements.Require(geometry::neighbouring::terms::Density);
                 requirements.Require(geometry::neighbouring::terms::Velocity);
 
-                initParams.neighbouringDataManager->RegisterNeededSite(neighGlobalIdx, requirements);
+                initParams.neighbouringDataManager->RegisterNeededSite(neighGlobalIdx,
+                                                                       requirements);
                 // Store the cut distance from neigh to the iolet
                 // I.e along the direction opposite to i
-                AddQ(initParams.latDat->GetNeighbouringData().GetCutDistance<LatticeType> (neighGlobalIdx,
-                                                                                           lattice.GetInverseIndex(i)));
+                AddQ(initParams.latDat->GetNeighbouringData().GetCutDistance<LatticeType>(neighGlobalIdx,
+                                                                                          lattice.GetInverseIndex(i)));
               }
             }
             distribn_t det = Matrix3DInverse(velocityMatrix, velocityMatrixInv);

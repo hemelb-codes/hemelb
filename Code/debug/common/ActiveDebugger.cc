@@ -32,7 +32,7 @@ namespace hemelb
   {
 
     ActiveDebugger::ActiveDebugger(const char* const executable, const net::MpiCommunicator& comm) :
-      Debugger(executable, comm), mAmAttached(false), mPIds()
+        Debugger(executable, comm), mAmAttached(false), mPIds()
     {
     }
 
@@ -90,7 +90,9 @@ namespace hemelb
       if (mCommunicator.Rank() == 0)
       {
         // Reap the spawner
-        int deadPid = waitpid(childPid, NULL, 0);
+        int deadPid = waitpid(childPid, nullptr, 0);
+        if (deadPid != childPid)
+          std::cerr << "Error in waitpid, code: " << errno << std::endl;
       }
 
       mAmAttached = true;
@@ -98,9 +100,6 @@ namespace hemelb
 
     void ActiveDebugger::GatherProcessIds()
     {
-      int rank = mCommunicator.Rank();
-      int nProcs = mCommunicator.Size();
-
       int pId = getpid();
 
       mPIds = mCommunicator.Gather(pId, 0);
@@ -115,23 +114,13 @@ namespace hemelb
       std::string srcFile(__FILE__);
       std::string debugCommonDir = srcFile.substr(0, srcFile.rfind('/'));
 
-      std::string binaryPath(getcwd(NULL, 0)); // This will leak,
-      // but don't care
-      binaryPath += "/";
-      binaryPath += mExecutable;
+      const std::string binaryPath = GetBinaryPath();
 
       VoS args;
 
       args.push_back(GetPlatformInterpreter());
 
       args.push_back(GetPlatformScript());
-
-      // Get the GDB script to exec
-      // This will either be the value of the environment variable
-      // HEMELB_DEBUG_SCRIPT or resume.gdb
-      args.push_back(GetPlatformGdbScript());
-
-      //args.push_back(GetEnvironmentDebugScript());
 
       args.push_back(binaryPath);
 
@@ -141,7 +130,7 @@ namespace hemelb
         args.push_back(ConvertIntToString(*i));
       }
 
-      // +1 to include required NULL pointer for execvp()
+      // +1 to include required nullptr pointer for execvp()
       char **argv = new char *[args.size() + 1];
 
       // convert to C array of char arrays.
@@ -151,15 +140,16 @@ namespace hemelb
         std::strcpy(argv[i], args[i].c_str());
       }
 
-      // Terminating NULL
-      argv[args.size()] = NULL;
+      // Terminating nullptr
+      argv[args.size()] = nullptr;
 
       // Exec to replace hemelb with osascript
       int code = execvp(argv[0], argv);
 
       // OK- that didn't work if we get here, better die (since we're
       // the extra process). Print the error code too.
-      std::cerr << "Couldn't exec() script to launch debuggers, error code " << errno << std::endl;
+      std::cerr << "Couldn't exec() script to launch debuggers. Return value: " << code
+          << "; error code: " << errno << std::endl;
       // Now print the command we wanted to exec()
       for (VoS::iterator it = args.begin(); it < args.end(); it++)
       {

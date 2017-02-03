@@ -18,7 +18,7 @@
 
 #include "geometry/LatticeData.h"
 #include "lb/MacroscopicPropertyCache.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 
 #include "vis/streaklineDrawer/NeighbouringProcessor.h"
 #include "vis/streaklineDrawer/VelocitySiteData.h"
@@ -32,8 +32,9 @@ namespace hemelb
       class VelocityField
       {
         public:
-          VelocityField(std::map<proc_t, NeighbouringProcessor>& iNeighbouringProcessors
-                        , const lb::MacroscopicPropertyCache& propertyCache);
+          VelocityField(proc_t localRank,
+                        std::map<proc_t, NeighbouringProcessor>& iNeighbouringProcessors,
+                        const lb::MacroscopicPropertyCache& propertyCache);
 
           void BuildVelocityField(const geometry::LatticeData& latDat);
 
@@ -47,19 +48,21 @@ namespace hemelb
                                            util::Vector3D<float> localVelocityField[2][2][2]);
 
           util::Vector3D<float>
-          InterpolateVelocityForPoint(const util::Vector3D<float> position,
-                                      const util::Vector3D<float> localVelocityField[2][2][2]) const;
+          InterpolateVelocityForPoint(
+              const util::Vector3D<float> position,
+              const util::Vector3D<float> localVelocityField[2][2][2]) const;
 
           void InvalidateAllCalculatedVelocities();
 
-          void UpdateLocalField(const util::Vector3D<site_t>& position, const geometry::LatticeData& latDat);
+          void UpdateLocalField(const util::Vector3D<site_t>& position,
+                                const geometry::LatticeData& latDat);
 
           bool NeededFromNeighbour(const util::Vector3D<site_t> location,
-                                   const geometry::LatticeData& latDat,
-                                   proc_t* sourceProcessor);
+                                   const geometry::LatticeData& latDat, proc_t* sourceProcessor);
 
         private:
-          void UpdateLocalField(VelocitySiteData* localVelocitySiteData, const geometry::LatticeData& latDat);
+          void UpdateLocalField(VelocitySiteData* localVelocitySiteData,
+                                const geometry::LatticeData& latDat);
 
           // Counter to make sure the velocity field blocks are correct for the current iteration.
           site_t counter;
@@ -70,6 +73,7 @@ namespace hemelb
                                             const util::Vector3D<site_t> location,
                                             const proc_t proc_id);
 
+          const proc_t localRank;
           // Vector containing VelocityFields
           std::vector<std::vector<VelocitySiteData> > velocityField;
           std::map<proc_t, NeighbouringProcessor>& neighbouringProcessors;

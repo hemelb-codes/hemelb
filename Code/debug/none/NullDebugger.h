@@ -25,10 +25,9 @@ namespace hemelb
       protected:
         void Attach(void);
         NullDebugger(const char* const executable, const net::MpiCommunicator& comm);
-        friend Debugger* PlatformDebuggerFactory(const char* const executable, const net::MpiCommunicator& comm);
+        friend class Debugger;
     };
 
-    Debugger* PlatformDebuggerFactory(const char* const executable, const net::MpiCommunicator& comm);
   }
 }
 

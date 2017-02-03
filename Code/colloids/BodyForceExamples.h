@@ -20,33 +20,37 @@ namespace hemelb
     class ConstantBodyForce : public BodyForce
     {
       public:
-        static BodyForce* ReadFromXml(const io::xml::Element& xml)
+        static BodyForce* ReadFromXml(io::xml::Element& xml)
         {
           LatticeForceVector field;
           io::xml::Element force = xml.GetChildOrThrow("force");
           // TODO: convert to lattice units
           configuration::GetDimensionalValue(force, "N", field);
           return new ConstantBodyForce(field);
-        };
+        }
+        ;
 
         virtual const LatticeForceVector GetForceForParticle(const Particle&) const
         {
           return constantForce;
-        };
-
-        const LatticeForceVector& GetForce() const
-        {
-          return constantForce;
         }
+        ;
+
       protected:
         ConstantBodyForce(const LatticeForceVector constantForce) :
-          BodyForce(), constantForce(constantForce) {};
+            BodyForce(), constantForce(constantForce)
+        {
+        }
+        ;
 
         const LatticeForceVector constantForce;
+	int starttime;
+	int endtime;
     };
 
-    class ConstantBodyForceFactory : public BodyForceFactory<ConstantBodyForce> { };
-
+    class ConstantBodyForceFactory : public BodyForceFactory<ConstantBodyForce>
+    {
+    };
 
     /** general class representing a radial body force, i.e.
      *  inversely proportional to the square of the distance
@@ -56,53 +60,51 @@ namespace hemelb
     class RadialBodyForce : public BodyForce
     {
       public:
-        static BodyForce* ReadFromXml(const io::xml::Element& xml)
+        static BodyForce* ReadFromXml(io::xml::Element& xml)
         {
-          LatticeForceLengthSquared magnitude;
+          LatticeForce magnitude;
           LatticePosition centrePoint;
           // TODO: convert to lattice units.
           io::xml::Element magnitudeEl = xml.GetChildOrThrow("magnitude");
-          configuration::GetDimensionalValue(magnitudeEl, "N m^2", magnitude);
+          configuration::GetDimensionalValue(magnitudeEl, "N/m^2", magnitude);
           // TODO: convert to lattice units.
-          io::xml::Element centreElem = xml.GetChildOrThrow("centre");
+          io::xml::Element centreElem = xml.GetChildOrThrow("centrePoint");
           configuration::GetDimensionalValue(centreElem, "m", centrePoint);
 
           return new RadialBodyForce(centrePoint, magnitude);
-        };
+        }
+        ;
 
         virtual const LatticeForceVector GetForceForParticle(const Particle& particle) const
         {
           const LatticePosition& direction = particle.GetGlobalPosition() - centrePoint;
-/*
-          printf("In RadialBF::GetForce - centre: {%g,%g,%g}, mag: %g, pos: {%g,%g,%g}, dir: {%g,%g,%g}\n",
-            centrePoint.x, centrePoint.y, centrePoint.z,
-            magnitude, particle.GetGlobalPosition().x,
-            particle.GetGlobalPosition().y, particle.GetGlobalPosition().z,
-            direction.x, direction.y, direction.z);
-*/
+          /*
+           printf("In RadialBF::GetForce - centre: {%g,%g,%g}, mag: %g, pos: {%g,%g,%g}, dir: {%g,%g,%g}\n",
+           centrePoint.x, centrePoint.y, centrePoint.z,
+           magnitude, particle.GetGlobalPosition().x,
+           particle.GetGlobalPosition().y, particle.GetGlobalPosition().z,
+           direction.x, direction.y, direction.z);
+           */
           if (direction.GetMagnitudeSquared() < 0.0000001)
             return LatticeForceVector();
           return direction.GetNormalised() * (magnitude / direction.GetMagnitudeSquared());
-        };
-
-        const LatticePosition& GetCentrePoint() const
-        {
-          return centrePoint;
         }
-        const LatticeForce& GetMagnitude() const
-        {
-          return magnitude;
-        }
+        ;
 
       protected:
         RadialBodyForce(const LatticePosition centrePoint, const LatticeForce magnitude) :
-          BodyForce(), centrePoint(centrePoint), magnitude(magnitude) {};
+            BodyForce(), centrePoint(centrePoint), magnitude(magnitude)
+        {
+        }
+        ;
 
         const LatticePosition centrePoint;
-        const LatticeForceLengthSquared magnitude;
+        const LatticeForce magnitude;
     };
 
-    class RadialBodyForceFactory : public BodyForceFactory<RadialBodyForce> { };
+    class RadialBodyForceFactory : public BodyForceFactory<RadialBodyForce>
+    {
+    };
   }
 }
 #endif /* HEMELB_COLLOIDS_BODYFORCEEXAMPLES_H */

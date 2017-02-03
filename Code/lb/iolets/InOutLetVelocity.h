@@ -44,7 +44,8 @@ namespace hemelb
             radius = r;
           }
 
-          virtual LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTimeStep t) const = 0;
+          virtual LatticeVelocity GetVelocity(const LatticePosition& x,
+                                              const LatticeTimeStep t) const = 0;
 
         protected:
           LatticeDistance radius;

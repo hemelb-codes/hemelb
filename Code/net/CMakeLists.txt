@@ -1,14 +1,8 @@
-if(HEMELB_USE_MULTIMACHINE)
-	set(topology MultiMachineNetworkTopology.cc)
-else(HEMELB_USE_MULTIMACHINE)
-	set(topology SingleMachineNetworkTopology.cc)
-endif(HEMELB_USE_MULTIMACHINE)
-
 add_library(hemelb_net
   MpiDataType.cc MpiEnvironment.cc MpiError.cc
-  MpiCommunicator.cc MpiGroup.cc
+  MpiCommunicator.cc MpiGroup.cc MpiFile.cc
  IteratedAction.cc BaseNet.cc 
-NetworkTopology.cc ${topology}
+IOCommunicator.cc
 mixins/pointpoint/CoalescePointPoint.cc
 mixins/pointpoint/SeparatedPointPoint.cc
 mixins/pointpoint/ImmediatePointPoint.cc
@@ -21,4 +15,8 @@ phased/StepManager.cc)
 configure_file (
   "${PROJECT_SOURCE_DIR}/net/BuildInfo.h.in"
   "${PROJECT_BINARY_DIR}/net/BuildInfo.h"
+  )
+configure_file (
+  "${PROJECT_SOURCE_DIR}/net/MpiConstness.h.in"
+  "${PROJECT_BINARY_DIR}/net/MpiConstness.h"
   )

@@ -29,7 +29,7 @@ namespace hemelb
          * @return
          */
         LbDataSourceIterator(const lb::MacroscopicPropertyCache& propertyCache,
-                             const geometry::LatticeData& data,
+                             const geometry::LatticeData& data, int rank,
                              const util::UnitConverter& converter);
 
         /**
@@ -136,7 +136,6 @@ namespace hemelb
          */
         bool IsWallSite(const util::Vector3D<site_t>& location) const;
 
-
       private:
         /**
          * The cache of properties for each site, which we iterate through.
@@ -146,6 +145,10 @@ namespace hemelb
          * The object containing information about the lattice.
          */
         const geometry::LatticeData& data;
+        /**
+         * The rank of the current process in the LB communicator.
+         */
+        const int rank;
         /**
          * Object capable of converting from physical to lattice units and vice versa.
          */

@@ -26,33 +26,36 @@ namespace hemelb
 
       class GeometryReaderTests : public FolderTestFixture
       {
-          CPPUNIT_TEST_SUITE ( GeometryReaderTests);
-          CPPUNIT_TEST ( TestRead);
-          CPPUNIT_TEST ( TestSameAsFourCube);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (GeometryReaderTests);
+          CPPUNIT_TEST (TestRead);
+          CPPUNIT_TEST (TestSameAsFourCube);CPPUNIT_TEST_SUITE_END();
 
         public:
 
-          GeometryReaderTests() :
-            timings()
+          GeometryReaderTests()
           {
           }
 
           void setUp()
           {
+            FolderTestFixture::setUp();
+            timings = new reporting::Timers(Comms());
             reader = new GeometryReader(false,
                                         hemelb::lb::lattices::D3Q15::GetLatticeInfo(),
-                                        timings);
-            lattice = NULL;
-            fourCube = FourCubeLatticeData::Create();
-            FolderTestFixture::setUp();
+                                        *timings,
+                                        Comms());
+            lattice = nullptr;
+            fourCube = FourCubeLatticeData::Create(Comms());
             CopyResourceToTempdir("four_cube.xml");
             CopyResourceToTempdir("four_cube.gmy");
+            simConfig = nullptr;
             simConfig = configuration::SimConfig::New("four_cube.xml");
           }
 
           void tearDown()
           {
             FolderTestFixture::tearDown();
+            delete timings;
             delete reader;
             delete lattice;
             delete fourCube;
@@ -112,12 +115,12 @@ namespace hemelb
           GeometryReader *reader;
           LatticeData* lattice;
           configuration::SimConfig * simConfig;
-          reporting::Timers timings;
+          reporting::Timers* timings;
           hemelb::geometry::LatticeData *fourCube;
 
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION ( GeometryReaderTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (GeometryReaderTests);
     }
   }
 }

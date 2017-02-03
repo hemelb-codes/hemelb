@@ -17,24 +17,23 @@ namespace hemelb
 {
   namespace colloids
   {
-    BoundaryConditions::BoundaryConditions(const geometry::LatticeData& latDat) :
-      latticeData(latDat)
-    {
-    }
+    std::vector<BoundaryCondition*> BoundaryConditions::boundaryConditionsWall;
+    std::vector<BoundaryCondition*> BoundaryConditions::boundaryConditionsInlet;
+    std::vector<BoundaryCondition*> BoundaryConditions::boundaryConditionsOutlet;
 
-    BoundaryConditions* BoundaryConditions::Load(const geometry::LatticeData& latticeData,
-                                                 const io::xml::Element& bcEl)
+    const geometry::LatticeData* BoundaryConditions::latticeData;
+
+    const void BoundaryConditions::InitBoundaryConditions(
+        const geometry::LatticeData* const latticeData, io::xml::Document& xml)
     {
-      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Boundary Conditions.");
+      BoundaryConditions::latticeData = latticeData;
+
       std::map<std::string, BoundaryConditionFactory_Create> mapBCGenerators;
       mapBCGenerators["lubricationBC"] = & (LubricationBoundaryConditionFactory::Create);
       mapBCGenerators["deletionBC"] = & (DeletionBoundaryConditionFactory::Create);
 
-      if (bcEl.GetName() != "boundaryConditions")
-        throw Exception() << "BoundaryConditions::Load got XML Element with wrong name. Expected 'boundaryConditions', got '"
-            << bcEl.GetName() << "'.";
-
-      BoundaryConditions* result = new BoundaryConditions(latticeData);
+      io::xml::Element colloidsBC =
+          xml.GetRoot().GetChildOrThrow("colloids").GetChildOrThrow("boundaryConditions");
 
       for (std::map<std::string, BoundaryConditionFactory_Create>::const_iterator iter =
           mapBCGenerators.begin(); iter != mapBCGenerators.end(); iter++)
@@ -43,41 +42,37 @@ namespace hemelb
         const BoundaryConditionFactory_Create createFunction = iter->second;
         log::Logger::Log<log::Debug, log::OnePerCore>("*** In BoundaryConditions::InitBoundaryConditions - looking for %s BC in XML\n",
                                                       boundaryConditionClass.c_str());
-        for (// There must be at least one BC element for each type
-        io::xml::Element bcNode = bcEl.GetChildOrThrow(boundaryConditionClass); ! (bcNode
-            == io::xml::Element::Missing()); bcNode
-            = bcNode.NextSiblingOrNull(boundaryConditionClass))
+        for ( // There must be at least one BC element for each type
+        io::xml::Element bcNode = colloidsBC.GetChildOrThrow(boundaryConditionClass);
+            ! (bcNode == io::xml::Element::Missing());
+            bcNode = bcNode.NextSiblingOrNull(boundaryConditionClass))
         {
           const std::string& appliesTo = bcNode.GetAttributeOrThrow("appliesTo");
           BoundaryCondition* nextBC = createFunction(bcNode);
           if (appliesTo == "wall")
-            result->boundaryConditionsWall.push_back(nextBC);
+            BoundaryConditions::boundaryConditionsWall.push_back(nextBC);
           else if (appliesTo == "inlet")
-            result->boundaryConditionsInlet.push_back(nextBC);
+            BoundaryConditions::boundaryConditionsInlet.push_back(nextBC);
           else if (appliesTo == "outlet")
-            result->boundaryConditionsOutlet.push_back(nextBC);
+            BoundaryConditions::boundaryConditionsOutlet.push_back(nextBC);
         }
       }
-      return result;
     }
 
-    bool BoundaryConditions::DoSomeThingsToParticle(const LatticeTimeStep currentTimestep,
-                                                    Particle& particle)
+    const bool BoundaryConditions::DoSomeThingsToParticle(const LatticeTimeStep currentTimestep,
+                                                          Particle& particle)
     {
       bool keep = true;
 
       particle.SetLubricationVelocityAdjustment(LatticeVelocity());
 
       // detect collision(s)
-      const util::Vector3D<site_t> siteGlobalPosition((site_t) (0.5
-                                                          + particle.GetGlobalPosition().x),
-                                                      (site_t) (0.5
-                                                          + particle.GetGlobalPosition().y),
-                                                      (site_t) (0.5
-                                                          + particle.GetGlobalPosition().z));
+      const util::Vector3D<site_t> siteGlobalPosition((site_t) (0.5 + particle.GetGlobalPosition().x),
+                                                      (site_t) (0.5 + particle.GetGlobalPosition().y),
+                                                      (site_t) (0.5 + particle.GetGlobalPosition().z));
       proc_t procId;
       site_t localContiguousId;
-      const bool isLocalFluid = latticeData.GetContiguousSiteId(siteGlobalPosition,
+      const bool isLocalFluid = latticeData->GetContiguousSiteId(siteGlobalPosition,
                                                                  procId,
                                                                  localContiguousId);
       if (particle.GetGlobalPosition().y < 1.5 && particle.GetGlobalPosition().y >= 0.5)
@@ -89,9 +84,9 @@ namespace hemelb
                                                       particle.GetVelocity().x,
                                                       particle.GetVelocity().y,
                                                       particle.GetVelocity().z,
-                                                      isLocalFluid
-                                                        ? "TRUE"
-                                                        : "FALSE",
+                                                      isLocalFluid ?
+                                                        "TRUE" :
+                                                        "FALSE",
                                                       procId,
                                                       localContiguousId,
                                                       siteGlobalPosition.x,
@@ -105,9 +100,9 @@ namespace hemelb
       }
 
       const lb::lattices::LatticeInfo latticeInfo =
-          latticeData.GetLatticeInfo();
+          BoundaryConditions::latticeData->GetLatticeInfo();
       const geometry::Site<const geometry::LatticeData> site =
-          latticeData.GetSite(localContiguousId);
+          latticeData->GetSite(localContiguousId);
       const geometry::SiteData siteData = site.GetSiteData();
       const geometry::SiteType siteType = siteData.GetSiteType();
       const distribn_t* siteWallDistances = site.GetWallDistances();
@@ -125,15 +120,15 @@ namespace hemelb
       ////else
       log::Logger::Log<log::Trace, log::OnePerCore>("*** In BoundaryConditions::DoSomeThingsToParticle for id: %lu, isNearWall: %s, isNearInlet: %s, isNearOutlet: %s ***\n",
                                                     particle.GetParticleId(),
-                                                    isNearWall
-                                                      ? "TRUE"
-                                                      : "FALSE",
-                                                    isNearInlet
-                                                      ? "TRUE"
-                                                      : "FALSE",
-                                                    isNearOutlet
-                                                      ? "TRUE"
-                                                      : "FALSE");
+                                                    isNearWall ?
+                                                      "TRUE" :
+                                                      "FALSE",
+                                                    isNearInlet ?
+                                                      "TRUE" :
+                                                      "FALSE",
+                                                    isNearOutlet ?
+                                                      "TRUE" :
+                                                      "FALSE");
 
       // only use lattice vectors 1 to 6 (the face-of-a-cube vectors)
       std::vector<LatticePosition> particleToWallVectors;
@@ -163,8 +158,8 @@ namespace hemelb
             - particle.GetGlobalPosition();
 
         // particleToWall = siteToWall + projection of particleToSite in the siteToWall direction
-        const LatticePosition particleToWallVector = siteToWall + siteToWall.GetNormalised()
-            * siteToWall.GetNormalised().Dot(particleToSite);
+        const LatticePosition particleToWallVector = siteToWall
+            + siteToWall.GetNormalised() * siteToWall.GetNormalised().Dot(particleToSite);
 
         log::Logger::Log<log::Trace, log::OnePerCore>("*** In BoundaryConditions::DoSomeThingsToParticle for id: %lu, siteToWall: {%g,%g,%g}, particleToSite: {%g,%g,%g}, particleToWall: {%g,%g,%g}\n",
                                                       particle.GetParticleId(),
@@ -182,24 +177,24 @@ namespace hemelb
       }
 
       if (isNearWall)
-        for (std::vector<BoundaryCondition*>::iterator iter = boundaryConditionsWall.begin(); iter
-            != boundaryConditionsWall.end(); iter++)
+        for (std::vector<BoundaryCondition*>::iterator iter = boundaryConditionsWall.begin();
+            iter != boundaryConditionsWall.end(); iter++)
         {
           BoundaryCondition& boundaryCondition = ** (iter);
           keep &= boundaryCondition.DoSomethingToParticle(particle, particleToWallVectors);
         }
 
       if (isNearInlet)
-        for (std::vector<BoundaryCondition*>::iterator iter = boundaryConditionsInlet.begin(); iter
-            != boundaryConditionsInlet.end(); iter++)
+        for (std::vector<BoundaryCondition*>::iterator iter = boundaryConditionsInlet.begin();
+            iter != boundaryConditionsInlet.end(); iter++)
         {
           BoundaryCondition& boundaryCondition = ** (iter);
           keep &= boundaryCondition.DoSomethingToParticle(particle, particleToWallVectors);
         }
 
       if (isNearOutlet)
-        for (std::vector<BoundaryCondition*>::iterator iter = boundaryConditionsOutlet.begin(); iter
-            != boundaryConditionsOutlet.end(); iter++)
+        for (std::vector<BoundaryCondition*>::iterator iter = boundaryConditionsOutlet.begin();
+            iter != boundaryConditionsOutlet.end(); iter++)
         {
           BoundaryCondition& boundaryCondition = ** (iter);
           keep &= boundaryCondition.DoSomethingToParticle(particle, particleToWallVectors);

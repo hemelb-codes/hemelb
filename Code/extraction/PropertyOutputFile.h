@@ -23,7 +23,7 @@ namespace hemelb
     {
         PropertyOutputFile()
         {
-          geometry = NULL;
+          geometry = nullptr;
         }
 
         ~PropertyOutputFile()

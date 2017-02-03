@@ -23,7 +23,8 @@ namespace hemelb
       template<typename CollisionImpl>
       struct BouzidiFirdaousLallemand
       {
-          typedef WallStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl> > Type;
+          typedef WallStreamerTypeFactory<CollisionImpl,
+              BouzidiFirdaousLallemandDelegate<CollisionImpl> > Type;
       };
 
     }

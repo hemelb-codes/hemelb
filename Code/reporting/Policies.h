@@ -19,7 +19,7 @@
 
 #include <fstream>
 #include "net/mpi.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 #include "util/utilityFunctions.h"
 
 namespace hemelb
@@ -37,8 +37,8 @@ namespace hemelb
         /**
          * Stores a pointer to the MPI Network topology singleton.
          */
-        MPICommsPolicy() :
-            instance(*net::NetworkTopology::Instance())
+        MPICommsPolicy(const net::IOCommunicator& inst_) :
+            instance(inst_)
         {
         }
       protected:
@@ -53,9 +53,10 @@ namespace hemelb
          * @param comm MPI Communicator to reduce over
          * @return
          */
-        int Reduce(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm)
+        int Reduce(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                   int root)
         {
-          return MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
+          return MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, instance);
         }
 
         /**
@@ -64,27 +65,11 @@ namespace hemelb
          */
         proc_t GetProcessorCount() const
         {
-          return instance.GetProcessorCount();
-        }
-        /**
-         * Number of machines, as opposed to processors.
-         * @return Number of machines.
-         */
-        unsigned int GetMachineCount() const
-        {
-          return instance.GetMachineCount();
-        }
-        /**
-         * Max depth of all processors within the machine topology.
-         * @return Greatest processor depth.
-         */
-        int GetDepths() const
-        {
-          return instance.GetDepths();
+          return instance.Size();
         }
 
       private:
-        const net::NetworkTopology& instance; //! Reference to the singleton instance of the MPI topology
+        const net::IOCommunicator& instance; //! Reference to the singleton instance of the MPI topology
     };
 
     /**

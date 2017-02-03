@@ -10,9 +10,11 @@
 #ifndef HEMELB_LB_IOLETS_INOUTLET_H
 #define HEMELB_LB_IOLETS_INOUTLET_H
 
+#include <memory>
 #include "util/Vector3D.h"
 #include "util/UnitConverter.h"
 #include "lb/SimulationState.h"
+#include "redblood/FlowExtension.h"
 
 namespace hemelb
 {
@@ -23,6 +25,7 @@ namespace hemelb
 
       //forward declare boundary comms class
       class BoundaryComms;
+      class BoundaryCommunicator;
 
       /**
        * Base class for extra data needed by LB BC implementations.
@@ -59,7 +62,7 @@ namespace hemelb
       {
         public:
           InOutLet() :
-            comms(NULL), extraData(NULL)
+              comms(nullptr), extraData(nullptr)
           {
           }
           virtual ~InOutLet()
@@ -103,10 +106,8 @@ namespace hemelb
            * Carry out communication necessary
            * @param isIoProcess Is the process the master process?
            */
-          virtual void DoComms(bool isIoProcess, const LatticeTimeStep timeStep)
-          {
-            // pass
-          }
+          virtual void DoComms(const BoundaryCommunicator& bcComms, const LatticeTimeStep timeStep);
+
           /***
            * Set up the Iolet.
            * @param units a UnitConverter instance.
@@ -194,12 +195,21 @@ namespace hemelb
             extraData = ed;
           }
 
+          void SetFlowExtension(std::shared_ptr<redblood::FlowExtension> flowExt) {
+            this->flowExtension = flowExt;
+          }
+
+          const std::shared_ptr<redblood::FlowExtension> GetFlowExtension() const {
+            return this->flowExtension;
+          }
+
         protected:
           LatticeDensity minimumSimulationDensity;
           LatticePosition position;
           util::Vector3D<Dimensionless> normal;
           BoundaryComms* comms;
           IoletExtraData* extraData;
+          std::shared_ptr<redblood::FlowExtension> flowExtension;
           friend class IoletExtraData;
       };
 

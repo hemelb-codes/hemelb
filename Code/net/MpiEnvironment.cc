@@ -18,12 +18,12 @@ namespace hemelb
   {
 
     MpiEnvironment::MpiEnvironment(int& argc, char**& argv) :
-      doesOwnMpi(false)
+        doesOwnMpi(false)
     {
       if (!Initialized())
       {
         HEMELB_MPI_CALL(MPI_Init, (&argc, &argv));
-        HEMELB_MPI_CALL(MPI_Errhandler_set, (MPI_COMM_WORLD, MPI_ERRORS_RETURN));
+        HEMELB_MPI_CALL(MPI_Comm_set_errhandler, (MPI_COMM_WORLD, MPI_ERRORS_RETURN));
         doesOwnMpi = true;
       }
     }
@@ -40,18 +40,18 @@ namespace hemelb
     {
       int flag;
       MPI_Initialized(&flag);
-      return flag
-        ? true
-        : false;
+      return flag ?
+        true :
+        false;
     }
 
     bool MpiEnvironment::Finalized()
     {
       int flag;
       MPI_Finalized(&flag);
-      return flag
-        ? true
-        : false;
+      return flag ?
+        true :
+        false;
     }
 
     void MpiEnvironment::Abort(int errorCode)

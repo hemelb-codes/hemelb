@@ -36,21 +36,16 @@ namespace hemelb
       class MPICommsMock
       {
         public:
-          MPICommsMock() :
+          MPICommsMock(const net::IOCommunicator& ignored) :
               calls(1)
           {
           }
           ;
         protected:
-          int Reduce(double *sendbuf,
-                     double *recvbuf,
-                     int count,
-                     MPI_Datatype datatype,
-                     MPI_Op op,
-                     int root,
-                     MPI_Comm comm)
+          int Reduce(double *sendbuf, double *recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                     int root)
           {
-            CPPUNIT_ASSERT_EQUAL((int)hemelb::reporting::Timers::last, count);
+            CPPUNIT_ASSERT_EQUAL((int) hemelb::reporting::Timers::last, count);
             for (int i = 0; i < count; i++)
             {
               CPPUNIT_ASSERT_EQUAL(10.0 * i, sendbuf[i]);
@@ -62,14 +57,6 @@ namespace hemelb
           proc_t GetProcessorCount()
           {
             return 5;
-          }
-          unsigned int GetMachineCount()
-          {
-            return 4;
-          }
-          int GetDepths()
-          {
-            return 3;
           }
         private:
           unsigned int calls;

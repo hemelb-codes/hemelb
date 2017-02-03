@@ -9,30 +9,48 @@
 
 #include "colloids/PersistedParticle.h"
 #include "constants.h"
-#include "io/xml/XmlAbstractionLayer.h"
 
 namespace hemelb
 {
   namespace colloids
   {
-    PersistedParticle::PersistedParticle(const io::xml::Element& xml)
+    PersistedParticle::PersistedParticle(io::xml::Element& xml, LatticeDistance voxelSize, LatticePosition geometryOrigin)
     {
       // assume we are currently at a <SubgridParticle> node
       xml.GetAttributeOrThrow("ParticleId", particleId);
-      // TODO: Convert to lattice
+
       xml.GetAttributeOrThrow("InputRadiusA0", smallRadius_a0);
-      // TODO: Convert to lattice
+      // Convert to lattice units
+      smallRadius_a0 = smallRadius_a0 / voxelSize;
+
       xml.GetAttributeOrThrow("HydrostaticRadiusAh", largeRadius_ah);
-      // TODO: This MAY not need to be converted to lattice (wasn't before my refactor)
+      // Convert to lattice units
+      largeRadius_ah = largeRadius_ah / voxelSize;
+      
       xml.GetAttributeOrThrow("Mass", mass);
-      // TODO: Convert to lattice
+
       io::xml::Element initPosElem = xml.GetChildOrThrow("initialPosition");
       initPosElem.GetAttributeOrThrow("x", globalPosition.x);
       initPosElem.GetAttributeOrThrow("y", globalPosition.y);
       initPosElem.GetAttributeOrThrow("z", globalPosition.z);
 
+      io::xml::Element fieldStrengthElem = xml.GetChildOrThrow("fieldStrength");
+      fieldStrengthElem.GetAttributeOrThrow("x", fieldStrength.x);
+      fieldStrengthElem.GetAttributeOrThrow("y", fieldStrength.y);
+      fieldStrengthElem.GetAttributeOrThrow("z", fieldStrength.z);
+
+      io::xml::Element temperatureElem = xml.GetChildOrThrow("temperature");
+      temperatureElem.GetAttributeOrThrow("D", diffusiveTemp);
+      temperatureElem.GetAttributeOrThrow("SC", softcoreTemp);
+
+      // Convert to lattice units
+      globalPosition.x = ((globalPosition.x - geometryOrigin.x) / voxelSize);
+      globalPosition.y = ((globalPosition.y - geometryOrigin.y) / voxelSize);
+      globalPosition.z = ((globalPosition.z - geometryOrigin.z) / voxelSize);
+
       lastCheckpointTimestep = 0;
       markedForDeletionTimestep = BIG_NUMBER2;
-    };
+    }
+    ;
   }
 }

@@ -20,9 +20,8 @@ namespace hemelb
     {
       class HslToRgbConvertorTests : public CppUnit::TestFixture
       {
-        CPPUNIT_TEST_SUITE( HslToRgbConvertorTests );
-        CPPUNIT_TEST( TestColours );
-        CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (HslToRgbConvertorTests);
+          CPPUNIT_TEST (TestColours);CPPUNIT_TEST_SUITE_END();
         public:
           void TestColours()
           {
@@ -32,11 +31,8 @@ namespace hemelb
           }
 
         private:
-          void DoColourTest(float iHue,
-                            float iSaturation,
-                            float iLightness,
-                            unsigned char iExpectedRed,
-                            unsigned char iExpectedGreen,
+          void DoColourTest(float iHue, float iSaturation, float iLightness,
+                            unsigned char iExpectedRed, unsigned char iExpectedGreen,
                             unsigned char iExpectedBlue)
           {
             unsigned char lRGB[3];
@@ -55,7 +51,7 @@ namespace hemelb
           }
 
       };
-      CPPUNIT_TEST_SUITE_REGISTRATION( HslToRgbConvertorTests );
+      CPPUNIT_TEST_SUITE_REGISTRATION (HslToRgbConvertorTests);
     }
   }
 }

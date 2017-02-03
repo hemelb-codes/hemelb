@@ -1,12 +1,14 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.1)
 
 project(HemeLB)
 
 #---- OPTION switches accepted by the build -------
 
-option(HEMELB_USE_DEBUGGER "Use built in hemelb debugger" OFF)
+option(HEMELB_BUILD_DEBUGGER "Build the built in debugger" ON)
+# option(HEMELB_DEBUGGER_IMPLEMENTATION "Which implementation to use for the debugger" none)
+# mark_as_advanced(HEMELB_DEBUGGER_IMPLEMENTATION)
+
 option(HEMELB_VALIDATE_GEOMETRY "Validate geometry" OFF)
-option(HEMELB_USE_MULTIMACHINE "Use multi-level parallelism support" OFF)
 option(HEMELB_BUILD_TESTS_ALL "Build all the tests" ON)
 option(HEMELB_BUILD_TESTS_UNIT "Build the unit-tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
 option(HEMELB_BUILD_TESTS_FUNCTIONAL "Build the functional tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
@@ -19,6 +21,7 @@ option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
 option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" OFF)
+option(HEMELB_CALLGRIND "Compile unit tests that use callgrind" OFF)
 
 set(HEMELB_EXECUTABLE "hemelb"
   CACHE STRING "File name of executable to produce")
@@ -32,11 +35,13 @@ set(HEMELB_DEPENDENCIES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../dependencies"
 	CACHE FILEPATH "Path to find dependency find modules")
 set(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH}
 	CACHE FILEPATH "Path to find dependency includes and libraries")
-set(HEMELB_OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
+set(HEMELB_OPTIMISATION "-O3" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
 set(HEMELB_LATTICE "D3Q15"
   CACHE STRING "Select the lattice type to use (D3Q15,D3Q19,D3Q27,D3Q15i)")
 set(HEMELB_KERNEL "LBGK"
-  CACHE STRING "Select the kernel to use (LBGK,EntropicAnsumali,EntropicChik,MRT,NNCY,NNCYMOUSE,NNC,NNTPL)")
+  CACHE STRING
+  "Select the kernel to use
+  (LBGK,EntropicAnsumali,EntropicChik,MRT,NNCY,NNCYMOUSE,NNC,NNTPL,GuoForcingLBGK)")
 set(HEMELB_WALL_BOUNDARY "SIMPLEBOUNCEBACK"
   CACHE STRING "Select the boundary conditions to be used at the walls (BFL,GZS,SIMPLEBOUNCEBACK,JUNKYANG)")
 set(HEMELB_INLET_BOUNDARY "NASHZEROTHORDERPRESSUREIOLET"
@@ -56,6 +61,9 @@ set(HEMELB_GATHERS_IMPLEMENTATION Separated
 set(HEMELB_ALLTOALL_IMPLEMENTATION Separated
 	CACHE STRING "Alltoall comms implementation, choose 'Separated', or 'ViaPointPoint'" )
 option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
+set(HEMELB_STENCIL "FourPoint"
+    CACHE STRING "HemeLB stencil type")
+set_property(CACHE HEMELB_STENCIL PROPERTY STRINGS TwoPoint ThreePoint FourPoint CosineApprox)
 	
 # Add warnings flags to development build types
 if (HEMELB_USE_ALL_WARNINGS_GNU)
@@ -65,6 +73,17 @@ endif()
 if(HEMELB_OPTIMISATION)
 	set( CMAKE_CXX_FLAGS_RELEASE ${HEMELB_OPTIMISATION})
 	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HEMELB_OPTIMISATION}")
+endif()
+
+# Makes this a c++11 project
+list(APPEND  CMAKE_PREFIX_PATH "${HEMELB_DEPENDENCIES_PATH}")
+find_package(GreatCMakeCookOff REQUIRED)
+initialize_cookoff()
+include(AddCPP11Flags)
+include(CheckCXX11Features)
+cxx11_feature_check(override REQUIRED unique_ptr nullptr lambda)
+if(NOT HAS_CXX11_OVERRIDE)
+    add_definitions(-Doverride= )
 endif()
 
 
@@ -79,6 +98,7 @@ add_definitions(-DHEMELB_WALL_INLET_BOUNDARY=${HEMELB_WALL_INLET_BOUNDARY})
 add_definitions(-DHEMELB_WALL_OUTLET_BOUNDARY=${HEMELB_WALL_OUTLET_BOUNDARY})
 add_definitions(-DHEMELB_COMPUTE_ARCHITECTURE=${HEMELB_COMPUTE_ARCHITECTURE})
 add_definitions(-DHEMELB_LOG_LEVEL=${HEMELB_LOG_LEVEL})
+add_definitions(-DHEMELB_STENCIL=${HEMELB_STENCIL})
 
 if(HEMELB_VALIDATE_GEOMETRY)
   add_definitions(-DHEMELB_VALIDATE_GEOMETRY)
@@ -105,6 +125,10 @@ if (HEMELB_USE_SSE3)
 	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
 	set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -msse3")
         set( CMAKE_CXX_FLAGS_RELEASE "${HEMELB_OPTIMISATION} -msse3")
+endif()
+
+if (HEMELB_CALLGRIND)
+    add_definitions(-DHEMELB_CALLGRIND)
 endif()
 
 
@@ -246,6 +270,33 @@ set(CMAKE_CXX_COMPILE_FLAGS "${CMAKE_CXX_COMPILE_FLAGS} ${MPI_COMPILE_FLAGS}")
 set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} ${CMAKE_CXX_LINK_FLAGS}")
 include_directories(${MPI_INCLUDE_PATH})
 
+# Figure out if this MPI implementation has a const-correct API (supports MPI 3)
+set(CMAKE_REQUIRED_FLAGS -Werror)
+set(CMAKE_REQUIRED_DEFINITIONS ${MPI_COMPILE_FLAGS})
+set(CMAKE_REQUIRED_INCLUDES ${MPI_INCLUDE_PATH})
+set(CMAKE_REQUIRED_LIBRARIES ${MPI_LIBRARIES})
+CHECK_CXX_SOURCE_COMPILES("#include <mpi.h>
+int main(int argc, char* argv[]) {
+  const int send = 0;
+  int recv;
+  MPI_Request req;
+  MPI_Init(&argc, &argv);
+  MPI_Irecv(&recv, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &req);
+  MPI_Send(&send, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+  MPI_Wait(&req, MPI_STATUS_IGNORE);
+  MPI_Finalize();
+}" HAVE_CONSTCORRECTMPI)
+
+#------HDF5------------------
+# Require HDF5 1.8+ configured with --with-mpi
+find_package(HDF5 1.8 REQUIRED)
+if (NOT HDF5_IS_PARALLEL)
+    message(SEND_ERROR "HDF5 library with MPI support not found.")
+endif()
+include_directories(SYSTEM ${HDF5_INCLUDE_DIRS})
+add_definitions(${HDF5_DEFINITIONS})
+link_directories(${HDF5_LIBRARY_DIRS})
+
 #------Parmetis  ------------
 find_package(Parmetis REQUIRED)
 include_directories(${PARMETIS_INCLUDE_DIR})
@@ -280,10 +331,26 @@ find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIR})
 
 #-------------Resources -----------------------
-
 set(BUILD_RESOURCE_PATH ${PROJECT_BINARY_DIR}/resources)
 file(MAKE_DIRECTORY ${BUILD_RESOURCE_PATH})
 set(INSTALL_RESOURCE_PATH ${CMAKE_INSTALL_PREFIX}/share/hemelb/resources)
+function(add_to_resources)
+  unset(donotexist)
+  set(hasmissing FALSE)
+  foreach(resource ${ARGN})
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${resource}")
+      set(donotexist "${donotexist}\n - ${CMAKE_CURRENT_SOURCE_DIR}/${resource}")
+      set(hasmissing TRUE)
+    else()
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${resource} ${BUILD_RESOURCE_PATH} COPYONLY)
+      get_filename_component(resource_leaf ${resource} NAME)
+      INSTALL(FILES ${BUILD_RESOURCE_PATH}/${resource_leaf} DESTINATION share/hemelb/resources)
+    endif()
+  endforeach()
+  if(hasmissing)
+    message(WARNING "The following resources are missing:${donotexist}")
+  endif()
+endfunction()
 
 configure_file (
   "${PROJECT_SOURCE_DIR}/resources/path_parameters.h.in"
@@ -303,8 +370,12 @@ if (HEMELB_USE_DEBUGGER)
 	set(CMAKE_BUILD_TYPE DEBUG)
 endif()
 
-set(root_sources SimulationMaster.cc)
-add_executable(${HEMELB_EXECUTABLE} main.cc ${root_sources})
+# compiler features do not work for clang and cmake 3.1
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
+
+add_executable(${HEMELB_EXECUTABLE} main.cc)
 
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
@@ -321,6 +392,7 @@ set(package_subdirs
 	io
 	log
         colloids
+    redblood
 	)
 foreach(subdir ${package_subdirs})
 	set(lib "hemelb_${subdir}")
@@ -331,6 +403,7 @@ add_subdirectory(resources)
 target_link_libraries(${HEMELB_EXECUTABLE} 
 	${heme_libraries}
 	${MPI_LIBRARIES}
+	${HDF5_LIBRARIES}
 	${PARMETIS_LIBRARIES}
 	${TINYXML_LIBRARIES}
 	${Boost_LIBRARIES}
@@ -339,7 +412,7 @@ target_link_libraries(${HEMELB_EXECUTABLE}
     ${MPWide_LIBRARIES}
 	)
 INSTALL(TARGETS ${HEMELB_EXECUTABLE} RUNTIME DESTINATION bin)
-list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
+add_to_resources(resources/report.txt.ctp resources/report.xml.ctp)
 
 # ----------- HemeLB Multiscale ------------------
 if (HEMELB_BUILD_MULTISCALE)
@@ -351,8 +424,7 @@ if (HEMELB_BUILD_MULTISCALE)
 		set(CMAKE_BUILD_TYPE DEBUG)
 	endif()
 	
-	set(root_sources SimulationMaster.cc multiscale/MultiscaleSimulationMaster.h)
-	add_executable(multiscale_hemelb mainMultiscale.cc ${root_sources})
+	add_executable(multiscale_hemelb mainMultiscale.cc)
 	include_directories(${PROJECT_SOURCE_DIR})
 	set(package_subdirs
 		configuration
@@ -378,6 +450,7 @@ if (HEMELB_BUILD_MULTISCALE)
 	target_link_libraries(multiscale_hemelb
 		${heme_libraries}
 		${MPI_LIBRARIES}
+        ${HDF5_LIBRARIES}
 		${PARMETIS_LIBRARIES}
 		${TINYXML_LIBRARIES}
 		${Boost_LIBRARIES}
@@ -386,36 +459,13 @@ if (HEMELB_BUILD_MULTISCALE)
                 ${MPWide_LIBRARIES}
 		)
 	INSTALL(TARGETS multiscale_hemelb RUNTIME DESTINATION bin)
-	list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
+	add_to_resources(resources/report.txt.ctp resources/report.xml.ctp)
 endif()
 
 # ----------- HEMELB unittests ---------------
 if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
-	#------CPPUnit ---------------
-	find_package(CPPUnit REQUIRED)
-	include_directories(${CPPUNIT_INCLUDE_DIR})
-	add_executable(unittests_hemelb ${root_sources})
-	add_subdirectory(unittests)
-	target_link_libraries(unittests_hemelb 
-		hemelb_unittests 
-		${heme_libraries}
-		${MPI_LIBRARIES}
-		${PARMETIS_LIBRARIES}
-		${TINYXML_LIBRARIES}
-		${CPPUNIT_LIBRARY}
-		${Boost_LIBRARIES}
-		${CTEMPLATE_LIBRARIES}
-		${ZLIB_LIBRARIES}
-		${MPWide_LIBRARIES}
-		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
-	INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
-	list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/four_cube_multiscale.xml
-		unittests/resources/config.xml unittests/resources/config0_2_0.xml
-		unittests/resources/config_file_inlet.xml unittests/resources/iolet.txt 
-		unittests/resources/config-velocity-iolet.xml unittests/resources/config_new_velocity_inlets.xml
-		unittests/resources/xmltest.xml unittests/resources/config_file_velocity_inlet.xml unittests/resources/velocity_inlet.txt
-		unittests/resources/four_cube_colloids.xml 
-		)
+  enable_testing()
+  add_subdirectory(unittests)
 endif()
 
 # ----------- HEMELB functionaltests ---------------
@@ -423,12 +473,11 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
 	#------CPPUnit ---------------
 	find_package(CPPUnit REQUIRED)
 	include_directories(${CPPUNIT_INCLUDE_DIR})
-	add_executable(functionaltests_hemelb ${root_sources})
-	add_subdirectory(functionaltests/cpptests)
+	add_executable(functionaltests_hemelb functionaltests/cpptests/main.cc)
 	target_link_libraries(functionaltests_hemelb 
-		hemelb_functionaltests 
 		${heme_libraries}
 		${MPI_LIBRARIES}
+        ${HDF5_LIBRARIES}
 		${PARMETIS_LIBRARIES}
 		${TINYXML_LIBRARIES}
 		${CPPUNIT_LIBRARY}
@@ -440,10 +489,3 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
 	INSTALL(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
 endif()
 
-#-------- Copy and install resources --------------
-
-foreach(resource ${RESOURCES})
-	configure_file(${PROJECT_SOURCE_DIR}/${resource} ${BUILD_RESOURCE_PATH} COPYONLY)
-	get_filename_component(resource_leaf ${resource} NAME)
-	INSTALL(FILES ${BUILD_RESOURCE_PATH}/${resource_leaf} DESTINATION share/hemelb/resources)
-endforeach()

@@ -6,8 +6,10 @@
 # file, or any part thereof, other than as allowed by any agreement
 # specifically made by you with University College London.
 # 
+export OMP_NUM_THREADS=1
+
 cd $job_results
 $run_prefix
 rm -rf results
 cp $job_config_path/* .
-$run_command $install_path/bin/$executable -in config.xml -i $images -ss $steering
+$run_command $install_path/bin/$executable -in config.xml -i $images 

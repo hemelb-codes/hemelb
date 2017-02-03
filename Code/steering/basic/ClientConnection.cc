@@ -24,8 +24,8 @@ namespace hemelb
 {
   namespace steering
   {
-    ClientConnection::ClientConnection(int iSteeringSessionId, reporting::Timers & timings)
-      :mIsBusy(), timers(timings)
+    ClientConnection::ClientConnection(int iSteeringSessionId, reporting::Timers & timings) :
+        mIsBusy(), timers(timings)
     {
       sem_init(&mIsBusy, 0, 1);
 
@@ -37,17 +37,6 @@ namespace hemelb
         std::FILE *f = std::fopen("env_details.asc", "w");
         std::fprintf(f, "%s\n", thisMachineName);
         std::fclose(f);
-      }
-
-      // Send the steering session id we're using to the rendezvous resource.
-      {
-        char steering_session_id_char[255];
-        std::sprintf(steering_session_id_char, "%i", iSteeringSessionId);
-
-        HttpPost::request("bunsen.chem.ucl.ac.uk",
-                          28080,
-                          "/ahe/test/rendezvous/",
-                          steering_session_id_char);
       }
 
       mCurrentSocket = -1;
@@ -74,7 +63,7 @@ namespace hemelb
         struct sockaddr_in my_address;
 
         my_address.sin_family = AF_INET;
-        my_address.sin_port = htons((in_port_t) MYPORT);
+        my_address.sin_port = htons((in_port_t ) MYPORT);
         my_address.sin_addr.s_addr = INADDR_ANY;
         memset(my_address.sin_zero, '\0', sizeof my_address.sin_zero);
 
@@ -133,8 +122,9 @@ namespace hemelb
 
 #endif
           // Try to accept a socket (from the non-blocking socket)
-          mCurrentSocket
-              = accept(mListeningSocket, (struct sockaddr *) &clientAddress, &socketSize);
+          mCurrentSocket = accept(mListeningSocket,
+                                  (struct sockaddr *) &clientAddress,
+                                  &socketSize);
 #ifdef HEMELB_WAIT_ON_CONNECT
           timers[reporting::Timers::steeringWait].Stop();
           log::Logger::Log<log::Debug, log::Singleton>("Continuing after receiving steering connection.");

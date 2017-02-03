@@ -177,7 +177,7 @@ class PipelineController(HasVtkObjectKeys, HasPlacedIoletListKeys, ObjectControl
     def HandleSideLengthModified(self, obj, evt):
         pdb.set_trace()
         side = obj.GetValueForKey.GetOutputValue()
-        self.SetValueForKey('PlacedSeed.representation.Radius', side)
+        self.SetValueForKey('PlacedSeed.representation.Radius', side*0.1)
         return
         
     def HandleSurfaceSourceModified(self, change):

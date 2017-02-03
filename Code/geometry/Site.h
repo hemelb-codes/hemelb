@@ -87,6 +87,19 @@ namespace hemelb
         {
           return latticeData.GetNormalToWall(index);
         }
+        const LatticeForceVector& GetForce() const
+        {
+          return latticeData.GetForceAtSite(index);
+	}
+
+        void SetForce(LatticeForceVector const &_force)
+        {
+          return latticeData.SetForceAtSite(index, _force);
+        }
+        void AddToForce(LatticeForceVector const &_force)
+        {
+          return latticeData.AddToForceAtSite(index, _force);
+        }
         inline site_t GetIndex() const
         {
           return index;
@@ -108,7 +121,7 @@ namespace hemelb
 
         template<typename LatticeType>
         inline const distribn_t* GetFOld() const
-        {
+        { 
           return latticeData.GetFOld(index * LatticeType::NUMVECTORS);
         }
 
@@ -128,7 +141,7 @@ namespace hemelb
           return latticeData.GetSiteData(index);
         }
 
-        inline const util::Vector3D<site_t>& GetGlobalSiteCoords() const
+        inline const LatticeVector& GetGlobalSiteCoords() const
         {
           return latticeData.GetGlobalSiteCoords(index);
         }

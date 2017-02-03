@@ -25,15 +25,15 @@ namespace hemelb
     using namespace helpers;
     class SimulationMasterTests : public FolderTestFixture
     {
-        CPPUNIT_TEST_SUITE( SimulationMasterTests);
-        CPPUNIT_TEST( TestRun);CPPUNIT_TEST_SUITE_END();
+        CPPUNIT_TEST_SUITE (SimulationMasterTests);
+        CPPUNIT_TEST (TestRun);CPPUNIT_TEST_SUITE_END();
       public:
         void setUp()
         {
           argc = 7;
           argv[0] = "hemelb";
-          argv[2] = "four_cube.xml";
           argv[1] = "-in";
+          argv[2] = "four_cube.xml";
           argv[3] = "-i";
           argv[4] = "1";
           argv[5] = "-ss";
@@ -41,10 +41,13 @@ namespace hemelb
           FolderTestFixture::setUp();
           CopyResourceToTempdir("four_cube.xml");
           CopyResourceToTempdir("four_cube.gmy");
-          try {
-          options = new hemelb::configuration::CommandLine(argc, argv);
-          master = new SimulationMaster(*options);
-          } catch (hemelb::io::xml::ChildError& e) {
+          try
+          {
+            options = new hemelb::configuration::CommandLine(argc, argv);
+            master = new SimulationMaster<>(*options, Comms());
+          }
+          catch (hemelb::io::xml::ChildError& e)
+          {
             std::cout << e.what() << std::endl;
             throw;
           }
@@ -74,12 +77,12 @@ namespace hemelb
       private:
         int argc;
         hemelb::configuration::CommandLine *options;
-        SimulationMaster *master;
+        SimulationMaster<> *master;
         const char* argv[7];
 
     };
 
-    CPPUNIT_TEST_SUITE_REGISTRATION( SimulationMasterTests);
+    CPPUNIT_TEST_SUITE_REGISTRATION (SimulationMasterTests);
   }
 }
 

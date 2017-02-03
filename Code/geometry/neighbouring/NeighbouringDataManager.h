@@ -36,8 +36,8 @@ namespace hemelb
           // Initially, the required site information will not be used -- we just transfer everything.
           // This considerably simplifies matters.
           // Nevertheless, we provide the interface here in its final form
-          void RegisterNeededSite(site_t globalId,
-                                  RequiredSiteInformation requirements = RequiredSiteInformation(true));
+          void RegisterNeededSite(site_t globalId, RequiredSiteInformation requirements =
+                                      RequiredSiteInformation(true));
           void ShareNeeds();
           std::vector<site_t> &GetNeedsForProc(proc_t proc)
           {

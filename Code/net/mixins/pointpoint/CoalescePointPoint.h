@@ -19,8 +19,8 @@ namespace hemelb
     {
 
       public:
-        CoalescePointPoint() :
-            sendReceivePrepped(false)
+        CoalescePointPoint(const MpiCommunicator& comms) :
+            BaseNet(comms), StoringNet(comms), sendReceivePrepped(false)
         {
         }
         ~CoalescePointPoint();

@@ -34,7 +34,13 @@ void GeometryGenerator::PreExecute() {
 }
 
 void GeometryGenerator::Execute(bool skipNonIntersectingBlocks)
-  throw (GenerationError) {
+		throw (GenerationError) {
+
+	if (skipNonIntersectingBlocks) {
+		throw GenerationErrorMessage(
+				"Skip non intersecting blocks functionality currently not available. See ticket #651");
+	}
+
 	this->PreExecute();
 	double bounds[6];
 	this->ComputeBounds(bounds);
@@ -55,7 +61,7 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks)
 
 		if (skipNonIntersectingBlocks) {
 			side = this->BlockInsideOrOutsideSurface(block);
-		} else {			// don't use the optimisation -- check every site
+		} else { // don't use the optimisation -- check every site
 			side = 0;
 		}
 
@@ -76,8 +82,8 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks)
 					WriteFluidSite(*blockWriterPtr, site);
 				} else {
 					WriteSolidSite(*blockWriterPtr, site);
-					}
-				
+				}
+
 			}
 			break;
 		case -1:
@@ -105,7 +111,6 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks)
 	}
 	writer.Close();
 }
-
 
 void GeometryGenerator::WriteSolidSite(BlockWriter& blockWriter, Site& site) {
 	blockWriter << static_cast<unsigned int>(geometry::SOLID);

@@ -24,6 +24,8 @@
 #include "geometry/Geometry.h"
 #include "geometry/needs/Needs.h"
 
+#include "net/MpiFile.h"
+
 namespace hemelb
 {
   namespace geometry
@@ -34,7 +36,8 @@ namespace hemelb
       public:
         typedef util::Vector3D<site_t> BlockLocation;
 
-        GeometryReader(const bool reserveSteeringCore, const lb::lattices::LatticeInfo&, reporting::Timers &timings);
+        GeometryReader(const bool reserveSteeringCore, const lb::lattices::LatticeInfo&,
+                       reporting::Timers &timings, const net::IOCommunicator& ioComm);
         ~GeometryReader();
 
         Geometry LoadAndDecompose(const std::string& dataFilePath);
@@ -56,8 +59,7 @@ namespace hemelb
 
         void ReadHeader(site_t blockCount);
 
-        void ReadInBlocksWithHalo(Geometry& geometry,
-                                  const std::vector<proc_t>& unitForEachBlock,
+        void ReadInBlocksWithHalo(Geometry& geometry, const std::vector<proc_t>& unitForEachBlock,
                                   const proc_t localRank);
 
         /**
@@ -72,9 +74,9 @@ namespace hemelb
          * @param localRank [in] Local rank number
          * @return Vector with true for each block we should read in.
          */
-        std::vector<bool> DecideWhichBlocksToReadIncludingHalo(const Geometry& geometry,
-                                                               const std::vector<proc_t>& unitForEachBlock,
-                                                               const proc_t localRank);
+        std::vector<bool> DecideWhichBlocksToReadIncludingHalo(
+            const Geometry& geometry, const std::vector<proc_t>& unitForEachBlock,
+            const proc_t localRank);
 
         /**
          * Reads in a single block and ensures it is distributed to all cores that need it.
@@ -85,10 +87,8 @@ namespace hemelb
          * @param blockNumber [in] The id of the block we're reading.
          * @param neededOnThisRank [in] A boolean indicating whether the block is required locally.
          */
-        void ReadInBlock(MPI_Offset offsetSoFar,
-                         Geometry& geometry,
-                         const std::vector<proc_t>& procsWantingThisBlock,
-                         const site_t blockNumber,
+        void ReadInBlock(MPI_Offset offsetSoFar, Geometry& geometry,
+                         const std::vector<proc_t>& procsWantingThisBlock, const site_t blockNumber,
                          const bool neededOnThisRank);
 
         /**
@@ -102,7 +102,8 @@ namespace hemelb
         std::vector<char> DecompressBlockData(const std::vector<char>& compressed,
                                               const unsigned int uncompressedBytes);
 
-        void ParseBlock(Geometry& geometry, const site_t block, io::writers::xdr::XdrReader& reader);
+        void ParseBlock(Geometry& geometry, const site_t block,
+                        io::writers::xdr::XdrReader& reader);
 
         /**
          * Parse the next site from the XDR reader. Note that we return by copy here.
@@ -126,7 +127,8 @@ namespace hemelb
          * @param geometry
          * @param procForEachBlock
          */
-        void OptimiseDomainDecomposition(Geometry& geometry, const std::vector<proc_t>& procForEachBlock);
+        void OptimiseDomainDecomposition(Geometry& geometry,
+                                         const std::vector<proc_t>& procForEachBlock);
 
         void ValidateGeometry(const Geometry& geometry);
 
@@ -138,13 +140,11 @@ namespace hemelb
          */
         site_t GetHeaderLength(site_t blockCount) const;
 
-        void RereadBlocks(Geometry& geometry,
-                          const std::vector<idx_t>& movesPerProc,
+        void RereadBlocks(Geometry& geometry, const std::vector<idx_t>& movesPerProc,
                           const std::vector<idx_t>& movesList,
                           const std::vector<int>& procForEachBlock);
 
-        void ImplementMoves(Geometry& geometry,
-                            const std::vector<proc_t>& procForEachBlock,
+        void ImplementMoves(Geometry& geometry, const std::vector<proc_t>& procForEachBlock,
                             const std::vector<idx_t>& movesFromEachProc,
                             const std::vector<idx_t>& movesList) const;
 
@@ -164,14 +164,11 @@ namespace hemelb
         //! Info about the connectivity of the lattice.
         const lb::lattices::LatticeInfo& latticeInfo;
         //! File accessed to read in the geometry data.
-        MPI_File file;
+        net::MpiFile file;
         //! Information about the file, to give cues and hints to MPI.
-        MPI_Info fileInfo;
-        net::MpiGroup topologyGroup; //! New group for ranks in the topology.
-        //net::MpiCommunicator topologyCommunicator; //! New communicator for ranks in the topology.
-        net::MpiCommunicator topologyComms; //! Communication info for all ranks that will need a slice of the geometry.
-        // TODO: This was never a good plan, better code design will avoid the need for it.
-        net::MpiCommunicator currentComms; //! The communicator currently in use.
+
+        const net::IOCommunicator& hemeLbComms; //! HemeLB's main communicator
+        net::MpiCommunicator computeComms; //! Communication info for all ranks that will need a slice of the geometry (i.e. all non-steering cores)
         //! True iff this rank is participating in the domain decomposition.
         bool participateInTopology;
 

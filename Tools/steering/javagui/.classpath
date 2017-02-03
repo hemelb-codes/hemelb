@@ -40,6 +40,6 @@
 	<classpathentry kind="lib" path="dependencies/jogamp/gluegen/build/gluegen.jar"/>
 	<classpathentry kind="lib" path="dependencies/jogamp/gluegen/build/gluegen-rt-natives-macosx-universal.jar"/>
 	<classpathentry kind="lib" path="dependencies/jogamp/jogl/build/jar/jogl-all-natives-macosx-universal.jar"/>
-	<classpathentry kind="lib" path="dependencies/jogamp/jogl/build/jar/jogl.all.jar"/>
+	<classpathentry kind="lib" path="dependencies/jogamp/jogl/build/jar/jogl-all.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>

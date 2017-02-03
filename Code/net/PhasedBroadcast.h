@@ -16,7 +16,7 @@
 #include "net/IteratedAction.h"
 #include "net/net.h"
 #include "lb/SimulationState.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 
 namespace hemelb
 {
@@ -73,24 +73,17 @@ namespace hemelb
     class PhasedBroadcast : public IteratedAction
     {
       public:
-        PhasedBroadcast(Net * iNet,
-                        const lb::SimulationState * iSimState,
-                        unsigned int spreadFactor)
+        PhasedBroadcast(Net * iNet, const lb::SimulationState * iSimState,
+                        unsigned int spreadFactor) :
+            mSimState(iSimState), mMyDepth(0), mTreeDepth(0), mNet(iNet)
         {
-          mNet = iNet;
-          mSimState = iSimState;
-
-          // Initialise member variables.
-          mTreeDepth = 0;
-          mMyDepth = 0;
-
           // Calculate the correct values for the depth variables.
           proc_t noSeenToThisDepth = 1;
           proc_t noAtCurrentDepth = 1;
 
-          NetworkTopology* netTop = NetworkTopology::Instance();
+          const MpiCommunicator& netTop = mNet->GetCommunicator();
 
-          while (noSeenToThisDepth < netTop->GetProcessorCount())
+          while (noSeenToThisDepth < netTop.Size())
           {
             // Go down a level. I.e. increase the depth of the tree, to a new level which has M times
             // as many nodes on it.
@@ -100,28 +93,28 @@ namespace hemelb
 
             // If this node is at the current depth, it must have a rank lower than or equal to the highest
             // rank at the current depth but greater than the highest rank at the previous depth.
-            if (noSeenToThisDepth > netTop->GetLocalRank() && ( (noSeenToThisDepth
-                - noAtCurrentDepth) <= netTop->GetLocalRank()))
+            if (noSeenToThisDepth > netTop.Rank()
+                && ( (noSeenToThisDepth - noAtCurrentDepth) <= netTop.Rank()))
             {
               mMyDepth = mTreeDepth;
             }
           }
 
           // In a M-tree, with a root of 0, each node N's parent has rank floor((N-1) / M)
-          if (netTop->GetLocalRank() == 0)
+          if (netTop.Rank() == 0)
           {
             mParent = NOPARENT;
           }
           else
           {
-            mParent = (netTop->GetLocalRank() - 1) / spreadFactor;
+            mParent = (netTop.Rank() - 1) / spreadFactor;
           }
 
           // The children of a node N in a M-tree with root 0 are those in the range (M*N)+1,...,(M*N) + M
-          for (unsigned int child = (spreadFactor * netTop->GetLocalRank()) + 1; child
-              <= spreadFactor * (1 + netTop->GetLocalRank()); ++child)
+          for (unsigned int child = (spreadFactor * netTop.Rank()) + 1;
+              child <= spreadFactor * (1 + netTop.Rank()); ++child)
           {
-            if (child < (unsigned int) netTop->GetProcessorCount())
+            if (child < (unsigned int) netTop.Size())
             {
               mChildren.push_back(child);
             }
@@ -140,7 +133,7 @@ namespace hemelb
         {
           for (std::vector<int>::iterator it = mChildren.begin(); it != mChildren.end(); ++it)
           {
-            mNet->RequestSend<T> (data, count, *it);
+            mNet->RequestSend<T>(data, count, *it);
           }
         }
 
@@ -152,7 +145,7 @@ namespace hemelb
         {
           if (mParent != NOPARENT)
           {
-            mNet ->RequestReceive<T> (data, count, mParent);
+            mNet->RequestReceive<T>(data, count, mParent);
           }
         }
 
@@ -172,7 +165,7 @@ namespace hemelb
           T* data = dataStart;
           for (std::vector<int>::iterator it = mChildren.begin(); it != mChildren.end(); ++it)
           {
-            mNet->RequestReceive<T> (data, countPerChild, *it);
+            mNet->RequestReceive<T>(data, countPerChild, *it);
             data += countPerChild;
           }
         }
@@ -193,7 +186,7 @@ namespace hemelb
           unsigned int childNum = 0;
           for (std::vector<int>::iterator it = mChildren.begin(); it != mChildren.end(); ++it)
           {
-            mNet->RequestReceive<T> (dataStart[childNum], countPerChild[childNum], *it);
+            mNet->RequestReceive<T>(dataStart[childNum], countPerChild[childNum], *it);
             ++childNum;
           }
         }
@@ -206,7 +199,7 @@ namespace hemelb
         {
           if (mParent != NOPARENT)
           {
-            mNet->RequestSend<T> (data, count, mParent);
+            mNet->RequestSend<T>(data, count, mParent);
           }
         }
 
@@ -218,15 +211,15 @@ namespace hemelb
          */
         unsigned long GetRoundTripLength() const
         {
-          unsigned long delayTime = initialAction
-            ? 1
-            : 0;
+          unsigned long delayTime = initialAction ?
+            1 :
+            0;
 
-          unsigned long multiplier = (down
-            ? 1
-            : 0) + (up
-            ? 1
-            : 0);
+          unsigned long multiplier = (down ?
+            1 :
+            0) + (up ?
+            1 :
+            0);
 
           return delayTime + multiplier * GetTraverseTime();
         }
@@ -238,9 +231,9 @@ namespace hemelb
          */
         unsigned long GetFirstDescending() const
         {
-          return (initialAction
-            ? 1
-            : 0);
+          return (initialAction ?
+            1 :
+            0);
         }
 
         /**
@@ -250,9 +243,9 @@ namespace hemelb
          */
         unsigned long GetFirstAscending() const
         {
-          return GetFirstDescending() + (down
-            ? GetTraverseTime()
-            : 0);
+          return GetFirstDescending() + (down ?
+            GetTraverseTime() :
+            0);
         }
 
         /**
@@ -388,9 +381,10 @@ namespace hemelb
           return mChildren;
         }
 
-      private:
+      protected:
         static const int NOPARENT = -1;
 
+      private:
         /**
          * Note that depths are 0-indexed. I.e. a tree with a single node has
          * a depth of zero, and the node itself is considered to be at depth 0.
@@ -406,7 +400,7 @@ namespace hemelb
          * This node's child ranks.
          */
         std::vector<int> mChildren;
-
+      protected:
         Net * mNet;
     };
   }
