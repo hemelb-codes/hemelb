@@ -25,20 +25,11 @@ namespace hemelb
                                                           MeshData::Vertices const &vertices)
         {
           NodeCharacterizer::Process2NodesMap result;
-          for (auto const vertex : util::enumerate(vertices))
+          for (auto const &vertex : util::enumerate(vertices))
           {
             for (auto const &process : assessNodeRange(vertex.value))
             {
-              auto const i_proc = result.find(process);
-              if (i_proc == result.end())
-              {
-                result[process] =
-                { vertex.index};
-              }
-              else
-              {
-                result[process].insert(vertex.index);
-              }
+              result[process].insert(vertex.index);
             }
           }
           return result;
