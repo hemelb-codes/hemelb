@@ -10,7 +10,7 @@
 #include "geometry/LatticeData.h"
 #include "geometry/neighbouring/NeighbouringLatticeData.h"
 #include "geometry/neighbouring/RequiredSiteInformation.h"
-#include "net/IteratedAction.h"
+#include "timestep/Actor.h"
 #include <vector>
 #include <map>
 
@@ -23,7 +23,7 @@ namespace hemelb
     namespace neighbouring
     {
 
-      class NeighbouringDataManager : public net::IteratedAction
+      class NeighbouringDataManager : public timestep::Actor
       {
         public:
           NeighbouringDataManager(const LatticeData & localLatticeData,
@@ -38,6 +38,7 @@ namespace hemelb
 	  // This is collective across the communicator used by the
 	  // communication queue given to the constructor
           void ShareNeeds();
+	
           std::vector<site_t> &GetNeedsForProc(proc_t proc)
           {
             return needsEachProcHasFromMe[proc];
@@ -51,7 +52,24 @@ namespace hemelb
           // NB this is virtual so that the class can be tested.
           virtual proc_t ProcForSite(site_t site);
         protected:
-          void RequestComms();
+	  inline virtual void BeginAll() {
+	  }
+	  inline virtual void Begin() {
+	  }
+	  // Implemented
+	  virtual void Receive();
+	  inline virtual void PreSend() {
+	  }
+	  // Implemented
+	  virtual void Send();
+	  inline virtual void PreWait() {
+	  }
+	  inline virtual void Wait() {
+	  }
+	  inline virtual void End() {
+	  }
+	  inline virtual void EndAll() {
+	  }
         private:
           const LatticeData & localLatticeData;
           NeighbouringLatticeData & neighbouringLatticeData;

@@ -8,10 +8,9 @@
 #define HEMELB_LB_IOLETS_BOUNDARYVALUES_H
 
 #include "comm/Communicator.h"
-#include "net/IteratedAction.h"
+#include "timestep/Actor.h"
 #include "lb/iolets/InOutLet.h"
 #include "geometry/LatticeData.h"
-#include "lb/iolets/BoundaryCommunicator.h"
 
 namespace hemelb
 {
@@ -20,27 +19,47 @@ namespace hemelb
     namespace iolets
     {
 
-      class BoundaryValues : public net::IteratedAction
+      class BoundaryValues : public timestep::Actor
       {
         public:
           BoundaryValues(geometry::SiteType ioletType,
                          geometry::LatticeData* latticeData,
                          const std::vector<iolets::InOutLet*> &iolets,
                          SimulationState* simulationState,
-                         comm::Communicator::ConstPtr comms,
+                         comm::Async::Ptr commQ,
                          const util::UnitConverter& units);
           ~BoundaryValues();
 
-          void RequestComms();
-          void EndIteration();
+	// timestep::Actor interface
+	virtual void BeginAll() { /* not needed */ }
+	virtual void Begin();
+	virtual void Receive();
+	virtual void PreSend() { /* not needed */ }
+	virtual void Send();
+	virtual void PreWait() { /* not needed */ }
+	virtual void Wait() { /* not needed */ }
+	virtual void End();
+	virtual void EndAll() { /* not needed */ }
+
+
+	void ForceCommunication();
+          // void RequestComms();
+          // void EndIteration();
           void Reset();
 
-          void FinishReceive();
+          // void FinishReceive();
 
           LatticeDensity GetBoundaryDensity(const int index);
 
-          static proc_t GetBCProcRank();
-          iolets::InOutLet* GetLocalIolet(unsigned int index)
+  	  static constexpr int GetBCProcRank() {
+	    return 0;
+	  }
+
+	  inline bool IsCurrentProcTheBCProc() {
+	    return asyncCommsQ->GetComm()->Rank() == GetBCProcRank();
+	  }
+
+	  iolets::InOutLet* GetLocalIolet(unsigned int index)
           {
             return iolets[localIoletIDs[index]];
           }
@@ -57,10 +76,20 @@ namespace hemelb
             return ioletType;
           }
 
+	inline const std::vector<int>& GetProcsForIolet(int i) const {
+	  return procsForIolet[i];
+	}
+	inline const std::vector<int>& GetProcsForIolet(const InOutLet* io) const {
+	  auto iter = std::find(iolets.begin(), iolets.end(), io);
+	  if (iter == iolets.end())
+	    throw Exception() << "Can't find iolet in BoundaryValues";
+	  return  GetProcsForIolet(iter - iolets.begin());
+	}
+	
         private:
           bool IsIOletOnThisProc(geometry::SiteType ioletType, geometry::LatticeData* latticeData, int boundaryId);
           std::vector<int> GatherProcList(bool hasBoundary);
-          void HandleComms(iolets::InOutLet* iolet);
+          // void HandleComms(iolets::InOutLet* iolet);
           geometry::SiteType ioletType;
           int totalIoletCount;
           // Number of IOlets and vector of their indices for communication purposes
@@ -68,10 +97,11 @@ namespace hemelb
           std::vector<int> localIoletIDs;
           // Has to be a vector of pointers for InOutLet polymorphism
           std::vector<iolets::InOutLet*> iolets;
-
+	  // For each iolet, lists the procs that have it (only populated on BCProc rank)
+	  std::vector<std::vector<int>> procsForIolet;
           SimulationState* state;
           const util::UnitConverter& unitConverter;
-          BoundaryCommunicator bcComms;
+          comm::Async::Ptr asyncCommsQ;
       }
       ;
     }

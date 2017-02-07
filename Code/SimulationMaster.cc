@@ -17,7 +17,6 @@
 #include "lb/HFunction.h"
 #include "io/xml/XmlAbstractionLayer.h"
 #include "colloids/ColloidController.h"
-#include "net/BuildInfo.h"
 #include "colloids/BodyForces.h"
 #include "colloids/BoundaryConditions.h"
 #include "comm/MpiEnvironment.h"
@@ -45,7 +44,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options,
   propertyExtractor = NULL;
   simulationState = NULL;
   stepManager = NULL;
-  netConcern = NULL;
+  asyncCommsManager = NULL;
   neighbouringDataManager = NULL;
 
   fileManager = new hemelb::io::PathManager(options, IsCurrentProcTheIOProc(), GetProcessorCount());
@@ -98,7 +97,7 @@ SimulationMaster::~SimulationMaster()
     delete reporter;
   }
   delete stepManager;
-  delete netConcern;
+  delete asyncCommsManager;
 }
 
 /**
@@ -213,14 +212,14 @@ void SimulationMaster::Initialise()
                                                        latticeData,
                                                        simConfig->GetInlets(),
                                                        simulationState,
-                                                       ioComms,
+                                                       asyncCommQ,
                                                        *unitConverter);
 
   outletValues = new hemelb::lb::iolets::BoundaryValues(hemelb::geometry::OUTLET_TYPE,
                                                         latticeData,
                                                         simConfig->GetOutlets(),
                                                         simulationState,
-                                                        ioComms,
+                                                        asyncCommQ,
                                                         *unitConverter);
 
   latticeBoltzmannModel->Initialise(inletValues, outletValues, unitConverter);
@@ -249,38 +248,37 @@ void SimulationMaster::Initialise()
                                                               timings, ioComms);
   }
 
-  stepManager = new hemelb::net::phased::StepManager(2,
-                                                     &timings,
-                                                     hemelb::net::separate_communications);
-  netConcern = new hemelb::comm::AsyncConcern(asyncCommQ);
-  stepManager->RegisterIteratedActorSteps(*neighbouringDataManager, 0);
+  const int nPhase = 2;
+  stepManager = new hemelb::timestep::TimeStepManager(nPhase);
+  asyncCommsManager = new hemelb::comm::AsyncConcern(asyncCommQ);
+  for (auto i=0; i<nPhase; ++i)
+    stepManager->AddToPhase(i, asyncCommsManager);
+
+  stepManager->AddToPhase(0, neighbouringDataManager);
   if (colloidController != NULL)
   {
-    stepManager->RegisterIteratedActorSteps(*colloidController, 1);
+    stepManager->AddToPhase(1, colloidController);
   }
-  stepManager->RegisterIteratedActorSteps(*latticeBoltzmannModel, 1);
+  stepManager->AddToPhase(1, latticeBoltzmannModel);
 
-  stepManager->RegisterIteratedActorSteps(*inletValues, 1);
-  stepManager->RegisterIteratedActorSteps(*outletValues, 1);
-  stepManager->RegisterIteratedActorSteps(*stabilityTester, 1);
-  stepManager->RegisterCommsSteps(*stabilityTester, 1);
+  stepManager->AddToPhase(1, inletValues);
+  stepManager->AddToPhase(1, outletValues);
+  stepManager->AddToPhase(1, stabilityTester);
   if (entropyTester != NULL)
   {
-    stepManager->RegisterIteratedActorSteps(*entropyTester, 1);
+    stepManager->AddToPhase(1, entropyTester);
   }
 
   if (monitoringConfig->doIncompressibilityCheck)
   {
-    stepManager->RegisterIteratedActorSteps(*incompressibilityChecker, 1);
-    stepManager->RegisterCommsSteps(*incompressibilityChecker, 1);
+    stepManager->AddToPhase(1, incompressibilityChecker);
   }
 
   if (propertyExtractor != NULL)
   {
-    stepManager->RegisterIteratedActorSteps(*propertyExtractor, 1);
+    stepManager->AddToPhase(1, propertyExtractor);
   }
 
-  stepManager->RegisterCommsForAllPhases(*netConcern);
 }
 
 unsigned int SimulationMaster::OutputPeriod(unsigned int frequency)
@@ -295,7 +293,7 @@ unsigned int SimulationMaster::OutputPeriod(unsigned int frequency)
 
 void SimulationMaster::HandleActors()
 {
-  stepManager->CallActions();
+  stepManager->DoStep();
 }
 
 void SimulationMaster::OnUnstableSimulation()

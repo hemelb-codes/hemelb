@@ -167,11 +167,6 @@ namespace hemelb
 
 
     protected:
-      // TODO: remove when net is dead.
-      friend class net::CoalescePointPoint;
-      friend class net::SeparatedPointPoint;
-      friend class net::ImmediatePointPoint;
-      
       virtual void BcastImpl(void* buf, int count, MPI_Datatype dt, int root) const = 0;
       virtual std::shared_ptr<Request> IbcastImpl(void* buf, int count, MPI_Datatype dt, int root) const = 0;
       virtual void AllreduceImpl(const void* send, void* ans, int count, MPI_Datatype dt, MPI_Op op) const = 0;

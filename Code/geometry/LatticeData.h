@@ -59,7 +59,9 @@ namespace hemelb
           oldDistributions.swap(newDistributions);
         }
 
-        void SendAndReceive(comm::Async::Ptr commQ);
+        void Receive(comm::Async::Ptr commQ);
+        void Send(comm::Async::Ptr commQ);
+      
         void CopyReceived();
 
         /**

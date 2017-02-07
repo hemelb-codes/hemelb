@@ -111,6 +111,7 @@ namespace hemelb
       
       // Begin collective.
       collectiveReq = collectiveComm->Iallreduce(localStability, MPI_MIN, globalStability);
+      isCollectiveRunning = true;
     }
 
     /**

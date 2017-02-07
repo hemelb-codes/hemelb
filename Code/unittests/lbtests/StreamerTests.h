@@ -760,11 +760,12 @@ namespace hemelb
 
           void TestNashZerothOrderPressureIolet()
           {
+	    auto async = comm::Async::New(Comms());
             lb::iolets::BoundaryValues inletBoundary(geometry::INLET_TYPE,
                                                      latDat,
                                                      simConfig->GetInlets(),
                                                      simState,
-                                                     Comms(),
+                                                     async,
                                                      *unitConverter);
 
             initParams.boundaryObject = &inletBoundary;
@@ -870,11 +871,12 @@ namespace hemelb
 
           void TestNashZerothOrderPressureBB()
           {
+	    auto async = comm::Async::New(Comms());
             lb::iolets::BoundaryValues inletBoundary(geometry::INLET_TYPE,
                                                      latDat,
                                                      simConfig->GetInlets(),
                                                      simState,
-                                                     Comms(),
+                                                     async,
                                                      *unitConverter);
 
             initParams.boundaryObject = &inletBoundary;

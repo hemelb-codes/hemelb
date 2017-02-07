@@ -11,7 +11,6 @@
 #include "multiscale/Intercommunicand.h"
 #include "multiscale/SharedValue.h"
 #include "log/Logger.h"
-#include "lb/iolets/BoundaryCommunicator.h"
 
 namespace hemelb
 {
@@ -84,7 +83,11 @@ namespace hemelb
 
           virtual bool IsCommsRequired() const;
           virtual void SetCommsRequired(bool b);
-          void DoComms(const BoundaryCommunicator& bcComms, const LatticeTimeStep timeStep);
+
+	  virtual void Begin(BoundaryValues*);
+	  virtual void Receive(BoundaryValues*, comm::Async::Ptr);
+	  virtual void Send(BoundaryValues* bv, comm::Async::Ptr);
+	  virtual void CommsComplete(BoundaryValues*);
 
         private:
           std::string label;
@@ -95,6 +98,7 @@ namespace hemelb
           multiscale::SharedValue<PhysicalPressure> minPressure;
           multiscale::SharedValue<PhysicalPressure> maxPressure;
           mutable multiscale::SharedValue<PhysicalVelocity> velocity;
+	  double pressure_array[3];
       };
     }
   }

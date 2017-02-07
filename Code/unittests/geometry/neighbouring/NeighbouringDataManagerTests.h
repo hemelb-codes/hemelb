@@ -243,11 +243,11 @@ namespace hemelb
 				       0,
 				       0);
 	      
-              net::phased::StepManager stepManager;
-              stepManager.RegisterIteratedActorSteps(*manager, 0);
+	      timestep::TimeStepManager stepManager(1);
+              stepManager.AddToPhase(0, manager);
 	      comm::AsyncConcern netConcern = comm::AsyncConcern(commQ);
-              stepManager.RegisterCommsForAllPhases(netConcern);
-              stepManager.CallActions();
+              stepManager.AddToPhase(0, &netConcern);
+              stepManager.DoStep();
               MockComms()->ExpectationsAllCompleted();
 
               NeighbouringSite transferredSite = data->GetSite(targetGlobalOneDIdx);

@@ -20,7 +20,7 @@
 #include "reporting/BuildInfo.h"
 #include "lb/IncompressibilityChecker.h"
 #include "colloids/ColloidController.h"
-#include "net/phased/StepManager.h"
+#include "timestep/TimeStepManager.h"
 #include "comm/AsyncConcern.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 
@@ -95,8 +95,8 @@ class SimulationMaster
     hemelb::extraction::IterableDataSource* propertyDataSource;
     hemelb::extraction::PropertyActor* propertyExtractor;
 
-    hemelb::net::phased::StepManager* stepManager;
-    hemelb::comm::AsyncConcern* netConcern;
+    hemelb::timestep::TimeStepManager* stepManager;
+    hemelb::comm::AsyncConcern* asyncCommsManager;
 
     static const hemelb::LatticeTimeStep FORCE_FLUSH_PERIOD=1000;
 };

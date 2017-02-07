@@ -8,7 +8,6 @@
 #define HEMELB_COLLOIDS_COLLOIDCONTROLLER_H
 
 #include <vector>
-#include "net/IteratedAction.h"
 #include "geometry/LatticeData.h"
 #include "geometry/Geometry.h"
 #include "io/xml/XmlAbstractionLayer.h"
@@ -16,13 +15,14 @@
 #include "colloids/ParticleSet.h"
 #include "util/Vector3D.h"
 #include "units.h"
+#include "timestep/Actor.h"
 
 namespace hemelb
 {
   namespace colloids
   {
     /** provides the control interface between colloid simulation and the rest of the system */
-    class ColloidController : public net::IteratedAction
+    class ColloidController : public timestep::Actor
     {
       public:
         /** constructor - currently only initialises the neighbour list */
@@ -39,14 +39,31 @@ namespace hemelb
         /** destructor - releases resources allocated by this class */
         ~ColloidController();
 
-        /** overloaded from IteratedAction */
         void RequestComms();
 
-        /** overloaded from IteratedAction */
         void EndIteration();
 
         const void OutputInformation(const LatticeTimeStep timestep) const;
-
+      inline virtual void BeginAll() {
+      }
+      inline virtual void Begin()  {
+      }
+      inline virtual void Receive()  {
+      }
+      inline virtual void PreSend()  {
+      }
+      inline virtual void Send()  {
+      }
+      inline virtual void PreWait()  {
+      }
+      
+      inline virtual void Wait() {
+      }
+      
+      inline virtual void End()  {
+      }
+      virtual void EndAll()  {
+      }
       private:
         /** Main code communicator */
         comm::Communicator::ConstPtr ioComms;

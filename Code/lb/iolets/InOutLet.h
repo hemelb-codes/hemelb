@@ -10,6 +10,7 @@
 #include "util/Vector3D.h"
 #include "util/UnitConverter.h"
 #include "lb/SimulationState.h"
+#include "comm/Async.h"
 
 namespace hemelb
 {
@@ -17,11 +18,8 @@ namespace hemelb
   {
     namespace iolets
     {
-
-      //forward declare boundary comms class
-      class BoundaryComms;
-      class BoundaryCommunicator;
-
+      class BoundaryValues;
+      
       /**
        * Base class for extra data needed by LB BC implementations.
        * Makes "Iolet coordinates" available.
@@ -56,8 +54,7 @@ namespace hemelb
       class InOutLet
       {
         public:
-          InOutLet() :
-            comms(NULL), extraData(NULL)
+          InOutLet() : extraData(NULL)
           {
           }
           virtual ~InOutLet()
@@ -80,6 +77,15 @@ namespace hemelb
             return false;
           }
 
+	  virtual void Begin(BoundaryValues*) {
+	  }
+	  virtual void Receive(BoundaryValues*, comm::Async::Ptr) {
+	  }
+  	  virtual void Send(BoundaryValues* , comm::Async::Ptr) {
+	  }
+	  virtual void CommsComplete(BoundaryValues*) {
+	  }
+
           /***
            * This is a castable? virtual method, which is perhaps an anti-pattern
            * We should potentially use dynamic cast checks instead.
@@ -89,20 +95,7 @@ namespace hemelb
           {
             return false;
           }
-          void SetComms(BoundaryComms * boundaryComms)
-          {
-            comms = boundaryComms;
-          }
-          BoundaryComms * GetComms() const
-          {
-            return comms;
-          }
-          /***
-           * Carry out communication necessary
-           * @param isIoProcess Is the process the master process?
-           */
-          virtual void DoComms(const BoundaryCommunicator& bcComms, const LatticeTimeStep timeStep);
-
+	
           /***
            * Set up the Iolet.
            * @param units a UnitConverter instance.
@@ -164,7 +157,6 @@ namespace hemelb
           LatticeDensity minimumSimulationDensity;
           LatticePosition position;
           util::Vector3D<Dimensionless> normal;
-          BoundaryComms* comms;
           IoletExtraData* extraData;
           friend class IoletExtraData;
       };

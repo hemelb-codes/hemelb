@@ -19,6 +19,10 @@ namespace hemelb
     {
     }
     
+    void CollectiveActor::Receive()
+    {
+    }
+    
     /**
      * Wait on the collectives to finish.
      */

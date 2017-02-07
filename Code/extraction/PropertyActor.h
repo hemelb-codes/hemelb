@@ -11,13 +11,13 @@
 #include "io/PathManager.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "lb/SimulationState.h"
-#include "net/IteratedAction.h"
+#include "timestep/Actor.h"
 
 namespace hemelb
 {
   namespace extraction
   {
-    class PropertyActor : public net::IteratedAction
+    class PropertyActor : public timestep::Actor
     {
       public:
         /**
@@ -41,11 +41,26 @@ namespace hemelb
          */
         void SetRequiredProperties(lb::MacroscopicPropertyCache& propertyCache);
 
-        /**
-         * Override the iterated actor end of iteration method to perform writing.
-         */
-        void EndIteration();
-
+      inline virtual void BeginAll() {
+      }
+      inline virtual void Begin()  {
+      }
+      inline virtual void Receive()  {
+      }
+      inline virtual void PreSend()  {
+      }
+      inline virtual void Send()  {
+      }
+      inline virtual void PreWait()  {
+      }
+      inline virtual void Wait() {
+      }
+      inline virtual void End()  {
+      }
+      
+      // Override the iterated actor end of iteration method to perform writing.
+      virtual void EndAll();
+      
       private:
         const lb::SimulationState& simulationState;
         PropertyWriter* propertyWriter;

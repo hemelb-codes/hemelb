@@ -99,11 +99,12 @@ namespace hemelb
 
       void NeighbouringDataManager::TransferFieldDependentInformation()
       {
-        RequestComms();
+        Receive();
+	Send();
         commQ->Wait();
       }
 
-      void NeighbouringDataManager::RequestComms()
+      void NeighbouringDataManager::Receive()
       {
         /*if (needsHaveBeenShared == false)
         {
@@ -125,7 +126,9 @@ namespace hemelb
                              source);
 
         }
-
+      }
+      void NeighbouringDataManager::Send()
+      {
         const unsigned Q = localLatticeData.GetLatticeInfo().GetNumVectors();
         for (IdsMap::const_iterator iter = needsEachProcHasFromMe.begin();
             iter != needsEachProcHasFromMe.end();
