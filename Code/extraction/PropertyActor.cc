@@ -82,7 +82,7 @@ namespace hemelb
       }
     }
 
-    void PropertyActor::EndIteration()
+    void PropertyActor::EndAll()
     {
       timers[reporting::Timers::extractionWriting].Start();
       propertyWriter->Write(simulationState.GetTimeStep());

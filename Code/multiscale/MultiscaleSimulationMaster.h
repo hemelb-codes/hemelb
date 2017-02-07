@@ -225,6 +225,14 @@ namespace hemelb
              * (it's hard enough to get the physics right with a consistent
              * state ;)). */
 
+	    // TODO: Derek to please comment on this.
+	    
+	    // With the rejigged BoundarValues, the above comment is
+	    // probably defunct. Hence I have removed the RequestComms
+	    // calls below. (They may have in fact not quite worked as
+	    // intented as they was no call to the net->Dispatch
+	    // method to actually cause communication)
+	    
             hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("inlet and outlet count: %d and %d",
                                                                                   inletValues->GetLocalIoletCount(),
                                                                                   outletValues->GetLocalIoletCount());
@@ -232,14 +240,13 @@ namespace hemelb
                                                                                   inletValues->GetLocalIolet(0)->IsCommsRequired());
             hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("outlets: %d",
                                                                                   outletValues->GetLocalIolet(0)->IsCommsRequired());
+	    // SetCommsRequired(inletValues, true);
+            // SetCommsRequired(outletValues, true);
 
-            SetCommsRequired(inletValues, true);
-            SetCommsRequired(outletValues, true);
-
-            inletValues->RequestComms();
-            outletValues->RequestComms();
-            SetCommsRequired(inletValues, false);
-            SetCommsRequired(outletValues, false);
+            // inletValues->RequestComms();
+            // outletValues->RequestComms();
+            // SetCommsRequired(inletValues, false);
+            // SetCommsRequired(outletValues, false);
 
             for (unsigned int i = 0; i < inletValues->GetLocalIoletCount(); i++)
             {

@@ -100,6 +100,9 @@ namespace hemelb
 
     void IncompressibilityChecker::PreSend()
     {
+      if (isCollectiveRunning)
+	return;
+      
       for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
       {
         DensityEtc etc;
@@ -117,6 +120,7 @@ namespace hemelb
     {
       // Begin collective.
       collectiveReq = collectiveComm->Iallreduce(localDensity, reduction, globalDensity);
+      isCollectiveRunning = true;
     }
 
     bool IncompressibilityChecker::IsDensityDiffWithinRange() const

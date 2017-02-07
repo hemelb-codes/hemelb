@@ -7,32 +7,40 @@
 #define HEMELB_COMM_ASYNC_CONCERN_H
 
 #include "comm/Async.h"
-#include "net/phased/Concern.h"
-#include "net/phased/steps.h"
+#include "timestep/Actor.h"
 
 namespace hemelb
 {
   namespace comm
   {
-    using namespace net::phased;
-    class AsyncConcern : public Concern
+    class AsyncConcern : public timestep::Actor
     {
     public:
       AsyncConcern(Async::Ptr async) : mAsync(async)
       {
       }
-      bool CallAction(int action)
-      {
-	switch (static_cast<steps::Step>(action))
-	{
-	case steps::Wait:
-	  mAsync->Wait();
-	  return true;
-	  
-	default:
-	  return false;
-	}
+      inline virtual void BeginAll() {
       }
+      inline virtual void Begin()  {
+      }
+      inline virtual void Receive()  {
+      }
+      inline virtual void PreSend()  {
+      }
+      inline virtual void Send()  {
+      }
+      inline virtual void PreWait()  {
+      }
+      
+      inline virtual void Wait() {
+	mAsync->Wait();
+      }
+      
+      inline virtual void End()  {
+      }
+      inline virtual void EndAll()  {
+      }
+      
     private:
       Async::Ptr mAsync;
     };

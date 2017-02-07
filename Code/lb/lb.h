@@ -7,8 +7,8 @@
 #ifndef HEMELB_LB_LB_H
 #define HEMELB_LB_LB_H
 
-#include "net/IteratedAction.h"
 #include "comm/Communicator.h"
+#include "timestep/Actor.h"
 #include "lb/SimulationState.h"
 #include "lb/iolets/BoundaryValues.h"
 #include "lb/MacroscopicPropertyCache.h"
@@ -27,10 +27,10 @@ namespace hemelb
   {
     /**
      * Class providing core Lattice Boltzmann functionality.
-     * Implements the IteratedAction interface.
+     * Implements the timestep::Actor interface.
      */
     template<class LatticeType>
-    class LBM : public net::IteratedAction
+    class LBM : public timestep::Actor
     {
       private:
         // Use the kernel specified through the build system. This will select one of the above classes.
@@ -62,11 +62,24 @@ namespace hemelb
             geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager);
         ~LBM();
 
-        void RequestComms(); ///< part of IteratedAction interface.
-        void PreSend(); ///< part of IteratedAction interface.
-        void PreReceive(); ///< part of IteratedAction interface.
-        void PostReceive(); ///< part of IteratedAction interface.
-        void EndIteration(); ///< part of IteratedAction interface.
+        // Actor interface
+        inline virtual void BeginAll() {
+	  // No-op
+	}
+        virtual void Begin() {
+	  // No-op
+	}
+        virtual void Receive();
+        virtual void PreSend();
+        virtual void Send();
+        virtual void PreWait();
+        inline virtual void Wait()
+        {
+	  // This is a no-op as waiting is delegated to the async
+	  // comms actor
+	}
+        virtual void End();
+        virtual void EndAll();
 
         site_t TotalFluidSiteCount() const;
         void SetTotalFluidSiteCount(site_t);

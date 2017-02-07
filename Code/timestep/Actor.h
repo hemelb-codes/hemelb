@@ -15,7 +15,9 @@ namespace hemelb
     {
     protected:
       friend class TimeStepManager;
-      
+
+      inline virtual ~Actor() {
+      }
       virtual void BeginAll() = 0;
       virtual void Begin() = 0;
       virtual void Receive() = 0;

@@ -17,13 +17,13 @@ namespace hemelb
     {
       class BoundaryCommunicator
       {
-        public:
+      public:
 	BoundaryCommunicator(comm::Communicator::ConstPtr parent);
-          bool IsCurrentProcTheBCProc() const;
-          int GetBCProcRank() const;
-	  comm::Communicator::ConstPtr GetComm() const;
-        private:
-	  comm::Communicator::Ptr comm;
+	bool IsCurrentProcTheBCProc() const;
+	int GetBCProcRank() const;
+	comm::Communicator::ConstPtr GetComm() const;
+      private:
+	comm::Communicator::Ptr comm;
 	
       };
     }

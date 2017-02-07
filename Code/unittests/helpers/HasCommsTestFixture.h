@@ -22,11 +22,13 @@ namespace hemelb
           void setUp()
           {
             //hemelbCommunicator = net::IOCommunicator::Instance();
+	    asyncCommQ = comm::Async::New(hemelbCommunicator);
           }
 
           void tearDown()
           {
             //hemelbCommunicator = NULL;
+	    asyncCommQ = nullptr;
           }
 
           static void Init(comm::Communicator::ConstPtr inst)
@@ -39,8 +41,13 @@ namespace hemelb
           {
             return hemelbCommunicator;
           }
+	  comm::Async::Ptr Async()
+	  {
+	    return asyncCommQ;
+	  }
         private:
 	static comm::Communicator::ConstPtr hemelbCommunicator;
+	comm::Async::Ptr asyncCommQ;
       };
 
       comm::Communicator::ConstPtr HasCommsTestFixture::hemelbCommunicator = NULL;
