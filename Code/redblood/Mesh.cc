@@ -93,6 +93,8 @@ namespace hemelb
       for (unsigned int i(1), index(0); i < num_vertices; ++i)
       {
         stream >> index >> result->vertices[i].x >> result->vertices[i].y >> result->vertices[i].z;
+        // No gaps in vertex index list
+        assert(index == (i + offset));
         log::Logger::Log<log::Trace, log::Singleton>("Vertex %i at %d, %d, %d",
                                                      i,
                                                      result->vertices[i].x,
@@ -669,7 +671,7 @@ namespace hemelb
 
     void orientFacets(Mesh &mesh, bool outward)
     {
-      orientFacets(*mesh.GetData());
+      orientFacets(*mesh.GetData(), outward);
     }
     void orientFacets(MeshData &mesh, bool outward)
     {
