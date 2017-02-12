@@ -201,7 +201,7 @@ namespace hemelb
       {
         return strainEnergyDensity(strainInvariants(deformed, undeformed, origMesh_scale),
                                    shearModulus,
-                                   dilationModulus) * undeformed.area();
+                                   dilationModulus) * undeformed.area() * origMesh_scale * origMesh_scale;
       }
 
       LatticeEnergy strainEnergy(ForceFacet const &deformed, Facet const &undeformed,

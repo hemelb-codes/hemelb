@@ -34,7 +34,7 @@ namespace hemelb
           {
               mutable Cell particle;
               CellEnergy(Mesh const &mesh, Mesh const origMesh) :
-                  particle(mesh, origMesh)
+                  particle(mesh, origMesh, 2.5) // Set scale to != 1 to test area scaling in energy calculations
               {
                 particle.moduli.bending = 0.888;
                 particle.moduli.surface = 1.127;
