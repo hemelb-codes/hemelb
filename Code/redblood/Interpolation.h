@@ -25,13 +25,13 @@ namespace hemelb
 
     namespace
     {
-      inline int minimumPosImpl(Dimensionless x, size_t range)
+      inline int minimumPosImpl(Dimensionless const x, size_t const range)
       {
         return static_cast<int>(std::floor(x - 0.5 * Dimensionless(range)) + 1);
       }
-      inline int maximumPosImpl(Dimensionless x, size_t range)
+      inline int maximumPosImpl(Dimensionless const x, size_t const range)
       {
-        return static_cast<int>(std::floor(x + 0.5 * Dimensionless(range)));
+        return minimumPosImpl(x, range) + range - 1;
       }
     }
 
@@ -122,6 +122,9 @@ namespace hemelb
           assert(current[1] <= max[1]);
           assert(current[2] >= min[2]);
           assert(current[2] <= max[2]);
+          assert(current[0] - min[0] < xWeight.size());
+          assert(current[1] - min[1] < yWeight.size());
+          assert(current[2] - min[2] < zWeight.size());
           return xWeight[current[0] - min[0]] * yWeight[current[1] - min[1]]
               * zWeight[current[2] - min[2]];
         }
@@ -134,6 +137,9 @@ namespace hemelb
           assert(current[1] <= max[1]);
           assert(current[2] >= min[2]);
           assert(current[2] <= max[2]);
+          assert(current[0] - min[0] < xWeight.size());
+          assert(current[1] - min[1] < yWeight.size());
+          assert(current[2] - min[2] < zWeight.size());
           return util::Vector3D<Dimensionless>(xWeight[current[0] - min[0]],
                                                yWeight[current[1] - min[1]],
                                                zWeight[current[2] - min[2]]);
@@ -173,6 +179,19 @@ namespace hemelb
             IndexIterator(minimumPosition(node, STENCIL::GetRange()),
                           maximumPosition(node, STENCIL::GetRange()))
     {
+      // Lattice interpolation range contains the specified off-lattice position
+      assert(node[0] >= min[0]);
+      assert(node[0] < max[0]);
+      assert(node[1] >= min[1]);
+      assert(node[1] < max[1]);
+      assert(node[2] >= min[2]);
+      assert(node[2] < max[2]);
+
+      // The size of the interpolation range is consistent with the stencil size
+      assert(max[0] - min[0] + 1 == STENCIL::GetRange());
+      assert(max[1] - min[1] + 1 == STENCIL::GetRange());
+      assert(max[2] - min[2] + 1 == STENCIL::GetRange());
+
       for (LatticeVector::value_type i(0); i < LatticeVector::value_type(STENCIL::GetRange()); ++i)
       {
         xWeight[i] = STENCIL::stencil(node[0] - Dimensionless(min[0] + i));

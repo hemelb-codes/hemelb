@@ -45,7 +45,12 @@ namespace hemelb
           CPPUNIT_TEST (testInterpolateQuadraticFunction<stencil::FourPoint> );
           CPPUNIT_TEST (testInterpolateQuadraticFunction<stencil::CosineApprox> );
           CPPUNIT_TEST (testInterpolateQuadraticFunction<stencil::ThreePoint> );
-          CPPUNIT_TEST (testInterpolateQuadraticFunction<stencil::TwoPoint> );CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testInterpolateQuadraticFunction<stencil::TwoPoint> );
+          CPPUNIT_TEST (testMinMaxPosCornerCase<stencil::FourPoint>);
+          CPPUNIT_TEST (testMinMaxPosCornerCase<stencil::CosineApprox>);
+          CPPUNIT_TEST (testMinMaxPosCornerCase<stencil::ThreePoint>);
+          CPPUNIT_TEST (testMinMaxPosCornerCase<stencil::TwoPoint>);
+          CPPUNIT_TEST_SUITE_END();
 
           struct PlanarFunction
           {
@@ -263,6 +268,22 @@ namespace hemelb
             check<QuadraticFunction, STENCIL>(0.1, 0.5, 0.6, tolerance);
             check<QuadraticFunction, STENCIL>(-5.1, 0.5, 8.7, tolerance);
             check<QuadraticFunction, STENCIL>(-5, 0, -1, tolerance);
+          }
+
+          template<class STENCIL> void testMinMaxPosCornerCase()
+          {
+            // LatticeDistance 0x402effffffffffff is one bit short of 15.5. The
+            // previous implementations of minimumPosImpl/maximumPosImpl were
+            // returning a range of 4 lattice sites around it for the 3-point stencil.
+            uint64_t const ux = 0x402effffffffffff;
+            assert(sizeof(LatticeDistance) == sizeof(uint64_t));
+            LatticeDistance const x(*reinterpret_cast<LatticeDistance const *>(&ux));
+
+            auto const stencil_range = STENCIL::GetRange();
+            auto const x_min = minimumPosImpl(x, stencil_range);
+            auto const x_max = maximumPosImpl(x, stencil_range);
+            decltype(stencil_range) const num_positions = x_max - x_min + 1;
+            CPPUNIT_ASSERT_EQUAL(stencil_range, num_positions);
           }
       };
 
