@@ -28,8 +28,6 @@ namespace hemelb
       
     };
     
-    // Factory. Don't be calling this.
-    Debugger* PlatformDebuggerFactory(const char* const executable, const net::MpiCommunicator& comm);
   }
 }
 
