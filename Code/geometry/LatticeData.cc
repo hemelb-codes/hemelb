@@ -7,7 +7,6 @@
 #include <map>
 #include <limits>
 
-#include "debug/Debugger.h"
 #include "log/Logger.h"
 #include "comm/Communicator.h"
 #include "geometry/BlockTraverser.h"

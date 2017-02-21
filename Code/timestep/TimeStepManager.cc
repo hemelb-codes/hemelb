@@ -5,6 +5,7 @@
 
 #include "timestep/TimeStepManager.h"
 #include "timestep/Actor.h"
+#include "debug/Debugger.h"
 
 namespace hemelb
 {
@@ -29,15 +30,25 @@ namespace hemelb
       for (auto& ph: mPhases)
       {
 	for (auto ap: ph.actors)
-	{
 	  ap->Begin();
+	
+	for (auto ap: ph.actors)
 	  ap->Receive();
+	
+	for (auto ap: ph.actors)
 	  ap->PreSend();
+	
+	for (auto ap: ph.actors)
 	  ap->Send();
+	
+	for (auto ap: ph.actors)
 	  ap->PreWait();
+	
+	for (auto ap: ph.actors)
 	  ap->Wait();
+		
+	for (auto ap: ph.actors)
 	  ap->End();
-	}
       }
 
       for (auto& ph: mPhases)
