@@ -11,6 +11,7 @@
 #define HEMELB_COMM_REQUEST_H
 
 #include <vector>
+#include <memory>
 
 namespace hemelb
 {
