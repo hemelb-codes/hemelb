@@ -8,6 +8,7 @@
 #define HEMELB_REPORTING_TIMERS_HPP
 
 #include "reporting/Timers.h"
+#include <algorithm>
 
 namespace hemelb
 {
