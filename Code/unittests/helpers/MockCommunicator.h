@@ -8,6 +8,8 @@
 #define HEMELB_UNITTESTS_HELPERS_MOCKCOMMUNICATOR_H
 
 #include <numeric>
+#include <cstring>
+
 #include "comm/Communicator.h"
 #include "comm/Request.h"
 
