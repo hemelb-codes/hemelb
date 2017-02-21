@@ -14,7 +14,7 @@ namespace hemelb
 {
   namespace debug
   {
-    LinuxDebugger::LinuxDebugger(const char* const executable, const net::MpiCommunicator& comm) :
+    LinuxDebugger::LinuxDebugger(const char* const executable, comm::Communicator::ConstPtr comm) :
       ActiveDebugger(executable, comm) {}
 
     const std::string LinuxDebugger::GetBinaryPath(void) const
