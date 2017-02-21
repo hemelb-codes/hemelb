@@ -7,6 +7,7 @@
 #include <string>
 
 #include "debug/linux/LinuxDebugger.h"
+#include "Exception.h"
 #include <unistd.h>
 #include <cerrno>
 
