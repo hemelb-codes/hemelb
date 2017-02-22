@@ -19,11 +19,12 @@ namespace hemelb
      */
     template<class LatticeType>
     StabilityTester<LatticeType>::StabilityTester(const geometry::LatticeData * iLatDat,
-                                                  net::Net* net, SimulationState* simState,
+                                                  comm::Communicator::ConstPtr comms,
+						  SimulationState* simState,
                                                   reporting::Timers& timings,
                                                   bool checkForConvergence,
                                                   double relativeTolerance) :
-        CollectiveAction(net->GetCommunicator(), timings[reporting::Timers::monitoring]),
+        CollectiveActor(comms, timings[reporting::Timers::monitoring]),
             mLatDat(iLatDat), mSimState(simState), checkForConvergence(checkForConvergence),
             relativeTolerance(relativeTolerance), workTimer(timings[reporting::Timers::monitoring])
     {
@@ -47,6 +48,9 @@ namespace hemelb
     template<class LatticeType>
     void StabilityTester<LatticeType>::PreSend(void)
     {
+      if (isCollectiveRunning)
+	return;
+      
       workTimer.Start();
       bool unconvergedSitePresent = false;
       bool checkConvThisTimeStep = checkForConvergence;
@@ -102,8 +106,12 @@ namespace hemelb
     template<class LatticeType>
     void StabilityTester<LatticeType>::Send(void)
     {
+      if (isCollectiveRunning)
+	return;
+      
       // Begin collective.
-      collectiveReq = collectiveComm.Iallreduce(localStability, MPI_MIN, globalStability);
+      collectiveReq = collectiveComm->Iallreduce(localStability, MPI_MIN, globalStability);
+      isCollectiveRunning = true;
     }
 
     /**
@@ -142,8 +150,11 @@ namespace hemelb
      * Apply the stability value sent by the root node to the simulation logic.
      */
     template<class LatticeType>
-    void StabilityTester<LatticeType>::PostReceive()
+    void StabilityTester<LatticeType>::End()
     {
+      if (isCollectiveRunning)
+	return;
+      
       mSimState->SetStability((Stability) globalStability);
     }
   }

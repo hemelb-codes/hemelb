@@ -19,8 +19,6 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-#include "net/mpi.h"
-
 #include "debug/common/ActiveDebugger.h"
 
 namespace hemelb
@@ -28,7 +26,7 @@ namespace hemelb
   namespace debug
   {
 
-    ActiveDebugger::ActiveDebugger(const char* const executable, const net::MpiCommunicator& comm) :
+    ActiveDebugger::ActiveDebugger(const char* const executable, comm::Communicator::ConstPtr comm) :
       Debugger(executable, comm), mAmAttached(false), mPIds()
     {
     }
@@ -69,7 +67,7 @@ namespace hemelb
       // To rank 0
       GatherProcessIds();
 
-      if (mCommunicator.Rank() == 0)
+      if (mCommunicator->Rank() == 0)
       {
         childPid = fork();
         // Fork gives the PID of the child to the parent and zero to the child
@@ -84,7 +82,7 @@ namespace hemelb
       while (amWaiting)
         sleep(5);
 
-      if (mCommunicator.Rank() == 0)
+      if (mCommunicator->Rank() == 0)
       {
         // Reap the spawner
         int deadPid = waitpid(childPid, NULL, 0);
@@ -99,7 +97,7 @@ namespace hemelb
     {
       int pId = getpid();
 
-      mPIds = mCommunicator.Gather(pId, 0);
+      mPIds = mCommunicator->Gather(pId, 0);
     }
 
     void ActiveDebugger::SpawnDebuggers(void)

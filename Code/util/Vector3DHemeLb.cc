@@ -4,13 +4,15 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
+#include "units.h"
 #include "util/Vector3D.h"
-#include "net/mpi.h"
+#include "comm/MpiError.h"
+#include "comm/MpiDataType.h"
 #include "Exception.h"
 
 namespace hemelb
 {
-  namespace net
+  namespace comm
   {
     template<typename vectorType>
     MPI_Datatype GenerateTypeForVector()
@@ -18,7 +20,7 @@ namespace hemelb
       const int typeCount = 1;
       int blocklengths[typeCount] = { 3 };
 
-      MPI_Datatype types[typeCount] = { net::MpiDataType<vectorType>() };
+      MPI_Datatype types[typeCount] = { comm::MpiDataType<vectorType>() };
 
       MPI_Aint displacements[typeCount] = { 0 };
 

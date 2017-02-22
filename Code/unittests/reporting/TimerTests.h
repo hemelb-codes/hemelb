@@ -83,7 +83,7 @@ namespace hemelb
         public:
           void setUp()
           {
-            timers = new TimersBase<ClockMock, MPICommsMock>(Comms());
+            timers = new TimersBase<ClockMock>(Comms());
           }
 
           void tearDown()
@@ -130,14 +130,14 @@ namespace hemelb
             timers->Reduce(); // trigger the mock
             for (unsigned int i = 0; i < Timers::numberOfTimers; i++)
             {
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(i * 5.0, timers->Maxes()[i], 1e-6);
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(i * 2.0, timers->Means()[i], 1e-6);
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(i * 15.0, timers->Mins()[i], 1e-6);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(i * 10.0, timers->Maxes()[i], 1e-6);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(i * 10.0, timers->Means()[i], 1e-6);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(i * 10.0, timers->Mins()[i], 1e-6);
             }
           }
 
         private:
-          TimersBase<ClockMock, MPICommsMock> *timers;
+          TimersBase<ClockMock> *timers;
       };
 
       CPPUNIT_TEST_SUITE_REGISTRATION(TimersTests);

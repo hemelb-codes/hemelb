@@ -7,7 +7,7 @@
 
 namespace hemelb
 {
-  namespace net
+  namespace comm
   {
     template<>
     MPI_Datatype MpiDataTypeTraits<lb::DensityEtc>::RegisterMpiDataType()
@@ -51,11 +51,13 @@ namespace hemelb
       }
     }
 
-    IncompressibilityChecker::IncompressibilityChecker(
-        const geometry::LatticeData * latticeData, net::Net* net, SimulationState* simState,
-        lb::MacroscopicPropertyCache& propertyCache, reporting::Timers& timings,
-        distribn_t maximumRelativeDensityDifferenceAllowed) :
-        net::CollectiveAction(net->GetCommunicator(), timings[reporting::Timers::mpiWait]),
+    IncompressibilityChecker::IncompressibilityChecker(const geometry::LatticeData * latticeData,
+						       comm::Communicator::ConstPtr comms,
+						       SimulationState* simState,
+						       lb::MacroscopicPropertyCache& propertyCache,
+						       reporting::Timers& timings,
+						       distribn_t maximumRelativeDensityDifferenceAllowed) :
+        timestep::CollectiveActor(comms, timings[reporting::Timers::mpiWait]),
             mLatDat(latticeData), propertyCache(propertyCache), mSimState(simState),
             maximumRelativeDensityDifferenceAllowed(maximumRelativeDensityDifferenceAllowed),
             workTimer(timings[reporting::Timers::monitoring])
@@ -98,6 +100,9 @@ namespace hemelb
 
     void IncompressibilityChecker::PreSend()
     {
+      if (isCollectiveRunning)
+	return;
+      
       for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
       {
         DensityEtc etc;
@@ -114,7 +119,8 @@ namespace hemelb
     void IncompressibilityChecker::Send(void)
     {
       // Begin collective.
-      collectiveReq = collectiveComm.Iallreduce(localDensity, reduction, globalDensity);
+      collectiveReq = collectiveComm->Iallreduce(localDensity, reduction, globalDensity);
+      isCollectiveRunning = true;
     }
 
     bool IncompressibilityChecker::IsDensityDiffWithinRange() const

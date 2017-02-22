@@ -27,7 +27,6 @@ Name Local Min Mean Max
 
 {{#BUILD}}
 Revision number:{{REVISION}}
-Steering mode: {{STEERING}}
 Build type: {{TYPE}}
 Optimisation level: {{OPTIMISATION}}
 Use SSE3: {{USE_SSE3}}
@@ -41,6 +40,5 @@ Wall/iolet boundary condition: {{WALL_IOLET_BOUNDARY_CONDITION}}
 
 Communications options:
 Point to point implementation: {{POINTPOINT_IMPLEMENTATION}}
-Gathers implementation: {{GATHERS_IMPLEMENTATION}}
 Separated concerns: {{SEPARATE_CONCERNS}}
 {{/BUILD}}

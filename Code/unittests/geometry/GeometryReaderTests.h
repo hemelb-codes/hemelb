@@ -39,8 +39,7 @@ namespace hemelb
           {
             FolderTestFixture::setUp();
             timings = new reporting::Timers(Comms());
-            reader = new GeometryReader(false,
-                                        hemelb::lb::lattices::D3Q15::GetLatticeInfo(),
+            reader = new GeometryReader(hemelb::lb::lattices::D3Q15::GetLatticeInfo(),
                                         *timings, Comms());
             lattice = NULL;
             fourCube = FourCubeLatticeData::Create(Comms());

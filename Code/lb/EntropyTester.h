@@ -7,7 +7,7 @@
 #ifndef HEMELB_LB_ENTROPYTESTER_H
 #define HEMELB_LB_ENTROPYTESTER_H
 
-#include "net/CollectiveAction.h"
+#include "timestep/CollectiveActor.h"
 #include "geometry/LatticeData.h"
 #include "lb/HFunction.h"
 #include "log/Logger.h"
@@ -17,13 +17,13 @@ namespace hemelb
   namespace lb
   {
     template<class LatticeType>
-    class EntropyTester : public net::CollectiveAction
+    class EntropyTester : public timestep::CollectiveActor
     {
       public:
         EntropyTester(int* collisionTypes, unsigned int typesTested,
-                      const geometry::LatticeData * iLatDat, net::Net* net,
+                      const geometry::LatticeData * iLatDat, comm::Communicator::ConstPtr comm,
                       SimulationState* simState, reporting::Timers& timings) :
-            net::CollectiveAction(net->GetCommunicator(), timings[reporting::Timers::mpiWait]),
+            timestep::CollectiveActor(comm, timings[reporting::Timers::mpiWait]),
                 mLatDat(iLatDat), mHPreCollision(mLatDat->GetLocalFluidSiteCount()),
                 workTimer(timings[reporting::Timers::monitoring])
         {
@@ -135,7 +135,7 @@ namespace hemelb
         }
         void Send(void)
         {
-          collectiveReq = collectiveComm.Ireduce(localHTheorem, MPI_MAX, RootRank, globalHTheorem);
+          collectiveReq = collectiveComm->Ireduce(localHTheorem, MPI_MAX, RootRank, globalHTheorem);
         }
         /**
          * Take the combined stability information (an int, with a value of hemelb::lb::Unstable
@@ -143,7 +143,7 @@ namespace hemelb
          */
         void PostReceive()
         {
-          if (collectiveComm.Rank() == RootRank && globalHTheorem == DISOBEYED)
+          if (collectiveComm->Rank() == RootRank && globalHTheorem == DISOBEYED)
           {
             log::Logger::Log<log::Error, log::Singleton>("H Theorem violated.");
           }

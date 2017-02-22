@@ -11,6 +11,7 @@
 
 #include "lb/IncompressibilityChecker.h"
 #include "net/phased/steps.h"
+#include "timestep/TimeStepManager.h"
 
 #include "unittests/FourCubeLatticeData.h"
 #include "unittests/reporting/Mocks.h"
@@ -55,7 +56,6 @@ namespace hemelb
             eps = 1e-9;
 
             timings = new hemelb::reporting::Timers(Comms());
-            net = new net::Net(Comms());
           }
 
           void tearDown()
@@ -64,18 +64,17 @@ namespace hemelb
             FourCubeBasedTestFixture::tearDown();
           }
 
-          void AdvanceActorOneTimeStep(net::IteratedAction& actor)
+  	  void AdvanceActorOneTimeStep(timestep::Actor& actor)
           {
-            for (int phase = net::phased::steps::BeginPhase; phase <= net::phased::steps::EndPhase; ++phase)
-            {
-              actor.CallAction(phase);
-            }
-          }
+	    timestep::TimeStepManager tsm(1);
+	    tsm.AddToPhase(0, &actor);
+	    tsm.DoStep();
+	  }
 
           void TestIncompressibilityCheckerRootNode()
           {
             hemelb::lb::IncompressibilityChecker incompChecker(latDat,
-                                                               net,
+                                                               Comms(),
                                                                simState,
                                                                *cache,
                                                                *timings,
@@ -138,7 +137,7 @@ namespace hemelb
           void TestIncompressibilityCheckerLeafNode()
           {
             hemelb::lb::IncompressibilityChecker incompChecker(latDat,
-                                                               net,
+                                                               Comms(),
                                                                simState,
                                                                *cache,
                                                                *timings,
@@ -169,7 +168,6 @@ namespace hemelb
           distribn_t largestDefaultDensity;
           distribn_t largestDefaultVelocityMagnitude;
           hemelb::reporting::Timers* timings;
-          net::Net* net;
           distribn_t eps;
       };
 

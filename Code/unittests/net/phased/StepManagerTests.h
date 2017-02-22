@@ -7,10 +7,10 @@
 #ifndef HEMELB_UNITTESTS_NET_PHASED_STEPMANAGERTESTS_H
 #define HEMELB_UNITTESTS_NET_PHASED_STEPMANAGERTESTS_H
 #include "net/phased/StepManager.h"
-#include "unittests/helpers/MockNetHelper.h"
+#include "unittests/helpers/MockCommsHelper.h"
 #include "unittests/net/phased/MockConcern.h"
 #include "unittests/net/phased/MockIteratedAction.h"
-#include "net/phased/NetConcern.h"
+#include "comm/AsyncConcern.h"
 #include <cppunit/TestFixture.h>
 
 namespace hemelb
@@ -23,7 +23,7 @@ namespace hemelb
       {
         using namespace hemelb::net::phased;
         using namespace hemelb::unittests::helpers;
-        class StepManagerTests : public CppUnit::TestFixture, public MockNetHelper
+        class StepManagerTests : public CppUnit::TestFixture, public MockCommsHelper
         {
             CPPUNIT_TEST_SUITE (StepManagerTests);
             CPPUNIT_TEST (TestConstruct);
@@ -50,7 +50,7 @@ namespace hemelb
 
           public:
             StepManagerTests() :
-                MockNetHelper(),stepManager(NULL), action(NULL), concern(NULL), netConcern(NULL), action2(NULL), concern2(NULL)
+                MockCommsHelper(),stepManager(NULL), action(NULL), concern(NULL), netConcern(NULL), action2(NULL), concern2(NULL)
             {
             }
 
@@ -62,7 +62,7 @@ namespace hemelb
 
             void tearDown()
             {
-              MockNetHelper::tearDown();
+              MockCommsHelper::tearDown();
               delete stepManager;
               delete netConcern;
               delete action;
@@ -139,17 +139,17 @@ namespace hemelb
 
               int payload0Expectation = 5;
               int payload1Expectation = 1;
-              netMock->RequestSendR(payload1, 1);
-              netMock->RequestReceiveR(payload0, 1);
-              netMock->RequireSend(&payload1Expectation, 1, 1);
-              netMock->RequireReceive(&payload0Expectation, 1, 1);
-
+              MockComms()->RequireSend(payload1Expectation, 1, 11);
+              MockComms()->RequireRecv(payload0Expectation, 1, 11);
+	      
               stepManager->RegisterCommsSteps(*netConcern, 0);
+              commQ->Isend(payload1, 1, 11);
+              commQ->Irecv(payload0, 1, 11);
 
               stepManager->CallActionsForPhase(0);
 
               CPPUNIT_ASSERT_EQUAL(payload0, 5);
-              netMock->ExpectationsAllCompleted();
+              MockComms()->ExpectationsAllCompleted();
             }
 
             void TestCallNonCommsActions()
@@ -203,11 +203,12 @@ namespace hemelb
 
               int payload0Expectation = 5;
               int payload1Expectation = 1;
-              netMock->RequestSendR(payload1, 1);
-              netMock->RequestReceiveR(payload0, 1);
-              netMock->RequireSend(&payload1Expectation, 1, 1);
-              netMock->RequireReceive(&payload0Expectation, 1, 1);
-
+              MockComms()->RequireSend(payload1Expectation, 1, 1);
+              MockComms()->RequireRecv(payload0Expectation, 1, 1);
+	      
+	      commQ->Isend(payload1, 1, 1);
+              commQ->Irecv(payload0, 1, 1);
+  
               action = new MockIteratedAction("mockOne");
               concern = new MockConcern("mockTwo");
 
@@ -228,7 +229,7 @@ namespace hemelb
               CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, "),
                                    action->CallsSoFar());
               CPPUNIT_ASSERT_EQUAL(payload0, 5);
-              netMock->ExpectationsAllCompleted();
+              MockComms()->ExpectationsAllCompleted();
             }
 
             void TestCallAllActionsOnePhase()
@@ -240,11 +241,12 @@ namespace hemelb
 
               int payload0Expectation = 5;
               int payload1Expectation = 1;
-              netMock->RequestSendR(payload1, 1);
-              netMock->RequestReceiveR(payload0, 1);
-              netMock->RequireSend(&payload1Expectation, 1, 1);
-              netMock->RequireReceive(&payload0Expectation, 1, 1);
+              MockComms()->RequireSend(payload1Expectation, 1, 0);
+              MockComms()->RequireRecv(payload0Expectation, 1, 0);
 
+              commQ->Isend(payload1, 1);
+              commQ->Irecv(payload0, 1);
+	      
               action = new MockIteratedAction("mockOne");
               concern = new MockConcern("mockTwo");
 
@@ -267,7 +269,7 @@ namespace hemelb
               CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, EndIteration, "),
                                    action->CallsSoFar());
               CPPUNIT_ASSERT_EQUAL(payload0, 5);
-              netMock->ExpectationsAllCompleted();
+              MockComms()->ExpectationsAllCompleted();
             }
 
             void TestCallAllActionsManyPhases()
@@ -279,10 +281,11 @@ namespace hemelb
 
               int payload0Expectation = 5;
               int payload1Expectation = 1;
-              netMock->RequestSendR(payload1, 1);
-              netMock->RequestReceiveR(payload0, 1);
-              netMock->RequireSend(&payload1Expectation, 1, 1);
-              netMock->RequireReceive(&payload0Expectation, 1, 1);
+              MockComms()->RequireSend(payload1Expectation, 1, 0);
+              MockComms()->RequireRecv(payload0Expectation, 1, 0);
+	      
+              commQ->Isend(payload1, 1);
+	      commQ->Irecv(payload0, 1);
 
               action = new MockIteratedAction("mockOne");
               concern = new MockConcern("mockTwo");
@@ -325,7 +328,7 @@ namespace hemelb
               CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, EndIteration, "),
                                    action2->CallsSoFar());
               CPPUNIT_ASSERT_EQUAL(payload0, 5);
-              netMock->ExpectationsAllCompleted();
+              MockComms()->ExpectationsAllCompleted();
             }
 
             void TestCallAllActionsPhaseByPhase()
@@ -368,16 +371,17 @@ namespace hemelb
               CPPUNIT_ASSERT_EQUAL(std::string(""), action->CallsSoFar());
               CPPUNIT_ASSERT_EQUAL(std::string(""), action2->CallsSoFar());
               CPPUNIT_ASSERT_EQUAL(payload0, 0);
-              netMock->ExpectationsAllCompleted();
+              MockComms()->ExpectationsAllCompleted();
 
               //------------------Phase 0 ---------------------------------------------
 
               int payload0Expectation = 5;
               int payload1Expectation = 1;
-              netMock->RequestSendR(payload1, 1);
-              netMock->RequestReceiveR(payload0, 1);
-              netMock->RequireSend(&payload1Expectation, 1, 1);
-              netMock->RequireReceive(&payload0Expectation, 1, 1);
+              MockComms()->RequireSend(payload1Expectation, 1, 0);
+              MockComms()->RequireRecv(payload0Expectation, 1, 0);
+	      
+              commQ->Isend(payload1, 1);
+              commQ->Irecv(payload0, 1);
 
               stepManager->CallActionsForPhase(0);
 
@@ -392,17 +396,17 @@ namespace hemelb
                                    action->CallsSoFar());
               CPPUNIT_ASSERT_EQUAL(std::string(""), action2->CallsSoFar());
               CPPUNIT_ASSERT_EQUAL(payload0, 5);
-              netMock->ExpectationsAllCompleted();
+              MockComms()->ExpectationsAllCompleted();
 
               // ------------------- Phase 1 ------------------------------------------
 
               payload0Expectation = 13;
               payload1Expectation = 4;
               payload1 = 4;
-              netMock->RequestSendR(payload1, 1);
-              netMock->RequestReceiveR(payload0, 1);
-              netMock->RequireSend(&payload1Expectation, 1, 1);
-              netMock->RequireReceive(&payload0Expectation, 1, 1);
+              MockComms()->RequireSend(payload1Expectation, 1, 0);
+              MockComms()->RequireRecv(payload0Expectation, 1, 0);
+              commQ->Isend(payload1, 1);
+              commQ->Irecv(payload0, 1);
 
               stepManager->CallActionsForPhase(1);
 
@@ -413,17 +417,17 @@ namespace hemelb
               CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, "),
                                    action2->CallsSoFar());
               CPPUNIT_ASSERT_EQUAL(payload0, 13);
-              netMock->ExpectationsAllCompleted();
+              MockComms()->ExpectationsAllCompleted();
 
               // ------------------------- Phase 2 -----------------------------------------
 
               payload0Expectation = 77;
               payload1Expectation = 16;
               payload1 = 16;
-              netMock->RequestSendR(payload1, 1);
-              netMock->RequestReceiveR(payload0, 1);
-              netMock->RequireSend(&payload1Expectation, 1, 1);
-              netMock->RequireReceive(&payload0Expectation, 1, 1);
+              MockComms()->RequireSend(payload1Expectation, 1, 0);
+              MockComms()->RequireRecv(payload0Expectation, 1, 0);
+              commQ->Isend(payload1, 1);
+              commQ->Irecv(payload0, 1);
 
               stepManager->CallActionsForPhase(2);
 
@@ -436,7 +440,7 @@ namespace hemelb
               CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, "),
                                    action2->CallsSoFar());
               CPPUNIT_ASSERT_EQUAL(payload0, 77);
-              netMock->ExpectationsAllCompleted();
+              MockComms()->ExpectationsAllCompleted();
 
               // -------------------------- EndAll -----------------------------------------------
 
@@ -451,13 +455,13 @@ namespace hemelb
                                    action->CallsSoFar());
               CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, EndIteration, "),
                                    action2->CallsSoFar());
-              netMock->ExpectationsAllCompleted();
+              MockComms()->ExpectationsAllCompleted();
             }
 
             void SetupMocks(const proc_t core_count, const proc_t current_core)
             {
-              MockNetHelper::setUp(core_count,current_core);
-              netConcern = new NetConcern(*netMock);
+              MockCommsHelper::setUp(core_count,current_core);
+              netConcern = new AsyncConcern(commQ);
             }
 
           private:
@@ -465,7 +469,7 @@ namespace hemelb
             StepManager *stepManager;
             MockIteratedAction *action;
             MockConcern *concern;
-            NetConcern *netConcern;
+	    comm::AsyncConcern *netConcern;
             MockIteratedAction *action2;
             MockConcern *concern2;
         };

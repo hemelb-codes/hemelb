@@ -4,7 +4,7 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 add_library(hemelb_lb
-	iolets/BoundaryCommunicator.cc iolets/BoundaryComms.cc iolets/BoundaryValues.cc
+	iolets/BoundaryValues.cc
 	iolets/InOutLet.cc
 	iolets/InOutLetCosine.cc iolets/InOutLetFile.cc
 	iolets/InOutLetMultiscale.cc

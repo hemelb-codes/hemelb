@@ -8,5 +8,6 @@
 #define HEMELB_UNITTESTS_HELPERS_HELPERS_H
 
 #include "unittests/helpers/RandomSourceTests.h"
+#include "unittests/helpers/MockCommunicatorTests.h"
 
 #endif /* HEMELB_UNITTESTS_HELPERS_HELPERS_H */

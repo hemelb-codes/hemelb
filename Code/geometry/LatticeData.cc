@@ -7,19 +7,19 @@
 #include <map>
 #include <limits>
 
-#include "debug/Debugger.h"
 #include "log/Logger.h"
-#include "net/IOCommunicator.h"
+#include "comm/Communicator.h"
 #include "geometry/BlockTraverser.h"
 #include "geometry/LatticeData.h"
 #include "geometry/neighbouring/NeighbouringLatticeData.h"
 #include "util/utilityFunctions.h"
+#include "comm/Async.h"
 
 namespace hemelb
 {
   namespace geometry
   {
-    LatticeData::LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const net::IOCommunicator& comms_) :
+    LatticeData::LatticeData(const lb::lattices::LatticeInfo& latticeInfo, comm::Communicator::ConstPtr comms_) :
         latticeInfo(latticeInfo), neighbouringData(new neighbouring::NeighbouringLatticeData(latticeInfo)), comms(comms_)
     {
     }
@@ -29,7 +29,7 @@ namespace hemelb
       delete neighbouringData;
     }
 
-    LatticeData::LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult, const net::IOCommunicator& comms_) :
+    LatticeData::LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult, comm::Communicator::ConstPtr comms_) :
         latticeInfo(latticeInfo), neighbouringData(new neighbouring::NeighbouringLatticeData(latticeInfo)), comms(comms_)
     {
       SetBasicDetails(readResult.GetBlockDimensions(),
@@ -39,7 +39,7 @@ namespace hemelb
       // if debugging then output beliefs regarding geometry and neighbour list
       if (log::Logger::ShouldDisplay<log::Trace>())
       {
-        proc_t localRank = comms.Rank();
+        proc_t localRank = comms->Rank();
         for (std::vector<NeighbouringProcessor>::iterator itNeighProc = neighbouringProcs.begin();
             itNeighProc != neighbouringProcs.end(); ++itNeighProc)
         {
@@ -82,7 +82,7 @@ namespace hemelb
       std::vector<float> domainEdgeWallDistance[COLLISION_TYPES];
       std::vector<float> midDomainWallDistance[COLLISION_TYPES];
 
-      proc_t localRank = comms.Rank();
+      proc_t localRank = comms->Rank();
       // Iterate over all blocks in site units
       for (BlockTraverser blockTraverser(*this); blockTraverser.CurrentLocationValid(); blockTraverser.TraverseOne())
       {
@@ -275,9 +275,9 @@ namespace hemelb
     void LatticeData::CollectFluidSiteDistribution()
     {
       hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Gathering lattice info.");
-      fluidSitesOnEachProcessor = comms.AllGather(localFluidSites);
+      fluidSitesOnEachProcessor = comms->AllGather(localFluidSites);
       totalFluidSites = 0;
-      for (proc_t ii = 0; ii < comms.Size(); ++ii)
+      for (proc_t ii = 0; ii < comms->Size(); ++ii)
       {
         totalFluidSites += fluidSitesOnEachProcessor[ii];
       }
@@ -305,7 +305,7 @@ namespace hemelb
             siteSet.TraverseOne())
         {
           if (block.GetProcessorRankForSite(siteSet.GetCurrentIndex())
-              == comms.Rank())
+              == comms->Rank())
           {
             util::Vector3D<site_t> globalCoords = blockSet.GetCurrentLocation() * GetBlockSize()
                 + siteSet.GetCurrentLocation();
@@ -320,8 +320,8 @@ namespace hemelb
 
       }
 
-      std::vector<site_t> siteMins = comms.AllReduce(localMins, MPI_MIN);
-      std::vector<site_t> siteMaxes = comms.AllReduce(localMaxes, MPI_MAX);
+      std::vector<site_t> siteMins = comms->AllReduce(localMins, MPI_MIN);
+      std::vector<site_t> siteMaxes = comms->AllReduce(localMaxes, MPI_MAX);
 
       for (unsigned ii = 0; ii < 3; ++ii)
       {
@@ -335,7 +335,7 @@ namespace hemelb
       // Allocate the index in which to put the distribution functions received from the other
       // process.
       std::vector<std::vector<site_t> > sharedDistributionLocationForEachProc =
-          std::vector<std::vector<site_t> >(comms.Size());
+          std::vector<std::vector<site_t> >(comms->Size());
       site_t totalSharedDistributionsSoFar = 0;
       // Set the remaining neighbouring processor data.
       for (size_t neighbourId = 0; neighbourId < neighbouringProcs.size(); neighbourId++)
@@ -353,7 +353,7 @@ namespace hemelb
 
     void LatticeData::InitialiseNeighbourLookup(std::vector<std::vector<site_t> >& sharedFLocationForEachProc)
     {
-      const proc_t localRank = comms.Rank();
+      const proc_t localRank = comms->Rank();
       neighbourIndices.resize(latticeInfo.GetNumVectors() * localFluidSites);
       for (BlockTraverser blockTraverser(*this); blockTraverser.CurrentLocationValid(); blockTraverser.TraverseOne())
       {
@@ -433,7 +433,7 @@ namespace hemelb
 
     void LatticeData::InitialisePointToPointComms(std::vector<std::vector<site_t> >& sharedFLocationForEachProc)
     {
-      proc_t localRank = comms.Rank();
+      proc_t localRank = comms->Rank();
       // point-to-point communications are performed to match data to be
       // sent to/receive from different partitions; in this way, the
       // communication of the locations of the interface-dependent fluid
@@ -441,7 +441,7 @@ namespace hemelb
       // propagate to different partitions is avoided (only their values
       // will be communicated). It's here!
       // Allocate the request variable.
-      net::Net tempNet(comms);
+      comm::Async commQ(comms);
       for (size_t neighbourId = 0; neighbourId < neighbouringProcs.size(); neighbourId++)
       {
         NeighbouringProcessor* neigh_proc_p = &neighbouringProcs[neighbourId];
@@ -451,21 +451,19 @@ namespace hemelb
         // other processor.
         if (neigh_proc_p->Rank > localRank)
         {
-          tempNet.RequestSendV(sharedFLocationForEachProc[neigh_proc_p->Rank], neigh_proc_p->Rank);
+	  commQ.Isend(sharedFLocationForEachProc[neigh_proc_p->Rank], neigh_proc_p->Rank);
         }
         else
         {
           sharedFLocationForEachProc[neigh_proc_p->Rank].resize(neigh_proc_p->SharedDistributionCount * 4);
-          tempNet.RequestReceiveV(sharedFLocationForEachProc[neigh_proc_p->Rank], neigh_proc_p->Rank);
+          commQ.Irecv(sharedFLocationForEachProc[neigh_proc_p->Rank], neigh_proc_p->Rank);
         }
       }
-
-      tempNet.Dispatch();
     }
 
     void LatticeData::InitialiseReceiveLookup(std::vector<std::vector<site_t> >& sharedFLocationForEachProc)
     {
-      proc_t localRank = comms.Rank();
+      proc_t localRank = comms->Rank();
       streamingIndicesForReceivedDistributions.resize(totalSharedFs);
       site_t f_count = GetLocalFluidSiteCount() * latticeInfo.GetNumVectors();
       site_t sharedSitesSeen = 0;
@@ -594,7 +592,7 @@ namespace hemelb
 
       // get the rank of the processor that owns the site
       procId = block.GetProcessorRankForSite(localSiteIndex);
-      if (procId != comms.Rank())
+      if (procId != comms->Rank())
         return false;
       if (procId == SITE_OR_BLOCK_SOLID) // means that the site is solid
         return false;
@@ -653,20 +651,28 @@ namespace hemelb
       blockCoords.x = blockIJData / blockCounts.y;
     }
 
-    void LatticeData::SendAndReceive(hemelb::net::Net* net)
+    void LatticeData::Receive(comm::Async::Ptr commQ)
     {
       for (std::vector<NeighbouringProcessor>::const_iterator it = neighbouringProcs.begin();
           it != neighbouringProcs.end(); ++it)
       {
-        // Request the receive into the appropriate bit of FOld.
-        net->RequestReceive<distribn_t>(GetFOld( (*it).FirstSharedDistribution),
-                                        (int) ( ( (*it).SharedDistributionCount)),
-                                        (*it).Rank);
-        // Request the send from the right bit of FNew.
-        net->RequestSend<distribn_t>(GetFNew( (*it).FirstSharedDistribution),
-                                     (int) ( ( (*it).SharedDistributionCount)),
-                                     (*it).Rank);
-
+        // Start the receive into the appropriate bit of FOld.
+        commQ->Irecv(GetFOld( (*it).FirstSharedDistribution),
+		     (int) ( ( (*it).SharedDistributionCount)),
+		     (*it).Rank,
+		     1);
+      }
+    }
+    void LatticeData::Send(comm::Async::Ptr commQ)
+    {
+      for (std::vector<NeighbouringProcessor>::const_iterator it = neighbouringProcs.begin();
+          it != neighbouringProcs.end(); ++it)
+      {
+        // Start the send from the right bit of FNew.
+        commQ->Isend(GetFNew( (*it).FirstSharedDistribution),
+		     (int) ( ( (*it).SharedDistributionCount)),
+		     (*it).Rank,
+		     1);
       }
     }
 
@@ -704,7 +710,7 @@ namespace hemelb
 
     int LatticeData::GetLocalRank() const
     {
-      return comms.Rank();
+      return comms->Rank();
     }
 
   }

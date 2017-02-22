@@ -7,7 +7,7 @@
 #ifndef HEMELB_COLLOIDS_PARTICLE_H
 #define HEMELB_COLLOIDS_PARTICLE_H
 
-#include "net/mpi.h"
+#include "comm/MpiDataType.h"
 #include "colloids/PersistedParticle.h"
 #include "geometry/LatticeData.h"
 #include "io/xml/XmlAbstractionLayer.h"
@@ -27,7 +27,7 @@ namespace hemelb
      * all persisted properties, i.e. those that are read in from a config file,
      * are inherited from the PersistedParticle class (which handles the I/O)
      */
-    class Particle : PersistedParticle
+    class Particle : public PersistedParticle
     {
       public:
         /** constructor - gets initial values from an xml configuration file */
@@ -195,7 +195,7 @@ namespace hemelb
         friend struct ParticleSorter;
     };
   }
-  namespace net
+  namespace comm
   {
     template<>
     MPI_Datatype MpiDataTypeTraits<colloids::Particle>::RegisterMpiDataType();

@@ -23,7 +23,7 @@ namespace hemelb
     {
       public:
         MultiscaleSimulationMaster(hemelb::configuration::CommandLine &options,
-                                   const net::IOCommunicator& ioComm,
+                                   comm::Communicator::ConstPtr ioComm,
                                    Intercommunicator & aintercomms) :
             SimulationMaster(options, ioComm), intercomms(aintercomms),
                 multiscaleIoletType("inoutlet")
@@ -66,7 +66,7 @@ namespace hemelb
           std::vector<unsigned> GlobalIoletCount;
           GlobalIoletCount.push_back(inletValues->GetLocalIoletCount());
           GlobalIoletCount.push_back(outletValues->GetLocalIoletCount());
-          ioComms.Broadcast(GlobalIoletCount, 0);
+          ioComms->Broadcast(GlobalIoletCount, 0);
 
           std::vector<std::vector<site_t> > invertedInletBoundaryList(GlobalIoletCount[0]);
           std::vector<std::vector<site_t> > invertedOutletBoundaryList(GlobalIoletCount[1]);
@@ -225,6 +225,14 @@ namespace hemelb
              * (it's hard enough to get the physics right with a consistent
              * state ;)). */
 
+	    // TODO: Derek to please comment on this.
+	    
+	    // With the rejigged BoundarValues, the above comment is
+	    // probably defunct. Hence I have removed the RequestComms
+	    // calls below. (They may have in fact not quite worked as
+	    // intented as they was no call to the net->Dispatch
+	    // method to actually cause communication)
+	    
             hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("inlet and outlet count: %d and %d",
                                                                                   inletValues->GetLocalIoletCount(),
                                                                                   outletValues->GetLocalIoletCount());
@@ -232,14 +240,13 @@ namespace hemelb
                                                                                   inletValues->GetLocalIolet(0)->IsCommsRequired());
             hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("outlets: %d",
                                                                                   outletValues->GetLocalIolet(0)->IsCommsRequired());
+	    // SetCommsRequired(inletValues, true);
+            // SetCommsRequired(outletValues, true);
 
-            SetCommsRequired(inletValues, true);
-            SetCommsRequired(outletValues, true);
-
-            inletValues->RequestComms();
-            outletValues->RequestComms();
-            SetCommsRequired(inletValues, false);
-            SetCommsRequired(outletValues, false);
+            // inletValues->RequestComms();
+            // outletValues->RequestComms();
+            // SetCommsRequired(inletValues, false);
+            // SetCommsRequired(outletValues, false);
 
             for (unsigned int i = 0; i < inletValues->GetLocalIoletCount(); i++)
             {
@@ -332,49 +339,18 @@ namespace hemelb
         std::vector<std::vector<site_t> > ExchangeAndCompleteInverseBoundaryList(
             std::vector<std::vector<site_t> > inList)
         {
-          std::vector<std::vector<site_t> > outList;
-          int *recvSizes = new int[ioComms.Size()];
-          int *recvDispls = new int[ioComms.Size()];
+          std::vector<std::vector<site_t> > outList(inList.size());
 
           /* TODO: ASSUMPTION:
            * inList.size() is equal everywhere. This is not necessarily the case.
            * Use an AllReduce MAX and resize inList accordingly to make the remnant
            * of the code work here for unequal inList sizes. */
-
           for (unsigned int i = 0; i < inList.size(); i++)
           {
-            int sendSize = ((int) inList[i].size());
-            site_t *sendList = new site_t[inList[i].size()];
-            for (unsigned int j = 0; j < inList[i].size(); j++)
-            {
-              sendList[j] = inList[i][j];
-            }
-            HEMELB_MPI_CALL( MPI_Allgather,
-                            ( &sendSize, 1, MPI_INT, recvSizes, 1, MPI_INT, ioComms ));
-
-            int64_t totalSize = 0;
-
-            int np = ioComms.Size();
-            int64_t offset = 0;
-
-            for (int j = 0; j < np; j++)
-            {
-              totalSize += recvSizes[j];
-              recvDispls[j] = offset;
-              offset += recvSizes[j];
-            }
-
-            site_t *recvList = new site_t[totalSize]; //inList[i].size()
-
-            HEMELB_MPI_CALL( MPI_Allgatherv,
-                            ( sendList, inList[i].size(), MPI_LONG_LONG, recvList, recvSizes, recvDispls, MPI_LONG_LONG, ioComms ));
-
-            std::vector<site_t> subList;
-            for (int j = 0; j < totalSize; j++)
-            {
-              subList.push_back(recvList[j]);
-            }
-            outList.push_back(subList);
+            int sendSize = inList[i].size();
+	    auto recvSizes = ioComms->AllGather(sendSize);
+	    auto recvList = ioComms->AllGatherV(inList[i], recvSizes);
+	    outList.emplace_back(std::move(recvList));
           }
 
           return outList;

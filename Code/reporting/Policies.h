@@ -15,8 +15,8 @@
  */
 
 #include <fstream>
-#include "net/mpi.h"
-#include "net/IOCommunicator.h"
+//#include "net/mpi.h"
+//#include "net/IOCommunicator.h"
 #include "util/utilityFunctions.h"
 
 namespace hemelb
@@ -24,49 +24,49 @@ namespace hemelb
   namespace reporting
   {
 
-    /**
-     * Abstraction of interaction with MPI system.
-     * Mocked by hemelb::unittests::reporting::MPICommsMock
-     */
-    class MPICommsPolicy
-    {
-      public:
-        /**
-         * Stores a pointer to the MPI Network topology singleton.
-         */
-        MPICommsPolicy(const net::IOCommunicator& inst_) :
-            instance(inst_)
-        {
-        }
-      protected:
-        /**
-         * Wrap the MPI reduce call.
-         * @param sendbuf Pointer to start of send buffer
-         * @param recvbuf Pointer to start of receive buffer
-         * @param count Number of data to send/receive
-         * @param datatype MPI Datatype
-         * @param op Operator to reduce under
-         * @param root Target processor where the reduction is reduced to.
-         * @param comm MPI Communicator to reduce over
-         * @return
-         */
-        int Reduce(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root)
-        {
-          return MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, instance);
-        }
+    // /**
+    //  * Abstraction of interaction with MPI system.
+    //  * Mocked by hemelb::unittests::reporting::MPICommsMock
+    //  */
+    // class MPICommsPolicy
+    // {
+    //   public:
+    //     /**
+    //      * Stores a pointer to the MPI Network topology singleton.
+    //      */
+    //     MPICommsPolicy(const comm::Communicator* inst_) :
+    //         instance(inst_)
+    //     {
+    //     }
+    //   protected:
+    //     /**
+    //      * Wrap the MPI reduce call.
+    //      * @param sendbuf Pointer to start of send buffer
+    //      * @param recvbuf Pointer to start of receive buffer
+    //      * @param count Number of data to send/receive
+    //      * @param datatype MPI Datatype
+    //      * @param op Operator to reduce under
+    //      * @param root Target processor where the reduction is reduced to.
+    //      * @param comm MPI Communicator to reduce over
+    //      * @return
+    //      */
+    //     int Reduce(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root)
+    //     {
+    //       return MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, instance);
+    //     }
 
-        /**
-         * Total number of MPI nodes in the communicator.
-         * @return Total number of processors, some of which may be shared on a single machine.
-         */
-        proc_t GetProcessorCount() const
-        {
-          return instance.Size();
-        }
+    //     /**
+    //      * Total number of MPI nodes in the communicator.
+    //      * @return Total number of processors, some of which may be shared on a single machine.
+    //      */
+    //     proc_t GetProcessorCount() const
+    //     {
+    //       return instance->Size();
+    //     }
 
-      private:
-        const net::IOCommunicator& instance; //! Reference to the singleton instance of the MPI topology
-    };
+    //   private:
+    //     const comm::Communicator* instance; //! Reference to the singleton instance of the MPI topology
+    // };
 
     /**
      * A way to get the time.

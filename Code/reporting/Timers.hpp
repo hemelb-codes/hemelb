@@ -8,48 +8,33 @@
 #define HEMELB_REPORTING_TIMERS_HPP
 
 #include "reporting/Timers.h"
+#include <algorithm>
 
 namespace hemelb
 {
   namespace reporting
   {
-    template<class ClockPolicy, class CommsPolicy>
-    void TimersBase<ClockPolicy, CommsPolicy>::Reduce()
+    template<class ClockPolicy>
+    void TimersBase<ClockPolicy>::Reduce()
     {
-      double timings[numberOfTimers];
+      std::vector<double> timings(numberOfTimers);
       for (unsigned int ii = 0; ii < numberOfTimers; ii++)
       {
         timings[ii] = timers[ii].Get();
       }
 
-      CommsPolicy::Reduce(timings,
-                          &maxes[0],
-                          numberOfTimers,
-                          net::MpiDataType<double>(),
-                          MPI_MAX,
-                          0);
-      CommsPolicy::Reduce(timings,
-                          &means[0],
-                          numberOfTimers,
-                          net::MpiDataType<double>(),
-                          MPI_SUM,
-                          0);
-      CommsPolicy::Reduce(timings,
-                          &mins[0],
-                          numberOfTimers,
-                          net::MpiDataType<double>(),
-                          MPI_MIN,
-                          0);
-      for (unsigned int ii = 0; ii < numberOfTimers; ii++)
-      {
-        means[ii] /= double(CommsPolicy::GetProcessorCount());
-      }
+      maxes = comms->Reduce(timings, MPI_MAX, 0);
+      means = comms->Reduce(timings, MPI_SUM, 0);
+      mins = comms->Reduce(timings, MPI_MIN, 0);
+      const int np = comms->Size();
+      std::transform(means.begin(), means.end(), means.begin(),
+		     [&](double x) { return x / np; });
     }
 
-    template<class ClockPolicy, class CommsPolicy>
-    void TimersBase<ClockPolicy, CommsPolicy>::Report(ctemplate::TemplateDictionary& dictionary)
+    template<class ClockPolicy>
+    void TimersBase<ClockPolicy>::Report(ctemplate::TemplateDictionary& dictionary)
     {
-      dictionary.SetIntValue("THREADS", CommsPolicy::GetProcessorCount());
+      dictionary.SetIntValue("THREADS", comms->Size());
 
       for (unsigned int ii = 0; ii < numberOfTimers; ii++)
       {

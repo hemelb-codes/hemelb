@@ -19,7 +19,6 @@ option(HEMELB_BUILD_TESTS_UNIT "Build the unit-tests (HEMELB_BUILD_TESTS_ALL tak
 option(HEMELB_BUILD_TESTS_FUNCTIONAL "Build the functional tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
 option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
-option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
 option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" OFF)
@@ -31,8 +30,6 @@ set(HEMELB_READING_GROUP_SIZE 5
   CACHE INTEGER "Number of cores to use to read geometry file.")
 set(HEMELB_LOG_LEVEL Info
 	CACHE STRING "Log level, choose 'Critical', 'Error', 'Warning', 'Info', 'Debug' or 'Trace'" )
-set(HEMELB_STEERING_LIB basic
-	CACHE STRING "Steering library, choose 'basic' or 'none'" )
 set(HEMELB_DEPENDENCIES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../dependencies"
 	CACHE FILEPATH "Path to find dependency find modules")
 set(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH}
@@ -56,8 +53,6 @@ set(HEMELB_WALL_OUTLET_BOUNDARY "NASHZEROTHORDERPRESSURESBB"
   CACHE STRING "Select the boundary conditions to be used at corners between walls and outlets (NASHZEROTHORDERPRESSURESBB,NASHZEROTHORDERPRESSUREBFL,LADDIOLETSBB,LADDIOLETBFL)")
 set(HEMELB_POINTPOINT_IMPLEMENTATION Coalesce
 	CACHE STRING "Point to point comms implementation, choose 'Coalesce', 'Separated', or 'Immediate'" )
-set(HEMELB_GATHERS_IMPLEMENTATION Separated
-	CACHE STRING "Gather comms implementation, choose 'Separated', or 'ViaPointPoint'" )
 option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
 	
 # Add warnings flags to development build types
@@ -148,7 +143,7 @@ include(mpi)
 if(MPI_STANDARD_VERSION VERSION_LESS 3)
   message(FATAL_ERROR "Must have MPI 3.0 or greater")
 endif()
-set(HAVE_CONSTCORRECTMPI TRUE)
+
 include(dependencies)
 
 #-------------Resources -----------------------
@@ -181,12 +176,12 @@ add_executable(${HEMELB_EXECUTABLE} main.cc ${root_sources})
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
 	configuration
+	comm
 	extraction
 	reporting
-	steering
 	lb
 	geometry
-	net
+	timestep
 	debug
 	util
 	io
@@ -226,13 +221,13 @@ if (HEMELB_BUILD_MULTISCALE)
 	add_executable(multiscale_hemelb mainMultiscale.cc ${root_sources})
 	include_directories(${PROJECT_SOURCE_DIR})
 	set(package_subdirs
+		comm
 		configuration
 		extraction
 		reporting
-		steering
 		lb
 		geometry
-		net
+		timestep
 		debug
 		util
 		io

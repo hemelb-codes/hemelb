@@ -6,8 +6,8 @@
 
 #ifndef HEMELB_LB_INCOMPRESSIBILITYCHECKER_H
 #define HEMELB_LB_INCOMPRESSIBILITYCHECKER_H
-
-#include "net/CollectiveAction.h"
+#include "comm/Communicator.h"
+#include "timestep/CollectiveActor.h"
 #include "geometry/LatticeData.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "reporting/Reportable.h"
@@ -29,7 +29,7 @@ namespace hemelb
         double maxVel;
     };
 
-    class IncompressibilityChecker : public net::CollectiveAction,
+    class IncompressibilityChecker : public timestep::CollectiveActor,
                                      public reporting::Reportable
     {
       public:
@@ -37,11 +37,11 @@ namespace hemelb
          * Constructor
          *
          * @param latticeData geometry object
-         * @param net network interface object
+         * @param comms communicator object
          * @param simState simulation state
          * @param maximumRelativeDensityDifferenceAllowed maximum density difference allowed in the domain (relative to reference density, default 5%)
          */
-        IncompressibilityChecker(const geometry::LatticeData * latticeData, net::Net* net,
+      IncompressibilityChecker(const geometry::LatticeData * latticeData, comm::Communicator::ConstPtr comms,
                                  SimulationState* simState,
                                  lb::MacroscopicPropertyCache& propertyCache,
                                  reporting::Timers& timings,
@@ -107,15 +107,16 @@ namespace hemelb
         static MPI_Datatype GetDensityMpiDatatype();
 
       protected:
-        /**
-          * Compute the local state.
-          */
-         void PreSend(void);
-
-         /**
-          * Initiate the collective.
-          */
-         void Send(void);
+      
+      inline virtual void BeginAll() {}
+      inline virtual void Begin() {}
+      // Compute the local state
+      virtual void PreSend();
+      // Initiate the collective
+      virtual void Send();
+      inline virtual void PreWait() {}
+      inline virtual void End() {}
+      inline virtual void EndAll() {}
 
       private:
         static void UpdateDensityEtc(const DensityEtc& in, DensityEtc& inout);

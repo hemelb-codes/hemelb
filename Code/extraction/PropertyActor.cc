@@ -14,7 +14,7 @@ namespace hemelb
                                  const std::vector<PropertyOutputFile*>& propertyOutputs,
                                  IterableDataSource& dataSource,
                                  reporting::Timers& timers,
-                                 const net::IOCommunicator& ioComms) :
+                                 comm::Communicator::ConstPtr ioComms) :
         simulationState(simulationState), timers(timers)
     {
       propertyWriter = new PropertyWriter(dataSource, propertyOutputs, ioComms);
@@ -82,7 +82,7 @@ namespace hemelb
       }
     }
 
-    void PropertyActor::EndIteration()
+    void PropertyActor::EndAll()
     {
       timers[reporting::Timers::extractionWriting].Start();
       propertyWriter->Write(simulationState.GetTimeStep());

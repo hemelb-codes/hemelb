@@ -12,7 +12,7 @@
 #include "lb/lattices/LatticeInfo.h"
 #include "geometry/ParmetisHeader.h"
 #include "reporting/Timers.h"
-#include "net/MpiCommunicator.h"
+#include "comm/Communicator.h"
 #include "geometry/SiteData.h"
 #include "geometry/GeometryBlock.h"
 
@@ -25,7 +25,7 @@ namespace hemelb
       class OptimisedDecomposition
       {
         public:
-          OptimisedDecomposition(reporting::Timers& timers, net::MpiCommunicator& comms,
+	OptimisedDecomposition(reporting::Timers& timers, comm::Communicator::ConstPtr comms,
                                  const Geometry& geometry,
                                  const lb::lattices::LatticeInfo& latticeInfo,
                                  const std::vector<proc_t>& procForEachBlock,
@@ -206,7 +206,7 @@ namespace hemelb
                              std::map<site_t, std::vector<idx_t> > moveDataForEachBlock);
 
           reporting::Timers& timers; //! Timers for reporting.
-          net::MpiCommunicator& comms; //! Communicator
+          comm::Communicator::ConstPtr comms; //! Communicator
           const Geometry& geometry; //! The geometry being optimised.
           const lb::lattices::LatticeInfo& latticeInfo; //! The lattice info to optimise for.
           const std::vector<proc_t>& procForEachBlock; //! The processor assigned to each block at the moment

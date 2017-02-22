@@ -13,14 +13,19 @@ namespace hemelb
     namespace iolets
     {
 
-      BoundaryCommunicator::BoundaryCommunicator(const net::MpiCommunicator& parent) :
-          MpiCommunicator(parent.Duplicate())
+      BoundaryCommunicator::BoundaryCommunicator(comm::Communicator::ConstPtr parent) :
+	comm(parent->Duplicate())
       {
 
       }
+      comm::Communicator::ConstPtr BoundaryCommunicator::GetComm() const
+      {
+	return comm;
+      }
+
       bool BoundaryCommunicator::IsCurrentProcTheBCProc() const
       {
-        return Rank() == GetBCProcRank();
+        return comm->Rank() == GetBCProcRank();
       }
       int BoundaryCommunicator::GetBCProcRank() const
       {

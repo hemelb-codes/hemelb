@@ -10,8 +10,7 @@
 #include "geometry/LatticeData.h"
 #include "geometry/neighbouring/NeighbouringLatticeData.h"
 #include "geometry/neighbouring/RequiredSiteInformation.h"
-#include "net/net.h"
-#include "net/IteratedAction.h"
+#include "timestep/Actor.h"
 #include <vector>
 #include <map>
 
@@ -24,18 +23,22 @@ namespace hemelb
     namespace neighbouring
     {
 
-      class NeighbouringDataManager : public net::IteratedAction
+      class NeighbouringDataManager : public timestep::Actor
       {
         public:
           NeighbouringDataManager(const LatticeData & localLatticeData,
                                   NeighbouringLatticeData & neighbouringLatticeData,
-                                  net::InterfaceDelegationNet & net);
+                                  comm::Async::Ptr cq);
           // Initially, the required site information will not be used -- we just transfer everything.
           // This considerably simplifies matters.
           // Nevertheless, we provide the interface here in its final form
           void RegisterNeededSite(site_t globalId,
                                   RequiredSiteInformation requirements = RequiredSiteInformation(true));
+	  
+	  // This is collective across the communicator used by the
+	  // communication queue given to the constructor
           void ShareNeeds();
+	
           std::vector<site_t> &GetNeedsForProc(proc_t proc)
           {
             return needsEachProcHasFromMe[proc];
@@ -49,12 +52,28 @@ namespace hemelb
           // NB this is virtual so that the class can be tested.
           virtual proc_t ProcForSite(site_t site);
         protected:
-          void RequestComms();
+	  inline virtual void BeginAll() {
+	  }
+	  inline virtual void Begin() {
+	  }
+	  // Implemented
+	  virtual void Receive();
+	  inline virtual void PreSend() {
+	  }
+	  // Implemented
+	  virtual void Send();
+	  inline virtual void PreWait() {
+	  }
+	  inline virtual void Wait() {
+	  }
+	  inline virtual void End() {
+	  }
+	  inline virtual void EndAll() {
+	  }
         private:
           const LatticeData & localLatticeData;
           NeighbouringLatticeData & neighbouringLatticeData;
-          net::InterfaceDelegationNet & net;
-
+	  comm::Async::Ptr commQ;
           typedef std::vector<site_t> IdVec;
           typedef std::map<int, int> CountMap;
           typedef std::map<proc_t, IdVec > IdsMap;

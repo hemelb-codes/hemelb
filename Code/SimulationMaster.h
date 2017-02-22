@@ -10,8 +10,6 @@
 #include "extraction/PropertyActor.h"
 #include "lb/lb.hpp"
 #include "lb/StabilityTester.h"
-#include "net/net.h"
-#include "steering/SteeringComponent.h"
 #include "lb/EntropyTester.h"
 #include "lb/iolets/BoundaryValues.h"
 #include "util/UnitConverter.h"
@@ -22,14 +20,14 @@
 #include "reporting/BuildInfo.h"
 #include "lb/IncompressibilityChecker.h"
 #include "colloids/ColloidController.h"
-#include "net/phased/StepManager.h"
-#include "net/phased/NetConcern.h"
+#include "timestep/TimeStepManager.h"
+#include "comm/AsyncConcern.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 
 class SimulationMaster
 {
   public:
-    SimulationMaster(hemelb::configuration::CommandLine &options, const hemelb::net::IOCommunicator& ioComms);
+    SimulationMaster(hemelb::configuration::CommandLine &options, hemelb::comm::Communicator::ConstPtr ioComms);
     virtual ~SimulationMaster();
 
     void Abort();
@@ -55,7 +53,7 @@ class SimulationMaster
     hemelb::geometry::LatticeData* latticeData;
     hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
     hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
-    const hemelb::net::IOCommunicator& ioComms;
+    hemelb::comm::Communicator::ConstPtr ioComms;
 
   private:
     void Initialise();
@@ -81,9 +79,6 @@ class SimulationMaster
     hemelb::reporting::BuildInfo build_info;
     typedef std::multimap<unsigned long, unsigned long> MapType;
 
-    hemelb::steering::Network* network;
-    hemelb::steering::SteeringComponent* steeringCpt;
-
     hemelb::lb::SimulationState* simulationState;
 
     /** Struct containing the configuration of various checkers/testers */
@@ -94,17 +89,15 @@ class SimulationMaster
     hemelb::lb::IncompressibilityChecker* incompressibilityChecker;
 
     hemelb::colloids::ColloidController* colloidController;
-    hemelb::net::Net communicationNet;
-
+    hemelb::comm::Async::Ptr asyncCommQ;
     const hemelb::util::UnitConverter* unitConverter;
 
     hemelb::extraction::IterableDataSource* propertyDataSource;
     hemelb::extraction::PropertyActor* propertyExtractor;
 
-    hemelb::net::phased::StepManager* stepManager;
-    hemelb::net::phased::NetConcern* netConcern;
+    hemelb::timestep::TimeStepManager* stepManager;
+    hemelb::comm::AsyncConcern* asyncCommsManager;
 
-    int steeringSessionId;
     static const hemelb::LatticeTimeStep FORCE_FLUSH_PERIOD=1000;
 };
 

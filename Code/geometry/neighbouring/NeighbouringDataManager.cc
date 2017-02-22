@@ -9,7 +9,7 @@
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "geometry/LatticeData.h"
 #include "log/Logger.h"
-#include "net/MapAllToAll.h"
+#include "comm/MapAllToAll.h"
 
 namespace hemelb
 {
@@ -20,9 +20,9 @@ namespace hemelb
 
       NeighbouringDataManager::NeighbouringDataManager(
           const LatticeData & localLatticeData, NeighbouringLatticeData & neighbouringLatticeData,
-          net::InterfaceDelegationNet & net) :
+          comm::Async::Ptr cq) :
           localLatticeData(localLatticeData), neighbouringLatticeData(neighbouringLatticeData),
-              net(net), needsHaveBeenShared(false)
+	  commQ(cq), needsHaveBeenShared(false)
       {
       }
       void NeighbouringDataManager::RegisterNeededSite(site_t globalId,
@@ -43,7 +43,10 @@ namespace hemelb
       {
         return localLatticeData.ProcProvidingSiteByGlobalNoncontiguousId(site);
       }
-
+      
+      // TODO: figure out if this needs to force the commQ to wait
+      // (current behaviour) or if it can create a new queue and wait
+      // on that only.
       void NeighbouringDataManager::TransferNonFieldDependentInformation()
       {
         // Ordering is important here, to ensure the requests are registered in the same order
@@ -55,15 +58,14 @@ namespace hemelb
         {
           proc_t source = ProcForSite(*localNeed);
           NeighbouringSite site = neighbouringLatticeData.GetSite(*localNeed);
-
-          net.RequestReceiveR(site.GetSiteData().GetWallIntersectionData(), source);
-          net.RequestReceiveR(site.GetSiteData().GetIoletIntersectionData(), source);
-          net.RequestReceiveR(site.GetSiteData().GetIoletId(), source);
-          net.RequestReceiveR(site.GetSiteData().GetSiteType(), source);
-          net.RequestReceive(site.GetWallDistances(),
-                             localLatticeData.GetLatticeInfo().GetNumVectors() - 1,
-                             source);
-          net.RequestReceiveR(site.GetWallNormal(), source);
+	  commQ->Irecv(site.GetSiteData().GetWallIntersectionData(), source);
+          commQ->Irecv(site.GetSiteData().GetIoletIntersectionData(), source);
+          commQ->Irecv(site.GetSiteData().GetIoletId(), source);
+          commQ->Irecv(site.GetSiteData().GetSiteType(), source);
+          commQ->Irecv(site.GetWallDistances(),
+		       localLatticeData.GetLatticeInfo().GetNumVectors() - 1,
+		       source);
+	  commQ->Irecv(site.GetWallNormal(), source);
         }
 
         for (IdsMap::const_iterator iter = needsEachProcHasFromMe.begin();
@@ -82,26 +84,27 @@ namespace hemelb
             const Site<const LatticeData> site = localLatticeData.GetSite(localContiguousId);
             const SiteData& sd = site.GetSiteData();
 
-            net.RequestSendR(sd.GetWallIntersectionData(), other);
-            net.RequestSendR(sd.GetIoletIntersectionData(), other);
-            net.RequestSendR(sd.GetIoletId(), other);
-            net.RequestSendR(sd.GetSiteType(), other);
-            net.RequestSend(site.GetWallDistances(),
+            commQ->Isend(sd.GetWallIntersectionData(), other);
+            commQ->Isend(sd.GetIoletIntersectionData(), other);
+            commQ->Isend(sd.GetIoletId(), other);
+            commQ->Isend(sd.GetSiteType(), other);
+            commQ->Isend(site.GetWallDistances(),
                             localLatticeData.GetLatticeInfo().GetNumVectors() - 1,
                             other);
-            net.RequestSendR(site.GetWallNormal(), other);
+            commQ->Isend(site.GetWallNormal(), other);
           }
         }
-        net.Dispatch();
+	commQ->Wait();
       }
 
       void NeighbouringDataManager::TransferFieldDependentInformation()
       {
-        RequestComms();
-        net.Dispatch();
+        Receive();
+	Send();
+        commQ->Wait();
       }
 
-      void NeighbouringDataManager::RequestComms()
+      void NeighbouringDataManager::Receive()
       {
         /*if (needsHaveBeenShared == false)
         {
@@ -118,12 +121,14 @@ namespace hemelb
         {
           proc_t source = ProcForSite(*localNeed);
           NeighbouringSite site = neighbouringLatticeData.GetSite(*localNeed);
-          net.RequestReceive(site.GetFOld(localLatticeData.GetLatticeInfo().GetNumVectors()),
+          commQ->Irecv(site.GetFOld(localLatticeData.GetLatticeInfo().GetNumVectors()),
                              localLatticeData.GetLatticeInfo().GetNumVectors(),
                              source);
 
         }
-
+      }
+      void NeighbouringDataManager::Send()
+      {
         const unsigned Q = localLatticeData.GetLatticeInfo().GetNumVectors();
         for (IdsMap::const_iterator iter = needsEachProcHasFromMe.begin();
             iter != needsEachProcHasFromMe.end();
@@ -138,7 +143,7 @@ namespace hemelb
                 localLatticeData.GetLocalContiguousIdFromGlobalNoncontiguousId(*needOnProcFromMe);
             const Site<const LatticeData> site = localLatticeData.GetSite(localContiguousId);
             // have to cast away the const, because no respect for const-ness for sends in MPI
-            net.RequestSend(site.GetFOld(Q),
+            commQ->Isend(site.GetFOld(Q),
                             Q,
                             other);
           }
@@ -166,18 +171,20 @@ namespace hemelb
 
         // This will store the numbers of sites other ranks need from this rank
         CountMap countOfNeedsOnEachProcFromMe;
+        auto comms = commQ->GetComm();
         // This is collective
-        const net::MpiCommunicator& comms = net.GetCommunicator();
-        net::MapAllToAll(comms, countOfNeedsIHaveFromEachProc, countOfNeedsOnEachProcFromMe, 1234);
+        comm::MapAllToAll(comms, countOfNeedsIHaveFromEachProc, countOfNeedsOnEachProcFromMe, 1234);
 
-        std::vector<net::MpiRequest> requestQueue;
+	//comm::Request::ReqVec requestQueue;
+	auto requestQueue = comms->MakeRequestList();
+	
         // Now, for every rank, which I need something from, send the ids of those
         for (CountMap::const_iterator countIt = countOfNeedsIHaveFromEachProc.begin();
             countIt != countOfNeedsIHaveFromEachProc.end();
             ++countIt)
         {
           int other = countIt->first;
-          requestQueue.push_back(comms.Isend(needsIHaveFromEachProc[other], other));
+          requestQueue->push_back(comms->Isend(needsIHaveFromEachProc[other], other));
         }
 
         // And for every rank, which needs something from me, receive those ids
@@ -189,10 +196,10 @@ namespace hemelb
           int size = countIt->second;
           IdVec& otherNeeds = needsEachProcHasFromMe[other];
           otherNeeds.resize(size);
-          requestQueue.push_back(comms.Irecv(otherNeeds, other));
+          requestQueue->push_back(comms->Irecv(otherNeeds, other));
         }
 
-        net::MpiRequest::WaitAll(requestQueue);
+	requestQueue->WaitAll();
         needsHaveBeenShared = true;
       }
     }

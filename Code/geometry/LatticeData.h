@@ -10,7 +10,7 @@
 #include <cstdio>
 #include <vector>
 
-#include "net/net.h"
+#include "comm/Async.h"
 #include "constants.h"
 #include "configuration/SimConfig.h"
 #include "geometry/Block.h"
@@ -39,7 +39,7 @@ namespace hemelb
         template<class Lattice> friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
         template<class LatticeData> friend class Site; //! Let the inner classes have access to site-related data that's otherwise private.
 
-        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult, const net::IOCommunicator& comms);
+        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult, comm::Communicator::ConstPtr comms);
 
         virtual ~LatticeData();
 
@@ -51,7 +51,9 @@ namespace hemelb
           oldDistributions.swap(newDistributions);
         }
 
-        void SendAndReceive(net::Net* net);
+        void Receive(comm::Async::Ptr commQ);
+        void Send(comm::Async::Ptr commQ);
+      
         void CopyReceived();
 
         /**
@@ -337,7 +339,7 @@ namespace hemelb
          * class for the purpose of testing.
          * @return
          */
-        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const net::IOCommunicator& comms);
+        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, comm::Communicator::ConstPtr comms);
 
         void SetBasicDetails(util::Vector3D<site_t> blocks,
                              site_t blockSize);
@@ -574,7 +576,7 @@ namespace hemelb
         std::vector<site_t> neighbourIndices; //! Data about neighbouring fluid sites.
         std::vector<site_t> streamingIndicesForReceivedDistributions; //! The indices to stream to for distributions received from other processors.
         neighbouring::NeighbouringLatticeData *neighbouringData;
-        const net::IOCommunicator& comms;
+        comm::Communicator::ConstPtr comms;
     };
   }
 }

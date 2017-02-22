@@ -9,7 +9,7 @@
 
 #include "extraction/LocalPropertyOutput.h"
 #include "extraction/PropertyOutputFile.h"
-#include "net/mpi.h"
+#include "comm/Communicator.h"
 
 namespace hemelb
 {
@@ -23,7 +23,7 @@ namespace hemelb
          * @param propertyOutputs
          * @return
          */
-        PropertyWriter(IterableDataSource& dataSource, const std::vector<PropertyOutputFile*>& propertyOutputs, const net::IOCommunicator& ioComms);
+      PropertyWriter(IterableDataSource& dataSource, const std::vector<PropertyOutputFile*>& propertyOutputs, comm::Communicator::ConstPtr ioComms);
 
         /**
          * Destructor; deallocates memory used to store property info.

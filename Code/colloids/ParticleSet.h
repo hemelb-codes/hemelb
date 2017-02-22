@@ -11,9 +11,8 @@
 #include "geometry/LatticeData.h"
 #include "io/xml/XmlAbstractionLayer.h"
 #include "lb/MacroscopicPropertyCache.h"
-#include "net/mpi.h"
 #include "colloids/Particle.h"
-#include "net/IOCommunicator.h"
+#include "comm/Communicator.h"
 #include "units.h"
 
 namespace hemelb
@@ -30,7 +29,7 @@ namespace hemelb
                     lb::MacroscopicPropertyCache& propertyCache,
                     const hemelb::lb::LbmParameters *lbmParams,
                     std::vector<proc_t>& neighbourProcessors,
-                    const net::IOCommunicator& ioComms_,
+                    comm::Communicator::ConstPtr ioComms_,
                     const std::string& outputPath);
 
         /** destructor - de-allocates all Particle objects created by this Set */
@@ -61,7 +60,7 @@ namespace hemelb
         const void OutputInformation(const LatticeTimeStep timestep);
 
       private:
-        const net::IOCommunicator& ioComms;
+        comm::Communicator::ConstPtr ioComms;
         /** cached copy of local rank (obtained from topology) */
         const proc_t localRank;
 
@@ -94,8 +93,6 @@ namespace hemelb
          */
         lb::MacroscopicPropertyCache& propertyCache;
 
-        /** abstracts communication via MPI */
-        net::Net net;
         /**
          * Reusable output buffer.
          */
@@ -107,7 +104,7 @@ namespace hemelb
         /**
          * MPI File handle to write with
          */
-        net::MpiFile file;
+        comm::MpiFile::Ptr file;
     };
   }
 }

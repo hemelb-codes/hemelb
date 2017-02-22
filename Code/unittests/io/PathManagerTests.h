@@ -29,13 +29,11 @@ namespace hemelb
           void setUp()
           {
             FolderTestFixture::setUp();
-            argc = 5;
+            argc = 3;
             processorCount = 5;
             argv[0] = "hemelb";
             argv[1] = "-in";
             argv[2] = "config.xml";
-            argv[3] = "-ss";
-            argv[4] = "1111";
           }
 
           void tearDown()

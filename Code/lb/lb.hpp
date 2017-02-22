@@ -7,7 +7,6 @@
 #ifndef HEMELB_LB_LB_HPP
 #define HEMELB_LB_LB_HPP
 
-#include "io/writers/xdr/XdrMemWriter.h"
 #include "lb/lb.h"
 
 namespace hemelb
@@ -29,12 +28,12 @@ namespace hemelb
 
     template<class LatticeType>
     LBM<LatticeType>::LBM(configuration::SimConfig *iSimulationConfig,
-                          net::Net* net,
+                          comm::Async::Ptr commQ,
                           geometry::LatticeData* latDat,
                           SimulationState* simState,
                           reporting::Timers &atimings,
                           geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager) :
-      mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), 
+      mSimConfig(iSimulationConfig), mCommQ(commQ), mLatDat(latDat), mState(simState), 
           mParams(iSimulationConfig->GetTimeStepLength(), iSimulationConfig->GetVoxelSize()), timings(atimings),
           propertyCache(*simState, *latDat), neighbouringDataManager(neighbouringDataManager)
     {
@@ -167,16 +166,11 @@ namespace hemelb
     }
 
     template<class LatticeType>
-    void LBM<LatticeType>::RequestComms()
+    void LBM<LatticeType>::Receive()
     {
       timings[hemelb::reporting::Timers::lb].Start();
-
-      // Delegate to the lattice data object to post the asynchronous sends and receives
-      // (via the Net object).
-      // NOTE that this doesn't actually *perform* the sends and receives, it asks the Net
-      // to include them in the ISends and IRecvs that happen later.
-      mLatDat->SendAndReceive(mNet);
-
+      // Delegate to the lattice data object
+      mLatDat->Receive(mCommQ);
       timings[hemelb::reporting::Timers::lb].Stop();
     }
 
@@ -187,10 +181,12 @@ namespace hemelb
       timings[hemelb::reporting::Timers::lb_calc].Start();
 
       /**
-       * In the PreSend phase, we do LB on all the sites that need to have results sent to
-       * neighbouring ranks ('domainEdge' sites). In site id terms, this means we start at the
-       * end of the sites whose neighbours all lie on this rank ('midDomain'), then progress
-       * through the sites of each type in turn.
+       * In the PreSend phase, we do LB on all the sites that need to
+       * have results sent to neighbouring ranks ('domainEdge'
+       * sites). In site id terms, this means we start at the end of
+       * the sites whose neighbours all lie on this rank
+       * ('midDomain'), then progress through the sites of each type
+       * in turn.
        */
       site_t offset = mLatDat->GetMidDomainSiteCount();
 
@@ -200,11 +196,9 @@ namespace hemelb
       StreamAndCollide(mWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(1));
       offset += mLatDat->GetDomainEdgeCollisionCount(1);
 
-      mInletValues->FinishReceive();
       StreamAndCollide(mInletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(2));
       offset += mLatDat->GetDomainEdgeCollisionCount(2);
 
-      mOutletValues->FinishReceive();
       StreamAndCollide(mOutletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(3));
       offset += mLatDat->GetDomainEdgeCollisionCount(3);
 
@@ -216,20 +210,31 @@ namespace hemelb
       timings[hemelb::reporting::Timers::lb_calc].Stop();
       timings[hemelb::reporting::Timers::lb].Stop();
     }
-
+    
     template<class LatticeType>
-    void LBM<LatticeType>::PreReceive()
+    void LBM<LatticeType>::Send()
+    {
+      timings[hemelb::reporting::Timers::lb].Start();
+      // Delegate to the lattice data
+      mLatDat->Send(mCommQ);
+      timings[hemelb::reporting::Timers::lb].Stop();
+    }
+    
+    template<class LatticeType>
+    void LBM<LatticeType>::PreWait()
     {
       timings[hemelb::reporting::Timers::lb].Start();
       timings[hemelb::reporting::Timers::lb_calc].Start();
 
       /**
-       * In the PreReceive phase, we perform LB for all the sites whose neighbours lie on this
-       * rank ('midDomain' rather than 'domainEdge' sites). Ideally this phase is the longest bit (maximising time for the asynchronous sends
-       * and receives to complete).
+       * In the PreWait phase, we perform LB for all the sites whose
+       * neighbours lie on this rank ('midDomain' rather than
+       * 'domainEdge' sites). Ideally this phase is the longest bit
+       * (maximising time for the asynchronous sends and receives to
+       * complete).
        *
-       * In site id terms, this means starting at the first site and progressing through the
-       * midDomain sites, one type at a time.
+       * In site id terms, this means starting at the first site and
+       * progressing through the midDomain sites, one type at a time.
        */
       site_t offset = 0;
 
@@ -255,7 +260,7 @@ namespace hemelb
     }
 
     template<class LatticeType>
-    void LBM<LatticeType>::PostReceive()
+    void LBM<LatticeType>::End()
     {
       timings[hemelb::reporting::Timers::lb].Start();
 
@@ -311,7 +316,7 @@ namespace hemelb
     }
 
     template<class LatticeType>
-    void LBM<LatticeType>::EndIteration()
+    void LBM<LatticeType>::EndAll()
     {
       timings[hemelb::reporting::Timers::lb].Start();
       timings[hemelb::reporting::Timers::lb_calc].Start();

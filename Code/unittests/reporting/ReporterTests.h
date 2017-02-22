@@ -24,7 +24,7 @@ namespace hemelb
     {
       using namespace hemelb::reporting;
 
-      typedef TimersBase<ClockMock, MPICommsMock> TimersMock;
+      typedef TimersBase<ClockMock> TimersMock;
       typedef lb::IncompressibilityChecker IncompressibilityCheckerMock;
 
       class ReporterTests : public helpers::HasCommsTestFixture
@@ -40,14 +40,13 @@ namespace hemelb
             realTimers = new reporting::Timers(Comms());
             buildInfo = new reporting::BuildInfo();
             state = new hemelb::lb::SimulationState(0.0001, 1000);
-            net = new net::Net(Comms());
             latticeData = FourCubeLatticeData::Create(Comms(), 6, 5); // The 5 here is to match the topology size in the MPICommsMock
             lbtests::LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(latticeData);
             latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
             cache = new lb::MacroscopicPropertyCache(*state, *latticeData);
             cache->densityCache.SetRefreshFlag();
             lbtests::LbTestsHelper::UpdatePropertyCache<lb::lattices::D3Q15>(*latticeData, *cache, *state);
-            incompChecker = new IncompressibilityCheckerMock(latticeData, net, state, *cache, *realTimers, 10.0);
+            incompChecker = new IncompressibilityCheckerMock(latticeData, Comms(), state, *cache, *realTimers, 10.0);
             reporter = new Reporter("mock_path", "exampleinputfile");
             reporter->AddReportable(incompChecker);
             reporter->AddReportable(mockTimers);
@@ -63,7 +62,6 @@ namespace hemelb
             delete realTimers;
             delete cache;
             delete incompChecker;
-            delete net;
             delete buildInfo;
             helpers::HasCommsTestFixture::tearDown();
           }
@@ -131,8 +129,8 @@ namespace hemelb
             expectation << std::setprecision(3);
             for (unsigned int row = 0; row < Timers::numberOfTimers; row++)
             {
-              expectation << "N" << TimersMock::timerNames[row] << "L" << row * 10.0 << "MI" << row * 15.0 << "ME"
-                  << row * 2.0 << "MA" << row * 5.0 << " " << std::flush;
+              expectation << "N" << TimersMock::timerNames[row] << "L" << row * 10.0 << "MI" << row * 10.0 << "ME"
+                  << row * 10.0 << "MA" << row * 10.0 << " " << std::flush;
             }
             AssertTemplate(expectation.str(), "{{#TIMER}}N{{NAME}}L{{LOCAL}}MI{{MIN}}ME{{MEAN}}MA{{MAX}} {{/TIMER}}");
           }
@@ -148,7 +146,6 @@ namespace hemelb
           lb::MacroscopicPropertyCache* cache;
           IncompressibilityCheckerMock *incompChecker;
 
-          net::Net *net;
           hemelb::unittests::FourCubeLatticeData* latticeData;
           reporting::BuildInfo *buildInfo;
       };
