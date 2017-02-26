@@ -84,7 +84,7 @@ namespace hemelb
         distribn_t density;
         geometry::Site<geometry::LatticeData const> site(latticeData.GetSite(index));
         LatticeForceVector const &force(site.GetForce());
-        LatticeType::CalculateDensityAndMomentum(site.GetFOld<LatticeType>(),
+        LatticeType::CalculateDensityAndMomentum(latticeData.GetFNew(index * LatticeType::NUMVECTORS),
                                                  force[0],
                                                  force[1],
                                                  force[2],
@@ -102,8 +102,7 @@ namespace hemelb
         typedef typename KERNEL::LatticeType LatticeType;
         LatticeVelocity result(0, 0, 0);
         distribn_t density;
-        LatticeType::CalculateDensityAndMomentum(latticeData.GetSite(index).template GetFOld<
-                                                     LatticeType>(),
+        LatticeType::CalculateDensityAndMomentum(latticeData.GetFNew(index * LatticeType::NUMVECTORS),
                                                  density,
                                                  result.x,
                                                  result.y,
