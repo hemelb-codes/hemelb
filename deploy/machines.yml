@@ -62,7 +62,9 @@ archer: #the ARCHER supercomputer at EPCC
   make_jobs: 4
   verbose: 1
   job_dispatch: "qsub"
-  run_command: "aprun -n $cores -N $corespernode"
+  # -n : total number of MPI ranks
+  # -N : MPI ranks per node (must be <= n) default is min(n, 24)
+  run_command: "aprun -n $cores"
   batch_header: pbs-archer
   remote: "login.archer.ac.uk"
   # On ARCHER, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
@@ -70,7 +72,7 @@ archer: #the ARCHER supercomputer at EPCC
   home_path_template: "/home/$project/$project/$username"
   runtime_path_template: "/work/$project/$project/$username"
   fabric_dir: "FabricHemeLb"
-  modules: ["load cmake/3.2.3", "swap PrgEnv-cray PrgEnv-gnu", "load boost", "load cray-hdf5-parallel", "load cray-tpsl"]
+  modules: ["load cmake/3.2.3", "swap PrgEnv-cray PrgEnv-gnu", "load boost", "load cray-hdf5-parallel", "load cray-tpsl", "load anaconda/2.2.0-python2"]
   # Tell autoconf for dependencies where the compilers are
   build_prefix_commands: ["export LDFLAGS=-dynamic","export CXX=CC","export CC=cc", "export LD=CC", "export XTPE_LINK_TYPE=dynamic" ]
   temp_path_template: "$work_path/tmp"
