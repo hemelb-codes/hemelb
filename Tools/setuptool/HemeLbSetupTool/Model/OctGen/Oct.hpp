@@ -62,6 +62,30 @@ auto Octree<T>::Branch::Get(Int i, Int j, Int k, Int l) -> NodePtr {
 
 // Get a node without creating - returns null pointer if doensn't exist
 template<class T>
+auto Octree<T>::Branch::Get(Int i, Int j, Int k, Int l) const -> ConstNodePtr {
+  if (l >= this->level) {
+    // a parent - error
+    throw std::out_of_range("trying to get a parent node");
+  }
+      
+  // the least significant this->level bits represent the relative index
+  // the other bits must match my bits
+  // tl = this level
+  Int tl_mask = (~0) << this->level;
+  // logical not(0) == all the ones
+      
+  if ((tl_mask & i) != (tl_mask & this->x) ||
+      (tl_mask & j) != (tl_mask & this->y) ||
+      (tl_mask & k) != (tl_mask & this->z)) {
+    throw std::out_of_range("requested node not in my range");
+  }
+      
+  // OK
+  return get_nocreate_internal(i, j, k, l);
+}
+
+// Get a node without creating - returns null pointer if doensn't exist
+template<class T>
 auto Octree<T>::Branch::GetCreate(Int i, Int j, Int k, Int l) -> NodePtr {
   if (l >= this->level) {
     // a parent - error
@@ -181,10 +205,34 @@ auto Octree<T>::Branch::get_nocreate_internal(Int i, Int j, Int k, Int l) -> Nod
     return branch->get_nocreate_internal(i, j, k, l);
   }
 }
-  
+template<class T>
+auto Octree<T>::Branch::get_nocreate_internal(Int i, Int j, Int k, Int l) const -> ConstNodePtr {
+  // Get the local index
+  Int child_level = this->level - 1;
+  Int li = (i >> child_level) & 1;
+  Int lj = (j >> child_level) & 1;
+  Int lk = (k >> child_level) & 1;
+  auto child = children[li][lj][lk];
+      
+  if (!child) {
+    return child;
+  }
+      
+  if (child_level == l) {
+    return child;
+  } else {
+    auto branch = dynamic_cast<Branch*>(child.get());
+    return branch->get_nocreate_internal(i, j, k, l);
+  }
+}
+
 // Get a node without creating
 template<class T>
 auto Octree<T>::Leaf::Get(Int i, Int j, Int k, Int l) -> NodePtr {
+  throw std::out_of_range("trying to get a child of a leaf node");
+}
+template<class T>
+auto Octree<T>::Leaf::Get(Int i, Int j, Int k, Int l) const -> ConstNodePtr {
   throw std::out_of_range("trying to get a child of a leaf node");
 }
 template<class T>
@@ -229,6 +277,11 @@ template<class T>
 auto Octree<T>::Get(Int i, Int j, Int k, Int l) -> NodePtr {
   return root->Get(i,j,k,l);
 }
+template<class T>
+auto Octree<T>::Get(Int i, Int j, Int k, Int l) const -> ConstNodePtr {
+  return root->Get(i,j,k,l);
+}
+
 template<class T>
 auto Octree<T>::GetCreate(Int i, Int j, Int k, Int l) -> NodePtr {
   return root->GetCreate(i,j,k,l);

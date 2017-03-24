@@ -33,6 +33,8 @@ public:
     
     // Get a node without creating
     virtual NodePtr Get(Int i, Int j, Int k, Int l) = 0;
+    virtual ConstNodePtr Get(Int i, Int j, Int k, Int l) const = 0;
+
     // Get a node with creating
     virtual NodePtr GetCreate(Int i, Int j, Int k, Int l) = 0;
     virtual void Accept(Visitor& v) = 0;
@@ -70,7 +72,8 @@ public:
     
     // Get a node without creating - returns null pointer if doensn't exist
     virtual NodePtr Get(Int i, Int j, Int k, Int l);
-      
+    virtual ConstNodePtr Get(Int i, Int j, Int k, Int l) const;
+
     // Get a node without creating - returns null pointer if doensn't exist
     virtual NodePtr GetCreate(Int i, Int j, Int k, Int l);
     
@@ -81,6 +84,7 @@ public:
   private:
     NodePtr get_create_internal(Int i, Int j, Int k, Int l);
     NodePtr get_nocreate_internal(Int i, Int j, Int k, Int l);
+    ConstNodePtr get_nocreate_internal(Int i, Int j, Int k, Int l) const;
     
     NodePtr children[2][2][2];
   };
@@ -90,6 +94,8 @@ public:
     using Node::Node;
     // Get a node without creating
     virtual NodePtr Get(Int i, Int j, Int k, Int l);
+    virtual ConstNodePtr Get(Int i, Int j, Int k, Int l) const;
+
     virtual NodePtr GetCreate(Int i, Int j, Int k, Int l);
     virtual void Accept(Visitor& v);
     virtual void Accept(ConstVisitor& v) const;
@@ -173,6 +179,8 @@ public:
   ConstNodePtr Root() const;
   // Get a node without creating
   NodePtr Get(Int i, Int j, Int k, Int l);
+  ConstNodePtr Get(Int i, Int j, Int k, Int l) const;
+
   // Get a node with creating
   NodePtr GetCreate(Int i, Int j, Int k, Int l);
 
