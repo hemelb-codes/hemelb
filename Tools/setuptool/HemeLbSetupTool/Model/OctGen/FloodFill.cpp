@@ -2,117 +2,97 @@
 #include <deque>
 
 #include "FloodFill.h"
-#include "FloodFillImpl.h"
 
 #include "util/Vector3D.h"
 #include "Neighbours.h"
-
-//typedef hemelb::util::Vector3D<FluidTree::Int> Idx;
+#include "range.hpp"
 
 #define unpack(idx) idx[0], idx[1], idx[2], idx[3]
 
 Idx GetStart(const FluidTree& tree) {
-	Idx ans;
-	try {
-		tree.IterDepthFirst(0,0,
-				[&ans](FluidTree::ConstNodePtr n) {
-			ans = {n->X(), n->Y(), n->Z(), 0};
-			throw StopIteration();
-		});
-	} catch (StopIteration& stop) {
-		return ans;
+  Idx ans;
+  try {
+    tree.IterDepthFirst(0,0,
+			[&ans](FluidTree::ConstNodePtr n) {
+			  ans = {n->X(), n->Y(), n->Z(), 0};
+			  throw StopIteration();
+			});
+  } catch (StopIteration& stop) {
+    return ans;
+  }
+  throw std::runtime_error("Could not get a start point from tree");
+}
+
+
+#define PrintIdx(i) std::cout << "[" << i[0] << ", " << i[1] << ", "<< i[2] << ", "<< i[3] << "]" << std::endl
+
+MaskTree FloodFill(const FluidTree& tree) {
+  const auto& dirs = Neighbours::GetDisplacements();
+  typedef std::deque<Idx> Queue;
+  
+  auto seed = GetStart(tree);
+    
+  MaskTree seen(tree.Level());
+  seen.GetCreate(unpack(seed));
+  
+  // Stack holds sites that are def fluid but we don't know about their
+  // neighbours
+  Queue stack;
+  stack.push_back(seed);
+  auto BULK = std::make_shared<FluidSite>();
+  
+  while (!stack.empty()) {
+    // Grab the point from the queue
+    auto pt = stack.back();
+    stack.pop_back();
+    
+    auto leaf_node_ptr = tree.Get(unpack(pt));
+    if (leaf_node_ptr) {
+      // Node exists already: it must be fluid and have been created
+      // by SurfaceVoxeliser. Look at all links and queue all sites
+      // with intersection == none
+      const auto& node_data = leaf_node_ptr->Data();
+      const auto& links = node_data.leaf->links;
+      for (auto i: range(26)) {
+	if (links[i].type == Intersection::None) {
+	  // enqueue (pt + dirs[i]) if we have not seen it
+	  Idx neigh{FluidTree::Int(pt[0]+dirs[i][0]),
+	      FluidTree::Int(pt[1]+dirs[i][1]),
+	      FluidTree::Int(pt[2]+dirs[i][2]),
+	      pt[3]};
+
+	  if (!seen.Get(unpack(neigh))) {
+	    PrintIdx(neigh);
+	    seen.GetCreate(unpack(neigh));
+	    stack.emplace_back(neigh);
+	  }
 	}
-	throw std::runtime_error("Could not get a start point from tree");
-}
+      }
+    } else {
+      // Node does not exist, but it must be fluid (as we are only
+      // enqueuing nodes that are linked to a fluid site without cuts)
 
-size_t LIndex(MaskTree::Int x, MaskTree::Int y, MaskTree::Int z,
-		MaskTree::Int level) {
-	MaskTree::Int lx = (x >> level) & 1;
-	MaskTree::Int ly = (y >> level) & 1;
-	MaskTree::Int lz = (z >> level) & 1;
-	return (lx << 2) + (ly << 1) + lz;
-}
+      // Could create a leaf node for it with the basic fluid site
+      // state, but that is a lot of work
 
-
-MaskTree::MaskTree(Int nl) : nLevels(nl),  indices(nl), mask() {
-	indices[nl-1] = std::vector<size_t>(8, NA());
-}
-
-bool MaskTree::Get(Int x, Int y, Int z) {
-	auto cur_level = nLevels;
-	size_t offset = 0;
-	while (--cur_level) {
-		Int lInd = LIndex(x, y, z, cur_level);
-		offset = indices[cur_level][offset + lInd];
-		if (offset == NA()) {
-			return false;
-		}
+      // Instead, just iter over all the neighbours and enqueue if not
+      // seen
+      for (auto i: range(26)) {
+	Idx neigh{FluidTree::Int(pt[0]+dirs[i][0]),
+	    FluidTree::Int(pt[1]+dirs[i][1]),
+	    FluidTree::Int(pt[2]+dirs[i][2]),
+	    pt[3]};
+	if (!seen.Get(unpack(neigh))) {
+	  seen.GetCreate(unpack(neigh));
+	  stack.emplace_back(neigh);
 	}
-	Int lInd = LIndex(x, y, z, cur_level);
-	return mask[offset + lInd];
+      }
+      
+    }
+  }
+  return seen;
 }
 
-MaskBuilder::MaskBuilder(const FluidTree& t) : tree(t), ans(t.Level()), cursors(t.Level(), 0) {
-}
 
-MaskTree MaskBuilder::operator()() {
-	tree.Root()->Accept(*this);
-	return ans;
-}
-
-size_t MaskBuilder::LocalIndex(FluidTree::ConstNodePtr np) {
-	return LIndex(np->X(), np->Y(), np->Z(), np->Level());
-}
-
-void MaskBuilder::Arrive(FluidTree::ConstNodePtr np) {
-	Int level = np->Level();
-	if (level == tree.Level()) {
-		// Top level node implicily exists and points to offset zero of the
-		// level below. So do nothing.
-	} else if (level > 0) {
-		// Non-leaf node
-		auto i = cursors[level];
-		size_t n;
-		if (level == 1)
-			n = ans.mask.size();
-		else
-			n = ans.indices[level - 1].size();
-
-		ans.indices[level][i + LocalIndex(np)] = n;
-		cursors[level - 1] = n;
-		if (level == 1)
-			ans.mask.resize(n + 8, false);
-		else
-			ans.indices[level - 1].resize(n + 8, MaskTree::NA());
-	} else {
-		// Must be leaf node
-		auto i = cursors[level];
-		ans.mask[i + LocalIndex(np)] = true;
-	}
-}
-
-void MaskBuilder::Depart(FluidTree::ConstNodePtr n) {}
-
-
-void FloodFill(FluidTree& tree) {
-	Idx seed = GetStart(tree);
-	const auto& dirs = Neighbours::GetDisplacements();
-
-	typedef std::deque<Idx> Queue;
-
-	// Stack holds sites that are def fluid but we don't know about their
-	// neighbours
-	Queue stack;
-	stack.push_back(seed);
-
-	while (!stack.empty()) {
-		auto pt = stack.back();
-		stack.pop_back();
-
-		auto site = tree.Get(unpack(pt));
-
-	}
-
-}
 
 

@@ -4,9 +4,20 @@
 
 #include "FluidSiteTree.h"
 
-// This class flood fills the domain and propagates the fluid site count
-// of children up the tree
+// This function flood fills the domain
 
-void FloodFill(FluidTree& tree);
+// And (eventually) propagates the fluid site count of children up the
+// tree
+
+typedef Octree<bool> MaskTree;
+
+MaskTree FloodFill(const FluidTree& tree);
+
+typedef std::array<FluidTree::Int, 4> Idx;
+
+class StopIteration : public std::exception {
+};
+
+Idx GetStart(const FluidTree& tree);
 
 #endif

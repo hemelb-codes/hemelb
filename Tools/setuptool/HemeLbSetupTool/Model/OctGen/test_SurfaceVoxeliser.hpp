@@ -139,7 +139,7 @@ public:
 		TriTree::Int levels = 5;
 		TriTree::Int tri_level = 3;
 
-		Vector sphere_centre(10.5);
+		Vector sphere_centre(15.5);
 		double sphere_radius = 10.0;
 
 		auto sphere = SimpleMeshFactory::MkSphere();
