@@ -1,5 +1,5 @@
 #include <exception>
-#include <deque>
+#include <boost/lockfree/queue.hpp>
 
 #include "FloodFill.h"
 
@@ -9,7 +9,10 @@
 
 #define unpack(idx) idx[0], idx[1], idx[2], idx[3]
 
-Idx GetStart(const FluidTree& tree) {
+FloodFill::FloodFill(const FluidTree& t) : tree(t) {
+}
+
+auto FloodFill::GetStart() const -> Idx {
   Idx ans;
   try {
     tree.IterDepthFirst(0,0,
@@ -26,27 +29,42 @@ Idx GetStart(const FluidTree& tree) {
 
 #define PrintIdx(i) std::cout << "[" << i[0] << ", " << i[1] << ", "<< i[2] << ", "<< i[3] << "]" << std::endl
 
-MaskTree FloodFill(const FluidTree& tree) {
+auto FloodFill::operator()() const -> MaskTree {
   const auto& dirs = Neighbours::GetDisplacements();
-  typedef std::deque<Idx> Queue;
-  
-  auto seed = GetStart(tree);
+  typedef boost::lockfree::queue<Idx> Queue;
+  auto seed = GetStart();
     
   MaskTree seen(tree.Level());
   seen.GetCreate(unpack(seed));
   
-  // Stack holds sites that are def fluid but we don't know about their
+  // WorkQ holds sites that are def fluid but we don't know about their
   // neighbours
-  Queue stack;
-  stack.push_back(seed);
+  Queue workQ(100);
+  workQ.unsynchronized_push(seed);
+  
   auto BULK = std::make_shared<FluidSite>();
   
-  while (!stack.empty()) {
+  while (!workQ.empty()) {
     // Grab the point from the queue
-    auto pt = stack.back();
-    stack.pop_back();
+    Idx pt;
+    if (!workQ.pop(pt))
+      continue;
     
     auto leaf_node_ptr = tree.Get(unpack(pt));
+    
+    // enqueue (pt + dirs[i]) if we have not seen it
+    auto enqueue_neighbour_if_unseen = [&](unsigned i) {
+      Idx neigh{FluidTree::Int(pt[0]+dirs[i][0]),
+		FluidTree::Int(pt[1]+dirs[i][1]),
+		FluidTree::Int(pt[2]+dirs[i][2]),
+		pt[3]};
+      
+      if (!seen.Get(unpack(neigh))) {
+	seen.GetCreate(unpack(neigh));
+	workQ.push(neigh);
+      }
+    };
+    
     if (leaf_node_ptr) {
       // Node exists already: it must be fluid and have been created
       // by SurfaceVoxeliser. Look at all links and queue all sites
@@ -55,17 +73,7 @@ MaskTree FloodFill(const FluidTree& tree) {
       const auto& links = node_data.leaf->links;
       for (auto i: range(26)) {
 	if (links[i].type == Intersection::None) {
-	  // enqueue (pt + dirs[i]) if we have not seen it
-	  Idx neigh{FluidTree::Int(pt[0]+dirs[i][0]),
-	      FluidTree::Int(pt[1]+dirs[i][1]),
-	      FluidTree::Int(pt[2]+dirs[i][2]),
-	      pt[3]};
-
-	  if (!seen.Get(unpack(neigh))) {
-	    PrintIdx(neigh);
-	    seen.GetCreate(unpack(neigh));
-	    stack.emplace_back(neigh);
-	  }
+	  enqueue_neighbour_if_unseen(i);
 	}
       }
     } else {
@@ -78,14 +86,7 @@ MaskTree FloodFill(const FluidTree& tree) {
       // Instead, just iter over all the neighbours and enqueue if not
       // seen
       for (auto i: range(26)) {
-	Idx neigh{FluidTree::Int(pt[0]+dirs[i][0]),
-	    FluidTree::Int(pt[1]+dirs[i][1]),
-	    FluidTree::Int(pt[2]+dirs[i][2]),
-	    pt[3]};
-	if (!seen.Get(unpack(neigh))) {
-	  seen.GetCreate(unpack(neigh));
-	  stack.emplace_back(neigh);
-	}
+	enqueue_neighbour_if_unseen(i);
       }
       
     }

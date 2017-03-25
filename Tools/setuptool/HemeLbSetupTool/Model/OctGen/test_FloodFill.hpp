@@ -11,15 +11,18 @@ class FloodFillTests : public CppUnit::TestFixture {
   CPPUNIT_TEST(GetStartSingle);
   CPPUNIT_TEST(GetStartMulti);
   CPPUNIT_TEST(FillSphere);
-  // CPPUNIT_TEST(BuildMaskSingle);
   CPPUNIT_TEST_SUITE_END();
+
+  using Idx = FloodFill::Idx;
+  using MaskTree = FloodFill::MaskTree;
 public:
 
   void GetStartSingle() {
     // Make a FluidTree
     FluidTree tree(4);
     auto node = tree.GetCreate(1,2,3,0);
-    auto start_node = GetStart(tree);
+    FloodFill ff(tree);
+    auto start_node = ff.GetStart();
 
     CPPUNIT_ASSERT(Idx({1,2,3,0}) == start_node);
   }
@@ -33,7 +36,8 @@ public:
 	for (auto k: {3,4,5})
 	  auto node = tree.GetCreate(i,j,k,0);
 
-    auto start_node = GetStart(tree);
+    FloodFill ff(tree);
+    auto start_node = ff.GetStart();
 
     for (auto i: range(3))
       CPPUNIT_ASSERT(start_node[i] >= 3 && start_node[i] <= 5);
@@ -57,7 +61,8 @@ public:
     auto fluid_tree = voxer(tree, tri_level);
 
     // Fill the thing
-    auto mask = FloodFill(fluid_tree);
+    FloodFill ff(fluid_tree);
+    auto mask = ff();
     
     // Assert things...
     // (24, 17, 20) is known to be outside so shouldn't exist
