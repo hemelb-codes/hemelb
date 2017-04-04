@@ -69,8 +69,8 @@
             # Setup environment
             case $os in
                 "LegionRHEL7")
-                    module use ~ccsprsd/modulefiles
                     export MAKEFLAGS=-j4
+                    module load jenkins/hemelb/$compiler
                 ;;
                 "Mavericks")
                     case $compiler in
@@ -89,13 +89,10 @@
 
             # cpp check first -- on legion, this must be loaded without tinyxml
             cd $WORKSPACE
-            [[ "$os" == "LegionRHEL7" ]] && module load cppcheck
             filename=$WORKSPACE/cppcheck-result.xml
             cppcheck --enable=all --xml Code/*.cc Code/*.h $(ls -d Code/*/) 2> $filename
-            [[ "$os" == "LegionRHEL7" ]] && module unload cppcheck
 
             # # configure and build dependencies
-            [[ "$os" == "LegionRHEL7" ]] && module load jenkins/heme/$compiler
             dep_build_dir=$WORKSPACE/dependencies/build
             mkdir -p $dep_build_dir/fake_install && cd $dep_build_dir
             cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
