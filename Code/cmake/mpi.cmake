@@ -11,6 +11,9 @@ set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} ${CMAKE_CXX_LINK_FLAGS}")
 include_directories(${MPI_INCLUDE_PATH})
 
 function(TEST_MPI_VERSION_EQUAL ver output_var)
+  set(CMAKE_REQUIRED_FLAGS "${CXX11_FLAGS} ${CMAKE_CXX_COMPILE_FLAGS}")
+  set(CMAKE_REQUIRED_INCLUDES "${MPI_INCLUDE_PATH}")
+  set(CMAKE_REQUIRED_LIBRARIES "${MPI_CXX_LIBRARIES}")
   CHECK_CXX_SOURCE_COMPILES("#include <mpi.h>
 int main(int argc, char* argv[]) {
   static_assert(MPI_VERSION == ${ver}, \"\");
@@ -19,6 +22,9 @@ int main(int argc, char* argv[]) {
 endfunction()
 
 function(TEST_MPI_SUBVERSION_EQUAL ver output_var)
+  set(CMAKE_REQUIRED_FLAGS "${CXX11_FLAGS} ${CMAKE_CXX_COMPILE_FLAGS}")
+  set(CMAKE_REQUIRED_INCLUDES "${MPI_INCLUDE_PATH}")
+  set(CMAKE_REQUIRED_LIBRARIES "${MPI_CXX_LIBRARIES}")
   CHECK_CXX_SOURCE_COMPILES("#include <mpi.h>
 int main(int argc, char* argv[]) {
   static_assert(MPI_SUBVERSION == ${ver}, \"\");
