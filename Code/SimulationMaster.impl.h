@@ -196,7 +196,7 @@ namespace hemelb
       auto output_callback =
           [this](const hemelb::redblood::CellContainer & cells)
           {
-            auto timestep = simulationState->GetTimeStep();
+            auto timestep = simulationState->Get0IndexedTimeStep();
             if ((timestep % simConfig->GetRBCOutputPeriod()) == 0)
             {
               log::Logger::Log<log::Info, log::OnePerCore>("printstep %d, num cells %d", timestep, cells.size());
