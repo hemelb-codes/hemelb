@@ -200,10 +200,13 @@ namespace hemelb
             if ((timestep % simConfig->GetRBCOutputPeriod()) == 0)
             {
               log::Logger::Log<log::Info, log::OnePerCore>("printstep %d, num cells %d", timestep, cells.size());
+
+              std::string rbcOutputDir = fileManager->GetRBCOutputPathWithSubdir(std::to_string(timestep));
+
               for (auto cell : cells)
               {
                 std::stringstream filename;
-                filename << cell->GetTag() << "_t_" << timestep << ".vtp";
+                filename << rbcOutputDir << cell->GetTag() << "_t_" << timestep << ".vtp";
 
                 std::shared_ptr<redblood::CellBase> cell_base;
                 auto fader_cell_cast = std::dynamic_pointer_cast<redblood::FaderCell>(cell);
