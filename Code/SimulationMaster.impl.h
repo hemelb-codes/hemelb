@@ -201,7 +201,10 @@ namespace hemelb
             {
               log::Logger::Log<log::Info, log::OnePerCore>("printstep %d, num cells %d", timestep, cells.size());
 
+              // Create output directory for current writing step. Requires syncing to
+              // ensure no process goes ahead before directory is created.
               std::string rbcOutputDir = fileManager->GetRBCOutputPathWithSubdir(std::to_string(timestep));
+              ioComms.Barrier();
 
               for (auto cell : cells)
               {
