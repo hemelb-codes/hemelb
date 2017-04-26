@@ -25,6 +25,7 @@
 #include "redblood/parallel/SpreadForces.h"
 #include "Exception.h"
 #include "redblood/parallel/IntegrateVelocities.h"
+#include <boost/uuid/uuid_io.hpp>
 
 namespace hemelb
 {
