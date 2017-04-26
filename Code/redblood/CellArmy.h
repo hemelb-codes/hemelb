@@ -307,12 +307,14 @@ namespace hemelb
         ++i_first;
         if (std::find_if(outlets.begin(), outlets.end(), checkCell) != outlets.end())
         {
-          log::Logger::Log<log::Info, log::OnePerCore>("Removing cell at (%f, %f, %f)",
-                                                        barycenter.x,
-                                                        barycenter.y,
-                                                        barycenter.z);
+          std::stringstream message;
+          message << "Removing cell "<< (*i_current)->GetTag() << " at " << barycenter;
+          log::Logger::Log<log::Info, log::OnePerCore>(message.str());
+
           cellDnC.remove(*i_current);
           cells.erase(i_current);
+          auto const numErased = nodeDistributions.erase((*i_current)->GetTag());
+          assert(numErased == 1);
         }
       }
       timings[hemelb::reporting::Timers::cellRemoval].Stop();
