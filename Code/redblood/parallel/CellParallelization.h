@@ -52,24 +52,18 @@ namespace hemelb
           typedef std::tuple<CellContainer, CellContainer, LentCells> ChangedCells;
 
           //! \brief An object to exchange and distribute cells
-          //! \param[in] graphComm: neighberhood communicator
-          //! \param[in] simCom: world communicator of the simulation
-          ExchangeCells(net::MpiCommunicator const &graphComm, net::MpiCommunicator const &simComm) :
+          //! \param[in] graphComm: neighborhood communicator
+          ExchangeCells(net::MpiCommunicator const &graphComm) :
               cellCount(graphComm), totalNodeCount(graphComm), nameLengths(graphComm),
                   templateNames(graphComm), ownerIDs(graphComm), nodeCount(graphComm),
-                  cellUUIDs(graphComm), cellScales(graphComm), nodePositions(graphComm),
-                  simComm(simComm)
-          {
-          }
-          ExchangeCells(net::MpiCommunicator const &graphComm) :
-              ExchangeCells(graphComm, net::MpiCommunicator::World())
+                  cellUUIDs(graphComm), cellScales(graphComm), nodePositions(graphComm)
           {
           }
           //! \brief Computes and posts length of message when sending cells
           //! \param[in] distributions: Node distributions of the cells owned by this process
           //! \param[in] owned: Cells currently owned by this process
           //! \param[in] ownership a function to ascertain ownership. It should return the rank of
-          //! the owning process in the *world* communicator, according to the position in the cell.
+          //! the owning process in the graph communicator, according to the position of the cell.
           virtual void PostCellMessageLength(NodeDistributions const& distributions,
                                              CellContainer const &owned,
                                              Ownership const & ownership);
@@ -85,7 +79,7 @@ namespace hemelb
           //! \param[in] distributions tells us for each proc the list of nodes it requires
           //! \param[in] cells a container of cells owned and managed by this process
           //! \param[in] ownership a function to ascertain ownership. It should return the rank of
-          //! the owning process in the *world* communicator, according to the position in the cell.
+          //! the owning process in the graph communicator, according to the position of the cell.
           virtual void PostCells(NodeDistributions const &distributions, CellContainer const &cells,
                                  Ownership const & ownership);
           //! \brief Post all owned cells and preps for receiving lent cells
@@ -137,8 +131,6 @@ namespace hemelb
           //! \details These cells are the same as the disowned cells. However, only part of the
           //! nodes kept: those that affect this process.
           LentCells formelyOwned;
-          //! World communicator for the simulation
-          net::MpiCommunicator simComm;
 
           //! Number of nodes to send to each neighboring process
           void SetupLocalSendBuffers(NodeDistributions const &distributions,

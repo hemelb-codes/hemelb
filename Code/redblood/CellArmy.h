@@ -49,13 +49,13 @@ namespace hemelb
                  net::MpiCommunicator const &worldCommunicator = net::MpiCommunicator::World()) :
             latticeData(latDat), cells(cells), cellDnC(cells, boxsize, cell2Cell.cutoff + 1e-6),
                 wallDnC(createWallNodeDnC<Lattice>(latDat, boxsize, cell2Wall.cutoff + 1e-6)),
-                cell2Cell(cell2Cell), cell2Wall(cell2Wall), worldCommunicator(worldCommunicator),
+                cell2Cell(cell2Cell), cell2Wall(cell2Wall),
                 cellTemplates(cellTemplates), timings(timings),
                 neighbourDependenciesGraph(parallel::CreateGraphComm(worldCommunicator,
                                                                      latDat,
                                                                      cellTemplates,
                                                                      timings)),
-                exchangeCells(neighbourDependenciesGraph, worldCommunicator),
+                exchangeCells(neighbourDependenciesGraph),
                 velocityIntegrator(neighbourDependenciesGraph),
                 forceSpreader(neighbourDependenciesGraph),
                 globalCoordsToProcMap(parallel::ComputeGlobalCoordsToProcMap(neighbourDependenciesGraph, latticeData)),
@@ -191,8 +191,6 @@ namespace hemelb
         Node2NodeForce cell2Cell;
         //! Interaction terms between cells
         Node2NodeForce cell2Wall;
-        //! Communicator with all the processes participating in the simulation
-        net::MpiCommunicator const &worldCommunicator;
         //! Container with the templates used to create the RBC meshes
         std::shared_ptr<TemplateCellContainer> cellTemplates;
         //! Timers object used to time different code sections

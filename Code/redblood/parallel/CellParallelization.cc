@@ -56,15 +56,13 @@ namespace hemelb
         }
 
         std::map<boost::uuids::uuid, proc_t> getOwnership(net::MpiCommunicator const &graphComm,
-                                                          net::MpiCommunicator const &world,
                                                           CellContainer const &owned,
                                                           ExchangeCells::Ownership const &ownership)
         {
-          auto const rankMap = world.RankMap(graphComm);
           std::map<boost::uuids::uuid, proc_t> result;
           for (auto const &cell : owned)
           {
-            result[cell->GetTag()] = rankMap.find(ownership(cell))->second;
+            result[cell->GetTag()] = ownership(cell);
           }
           return result;
         }
@@ -76,7 +74,7 @@ namespace hemelb
       {
         PostCellMessageLength(distributions,
                               owned,
-                              getOwnership(nodeCount.GetCommunicator(), simComm, owned, ownership));
+                              getOwnership(nodeCount.GetCommunicator(), owned, ownership));
       }
 
       void ExchangeCells::PostCellMessageLength(
@@ -127,7 +125,7 @@ namespace hemelb
       {
         PostCells(distributions,
                   owned,
-                  getOwnership(nodeCount.GetCommunicator(), simComm, owned, ownership));
+                  getOwnership(nodeCount.GetCommunicator(), owned, ownership));
       }
 
       void ExchangeCells::PostCells(NodeDistributions const &distributions,

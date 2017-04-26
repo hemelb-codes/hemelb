@@ -168,7 +168,7 @@ namespace hemelb
           proc_t result = i / nCells;
           return result;
         };
-        hemelb::redblood::parallel::ExchangeCells xchange(graphComm, split);
+        hemelb::redblood::parallel::ExchangeCells xchange(graphComm);
         xchange.PostCellMessageLength(distributions, owned, ownership);
         xchange.PostCells(distributions, owned, ownership);
         auto const distCells = xchange.ReceiveCells(templates);
