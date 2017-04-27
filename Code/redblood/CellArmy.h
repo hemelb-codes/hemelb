@@ -252,7 +252,18 @@ namespace hemelb
       timings[hemelb::reporting::Timers::computeNodeDistributions].Start();
       for (auto cell : cells)
       {
-        nodeDistributions.at(cell->GetTag()).template Reindex<Stencil>(globalCoordsToProcMap, cell);
+        try
+        {
+          nodeDistributions.at(cell->GetTag()).template Reindex<Stencil>(globalCoordsToProcMap, cell);
+        }
+        catch (std::exception const &e)
+        {
+          // If the simulation went unstable, some vertices may have been advected out of the domain.
+          // This will be picked up in Reindex when figuring out vertex ownership. The code will throw
+          // to give us a chance to e.g. write all the cells to disk for debugging purposes
+          NotifyCellChangeListeners();
+          hemelb::net::MpiEnvironment::Abort(-1);
+        }
       }
       timings[hemelb::reporting::Timers::computeNodeDistributions].Stop();
 
@@ -328,7 +339,8 @@ namespace hemelb
 
       //! @todo: #623 AddCell should only be called if the subdomain contains the relevant RBC inlet
       auto const iter = globalCoordsToProcMap.find(barycenter);
-      if ((iter != globalCoordsToProcMap.end()) && (iter->second == neighbourDependenciesGraph.Rank()))
+      bool insertAtThisRank = (iter != globalCoordsToProcMap.end()) && (iter->second == neighbourDependenciesGraph.Rank());
+      if (insertAtThisRank)
       {
         log::Logger::Log<log::Info, log::OnePerCore>("Adding cell at (%f, %f, %f)",
             barycenter.x,
@@ -345,6 +357,19 @@ namespace hemelb
         log::Logger::Log<log::Info, log::OnePerCore>("Cell has %i edge nodes",
           nodeDistributions.find(cell->GetTag())->second.BoundaryIndices().size());
       }
+
+      // Check that one and only one process inserted the cell
+      unsigned numCellsAdded = neighbourDependenciesGraph.AllReduce((unsigned) insertAtThisRank, MPI_SUM);
+      if (numCellsAdded != 1)
+      {
+        log::Logger::Log<log::Info, log::OnePerCore>("Failed to add cell at (%f, %f, %f). It was added %d times.",
+            barycenter.x,
+            barycenter.y,
+            barycenter.z,
+            numCellsAdded);
+        assert(false);
+      }
+
     }
   }
 }

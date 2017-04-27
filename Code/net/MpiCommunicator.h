@@ -177,6 +177,13 @@ namespace hemelb
         //! \brief Number of neighbors in a graph communicator
         int GetNeighborsCount() const;
 
+        //! \brief Returns graph neighberhood
+        //! \details This communicator must have been created with graph
+        std::vector<int> GetNeighbors(int whoseNeighbours) const;
+        //! \brief Number of neighbors in a graph communicator
+        int GetNeighborsCount(int whoseNeighbours) const;
+
+
         //! A map from the ranks of this communicator to another
         std::map<int, int> RankMap(MpiCommunicator const &valueComm) const;
 

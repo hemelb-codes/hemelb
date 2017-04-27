@@ -123,6 +123,7 @@ namespace hemelb
       log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
           filename.c_str());
       std::ofstream file(filename.c_str());
+      assert(file.is_open());
       writeMesh(file, cell, converter);
     }
 
@@ -137,6 +138,7 @@ namespace hemelb
       log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
                                                    filename.c_str());
       std::ofstream file(filename.c_str());
+      assert(file.is_open());
       writeVTKMeshWithForces(file, cell, converter);
     }
 

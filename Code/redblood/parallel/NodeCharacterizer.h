@@ -61,7 +61,8 @@ namespace hemelb
               std::stringstream message;
               message << "Mesh vertex at " << pos << " is not affected by any flow subdomain.";
               log::Logger::Log<log::Error, log::OnePerCore>(message.str());
-              hemelb::net::MpiEnvironment::Abort(-1);
+
+              throw std::exception();
             }
             return affectedProcs;
           };

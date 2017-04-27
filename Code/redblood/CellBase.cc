@@ -169,6 +169,7 @@ namespace hemelb
       log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
                                                    filename.c_str());
       std::ofstream file(filename.c_str());
+      assert(file.is_open());
       writeVTKMesh(file, cell, converter);
     }
 

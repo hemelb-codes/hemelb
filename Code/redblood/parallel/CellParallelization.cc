@@ -358,6 +358,9 @@ namespace hemelb
           }
           if (formelyOwned.count(neighbor) == 1)
           {
+            // Overwritting the previous CellContainer. Shouldn't we append instead?
+            log::Logger::Log<log::Info, log::OnePerCore>("OVERWRITTING SET FOR NEIGHBOUR %d!!!", neighbor);
+            //formelyOwned[neighbor].insert(lentCell);
             formelyOwned[neighbor] = CellContainer { lentCell };
           }
           else

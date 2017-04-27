@@ -113,7 +113,7 @@ namespace hemelb
             assert(int(name ## Counts.size()) > index);                                          \
             auto const offset = std::accumulate(                                                 \
                 name ## Counts.begin(), name ## Counts.begin() + index, 0) + i;                  \
-            assert(int(name ## Buffer.size()) > offset);                                         \
+            if (int(name ## Buffer.size()) <= offset) throw std::exception();                                         \
             return name ## Buffer[offset];                                                       \
           }                                                                                      \
           /** Sets specific send object **/                                                      \
