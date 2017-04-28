@@ -55,21 +55,6 @@ function(GET_MPI_SUBVERSION output_var)
   message(FATAL_ERROR "Could not determine MPI_SUBVERSION")
 endfunction()
 
-# CMake doens't seem to properly pass through the C++11 flag
-# This is probably wrong
-set(CMAKE_REQUIRED_FLAGS ${CXX11_FLAGS})
-set(CMAKE_REQUIRED_QUIET 1)
-
-# Put this in here as this is the key feature needed by the test programs
-CHECK_CXX_SOURCE_COMPILES("int main(int, char**) {
-static_assert(true, \"must not fail\");
-}"
-  HAVE_STATIC_ASSERT)
-
-if(NOT HAVE_STATIC_ASSERT)
-  message(FATAL_ERROR "No static_assert!")
-endif()
-
 GET_MPI_VERSION(MPI_STANDARD_VERSION_MAJOR)
 GET_MPI_SUBVERSION(MPI_STANDARD_VERSION_MINOR)
 SET(MPI_STANDARD_VERSION "${MPI_STANDARD_VERSION_MAJOR}.${MPI_STANDARD_VERSION_MINOR}")
