@@ -88,7 +88,7 @@ class ExtractedPropertyV3Parser(object):
         self._fieldSpec = FieldSpec([('id', None, np.uint64, 1, None),
                                ('position', None, np.float32, (3,), None)])
 
-        for iField in xrange(self._fieldCount):
+        for iField in range(self._fieldCount):
             name = decoder.unpack_string()
             length = decoder.unpack_uint()
             self._fieldSpec.Append(name, length, '>f8', np.float64)
@@ -117,7 +117,7 @@ class ExtractedPropertyV4Parser(object):
                                ('position', None, np.float32, (3,), None)])
         self._dataOffset = [0]
 
-        for iField in xrange(self._fieldCount):
+        for iField in range(self._fieldCount):
             name = decoder.unpack_string()
             length = decoder.unpack_uint()
             self._dataOffset.append(decoder.unpack_double())
@@ -172,7 +172,7 @@ class ExtractedProperty(object):
         assert version in self.HandledVersions, "Incorrect extraction format version number"
 
         self.voxelSizeMetres = decoder.unpack_double()
-        self.originMetres = np.array([decoder.unpack_double() for i in xrange(3)])
+        self.originMetres = np.array([decoder.unpack_double() for i in range(3)])
 
         self.siteCount = decoder.unpack_uhyper()
         self.fieldCount = decoder.unpack_uint()
@@ -218,7 +218,7 @@ class ExtractedProperty(object):
         nTimes = bodysize / self._recordLength
 
         times = np.zeros(nTimes, dtype=int)
-        for iT in xrange(nTimes):
+        for iT in range(nTimes):
             pos = self._totalHeaderLength + iT * self._recordLength
             self._file.seek(pos)
             timeBuf = self._file.read(TimeStepDataLength)
