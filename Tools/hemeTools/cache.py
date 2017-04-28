@@ -35,11 +35,11 @@ def cache(filename, *argPatterns, **kwargPatterns):
             
             
             if os.path.exists(cachefile):
-                ans = cPickle.load(file(cachefile))
+                ans = cPickle.load(open(cachefile))
             else:
                 ans = f(*args, **kwargs)
                 cPickle.dump(ans,
-                             file(cachefile, 'wb'),
+                             open(cachefile, 'wb'),
                              protocol=2)
                 pass
             return ans
@@ -63,11 +63,11 @@ def processesFile(f):
         if os.path.exists(cachefile) and \
                 os.path.getmtime(cachefile) > os.path.getmtime(infile):
             # Is the cachefile newer than the input?
-            ans = cPickle.load(file(cachefile))
+            ans = cPickle.load(open(cachefile))
         else:
             ans = f(infile)
             cPickle.dump(ans,
-                         file(cachefile, 'wb'),
+                         open(cachefile, 'wb'),
                          protocol=2)
             pass
         return ans

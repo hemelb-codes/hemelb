@@ -144,7 +144,7 @@ class ExtractedProperty(object):
         """
 
         self.filename = filename
-        self._file = file(filename, 'rb')
+        self._file = open(filename, 'rb')
 
         self._ReadMainHeader()
         self._ReadFieldHeader()

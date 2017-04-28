@@ -26,7 +26,7 @@ def HemeLbSnapshot(filename):
        numbers and more metadata.
     """
     
-    start = file(filename).read(8)
+    start = open(filename).read(8)
     reader = xdrlib.Unpacker(start)
     firstInt = reader.unpack_uint()
     
@@ -171,7 +171,7 @@ class TextSnapshot(PositionlessSnapshot):
         
         """
 
-        f = file(filename)
+        f = open(filename)
         stable = int(f.readline())
         voxel_size = float(f.readline())
         bb_min = np.array([int(x) for x in f.readline().split()])
@@ -198,7 +198,7 @@ class XdrVoxelFormatOneSnapshot(object):
     @classmethod
     def _load(cls, filename, header):
         # Skip past the header, slurp data, create XDR object
-        f = file(filename)
+        f = open(filename)
         f.seek(cls._headerLengthBytes)
         reader = xdrlib.Unpacker(f.read())
 
@@ -236,7 +236,7 @@ class XdrSnapshotVersionOne(PositionlessSnapshot, XdrVoxelFormatOneSnapshot):
         5- total number of fluid voxels
 
         """
-        reader = xdrlib.Unpacker(file(filename).read(cls._headerLengthBytes))
+        reader = xdrlib.Unpacker(open(filename).read(cls._headerLengthBytes))
         header = {}
         header['stable'] = reader.unpack_int()
         header['voxel_size'] = reader.unpack_double()
@@ -264,7 +264,7 @@ class XdrSnapshotVersionTwo(BaseSnapshot, XdrVoxelFormatOneSnapshot):
     def _readHeader(cls, filename):
         """Read the header lines, according to description in Code/io/formats/snapshot.h
         """
-        reader = xdrlib.Unpacker(file(filename).read(cls._headerLengthBytes))
+        reader = xdrlib.Unpacker(open(filename).read(cls._headerLengthBytes))
         header = {}
         assert reader.unpack_uint() == HemeLbMagicNumber
         assert reader.unpack_uint() == SnapshotMagicNumber
@@ -299,7 +299,7 @@ def VersionedXdrSnapshot(filename):
     """Examine the file and dispatch to the appropriate constructor.
     """
     # Need the two magic numbers and the version number, i.e. 12 bytes
-    reader = xdrlib.Unpacker(file(filename).read(12))
+    reader = xdrlib.Unpacker(open(filename).read(12))
     
     assert reader.unpack_uint() == HemeLbMagicNumber
     assert reader.unpack_uint() == SnapshotMagicNumber
