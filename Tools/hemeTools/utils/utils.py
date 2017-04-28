@@ -5,7 +5,7 @@
 # license in the file LICENSE.
 """Utility functions for HemeTools
 """
-
+from six.moves import xrange
 import numpy as np
 
 def MatchCorresponding(first, second):
