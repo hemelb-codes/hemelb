@@ -5,6 +5,7 @@
 #include <memory>
 #include <functional>
 #include <list>
+#include <random>
 #include "io/xml/XmlAbstractionLayer.h"
 #include "lb/iolets/InOutLet.h"
 #include "redblood/types.h"
@@ -69,7 +70,7 @@ namespace hemelb
          * @see hemelb::redblood::CellArmy::SetCellInsertion
          * @see hemelb::redblood::CellArmy::CallCellInsertion
          */
-        void operator()(CellInserter insertFn) const
+        void operator()(CellInserter insertFn)
         {
           if (condition())
           {
@@ -81,7 +82,7 @@ namespace hemelb
           }
         }
 
-        virtual CellContainer::value_type drop() const
+        virtual CellContainer::value_type drop()
         {
           return CellContainer::value_type(cell->clone().release());
         }
@@ -104,12 +105,12 @@ namespace hemelb
                                     util::Matrix3D const &initialRotation, Angle dtheta, Angle dphi,
                                     LatticePosition const& dx, LatticePosition const& dy) :
             RBCInserter(condition, std::move(cell)), initialRotation(initialRotation),
-                dtheta(dtheta), dphi(dphi), dx(dx), dy(dy)
+                dtheta(dtheta), dphi(dphi), dx(dx), dy(dy), uniformDistribution(-1.0,1.0)
         {
         }
 
         //! Rotates and translates the template cell according to random dist
-        CellContainer::value_type drop() const override;
+        CellContainer::value_type drop() override;
 
         using RBCInserter::operator();
       private:
@@ -119,6 +120,9 @@ namespace hemelb
         Angle dtheta, dphi;
         //! Two vectors alongst which to move cell
         LatticePosition dx, dy;
+
+        std::default_random_engine randomGenerator;
+        std::uniform_real_distribution<double> uniformDistribution;
     };
 
     //! Composite RBCInserter that inserts multiple cells at each LB step

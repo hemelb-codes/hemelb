@@ -13,18 +13,13 @@ namespace hemelb
 {
   namespace redblood
   {
-    CellContainer::value_type RBCInserterWithPerturbation::drop() const
+    CellContainer::value_type RBCInserterWithPerturbation::drop()
     {
       auto const result = RBCInserter::drop();
-      auto const random = []()
-      {
-        auto const prec = 50000;
-        return double(rand() % (prec * 2) - prec) / double(prec);
-      };
 
       // apply rotation
-      auto const theta = dtheta * (2e0 * random() - 1e0);
-      auto const phi = dphi * (2e0 * random() - 1e0);
+      auto const theta = dtheta * (2e0 * uniformDistribution(randomGenerator) - 1e0);
+      auto const phi = dphi * (2e0 * uniformDistribution(randomGenerator) - 1e0);
       using std::cos;
       using std::sin;
       LatticePosition const z(cos(theta) * sin(phi), sin(theta) * sin(phi), cos(phi));
@@ -33,7 +28,7 @@ namespace hemelb
       *result *= rotation;
 
       // apply translation
-      *result += dx * random() + dy * random();
+      *result += dx * uniformDistribution(randomGenerator) + dy * uniformDistribution(randomGenerator);
       return result;
     }
   }

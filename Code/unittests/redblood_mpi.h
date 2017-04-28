@@ -16,5 +16,6 @@
 #include <unittests/redblood/parallel/ParallelFixtureTests.h>
 #include <unittests/redblood/parallel/MPILockStepTests.h>
 #include <unittests/redblood/parallel/GraphCommsTests.h>
+#include <unittests/redblood/parallel/RBCInserterWithPerturbationParallelTests.h>
 #undef HEMELB_DOING_UNITTESTS
 #endif
