@@ -32,7 +32,7 @@ class FieldSpec(object):
 
     def __init__(self, memspec):
         # name, XDR dtype, in-memory dtype, length, offset
-        self._filespec = [('grid', '>i4', np.uint32, (3,), 0)]
+        self._filespec = [(u'grid', '>i4', np.uint32, (3,), 0)]
         
         self._memspec = memspec
         return
@@ -51,13 +51,13 @@ class FieldSpec(object):
     def GetMem(self):
         """Get the numpy datatype for the in-memory array.
         """
-        return np.dtype([(name, memType, length) 
+        return np.dtype([(str(name), memType, length) 
                          for name, xdrType, memType, length, offset in (self._memspec + self._filespec)])
 
     def GetXdr(self):
         """Get the numpy datatype for the XDR file.
         """
-        return np.dtype([(name, xdrType, length) 
+        return np.dtype([(str(name), xdrType, length) 
                          for name, xdrType, memType, length, offset in self._filespec])
 
     def GetRecordLength(self):
@@ -70,6 +70,10 @@ class FieldSpec(object):
         """
         return iter(self._filespec)
     pass
+
+def unpack_string(decoder):
+    bstr = decoder.unpack_bytes()
+    return bstr.decode('utf-8')
 
 class ExtractedPropertyV3Parser(object):
     def __init__(self, fieldCount, siteCount):
@@ -85,11 +89,11 @@ class ExtractedPropertyV3Parser(object):
         return result
 
     def ParseFieldHeader(self, decoder):
-        self._fieldSpec = FieldSpec([('id', None, np.uint64, 1, None),
-                               ('position', None, np.float32, (3,), None)])
+        self._fieldSpec = FieldSpec([(u'id', None, np.uint64, 1, None),
+                               (u'position', None, np.float32, (3,), None)])
 
         for iField in range(self._fieldCount):
-            name = decoder.unpack_string()
+            name = unpack_string(decoder)
             length = decoder.unpack_uint()
             self._fieldSpec.Append(name, length, '>f8', np.float64)
             continue
@@ -113,12 +117,12 @@ class ExtractedPropertyV4Parser(object):
         return result
 
     def ParseFieldHeader(self, decoder):
-        self._fieldSpec = FieldSpec([('id', None, np.uint64, 1, None),
-                               ('position', None, np.float32, (3,), None)])
+        self._fieldSpec = FieldSpec([(u'id', None, np.uint64, 1, None),
+                               (u'position', None, np.float32, (3,), None)])
         self._dataOffset = [0]
 
         for iField in range(self._fieldCount):
-            name = decoder.unpack_string()
+            name = unpack_string(decoder)
             length = decoder.unpack_uint()
             self._dataOffset.append(decoder.unpack_double())
             self._fieldSpec.Append(name, length, '>f4', np.float32)
@@ -215,7 +219,7 @@ class ExtractedProperty(object):
         bodysize = filesize - self._totalHeaderLength
         assert bodysize % self._recordLength == 0, \
             "Extraction file appears to have partial record(s), residual %s / %s , bodysize %s"%(bodysize % self._recordLength,self._recordLength,bodysize)
-        nTimes = bodysize / self._recordLength
+        nTimes = bodysize // self._recordLength
 
         times = np.zeros(nTimes, dtype=int)
         for iT in range(nTimes):
