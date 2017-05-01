@@ -10,7 +10,6 @@
 #include <cppunit/TestFixture.h>
 
 #include "lb/IncompressibilityChecker.h"
-#include "net/phased/steps.h"
 #include "timestep/TimeStepManager.h"
 
 #include "unittests/FourCubeLatticeData.h"

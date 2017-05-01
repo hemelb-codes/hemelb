@@ -6,7 +6,7 @@
 
 #ifndef HEMELB_UNITTESTS_GEOMETRY_NEIGHBOURING_NEIGHBOURINGDATAMANAGERTESTS_H
 #define HEMELB_UNITTESTS_GEOMETRY_NEIGHBOURING_NEIGHBOURINGDATAMANAGERTESTS_H
-#include "net/phased/StepManager.h"
+
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "unittests/helpers/MockCommsHelper.h"
 #include "comm/MpiEnvironment.h"
