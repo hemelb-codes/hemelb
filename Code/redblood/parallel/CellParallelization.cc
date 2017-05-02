@@ -356,17 +356,8 @@ namespace hemelb
           {
             lentCell->addVertex(cell->GetVertices()[index]);
           }
-          if (formelyOwned.count(neighbor) == 1)
-          {
-            // Overwritting the previous CellContainer. Shouldn't we append instead?
-            log::Logger::Log<log::Info, log::OnePerCore>("OVERWRITTING SET FOR NEIGHBOUR %d!!!", neighbor);
-            //formelyOwned[neighbor].insert(lentCell);
-            formelyOwned[neighbor] = CellContainer { lentCell };
-          }
-          else
-          {
-            formelyOwned[neighbor].emplace(std::move(lentCell));
-          }
+          auto const &inserted = formelyOwned[neighbor].emplace(std::move(lentCell));
+          assert(inserted.second);
         }
       }
 

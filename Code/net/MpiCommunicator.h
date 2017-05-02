@@ -171,18 +171,19 @@ namespace hemelb
         //! \param reorder: Whether nodes can be re-ordered
         MpiCommunicator Graph(std::vector<std::vector<int>> edges, bool reorder = true) const;
 
-        //! \brief Returns graph neighberhood
+        //! \brief Returns graph neighborhood for calling process
         //! \details This communicator must have been created with graph
         std::vector<int> GetNeighbors() const;
-        //! \brief Number of neighbors in a graph communicator
+        //! \brief Number of neighbors for calling process in a graph communicator
         int GetNeighborsCount() const;
 
-        //! \brief Returns graph neighberhood
+        //! \brief Returns graph neighborhood for a given rank
         //! \details This communicator must have been created with graph
-        std::vector<int> GetNeighbors(int whoseNeighbours) const;
-        //! \brief Number of neighbors in a graph communicator
-        int GetNeighborsCount(int whoseNeighbours) const;
-
+        //! \param whoseNeighbors: process rank whose neighbors we want to know about
+        std::vector<int> GetNeighbors(int whoseNeighbors) const;
+        //! \brief Number of neighbors in a graph communicator for a given rank
+        //! \param whoseNeighbors: process rank whose number of neighbors we want to know about
+        int GetNeighborsCount(int whoseNeighbors) const;
 
         //! A map from the ranks of this communicator to another
         std::map<int, int> RankMap(MpiCommunicator const &valueComm) const;

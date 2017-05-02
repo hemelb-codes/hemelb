@@ -358,6 +358,7 @@ namespace hemelb
           nodeDistributions.find(cell->GetTag())->second.BoundaryIndices().size());
       }
 
+#ifndef NDEBUG
       // Check that one and only one process inserted the cell
       unsigned numCellsAdded = neighbourDependenciesGraph.AllReduce((unsigned) insertAtThisRank, MPI_SUM);
       if (numCellsAdded != 1)
@@ -367,8 +368,10 @@ namespace hemelb
             barycenter.y,
             barycenter.z,
             numCellsAdded);
-        assert(false);
+
+        hemelb::net::MpiEnvironment::Abort(-1);
       }
+#endif
 
     }
   }

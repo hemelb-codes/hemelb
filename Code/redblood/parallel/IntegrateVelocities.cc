@@ -68,34 +68,7 @@ namespace hemelb
             {
               assert(int(item.value) <= cell->GetNumberOfNodes());
               auto &pos = cell->GetVertices()[item.value];
-              try
-              {
-                pos += sendVelocities.GetReceive(neighbor.value, offset + item.index);
-              }
-              catch(...)
-              {
-                std::stringstream message;
-                message << "Failed when receiving velocities for " << cell->GetTag() << " from neighbour " << neighbor.value << std::endl;
-                message << "My neighs: ";
-                for (auto const neigh : neighbors)
-                {
-                  message << neigh << ", ";
-                }
-                message << std::endl;
-
-                for (auto const neigh : neighbors)
-                {
-                  message << neigh << " neighs: ";
-                  for (auto const neigh_neigh : sendNodeCount.GetCommunicator().GetNeighbors(neigh))
-                  {
-                    message << neigh_neigh << ", ";
-                  }
-                  message << std::endl;
-                }
-
-                log::Logger::Log<log::Info, log::OnePerCore>(message.str());
-//                throw;
-              }
+              pos += sendVelocities.GetReceive(neighbor.value, offset + item.index);
             }
           }
         }
