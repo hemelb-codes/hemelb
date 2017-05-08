@@ -161,7 +161,7 @@ namespace hemelb
         ModifyXMLInput(resource, { "redbloodcells", "cell2Cell", "intensity", "value" }, cell);
         ModifyXMLInput(resource, { "redbloodcells", "cell2Cell", "cutoff", "value" }, 2);
         ModifyXMLInput(resource, { "redbloodcells", "cell2Wall", "intensity", "value" }, wall);
-        ModifyXMLInput(resource, { "redbloodcells", "cell2Well", "cutoff", "value" }, 2);
+        ModifyXMLInput(resource, { "redbloodcells", "cell2Wall", "cutoff", "value" }, 2);
         auto options = std::make_shared<configuration::CommandLine>(argc, argv);
         auto const master = std::make_shared<SimulationMaster<TRAITS>>(*options, Comms());
         helpers::LatticeDataAccess(&master->GetLatticeData()).ZeroOutForces();
@@ -177,11 +177,10 @@ namespace hemelb
 
         auto const master = simulationMaster<Traits>(3, 0, intensity);
         auto controller = std::static_pointer_cast<CellController>(master->GetCellController());
+        assert(controller); // XML file contains RBC problem definition, therefore a CellController should exist already
         controller->AddCell(std::make_shared<NodeCell>(where));
 
-        master->RegisterActor(*controller, 1);
         master->RunSimulation();
-        master->Finalise();
         return (*controller->GetCells().begin())->GetVertices().front();
       }
 
@@ -194,14 +193,13 @@ namespace hemelb
 
         auto const master = simulationMaster<Traits>(3, intensity, 0);
         auto controller = std::static_pointer_cast<CellController>(master->GetCellController());
+        assert(controller); // XML file contains RBC problem definition, therefore a CellController should exist already
         auto const firstCell = std::make_shared<NodeCell>(n0);
         auto const secondCell = std::make_shared<NodeCell>(n1);
         controller->AddCell(firstCell);
         controller->AddCell(secondCell);
 
-        master->RegisterActor(*controller, 1);
         master->RunSimulation();
-        master->Finalise();
         return
         { firstCell->GetVertices().front(), secondCell->GetVertices().front()};
       }

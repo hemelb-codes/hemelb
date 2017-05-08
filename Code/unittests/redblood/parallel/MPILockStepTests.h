@@ -130,9 +130,9 @@ namespace hemelb
           for(std::size_t i(serial.size()); i < uuids.size(); ++i)
           {
             CPPUNIT_ASSERT_EQUAL(std::size_t(1), serial.count(uuids[i]));
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].x, serial[uuids[i]].x, 1e-12);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].y, serial[uuids[i]].y, 1e-12);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].z, serial[uuids[i]].z, 1e-12);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].x, serial[uuids[i]].x, 1e-11);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].y, serial[uuids[i]].y, 1e-11);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].z, serial[uuids[i]].z, 1e-11);
           }
         }
         world.Barrier();
@@ -169,9 +169,9 @@ namespace hemelb
                 parallel_positions.begin(), parallel_positions.end(), positions[i]);
             CPPUNIT_ASSERT(i_found != parallel_positions.end());
             auto const actual_force = parallel_forces[i_found - parallel_positions.begin()];
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(forces[i].x, actual_force.x, 1e-12);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(forces[i].y, actual_force.y, 1e-12);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(forces[i].z, actual_force.z, 1e-12);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(forces[i].x, actual_force.x, 1e-11);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(forces[i].y, actual_force.y, 1e-11);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(forces[i].z, actual_force.z, 1e-11);
             ++nbtests;
           }
         }
