@@ -22,6 +22,7 @@ option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
 option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" OFF)
 option(HEMELB_CALLGRIND "Compile unit tests that use callgrind" OFF)
 option(HEMELB_USE_VELOCITY_WEIGHTS_FILE "Use Velocity weights file" OFF)
+option(HEMELB_USE_KRUEGER_ORDERING "Use Krueger's LB-IBM algorithm reodering" ON)
 
 set(HEMELB_EXECUTABLE "hemelb"
   CACHE STRING "File name of executable to produce")
@@ -77,7 +78,7 @@ option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
 set(HEMELB_STENCIL "FourPoint"
     CACHE STRING "HemeLB stencil type")
 set_property(CACHE HEMELB_STENCIL PROPERTY STRINGS TwoPoint ThreePoint FourPoint CosineApprox)
-	
+
 # Add warnings flags to development build types
 if (HEMELB_USE_ALL_WARNINGS_GNU)
 	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
@@ -138,6 +139,10 @@ endif()
 
 if (HEMELB_USE_VELOCITY_WEIGHTS_FILE)
     add_definitions(-DHEMELB_USE_VELOCITY_WEIGHTS_FILE)
+endif()
+
+if (HEMELB_USE_KRUEGER_ORDERING)
+    add_definitions(-DHEMELB_USE_KRUEGER_ORDERING)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${HEMELB_DEPENDENCIES_PATH}/Modules/")
