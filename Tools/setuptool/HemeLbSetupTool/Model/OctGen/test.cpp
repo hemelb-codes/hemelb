@@ -7,6 +7,7 @@
 #include "test_SegmentFactory.hpp"
 #include "test_SurfaceVoxeliser.hpp"
 #include "test_FloodFill.hpp"
+#include "test_SectionTree.hpp"
 
 int main( int argc, char **argv)
 {

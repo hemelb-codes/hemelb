@@ -14,7 +14,6 @@ class FloodFillTests : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE_END();
 
   using Idx = FloodFill::Idx;
-  using MaskTree = FloodFill::MaskTree;
 public:
 
   void GetStartSingle() {

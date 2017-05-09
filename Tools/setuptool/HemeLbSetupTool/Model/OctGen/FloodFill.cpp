@@ -29,7 +29,7 @@ auto FloodFill::GetStart() const -> Idx {
 
 #define PrintIdx(i) std::cout << "[" << i[0] << ", " << i[1] << ", "<< i[2] << ", "<< i[3] << "]" << std::endl
 
-auto FloodFill::operator()() const -> MaskTree {
+MaskTree FloodFill::operator()() const {
   const auto& dirs = Neighbours::GetDisplacements();
   typedef boost::lockfree::queue<Idx> Queue;
   auto seed = GetStart();
