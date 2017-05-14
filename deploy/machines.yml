@@ -56,6 +56,24 @@ default:
   stat: qstat
   forward_agent: true
 
+palmetto: # Palmetto Cluster at Clemson University
+  verbose: 0
+  import: "palmetto"
+  remote: "user.palmetto.clemson.edu"
+  queue: "work"
+  max_job_name_chars: 15
+  job_dispatch: "qsub"
+  run_command: "mpirun"
+  batch_header: pbs-palmetto
+  modules: ["load gcc/6.1.0", "load openmpi/1.10.3", "load hdf5/1.10.0", "load cmake/3.6.1", "load boost/1.57.0", "load anaconda/4.0.0"]
+  fabric_dir: "FabricHemeLB"
+  home_path_template: "/home/$username/"
+  runtime_path_template: "/scratch1/$username/"
+  make_jobs: 4
+  cmake_options:
+    BOOST_ROOT:PATHNAME: "${BOOST}"
+    HEMELB_USE_SSE3: "ON"
+
 archer: #the ARCHER supercomputer at EPCC
   import: "archer"
   max_job_name_chars: 15
