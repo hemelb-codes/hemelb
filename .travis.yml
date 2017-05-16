@@ -32,5 +32,5 @@ install:
 script:
   - mkdir build
   - cd build
-  - ${DEPS_DIR}/cmake/bin/cmake -DBOOST_ROOT:PATHNAME=${BOOST} ..
+  - ${DEPS_DIR}/cmake/bin/cmake -DBOOST_ROOT:PATHNAME=${BOOST} -DCMAKE_INSTALL_PREFIX=../install ..
   - make
