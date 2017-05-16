@@ -15,7 +15,7 @@ compiler:
   - mpicc
   
 install:
-  - sudo apt-get -y install libboost-{chrono,program-options,date-time,thread,system,filesystem,regex,serialization}1.58{-dev,.0}
+#  - sudo apt-get -y install libboost-{chrono,program-options,date-time,thread,system,filesystem,regex,serialization}1.58{-dev,.0}
   - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
   - mkdir ${DEPS_DIR} && cd ${DEPS_DIR}
   
@@ -33,5 +33,5 @@ install:
 script:
   - mkdir build
   - cd build
-  - ${DEPS_DIR}/cmake/bin/cmake -DBOOST_ROOT:PATHNAME=${BOOST} -DCMAKE_INSTALL_PREFIX=../install ..
+  - ${DEPS_DIR}/cmake/bin/cmake -DBOOST_ROOT:PATHNAME=../install/boost-1.60 -DCMAKE_INSTALL_PREFIX=../install ..
   - make
