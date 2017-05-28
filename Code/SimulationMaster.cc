@@ -41,6 +41,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options,
 
   colloidController = NULL;
   latticeBoltzmannModel = NULL;
+  advectionDiffusionModel = NULL;
   steeringCpt = NULL;
   propertyDataSource = NULL;
   visualisationControl = NULL;
@@ -91,6 +92,7 @@ SimulationMaster::~SimulationMaster()
   delete latticeData;
   delete colloidController;
   delete latticeBoltzmannModel;
+  delete advectionDiffusionModel;
   delete inletValues;
   delete outletValues;
   delete network;
@@ -171,6 +173,13 @@ void SimulationMaster::Initialise()
                                                            simulationState,
                                                            timings,
                                                            neighbouringDataManager);
+
+  advectionDiffusionModel = new hemelb::lb::LBM<latticeType>(simConfig,
+                                                             &communicationNet,
+                                                             latticeData,
+                                                             simulationState,
+                                                             timings,
+                                                             neighbouringDataManager);
 
   hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
 
