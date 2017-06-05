@@ -261,8 +261,12 @@ namespace hemelb
           // If the simulation went unstable, some vertices may have been advected out of the domain.
           // This will be picked up in Reindex when figuring out vertex ownership. The code will throw
           // to give us a chance to e.g. write all the cells to disk for debugging purposes
-          NotifyCellChangeListeners();
-          hemelb::net::MpiEnvironment::Abort(-1);
+
+          std::stringstream message;
+          message << "Mesh vertex belongs to cell " << cell->GetTag();
+          log::Logger::Log<log::Error, log::OnePerCore>(message.str());
+
+          throw;
         }
       }
       timings[hemelb::reporting::Timers::computeNodeDistributions].Stop();
