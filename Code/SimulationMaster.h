@@ -55,8 +55,10 @@ class SimulationMaster
     typedef hemelb::lb::lattices:: HEMELB_LATTICE latticeType;
     hemelb::geometry::LatticeData* latticeData;
     hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
-    hemelb::lb::LBM<latticeType>* advectionDiffusionModel;
     hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
+    hemelb::geometry::LatticeData* advectionDiffusionData;
+    hemelb::lb::LBM<latticeType>* advectionDiffusionModel;
+    hemelb::geometry::neighbouring::NeighbouringDataManager *advectionDiffusionDataManager;
     const hemelb::net::IOCommunicator& ioComms;
 
   private:

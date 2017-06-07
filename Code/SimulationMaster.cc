@@ -37,11 +37,14 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options,
 {
   timings[hemelb::reporting::Timers::total].Start();
 
+  advectionDiffusionData = NULL;
+  advectionDiffusionModel = NULL;
+  advectionDiffusionDataManager = NULL;
+
   latticeData = NULL;
 
   colloidController = NULL;
   latticeBoltzmannModel = NULL;
-  advectionDiffusionModel = NULL;
   steeringCpt = NULL;
   propertyDataSource = NULL;
   visualisationControl = NULL;
@@ -89,10 +92,12 @@ SimulationMaster::~SimulationMaster()
   {
     delete imageSendCpt;
   }
+  delete advectionDiffusionData;
+  delete advectionDiffusionModel;
+  delete advectionDiffusionDataManager;
   delete latticeData;
   delete colloidController;
   delete latticeBoltzmannModel;
-  delete advectionDiffusionModel;
   delete inletValues;
   delete outletValues;
   delete network;
@@ -174,14 +179,19 @@ void SimulationMaster::Initialise()
                                                            timings,
                                                            neighbouringDataManager);
 
+  hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
+
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising ADE.");
+  advectionDiffusionData = new hemelb::geometry::LatticeData(latticeType::GetLatticeInfo(), readGeometryData, ioComms);
+
+  advectionDiffusionDataManager = new hemelb::geometry::neighbouring::NeighbouringDataManager(*advectionDiffusionData, advectionDiffusionData->GetNeighbouringData(), communicationNet);
+
   advectionDiffusionModel = new hemelb::lb::LBM<latticeType>(simConfig,
                                                              &communicationNet,
-                                                             latticeData,
+                                                             advectionDiffusionData,
                                                              simulationState,
                                                              timings,
-                                                             neighbouringDataManager);
-
-  hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
+                                                             advectionDiffusionDataManager);
 
   if (simConfig->HasColloidSection())
   {
@@ -282,6 +292,10 @@ void SimulationMaster::Initialise()
   neighbouringDataManager->ShareNeeds();
   neighbouringDataManager->TransferNonFieldDependentInformation();
 
+  advectionDiffusionModel->Initialise(visualisationControl, inletValues, outletValues, unitConverter);
+  advectionDiffusionDataManager->ShareNeeds();
+  advectionDiffusionDataManager->TransferNonFieldDependentInformation();
+
   steeringCpt = new hemelb::steering::SteeringComponent(network,
                                                         visualisationControl,
                                                         imageSendCpt,
@@ -330,6 +344,7 @@ void SimulationMaster::Initialise()
     stepManager->RegisterIteratedActorSteps(*colloidController, 1);
   }
   stepManager->RegisterIteratedActorSteps(*latticeBoltzmannModel, 1);
+  stepManager->RegisterIteratedActorSteps(*advectionDiffusionModel, 1);
 
   stepManager->RegisterIteratedActorSteps(*inletValues, 1);
   stepManager->RegisterIteratedActorSteps(*outletValues, 1);
