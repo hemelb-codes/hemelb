@@ -179,8 +179,6 @@ void SimulationMaster::Initialise()
                                                            timings,
                                                            neighbouringDataManager);
 
-  hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
-
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising ADE.");
   advectionDiffusionData = new hemelb::geometry::LatticeData(latticeType::GetLatticeInfo(), readGeometryData, ioComms);
 
@@ -205,6 +203,8 @@ void SimulationMaster::Initialise()
 
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Boundary Conditions.");
     hemelb::colloids::BoundaryConditions::InitBoundaryConditions(latticeData, xml);
+
+    hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
 
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising Colloids.");
     colloidController =
