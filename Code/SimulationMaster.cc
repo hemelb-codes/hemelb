@@ -293,6 +293,10 @@ void SimulationMaster::Initialise()
 
     for (unsigned outputNumber = 0; outputNumber < simConfig->PropertyOutputCount(); ++outputNumber)
     {
+      /* This is ugly. The path would better be set during
+	 instantiation of simConfig. Alas, sufficient effort has been
+	 made to make that change nontrivial. This is C++ after all,
+	 and things have to be obfuscated. */
       simConfig->GetPropertyOutput(outputNumber)->filename = fileManager->GetDataExtractionPath()
           + simConfig->GetPropertyOutput(outputNumber)->filename;
     }
