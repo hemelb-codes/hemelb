@@ -57,7 +57,6 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options,
   unitConverter = &simConfig->GetUnitConverter();
   monitoringConfig = simConfig->GetMonitoringConfiguration();
 
-  fileManager->SaveConfiguration(simConfig);
   Initialise();
   if (IsCurrentProcTheIOProc())
   {

@@ -11,7 +11,6 @@
 #include "configuration/CommandLine.h"
 #include "util/fileutils.h"
 #include "log/Logger.h"
-#include "configuration/SimConfig.h"
 #include "io/writers/xdr/XdrFileWriter.h"
 #include "io/writers/null/NullWriter.h"
 namespace hemelb
@@ -55,11 +54,6 @@ namespace hemelb
          * @return Reference to path to where a run report file should be created.
          */
         const std::string & GetReportPath() const;
-        /**
-         * Save the current configuration as a configuration xml file to the output folder.
-         * @param simConfig The input configuration instance, constructed from the input xml file.
-         */
-        void SaveConfiguration(configuration::SimConfig * const simConfig) const;
         /**
          * Delete the output data.
          * This deletes images, config files, and the report.

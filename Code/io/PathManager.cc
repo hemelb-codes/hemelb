@@ -76,14 +76,6 @@ namespace hemelb
       return dataPath;
     }
 
-    void PathManager::SaveConfiguration(configuration::SimConfig * const simConfig) const
-    {
-      if (doIo)
-      {
-        //simConfig->Save(outputDir + "/" + configLeafName);
-      }
-    }
-
     void PathManager::GuessOutputDir()
     {
       unsigned long lLastForwardSlash = inputFile.rfind('/');
