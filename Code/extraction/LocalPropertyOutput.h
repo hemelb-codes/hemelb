@@ -81,7 +81,7 @@ namespace hemelb
         /**
          * The data source to use for file output.
          */
-        IterableDataSource& dataSource;
+        std::map<OutputField::FieldType, IterableDataSource**>& dataSourceMap;
 
         /**
          * PropertyOutputFile spec.

@@ -19,7 +19,7 @@ namespace hemelb
     LocalPropertyOutput::LocalPropertyOutput(std::map<OutputField::FieldType, IterableDataSource**>& dataSourceMap,
                                              const PropertyOutputFile* outputSpec,
                                              const net::IOCommunicator& ioComms) :
-      comms(ioComms), outputSpec(outputSpec), dataSource(**(dataSourceMap[outputSpec->fields[0].type]))
+      comms(ioComms), outputSpec(outputSpec), dataSourceMap(dataSourceMap)
     {
 
       // Open the file as write-only, create it if it doesn't exist, don't create if the file
@@ -28,6 +28,8 @@ namespace hemelb
                                       MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL);
       // Count sites on this task
       uint64_t siteCount = 0;
+
+      IterableDataSource& dataSource = **(dataSourceMap[outputSpec->fields.front().type]);
 
       dataSource.Reset();
       while (dataSource.ReadNext())
@@ -196,6 +198,7 @@ namespace hemelb
         xdrWriter << (uint64_t) timestepNumber;
       }
 
+      IterableDataSource& dataSource = **dataSourceMap[outputSpec->fields.front().type];
       dataSource.Reset();
 
       while (dataSource.ReadNext())
