@@ -95,6 +95,8 @@ SimulationMaster::~SimulationMaster()
   delete advectionDiffusionData;
   delete advectionDiffusionModel;
   delete advectionDiffusionDataManager;
+  delete advectionDiffusionDataSource;
+  delete advectionDiffusionExtractor;
   delete latticeData;
   delete colloidController;
   delete latticeBoltzmannModel;
@@ -181,9 +183,7 @@ void SimulationMaster::Initialise()
 
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising ADE.");
   advectionDiffusionData = new hemelb::geometry::LatticeData(latticeType::GetLatticeInfo(), readGeometryData, ioComms);
-
   advectionDiffusionDataManager = new hemelb::geometry::neighbouring::NeighbouringDataManager(*advectionDiffusionData, advectionDiffusionData->GetNeighbouringData(), communicationNet);
-
   advectionDiffusionModel = new hemelb::lb::LBM<latticeType>(simConfig,
                                                              &communicationNet,
                                                              advectionDiffusionData,
@@ -308,10 +308,16 @@ void SimulationMaster::Initialise()
   latticeBoltzmannModel->ReadVisParameters();
 
   propertyDataSource =
-      new hemelb::extraction::LbDataSourceIterator(latticeBoltzmannModel->GetPropertyCache(),
-                                                   *latticeData,
-                                                   ioComms.Rank(),
-                                                   *unitConverter);
+    new hemelb::extraction::LbDataSourceIterator(latticeBoltzmannModel->GetPropertyCache(),
+						 *latticeData,
+						 ioComms.Rank(),
+						 *unitConverter);
+
+  advectionDiffusionDataSource =
+    new hemelb::extraction::LbDataSourceIterator(advectionDiffusionModel->GetPropertyCache(),
+						 *advectionDiffusionData,
+						 ioComms.Rank(),
+						 *unitConverter);
 
   if (simConfig->PropertyOutputCount() > 0)
   {
@@ -330,6 +336,11 @@ void SimulationMaster::Initialise()
                                                               simConfig->GetPropertyOutputs(),
 							      dataSourceMap,
                                                               timings, ioComms);
+    advectionDiffusionExtractor = new hemelb::extraction::PropertyActor(*simulationState,
+									simConfig->GetPropertyOutputs(),
+									*advectionDiffusionDataSource,
+									timings, ioComms);
+
   }
 
   imagesPeriod = OutputPeriod(imagesPerSimulation);
@@ -363,6 +374,7 @@ void SimulationMaster::Initialise()
   if (propertyExtractor != NULL)
   {
     stepManager->RegisterIteratedActorSteps(*propertyExtractor, 1);
+    stepManager->RegisterIteratedActorSteps(*advectionDiffusionExtractor, 1);
   }
 
   if (ioComms.OnIORank())

@@ -111,6 +111,8 @@ class SimulationMaster
     hemelb::vis::Control* visualisationControl;
     hemelb::extraction::IterableDataSource* propertyDataSource;
     hemelb::extraction::PropertyActor* propertyExtractor;
+    hemelb::extraction::IterableDataSource* advectionDiffusionDataSource;
+    hemelb::extraction::PropertyActor* advectionDiffusionExtractor;
 
     hemelb::net::phased::StepManager* stepManager;
     hemelb::net::phased::NetConcern* netConcern;
