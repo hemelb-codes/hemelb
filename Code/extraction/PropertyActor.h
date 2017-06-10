@@ -29,7 +29,7 @@ namespace hemelb
          */
         PropertyActor(const lb::SimulationState& simulationState,
                       const std::vector<PropertyOutputFile*>& propertyOutputs,
-                      IterableDataSource& dataSource,
+                      std::map<OutputField::FieldType, IterableDataSource**>& dataSources,
                       reporting::Timers& timers,
                       const net::IOCommunicator& ioComms);
 

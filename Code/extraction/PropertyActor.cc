@@ -12,12 +12,12 @@ namespace hemelb
   {
     PropertyActor::PropertyActor(const lb::SimulationState& simulationState,
                                  const std::vector<PropertyOutputFile*>& propertyOutputs,
-                                 IterableDataSource& dataSource,
+                                 std::map<OutputField::FieldType, IterableDataSource**>& dataSources,
                                  reporting::Timers& timers,
                                  const net::IOCommunicator& ioComms) :
         simulationState(simulationState), timers(timers)
     {
-      propertyWriter = new PropertyWriter(dataSource, propertyOutputs, ioComms);
+      propertyWriter = new PropertyWriter(dataSources, propertyOutputs, ioComms);
     }
 
     PropertyActor::~PropertyActor()

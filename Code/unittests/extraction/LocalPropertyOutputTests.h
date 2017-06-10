@@ -104,7 +104,7 @@ namespace hemelb
           void TestWrite()
           {
             // Create the writer object; this should write the headers.
-            propertyWriter = new hemelb::extraction::LocalPropertyOutput(*simpleDataSource, &simpleOutFile, Comms());
+            propertyWriter = new hemelb::extraction::LocalPropertyOutput(dataSourceMap, &simpleOutFile, Comms());
 
             // Open the file
             writtenFile = std::fopen(simpleOutFile.filename.c_str(), "r");
@@ -258,6 +258,12 @@ namespace hemelb
 
           hemelb::extraction::PropertyOutputFile simpleOutFile;
           DummyDataSource* simpleDataSource;
+
+	  std::map<hemelb::extraction::OutputField::FieldType, hemelb::extraction::IterableDataSource**>
+	    dataSourceMap
+	    = { { hemelb::extraction::OutputField::Pressure, (hemelb::extraction::IterableDataSource **)&simpleDataSource },
+		{ hemelb::extraction::OutputField::Velocity, (hemelb::extraction::IterableDataSource **)&simpleDataSource }
+	  };
 
           hemelb::extraction::LocalPropertyOutput* propertyWriter;
           double epsilon;

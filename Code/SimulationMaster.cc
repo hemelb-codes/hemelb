@@ -54,6 +54,9 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options,
 
   fileManager = new hemelb::io::PathManager(options, IsCurrentProcTheIOProc(), GetProcessorCount());
   simConfig = hemelb::configuration::SimConfig::New(fileManager->GetInputFile());
+
+  /* This is ugly design. References to encapuslated data members are
+     indicative of an ill-designed class hierarchy. */
   unitConverter = &simConfig->GetUnitConverter();
   monitoringConfig = simConfig->GetMonitoringConfiguration();
 
@@ -302,7 +305,7 @@ void SimulationMaster::Initialise()
 
     propertyExtractor = new hemelb::extraction::PropertyActor(*simulationState,
                                                               simConfig->GetPropertyOutputs(),
-                                                              *propertyDataSource,
+							      dataSourceMap,
                                                               timings, ioComms);
   }
 

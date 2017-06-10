@@ -116,6 +116,20 @@ class SimulationMaster
     int steeringSessionId;
     unsigned int imagesPeriod;
     static const hemelb::LatticeTimeStep FORCE_FLUSH_PERIOD=1000;
+
+    std::map<hemelb::extraction::OutputField::FieldType, hemelb::extraction::IterableDataSource**>
+      dataSourceMap
+      = { { hemelb::extraction::OutputField::Pressure,                     &propertyDataSource },
+	  { hemelb::extraction::OutputField::Velocity,                     &propertyDataSource },
+	  { hemelb::extraction::OutputField::ShearStress,                  &propertyDataSource },
+	  { hemelb::extraction::OutputField::VonMisesStress,               &propertyDataSource },
+	  { hemelb::extraction::OutputField::ShearRate,                    &propertyDataSource },
+	  { hemelb::extraction::OutputField::StressTensor,                 &propertyDataSource },
+	  { hemelb::extraction::OutputField::Traction,                     &propertyDataSource },
+	  { hemelb::extraction::OutputField::TangentialProjectionTraction, &propertyDataSource },
+	  { hemelb::extraction::OutputField::MpiRank,                      &propertyDataSource }
+    };
+
 };
 
 #endif /* HEMELB_SIMULATIONMASTER_H */

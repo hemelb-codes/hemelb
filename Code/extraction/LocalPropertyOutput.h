@@ -32,7 +32,7 @@ namespace hemelb
          * @param offset
          * @return
          */
-        LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile* outputSpec, const net::IOCommunicator& ioComms);
+        LocalPropertyOutput(std::map<OutputField::FieldType, IterableDataSource**>& dataSources, const PropertyOutputFile* outputSpec, const net::IOCommunicator& ioComms);
 
         /**
          * Tidies up the LocalPropertyOutput (close files etc).
@@ -112,6 +112,7 @@ namespace hemelb
          * Type of written values
          */
         typedef float WrittenDataType;
+
     };
   }
 }

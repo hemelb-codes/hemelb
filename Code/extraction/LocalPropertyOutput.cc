@@ -16,17 +16,19 @@ namespace hemelb
 {
   namespace extraction
   {
-    LocalPropertyOutput::LocalPropertyOutput(IterableDataSource& dataSource,
+    LocalPropertyOutput::LocalPropertyOutput(std::map<OutputField::FieldType, IterableDataSource**>& dataSourceMap,
                                              const PropertyOutputFile* outputSpec,
                                              const net::IOCommunicator& ioComms) :
-      comms(ioComms), dataSource(dataSource), outputSpec(outputSpec)
+      comms(ioComms), outputSpec(outputSpec), dataSource(**(dataSourceMap[outputSpec->fields[0].type]))
     {
+
       // Open the file as write-only, create it if it doesn't exist, don't create if the file
       // already exists.
       outputFile = net::MpiFile::Open(comms, outputSpec->filename,
                                       MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL);
       // Count sites on this task
       uint64_t siteCount = 0;
+
       dataSource.Reset();
       while (dataSource.ReadNext())
       {
@@ -153,6 +155,7 @@ namespace hemelb
 
       // Create the buffer that we'll write each iteration's data into.
       buffer.resize(writeLength);
+
     }
 
     LocalPropertyOutput::~LocalPropertyOutput()
