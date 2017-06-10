@@ -96,7 +96,6 @@ SimulationMaster::~SimulationMaster()
   delete advectionDiffusionModel;
   delete advectionDiffusionDataManager;
   delete advectionDiffusionDataSource;
-  delete advectionDiffusionExtractor;
   delete latticeData;
   delete colloidController;
   delete latticeBoltzmannModel;
@@ -336,10 +335,6 @@ void SimulationMaster::Initialise()
                                                               simConfig->GetPropertyOutputs(),
 							      dataSourceMap,
                                                               timings, ioComms);
-    advectionDiffusionExtractor = new hemelb::extraction::PropertyActor(*simulationState,
-									simConfig->GetPropertyOutputs(),
-									*advectionDiffusionDataSource,
-									timings, ioComms);
 
   }
 
@@ -374,7 +369,6 @@ void SimulationMaster::Initialise()
   if (propertyExtractor != NULL)
   {
     stepManager->RegisterIteratedActorSteps(*propertyExtractor, 1);
-    stepManager->RegisterIteratedActorSteps(*advectionDiffusionExtractor, 1);
   }
 
   if (ioComms.OnIORank())
