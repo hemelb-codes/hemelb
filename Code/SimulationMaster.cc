@@ -181,9 +181,9 @@ void SimulationMaster::Initialise()
                                                            neighbouringDataManager);
 
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising ADE.");
-  advectionDiffusionData = new hemelb::geometry::LatticeData(latticeType::GetLatticeInfo(), readGeometryData, ioComms);
+  advectionDiffusionData = new hemelb::geometry::LatticeData(advectionDiffusionLatticeType::GetLatticeInfo(), readGeometryData, ioComms);
   advectionDiffusionDataManager = new hemelb::geometry::neighbouring::NeighbouringDataManager(*advectionDiffusionData, advectionDiffusionData->GetNeighbouringData(), communicationNet);
-  advectionDiffusionModel = new hemelb::lb::LBM<latticeType>(simConfig,
+  advectionDiffusionModel = new hemelb::lb::LBM<advectionDiffusionLatticeType>(simConfig,
                                                              &communicationNet,
                                                              advectionDiffusionData,
                                                              simulationState,

@@ -6,6 +6,7 @@
 
 #ifndef HEMELB_SIMULATIONMASTER_H
 #define HEMELB_SIMULATIONMASTER_H
+#define ADE_LATTICE D3Q15
 #include "lb/lattices/Lattices.h"
 #include "extraction/PropertyActor.h"
 #include "lb/lb.hpp"
@@ -56,8 +57,9 @@ class SimulationMaster
     hemelb::geometry::LatticeData* latticeData;
     hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
     hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
+    typedef hemelb::lb::lattices:: ADE_LATTICE advectionDiffusionLatticeType;
     hemelb::geometry::LatticeData* advectionDiffusionData;
-    hemelb::lb::LBM<latticeType>* advectionDiffusionModel;
+    hemelb::lb::LBM<advectionDiffusionLatticeType>* advectionDiffusionModel;
     hemelb::geometry::neighbouring::NeighbouringDataManager *advectionDiffusionDataManager;
     const hemelb::net::IOCommunicator& ioComms;
 
