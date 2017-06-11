@@ -62,6 +62,11 @@ namespace hemelb
 
           }
 
+	  lb::MacroscopicPropertyCache& GetPropertyCache()
+	  {
+	    assert(false);
+	  }
+
           void Reset()
           {
             location = 0 - 1;

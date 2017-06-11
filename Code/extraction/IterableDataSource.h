@@ -13,6 +13,9 @@
 
 namespace hemelb
 {
+  namespace lb {
+    class MacroscopicPropertyCache;
+  }
   namespace extraction
   {
 
@@ -96,6 +99,11 @@ namespace hemelb
          * Resets the iterator to the beginning again.
          */
         virtual void Reset() = 0;
+
+	/**
+	 * Returns the property cache where the data is stored.
+         */
+	virtual lb::MacroscopicPropertyCache& GetPropertyCache() = 0;
 
         /**
          * Returns true iff the passed location is within the lattice.

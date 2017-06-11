@@ -25,7 +25,7 @@ namespace hemelb
       delete propertyWriter;
     }
 
-    void PropertyActor::SetRequiredProperties(lb::MacroscopicPropertyCache& propertyCache)
+    void PropertyActor::SetRequiredProperties(std::map<hemelb::extraction::OutputField::FieldType, hemelb::extraction::IterableDataSource**> dataSourceMap) // (PropertyCache& propertyCache)
     {
       const std::vector<LocalPropertyOutput*>& propertyOutputs = propertyWriter->GetPropertyOutputs();
 
@@ -46,28 +46,29 @@ namespace hemelb
             switch (outputFile->fields[outputField].type)
             {
               case (OutputField::Pressure):
-                propertyCache.densityCache.SetRefreshFlag();
+		(*dataSourceMap[outputFile->fields[outputField].type])->GetPropertyCache().densityCache.SetRefreshFlag();
                 break;
+	      case OutputField::TracerConcentration:
               case OutputField::Velocity:
-                propertyCache.velocityCache.SetRefreshFlag();
-                break;
+		(*dataSourceMap[outputFile->fields[outputField].type])->GetPropertyCache().velocityCache.SetRefreshFlag();
+		break;
               case OutputField::ShearStress:
-                propertyCache.wallShearStressMagnitudeCache.SetRefreshFlag();
+                (*dataSourceMap[outputFile->fields[outputField].type])->GetPropertyCache().wallShearStressMagnitudeCache.SetRefreshFlag();
                 break;
               case OutputField::VonMisesStress:
-                propertyCache.vonMisesStressCache.SetRefreshFlag();
+                (*dataSourceMap[outputFile->fields[outputField].type])->GetPropertyCache().vonMisesStressCache.SetRefreshFlag();
                 break;
               case OutputField::ShearRate:
-                propertyCache.shearRateCache.SetRefreshFlag();
+                (*dataSourceMap[outputFile->fields[outputField].type])->GetPropertyCache().shearRateCache.SetRefreshFlag();
                 break;
               case OutputField::StressTensor:
-                propertyCache.stressTensorCache.SetRefreshFlag();
+                (*dataSourceMap[outputFile->fields[outputField].type])->GetPropertyCache().stressTensorCache.SetRefreshFlag();
                 break;
               case OutputField::Traction:
-                propertyCache.tractionCache.SetRefreshFlag();
+                (*dataSourceMap[outputFile->fields[outputField].type])->GetPropertyCache().tractionCache.SetRefreshFlag();
                 break;
               case OutputField::TangentialProjectionTraction:
-                propertyCache.tangentialProjectionTractionCache.SetRefreshFlag();
+                (*dataSourceMap[outputFile->fields[outputField].type])->GetPropertyCache().tangentialProjectionTractionCache.SetRefreshFlag();
                 break;
               case OutputField::MpiRank:
                 // We don't actually have to cache anything to get the rank.

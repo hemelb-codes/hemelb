@@ -465,6 +465,9 @@ namespace hemelb
       {
         field.type = extraction::OutputField::MpiRank;
       }
+      else if (type == "tracerconcentration") {
+	field.type = extraction::OutputField::TracerConcentration;
+      }
       else
       {
         throw Exception() << "Unrecognised field type '" << type << "' in " << fieldEl.GetPath();

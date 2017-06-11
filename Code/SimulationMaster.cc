@@ -641,7 +641,7 @@ void SimulationMaster::RecalculatePropertyRequirements()
   // If extracting property results, check what's required by them.
   if (propertyExtractor != NULL)
   {
-    propertyExtractor->SetRequiredProperties(propertyCache);
+    propertyExtractor->SetRequiredProperties(dataSourceMap);
   }
 
   // If using streaklines, the velocity will be needed.

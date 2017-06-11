@@ -10,7 +10,7 @@ namespace hemelb
 {
   namespace extraction
   {
-    LbDataSourceIterator::LbDataSourceIterator(const lb::MacroscopicPropertyCache& propertyCache,
+    LbDataSourceIterator::LbDataSourceIterator(lb::MacroscopicPropertyCache& propertyCache,
                                                const geometry::LatticeData& data,
                                                int rank_,
                                                const util::UnitConverter& converter) :
@@ -80,6 +80,11 @@ namespace hemelb
     void LbDataSourceIterator::Reset()
     {
       position = -1;
+    }
+
+    lb::MacroscopicPropertyCache& LbDataSourceIterator::GetPropertyCache()
+    {
+      return propertyCache;
     }
 
     bool LbDataSourceIterator::IsValidLatticeSite(const util::Vector3D<site_t>& location) const

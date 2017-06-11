@@ -110,9 +110,8 @@ class SimulationMaster
 
     hemelb::vis::Control* visualisationControl;
     hemelb::extraction::IterableDataSource* propertyDataSource;
-    hemelb::extraction::PropertyActor* propertyExtractor;
     hemelb::extraction::IterableDataSource* advectionDiffusionDataSource;
-    hemelb::extraction::PropertyActor* advectionDiffusionExtractor;
+    hemelb::extraction::PropertyActor* propertyExtractor;
 
     hemelb::net::phased::StepManager* stepManager;
     hemelb::net::phased::NetConcern* netConcern;
@@ -132,6 +131,7 @@ class SimulationMaster
 	  { hemelb::extraction::OutputField::StressTensor,                 &propertyDataSource },
 	  { hemelb::extraction::OutputField::Traction,                     &propertyDataSource },
 	  { hemelb::extraction::OutputField::TangentialProjectionTraction, &propertyDataSource },
+          { hemelb::extraction::OutputField::TracerConcentration,          &advectionDiffusionDataSource },
 	  { hemelb::extraction::OutputField::MpiRank,                      &propertyDataSource }
     };
 

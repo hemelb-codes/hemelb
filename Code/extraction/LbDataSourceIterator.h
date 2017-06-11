@@ -25,7 +25,7 @@ namespace hemelb
          * @param data
          * @return
          */
-        LbDataSourceIterator(const lb::MacroscopicPropertyCache& propertyCache,
+        LbDataSourceIterator(lb::MacroscopicPropertyCache& propertyCache,
                              const geometry::LatticeData& data,
                              int rank,
                              const util::UnitConverter& converter);
@@ -97,6 +97,11 @@ namespace hemelb
          */
         void Reset();
 
+	/**
+	 * Returns the property cache.
+	 */
+	lb::MacroscopicPropertyCache& GetPropertyCache();
+
         /**
          * Returns true iff the passed location is within the lattice.
          *
@@ -139,7 +144,7 @@ namespace hemelb
         /**
          * The cache of properties for each site, which we iterate through.
          */
-        const lb::MacroscopicPropertyCache& propertyCache;
+        lb::MacroscopicPropertyCache& propertyCache;
         /**
          * The object containing information about the lattice.
          */

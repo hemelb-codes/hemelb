@@ -8,6 +8,7 @@
 #define HEMELB_EXTRACTION_PROPERTYACTOR_H
 
 #include "extraction/PropertyWriter.h"
+#include "extraction/LbDataSourceIterator.h"
 #include "io/PathManager.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "lb/SimulationState.h"
@@ -39,7 +40,7 @@ namespace hemelb
          * Set which properties will be required this iteration.
          * @param propertyCache
          */
-        void SetRequiredProperties(lb::MacroscopicPropertyCache& propertyCache);
+        void SetRequiredProperties(std::map<hemelb::extraction::OutputField::FieldType, hemelb::extraction::IterableDataSource**> dataSourceMap); // (lb::MacroscopicPropertyCache& propertyCache);
 
         /**
          * Override the iterated actor end of iteration method to perform writing.
