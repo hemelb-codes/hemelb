@@ -287,6 +287,20 @@ void SimulationMaster::Initialise()
                                                         ioComms,
                                                         *unitConverter);
 
+  advectionDiffusionInlet = new hemelb::lb::iolets::BoundaryValues(hemelb::geometry::INLET_TYPE,
+								   advectionDiffusionLatticeData,
+								   simConfig->GetOutlets(),
+								   simulationState,
+								   ioComms,
+								   *unitConverter);
+
+  advectionDiffusionOutlet = new hemelb::lb::iolets::BoundaryValues(hemelb::geometry::OUTLET_TYPE,
+								   advectionDiffusionLatticeData,
+								   simConfig->GetOutlets(),
+								   simulationState,
+								   ioComms,
+								   *unitConverter);
+
   latticeBoltzmannModel->Initialise(visualisationControl, inletValues, outletValues, unitConverter);
   neighbouringDataManager->ShareNeeds();
   neighbouringDataManager->TransferNonFieldDependentInformation();
@@ -345,13 +359,15 @@ void SimulationMaster::Initialise()
                                                      hemelb::net::separate_communications);
   netConcern = new hemelb::net::phased::NetConcern(communicationNet);
   stepManager->RegisterIteratedActorSteps(*neighbouringDataManager, 0);
+  stepManager->RegisterIteratedActorSteps(*advectionDiffusionDataManager, 0);
   if (colloidController != NULL)
   {
     stepManager->RegisterIteratedActorSteps(*colloidController, 1);
   }
   stepManager->RegisterIteratedActorSteps(*latticeBoltzmannModel, 1);
   stepManager->RegisterIteratedActorSteps(*advectionDiffusionModel, 1);
-
+  stepManager->RegisterIteratedActorSteps(*advectionDiffusionInlet, 1);
+  stepManager->RegisterIteratedActorSteps(*advectionDiffsuionOutlet, 1);
   stepManager->RegisterIteratedActorSteps(*inletValues, 1);
   stepManager->RegisterIteratedActorSteps(*outletValues, 1);
   stepManager->RegisterIteratedActorSteps(*steeringCpt, 1);
