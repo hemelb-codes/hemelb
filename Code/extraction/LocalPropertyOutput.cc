@@ -257,9 +257,10 @@ namespace hemelb
                 break;
 	      case OutputField::TracerConcentration:
                 xdrWriter
-		  << static_cast<WrittenDataType> ((*dataSourceMap[OutputField::TracerConcentration])->GetVelocity().x)
-		  << static_cast<WrittenDataType> ((*dataSourceMap[OutputField::TracerConcentration])->GetVelocity().y)
-		  << static_cast<WrittenDataType> ((*dataSourceMap[OutputField::TracerConcentration])->GetVelocity().z);
+		  << static_cast<WrittenDataType> (dataSource.GetVelocity().x)
+		  << static_cast<WrittenDataType> (dataSource.GetVelocity().y)
+		  << static_cast<WrittenDataType> (dataSource.GetVelocity().z);
+		break;
               case OutputField::MpiRank:
                 xdrWriter
                     << static_cast<WrittenDataType> (comms.Rank());

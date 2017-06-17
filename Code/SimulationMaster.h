@@ -49,6 +49,9 @@ class SimulationMaster
 
     hemelb::lb::iolets::BoundaryValues* inletValues;
     hemelb::lb::iolets::BoundaryValues* outletValues;
+    hemelb::lb::iolets::BoundaryValues* advectionDiffusionInlet;
+    hemelb::lb::iolets::BoundaryValues* advectionDiffusionOutlet;
+
     virtual void DoTimeStep();
     
     /* The next quantities are protected because they are used by MultiscaleSimulationMaster */

@@ -40,6 +40,9 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options,
   advectionDiffusionData = NULL;
   advectionDiffusionModel = NULL;
   advectionDiffusionDataManager = NULL;
+  advectionDiffusionDataSource = NULL;
+  advectionDiffusionInlet = NULL;
+  advectionDiffusionOutlet = NULL;
 
   latticeData = NULL;
 
@@ -96,6 +99,8 @@ SimulationMaster::~SimulationMaster()
   delete advectionDiffusionModel;
   delete advectionDiffusionDataManager;
   delete advectionDiffusionDataSource;
+  delete advectionDiffusionInlet;
+  delete advectionDiffusionOutlet;
   delete latticeData;
   delete colloidController;
   delete latticeBoltzmannModel;
@@ -288,14 +293,14 @@ void SimulationMaster::Initialise()
                                                         *unitConverter);
 
   advectionDiffusionInlet = new hemelb::lb::iolets::BoundaryValues(hemelb::geometry::INLET_TYPE,
-								   advectionDiffusionLatticeData,
-								   simConfig->GetOutlets(),
+								   advectionDiffusionData,
+								   simConfig->GetInlets(),
 								   simulationState,
 								   ioComms,
 								   *unitConverter);
 
   advectionDiffusionOutlet = new hemelb::lb::iolets::BoundaryValues(hemelb::geometry::OUTLET_TYPE,
-								   advectionDiffusionLatticeData,
+								   advectionDiffusionData,
 								   simConfig->GetOutlets(),
 								   simulationState,
 								   ioComms,
@@ -305,7 +310,7 @@ void SimulationMaster::Initialise()
   neighbouringDataManager->ShareNeeds();
   neighbouringDataManager->TransferNonFieldDependentInformation();
 
-  advectionDiffusionModel->Initialise(visualisationControl, inletValues, outletValues, unitConverter);
+  advectionDiffusionModel->Initialise(visualisationControl, advectionDiffusionInlet, advectionDiffusionOutlet, unitConverter);
   advectionDiffusionDataManager->ShareNeeds();
   advectionDiffusionDataManager->TransferNonFieldDependentInformation();
 
@@ -364,10 +369,10 @@ void SimulationMaster::Initialise()
   {
     stepManager->RegisterIteratedActorSteps(*colloidController, 1);
   }
-  stepManager->RegisterIteratedActorSteps(*latticeBoltzmannModel, 1);
   stepManager->RegisterIteratedActorSteps(*advectionDiffusionModel, 1);
   stepManager->RegisterIteratedActorSteps(*advectionDiffusionInlet, 1);
-  stepManager->RegisterIteratedActorSteps(*advectionDiffsuionOutlet, 1);
+  stepManager->RegisterIteratedActorSteps(*advectionDiffusionOutlet, 1);
+  stepManager->RegisterIteratedActorSteps(*latticeBoltzmannModel, 1);
   stepManager->RegisterIteratedActorSteps(*inletValues, 1);
   stepManager->RegisterIteratedActorSteps(*outletValues, 1);
   stepManager->RegisterIteratedActorSteps(*steeringCpt, 1);
@@ -630,7 +635,9 @@ void SimulationMaster::RecalculatePropertyRequirements()
   // Get the property cache & reset its list of properties to get.
   hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
 
+  /* TODO: This should really be an iteration over all property caches */
   propertyCache.ResetRequirements();
+  advectionDiffusionModel->GetPropertyCache().ResetRequirements();
 
   // Check whether we're rendering images on this iteration.
   if (visualisationControl->IsRendering())
