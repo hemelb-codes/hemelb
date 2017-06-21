@@ -8,6 +8,7 @@
 #include <limits>
 
 #include "debug/Debugger.h"
+#include "io/formats/geometry.h"
 #include "log/Logger.h"
 #include "net/IOCommunicator.h"
 #include "geometry/BlockTraverser.h"
@@ -113,9 +114,29 @@ namespace hemelb
             continue;
           }
           bool isMidDomainSite = true;
+
+	  /* The read in site has all possible links, so create a
+	  local site that has only the links needed by the DnQm model
+	  for this instance of LatticeData. */
+	  GeometrySite localSite = blockReadIn.Sites[localSiteId];
+
+	  const io::formats::geometry::DisplacementVector& neighbourhood =
+	    io::formats::geometry::Get().GetNeighbourhood();
+
           // Iterate over all non-zero direction vectors.
           for (unsigned int l = 1; l < latticeInfo.GetNumVectors(); l++)
           {
+	    // Map the read in links to the DnQm lattice that is actually used.
+	    for (Direction readDirection = 0; readDirection < neighbourhood.size(); readDirection++) 
+	    {
+	      if (latticeInfo.GetVector(l) == neighbourhood[readDirection])
+	      {
+		// If this link direction is necessary to the lattice in use, copy the link data.
+		localSite.links[l - 1] = blockReadIn.Sites[localSiteId].links[readDirection];
+		break;
+	      }
+	    }
+
             // Find the neighbour site co-ords in this direction.
             util::Vector3D<site_t> neighbourGlobalCoords = blockTraverser.GetCurrentLocation()
                 * readResult.GetBlockSize() + siteTraverser.GetCurrentLocation()
@@ -205,7 +226,7 @@ namespace hemelb
 
           // Set the collision type data. map_block site data is renumbered according to
           // fluid site numbers within a particular collision type.
-          SiteData siteData(blockReadIn.Sites[localSiteId]);
+	  SiteData siteData(localSite);
           int l = -1;
           switch (siteData.GetCollisionType())
           {
@@ -241,7 +262,7 @@ namespace hemelb
             midDomainWallNormals[l].push_back(normal);
             for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); direction++)
             {
-              midDomainWallDistance[l].push_back(blockReadIn.Sites[localSiteId].links[direction - 1].distanceToIntersection);
+              midDomainWallDistance[l].push_back(localSite.links[direction - 1].distanceToIntersection);
             }
           }
           else
@@ -252,7 +273,7 @@ namespace hemelb
             domainEdgeWallNormals[l].push_back(normal);
             for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); direction++)
             {
-              domainEdgeWallDistance[l].push_back(blockReadIn.Sites[localSiteId].links[direction - 1].distanceToIntersection);
+              domainEdgeWallDistance[l].push_back(localSite.links[direction - 1].distanceToIntersection);
             }
           }
 
