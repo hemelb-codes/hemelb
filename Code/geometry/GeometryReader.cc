@@ -514,9 +514,14 @@ namespace hemelb
       const io::formats::geometry::DisplacementVector& neighbourhood =
           io::formats::geometry::Get().GetNeighbourhood();
       // Prepare the links array to have enough space.
-      readInSite.links.resize(latticeInfo.GetNumVectors() - 1);
+      readInSite.links.resize(neighbourhood.size());
 
       bool isGmyWallSite = false;
+
+      /* Note: We store the entire neighbourhood that is stored in the
+	 file as per hemelb::io::formats::geometry. The mapping to the
+	 actual DnQm neighbourhood used in the simulation happens upon
+	 instantiation of hemelb::geometry::LatticeData. See also #706. */
 
       // For each link direction...
       for (Direction readDirection = 0; readDirection < neighbourhood.size(); readDirection++)
@@ -525,7 +530,7 @@ namespace hemelb
         unsigned intersectionType;
         reader.readUnsignedInt(intersectionType);
 
-        GeometrySiteLink link;
+        GeometrySiteLink& link = readInSite.links[readDirection];
         link.type = (GeometrySiteLink::IntersectionType) intersectionType;
 
         // walls have a floating-point distance to the wall...
@@ -549,18 +554,11 @@ namespace hemelb
           link.distanceToIntersection = distance;
         }
 
-        // Now, attempt to match the direction read from the local neighbourhood to one in the
-        // lattice being used for simulation. If a match is found, assign the link to the read
-        // site.
-        for (Direction usedLatticeDirection = 1; usedLatticeDirection < latticeInfo.GetNumVectors(); usedLatticeDirection++)
-        {
-          if (latticeInfo.GetVector(usedLatticeDirection) == neighbourhood[readDirection])
-          {
-            // If this link direction is necessary to the lattice in use, keep the link data.
-            readInSite.links[usedLatticeDirection - 1] = link;
-            break;
-          }
-        }
+	/* The matching between the links read and the links of the
+	   DnQm lattice being used for the simulation is now done in
+	   hemelb::geometry::LatticeData() in order to keep the
+	   Geometry independent of latticeType! */
+
       }
 
       unsigned normalAvailable;

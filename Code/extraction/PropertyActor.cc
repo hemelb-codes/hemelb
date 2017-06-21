@@ -42,34 +42,37 @@ namespace hemelb
           // Iterate over each field.
           for (unsigned outputField = 0; outputField < outputFile->fields.size(); ++outputField)
           {
+	    IterableDataSource *dataSource = *dataSourceMap[outputFile->fields[outputField].type];
             // Set the cache to calculate each required field.
             switch (outputFile->fields[outputField].type)
             {
               case (OutputField::Pressure):
-		(*dataSourceMap[outputFile->fields[outputField].type])->GetPropertyCache().densityCache.SetRefreshFlag();
+		dataSource->GetPropertyCache().densityCache.SetRefreshFlag();
                 break;
-	      case OutputField::TracerConcentration:
               case OutputField::Velocity:
-		(*dataSourceMap[outputFile->fields[outputField].type])->GetPropertyCache().velocityCache.SetRefreshFlag();
+		dataSource->GetPropertyCache().velocityCache.SetRefreshFlag();
 		break;
               case OutputField::ShearStress:
-                (*dataSourceMap[outputFile->fields[outputField].type])->GetPropertyCache().wallShearStressMagnitudeCache.SetRefreshFlag();
+                dataSource->GetPropertyCache().wallShearStressMagnitudeCache.SetRefreshFlag();
                 break;
               case OutputField::VonMisesStress:
-                (*dataSourceMap[outputFile->fields[outputField].type])->GetPropertyCache().vonMisesStressCache.SetRefreshFlag();
+                dataSource->GetPropertyCache().vonMisesStressCache.SetRefreshFlag();
                 break;
               case OutputField::ShearRate:
-                (*dataSourceMap[outputFile->fields[outputField].type])->GetPropertyCache().shearRateCache.SetRefreshFlag();
+                dataSource->GetPropertyCache().shearRateCache.SetRefreshFlag();
                 break;
               case OutputField::StressTensor:
-                (*dataSourceMap[outputFile->fields[outputField].type])->GetPropertyCache().stressTensorCache.SetRefreshFlag();
+                dataSource->GetPropertyCache().stressTensorCache.SetRefreshFlag();
                 break;
               case OutputField::Traction:
-                (*dataSourceMap[outputFile->fields[outputField].type])->GetPropertyCache().tractionCache.SetRefreshFlag();
+                dataSource->GetPropertyCache().tractionCache.SetRefreshFlag();
                 break;
               case OutputField::TangentialProjectionTraction:
-                (*dataSourceMap[outputFile->fields[outputField].type])->GetPropertyCache().tangentialProjectionTractionCache.SetRefreshFlag();
+                dataSource->GetPropertyCache().tangentialProjectionTractionCache.SetRefreshFlag();
                 break;
+	      case OutputField::TracerConcentration:
+		dataSource->GetPropertyCache().velocityCache.SetRefreshFlag();
+		break;
               case OutputField::MpiRank:
                 // We don't actually have to cache anything to get the rank.
                 break;
