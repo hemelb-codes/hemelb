@@ -29,16 +29,6 @@ import pdb
 
 np.seterr(divide='ignore')
 
-partnumber = raw_input("Enter number of parts: ")
-intpartnumber=int(partnumber)
-if intpartnumber==2:
- Seedpoint2x = raw_input("Enter second seed points' x coordinate: ")
- Seedpoint2y = raw_input("Enter second seed points' y coordinate: ")
- Seedpoint2z = raw_input("Enter second seed points' z coordinate: ")
- fSeedpoint2x=float(Seedpoint2x)
- fSeedpoint2y=float(Seedpoint2y)
- fSeedpoint2z=float(Seedpoint2z)
-
 def DVfromV(v):
     """Translate a Model.Vector.Vector to a Generation.DoubleVector.
     """
@@ -111,6 +101,11 @@ class PolyDataGenerator(GeometryGenerator):
             profile.SeedPoint.x / profile.VoxelSize,
             profile.SeedPoint.y / profile.VoxelSize,
             profile.SeedPoint.z / profile.VoxelSize)
+        if self.PartNumber == 2:
+         self.generator.SetSeedPointWorking(
+            profile.SeedPoint2.x / profile.VoxelSize,
+            profile.SeedPoint2.y / profile.VoxelSize,
+            profile.SeedPoint2.z / profile.VoxelSize)
 
         # This will create the pipeline for the clipped surface
         clipper = Clipper(profile)
@@ -395,7 +390,7 @@ class Clipper(object):
         pdSource = adder
         for i, iolet in enumerate(self.Iolets):
             capper = PolyDataClipCapAndLabeller(Value=i, Iolet=iolet,
-                                                SeedPoint=self.SeedPoint)
+                                                SeedPoint=self.SeedPoint, SeedPoint2=self.SeedPoint2, PartNumber=self.PartNumber)
             capper.SetInputConnection(pdSource.GetOutputPort())
             # Set the source of the next iteraction to the capped
             # surface producer.
@@ -458,11 +453,13 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
     """vtkFilter for clipping and capping a vtkPolyData surface, and labeling
     the cap with an integer cell data value.
     """
-    def __init__(self, Value=None, Iolet=None, SeedPoint=None):
+    def __init__(self, Value=None, Iolet=None, SeedPoint=None, SeedPoint2=None, PartNumber=None):
         self.SetExecuteMethod(self._Execute)
         self.Value = Value
         self.Iolet = Iolet
         self.SeedPoint = (SeedPoint.x, SeedPoint.y, SeedPoint.z)
+        self.SeedPoint2 = (SeedPoint2.x, SeedPoint2.y, SeedPoint2.z)
+        self.PartNumber = PartNumber
         return
 
     def SetValue(self, val):
@@ -509,7 +506,7 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
         clipper.SetInputData(pd)
         clipper.SetClipFunction(clippingFunction)
         
-        if intpartnumber==2:
+        if self.PartNumber == 2:
          connectedRegionGetterp1 = vtkPolyDataConnectivityFilter()
          connectedRegionGetterp1.SetExtractionModeToClosestPointRegion()
          connectedRegionGetterp1.SetClosestPoint(*self.SeedPoint)
@@ -518,7 +515,7 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
 
          connectedRegionGetterp2 = vtkPolyDataConnectivityFilter()
          connectedRegionGetterp2.SetExtractionModeToClosestPointRegion()
-         connectedRegionGetterp2.SetClosestPoint(fSeedpoint2x,fSeedpoint2y,fSeedpoint2z)
+         connectedRegionGetterp2.SetClosestPoint(*self.SeedPoint2)
          connectedRegionGetterp2.SetInputConnection(clipper.GetOutputPort())
          connectedRegionGetterp2.Update()
 
@@ -530,7 +527,7 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
          return appendFilter.GetOutput()
 
         # Filter to get part closest to seed point
-        elif intpartnumber==1:
+        elif self.PartNumber == 1:
          connectedRegionGetter = vtkPolyDataConnectivityFilter()
          connectedRegionGetter.SetExtractionModeToClosestPointRegion()
          connectedRegionGetter.SetClosestPoint(*self.SeedPoint)
