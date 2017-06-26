@@ -49,6 +49,21 @@ public:
 		this->SeedPointWorking[2] = z;
 	}
 
+        inline void GetSeedPointWorking2(double out[3]) {
+                for (unsigned int i = 0; i < 3; ++i)
+                        out[i] = this->SeedPointWorking2[i];
+                return;
+        }
+        inline void SetSeedPointWorking2(double out[3]) {
+                for (unsigned int i = 0; i < 3; ++i)
+                        this->SeedPointWorking2[i] = out[i];
+        }
+        inline void SetSeedPointWorking2(double x, double y, double z) {
+                this->SeedPointWorking2[0] = x;
+                this->SeedPointWorking2[1] = y;
+                this->SeedPointWorking2[2] = z;
+        }
+
 	inline vtkPolyData* GetClippedSurface(void) {
 		return this->ClippedSurface;
 	}
@@ -70,6 +85,7 @@ private:
 	virtual int BlockInsideOrOutsideSurface(const Block &block);
 	// Members set from outside to initialise
 	double SeedPointWorking[3];
+        double SeedPointWorking2[3];
 	vtkPolyData* ClippedSurface;
 	vtkOBBTree* Locator;
 	Polyhedron* ClippedCGALSurface;

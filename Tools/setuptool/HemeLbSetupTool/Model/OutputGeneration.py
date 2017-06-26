@@ -101,8 +101,7 @@ class PolyDataGenerator(GeometryGenerator):
             profile.SeedPoint.x / profile.VoxelSize,
             profile.SeedPoint.y / profile.VoxelSize,
             profile.SeedPoint.z / profile.VoxelSize)
-        if self.PartNumber == 2:
-         self.generator.SetSeedPointWorking(
+        self.generator.SetSeedPointWorking2(
             profile.SeedPoint2.x / profile.VoxelSize,
             profile.SeedPoint2.y / profile.VoxelSize,
             profile.SeedPoint2.z / profile.VoxelSize)
