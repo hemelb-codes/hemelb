@@ -4,8 +4,8 @@
     <step_length units="s" value="0.0001" />
     <steps units="lattice" value="50000" />
     <stresstype value="1" />
-    <voxel_size units="m" value="0.0001" />
-    <origin units="m" value="(-0.00150680174828,-0.00130027070045,-0.00155153059959)" />
+    <voxel_size units="m" value="0.002" />
+    <origin units="m" value="(0.00549999976158,-0.011,-0.011)" />
   </simulation>
   <geometry>
     <datafile path="test.gmy" />
@@ -13,25 +13,25 @@
   <inlets>
     <inlet>
       <condition subtype="cosine" type="pressure">
-        <mean units="mmHg" value="80.0" />
+        <mean units="mmHg" value="0.0" />
         <amplitude units="mmHg" value="0.0" />
         <phase units="rad" value="0.0" />
         <period units="s" value="1" />
       </condition>
-      <normal units="dimensionless" value="(0.571490683385,0.246911638329,-0.782581012843)" />
-      <position units="m" value="(-0.000717508783523,-0.000351761187458,0.000848702777352)" />
+      <normal units="dimensionless" value="(-1.0,0.0,0.0)" />
+      <position units="m" value="(0.001,0.0,0.0)" />
     </inlet>
   </inlets>
   <outlets>
     <outlet>
       <condition subtype="cosine" type="pressure">
-        <mean units="mmHg" value="80.0" />
+        <mean units="mmHg" value="0.0" />
         <amplitude units="mmHg" value="0.0" />
         <phase units="rad" value="0.0" />
         <period units="s" value="1" />
       </condition>
-      <normal units="dimensionless" value="(-0.583800592647,-0.241788117106,0.775058303904)" />
-      <position units="m" value="(0.000681397691515,0.000293539312786,-0.000883567218537)" />
+      <normal units="dimensionless" value="(1.0,-0.0,0.0)" />
+      <position units="m" value="(0.098,0.0,0.0)" />
     </outlet>
   </outlets>
   <visualisation>

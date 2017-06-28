@@ -1,29 +1,25 @@
 DurationSeconds: 5.0
 Iolets:
-- Centre: {x: -0.7175087835232064, y: -0.35176118745805307, z: 0.8487027773518294}
+- Centre: {x: 1.0, y: 0.0, z: 0.0}
   Name: Inlet1
-  Normal: {x: 0.5714906833845466, y: 0.24691163832925012, z: -0.7825810128429067}
-  Pressure: {x: 80.0, y: 0.0, z: 0.0}
-  Radius: !!python/object/apply:numpy.core.multiarray.scalar
-  - &id001 !!python/object/apply:numpy.dtype
-    args: [f8, 0, 1]
-    state: !!python/tuple [3, <, null, null, null, -1, -1, 0]
-  - !!binary |
-    5f//////9z8=
+  Normal: {x: -1.0, y: 0.0, z: 0.0}
+  Pressure: {x: 0.0, y: 0.0, z: 0.0}
+  Radius: 11.0
   Type: Inlet
-- Centre: {x: 0.6813976915146475, y: 0.2935393127862492, z: -0.8835672185368557}
+- Centre: {x: 98.0, y: 0.0, z: 0.0}
   Name: Outlet1
-  Normal: {x: -0.5838005926470043, y: -0.24178811710621645, z: 0.7750583039044462}
-  Pressure: {x: 80.0, y: 0.0, z: 0.0}
-  Radius: !!python/object/apply:numpy.core.multiarray.scalar
-  - *id001
-  - !!binary |
-    /P//////9z8=
+  Normal: {x: 0.9999999999999999, y: -0.0, z: 0.0}
+  Pressure: {x: 0.0, y: 0.0, z: 0.0}
+  Radius: 11.000000000000002
   Type: Outlet
+SeedPoints:
+- Point: {x: 30.0, y: 0, z: 0}
+  Name: SeedPoint1
+  Type: SeedPoint
 OutputGeometryFile: test.gmy
 OutputXmlFile: test.xml
-MainSeedPoint: {x: 0.2804247306759349, y: 1.0472264605233645, z: -0.08133472310153574}
-StlFile: test.stl
+MainSeedPoint: {x: 28.078162452578667, y: -8.851659100407282, z: -4.383339311220453}
+StlFile: ./test.stl
 StlFileUnitId: 1
 TimeStepSeconds: 0.0001
-VoxelSize: 0.1
+VoxelSize: 2.0
