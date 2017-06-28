@@ -22,10 +22,8 @@ Iolets:
   Type: Outlet
 OutputGeometryFile: test.gmy
 OutputXmlFile: test.xml
-SeedPoint: {x: 0.2804247306759349, y: 1.0472264605233645, z: -0.08133472310153574}
-SeedPoint2: {x: 0, y: 0, z: 0}
+MainSeedPoint: {x: 0.2804247306759349, y: 1.0472264605233645, z: -0.08133472310153574}
 StlFile: test.stl
 StlFileUnitId: 1
 TimeStepSeconds: 0.0001
 VoxelSize: 0.1
-PartNumber: 1

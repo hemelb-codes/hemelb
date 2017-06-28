@@ -17,6 +17,7 @@ from HemeLbSetupTool.Util.Observer import Observable
 from HemeLbSetupTool.Model.SideLengthCalculator import AverageSideLengthCalculator
 from HemeLbSetupTool.Model.Vector import Vector
 from HemeLbSetupTool.Model.Iolets import ObservableListOfIolets, IoletLoader
+from HemeLbSetupTool.Model.SeedPoints import ObservableListOfSeedPoints, SeedPointLoader
 
 class LengthUnit(Observable):
     def __init__(self, sizeInMetres, name, abbrv):
@@ -43,12 +44,11 @@ class Profile(Observable):
     _Args = {'StlFile': None,
              'StlFileUnitId': 1,
              'Iolets': ObservableListOfIolets(),
-             'PartNumber': 1,
+             'SeedPoints': ObservableListOfSeedPoints(),
              'VoxelSize': 0.,
              'TimeStepSeconds': 1e-4,
              'DurationSeconds': 5.0,
-             'SeedPoint': Vector(),
-             'SeedPoint2': Vector(),
+             'MainSeedPoint': Vector(),
              'OutputGeometryFile': None,
              'OutputXmlFile': None}
     _UnitChoices = [metre, millimetre, micrometre]
@@ -75,21 +75,15 @@ class Profile(Observable):
 
         # Dependencies for properties
         self.AddDependency('HaveValidStlFile', 'StlFile')
-        self.AddDependency('HaveValidPartNumber', 'PartNumber')
         self.AddDependency('HaveValidOutputXmlFile', 'OutputXmlFile')
         self.AddDependency('HaveValidOutputGeometryFile', 'OutputGeometryFile')
-        self.AddDependency('HaveValidSeedPoint', 'SeedPoint.x')
-        self.AddDependency('HaveValidSeedPoint', 'SeedPoint.y')
-        self.AddDependency('HaveValidSeedPoint', 'SeedPoint.z')
-        self.AddDependency('HaveValidSeedPoint2', 'SeedPoint2.x')
-        self.AddDependency('HaveValidSeedPoint2', 'SeedPoint2.y')
-        self.AddDependency('HaveValidSeedPoint2', 'SeedPoint2.z')
+        self.AddDependency('HaveValidSeedPoint', 'MainSeedPoint.x')
+        self.AddDependency('HaveValidSeedPoint', 'MainSeedPoint.y')
+        self.AddDependency('HaveValidSeedPoint', 'MainSeedPoint.z')
         self.AddDependency('IsReadyToGenerate', 'HaveValidStlFile')
         self.AddDependency('IsReadyToGenerate', 'HaveValidOutputXmlFile')
         self.AddDependency('IsReadyToGenerate', 'HaveValidOutputGeometryFile')
         self.AddDependency('IsReadyToGenerate', 'HaveValidSeedPoint')
-        self.AddDependency('IsReadyToGenerate', 'HaveValidSeedPoint2')
-        self.AddDependency('IsReadyToGenerate', 'HaveValidPartNumber')
         self.AddDependency('StlFileUnit', 'StlFileUnitId')
         self.AddDependency('VoxelSizeMetres', 'VoxelSize')
         self.AddDependency('VoxelSizeMetres', 'StlFileUnit.SizeInMetres')
@@ -120,6 +114,7 @@ class Profile(Observable):
             if val is not None:
                 setattr(self, k, val)
 
+    
     def OnStlFileChanged(self, change):
         self.StlReader.SetFileName(self.StlFile)
         self.VoxelSize = self.SideLengthCalculator.GetOutputValue()
@@ -141,20 +136,8 @@ class Profile(Observable):
         return IsFileValid(self.StlFile, ext='.stl', exists=True)
 
     @property
-    def HaveValidPartNumber(self):
-        if self.PartNumber == 1 or self.PartNumber == 2:
-            return True
-        return False
-        
-    @property
     def HaveValidSeedPoint(self):
-        if np.isfinite(self.SeedPoint.x) and np.isfinite(self.SeedPoint.y) and np.isfinite(self.SeedPoint.z):
-            return True
-        return False
-
-    @property
-    def HaveValidSeedPoint2(self):
-        if np.isfinite(self.SeedPoint2.x) and np.isfinite(self.SeedPoint2.y) and np.isfinite(self.SeedPoint2.z):
+        if np.isfinite(self.MainSeedPoint.x) and np.isfinite(self.MainSeedPoint.y) and np.isfinite(self.MainSeedPoint.z):
             return True
         return False
     
@@ -171,10 +154,6 @@ class Profile(Observable):
         to do the setup.
         """
         if not self.HaveValidSeedPoint:
-            return False
-        if not self.HaveValidSeedPoint2:
-            return False
-        if not self.HaveValidPartNumber:
             return False
         if not self.HaveValidOutputXmlFile:
             return False

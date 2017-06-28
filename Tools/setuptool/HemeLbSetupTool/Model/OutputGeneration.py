@@ -20,6 +20,7 @@ from vmtk.vtkvmtk import vtkvmtkBoundaryReferenceSystems
 #from CGAL.CGAL_Polyhedron_3 import Polyhedron_3
 
 from .Iolets import Inlet, Outlet, Iolet
+from .SeedPoints import Point, SeedPoint
 from .Vector import Vector
 from .Profile import Profile, metre
 from .XmlWriter import XmlWriter
@@ -28,6 +29,7 @@ import Generation
 import pdb
 
 np.seterr(divide='ignore')
+
 
 def DVfromV(v):
     """Translate a Model.Vector.Vector to a Generation.DoubleVector.
@@ -98,13 +100,9 @@ class PolyDataGenerator(GeometryGenerator):
         self.generator = Generation.PolyDataGenerator()
         self._SetCommonGeneratorProperties()
         self.generator.SetSeedPointWorking(
-            profile.SeedPoint.x / profile.VoxelSize,
-            profile.SeedPoint.y / profile.VoxelSize,
-            profile.SeedPoint.z / profile.VoxelSize)
-        self.generator.SetSeedPointWorking2(
-            profile.SeedPoint2.x / profile.VoxelSize,
-            profile.SeedPoint2.y / profile.VoxelSize,
-            profile.SeedPoint2.z / profile.VoxelSize)
+            profile.MainSeedPoint.x / profile.VoxelSize,
+            profile.MainSeedPoint.y / profile.VoxelSize,
+            profile.MainSeedPoint.z / profile.VoxelSize)
 
         # This will create the pipeline for the clipped surface
         clipper = Clipper(profile)
@@ -389,13 +387,14 @@ class Clipper(object):
         pdSource = adder
         for i, iolet in enumerate(self.Iolets):
             capper = PolyDataClipCapAndLabeller(Value=i, Iolet=iolet,
-                                                SeedPoint=self.SeedPoint, SeedPoint2=self.SeedPoint2, PartNumber=self.PartNumber)
+                                                MainSeedPoint=self.MainSeedPoint,
+                                                SeedPoints=self.SeedPoints)
             capper.SetInputConnection(pdSource.GetOutputPort())
             # Set the source of the next iteraction to the capped
             # surface producer.
             pdSource = capper
             continue
-
+        
         # The following adds cell normals to the PolyData
         normer = vtkPolyDataNormals()
         normer.SetInputConnection(pdSource.GetOutputPort())
@@ -452,13 +451,12 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
     """vtkFilter for clipping and capping a vtkPolyData surface, and labeling
     the cap with an integer cell data value.
     """
-    def __init__(self, Value=None, Iolet=None, SeedPoint=None, SeedPoint2=None, PartNumber=None):
+    def __init__(self, Value=None, Iolet=None, MainSeedPoint=None, SeedPoints=None):
         self.SetExecuteMethod(self._Execute)
         self.Value = Value
         self.Iolet = Iolet
-        self.SeedPoint = (SeedPoint.x, SeedPoint.y, SeedPoint.z)
-        self.SeedPoint2 = (SeedPoint2.x, SeedPoint2.y, SeedPoint2.z)
-        self.PartNumber = PartNumber
+        self.SeedPoints = SeedPoints
+        self.MainSeedPoint = (MainSeedPoint.x, MainSeedPoint.y, MainSeedPoint.z)
         return
 
     def SetValue(self, val):
@@ -504,35 +502,39 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
         clipper = vtkClipPolyData()
         clipper.SetInputData(pd)
         clipper.SetClipFunction(clippingFunction)
+
         
-        if self.PartNumber == 2:
-         connectedRegionGetterp1 = vtkPolyDataConnectivityFilter()
-         connectedRegionGetterp1.SetExtractionModeToClosestPointRegion()
-         connectedRegionGetterp1.SetClosestPoint(*self.SeedPoint)
-         connectedRegionGetterp1.SetInputConnection(clipper.GetOutputPort())
-         connectedRegionGetterp1.Update()
+        for j, seedpoint in enumerate(self.SeedPoints):
+            if j == 0:
+             connectedRegionGetterp1 = vtkPolyDataConnectivityFilter()
+             connectedRegionGetterp1.SetExtractionModeToClosestPointRegion()
+             connectedRegionGetterp1.SetClosestPoint(*self.MainSeedPoint)
+             connectedRegionGetterp1.SetInputConnection(clipper.GetOutputPort())
+             connectedRegionGetterp1.Update()
 
-         connectedRegionGetterp2 = vtkPolyDataConnectivityFilter()
-         connectedRegionGetterp2.SetExtractionModeToClosestPointRegion()
-         connectedRegionGetterp2.SetClosestPoint(*self.SeedPoint2)
-         connectedRegionGetterp2.SetInputConnection(clipper.GetOutputPort())
-         connectedRegionGetterp2.Update()
+             connectedRegionGetterp2 = vtkPolyDataConnectivityFilter()
+             connectedRegionGetterp2.SetExtractionModeToClosestPointRegion()
+             connectedRegionGetterp2.SetClosestPoint(seedpoint.Point.x, seedpoint.Point.y, seedpoint.Point.z)
+             connectedRegionGetterp2.SetInputConnection(clipper.GetOutputPort())
+             connectedRegionGetterp2.Update()
 
-         appendFilter = vtkAppendPolyData() 
-         appendFilter.AddInputData(connectedRegionGetterp1.GetOutput())
-         appendFilter.AddInputData(connectedRegionGetterp2.GetOutput())
-         appendFilter.Update()
+             appendFilter = vtkAppendPolyData() 
+             appendFilter.AddInputData(connectedRegionGetterp1.GetOutput())
+             appendFilter.AddInputData(connectedRegionGetterp2.GetOutput())
+             appendFilter.Update()
+            else:
+             connectedRegionGetterp2 = vtkPolyDataConnectivityFilter()
+             connectedRegionGetterp2.SetExtractionModeToClosestPointRegion()
+             connectedRegionGetterp2.SetClosestPoint(seedpoint.Point.x, seedpoint.Point.y, seedpoint.Point.z)
+             connectedRegionGetterp2.SetInputConnection(clipper.GetOutputPort())
+             connectedRegionGetterp2.Update()
 
-         return appendFilter.GetOutput()
+             appendFilter.AddInputData(appendFilter.GetOutput())
+             appendFilter.AddInputData(connectedRegionGetterp2.GetOutput())
+             appendFilter.Update()
 
-        # Filter to get part closest to seed point
-        elif self.PartNumber == 1:
-         connectedRegionGetter = vtkPolyDataConnectivityFilter()
-         connectedRegionGetter.SetExtractionModeToClosestPointRegion()
-         connectedRegionGetter.SetClosestPoint(*self.SeedPoint)
-         connectedRegionGetter.SetInputConnection(clipper.GetOutputPort())
-         connectedRegionGetter.Update()
-         return connectedRegionGetter.GetOutput()
+
+        return appendFilter.GetOutput()
 
     def _AddValue(self, pd):
         adder = IntegerAdder(Value=self.Value)

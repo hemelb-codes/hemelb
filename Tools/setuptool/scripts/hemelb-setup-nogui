@@ -27,9 +27,6 @@ parser.add_argument('--xml', default=None, dest='OutputXmlFile',
 parser.add_argument('--voxel', default=None, type=float, dest='VoxelSizeMetres',
                     help='The voxel size in metres',
                     metavar='FLOAT')
-parser.add_argument('--part-number', default=None, type=int, dest='PartNumber',
-                    help='The number of parts (Just should be one or two)',
-                    metavar='INTEGER')
 
 # Parse
 args = parser.parse_args()

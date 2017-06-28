@@ -12,12 +12,14 @@ Iolets:
   Pressure: {x: 0.0, y: 0.0, z: 0.0}
   Radius: 11.000000000000002
   Type: Outlet
+SeedPoints:
+- Point: {x: 30.0, y: 0, z: 0}
+  Name: SeedPoint1
+  Type: SeedPoint
 OutputGeometryFile: test.gmy
 OutputXmlFile: test.xml
-SeedPoint: {x: 28.078162452578667, y: -8.851659100407282, z: -4.383339311220453}
-SeedPoint2: {x: 30.0, y: 0, z: 0}
+MainSeedPoint: {x: 28.078162452578667, y: -8.851659100407282, z: -4.383339311220453}
 StlFile: ./test.stl
 StlFileUnitId: 1
 TimeStepSeconds: 0.0001
 VoxelSize: 2.0
-PartNumber: 2
