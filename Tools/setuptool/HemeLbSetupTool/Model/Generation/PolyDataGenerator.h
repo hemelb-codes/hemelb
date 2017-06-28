@@ -34,21 +34,6 @@ public:
 	PolyDataGenerator();
 	virtual ~PolyDataGenerator();
 
-	inline void GetSeedPointWorking(double out[3]) {
-		for (unsigned int i = 0; i < 3; ++i)
-			out[i] = this->SeedPointWorking[i];
-		return;
-	}
-	inline void SetSeedPointWorking(double out[3]) {
-		for (unsigned int i = 0; i < 3; ++i)
-			this->SeedPointWorking[i] = out[i];
-	}
-	inline void SetSeedPointWorking(double x, double y, double z) {
-		this->SeedPointWorking[0] = x;
-		this->SeedPointWorking[1] = y;
-		this->SeedPointWorking[2] = z;
-	}
-
 	inline vtkPolyData* GetClippedSurface(void) {
 		return this->ClippedSurface;
 	}
@@ -69,7 +54,6 @@ private:
 	// represents whether the block is inside (-1) outside (+1) or undetermined (0)
 	virtual int BlockInsideOrOutsideSurface(const Block &block);
 	// Members set from outside to initialise
-	double SeedPointWorking[3];
 	vtkPolyData* ClippedSurface;
 	vtkOBBTree* Locator;
 	Polyhedron* ClippedCGALSurface;

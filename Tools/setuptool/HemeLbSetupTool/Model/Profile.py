@@ -48,7 +48,6 @@ class Profile(Observable):
              'VoxelSize': 0.,
              'TimeStepSeconds': 1e-4,
              'DurationSeconds': 5.0,
-             'MainSeedPoint': Vector(),
              'OutputGeometryFile': None,
              'OutputXmlFile': None}
     _UnitChoices = [metre, millimetre, micrometre]
@@ -77,13 +76,9 @@ class Profile(Observable):
         self.AddDependency('HaveValidStlFile', 'StlFile')
         self.AddDependency('HaveValidOutputXmlFile', 'OutputXmlFile')
         self.AddDependency('HaveValidOutputGeometryFile', 'OutputGeometryFile')
-        self.AddDependency('HaveValidSeedPoint', 'MainSeedPoint.x')
-        self.AddDependency('HaveValidSeedPoint', 'MainSeedPoint.y')
-        self.AddDependency('HaveValidSeedPoint', 'MainSeedPoint.z')
         self.AddDependency('IsReadyToGenerate', 'HaveValidStlFile')
         self.AddDependency('IsReadyToGenerate', 'HaveValidOutputXmlFile')
         self.AddDependency('IsReadyToGenerate', 'HaveValidOutputGeometryFile')
-        self.AddDependency('IsReadyToGenerate', 'HaveValidSeedPoint')
         self.AddDependency('StlFileUnit', 'StlFileUnitId')
         self.AddDependency('VoxelSizeMetres', 'VoxelSize')
         self.AddDependency('VoxelSizeMetres', 'StlFileUnit.SizeInMetres')
@@ -134,12 +129,6 @@ class Profile(Observable):
         """Read only property indicating if our STL file is valid.
         """
         return IsFileValid(self.StlFile, ext='.stl', exists=True)
-
-    @property
-    def HaveValidSeedPoint(self):
-        if np.isfinite(self.MainSeedPoint.x) and np.isfinite(self.MainSeedPoint.y) and np.isfinite(self.MainSeedPoint.z):
-            return True
-        return False
     
     @property
     def HaveValidOutputXmlFile(self):
@@ -153,8 +142,6 @@ class Profile(Observable):
         """Read only property indicating if we have enough information
         to do the setup.
         """
-        if not self.HaveValidSeedPoint:
-            return False
         if not self.HaveValidOutputXmlFile:
             return False
         if not self.HaveValidOutputGeometryFile:

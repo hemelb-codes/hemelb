@@ -16,9 +16,6 @@ SeedPoints:
 - Point: {x: 28.078162452578667, y: -8.851659100407282, z: -4.383339311220453}
   Name: SeedPoint1
   Type: SeedPoint
-- Point: {x: 30.0, y: 0, z: 0}
-  Name: SeedPoint2
-  Type: SeedPoint
 OutputGeometryFile: test.gmy
 OutputXmlFile: test.xml
 StlFile: ./test.stl

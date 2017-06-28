@@ -1,0 +1,54 @@
+<?xml version="1.0" ?>
+<hemelbsettings version="3">
+  <simulation>
+    <step_length units="s" value="0.0001" />
+    <steps units="lattice" value="50000" />
+    <stresstype value="1" />
+    <voxel_size units="m" value="0.002" />
+    <origin units="m" value="(0.00549999976158,-0.011,-0.011)" />
+  </simulation>
+  <geometry>
+    <datafile path="test.gmy" />
+  </geometry>
+  <inlets>
+    <inlet>
+      <condition subtype="cosine" type="pressure">
+        <mean units="mmHg" value="0.0" />
+        <amplitude units="mmHg" value="0.0" />
+        <phase units="rad" value="0.0" />
+        <period units="s" value="1" />
+      </condition>
+      <normal units="dimensionless" value="(-1.0,0.0,0.0)" />
+      <position units="m" value="(0.001,0.0,0.0)" />
+    </inlet>
+  </inlets>
+  <outlets>
+    <outlet>
+      <condition subtype="cosine" type="pressure">
+        <mean units="mmHg" value="0.0" />
+        <amplitude units="mmHg" value="0.0" />
+        <phase units="rad" value="0.0" />
+        <period units="s" value="1" />
+      </condition>
+      <normal units="dimensionless" value="(1.0,-0.0,0.0)" />
+      <position units="m" value="(0.098,0.0,0.0)" />
+    </outlet>
+  </outlets>
+  <visualisation>
+    <centre units="m" value="(0.0,0.0,0.0)" />
+    <orientation>
+      <longitude units="deg" value="45.0" />
+      <latitude units="deg" value="45.0" />
+    </orientation>
+    <display brightness="0.03" zoom="1.0" />
+    <range>
+      <maxvelocity units="m/s" value="0.1" />
+      <maxstress units="Pa" value="0.1" />
+    </range>
+  </visualisation>
+  <initialconditions>
+    <pressure>
+      <uniform units="mmHg" value="0.0" />
+    </pressure>
+  </initialconditions>
+</hemelbsettings>
