@@ -114,9 +114,9 @@ class PolyDataGenerator(GeometryGenerator):
             clipper.ClippedSurfaceSource.GetOutputPort())
 
         # Uncomment this an insert the output path to debug pipeline construction
-        # write = StageWriter('/Users/rupert/working/compare/aneurysm').WriteOutput
-        # i = 0
-        # for alg in getpipeline(transformer):
+        #write = StageWriter('/users/yousefi/hemelb-dev/Tools/setuptool/test/TestHemeLBSetupTool/Model/data').WriteOutput
+        #i = 0
+        #for alg in getpipeline(transformer):
         #     print i
         #     i += 1
         #     print alg
@@ -514,9 +514,13 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
              connectedRegionGetterp2.SetClosestPoint(seedpoint.Point.x, seedpoint.Point.y, seedpoint.Point.z)
              connectedRegionGetterp2.SetInputConnection(clipper.GetOutputPort())
              connectedRegionGetterp2.Update()
-
+             
+             adderFilter = IntegerAdder(Value=-1-j)
+             adderFilter.SetInputConnection(connectedRegionGetterp2.GetOutputPort())
+             adderFilter.Update()
+ 
              appendFilter.AddInputData(appendFilter.GetOutput())
-             appendFilter.AddInputData(connectedRegionGetterp2.GetOutput())
+             appendFilter.AddInputData(adderFilter.GetOutput())
              appendFilter.Update()
 
 
