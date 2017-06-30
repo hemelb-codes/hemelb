@@ -10,6 +10,7 @@ from xml.etree.ElementTree import Element, SubElement, ElementTree
 
 #from .Profile import Profile, metre
 from .Iolets import Inlet, Outlet
+from .SeedPoints import Point, SeedPoint
 from .Vector import Vector
 
 import pdb
@@ -45,6 +46,7 @@ class XmlWriter(object):
         self.DoSimulation(root)
         self.DoGeometry(root)
         self.DoIolets(root)
+        self.DoStents(root)
         self.DoVisualisation(root)
         self.DoInitialConditions(root)
         
@@ -74,7 +76,9 @@ class XmlWriter(object):
     def DoInitialConditions(self, root):
         ic = SubElement(root, 'initialconditions')
         pressure = SubElement(ic, 'pressure')
+        concentration = SubElement(ic, 'concentration')
         QuantityElement(pressure, 'uniform', 0.0, 'mmHg')
+        QuantityElement(concentration, 'uniform', 0.0, 'dimensionless')
         return
     
     def DoProperties(self, root):
@@ -114,6 +118,21 @@ class XmlWriter(object):
             continue
         return
 
+    def DoStents(self, root):
+        stents = SubElement(root, 'stents')
+
+        for index, st in enumerate(self.profile.SeedPoints):
+         if index > 0:
+            if isinstance(st, SeedPoint):
+                stent = SubElement(stents, 'stent')
+            else:
+                continue
+
+            condition = SubElement(stent, 'condition', type='concentration',
+                                   subtype='file')
+            ValueElement(condition, 'path', './stent.txt')
+        return
+
     def DoVisualisation(self, root):
         vis = SubElement(root, 'visualisation')
         
@@ -127,6 +146,7 @@ class XmlWriter(object):
         
         range = SubElement(vis, 'range')
         QuantityElement(range, 'maxvelocity', 0.1, 'm/s')
+        QuantityElement(range, 'maxflux', 0.1, 'm/s')
         QuantityElement(range, 'maxstress', 0.1, 'Pa')
         
         return

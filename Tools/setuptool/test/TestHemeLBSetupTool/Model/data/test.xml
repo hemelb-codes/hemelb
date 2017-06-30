@@ -34,6 +34,13 @@
       <position units="m" value="(0.098,0.0,0.0)" />
     </outlet>
   </outlets>
+  <stents>
+    <stent>
+      <condition subtype="file" type="concentration">
+        <path value="./stent.txt" />
+      </condition>
+    </stent>
+  </stents>
   <visualisation>
     <centre units="m" value="(0.0,0.0,0.0)" />
     <orientation>
@@ -43,6 +50,7 @@
     <display brightness="0.03" zoom="1.0" />
     <range>
       <maxvelocity units="m/s" value="0.1" />
+      <maxflux units="m/s" value="0.1" />
       <maxstress units="Pa" value="0.1" />
     </range>
   </visualisation>
@@ -50,5 +58,8 @@
     <pressure>
       <uniform units="mmHg" value="0.0" />
     </pressure>
+    <concentration>
+      <uniform units="dimensionless" value="0.0" />
+    </concentration>
   </initialconditions>
 </hemelbsettings>
