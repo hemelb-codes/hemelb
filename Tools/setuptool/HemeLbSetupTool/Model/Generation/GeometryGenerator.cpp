@@ -125,10 +125,12 @@ void GeometryGenerator::WriteFluidSite(BlockWriter& blockWriter, Site& site) {
 			blockWriter << static_cast<unsigned int>(geometry::CUT_NONE);
 		} else if (cutType == geometry::CUT_WALL
 				|| cutType == geometry::CUT_INLET
-				|| cutType == geometry::CUT_OUTLET) {
+				|| cutType == geometry::CUT_OUTLET
+                                || cutType == geometry::CUT_STENT) {
 			blockWriter << static_cast<unsigned int>(cutType);
 			if (cutType == geometry::CUT_INLET
-					|| cutType == geometry::CUT_OUTLET) {
+					|| cutType == geometry::CUT_OUTLET
+                                                       || cutType == geometry::CUT_STENT) {
 				blockWriter << static_cast<unsigned int>(site.Links[i].IoletId);
 			}
 			blockWriter << static_cast<float>(site.Links[i].Distance);
@@ -163,7 +165,8 @@ void GeometryGenerator::ComputeAveragedNormal(Site& site) const {
 		// Compute a weighted sum of the wall normals available and normalise it.
 		for (unsigned neighId = 0; neighId < Neighbours::n; ++neighId) {
 			LinkData& link = site.Links[neighId];
-			if (link.Type == geometry::CUT_WALL) {
+			if (link.Type == geometry::CUT_WALL
+                                          || link.Type == geometry::CUT_STENT) {
 
 				assert(link.DistanceInVoxels != 0);
 				double weight = 1 / link.DistanceInVoxels;

@@ -77,7 +77,8 @@ namespace hemelb
             CUT_NONE = 0, //!< No intersection
             CUT_WALL = 1, //!< Intersect a wall
             CUT_INLET = 2, //!< Intersect an inlet
-            CUT_OUTLET = 3
+            CUT_OUTLET = 3, //!< Intersect an outlet
+            CUT_STENT = 4
           //!< Intersect an outlet
           };
 

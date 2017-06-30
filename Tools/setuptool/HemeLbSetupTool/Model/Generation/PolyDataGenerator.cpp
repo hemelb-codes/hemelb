@@ -358,9 +358,12 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			
 			int ioletId =  hitpoint_triangle_dist.first.second->id() - 2;
 			//shifting back from unsigned.
-			if (ioletId < 0) {
+			if (ioletId == -1) {
 				// -1 => we hit a wall
 				link.Type = geometry::CUT_WALL;
+                        } else if (ioletId < -1) {
+                                link.Type = geometry::CUT_STENT;
+                                link.IoletId = ioletId;
 			} else {
 				// We hit an inlet or outlet
 				Iolet* iolet = this->Iolets[ioletId];
@@ -374,7 +377,8 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			}
 			
 			// If this link intersected the wall, store the normal of the cell we hit and the distance to it.
-			if (link.Type == geometry::CUT_WALL) {
+			if (link.Type == geometry::CUT_WALL
+                                          || link.Type == geometry::CUT_STENT) {
 				VectorCGAL CGALNorm = 
 				CGAL::cross_product(hitpoint_triangle_dist.first.second->halfedge()->next()->vertex()->point() 
 									- hitpoint_triangle_dist.first.second->halfedge()->vertex()->point(),
