@@ -1,4 +1,5 @@
 #include <utility>
+#include <chrono>
 #include "io/xml/XmlAbstractionLayer.h"
 #include "redblood/stencil.h"
 #include "redblood/Cell.h"
