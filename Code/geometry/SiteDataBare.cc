@@ -27,6 +27,7 @@ namespace hemelb
       {
         type = SOLID_TYPE;
         wallIntersection = 0;
+        stentIntersection = 0;
         ioletIntersection = 0;
         ioletId = -1;
       }
@@ -34,6 +35,7 @@ namespace hemelb
       {
         ioletId = -1;
         wallIntersection = 0;
+        stentIntersection = 0;
         ioletIntersection = 0;
 
         bool hadInlet = false;
@@ -49,6 +51,10 @@ namespace hemelb
           if (link.type == GeometrySiteLink::WALL_INTERSECTION)
           {
             wallIntersection |= 1 << (direction - 1);
+          }
+          else if (link.type == GeometrySiteLink::STENT_INTERSECTION)
+          {
+            stentIntersection |= 1 << (direction - 1);
           }
           else if (link.type == GeometrySiteLink::INLET_INTERSECTION || link.type
               == GeometrySiteLink::OUTLET_INTERSECTION)
@@ -80,13 +86,13 @@ namespace hemelb
     }
 
     SiteData::SiteData(const SiteData& other) :
-      wallIntersection(other.wallIntersection), ioletIntersection(other.ioletIntersection),
+      wallIntersection(other.wallIntersection), ioletIntersection(other.ioletIntersection), stentIntersection(other.stentIntersection),
           type(other.type), ioletId(other.ioletId)
     {
     }
 
     SiteData::SiteData() :
-      wallIntersection(0), ioletIntersection(0), type(SOLID_TYPE), ioletId(-1)
+      wallIntersection(0), ioletIntersection(0), stentIntersection(0), type(SOLID_TYPE), ioletId(-1)
     {
     }
 
@@ -99,6 +105,11 @@ namespace hemelb
       return wallIntersection != 0;
     }
 
+    bool SiteData::IsStent() const
+    {
+      return stentIntersection != 0;
+    }
+
     bool SiteData::IsSolid() const
     {
       return GetSiteType() == SOLID_TYPE;
@@ -106,7 +117,7 @@ namespace hemelb
 
     unsigned SiteData::GetCollisionType() const
     {
-      if (wallIntersection == 0)
+      if (wallIntersection == 0 && stentIntersection == 0)
       {
         // No solid wall intersections
         switch (type)
@@ -124,7 +135,7 @@ namespace hemelb
             throw Exception() << "Requesting collision type for solid site!";
         }
       }
-      else
+      else if (wallIntersection != 0 && stentIntersection == 0)
       {
         // There are solid wall intersections
         switch (type)
@@ -143,6 +154,44 @@ namespace hemelb
 
         }
       }
+      else if (wallIntersection == 0 && stentIntersection != 0)
+      {
+        // There are solid wall intersections
+        switch (type)
+        {
+          case FLUID_TYPE:
+            return STENT;
+
+          case INLET_TYPE:
+            return INLET | STENT;
+
+          case OUTLET_TYPE:
+            return OUTLET | STENT;
+
+          case SOLID_TYPE:
+            throw Exception() << "Requesting collision type for solid site!";
+
+        }
+      }
+      else
+      {
+        // There are solid wall intersections
+        switch (type)
+        {
+          case FLUID_TYPE: 
+            return WALL | STENT;
+     
+          case INLET_TYPE:
+            return INLET | WALL | STENT;
+
+          case OUTLET_TYPE:
+            return OUTLET | WALL | STENT;
+
+          case SOLID_TYPE:
+            throw Exception() << "Requesting collision type for solid site!";
+
+        }
+      }
 
       throw Exception() << "Requesting collision type for solid site!";
       // The end of this function should never be reached. Adding return statement to please CRAY compiler
@@ -153,6 +202,12 @@ namespace hemelb
     {
       unsigned mask = 1U << (direction - 1);
       return (wallIntersection & mask) != 0;
+    }
+
+    bool SiteData::HasStent(Direction direction) const
+    {
+      unsigned mask = 1U << (direction - 1);
+      return (stentIntersection & mask) != 0;
     }
 
     bool SiteData::HasIolet(Direction direction) const
@@ -169,6 +224,11 @@ namespace hemelb
     uint32_t SiteData::GetWallIntersectionData() const
     {
       return wallIntersection;
+    }
+
+    uint32_t SiteData::GetStentIntersectionData() const
+    {
+      return stentIntersection;
     }
 
   }

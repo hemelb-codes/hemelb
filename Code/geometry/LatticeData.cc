@@ -247,6 +247,14 @@ namespace hemelb
               break;
             case (OUTLET | WALL):
               l = 5;
+            case STENT:
+              l = 6;
+            case (STENT | WALL):
+              l = 7;
+            case (STENT | INLET):
+              l = 8;
+            case (STENT | OUTLET):
+              l = 9; 
               break;
           }
 

@@ -24,7 +24,8 @@ namespace hemelb
           NO_INTERSECTION = 0,
           WALL_INTERSECTION = 1,
           INLET_INTERSECTION = 2,
-          OUTLET_INTERSECTION = 3
+          OUTLET_INTERSECTION = 3,
+          STENT_INTERSECTION = 4
         } type;
 
         //! Default constructor. Has no intersection, nonsense values for intersection distance

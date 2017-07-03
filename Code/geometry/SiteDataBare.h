@@ -25,6 +25,7 @@ namespace hemelb
         ~SiteData();
 
         bool IsWall() const;
+        bool IsStent() const;
         bool IsSolid() const;
         unsigned GetCollisionType() const;
 
@@ -47,6 +48,7 @@ namespace hemelb
         }
 
         bool HasWall(Direction direction) const;
+        bool HasStent(Direction direction) const;
         bool HasIolet(Direction direction) const;
 
         /**
@@ -62,12 +64,18 @@ namespace hemelb
         {
           return wallIntersection;
         }
+        uint32_t GetStentIntersectionData() const;
+        uint32_t &GetStentIntersectionData()
+        {
+          return stentIntersection;
+        }
 
       protected:
         /**
          * This is a bit mask for whether a wall is hit by links in each direction.
          */
         uint32_t wallIntersection;
+        uint32_t stentIntersection;
 
         /**
          * This is a bit mask for whether an iolet is hit by links in each direction.
