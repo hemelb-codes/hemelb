@@ -164,6 +164,11 @@ namespace hemelb
           io::xml::Element const& node, util::UnitConverter const& converter,
           TemplateCellContainer const &templateCells)
       {
+        // We need to seed each of the RBCInserterWithPerturbation objects consistently across MPI processes
+        auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+        auto comm_world = hemelb::net::MpiCommunicator::World();
+        comm_world.Broadcast(seed, 0);
+
         // Now gets data for cell insertion
 
         // There are potentially multiple cell inserters each with their own
@@ -256,7 +261,9 @@ namespace hemelb
                                            dtheta,
                                            dphi,
                                            rotateToFlow * LatticePosition(dx, 0, 0),
-                                           rotateToFlow * LatticePosition(0, dy, 0))));
+                                           rotateToFlow * LatticePosition(0, dy, 0),
+                                           seed)));
+          seed++;
         }
 
         return composite;

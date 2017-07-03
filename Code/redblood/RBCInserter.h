@@ -103,9 +103,10 @@ namespace hemelb
         RBCInserterWithPerturbation(std::function<bool()> condition,
                                     std::unique_ptr<CellBase const> cell,
                                     util::Matrix3D const &initialRotation, Angle dtheta, Angle dphi,
-                                    LatticePosition const& dx, LatticePosition const& dy) :
+                                    LatticePosition const& dx, LatticePosition const& dy,
+                                    std::default_random_engine::result_type randomGeneratorSeed = std::default_random_engine::default_seed) :
             RBCInserter(condition, std::move(cell)), initialRotation(initialRotation),
-                dtheta(dtheta), dphi(dphi), dx(dx), dy(dy), uniformDistribution(-1.0,1.0)
+                dtheta(dtheta), dphi(dphi), dx(dx), dy(dy), randomGenerator(randomGeneratorSeed), uniformDistribution(-1.0,1.0)
         {
         }
 
