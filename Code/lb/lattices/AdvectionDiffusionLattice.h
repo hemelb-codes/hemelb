@@ -39,7 +39,7 @@ namespace hemelb
             }
           }
 
-          inline static void CalculateConcentrationFluxFEq(const distribn_t f[],
+          inline static void CalculateDensityMomentumFEq(const distribn_t f[],
                                                          distribn_t &concentration,
                                                          distribn_t &flux_x,
                                                          distribn_t &flux_y,
