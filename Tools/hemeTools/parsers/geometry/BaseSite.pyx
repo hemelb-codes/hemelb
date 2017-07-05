@@ -104,7 +104,7 @@ cdef class BaseSite:
             
             for i in xrange(DIRECTIONS):
                 itype[i] = loader.unpack_uint()
-                if itype[i] == INLET_INTERSECTION or itype[i] == OUTLET_INTERSECTION:
+                if itype[i] == INLET_INTERSECTION or itype[i] == OUTLET_INTERSECTION or itype[i] == WALL_INTERSECTION:
                     ioind[i] = loader.unpack_uint()
                 if itype[i] != NO_INTERSECTION:
                     idist[i] = loader.unpack_float()
