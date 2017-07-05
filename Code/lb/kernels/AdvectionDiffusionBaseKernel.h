@@ -20,7 +20,7 @@ namespace hemelb
     {
 
       template<typename KernelImpl, typename LatticeImpl>
-      class AdvectionDiffusionBaseKernel
+      class AdvectionDiffusionBaseKernel : public BaseKernel<KernelImpl<LatticeImpl>, LatticeImpl>
       {
         public:
           typedef HydroVars<KernelImpl> KHydroVars;
