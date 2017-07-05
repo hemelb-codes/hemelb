@@ -14,7 +14,7 @@
 namespace hemelb
 {
 
-  const unsigned int COLLISION_TYPES = 10;
+  const unsigned int COLLISION_TYPES = 6;
   const double PI = 3.14159265358979323846264338327950288;
   const double DEG_TO_RAD = (PI / 180.0);
   // TODO this was used for a convergence test - we could reinstate that at some point.
@@ -30,18 +30,16 @@ namespace hemelb
    * meant to be. It is also not used in the setup tool, so we will drop it,
    * setting BOUNDARIES to 3
    */
-  const sitedata_t BOUNDARIES = 4U;
+  const sitedata_t BOUNDARIES = 3U;
   const sitedata_t INLET_BOUNDARY = 0U;
   const sitedata_t OUTLET_BOUNDARY = 1U;
   const sitedata_t WALL_BOUNDARY = 2U;
-  const sitedata_t STENT_BOUNDARY = 3U;
   // const unsigned int CHARACTERISTIC_BOUNDARY = 3U;
 
   const unsigned int FLUID = 1U;
   const unsigned int INLET = 2U;
   const unsigned int OUTLET = 4U;
   const unsigned int WALL = 8U;
-  const unsigned int STENT = 16U;
 
   // square of the speed of sound
   const double Cs2 = 1.0 / 3.0;

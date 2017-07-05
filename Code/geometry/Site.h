@@ -30,11 +30,6 @@ namespace hemelb
           return GetSiteData().IsWall();
         }
 
-        inline bool IsStent() const
-        {
-          return GetSiteData().IsStent();
-        }  
-
         inline bool IsSolid() const
         {
           return GetSiteData().IsSolid();
@@ -58,11 +53,6 @@ namespace hemelb
         inline bool HasWall(Direction direction) const
         {
           return GetSiteData().HasWall(direction);
-        }
-
-        inline bool HasStent(Direction direction) const
-        {
-          return GetSiteData().HasStent(direction);
         }
 
         inline bool HasIolet(Direction direction) const
