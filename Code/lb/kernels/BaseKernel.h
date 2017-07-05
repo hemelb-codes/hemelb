@@ -52,6 +52,7 @@ namespace hemelb
           template<class LatticeImpl> friend class EntropicAnsumali;
           template<class LatticeImpl> friend class EntropicChik;
           template<class LatticeImpl> friend class LBGK;
+          template<class LatticeImpl> friend class AdvectionDiffusionLBGK;
           template<class rheologyModel, class LatticeImpl> friend class LBGKNN;
           template<class LatticeImpl> friend class MRT;
           template<class LatticeImpl> friend class TRT;
