@@ -19,7 +19,6 @@ cdef public enum:
     WALL_INTERSECTION = 1
     INLET_INTERSECTION = 2
     OUTLET_INTERSECTION = 3
-    STENT_INTERSECTION = 4
 
 cdef public enum:
     NO_IOLET = -1
@@ -52,7 +51,7 @@ cdef class BaseSite:
             return self._IsSolid()
     
     cdef bint _IsEdge(self):
-        return self.IsFluid and np.any(self.IntersectionType == WALL_INTERSECTION or self.IntersectionType == STENT_INTERSECTION)
+        return self.IsFluid and np.any(self.IntersectionType == WALL_INTERSECTION)
     property IsEdge:
         def __get__(self):
             return self._IsEdge()
@@ -105,7 +104,7 @@ cdef class BaseSite:
             
             for i in xrange(DIRECTIONS):
                 itype[i] = loader.unpack_uint()
-                if itype[i] == INLET_INTERSECTION or itype[i] == OUTLET_INTERSECTION or itype[i] == STENT_INTERSECTION:
+                if itype[i] == INLET_INTERSECTION or itype[i] == OUTLET_INTERSECTION:
                     ioind[i] = loader.unpack_uint()
                 if itype[i] != NO_INTERSECTION:
                     idist[i] = loader.unpack_float()

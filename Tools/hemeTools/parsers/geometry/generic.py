@@ -221,15 +221,13 @@ class Site(BaseSite.BaseSite):
     WALL_INTERSECTION = BaseSite.WALL_INTERSECTION
     INLET_INTERSECTION = BaseSite.INLET_INTERSECTION
     OUTLET_INTERSECTION = BaseSite.OUTLET_INTERSECTION
-    STENT_INTERSECTION = BaseSite.STENT_INTERSECTION
     
     NO_IOLET = BaseSite.NO_IOLET
     
     INTERSECTION_TYPES = (BaseSite.NO_INTERSECTION,
                           BaseSite.WALL_INTERSECTION,
                           BaseSite.INLET_INTERSECTION,
-                          BaseSite.OUTLET_INTERSECTION,
-                          BaseSite.STENT_INTERSECTION)
+                          BaseSite.OUTLET_INTERSECTION)
     
     _template = 'Site [' + ', '.join('{0[%d]:{2[%d]}}/{1[%d]:{2[%d]}}' % (i,i,i,i) for i in xrange(3)) + ']'
     
