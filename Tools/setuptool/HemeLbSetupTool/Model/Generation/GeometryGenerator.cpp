@@ -128,7 +128,8 @@ void GeometryGenerator::WriteFluidSite(BlockWriter& blockWriter, Site& site) {
 				|| cutType == geometry::CUT_OUTLET) {
 			blockWriter << static_cast<unsigned int>(cutType);
 			if (cutType == geometry::CUT_INLET
-					|| cutType == geometry::CUT_OUTLET) {
+					|| cutType == geometry::CUT_OUTLET
+                                                       || cutType == geometry::CUT_WALL) {
 				blockWriter << static_cast<unsigned int>(site.Links[i].IoletId);
 			}
 			blockWriter << static_cast<float>(site.Links[i].Distance);

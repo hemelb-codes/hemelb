@@ -361,6 +361,7 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			if (ioletId < 0) {
 				// -1 => we hit a wall
 				link.Type = geometry::CUT_WALL;
+                                link.IoletId = ioletId;
 			} else {
 				// We hit an inlet or outlet
 				Iolet* iolet = this->Iolets[ioletId];
