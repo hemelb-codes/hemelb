@@ -25,6 +25,8 @@ namespace hemelb
         ~SiteData();
 
         bool IsWall() const;
+        bool IsVesselWall() const;
+        bool IsStentWall() const;
         bool IsSolid() const;
         unsigned GetCollisionType() const;
 
@@ -47,6 +49,8 @@ namespace hemelb
         }
 
         bool HasWall(Direction direction) const;
+        bool HasVesselWall(Direction direction) const;
+        bool HasStentWall(Direction direction) const;
         bool HasIolet(Direction direction) const;
 
         /**

@@ -68,6 +68,10 @@ namespace hemelb
             ioletId = link.ioletId;
             hadOutlet = true;
           }
+          else if (link.type == GeometrySiteLink::WALL_INTERSECTION)
+          {
+            ioletId = link.ioletId; 
+          }
         }
 
         type = hadInlet
@@ -97,6 +101,16 @@ namespace hemelb
     bool SiteData::IsWall() const
     {
       return wallIntersection != 0;
+    }
+
+    bool SiteData::IsVesselWall() const
+    {
+      return wallIntersection != 0 && ioletId == -1;
+    }
+
+    bool SiteData::IsStentWall() const
+    {
+      return wallIntersection != 0 && ioletId < -1;
     }
 
     bool SiteData::IsSolid() const
@@ -153,6 +167,18 @@ namespace hemelb
     {
       unsigned mask = 1U << (direction - 1);
       return (wallIntersection & mask) != 0;
+    }
+
+    bool SiteData::HasVesselWall(Direction direction) const
+    {
+      unsigned mask = 1U << (direction - 1);
+      return (wallIntersection & mask) != 0 && ioletId == -1;
+    }
+
+    bool SiteData::HasStentWall(Direction direction) const
+    {
+      unsigned mask = 1U << (direction - 1);
+      return (wallIntersection & mask) != 0 && ioletId < -1;
     }
 
     bool SiteData::HasIolet(Direction direction) const
