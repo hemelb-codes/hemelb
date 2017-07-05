@@ -40,6 +40,11 @@ namespace hemelb
                   / (Cs2 * voxelSize * voxelSize);
 
           omega = -1.0 / tau;
+          advectionDiffusionTau = 0.5
+              + (timeStepLength * DRUG_DIFFUSIVITY_m2_per_s)
+                  / (Cs2 * voxelSize * voxelSize);
+
+          advectionDiffusionOmega = -1.0 / advectionDiffusionTau;
           stressParameter = (1.0 - 1.0 / (2.0 * tau)) / sqrt(2.0);
           beta = -1.0 / (2.0 * tau);
         }
@@ -64,6 +69,16 @@ namespace hemelb
           return tau;
         }
 
+        distribn_t GetAdvectionDiffusionOmega() const
+        {
+          return advectionDiffusionOmega;
+        }
+
+        distribn_t GetAdvectionDiffusionTau() const
+        {
+          return advectionDiffusionTau;
+        }
+
         distribn_t GetStressParameter() const
         {
           return stressParameter;
@@ -81,6 +96,8 @@ namespace hemelb
         PhysicalDistance voxelSize;
         distribn_t omega;
         distribn_t tau;
+        distribn_t advectionDiffusionOmega;
+        distribn_t advectionDiffusionTau;
         distribn_t stressParameter;
         distribn_t beta; ///< Viscous dissipation in ELBM
     };
