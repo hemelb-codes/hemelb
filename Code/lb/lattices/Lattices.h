@@ -10,5 +10,9 @@
 #include "lb/lattices/D3Q19.h"
 #include "lb/lattices/D3Q27.h"
 #include "lb/lattices/D3Q15i.h"
+#include "lb/lattices/D3Q15ad.h"
+#include "lb/lattices/D3Q19ad.h"
+#include "lb/lattices/D3Q27ad.h"
+#include "lb/lattices/D3Q7ad.h"
 
 #endif /* HEMELB_LB_LATTICES_LATTICES_H */
