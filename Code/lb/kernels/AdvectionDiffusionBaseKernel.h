@@ -31,7 +31,7 @@ namespace hemelb
             static_cast<KernelImpl*> (this)->DoCalculateDensityMomentumFeq(hydroVars, advectionDiffusionVars, index);
           }
 
-          inline void CalculateFeq(KHydroVars& hydroVars, site_t index)
+          inline void CalculateFeq(KHydroVars& hydroVars, KHydroVars& advectionDiffusionVars, site_t index)
           {
             static_cast<KernelImpl*> (this)->DoCalculateFeq(hydroVars, advectionDiffusionVars, index);
           }
