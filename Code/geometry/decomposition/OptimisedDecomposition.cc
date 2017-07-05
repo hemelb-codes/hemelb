@@ -190,7 +190,7 @@ namespace hemelb
       void OptimisedDecomposition::PopulateVertexWeightData(idx_t localVertexCount)
       {
         // These counters will be used later on to count the number of each type of vertex site
-        int FluidSiteCounter = 0, WallSiteCounter = 0, StentSiteCounter = 0, IOSiteCounter = 0, WallIOSiteCounter = 0, StentIOSiteCounter = 0, WallStentSiteCounter = 0;
+        int FluidSiteCounter = 0, WallSiteCounter = 0, IOSiteCounter = 0, WallIOSiteCounter = 0;
         int localweight = 1;
 
         // For each block (counting up by lowest site id)...
@@ -273,26 +273,6 @@ namespace hemelb
                         localweight = hemelbSiteWeights[5];
                         ++WallIOSiteCounter;
                         break;
-
-                      case STENT:
-                        localweight = hemelbSiteWeights[6];
-                        ++StentSiteCounter;
-                        break;
-
-                      case (STENT | WALL):
-                        localweight = hemelbSiteWeights[7];
-                        ++WallStentSiteCounter;
-                        break;
-
-                      case (INLET | STENT):
-                        localweight = hemelbSiteWeights[8];
-                        ++StentIOSiteCounter;
-                        break;
-
-                      case (OUTLET | STENT):
-                        localweight = hemelbSiteWeights[9];
-                        ++StentIOSiteCounter;
-                        break;
                     }
 
                     vertexWeights.push_back(localweight);
@@ -313,17 +293,14 @@ namespace hemelb
 
         int TotalCoreWeight = ( (FluidSiteCounter * hemelbSiteWeights[0])
             + (WallSiteCounter * hemelbSiteWeights[1]) + (IOSiteCounter * hemelbSiteWeights[2])
-            + (WallIOSiteCounter * hemelbSiteWeights[4]) + (StentSiteCounter * hemelbSiteWeights[1]) + (StentIOSiteCounter * hemelbSiteWeights[4]) + (WallStentSiteCounter * hemelbSiteWeights[1])) / hemelbSiteWeights[0];
-        int TotalSites = FluidSiteCounter + WallSiteCounter + WallIOSiteCounter + StentSiteCounter + StentIOSiteCounter;
+            + (WallIOSiteCounter * hemelbSiteWeights[4])) / hemelbSiteWeights[0];
+        int TotalSites = FluidSiteCounter + WallSiteCounter + WallIOSiteCounter;
 
-        log::Logger::Log<log::Debug, log::OnePerCore>("There are %u Bulk Flow Sites, %u Wall Sites, %u IO Sites, %u WallIO Sites, %u Stent Sites, %u StentIOSites, %u WallStentSites, on core %u. Total: %u (Weighted %u Points)",
+        log::Logger::Log<log::Debug, log::OnePerCore>("There are %u Bulk Flow Sites, %u Wall Sites, %u IO Sites, %u WallIO Sites on core %u. Total: %u (Weighted %u Points)",
                                                       FluidSiteCounter,
                                                       WallSiteCounter,
                                                       IOSiteCounter,
                                                       WallIOSiteCounter,
-                                                      StentSiteCounter,
-                                                      StentIOSiteCounter,
-                                                      WallStentSiteCounter,
                                                       comms.Rank(),
                                                       TotalSites,
                                                       TotalCoreWeight);

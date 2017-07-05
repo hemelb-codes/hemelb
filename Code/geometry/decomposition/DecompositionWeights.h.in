@@ -55,16 +55,12 @@ namespace hemelb
       static const int hemelbSiteWeightsNASHZEROTHORDERPRESSUREIOLET_ISBFILEVELOCITYINLET = 16;
       static const int hemelbSiteWeightsLADDIOLET_ISBFILEVELOCITYINLET = 48;
 
-      static const int hemelbSiteWeights[10] = { hemelbSiteWeights@HEMELB_COMPUTE_ARCHITECTURE@, 
+      static const int hemelbSiteWeights[6] = { hemelbSiteWeights@HEMELB_COMPUTE_ARCHITECTURE@, 
                                                 hemelbSiteWeights@HEMELB_WALL_BOUNDARY@_@HEMELB_COMPUTE_ARCHITECTURE@, 
                                                 hemelbSiteWeights@HEMELB_INLET_BOUNDARY@_@HEMELB_COMPUTE_ARCHITECTURE@, 
                                                 hemelbSiteWeights@HEMELB_OUTLET_BOUNDARY@_@HEMELB_COMPUTE_ARCHITECTURE@, 
                                                 hemelbSiteWeights@HEMELB_INLET_BOUNDARY@_@HEMELB_COMPUTE_ARCHITECTURE@, 
-                                                hemelbSiteWeights@HEMELB_OUTLET_BOUNDARY@_@HEMELB_COMPUTE_ARCHITECTURE@,
-                                                hemelbSiteWeights@HEMELB_WALL_BOUNDARY@_@HEMELB_COMPUTE_ARCHITECTURE@,
-                                                hemelbSiteWeights@HEMELB_INLET_BOUNDARY@_@HEMELB_COMPUTE_ARCHITECTURE@,
-                                                hemelbSiteWeights@HEMELB_OUTLET_BOUNDARY@_@HEMELB_COMPUTE_ARCHITECTURE@,
-                                                hemelbSiteWeights@HEMELB_WALL_BOUNDARY@_@HEMELB_COMPUTE_ARCHITECTURE@ };
+                                                hemelbSiteWeights@HEMELB_OUTLET_BOUNDARY@_@HEMELB_COMPUTE_ARCHITECTURE@ };
                                                 
       static const int hemelbCoresPerNode = 32;
     }
