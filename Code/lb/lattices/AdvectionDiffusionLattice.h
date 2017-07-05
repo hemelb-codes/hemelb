@@ -49,7 +49,7 @@ namespace hemelb
                                                          distribn_t &velocity_z,
                                                          distribn_t f_eq[])
           {
-            Lattice<DmQn>::CalculateConcentrationAndFlux(f, concentration, flux_x, flux_y, flux_z);
+            Lattice<DmQn>::CalculateDensityAndMomentum(f, concentration, flux_x, flux_y, flux_z);
 
             CalculateFeq(concentration, velocity_x, velocity_y, velocity_z, f_eq);
           }
