@@ -52,6 +52,7 @@ namespace hemelb
           template<class LatticeImpl> friend class EntropicAnsumali;
           template<class LatticeImpl> friend class EntropicChik;
           template<class LatticeImpl> friend class LBGK;
+          template<class KernelImpl, class LatticeImpl, class SecondLatticeImpl> friend class AdvectionDiffusionLBGK;
           template<class rheologyModel, class LatticeImpl> friend class LBGKNN;
           template<class LatticeImpl> friend class MRT;
           template<class LatticeImpl> friend class TRT;
@@ -173,6 +174,37 @@ namespace hemelb
           geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
       };
 
+      struct AdvectionDiffusionInitParams
+      {
+        public:
+
+          // Assume the first site to be used in the kernel is the first site in the core, unless otherwise specified
+          AdvectionDiffusionInitParams()
+          {
+          }
+
+          // The number of sites using this kernel instance.
+          site_t siteCount;
+
+          // Each streamer is responsible for updating certain types of sites. These are arranged such they are largely
+          // contiguous in memory (the local contiguous site id). This data structure refers to which of those are handled
+          // by the current streamer. These are given as a collection of contiguous site ids, running from e.g.
+          // siteRanges[0].first to siteRanges[0].second-1 (inclusive).
+          std::vector<std::pair<site_t, site_t> > siteRanges;
+
+          // The lattice data object. Currently only used for accessing the boundary id
+          // of each site next to an inlet or an outlet.
+          const geometry::LatticeData* latDat;
+
+          // The LB parameters object. Currently only used in LBGKNN to access the current
+          // time step.
+          const LbmParameters* lbmParams;
+
+          // The neighbouring data manager, for kernels / collisions / streamers that
+          // require data from other cores.
+          geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
+      };
+
       /**
        * BaseKernel: inheritable base class for the kernel. The public interface here define the
        * complete interface usable by collision operators:
@@ -211,6 +243,32 @@ namespace hemelb
           inline void Collide(const LbmParameters* lbmParams, KHydroVars& hydroVars)
           {
             static_cast<KernelImpl*> (this)->DoCollide(lbmParams, hydroVars);
+          }
+
+      };
+
+      template<typename KernelImpl, typename LatticeImpl, typename SecondKernelImpl, typename SecondLatticeImpl>
+      class AdvectionDiffusionBaseKernel
+      {
+        public:
+          typedef HydroVars<KernelImpl> KHydroVars;
+          typedef LatticeImpl LatticeType;
+          typedef HydroVars<SecondKernelImpl> SecondKHydroVars;
+          typedef SecondLatticeImpl SecondLatticeType;
+
+          inline void CalculateDensityMomentumFeq(KHydroVars& hydroVars, SecondKHydroVars& advectionDiffusionVars, site_t index)
+          {
+            static_cast<SecondKernelImpl*> (this)->DoCalculateDensityMomentumFeq(hydroVars, advectionDiffusionVars, index);
+          }
+
+          inline void CalculateFeq(KHydroVars& hydroVars, SecondKHydroVars& advectionDiffusionVars, site_t index)
+          {
+            static_cast<SecondKernelImpl*> (this)->DoCalculateFeq(hydroVars, advectionDiffusionVars, index);
+          }
+
+          inline void Collide(const LbmParameters* lbmParams, SecondKHydroVars& hydroVars)
+          {
+            static_cast<SecondKernelImpl*> (this)->DoCollide(lbmParams, hydroVars);
           }
 
       };
