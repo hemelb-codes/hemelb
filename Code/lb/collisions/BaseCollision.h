@@ -51,28 +51,6 @@ namespace hemelb
 
       };
 
-      template<typename CollisionImpl, typename KernelImpl, typename SecondKernelImpl>
-      class AdvectionDiffusionBaseCollision
-      {
-        public:
-          typedef KernelImpl CKernel;
-          typedef SecondKernelImpl SecondCKernel;
-
-          inline void CalculatePreCollision(kernels::HydroVars<KernelImpl>& hydroVars,
-                                            kernels::HydroVars<SecondKernelImpl>& advectionDiffusionVars,
-                                            const geometry::Site<geometry::LatticeData>& site)
-          {
-            static_cast<CollisionImpl*>(this)->DoCalculatePreCollision(hydroVars, advectionDiffusionVars, site);
-          }
-
-          inline void Collide(const LbmParameters* lbmParams,
-                              kernels::HydroVars<SecondKernelImpl>& advectionDiffusionVars)
-          {
-            static_cast<CollisionImpl*>(this)->DoCollide(lbmParams, advectionDiffusionVars);
-          }
-
-      };
-
     }
   }
 }
