@@ -9,7 +9,6 @@
 
 #include "lb/collisions/NonZeroVelocityEquilibriumFixedDensity.h"
 #include "lb/collisions/Normal.h"
-#include "lb/collisions/AdvectionDiffusionNormal.h"
 #include "lb/collisions/ZeroVelocityEquilibrium.h"
 #include "lb/collisions/ZeroVelocityEquilibriumFixedDensity.h"
 
