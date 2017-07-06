@@ -12,6 +12,7 @@
 #include "lb/iolets/BoundaryValues.h"
 #include "lb/kernels/rheologyModels/RheologyModels.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
+#include "lb/MacroscopicPropertyCache.h"
 
 namespace hemelb
 {
@@ -52,6 +53,7 @@ namespace hemelb
           template<class LatticeImpl> friend class EntropicAnsumali;
           template<class LatticeImpl> friend class EntropicChik;
           template<class LatticeImpl> friend class LBGK;
+          template<class LatticeImpl> friend class AdvectionDiffusionLBGK;
           template<class rheologyModel, class LatticeImpl> friend class LBGKNN;
           template<class LatticeImpl> friend class MRT;
           template<class LatticeImpl> friend class TRT;
@@ -171,6 +173,7 @@ namespace hemelb
           // The neighbouring data manager, for kernels / collisions / streamers that
           // require data from other cores.
           geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
+
       };
 
       /**
@@ -206,6 +209,30 @@ namespace hemelb
           inline void CalculateFeq(KHydroVars& hydroVars, site_t index)
           {
             static_cast<KernelImpl*> (this)->DoCalculateFeq(hydroVars, index);
+          }
+
+          inline void Collide(const LbmParameters* lbmParams, KHydroVars& hydroVars)
+          {
+            static_cast<KernelImpl*> (this)->DoCollide(lbmParams, hydroVars);
+          }
+
+      };
+
+      template<typename KernelImpl, typename LatticeImpl>
+      class AdvectionDiffusionBaseKernel
+      {
+        public:
+          typedef HydroVars<KernelImpl> KHydroVars;
+          typedef LatticeImpl LatticeType;
+
+          inline void CalculateDensityMomentumFeq(KHydroVars& hydroVars, lb::MacroscopicPropertyCache& propertyCache, site_t index)
+          {
+            static_cast<KernelImpl*> (this)->DoCalculateDensityMomentumFeq(hydroVars, propertyCache, index);
+          }
+
+          inline void CalculateFeq(KHydroVars& hydroVars, lb::MacroscopicPropertyCache& propertyCache, site_t index)
+          {
+            static_cast<KernelImpl*> (this)->DoCalculateFeq(hydroVars, propertyCache, index);
           }
 
           inline void Collide(const LbmParameters* lbmParams, KHydroVars& hydroVars)

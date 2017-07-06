@@ -10,6 +10,7 @@
 #include "constants.h"
 #include "lb/LbmParameters.h"
 #include "geometry/LatticeData.h"
+#include "lb/MacroscopicPropertyCache.h"
 
 namespace hemelb
 {
@@ -41,6 +42,27 @@ namespace hemelb
                                             const geometry::Site<geometry::LatticeData>& site)
           {
             static_cast<CollisionImpl*>(this)->DoCalculatePreCollision(hydroVars, site);
+          }
+
+          inline void Collide(const LbmParameters* lbmParams,
+                              kernels::HydroVars<KernelImpl>& hydroVars)
+          {
+            static_cast<CollisionImpl*>(this)->DoCollide(lbmParams, hydroVars);
+          }
+
+      };
+
+      template<typename CollisionImpl, typename KernelImpl>
+      class AdvectionDiffusionBaseCollision
+      {
+        public:
+          typedef KernelImpl CKernel;
+
+          inline void CalculatePreCollision(kernels::HydroVars<KernelImpl>& hydroVars,
+                                            lb::MacroscopicPropertyCache& propertyCache,
+                                            const geometry::Site<geometry::LatticeData>& site)
+          {
+            static_cast<CollisionImpl*>(this)->DoCalculatePreCollision(hydroVars, propertyCache, site);
           }
 
           inline void Collide(const LbmParameters* lbmParams,
