@@ -10,7 +10,6 @@
 #include "lb/kernels/EntropicAnsumali.h"
 #include "lb/kernels/EntropicChik.h"
 #include "lb/kernels/LBGK.h"
-#include "lb/kernels/AdvectionDiffusionLBGK.h"
 #include "lb/kernels/LBGKNN.h"
 #include "lb/kernels/MRT.h"
 #include "lb/kernels/TRT.h"

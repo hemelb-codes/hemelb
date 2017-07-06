@@ -19,7 +19,7 @@ namespace hemelb
       {
         public:
 
-          inline static void CalculateFeq(const distribn_t &density,
+          inline static void CalculateFeq(const distribn_t &concentration,
                                           const distribn_t &velocity_x,
                                           const distribn_t &velocity_y,
                                           const distribn_t &velocity_z,
@@ -34,24 +34,24 @@ namespace hemelb
                   + DmQn::CZ[i] * velocity_z;
 
               f_eq[i] = DmQn::EQMWEIGHTS[i]
-                  * density * (1 - (3. / 2.) * velocityMagnitudeSquared + (9. / 2.) * v_dot_ei * v_dot_ei
+                  * concentration * (1 - (3. / 2.) * velocityMagnitudeSquared + (9. / 2.) * v_dot_ei * v_dot_ei
                       + 3. * v_dot_ei);
             }
           }
 
           inline static void CalculateDensityMomentumFEq(const distribn_t f[],
-                                                         distribn_t &density,
-                                                         distribn_t &momentum_x,
-                                                         distribn_t &momentum_y,
-                                                         distribn_t &momentum_z,
+                                                         distribn_t &concentration,
+                                                         distribn_t &flux_x,
+                                                         distribn_t &flux_y,
+                                                         distribn_t &flux_z,
                                                          distribn_t &velocity_x,
                                                          distribn_t &velocity_y,
                                                          distribn_t &velocity_z,
                                                          distribn_t f_eq[])
           {
-            Lattice<DmQn>::CalculateDensityAndMomentum(f, density, momentum_x, momentum_y, momentum_z);
+            Lattice<DmQn>::CalculateDensityAndMomentum(f, concentration, flux_x, flux_y, flux_z);
 
-            CalculateFeq(density, velocity_x, velocity_y, velocity_z, f_eq);
+            CalculateFeq(concentration, velocity_x, velocity_y, velocity_z, f_eq);
           }
 
       };
