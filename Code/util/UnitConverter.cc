@@ -33,6 +33,16 @@ namespace hemelb
       return REFERENCE_PRESSURE_mmHg + ConvertPressureDifferenceToPhysicalUnits(pressure - Cs2);
     }
 
+    LatticeDensity UnitConverter::ConvertDensityToLatticeUnits(PhysicalDensity density) const
+    {
+      return density / BLOOD_DENSITY_Kg_per_m3;
+    }
+
+    PhysicalDensity UnitConverter::ConvertDensityToPhysicalUnits(LatticeDensity density) const
+    {
+      return density * BLOOD_DENSITY_Kg_per_m3;
+    }
+
     LatticePressure UnitConverter::ConvertPressureDifferenceToLatticeUnits(
                                                                            PhysicalPressure pressure_diff) const
     {

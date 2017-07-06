@@ -27,6 +27,9 @@ namespace hemelb
         LatticeStress ConvertPressureDifferenceToLatticeUnits(PhysicalStress pressure_grad) const;
         PhysicalPressure ConvertPressureToPhysicalUnits(LatticePressure pressure) const;
 
+        LatticeDensity ConvertDensityToLatticeUnits(PhysicalDensity density) const;
+        PhysicalDensity ConvertDensityToPhysicalUnits(LatticeDensity density) const;
+
         LatticeDistance ConvertDistanceToLatticeUnits(const PhysicalDistance& x) const;
         PhysicalDistance ConvertDistanceToPhysicalUnits(const LatticeDistance& x) const;
 
