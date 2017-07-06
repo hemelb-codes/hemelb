@@ -10,7 +10,7 @@
 #include <cstdlib>
 #include "lb/HFunction.h"
 #include "util/utilityFunctions.h"
-#include "lb/kernels/AdvectionDiffusionBaseKernel.h"
+#include "lb/kernels/BaseKernel.h"
 
 namespace hemelb
 {
@@ -22,7 +22,7 @@ namespace hemelb
        * LBGK: This class implements the LBGK single-relaxation time kernel.
        */
       template<class LatticeType, class AdvectionDiffusionLatticeType>
-      class AdvectionDiffusionLBGK : public AdvectionDiffusionBaseKernel<AdvectionDiffusionLBGK<AdvectionDiffusionLatticeType>, AdvectionDiffusionLatticeType>
+      class AdvectionDiffusionLBGK : public BaseKernel<AdvectionDiffusionLBGK<AdvectionDiffusionLatticeType>, AdvectionDiffusionLatticeType>
       {
         public:
           AdvectionDiffusionLBGK(InitParams& initParams)
@@ -47,12 +47,12 @@ namespace hemelb
             }
           }
 
-          inline void DoCalculateFeq(HydroVars<LBGK<LatticeType> >& hydroVars, HydroVars<AdvectionDiffusionLBGK>& advectionDiffusionHydroVars, site_t index)
+          inline void DoCalculateFeq(HydroVars<AdvectionDiffusionLBGK>& advectionDiffusionHydroVars, site_t index)
           {
             AdvectionDiffusionLatticeType::CalculateFeq(advectionDiffusionHydroVars.density,
-                                                        hydroVars.momentum.x/hydroVars.density,
-                                                        hydroVars.momentum.y/hydroVars.density,
-                                                        hydroVars.momentum.z/hydroVars.density,
+                                                        advectionDiffusionHydroVars.momentum.x,
+                                                        advectionDiffusionHydroVars.momentum.y,
+                                                        advectionDiffusionHydroVars.momentum.z,
                                                         advectionDiffusionHydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < AdvectionDiffusionLatticeType::NUMVECTORS; ++ii)
