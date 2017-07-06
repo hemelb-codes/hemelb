@@ -56,6 +56,7 @@ namespace hemelb
           template<class LatticeImpl> friend class AdvectionDiffusionLBGK;
           template<class rheologyModel, class LatticeImpl> friend class LBGKNN;
           template<class LatticeImpl> friend class MRT;
+          template<class LatticeImpl> friend class AdvectionDiffusionMRT;
           template<class LatticeImpl> friend class TRT;
 
         protected:
