@@ -15,11 +15,7 @@
 #include "lb/streamers/NashZerothOrderPressureIolet.h"
 #include "lb/streamers/LaddIolet.h"
 #include "lb/streamers/VirtualSiteIolet.h"
-#include "lb/streamers/AdvectionDiffusionBouzidiFirdaousLallemand.h"
-#include "lb/streamers/AdvectionDiffusionGuoZhengShi.h"
-#include "lb/streamers/AdvectionDiffusionSimpleBounceBack.h"
+#include "lb/streamers/AdvectionDiffusionBoundaryConditions.h"
 #include "lb/streamers/AdvectionDiffusionSimpleCollideAndStream.h"
-#include "lb/streamers/AdvectionDiffusionDirichlet.h"
-#include "lb/streamers/AdvectionDiffusionNeumann.h"
 
 #endif /* HEMELB_LB_STREAMERS_STREAMERS_H */
