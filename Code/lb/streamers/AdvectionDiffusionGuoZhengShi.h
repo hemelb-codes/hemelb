@@ -26,7 +26,7 @@ namespace hemelb
       template<typename CollisionImpl>
       struct AdvectionDiffusionGuoZhengShiIolet
       {
-          typedef IoletStreamerTypeFactory<CollisionImpl, GuoZhengShiDelegate<CollisionImpl> > Type;
+          typedef AdvectionDiffusionIoletStreamerTypeFactory<CollisionImpl, GuoZhengShiDelegate<CollisionImpl> > Type;
       };
 
     }
