@@ -538,7 +538,10 @@ namespace hemelb
         {
           isGmyWallSite = true;
           float distance;
+          int ioletId;
+          reader.readInt(ioletId);
           reader.readFloat(distance);
+          link.ioletId = ioletId;
           link.distanceToIntersection = distance;
         }
         // inlets and outlets (which together with none make up the other intersection types)
@@ -546,8 +549,8 @@ namespace hemelb
         else if (link.type != GeometrySiteLink::NO_INTERSECTION)
         {
           float distance;
-          unsigned ioletId;
-          reader.readUnsignedInt(ioletId);
+          int ioletId;
+          reader.readInt(ioletId);
           reader.readFloat(distance);
 
           link.ioletId = ioletId;
