@@ -11,7 +11,7 @@ namespace hemelb
   {
     namespace stents
     {
-      void Stent::DoComms(const BoundaryCommunicator& bcComms, const LatticeTimeStep timeStep)
+      void Stent::DoComms(const iolets::BoundaryCommunicator& bcComms, const LatticeTimeStep timeStep)
       {
         // pass
       }

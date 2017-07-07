@@ -196,6 +196,61 @@ namespace hemelb
             }
           }
       };
+
+      template<typename StreamerImpl>
+      class AdvectionDiffusionBaseStreamer
+      {
+        public:
+          template<bool tDoRayTracing>
+          inline void StreamAndCollide(const site_t firstIndex,
+                                       const site_t siteCount,
+                                       const LbmParameters* lbmParams,
+                                       geometry::LatticeData* latDat,
+                                       lb::MacroscopicPropertyCache& propertyCache,
+                                       lb::MacroscopicPropertyCache& coupledPropertyCache)
+          {
+            static_cast<StreamerImpl*> (this)->template DoStreamAndCollide<tDoRayTracing> (firstIndex,
+                                                                                           siteCount,
+                                                                                           lbmParams,
+                                                                                           latDat,
+                                                                                           propertyCache,
+                                                                                           coupledPropertyCache);
+          }
+
+          template<bool tDoRayTracing>
+          inline void PostStep(const site_t firstIndex,
+                               const site_t siteCount,
+                               const LbmParameters* lbmParams,
+                               geometry::LatticeData* latDat,
+                               lb::MacroscopicPropertyCache& propertyCache)
+          {
+            // The template parameter is required because we're using the CRTP to call a
+            // metaprogrammed method of the implementation class.
+            static_cast<StreamerImpl*> (this)->template DoPostStep<tDoRayTracing> (firstIndex,
+                                                                                   siteCount,
+                                                                                   lbmParams,
+                                                                                   latDat,
+                                                                                   propertyCache);
+          }
+
+        protected:
+          template<bool tDoRayTracing, class LatticeType>
+          inline static void UpdateMinsAndMaxes(const geometry::Site<geometry::LatticeData>& site,
+                                                const kernels::HydroVarsBase<LatticeType>& hydroVars,
+                                                const LbmParameters* lbmParams,
+                                                lb::MacroscopicPropertyCache& propertyCache)
+          {
+            if (propertyCache.densityCache.RequiresRefresh())
+            {
+              propertyCache.densityCache.Put(site.GetIndex(), hydroVars.density);
+            }
+
+            if (propertyCache.velocityCache.RequiresRefresh())
+            {
+              propertyCache.velocityCache.Put(site.GetIndex(), hydroVars.velocity);
+            }
+          }
+      };
     }
   }
 }

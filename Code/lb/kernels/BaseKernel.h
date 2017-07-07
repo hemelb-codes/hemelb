@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include "constants.h"
 #include "lb/iolets/BoundaryValues.h"
+#include "lb/stents/BoundaryValues.h"
 #include "lb/kernels/rheologyModels/RheologyModels.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "lb/MacroscopicPropertyCache.h"
@@ -162,6 +163,8 @@ namespace hemelb
 
           // The array with the imposed density at each boundary.
           iolets::BoundaryValues* boundaryObject;
+
+          stents::BoundaryValues* advectionDiffusionBoundaryObject;
 
           // The lattice data object. Currently only used for accessing the boundary id
           // of each site next to an inlet or an outlet.

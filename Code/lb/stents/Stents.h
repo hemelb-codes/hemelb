@@ -8,7 +8,6 @@
 #define HEMELB_LB_STENTS_STENTS_H
 
 #include "lb/stents/Stent.h"
-#include "lb/stents/StentFlux.h"
 #include "lb/stents/StentConstant.h"
 #include "lb/stents/StentConstantFlux.h"
 #include "lb/stents/StentFile.h"

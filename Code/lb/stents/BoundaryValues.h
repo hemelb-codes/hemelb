@@ -68,7 +68,7 @@ namespace hemelb
 
           SimulationState* state;
           const util::UnitConverter& unitConverter;
-          BoundaryCommunicator bcComms;
+          iolets::BoundaryCommunicator bcComms;
       }
       ;
     }

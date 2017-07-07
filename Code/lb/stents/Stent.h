@@ -21,8 +21,8 @@ namespace hemelb
     {
 
       //forward declare boundary comms class
-      class BoundaryComms;
-      class BoundaryCommunicator;
+      class iolets::BoundaryComms;
+      class iolets::BoundaryCommunicator;
 
       /**
        * Base class for extra data needed by LB BC implementations.
@@ -75,11 +75,11 @@ namespace hemelb
           {
             return false;
           }
-          void SetComms(BoundaryComms * boundaryComms)
+          void SetComms(iolets::BoundaryComms * boundaryComms)
           {
             comms = boundaryComms;
           }
-          BoundaryComms * GetComms() const
+          iolets::BoundaryComms * GetComms() const
           {
             return comms;
           }
@@ -87,7 +87,7 @@ namespace hemelb
            * Carry out communication necessary
            * @param isIoProcess Is the process the master process?
            */
-          virtual void DoComms(const BoundaryCommunicator& bcComms, const LatticeTimeStep timeStep);
+          virtual void DoComms(const iolets::BoundaryCommunicator& bcComms, const LatticeTimeStep timeStep);
 
           /***
            * Set up the Iolet.
@@ -141,7 +141,7 @@ namespace hemelb
 
         protected:
           LatticeDensity minimumSimulationDensity;
-          BoundaryComms* comms;
+          iolets::BoundaryComms* comms;
       };
 
     }

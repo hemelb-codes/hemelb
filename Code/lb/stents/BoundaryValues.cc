@@ -51,7 +51,7 @@ namespace hemelb
 
 //            if (stent->IsCommsRequired()) //DEREK: POTENTIAL MULTISCALE ISSUE (this if-statement)
 //            {
-              stent->SetComms(new BoundaryComms(state, procsList[stentIndex], bcComms, isStentOnThisProc));
+              stent->SetComms(new iolets::BoundaryComms(state, procsList[stentIndex], bcComms, isStentOnThisProc));
 //            }
           }
         }
