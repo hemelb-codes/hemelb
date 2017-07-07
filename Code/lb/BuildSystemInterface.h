@@ -28,6 +28,13 @@ namespace hemelb
         typedef kernels::LBGK<Lattice> Type;
     };
 
+    template<class Lattice>
+    class ADVECTIONDIFFUSIONLBGK
+    {
+      public:
+        typedef kernels::AdvectionDiffusionLBGK<Lattice> Type;
+    };
+
     /**
      * The entropic implementation by Ansumali et al.
      */
@@ -56,6 +63,11 @@ namespace hemelb
     {
     };
 
+    template<class Lattice>
+    class ADVECTIONDIFFUSIONMRT
+    {
+    };
+
     template<>
     class MRT<lattices::D3Q15>
     {
@@ -64,10 +76,24 @@ namespace hemelb
     };
 
     template<>
+    class ADVECTIONDIFFUSIONMRT<lattices::D3Q15>
+    {
+      public:
+        typedef kernels::AdvectionDiffusionMRT<kernels::momentBasis::DHumieresD3Q15MRTBasis> Type;
+    };
+
+    template<>
     class MRT<lattices::D3Q19>
     {
       public:
         typedef kernels::MRT<kernels::momentBasis::DHumieresD3Q19MRTBasis> Type;
+    };
+
+    template<>
+    class ADVECTIONDIFFUSIONMRT<lattices::D3Q19>
+    {
+      public:
+        typedef kernels::AdvectionDiffusionMRT<kernels::momentBasis::DHumieresD3Q19MRTBasis> Type;
     };
 
     template<class Lattice>
@@ -130,6 +156,20 @@ namespace hemelb
       public:
         typedef typename streamers::BouzidiFirdaousLallemand<Collision>::Type Type;
     };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONBFL
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionBouzidiFirdaousLallemand<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONBFLIOLET
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionBouzidiFirdaousLallemandIolet<Collision>::Type Type;
+    };
     /**
      * The Guo Zheng and Shi mode-extrapolation boundary condition.
      */
@@ -139,6 +179,20 @@ namespace hemelb
       public:
         typedef typename streamers::GuoZhengShi<Collision>::Type Type;
     };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONGZS
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionGuoZhengShi<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONGZSIOLET
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionGuoZhengShiIolet<Collision>::Type Type;
+    };
     /**
      * The simple bounce back boundary condition.
      */
@@ -147,6 +201,20 @@ namespace hemelb
     {
       public:
         typedef typename streamers::SimpleBounceBack<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONSIMPLEBOUNCEBACK
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionSimpleBounceBack<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONSIMPLEBOUNCEBACKIOLET
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionSimpleBounceBackIolet<Collision>::Type Type;
     };
     /**
      * The Junk & Yang 2005 boundary condition.
@@ -249,6 +317,146 @@ namespace hemelb
     struct VIRTUALSITEIOLETSBB
     {
         typedef typename streamers::VirtualSiteIolet<Collision> Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONDIRICHLET
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionDirichlet<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONDIRICHLETSBB
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionDirichletSBB<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONDIRICHLETBFL
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionDirichletBFL<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONDIRICHLETGZS
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionDirichletGZS<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONDIRICHLETIOLETSBB
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionDirichletIoletSBB<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONDIRICHLETIOLETBFL
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionDirichletIoletBFL<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONDIRICHLETIOLETGZS
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionDirichletIoletGZS<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONDIRICHLETSBBIOLETWALL
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionDirichletSBBIoletWall<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONDIRICHLETBFLIOLETWALL
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionDirichletBFLIoletWall<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONDIRICHLETGZSIOLETWALL
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionDirichletGZSIoletWall<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONNEUMANN
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionNeumann<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONNEUMANNSBB
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionNeumannSBB<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONNEUMANNBFL
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionNeumannBFL<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONNEUMANNGZS
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionNeumannGZS<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONNEUMANNIOLETSBB
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionNeumannIoletSBB<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONNEUMANNIOLETBFL
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionNeumannIoletBFL<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONNEUMANNIOLETGZS
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionNeumannIoletGZS<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONNEUMANNSBBIOLETWALL
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionNeumannSBBIoletWall<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONNEUMANNBFLIOLETWALL
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionNeumannBFLIoletWall<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONNEUMANNGZSIOLETWALL
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionNeumannGZSIoletWall<Collision>::Type Type;
     };
   }
 }
