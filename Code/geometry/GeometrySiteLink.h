@@ -30,7 +30,7 @@ namespace hemelb
         //! Default constructor. Has no intersection, nonsense values for intersection distance
         //! and iolet id.
         GeometrySiteLink() :
-            type(NO_INTERSECTION), distanceToIntersection(-1.0), ioletId(-1)
+            type(NO_INTERSECTION), distanceToIntersection(-1.0), ioletId(-1), stentId(-1)
         {
         }
 
@@ -39,6 +39,7 @@ namespace hemelb
 
         //! The identifier of the inlet or outlet hit along the lattice vector (if one is hit).
         int ioletId;
+        int stentId;
     };
   }
 }

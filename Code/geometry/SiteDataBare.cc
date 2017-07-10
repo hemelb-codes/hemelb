@@ -29,10 +29,12 @@ namespace hemelb
         wallIntersection = 0;
         ioletIntersection = 0;
         ioletId = -1;
+        stentId = -1;
       }
       else
       {
         ioletId = -1;
+        stentId = -1;
         wallIntersection = 0;
         ioletIntersection = 0;
 
@@ -70,7 +72,7 @@ namespace hemelb
           }
           else if (link.type == GeometrySiteLink::WALL_INTERSECTION)
           {
-            ioletId = link.ioletId; 
+            stentId = link.stentId; 
           }
         }
 
@@ -105,12 +107,12 @@ namespace hemelb
 
     bool SiteData::IsVesselWall() const
     {
-      return wallIntersection != 0 && ioletId == -1;
+      return wallIntersection != 0 && stentId == 1;
     }
 
     bool SiteData::IsStentWall() const
     {
-      return wallIntersection != 0 && ioletId < -1;
+      return wallIntersection != 0 && stentId > 1;
     }
 
     bool SiteData::IsSolid() const

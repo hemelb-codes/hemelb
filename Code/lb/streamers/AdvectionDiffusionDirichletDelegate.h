@@ -33,7 +33,7 @@ namespace hemelb
                                  kernels::HydroVars<typename CollisionType::CKernel>& hydroVars,
                                  const Direction& direction)
           {
-            int boundaryId = site.GetIoletId();
+            int boundaryId = site.GetStentId();
 
             // Set the density at the "ghost" site to be the density of the stent.
             stents::Stent* stent =

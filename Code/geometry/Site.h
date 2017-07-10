@@ -60,6 +60,11 @@ namespace hemelb
           return GetSiteData().GetIoletId();
         }
 
+        inline int GetStentId() const
+        {
+          return GetSiteData().GetStentId();
+        }
+
         inline bool HasWall(Direction direction) const
         {
           return GetSiteData().HasWall(direction);

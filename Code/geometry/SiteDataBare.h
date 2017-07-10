@@ -48,6 +48,15 @@ namespace hemelb
           return ioletId;
         }
 
+        int GetStentId() const
+        {
+          return stentId;
+        }
+        int& GetStentId()
+        {
+          return stentId;
+        }
+
         bool HasWall(Direction direction) const;
         bool HasVesselWall(Direction direction) const;
         bool HasStentWall(Direction direction) const;
@@ -80,6 +89,7 @@ namespace hemelb
 
         SiteType type;
         int ioletId;
+        int stentId;
     };
   }
 }

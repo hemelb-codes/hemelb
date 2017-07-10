@@ -538,10 +538,10 @@ namespace hemelb
         {
           isGmyWallSite = true;
           float distance;
-          int ioletId;
-          reader.readInt(ioletId);
+          int stentId;
+          reader.readInt(stentId);
           reader.readFloat(distance);
-          link.ioletId = ioletId;
+          link.stentId = std::abs(stentId);
           link.distanceToIntersection = distance;
         }
         // inlets and outlets (which together with none make up the other intersection types)
