@@ -255,12 +255,15 @@ namespace hemelb
                     << static_cast<WrittenDataType> (dataSource.GetTangentialProjectionTraction().y)
                     << static_cast<WrittenDataType> (dataSource.GetTangentialProjectionTraction().z);
                 break;
-	      case OutputField::TracerConcentration:
+	      case OutputField::Flux:
                 xdrWriter
 		  << static_cast<WrittenDataType> (dataSource.GetVelocity().x)
 		  << static_cast<WrittenDataType> (dataSource.GetVelocity().y)
 		  << static_cast<WrittenDataType> (dataSource.GetVelocity().z);
 		break;
+              case OutputField::Concentration:
+                xdrWriter << static_cast<WrittenDataType> (dataSource.GetDensity());
+                break;
               case OutputField::MpiRank:
                 xdrWriter
                     << static_cast<WrittenDataType> (comms.Rank());
@@ -286,12 +289,13 @@ namespace hemelb
       switch (field)
       {
         case OutputField::Pressure:
+        case OutputField::Concentration:
         case OutputField::VonMisesStress:
         case OutputField::ShearStress:
         case OutputField::ShearRate:
         case OutputField::MpiRank:
           return 1;
-        case OutputField::TracerConcentration:
+        case OutputField::Flux:
         case OutputField::Velocity:
         case OutputField::Traction:
         case OutputField::TangentialProjectionTraction:

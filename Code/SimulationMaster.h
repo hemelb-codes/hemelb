@@ -136,7 +136,8 @@ class SimulationMaster
 	  { hemelb::extraction::OutputField::StressTensor,                 &propertyDataSource },
 	  { hemelb::extraction::OutputField::Traction,                     &propertyDataSource },
 	  { hemelb::extraction::OutputField::TangentialProjectionTraction, &propertyDataSource },
-          { hemelb::extraction::OutputField::TracerConcentration,          &advectionDiffusionDataSource },
+          { hemelb::extraction::OutputField::Concentration,          &advectionDiffusionDataSource },
+          { hemelb::extraction::OutputField::Flux,                   &advectionDiffusionDataSource },
 	  { hemelb::extraction::OutputField::MpiRank,                      &propertyDataSource }
     };
 

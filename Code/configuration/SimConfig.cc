@@ -83,6 +83,8 @@ namespace hemelb
       inlets = DoIOForInOutlets(topNode.GetChildOrThrow("inlets"));
       outlets = DoIOForInOutlets(topNode.GetChildOrThrow("outlets"));
 
+      stents = DoIOForStents(topNode.GetChildOrThrow("stents"));
+
       DoIOForVisualisation(topNode.GetChildOrThrow("visualisation"));
 
       // Optional element <properties>
@@ -233,6 +235,40 @@ namespace hemelb
       return ioletList;
     }
 
+    std::vector<lb::stents::Stent*> SimConfig::DoIOForStents(const io::xml::Element stentsEl)
+    {
+      const std::string& nodeName = stentsEl.GetName();
+
+      const std::string childNodeName = nodeName.substr(0, nodeName.size() - 1);
+      std::vector<lb::stents::Stent*> stentList;
+      for (io::xml::Element currentStentNode = stentsEl.GetChildOrNull(childNodeName);
+          currentStentNode != io::xml::Element::Missing();
+          currentStentNode = currentStentNode.NextSiblingOrNull(childNodeName))
+      {
+        // Determine which InOutlet to create
+        io::xml::Element conditionEl = currentStentNode.GetChildOrThrow("condition");
+        const std::string& conditionType = conditionEl.GetAttributeOrThrow("type");
+
+        lb::stents::Stent* newStent = NULL;
+
+        if (conditionType == "concentration")
+        {
+          newStent = DoIOForDensityStent(currentStentNode);
+        }
+        else if (conditionType == "flux")
+        {
+          newStent = DoIOForFluxStent(currentStentNode);
+        }
+        else
+        {
+          throw Exception() << "Invalid boundary condition type '" << conditionType << "' in "
+              << conditionEl.GetPath();
+        }
+        stentList.push_back(newStent);
+      }
+      return stentList;
+    }
+
     lb::iolets::InOutLet* SimConfig::DoIOForPressureInOutlet(const io::xml::Element& ioletEl)
     {
       CheckIoletMatchesCMake(ioletEl, "NASHZEROTHORDERPRESSUREIOLET");
@@ -259,6 +295,29 @@ namespace hemelb
       }
 
       return newIolet;
+    }
+
+    lb::stents::Stent* SimConfig::DoIOForDensityStent(const io::xml::Element& stentEl)
+    {
+      io::xml::Element conditionEl = stentEl.GetChildOrThrow("condition");
+      const std::string& conditionSubtype = conditionEl.GetAttributeOrThrow("subtype");
+
+      lb::stents::Stent* newStent = NULL;
+      if (conditionSubtype == "constant")
+      {
+        newStent = DoIOForConstantDensityStent(stentEl);
+      }
+      else if (conditionSubtype == "file")
+      {
+        newStent = DoIOForFileDensityStent(stentEl);
+      }
+      else
+      {
+        throw Exception() << "Invalid boundary condition subtype '" << conditionSubtype << "' in "
+            << stentEl.GetPath();
+      }
+
+      return newStent;
     }
 
     lb::iolets::InOutLet* SimConfig::DoIOForVelocityInOutlet(const io::xml::Element& ioletEl)
@@ -288,6 +347,30 @@ namespace hemelb
 
       return newIolet;
     }
+
+    lb::stents::Stent* SimConfig::DoIOForFluxStent(const io::xml::Element& stentEl)
+    {
+      io::xml::Element conditionEl = stentEl.GetChildOrThrow("condition");
+      const std::string& conditionSubtype = conditionEl.GetAttributeOrThrow("subtype");
+
+      lb::stents::Stent* newStent = NULL;
+      if (conditionSubtype == "constant")
+      {
+        newStent = DoIOForConstantFluxStent(stentEl);
+      }
+      else if (conditionSubtype == "file")
+      {
+        newStent = DoIOForFileFluxStent(stentEl);
+      }
+      else
+      {
+        throw Exception() << "Invalid boundary condition subtype '" << conditionSubtype << "' in "
+            << stentEl.GetPath();
+      }
+
+      return newStent;
+    }
+
     void SimConfig::DoIOForVisualisation(const io::xml::Element& visEl)
     {
       GetDimensionalValue(visEl.GetChildOrThrow("centre"), "m", visualisationCentre);
@@ -465,8 +548,11 @@ namespace hemelb
       {
         field.type = extraction::OutputField::MpiRank;
       }
-      else if (type == "tracerconcentration") {
-	field.type = extraction::OutputField::TracerConcentration;
+      else if (type == "concentration") {
+	field.type = extraction::OutputField::Concentration;
+      }
+      else if (type == "flux") {
+        field.type = extraction::OutputField::Flux;
       }
       else
       {
@@ -497,6 +583,12 @@ namespace hemelb
       io::xml::Element uniformEl = pressureEl.GetChildOrThrow("uniform");
 
       GetDimensionalValue(uniformEl, "mmHg", initialPressure_mmHg);
+
+      //, isLoading, initialDensity
+      io::xml::Element densityEl = initialconditionsEl.GetChildOrThrow("concentration");
+      io::xml::Element uniformDensityEl = densityEl.GetChildOrThrow("uniform");
+
+      GetDimensionalValue(uniformDensityEl, "kg/m3", initialDensity_Kg_per_m3);
     }
 
     lb::iolets::InOutLetCosine* SimConfig::DoIOForCosinePressureInOutlet(
@@ -530,6 +622,21 @@ namespace hemelb
       return newIolet;
     }
 
+    lb::stents::StentConstant* SimConfig::DoIOForConstantDensityStent(
+        const io::xml::Element& stentEl)
+    {
+      lb::stents::StentConstant* newStent = new lb::stents::StentConstant();
+
+      const io::xml::Element conditionEl = stentEl.GetChildOrThrow("condition");
+
+      PhysicalDensity tempD;
+      // Amplitude is a pressure DIFFERENCE (no use of REFERENCE_PRESSURE)
+      GetDimensionalValue(conditionEl.GetChildOrThrow("mean"), "kg/m3", tempD);
+      newStent->SetDensity(unitConverter->ConvertDensityToLatticeUnits(tempD));
+
+      return newStent;
+    }
+
     lb::iolets::InOutLetFile* SimConfig::DoIOForFilePressureInOutlet(
         const io::xml::Element& ioletEl)
     {
@@ -541,6 +648,18 @@ namespace hemelb
       newIolet->SetFilePath(pathEl.GetAttributeOrThrow("value"));
 
       return newIolet;
+    }
+
+    lb::stents::StentFile* SimConfig::DoIOForFileDensityStent(
+        const io::xml::Element& stentEl)
+    {
+      lb::stents::StentFile* newStent = new lb::stents::StentFile();
+
+      const io::xml::Element conditionEl = stentEl.GetChildOrThrow("condition");
+      const io::xml::Element pathEl = conditionEl.GetChildOrThrow("path");
+      newStent->SetFilePath(pathEl.GetAttributeOrThrow("value"));
+
+      return newStent;
     }
 
     lb::iolets::InOutLetMultiscale* SimConfig::DoIOForMultiscalePressureInOutlet(
@@ -581,6 +700,19 @@ namespace hemelb
       }
 
       return newIolet;
+    }
+
+    lb::stents::StentConstantFlux* SimConfig::DoIOForConstantFluxStent(
+        const io::xml::Element& stentEl)
+    {
+      lb::stents::StentConstantFlux* newStent = new lb::stents::StentConstantFlux();
+
+      const io::xml::Element conditionEl = stentEl.GetChildOrThrow("condition");
+
+      const io::xml::Element meanEl = conditionEl.GetChildOrThrow("mean");
+      newStent->SetFlux(GetDimensionalValueInLatticeUnits<PhysicalSpeed>(meanEl, "m/s"));
+
+      return newStent;
     }
 
     lb::iolets::InOutLetWomersleyVelocity* SimConfig::DoIOForWomersleyVelocityInOutlet(
@@ -627,6 +759,21 @@ namespace hemelb
       return newIolet;
     }
 
+    lb::stents::StentFileFlux* SimConfig::DoIOForFileFluxStent(
+        const io::xml::Element& stentEl)
+    {
+      lb::stents::StentFileFlux* newStent = new lb::stents::StentFileFlux();
+
+      const io::xml::Element conditionEl = stentEl.GetChildOrThrow("condition");
+
+      std::string fluxFilePath = conditionEl.GetChildOrThrow("path").GetAttributeOrThrow("value");
+
+      fluxFilePath = util::NormalizePathRelativeToPath(fluxFilePath, xmlFilePath);
+      newStent->SetFilePath(fluxFilePath);
+
+      return newStent;
+    }
+
     bool SimConfig::HasColloidSection() const
     {
       return hasColloidSection;
@@ -635,6 +782,11 @@ namespace hemelb
     PhysicalPressure SimConfig::GetInitialPressure() const
     {
       return initialPressure_mmHg;
+    }
+
+    PhysicalDensity SimConfig::GetInitialDensity() const
+    {
+      return initialDensity_Kg_per_m3;
     }
 
     const util::UnitConverter& SimConfig::GetUnitConverter() const

@@ -41,6 +41,11 @@ namespace hemelb
       return converter.ConvertPressureToPhysicalUnits(propertyCache.densityCache.Get(position) * Cs2);
     }
 
+    FloatingType LbDataSourceIterator::GetDensity() const
+    {
+      return converter.ConvertDensityToPhysicalUnits(propertyCache.densityCache.Get(position));
+    }
+
     util::Vector3D<FloatingType> LbDataSourceIterator::GetVelocity() const
     {
       return converter.ConvertVelocityToPhysicalUnits(propertyCache.velocityCache.Get(position));

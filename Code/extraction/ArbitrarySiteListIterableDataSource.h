@@ -56,6 +56,10 @@ namespace hemelb
           return 0.0;
         }
 
+        float GetDensity() const {
+          return 0.0;
+        }
+
         /**
          * Returns the velocity at the site.
          * @return

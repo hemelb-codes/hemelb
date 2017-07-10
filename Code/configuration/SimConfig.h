@@ -78,6 +78,10 @@ namespace hemelb
         {
           return outlets;
         }
+        const std::vector<lb::stents::Stent*> & GetStents() const
+        {
+          return stents;
+        }
         lb::StressTypes GetStressType() const
         {
           return stressType;
@@ -158,6 +162,8 @@ namespace hemelb
          */
         LatticeDensity GetInitialPressure() const;
 
+        LatticeDensity GetInitialDensity() const;
+
         const util::UnitConverter& GetUnitConverter() const;
 
         /**
@@ -203,17 +209,25 @@ namespace hemelb
 
         std::vector<lb::iolets::InOutLet*> DoIOForInOutlets(const io::xml::Element xmlNode);
 
+        std::vector<hemelb::lb::stents::Stent*> DoIOForStents(const io::xml::Element xmlNode);
+
         void DoIOForBaseInOutlet(const io::xml::Element& ioletEl, lb::iolets::InOutLet* value);
 
         lb::iolets::InOutLet* DoIOForPressureInOutlet(const io::xml::Element& ioletEl);
+        lb::stents::Stent* DoIOForDensityStent(const io::xml::Element& stentEl);
         lb::iolets::InOutLetCosine* DoIOForCosinePressureInOutlet(const io::xml::Element& ioletEl);
+        lb::stents::StentConstant* DoIOForConstantDensityStent(const io::xml::Element& stentEl);
         lb::iolets::InOutLetFile* DoIOForFilePressureInOutlet(const io::xml::Element& ioletEl);
+        lb::stents::StentFile* DoIOForFileDensityStent(const io::xml::Element& stentEl);
         lb::iolets::InOutLetMultiscale* DoIOForMultiscalePressureInOutlet(
             const io::xml::Element& ioletEl);
 
         lb::iolets::InOutLet* DoIOForVelocityInOutlet(const io::xml::Element& ioletEl);
+        lb::stents::Stent* DoIOForFluxStent(const io::xml::Element& stentEl);
         lb::iolets::InOutLetParabolicVelocity* DoIOForParabolicVelocityInOutlet(
             const io::xml::Element& ioletEl);
+        lb::stents::StentConstantFlux* DoIOForConstantFluxStent(
+            const io::xml::Element& stentEl);
         /**
          * Reads a Womersley velocity iolet definition from the XML config file and returns
          * an InOutLetWomersleyVelocity object
@@ -233,6 +247,9 @@ namespace hemelb
          */
         lb::iolets::InOutLetFileVelocity* DoIOForFileVelocityInOutlet(
             const io::xml::Element& ioletEl);
+
+        lb::stents::StentFileFlux* DoIOForFileFluxStent(
+            const io::xml::Element& stentEl);
 
         void DoIOForProperties(const io::xml::Element& xmlNode);
         void DoIOForProperty(io::xml::Element xmlNode, bool isLoading);
@@ -287,6 +304,7 @@ namespace hemelb
          */
         bool hasColloidSection;
         PhysicalPressure initialPressure_mmHg; ///< Pressure used to initialise the domain
+        PhysicalDensity initialDensity_Kg_per_m3;
         MonitoringConfig monitoringConfig; ///< Configuration of various checks/tests
 
       protected:
@@ -294,6 +312,7 @@ namespace hemelb
         // instantiated.
         std::vector<lb::iolets::InOutLet*> inlets;
         std::vector<lb::iolets::InOutLet*> outlets;
+        std::vector<lb::stents::Stent*> stents;
         PhysicalTime timeStepSeconds;
         unsigned long totalTimeSteps;
         unsigned long warmUpSteps;

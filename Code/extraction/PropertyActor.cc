@@ -49,6 +49,9 @@ namespace hemelb
               case (OutputField::Pressure):
 		dataSource->GetPropertyCache().densityCache.SetRefreshFlag();
                 break;
+              case OutputField::Concentration:
+                (*dataSourceMap[outputFile->fields[outputField].type])->GetPropertyCache().densityCache.SetRefreshFlag();
+                break;
               case OutputField::Velocity:
 		dataSource->GetPropertyCache().velocityCache.SetRefreshFlag();
 		break;

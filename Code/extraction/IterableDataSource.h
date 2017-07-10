@@ -53,6 +53,8 @@ namespace hemelb
          */
         virtual FloatingType GetPressure() const = 0;
 
+        virtual FloatingType GetDensity() const = 0;
+
         /**
          * Returns the velocity at the site.
          * @return

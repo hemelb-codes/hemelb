@@ -24,7 +24,8 @@ namespace hemelb
           StressTensor,
           Traction,
           TangentialProjectionTraction,
-	  TracerConcentration,
+	  Concentration,
+          Flux,
           MpiRank
         };
 
