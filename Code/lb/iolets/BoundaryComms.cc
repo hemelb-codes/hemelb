@@ -6,6 +6,7 @@
 
 #include "lb/iolets/BoundaryComms.h"
 #include "lb/iolets/BoundaryValues.h"
+#include "lb/stents/BoundaryValues.h"
 #include "net/IOCommunicator.h"
 #include "util/utilityFunctions.h"
 

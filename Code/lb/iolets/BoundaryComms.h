@@ -7,7 +7,7 @@
 #ifndef HEMELB_LB_IOLETS_BOUNDARYCOMMS_H
 #define HEMELB_LB_IOLETS_BOUNDARYCOMMS_H
 
-#include "geometry/LatticeData.h"
+//#include "geometry/LatticeData.h"
 #include "lb/SimulationState.h"
 #include "util/UnitConverter.h"
 #include "lb/iolets/BoundaryCommunicator.h"

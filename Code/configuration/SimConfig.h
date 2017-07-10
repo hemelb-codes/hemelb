@@ -11,6 +11,7 @@
 #include "util/Vector3D.h"
 #include "lb/LbmParameters.h"
 #include "lb/iolets/InOutLets.h"
+#include "lb/stents/Stents.h"
 #include "extraction/PropertyOutputFile.h"
 #include "extraction/GeometrySelectors.h"
 #include "io/xml/XmlAbstractionLayer.h"
