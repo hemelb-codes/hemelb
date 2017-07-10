@@ -27,7 +27,7 @@ namespace hemelb
 
         private:
           CollisionType collider;
-          AdvectionDiffusionSimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
+          SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
         public:

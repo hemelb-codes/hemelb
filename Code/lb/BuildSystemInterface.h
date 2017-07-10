@@ -205,20 +205,6 @@ namespace hemelb
       public:
         typedef typename streamers::AdvectionDiffusionBFLWallSBBIoletNeumann<Collision>::Type Type;
     };
-
-    template<class Collision>
-    class ADVECTIONDIFFUSIONBFLWALLGZSIOLETDIRICHLET
-    {
-      public:
-        typedef typename streamers::AdvectionDiffusionBFLWallGZSIoletDirichlet<Collision>::Type Type;
-    };
-
-    template<class Collision>
-    class ADVECTIONDIFFUSIONBFLWALLGZSIOLETNEUMANN
-    {
-      public:
-        typedef typename streamers::AdvectionDiffusionBFLWallGZSIoletNeumann<Collision>::Type Type;
-    };
     /**
      * The Guo Zheng and Shi mode-extrapolation boundary condition.
      */
@@ -227,69 +213,6 @@ namespace hemelb
     {
       public:
         typedef typename streamers::GuoZhengShi<Collision>::Type Type;
-    };
-
-    template<class Collision>
-    class ADVECTIONDIFFUSIONGZSDIRICHLET
-    {
-      public:
-        typedef typename streamers::AdvectionDiffusionGZSDirichlet<Collision>::Type Type;
-    };
-
-    template<class Collision>
-    class ADVECTIONDIFFUSIONGZSNEUMANN
-    {
-      public:
-        typedef typename streamers::AdvectionDiffusionGZSNeumann<Collision>::Type Type;
-    };
-
-    template<class Collision>
-    class ADVECTIONDIFFUSIONGZSIOLET
-    {
-      public:
-        typedef typename streamers::AdvectionDiffusionGZSIolet<Collision>::Type Type;
-    };
-
-    template<class Collision>
-    class ADVECTIONDIFFUSIONGZSWALLBFLIOLETDIRICHLET
-    {
-      public:
-        typedef typename streamers::AdvectionDiffusionGZSWallBFLIoletDirichlet<Collision>::Type Type;
-    };
-
-    template<class Collision>
-    class ADVECTIONDIFFUSIONGZSWALLBFLIOLETNEUMANN
-    {
-      public:
-        typedef typename streamers::AdvectionDiffusionGZSWallBFLIoletNeumann<Collision>::Type Type;
-    };
-
-    template<class Collision>
-    class ADVECTIONDIFFUSIONGZSWALLSBBIOLETDIRICHLET
-    {
-      public:
-        typedef typename streamers::AdvectionDiffusionGZSWallSBBIoletDirichlet<Collision>::Type Type;
-    };
-
-    template<class Collision>
-    class ADVECTIONDIFFUSIONGZSWALLSBBIOLETNEUMANN
-    {
-      public:
-        typedef typename streamers::AdvectionDiffusionGZSWallSBBIoletNeumann<Collision>::Type Type;
-    };
-
-    template<class Collision>
-    class ADVECTIONDIFFUSIONGZSWALLGZSIOLETDIRICHLET
-    {
-      public:
-        typedef typename streamers::AdvectionDiffusionGZSWallGZSIoletDirichlet<Collision>::Type Type;
-    };
-
-    template<class Collision>
-    class ADVECTIONDIFFUSIONGZSWALLGZSIOLETNEUMANN
-    {
-      public:
-        typedef typename streamers::AdvectionDiffusionGZSWallGZSIoletNeumann<Collision>::Type Type;
     };
     /**
      * The simple bounce back boundary condition.
@@ -348,20 +271,6 @@ namespace hemelb
     {
       public:
         typedef typename streamers::AdvectionDiffusionSBBWallSBBIoletNeumann<Collision>::Type Type;
-    };
-
-    template<class Collision>
-    class ADVECTIONDIFFUSIONSBBWALLGZSIOLETDIRICHLET
-    {
-      public:
-        typedef typename streamers::AdvectionDiffusionSBBWallGZSIoletDirichlet<Collision>::Type Type;
-    };
-
-    template<class Collision>
-    class ADVECTIONDIFFUSIONSBBWALLGZSIOLETNEUMANN
-    {
-      public:
-        typedef typename streamers::AdvectionDiffusionSBBWallGZSIoletNeumann<Collision>::Type Type;
     };
     /**
      * The Junk & Yang 2005 boundary condition.
