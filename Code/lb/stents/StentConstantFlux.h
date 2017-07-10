@@ -22,6 +22,11 @@ namespace hemelb
           Stent* Clone() const;
           LatticeSpeed GetFlux(const LatticeTimeStep t) const;
 
+          void SetFlux(const LatticeSpeed& flux)
+          {
+            maxSpeed = flux;
+          }
+
         protected:
           LatticeSpeed maxSpeed;
       };

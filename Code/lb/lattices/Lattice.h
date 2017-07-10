@@ -262,6 +262,27 @@ namespace hemelb
           }
           #endif
           
+
+          inline static void CalculateADEFeq(const distribn_t &density,
+                                             distribn_t f_eq[])
+          {
+            //const distribn_t density_1 = 1. / density;
+            //const distribn_t momentumMagnitudeSquared = momentum_x * momentum_x + momentum_y * momentum_y
+               // + momentum_z * momentum_z;
+
+            for (Direction i = 0; i < DmQn::NUMVECTORS; ++i)
+            {
+              //const distribn_t mom_dot_ei = DmQn::CX[i] * momentum_x
+                //  + DmQn::CY[i] * momentum_y + DmQn::CZ[i] * momentum_z;
+
+              f_eq[i] = DmQn::EQMWEIGHTS[i]
+                  * (density); 
+                  //      - (3. / 2.) * momentumMagnitudeSquared * density_1
+                  //    + (9. / 2.) * density_1 * mom_dot_ei * mom_dot_ei
+                    //  + 3. * mom_dot_ei);
+            }
+          }
+          
                                         
           // Calculate density, momentum and the equilibrium distribution
           // functions according to the D3Q15 model.  The calculated momentum_x, momentum_y
@@ -284,6 +305,25 @@ namespace hemelb
             velocity_z = momentum_z / density;
             
             CalculateFeq(density, momentum_x, momentum_y, momentum_z, f_eq);
+          }
+
+          inline static void CalculateADEDensityMomentumFEq(const distribn_t f[],
+                                                            distribn_t &density,
+                                                            distribn_t &momentum_x,
+                                                            distribn_t &momentum_y,
+                                                            distribn_t &momentum_z,
+                                                            distribn_t &velocity_x,
+                                                            distribn_t &velocity_y,
+                                                            distribn_t &velocity_z,
+                                                            distribn_t f_eq[])
+          {
+            CalculateDensityAndMomentum(f, density, momentum_x, momentum_y, momentum_z);
+
+            velocity_x = momentum_x / density;
+            velocity_y = momentum_y / density;
+            velocity_z = momentum_z / density;
+
+            CalculateADEFeq(density, f_eq);
           }
 
           // von Mises stress computation given the non-equilibrium distribution functions.

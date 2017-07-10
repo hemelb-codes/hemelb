@@ -20,7 +20,7 @@ namespace hemelb
        * Normal collisions - use a formula to relax the distribution towards equilibrium.
        */
       template<typename KernelType>
-      class AdvectionDiffusionNormal : public AdvectionDiffusionBaseCollision<Normal<KernelType>, KernelType>
+      class AdvectionDiffusionNormal : public AdvectionDiffusionBaseCollision<AdvectionDiffusionNormal<KernelType>, KernelType>
       {
         public:
           typedef KernelType CKernel;
@@ -31,10 +31,9 @@ namespace hemelb
           }
 
           inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars,
-                                              lb::MacroscopicPropertyCache& propertyCache,
                                               const geometry::Site<geometry::LatticeData>& site)
           {
-            kernel.CalculateDensityMomentumFeq(hydroVars, propertyCache, site.GetIndex());
+            kernel.CalculateDensityMomentumFeq(hydroVars, site.GetIndex());
           }
 
           inline void DoCollide(const LbmParameters* lbmParams,

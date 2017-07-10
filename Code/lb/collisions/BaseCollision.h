@@ -59,10 +59,9 @@ namespace hemelb
           typedef KernelImpl CKernel;
 
           inline void CalculatePreCollision(kernels::HydroVars<KernelImpl>& hydroVars,
-                                            lb::MacroscopicPropertyCache& propertyCache,
                                             const geometry::Site<geometry::LatticeData>& site)
           {
-            static_cast<CollisionImpl*>(this)->DoCalculatePreCollision(hydroVars, propertyCache, site);
+            static_cast<CollisionImpl*>(this)->DoCalculatePreCollision(hydroVars, site);
           }
 
           inline void Collide(const LbmParameters* lbmParams,

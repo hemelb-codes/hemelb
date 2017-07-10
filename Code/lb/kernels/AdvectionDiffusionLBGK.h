@@ -29,17 +29,17 @@ namespace hemelb
           {
           }
 
-          inline void DoCalculateDensityMomentumFeq(HydroVars<AdvectionDiffusionLBGK<LatticeType> >& hydroVars, lb::MacroscopicPropertyCache& propertyCache, site_t index)
+          inline void DoCalculateDensityMomentumFeq(HydroVars<AdvectionDiffusionLBGK<LatticeType> >& hydroVars, site_t index)
           {
-            LatticeType::CalculateDensityMomentumFEq(hydroVars.f,
-                                                     hydroVars.density,
-                                                     hydroVars.momentum.x,
-                                                     hydroVars.momentum.y,
-                                                     hydroVars.momentum.z,
-                                                     propertyCache.velocityCache.Get(index).x,
-                                                     propertyCache.velocityCache.Get(index).y,
-                                                     propertyCache.velocityCache.Get(index).z,
-                                                     hydroVars.f_eq.f);
+            LatticeType::CalculateADEDensityMomentumFEq(hydroVars.f,
+                                                        hydroVars.density,
+                                                        hydroVars.momentum.x,
+                                                        hydroVars.momentum.y,
+                                                        hydroVars.momentum.z,
+                                                        hydroVars.velocity.x,
+                                                        hydroVars.velocity.y,
+                                                        hydroVars.velocity.z,
+                                                        hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {
@@ -47,13 +47,10 @@ namespace hemelb
             }
           }
 
-          inline void DoCalculateFeq(HydroVars<AdvectionDiffusionLBGK>& hydroVars, lb::MacroscopicPropertyCache& propertyCache, site_t index)
+          inline void DoCalculateFeq(HydroVars<AdvectionDiffusionLBGK>& hydroVars, site_t index)
           {
-            LatticeType::CalculateFeq(hydroVars.density,
-                                      propertyCache.velocityCache.Get(index).x,
-                                      propertyCache.velocityCache.Get(index).y,
-                                      propertyCache.velocityCache.Get(index).z,
-                                      hydroVars.f_eq.f);
+            LatticeType::CalculateADEFeq(hydroVars.density,
+                                         hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {

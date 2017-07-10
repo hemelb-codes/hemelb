@@ -43,6 +43,11 @@ namespace hemelb
             return densityMean;
           }
 
+          void SetDensity(const LatticeDensity& rho)
+          {
+            densityMean = rho;
+          }
+
         private:
 
           LatticeDensity densityMean;

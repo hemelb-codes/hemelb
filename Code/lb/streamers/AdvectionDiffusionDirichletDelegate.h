@@ -23,7 +23,7 @@ namespace hemelb
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
           AdvectionDiffusionDirichletDelegate(CollisionType& delegatorCollider, kernels::InitParams& initParams) :
-            collider(delegatorCollider), bValues(initParams.boundaryObject)
+            collider(delegatorCollider), bValues(initParams.advectionDiffusionBoundaryObject)
           {
           }
 

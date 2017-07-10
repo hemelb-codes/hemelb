@@ -229,14 +229,14 @@ namespace hemelb
           typedef HydroVars<KernelImpl> KHydroVars;
           typedef LatticeImpl LatticeType;
 
-          inline void CalculateDensityMomentumFeq(KHydroVars& hydroVars, lb::MacroscopicPropertyCache& propertyCache, site_t index)
+          inline void CalculateADEDensityMomentumFeq(KHydroVars& hydroVars, site_t index)
           {
-            static_cast<KernelImpl*> (this)->DoCalculateDensityMomentumFeq(hydroVars, propertyCache, index);
+            static_cast<KernelImpl*> (this)->DoCalculateDensityMomentumFeq(hydroVars, index);
           }
 
-          inline void CalculateFeq(KHydroVars& hydroVars, lb::MacroscopicPropertyCache& propertyCache, site_t index)
+          inline void CalculateADEFeq(KHydroVars& hydroVars, site_t index)
           {
-            static_cast<KernelImpl*> (this)->DoCalculateFeq(hydroVars, propertyCache, index);
+            static_cast<KernelImpl*> (this)->DoCalculateFeq(hydroVars, index);
           }
 
           inline void Collide(const LbmParameters* lbmParams, KHydroVars& hydroVars)

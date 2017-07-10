@@ -68,17 +68,17 @@ namespace hemelb
             }
           }
 
-          inline void DoCalculateDensityMomentumFeq(HydroVars<AdvectionDiffusionMRT>& hydroVars, lb::MacroscopicPropertyCache& propertyCache, site_t index)
+          inline void DoCalculateDensityMomentumFeq(HydroVars<AdvectionDiffusionMRT>& hydroVars, site_t index)
           {
-            MomentBasis::Lattice::CalculateDensityMomentumFEq(hydroVars.f,
-                                                              hydroVars.density,
-                                                              hydroVars.momentum.x,
-                                                              hydroVars.momentum.y,
-                                                              hydroVars.momentum.z,
-                                                              propertyCache.velocityCache.Get(index).x,
-                                                              propertyCache.velocityCache.Get(index).y,
-                                                              propertyCache.velocityCache.Get(index).z,
-                                                              hydroVars.f_eq.f);
+            MomentBasis::Lattice::CalculateADEDensityMomentumFEq(hydroVars.f,
+                                                                 hydroVars.density,
+                                                                 hydroVars.momentum.x,
+                                                                 hydroVars.momentum.y,
+                                                                 hydroVars.momentum.z,
+                                                                 hydroVars.velocity.x,
+                                                                 hydroVars.velocity.y,
+                                                                 hydroVars.velocity.z,
+                                                                 hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < MomentBasis::Lattice::NUMVECTORS; ++ii)
             {
@@ -89,13 +89,10 @@ namespace hemelb
             MomentBasis::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
           }
 
-          inline void DoCalculateFeq(HydroVars<AdvectionDiffusionMRT>& hydroVars, lb::MacroscopicPropertyCache& propertyCache, site_t index)
+          inline void DoCalculateFeq(HydroVars<AdvectionDiffusionMRT>& hydroVars, site_t index)
           {
-            MomentBasis::Lattice::CalculateFeq(hydroVars.density,
-                                               propertyCache.velocityCache.Get(index).x,
-                                               propertyCache.velocityCache.Get(index).y,
-                                               propertyCache.velocityCache.Get(index).z,
-                                               hydroVars.f_eq.f);
+            MomentBasis::Lattice::CalculateADEFeq(hydroVars.density,
+                                                  hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < MomentBasis::Lattice::NUMVECTORS; ++ii)
             {
