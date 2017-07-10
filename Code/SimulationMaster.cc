@@ -41,8 +41,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options,
   advectionDiffusionModel = NULL;
   advectionDiffusionDataManager = NULL;
   advectionDiffusionDataSource = NULL;
-  advectionDiffusionInlet = NULL;
-  advectionDiffusionOutlet = NULL;
+  stentValues = NULL;
 
   latticeData = NULL;
 
@@ -99,8 +98,7 @@ SimulationMaster::~SimulationMaster()
   delete advectionDiffusionModel;
   delete advectionDiffusionDataManager;
   delete advectionDiffusionDataSource;
-  delete advectionDiffusionInlet;
-  delete advectionDiffusionOutlet;
+  delete stentValues;
   delete latticeData;
   delete colloidController;
   delete latticeBoltzmannModel;
@@ -188,12 +186,12 @@ void SimulationMaster::Initialise()
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising ADE.");
   advectionDiffusionData = new hemelb::geometry::LatticeData(advectionDiffusionLatticeType::GetLatticeInfo(), readGeometryData, ioComms);
   advectionDiffusionDataManager = new hemelb::geometry::neighbouring::NeighbouringDataManager(*advectionDiffusionData, advectionDiffusionData->GetNeighbouringData(), communicationNet);
-  advectionDiffusionModel = new hemelb::lb::LBM<advectionDiffusionLatticeType>(simConfig,
-                                                             &communicationNet,
-                                                             advectionDiffusionData,
-                                                             simulationState,
-                                                             timings,
-                                                             advectionDiffusionDataManager);
+  advectionDiffusionModel = new hemelb::lb::ADELBM<advectionDiffusionLatticeType>(simConfig,
+                                                                                  &communicationNet,
+                                                                                  advectionDiffusionData,
+                                                                                  simulationState,
+                                                                                  timings,
+                                                                                  advectionDiffusionDataManager);
 
   if (simConfig->HasColloidSection())
   {
@@ -292,25 +290,17 @@ void SimulationMaster::Initialise()
                                                         ioComms,
                                                         *unitConverter);
 
-  advectionDiffusionInlet = new hemelb::lb::iolets::BoundaryValues(hemelb::geometry::INLET_TYPE,
-								   advectionDiffusionData,
-								   simConfig->GetInlets(),
-								   simulationState,
-								   ioComms,
-								   *unitConverter);
-
-  advectionDiffusionOutlet = new hemelb::lb::iolets::BoundaryValues(hemelb::geometry::OUTLET_TYPE,
-								   advectionDiffusionData,
-								   simConfig->GetOutlets(),
-								   simulationState,
-								   ioComms,
-								   *unitConverter);
+  stentValues = new hemelb::lb::stents::BoundaryValues(advectionDiffusionData,
+						       simConfig->GetStents(),
+						       simulationState,
+						       ioComms,
+						       *unitConverter);
 
   latticeBoltzmannModel->Initialise(visualisationControl, inletValues, outletValues, unitConverter);
   neighbouringDataManager->ShareNeeds();
   neighbouringDataManager->TransferNonFieldDependentInformation();
 
-  advectionDiffusionModel->Initialise(visualisationControl, advectionDiffusionInlet, advectionDiffusionOutlet, unitConverter);
+  advectionDiffusionModel->Initialise(visualisationControl, stentValues, unitConverter);
   advectionDiffusionDataManager->ShareNeeds();
   advectionDiffusionDataManager->TransferNonFieldDependentInformation();
 
@@ -370,8 +360,7 @@ void SimulationMaster::Initialise()
     stepManager->RegisterIteratedActorSteps(*colloidController, 1);
   }
   stepManager->RegisterIteratedActorSteps(*advectionDiffusionModel, 1);
-  stepManager->RegisterIteratedActorSteps(*advectionDiffusionInlet, 1);
-  stepManager->RegisterIteratedActorSteps(*advectionDiffusionOutlet, 1);
+  stepManager->RegisterIteratedActorSteps(*stentValues, 1);
   stepManager->RegisterIteratedActorSteps(*latticeBoltzmannModel, 1);
   stepManager->RegisterIteratedActorSteps(*inletValues, 1);
   stepManager->RegisterIteratedActorSteps(*outletValues, 1);

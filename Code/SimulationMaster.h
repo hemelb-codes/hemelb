@@ -6,16 +6,18 @@
 
 #ifndef HEMELB_SIMULATIONMASTER_H
 #define HEMELB_SIMULATIONMASTER_H
-#define ADE_LATTICE D3Q15
+#define HEMELB_ADE_LATTICE D3Q7
 #include "lb/lattices/Lattices.h"
 #include "extraction/PropertyActor.h"
 #include "lb/lb.hpp"
+#include "lb/ADELB.hpp"
 #include "lb/StabilityTester.h"
 #include "net/net.h"
 #include "steering/ImageSendComponent.h"
 #include "steering/SteeringComponent.h"
 #include "lb/EntropyTester.h"
 #include "lb/iolets/BoundaryValues.h"
+#include "lb/stents/BoundaryValues.h"
 #include "util/UnitConverter.h"
 #include "configuration/CommandLine.h"
 #include "io/PathManager.h"
@@ -49,8 +51,7 @@ class SimulationMaster
 
     hemelb::lb::iolets::BoundaryValues* inletValues;
     hemelb::lb::iolets::BoundaryValues* outletValues;
-    hemelb::lb::iolets::BoundaryValues* advectionDiffusionInlet;
-    hemelb::lb::iolets::BoundaryValues* advectionDiffusionOutlet;
+    hemelb::lb::stents::BoundaryValues* stentValues;
 
     virtual void DoTimeStep();
     
@@ -60,9 +61,9 @@ class SimulationMaster
     hemelb::geometry::LatticeData* latticeData;
     hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
     hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
-    typedef hemelb::lb::lattices:: ADE_LATTICE advectionDiffusionLatticeType;
+    typedef hemelb::lb::lattices:: HEMELB_ADE_LATTICE advectionDiffusionLatticeType;
     hemelb::geometry::LatticeData* advectionDiffusionData;
-    hemelb::lb::LBM<advectionDiffusionLatticeType>* advectionDiffusionModel;
+    hemelb::lb::ADELBM<advectionDiffusionLatticeType>* advectionDiffusionModel;
     hemelb::geometry::neighbouring::NeighbouringDataManager *advectionDiffusionDataManager;
     const hemelb::net::IOCommunicator& ioComms;
 
