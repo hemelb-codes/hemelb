@@ -78,7 +78,7 @@ class XmlWriter(object):
         pressure = SubElement(ic, 'pressure')
         concentration = SubElement(ic, 'concentration')
         QuantityElement(pressure, 'uniform', 0.0, 'mmHg')
-        QuantityElement(concentration, 'uniform', 0.0, 'dimensionless')
+        QuantityElement(concentration, 'uniform', 0.0, 'kg/m3')
         return
     
     def DoProperties(self, root):
@@ -129,8 +129,8 @@ class XmlWriter(object):
                 continue
 
             condition = SubElement(stent, 'condition', type='concentration',
-                                   subtype='file')
-            ValueElement(condition, 'path', './stent.txt')
+                                   subtype='constant')
+            QuantityElement(condition, 'mean', 1.0, 'kg/m3')
         return
 
     def DoVisualisation(self, root):
