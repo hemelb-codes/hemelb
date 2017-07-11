@@ -319,9 +319,9 @@ namespace hemelb
           {
             CalculateDensityAndMomentum(f, density, momentum_x, momentum_y, momentum_z);
 
-            velocity_x = momentum_x / density;
-            velocity_y = momentum_y / density;
-            velocity_z = momentum_z / density;
+            velocity_x = momentum_x;
+            velocity_y = momentum_y;
+            velocity_z = momentum_z;
 
             CalculateADEFeq(density, f_eq);
           }

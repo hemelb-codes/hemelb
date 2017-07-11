@@ -87,12 +87,12 @@ namespace hemelb
 
     SiteData::SiteData(const SiteData& other) :
       wallIntersection(other.wallIntersection), ioletIntersection(other.ioletIntersection),
-          type(other.type), ioletId(other.ioletId)
+          type(other.type), ioletId(other.ioletId), stentId(other.stentId)
     {
     }
 
     SiteData::SiteData() :
-      wallIntersection(0), ioletIntersection(0), type(SOLID_TYPE), ioletId(-1)
+      wallIntersection(0), ioletIntersection(0), type(SOLID_TYPE), ioletId(-1), stentId(-1)
     {
     }
 
@@ -107,12 +107,12 @@ namespace hemelb
 
     bool SiteData::IsVesselWall() const
     {
-      return wallIntersection != 0 && stentId == 1;
+      return ((wallIntersection != 0) && (stentId == 1));
     }
 
     bool SiteData::IsStentWall() const
     {
-      return wallIntersection != 0 && stentId > 1;
+      return ((wallIntersection != 0) && (stentId > 1));
     }
 
     bool SiteData::IsSolid() const
@@ -174,13 +174,13 @@ namespace hemelb
     bool SiteData::HasVesselWall(Direction direction) const
     {
       unsigned mask = 1U << (direction - 1);
-      return (wallIntersection & mask) != 0 && ioletId == -1;
+      return (((wallIntersection & mask) != 0) && (stentId == 1));
     }
 
     bool SiteData::HasStentWall(Direction direction) const
     {
       unsigned mask = 1U << (direction - 1);
-      return (wallIntersection & mask) != 0 && ioletId < -1;
+      return (((wallIntersection & mask) != 0) && (stentId > 1));
     }
 
     bool SiteData::HasIolet(Direction direction) const

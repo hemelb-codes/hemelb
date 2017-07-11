@@ -100,8 +100,8 @@ namespace hemelb
       InitInitParamsSiteRanges(initParams, collId);
       mMidFluidCollision = new tMidFluidCollision(initParams);
 
-      initParams.advectionDiffusionBoundaryObject = mStentValues;
       AdvanceInitParamsSiteRanges(initParams, collId);
+      initParams.advectionDiffusionBoundaryObject = mStentValues;
       mWallCollision = new tWallCollision(initParams);
 
       AdvanceInitParamsSiteRanges(initParams, collId);
@@ -161,7 +161,7 @@ namespace hemelb
       {
         distribn_t f_eq[LatticeType::NUMVECTORS];
 
-        LatticeType::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
+        LatticeType::CalculateADEFeq(density, f_eq);
 
         distribn_t* f_old_p = mLatDat->GetFOld(i * LatticeType::NUMVECTORS);
         distribn_t* f_new_p = mLatDat->GetFNew(i * LatticeType::NUMVECTORS);
