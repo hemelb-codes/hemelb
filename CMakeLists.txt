@@ -40,10 +40,11 @@ option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
 set(HEMELB_SUBPROJECT_MAKE_JOBS 1 CACHE INTEGER "Number of jobs to use for subproject build steps")
 option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF) 
-option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" OFF)
+option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" ON)
 set(HEMELB_COMPUTE_ARCHITECTURE "AMDBULLDOZER"
   CACHE STRING "Select the architecture of the machine being used (INTELSANDYBRIDGE,AMDBULLDOZER,NEUTRAL,ISBFILEVELOCITYINLET)")
 option(HEMELB_USE_VELOCITY_WEIGHTS_FILE "Use Velocity weights file" OFF)
+option(UBUNTU_BUG_WORKAROUND "Work around the faulty HAVE_ISNAN value in Ubuntu 16.04." OFF)
 
 #------- Dependencies -----------
 
@@ -90,6 +91,7 @@ ExternalProject_Add(
         -DHEMELB_USE_SSE3=${HEMELB_USE_SSE3}
     -DHEMELB_COMPUTE_ARCHITECTURE=${HEMELB_COMPUTE_ARCHITECTURE}
     -DHEMELB_USE_VELOCITY_WEIGHTS_FILE=${HEMELB_USE_VELOCITY_WEIGHTS_FILE}
+    -DUBUNTU_BUG_WORKAROUND=${UBUNTU_BUG_WORKAROUND}
 	BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 )
 

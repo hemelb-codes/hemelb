@@ -27,8 +27,9 @@ option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
 option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
-option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" OFF)
+option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" ON)
 option(HEMELB_USE_VELOCITY_WEIGHTS_FILE "Use Velocity weights file" OFF)
+option(UBUNTU_BUG_WORKAROUND "Work around the faulty HAVE_ISNAN value in Ubuntu 16.04." OFF)
 
 set(HEMELB_EXECUTABLE "hemelb"
   CACHE STRING "File name of executable to produce")
@@ -134,8 +135,10 @@ endif()
 include(build_environment)
 include(platform_checks)
 
-if(HAVE_ISNAN)
-  add_definitions(-DHAVE_ISNAN)
+if(NOT UBUNTU_BUG_WORKAROUND)
+  if(HAVE_ISNAN)
+    add_definitions(-DHAVE_ISNAN)
+  endif()
 endif()
 
 if(HAVE_STD_ISNAN)
