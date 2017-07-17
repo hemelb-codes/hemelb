@@ -64,6 +64,8 @@ archer: #the ARCHER supercomputer at EPCC
   job_dispatch: "qsub"
   run_command: "aprun -n $cores -N $corespernode"
   batch_header: pbs-archer
+  no_ssh: true
+  no_git: true
   remote: "login.archer.ac.uk"
   # On ARCHER, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
   install_path_template: "$work_path/install"

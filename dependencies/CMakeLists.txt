@@ -80,8 +80,10 @@ if (HEMELB_BUILD_MULTISCALE)
 endif()
 
 # ------- parmetis --------------------
-find_package(Parmetis QUIET)
-if (PARMETIS_FOUND)
+#find_package(Parmetis QUIET)
+find_package(Parmetis 4.0.2)
+find_package(Metis)
+if (PARMETIS_FOUND AND METIS_FOUND)
 	message("Parmetis already installed, no need to download")
 else()
 	message("Parmetis not installed, will build from source")

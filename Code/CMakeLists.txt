@@ -31,6 +31,11 @@ option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" ON)
 option(HEMELB_USE_VELOCITY_WEIGHTS_FILE "Use Velocity weights file" OFF)
 option(UBUNTU_BUG_WORKAROUND "Work around the faulty HAVE_ISNAN value in Ubuntu 16.04." OFF)
 
+set(METIS_INCLUDE_DIR "${METIS_INCLUDE_DIR}")
+set(METIS_LIBRARY "${METIS_LIBRARY}")
+set(PARMETIS_INCLUDE_DIR "${PARMETIS_INCLUDE_DIR}")
+set(PARMETIS_LIBRARY "${PARMETIS_LIBRARY}")
+
 set(HEMELB_EXECUTABLE "hemelb"
   CACHE STRING "File name of executable to produce")
 set(HEMELB_READING_GROUP_SIZE 5
