@@ -33,10 +33,11 @@ namespace hemelb
                                 geometry::LatticeData* latDat,
                                 SimulationState* simState,
                                 reporting::Timers &atimings,
-                                geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager) :
+                                geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager,
+                                lb::MacroscopicPropertyCache& coupledPropertyCache) :
       mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), 
           mParams(iSimulationConfig->GetTimeStepLength(), iSimulationConfig->GetVoxelSize()), timings(atimings),
-          propertyCache(*simState, *latDat), neighbouringDataManager(neighbouringDataManager)
+          propertyCache(*simState, *latDat), neighbouringDataManager(neighbouringDataManager), mCoupledPropertyCache(coupledPropertyCache)
     {
       ReadParameters();
     }
@@ -161,7 +162,7 @@ namespace hemelb
       {
         distribn_t f_eq[LatticeType::NUMVECTORS];
 
-        LatticeType::CalculateADEFeq(density, f_eq);
+        LatticeType::CalculateADEFeq(density, 0.0, 0.0, 0.0, f_eq);
 
         distribn_t* f_old_p = mLatDat->GetFOld(i * LatticeType::NUMVECTORS);
         distribn_t* f_new_p = mLatDat->GetFNew(i * LatticeType::NUMVECTORS);
@@ -201,23 +202,23 @@ namespace hemelb
        */
       site_t offset = mLatDat->GetMidDomainSiteCount();
 
-      StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetDomainEdgeCollisionCount(0));
+      StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetDomainEdgeCollisionCount(0), mCoupledPropertyCache);
       offset += mLatDat->GetDomainEdgeCollisionCount(0);
       
       mStentValues->FinishReceive();
-      StreamAndCollide(mWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(1));
+      StreamAndCollide(mWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(1), mCoupledPropertyCache);
       offset += mLatDat->GetDomainEdgeCollisionCount(1);
 
-      StreamAndCollide(mInletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(2));
+      StreamAndCollide(mInletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(2), mCoupledPropertyCache);
       offset += mLatDat->GetDomainEdgeCollisionCount(2);
 
-      StreamAndCollide(mOutletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(3));
+      StreamAndCollide(mOutletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(3), mCoupledPropertyCache);
       offset += mLatDat->GetDomainEdgeCollisionCount(3);
 
-      StreamAndCollide(mInletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(4));
+      StreamAndCollide(mInletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(4), mCoupledPropertyCache);
       offset += mLatDat->GetDomainEdgeCollisionCount(4);
 
-      StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(5));
+      StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(5), mCoupledPropertyCache);
 
       timings[hemelb::reporting::Timers::lb_calc].Stop();
       timings[hemelb::reporting::Timers::lb].Stop();
@@ -239,22 +240,22 @@ namespace hemelb
        */
       site_t offset = 0;
 
-      StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetMidDomainCollisionCount(0));
+      StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetMidDomainCollisionCount(0), mCoupledPropertyCache);
       offset += mLatDat->GetMidDomainCollisionCount(0);
 
-      StreamAndCollide(mWallCollision, offset, mLatDat->GetMidDomainCollisionCount(1));
+      StreamAndCollide(mWallCollision, offset, mLatDat->GetMidDomainCollisionCount(1), mCoupledPropertyCache);
       offset += mLatDat->GetMidDomainCollisionCount(1);
 
-      StreamAndCollide(mInletCollision, offset, mLatDat->GetMidDomainCollisionCount(2));
+      StreamAndCollide(mInletCollision, offset, mLatDat->GetMidDomainCollisionCount(2), mCoupledPropertyCache);
       offset += mLatDat->GetMidDomainCollisionCount(2);
 
-      StreamAndCollide(mOutletCollision, offset, mLatDat->GetMidDomainCollisionCount(3));
+      StreamAndCollide(mOutletCollision, offset, mLatDat->GetMidDomainCollisionCount(3), mCoupledPropertyCache);
       offset += mLatDat->GetMidDomainCollisionCount(3);
 
-      StreamAndCollide(mInletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(4));
+      StreamAndCollide(mInletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(4), mCoupledPropertyCache);
       offset += mLatDat->GetMidDomainCollisionCount(4);
 
-      StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(5));
+      StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(5), mCoupledPropertyCache);
 
       timings[hemelb::reporting::Timers::lb_calc].Stop();
       timings[hemelb::reporting::Timers::lb].Stop();

@@ -68,7 +68,7 @@ namespace hemelb
             }
           }
 
-          inline void DoCalculateDensityMomentumFeq(HydroVars<AdvectionDiffusionMRT>& hydroVars, site_t index)
+          inline void DoCalculateDensityMomentumFeq(HydroVars<AdvectionDiffusionMRT>& hydroVars, lb::MacroscopicPropertyCache& coupledPropertyCache, site_t index)
           {
             MomentBasis::Lattice::CalculateADEDensityMomentumFEq(hydroVars.f,
                                                                  hydroVars.density,
@@ -78,7 +78,12 @@ namespace hemelb
                                                                  hydroVars.velocity.x,
                                                                  hydroVars.velocity.y,
                                                                  hydroVars.velocity.z,
+                                                                 coupledPropertyCache.velocityCache.Get(index).x,
+                                                                 coupledPropertyCache.velocityCache.Get(index).y,
+                                                                 coupledPropertyCache.velocityCache.Get(index).z,
                                                                  hydroVars.f_eq.f);
+
+            coupledPropertyCache.velocityCache.SetRefreshFlag();
 
             for (unsigned int ii = 0; ii < MomentBasis::Lattice::NUMVECTORS; ++ii)
             {
@@ -89,10 +94,15 @@ namespace hemelb
             MomentBasis::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
           }
 
-          inline void DoCalculateFeq(HydroVars<AdvectionDiffusionMRT>& hydroVars, site_t index)
+          inline void DoCalculateFeq(HydroVars<AdvectionDiffusionMRT>& hydroVars, lb::MacroscopicPropertyCache& coupledPropertyCache, site_t index)
           {
             MomentBasis::Lattice::CalculateADEFeq(hydroVars.density,
+                                                  coupledPropertyCache.velocityCache.Get(index).x,
+                                                  coupledPropertyCache.velocityCache.Get(index).y,
+                                                  coupledPropertyCache.velocityCache.Get(index).z,
                                                   hydroVars.f_eq.f);
+
+            coupledPropertyCache.velocityCache.SetRefreshFlag();
 
             for (unsigned int ii = 0; ii < MomentBasis::Lattice::NUMVECTORS; ++ii)
             {

@@ -191,7 +191,8 @@ void SimulationMaster::Initialise()
                                                                                   advectionDiffusionData,
                                                                                   simulationState,
                                                                                   timings,
-                                                                                  advectionDiffusionDataManager);
+                                                                                  advectionDiffusionDataManager,
+                                                                                  latticeBoltzmannModel->GetPropertyCache());
 
   if (simConfig->HasColloidSection())
   {

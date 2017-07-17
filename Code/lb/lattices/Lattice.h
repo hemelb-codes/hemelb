@@ -264,22 +264,25 @@ namespace hemelb
           
 
           inline static void CalculateADEFeq(const distribn_t &density,
+                                             const distribn_t &coupledV_x,
+                                             const distribn_t &coupledV_y,
+                                             const distribn_t &coupledV_z,
                                              distribn_t f_eq[])
           {
             //const distribn_t density_1 = 1. / density;
-            //const distribn_t momentumMagnitudeSquared = momentum_x * momentum_x + momentum_y * momentum_y
-               // + momentum_z * momentum_z;
+            const distribn_t velocityMagnitudeSquared = coupledV_x * coupledV_x + coupledV_y * coupledV_y
+                  + coupledV_z * coupledV_z;
 
             for (Direction i = 0; i < DmQn::NUMVECTORS; ++i)
             {
-              //const distribn_t mom_dot_ei = DmQn::CX[i] * momentum_x
-                //  + DmQn::CY[i] * momentum_y + DmQn::CZ[i] * momentum_z;
+              const distribn_t vel_dot_ei = DmQn::CX[i] * coupledV_x
+                  + DmQn::CY[i] * coupledV_y + DmQn::CZ[i] * coupledV_z;
 
               f_eq[i] = DmQn::EQMWEIGHTS[i]
-                  * (density); 
-                  //      - (3. / 2.) * momentumMagnitudeSquared * density_1
-                  //    + (9. / 2.) * density_1 * mom_dot_ei * mom_dot_ei
-                    //  + 3. * mom_dot_ei);
+                  * (density
+                        - (3. / 2.) * velocityMagnitudeSquared * density
+                      + (9. / 2.) * density * vel_dot_ei * vel_dot_ei
+                      + 3. * density * vel_dot_ei);
             }
           }
           
@@ -315,6 +318,9 @@ namespace hemelb
                                                             distribn_t &velocity_x,
                                                             distribn_t &velocity_y,
                                                             distribn_t &velocity_z,
+                                                            const distribn_t &coupledV_x,
+                                                            const distribn_t &coupledV_y,
+                                                            const distribn_t &coupledV_z,
                                                             distribn_t f_eq[])
           {
             CalculateDensityAndMomentum(f, density, momentum_x, momentum_y, momentum_z);
@@ -323,7 +329,7 @@ namespace hemelb
             velocity_y = momentum_y;
             velocity_z = momentum_z;
 
-            CalculateADEFeq(density, f_eq);
+            CalculateADEFeq(density, coupledV_x, coupledV_y, coupledV_z, f_eq);
           }
 
           // von Mises stress computation given the non-equilibrium distribution functions.

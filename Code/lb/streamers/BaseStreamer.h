@@ -206,13 +206,15 @@ namespace hemelb
                                        const site_t siteCount,
                                        const LbmParameters* lbmParams,
                                        geometry::LatticeData* latDat,
-                                       lb::MacroscopicPropertyCache& propertyCache)
+                                       lb::MacroscopicPropertyCache& propertyCache,
+                                       lb::MacroscopicPropertyCache& coupledPropertyCache)
           {
             static_cast<StreamerImpl*> (this)->template DoStreamAndCollide<tDoRayTracing> (firstIndex,
                                                                                            siteCount,
                                                                                            lbmParams,
                                                                                            latDat,
-                                                                                           propertyCache);
+                                                                                           propertyCache,
+                                                                                           coupledPropertyCache);
           }
 
           template<bool tDoRayTracing>

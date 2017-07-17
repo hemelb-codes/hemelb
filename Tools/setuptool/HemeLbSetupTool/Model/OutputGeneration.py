@@ -376,7 +376,10 @@ class Clipper(object):
         closer = PolyDataCloser()
         closer.SetInputConnection(self.SurfaceSource.GetOutputPort())
         # Add the Iolet id -1 to all cells
-        adder = IntegerAdder(Value=-1)
+        if len(self.SeedPoints) > 1:
+         adder = IntegerAdder(Value=-1)
+        else:
+         adder = IntegerAdder(Value=-2)
         adder.SetInputConnection(closer.GetOutputPort())
         # Have the name pdSource first point to the input, then loop
         # over IOlets, clipping and capping.
@@ -497,34 +500,42 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
         clipper.SetInputData(pd)
         clipper.SetClipFunction(clippingFunction)
 
-        for j, seedpoint in enumerate(self.SeedPoints):
-            if j == 0:
-             connectedRegionGetterp1 = vtkPolyDataConnectivityFilter()
-             connectedRegionGetterp1.SetExtractionModeToClosestPointRegion()
-             connectedRegionGetterp1.SetClosestPoint(seedpoint.Point.x, seedpoint.Point.y, seedpoint.Point.z)
-             connectedRegionGetterp1.SetInputConnection(clipper.GetOutputPort())
-             connectedRegionGetterp1.Update()
+        if len(self.SeedPoints) > 1:
+         for j, seedpoint in enumerate(self.SeedPoints):
+           if j == 0:
+            connectedRegionGetterp1 = vtkPolyDataConnectivityFilter()
+            connectedRegionGetterp1.SetExtractionModeToClosestPointRegion()
+            connectedRegionGetterp1.SetClosestPoint(seedpoint.Point.x, seedpoint.Point.y, seedpoint.Point.z)
+            connectedRegionGetterp1.SetInputConnection(clipper.GetOutputPort())
+            connectedRegionGetterp1.Update()
 
-             appendFilter = vtkAppendPolyData() 
-             appendFilter.AddInputData(connectedRegionGetterp1.GetOutput())
-             appendFilter.Update()
-            else:
-             connectedRegionGetterp2 = vtkPolyDataConnectivityFilter()
-             connectedRegionGetterp2.SetExtractionModeToClosestPointRegion()
-             connectedRegionGetterp2.SetClosestPoint(seedpoint.Point.x, seedpoint.Point.y, seedpoint.Point.z)
-             connectedRegionGetterp2.SetInputConnection(clipper.GetOutputPort())
-             connectedRegionGetterp2.Update()
+            appendFilter = vtkAppendPolyData() 
+            appendFilter.AddInputData(connectedRegionGetterp1.GetOutput())
+            appendFilter.Update()
+           else:
+            connectedRegionGetterp2 = vtkPolyDataConnectivityFilter()
+            connectedRegionGetterp2.SetExtractionModeToClosestPointRegion()
+            connectedRegionGetterp2.SetClosestPoint(seedpoint.Point.x, seedpoint.Point.y, seedpoint.Point.z)
+            connectedRegionGetterp2.SetInputConnection(clipper.GetOutputPort())
+            connectedRegionGetterp2.Update()
              
-             adderFilter = IntegerAdder(Value=-1-j)
-             adderFilter.SetInputConnection(connectedRegionGetterp2.GetOutputPort())
-             adderFilter.Update()
+            adderFilter = IntegerAdder(Value=-1-j)
+            adderFilter.SetInputConnection(connectedRegionGetterp2.GetOutputPort())
+            adderFilter.Update()
  
-             appendFilter.AddInputData(appendFilter.GetOutput())
-             appendFilter.AddInputData(adderFilter.GetOutput())
-             appendFilter.Update()
+            appendFilter.AddInputData(appendFilter.GetOutput())
+            appendFilter.AddInputData(adderFilter.GetOutput())
+            appendFilter.Update()   
 
 
-        return appendFilter.GetOutput()
+         return appendFilter.GetOutput()
+        else:
+         connectedRegionGetter = vtkPolyDataConnectivityFilter()
+         connectedRegionGetter.SetExtractionModeToClosestPointRegion()
+         connectedRegionGetter.SetClosestPoint(self.SeedPoints[0].Point.x, self.SeedPoints[0].Point.y, self.SeedPoints[0].Point.z)
+         connectedRegionGetter.SetInputConnection(clipper.GetOutputPort())
+         connectedRegionGetter.Update()
+         return connectedRegionGetter.GetOutput()
 
     def _AddValue(self, pd):
         adder = IntegerAdder(Value=self.Value)

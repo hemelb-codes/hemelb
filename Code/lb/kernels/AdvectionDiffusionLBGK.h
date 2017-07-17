@@ -29,7 +29,7 @@ namespace hemelb
           {
           }
 
-          inline void DoCalculateDensityMomentumFeq(HydroVars<AdvectionDiffusionLBGK<LatticeType> >& hydroVars, site_t index)
+          inline void DoCalculateDensityMomentumFeq(HydroVars<AdvectionDiffusionLBGK<LatticeType> >& hydroVars, lb::MacroscopicPropertyCache& coupledPropertyCache, site_t index)
           {
             LatticeType::CalculateADEDensityMomentumFEq(hydroVars.f,
                                                         hydroVars.density,
@@ -39,7 +39,12 @@ namespace hemelb
                                                         hydroVars.velocity.x,
                                                         hydroVars.velocity.y,
                                                         hydroVars.velocity.z,
+                                                        coupledPropertyCache.velocityCache.Get(index).x,
+                                                        coupledPropertyCache.velocityCache.Get(index).y,
+                                                        coupledPropertyCache.velocityCache.Get(index).z,
                                                         hydroVars.f_eq.f);
+
+            coupledPropertyCache.velocityCache.SetRefreshFlag();            
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {
@@ -47,10 +52,15 @@ namespace hemelb
             }
           }
 
-          inline void DoCalculateFeq(HydroVars<AdvectionDiffusionLBGK>& hydroVars, site_t index)
+          inline void DoCalculateFeq(HydroVars<AdvectionDiffusionLBGK>& hydroVars, lb::MacroscopicPropertyCache& coupledPropertyCache, site_t index)
           {
             LatticeType::CalculateADEFeq(hydroVars.density,
+                                         coupledPropertyCache.velocityCache.Get(index).x,
+                                         coupledPropertyCache.velocityCache.Get(index).y,
+                                         coupledPropertyCache.velocityCache.Get(index).z,
                                          hydroVars.f_eq.f);
+
+            coupledPropertyCache.velocityCache.SetRefreshFlag();
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {

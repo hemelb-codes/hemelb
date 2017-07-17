@@ -65,7 +65,8 @@ namespace hemelb
                geometry::LatticeData* latDat,
                SimulationState* simState,
                reporting::Timers &atimings,
-               geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager);
+               geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager,
+               lb::MacroscopicPropertyCache& coupledPropertyCache);
         ~ADELBM();
 
         void RequestComms(); ///< part of IteratedAction interface.
@@ -124,15 +125,15 @@ namespace hemelb
         tOutletWallCollision* mOutletWallCollision;
 
         template<typename Collision>
-        void StreamAndCollide(Collision* collision, const site_t iFirstIndex, const site_t iSiteCount)
+        void StreamAndCollide(Collision* collision, const site_t iFirstIndex, const site_t iSiteCount, lb::MacroscopicPropertyCache &coupledPropertyCache)
         {
           if (mVisControl->IsRendering())
           {
-            collision->template StreamAndCollide<true> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+            collision->template StreamAndCollide<true> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache, coupledPropertyCache);
           }
           else
           {
-            collision->template StreamAndCollide<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+            collision->template StreamAndCollide<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache, coupledPropertyCache);
           }
         }
 
@@ -165,6 +166,8 @@ namespace hemelb
         hemelb::reporting::Timers &timings;
 
         MacroscopicPropertyCache propertyCache;
+        
+        MacroscopicPropertyCache& mCoupledPropertyCache;
 
         geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
     };
