@@ -1,24 +1,22 @@
 <?xml version="1.0" ?>
 <hemelbsettings version="3">
   <simulation>
-    <step_length units="s" value="0.0001" />
-    <steps units="lattice" value="50000" />
+    <step_length units="s" value="0.0002" />
+    <steps units="lattice" value="18000" />
     <stresstype value="1" />
-    <voxel_size units="m" value="0.002" />
-    <origin units="m" value="(0.00549999976158,-0.011,-0.011)" />
+    <voxel_size units="m" value="0.0002" />
+    <origin units="m" value="(0.0055000005722,-0.0101,-0.0101)" />
   </simulation>
   <geometry>
     <datafile path="test.gmy" />
   </geometry>
   <inlets>
     <inlet>
-      <condition subtype="cosine" type="pressure">
-        <mean units="mmHg" value="0.0" />
-        <amplitude units="mmHg" value="0.0" />
-        <phase units="rad" value="0.0" />
-        <period units="s" value="1" />
+      <condition subtype="parabolic" type="velocity">
+        <radius units="m" value="0.01" />
+        <maximum units="m/s" value="0.01" />
       </condition>
-      <normal units="dimensionless" value="(-1.0,0.0,0.0)" />
+      <normal units="dimensionless" value="(1.0,0.0,0.0)" />
       <position units="m" value="(0.001,0.0,0.0)" />
     </inlet>
   </inlets>
@@ -30,10 +28,17 @@
         <phase units="rad" value="0.0" />
         <period units="s" value="1" />
       </condition>
-      <normal units="dimensionless" value="(1.0,-0.0,0.0)" />
+      <normal units="dimensionless" value="(-1.0,0.0,0.0)" />
       <position units="m" value="(0.098,0.0,0.0)" />
     </outlet>
   </outlets>
+  <stents>
+    <stent>
+      <condition subtype="constant" type="concentration">
+        <mean units="kg/m3" value="1.0" />
+      </condition>
+    </stent>
+  </stents>
   <visualisation>
     <centre units="m" value="(0.0,0.0,0.0)" />
     <orientation>
@@ -43,6 +48,7 @@
     <display brightness="0.03" zoom="1.0" />
     <range>
       <maxvelocity units="m/s" value="0.1" />
+      <maxflux units="m/s" value="0.1" />
       <maxstress units="Pa" value="0.1" />
     </range>
   </visualisation>
@@ -50,5 +56,24 @@
     <pressure>
       <uniform units="mmHg" value="0.0" />
     </pressure>
+    <concentration>
+      <uniform units="kg/m3" value="0.0" />
+    </concentration>
   </initialconditions>
+  <properties>
+    <propertyoutput file="wss_snapshot.dat" period="3600">
+      <geometry type="surface" />
+      <field type="shearstress" name="d_shearstress" />
+    </propertyoutput>
+    <propertyoutput file="results_snapshot.dat" period="3600">
+      <geometry type="whole" />
+      <field type="pressure" name="d_pressure" />
+      <field type="velocity" name="d_velocity" />
+    </propertyoutput>
+    <propertyoutput file="ade_snapshot.dat" period="3600">
+      <geometry type="whole" />
+      <field type="concentration" />
+      <field type="flux" />
+    </propertyoutput>
+  </properties>
 </hemelbsettings>

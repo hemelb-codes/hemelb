@@ -20,5 +20,5 @@ OutputGeometryFile: test.gmy
 OutputXmlFile: test.xml
 StlFile: ./test.stl
 StlFileUnitId: 1
-TimeStepSeconds: 0.0001
-VoxelSize: 2.0
+TimeStepSeconds: 0.0002
+VoxelSize: 0.2
