@@ -29,7 +29,7 @@ namespace hemelb
           {
           }
 
-          inline void DoCalculateDensityMomentumFeq(HydroVars<AdvectionDiffusionLBGK<LatticeType> >& hydroVars, lb::MacroscopicPropertyCache& coupledPropertyCache, site_t index)
+          inline void DoCalculateDensityMomentumFeq(HydroVars<AdvectionDiffusionLBGK<LatticeType> >& hydroVars, lb::MacroscopicPropertyCache& coupledPropertyCache, site_t index, site_t coupledIndex)
           {
             LatticeType::CalculateADEDensityMomentumFEq(hydroVars.f,
                                                         hydroVars.density,
@@ -39,9 +39,9 @@ namespace hemelb
                                                         hydroVars.velocity.x,
                                                         hydroVars.velocity.y,
                                                         hydroVars.velocity.z,
-                                                        coupledPropertyCache.velocityCache.Get(index).x,
-                                                        coupledPropertyCache.velocityCache.Get(index).y,
-                                                        coupledPropertyCache.velocityCache.Get(index).z,
+                                                        coupledPropertyCache.velocityCache.Get(coupledIndex).x,
+                                                        coupledPropertyCache.velocityCache.Get(coupledIndex).y,
+                                                        coupledPropertyCache.velocityCache.Get(coupledIndex).z,
                                                         hydroVars.f_eq.f);
 
             coupledPropertyCache.velocityCache.SetRefreshFlag();            
@@ -52,12 +52,12 @@ namespace hemelb
             }
           }
 
-          inline void DoCalculateFeq(HydroVars<AdvectionDiffusionLBGK>& hydroVars, lb::MacroscopicPropertyCache& coupledPropertyCache, site_t index)
+          inline void DoCalculateFeq(HydroVars<AdvectionDiffusionLBGK>& hydroVars, lb::MacroscopicPropertyCache& coupledPropertyCache, site_t index, site_t coupledIndex)
           {
             LatticeType::CalculateADEFeq(hydroVars.density,
-                                         coupledPropertyCache.velocityCache.Get(index).x,
-                                         coupledPropertyCache.velocityCache.Get(index).y,
-                                         coupledPropertyCache.velocityCache.Get(index).z,
+                                         coupledPropertyCache.velocityCache.Get(coupledIndex).x,
+                                         coupledPropertyCache.velocityCache.Get(coupledIndex).y,
+                                         coupledPropertyCache.velocityCache.Get(coupledIndex).z,
                                          hydroVars.f_eq.f);
 
             coupledPropertyCache.velocityCache.SetRefreshFlag();

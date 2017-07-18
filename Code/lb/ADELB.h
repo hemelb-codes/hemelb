@@ -63,6 +63,7 @@ namespace hemelb
         ADELBM(hemelb::configuration::SimConfig *iSimulationConfig,
                net::Net* net,
                geometry::LatticeData* latDat,
+               geometry::LatticeData* coupledLatDat,
                SimulationState* simState,
                reporting::Timers &atimings,
                geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager,
@@ -129,11 +130,11 @@ namespace hemelb
         {
           if (mVisControl->IsRendering())
           {
-            collision->template StreamAndCollide<true> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache, coupledPropertyCache);
+            collision->template StreamAndCollide<true> (iFirstIndex, iSiteCount, &mParams, mLatDat, mCoupledLatDat, propertyCache, coupledPropertyCache);
           }
           else
           {
-            collision->template StreamAndCollide<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache, coupledPropertyCache);
+            collision->template StreamAndCollide<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, mCoupledLatDat, propertyCache, coupledPropertyCache);
           }
         }
 
@@ -155,6 +156,7 @@ namespace hemelb
         configuration::SimConfig *mSimConfig;
         net::Net* mNet;
         geometry::LatticeData* mLatDat;
+        geometry::LatticeData* mCoupledLatDat;
         SimulationState* mState;
         stents::BoundaryValues *mStentValues;
 

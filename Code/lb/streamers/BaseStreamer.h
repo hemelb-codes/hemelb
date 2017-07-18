@@ -206,6 +206,7 @@ namespace hemelb
                                        const site_t siteCount,
                                        const LbmParameters* lbmParams,
                                        geometry::LatticeData* latDat,
+                                       geometry::LatticeData* coupledLatDat,
                                        lb::MacroscopicPropertyCache& propertyCache,
                                        lb::MacroscopicPropertyCache& coupledPropertyCache)
           {
@@ -213,6 +214,7 @@ namespace hemelb
                                                                                            siteCount,
                                                                                            lbmParams,
                                                                                            latDat,
+                                                                                           coupledLatDat,
                                                                                            propertyCache,
                                                                                            coupledPropertyCache);
           }

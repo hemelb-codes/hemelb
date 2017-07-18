@@ -32,9 +32,10 @@ namespace hemelb
 
           inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars,
                                               lb::MacroscopicPropertyCache& coupledPropertyCache,
-                                              const geometry::Site<geometry::LatticeData>& site)
+                                              const geometry::Site<geometry::LatticeData>& site,
+                                              const geometry::Site<geometry::LatticeData>& coupledSite)
           {
-            kernel.CalculateADEDensityMomentumFeq(hydroVars, coupledPropertyCache, site.GetIndex());
+            kernel.CalculateADEDensityMomentumFeq(hydroVars, coupledPropertyCache, site.GetIndex(), coupledSite.GetIndex());
           }
 
           inline void DoCollide(const LbmParameters* lbmParams,

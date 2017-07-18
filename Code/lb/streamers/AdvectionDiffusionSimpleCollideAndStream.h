@@ -42,12 +42,14 @@ namespace hemelb
                                          const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::LatticeData* latDat,
+                                         geometry::LatticeData* coupledLatDat,
                                          lb::MacroscopicPropertyCache& propertyCache,
                                          lb::MacroscopicPropertyCache& coupledPropertyCache)
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
               geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
+              geometry::Site<geometry::LatticeData> coupledSite = coupledLatDat->GetSite(siteIndex);
 
               const distribn_t* lFOld = site.GetFOld<LatticeType> ();
 
@@ -56,7 +58,7 @@ namespace hemelb
               ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
               hydroVars.tau = lbmParams->GetTau();
 
-              collider.CalculatePreCollision(hydroVars, coupledPropertyCache, site);
+              collider.CalculatePreCollision(hydroVars, coupledPropertyCache, site, coupledSite);
 
               collider.Collide(lbmParams, hydroVars);
 
