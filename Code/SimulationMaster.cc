@@ -189,7 +189,6 @@ void SimulationMaster::Initialise()
   advectionDiffusionModel = new hemelb::lb::ADELBM<advectionDiffusionLatticeType>(simConfig,
                                                                                   &communicationNet,
                                                                                   advectionDiffusionData,
-                                                                                  latticeData,
                                                                                   simulationState,
                                                                                   timings,
                                                                                   advectionDiffusionDataManager,

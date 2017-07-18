@@ -31,12 +31,11 @@ namespace hemelb
     ADELBM<LatticeType>::ADELBM(configuration::SimConfig *iSimulationConfig,
                                 net::Net* net,
                                 geometry::LatticeData* latDat,
-                                geometry::LatticeData* coupledLatDat,
                                 SimulationState* simState,
                                 reporting::Timers &atimings,
                                 geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager,
                                 lb::MacroscopicPropertyCache& coupledPropertyCache) :
-      mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mCoupledLatDat(coupledLatDat), mState(simState), 
+      mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), 
           mParams(iSimulationConfig->GetTimeStepLength(), iSimulationConfig->GetVoxelSize()), timings(atimings),
           propertyCache(*simState, *latDat), neighbouringDataManager(neighbouringDataManager), mCoupledPropertyCache(coupledPropertyCache)
     {
