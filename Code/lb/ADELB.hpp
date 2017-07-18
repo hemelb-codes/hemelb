@@ -109,6 +109,7 @@ namespace hemelb
       mInletCollision = new tInletCollision(initParams);
 
       AdvanceInitParamsSiteRanges(initParams, collId);
+      initParams.boundaryObject = mOutletValues;
       mOutletCollision = new tOutletCollision(initParams);
 
       AdvanceInitParamsSiteRanges(initParams, collId);
@@ -117,15 +118,18 @@ namespace hemelb
 
       AdvanceInitParamsSiteRanges(initParams, collId);
       initParams.advectionDiffusionBoundaryObject = mStentValues;
+      initParams.boundaryObject = mOutletValues;
       mOutletWallCollision = new tOutletWallCollision(initParams);
     }
 
     template<class LatticeType>
     void ADELBM<LatticeType>::Initialise(vis::Control* iControl,
                                          stents::BoundaryValues* iStentValues,
+                                         iolets::BoundaryValues* iOutletValues,
                                          const util::UnitConverter* iUnits)
     {
       mStentValues = iStentValues;
+      mOutletValues = iOutletValues;
       mUnits = iUnits;
 
       InitCollisions();

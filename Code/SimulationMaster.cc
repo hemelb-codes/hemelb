@@ -42,6 +42,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options,
   advectionDiffusionDataManager = NULL;
   advectionDiffusionDataSource = NULL;
   stentValues = NULL;
+  advectionDiffusionOutletValues = NULL;
 
   latticeData = NULL;
 
@@ -99,6 +100,7 @@ SimulationMaster::~SimulationMaster()
   delete advectionDiffusionDataManager;
   delete advectionDiffusionDataSource;
   delete stentValues;
+  delete advectionDiffusionOutletValues;
   delete latticeData;
   delete colloidController;
   delete latticeBoltzmannModel;
@@ -297,11 +299,18 @@ void SimulationMaster::Initialise()
 						       ioComms,
 						       *unitConverter);
 
+  advectionDiffusionOutletValues = new hemelb::lb::iolets::BoundaryValues(hemelb::geometry::OUTLET_TYPE,
+                                                                          advectionDiffusionData,
+                                                                          simConfig->GetOutlets(),
+                                                                          simulationState,
+                                                                          ioComms,
+                                                                          *unitConverter);
+
   latticeBoltzmannModel->Initialise(visualisationControl, inletValues, outletValues, unitConverter);
   neighbouringDataManager->ShareNeeds();
   neighbouringDataManager->TransferNonFieldDependentInformation();
 
-  advectionDiffusionModel->Initialise(visualisationControl, stentValues, unitConverter);
+  advectionDiffusionModel->Initialise(visualisationControl, stentValues, advectionDiffusionOutletValues, unitConverter);
   advectionDiffusionDataManager->ShareNeeds();
   advectionDiffusionDataManager->TransferNonFieldDependentInformation();
 
@@ -362,6 +371,7 @@ void SimulationMaster::Initialise()
   }
   stepManager->RegisterIteratedActorSteps(*advectionDiffusionModel, 1);
   stepManager->RegisterIteratedActorSteps(*stentValues, 1);
+  stepManager->RegisterIteratedActorSteps(*advectionDiffusionOutletValues, 1);
   stepManager->RegisterIteratedActorSteps(*latticeBoltzmannModel, 1);
   stepManager->RegisterIteratedActorSteps(*inletValues, 1);
   stepManager->RegisterIteratedActorSteps(*outletValues, 1);

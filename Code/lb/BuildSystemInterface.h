@@ -374,6 +374,41 @@ namespace hemelb
     {
         typedef typename streamers::VirtualSiteIolet<Collision> Type;
     };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONOUTFLOWIOLET
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionOutflowIolet<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONSBBWALLOUTFLOWIOLETDIRICHLET
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionSBBWallOutflowIoletDirichlet<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONSBBWALLOUTFLOWIOLETNEUMANN
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionSBBWallOutflowIoletNeumann<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONBFLWALLOUTFLOWIOLETDIRICHLET
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionBFLWallOutflowIoletDirichlet<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONBFLWALLOUTFLOWIOLETNEUMANN
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionBFLWallOutflowIoletNeumann<Collision>::Type Type;
+    };
   }
 }
 

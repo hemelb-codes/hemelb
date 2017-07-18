@@ -11,7 +11,9 @@
 #include "lb/streamers/SimpleBounceBackDelegate.h"
 #include "lb/streamers/AdvectionDiffusionDirichletDelegate.h"
 #include "lb/streamers/AdvectionDiffusionNeumannDelegate.h"
+#include "lb/streamers/AdvectionDiffusionOutflowDelegate.h"
 #include "lb/streamers/AdvectionDiffusionStreamerTypeFactory.h"
+#include "lb/streamers/AdvectionDiffusionOutflowStreamerTypeFactory.h"
 
 namespace hemelb
 {
@@ -102,6 +104,36 @@ namespace hemelb
       struct AdvectionDiffusionSBBWallSBBIoletNeumann
       {
           typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionNeumannDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionOutflowIolet
+      {
+          typedef AdvectionDiffusionOutflowIoletStreamerTypeFactory<CollisionImpl, AdvectionDiffusionOutflowDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionSBBWallOutflowIoletDirichlet
+      {
+          typedef AdvectionDiffusionWallOutflowIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionOutflowDelegate<CollisionImpl>, AdvectionDiffusionDirichletDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionSBBWallOutflowIoletNeumann
+      {
+          typedef AdvectionDiffusionWallOutflowIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionOutflowDelegate<CollisionImpl>, AdvectionDiffusionNeumannDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionBFLWallOutflowIoletDirichlet
+      {
+          typedef AdvectionDiffusionWallOutflowIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionOutflowDelegate<CollisionImpl>, AdvectionDiffusionDirichletDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionBFLWallOutflowIoletNeumann
+      {
+          typedef AdvectionDiffusionWallOutflowIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionOutflowDelegate<CollisionImpl>, AdvectionDiffusionNeumannDelegate<CollisionImpl> > Type;
       };
     }
   }

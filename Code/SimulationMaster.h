@@ -52,6 +52,7 @@ class SimulationMaster
     hemelb::lb::iolets::BoundaryValues* inletValues;
     hemelb::lb::iolets::BoundaryValues* outletValues;
     hemelb::lb::stents::BoundaryValues* stentValues;
+    hemelb::lb::iolets::BoundaryValues* advectionDiffusionOutletValues;
 
     virtual void DoTimeStep();
     
