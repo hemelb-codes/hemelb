@@ -106,6 +106,7 @@ namespace hemelb
       mWallCollision = new tWallCollision(initParams);
 
       AdvanceInitParamsSiteRanges(initParams, collId);
+      initParams.boundaryObject = mInletValues;
       mInletCollision = new tInletCollision(initParams);
 
       AdvanceInitParamsSiteRanges(initParams, collId);
@@ -114,6 +115,7 @@ namespace hemelb
 
       AdvanceInitParamsSiteRanges(initParams, collId);
       initParams.advectionDiffusionBoundaryObject = mStentValues;
+      initParams.boundaryObject = mInletValues;
       mInletWallCollision = new tInletWallCollision(initParams);
 
       AdvanceInitParamsSiteRanges(initParams, collId);
@@ -126,10 +128,12 @@ namespace hemelb
     void ADELBM<LatticeType>::Initialise(vis::Control* iControl,
                                          stents::BoundaryValues* iStentValues,
                                          iolets::BoundaryValues* iOutletValues,
+                                         iolets::BoundaryValues* iInletValues,
                                          const util::UnitConverter* iUnits)
     {
       mStentValues = iStentValues;
       mOutletValues = iOutletValues;
+      mInletValues = iInletValues;
       mUnits = iUnits;
 
       InitCollisions();
@@ -213,9 +217,11 @@ namespace hemelb
       StreamAndCollide(mWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(1), mCoupledPropertyCache);
       offset += mLatDat->GetDomainEdgeCollisionCount(1);
 
+      mInletValues->FinishReceive();
       StreamAndCollide(mInletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(2), mCoupledPropertyCache);
       offset += mLatDat->GetDomainEdgeCollisionCount(2);
 
+      mOutletValues->FinishReceive();
       StreamAndCollide(mOutletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(3), mCoupledPropertyCache);
       offset += mLatDat->GetDomainEdgeCollisionCount(3);
 

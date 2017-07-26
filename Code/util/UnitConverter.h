@@ -184,6 +184,10 @@ namespace hemelb
           {
             scale_factor = latticeMass / (latticeDistance * latticeDistance * latticeTime * latticeTime);
           }
+          else if (units == "kg/m3")
+          {
+            scale_factor = latticeMass / (latticeDistance * latticeDistance * latticeDistance);
+          }
           else
           {
             throw Exception() << "Unknown units '" << units << "'";

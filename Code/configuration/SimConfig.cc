@@ -694,6 +694,9 @@ namespace hemelb
       const io::xml::Element maximumEl = conditionEl.GetChildOrThrow("maximum");
       newIolet->SetMaxSpeed(GetDimensionalValueInLatticeUnits<PhysicalSpeed>(maximumEl, "m/s"));
 
+      const io::xml::Element concentrationEl = conditionEl.GetChildOrThrow("concentration");
+      newIolet->SetConcentration(GetDimensionalValueInLatticeUnits<PhysicalDensity>(concentrationEl, "kg/m3"));
+
       if (warmUpSteps != 0)
       {
         newIolet->SetWarmup(warmUpSteps);
@@ -726,6 +729,9 @@ namespace hemelb
       const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
       newIolet->SetRadius(GetDimensionalValueInLatticeUnits<LatticeDistance>(radiusEl, "m"));
 
+      const io::xml::Element concentrationEl = conditionEl.GetChildOrThrow("concentration");
+      newIolet->SetConcentration(GetDimensionalValueInLatticeUnits<PhysicalDensity>(concentrationEl, "kg/m3"));
+
       const io::xml::Element pgAmpEl = conditionEl.GetChildOrThrow("pressure_gradient_amplitude");
       newIolet->SetPressureGradientAmplitude(GetDimensionalValueInLatticeUnits<
           LatticePressureGradient>(pgAmpEl, "mmHg/m"));
@@ -755,6 +761,9 @@ namespace hemelb
 
       const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
       newIolet->SetRadius(GetDimensionalValueInLatticeUnits<LatticeDistance>(radiusEl, "m"));
+
+      const io::xml::Element concentrationEl = conditionEl.GetChildOrThrow("concentration");
+      newIolet->SetConcentration(GetDimensionalValueInLatticeUnits<PhysicalDensity>(concentrationEl, "kg/m3"));
 
       return newIolet;
     }

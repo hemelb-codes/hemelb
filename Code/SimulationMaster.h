@@ -6,7 +6,7 @@
 
 #ifndef HEMELB_SIMULATIONMASTER_H
 #define HEMELB_SIMULATIONMASTER_H
-#define HEMELB_ADE_LATTICE D3Q7
+#define HEMELB_ADE_LATTICE D3Q15
 #include "lb/lattices/Lattices.h"
 #include "extraction/PropertyActor.h"
 #include "lb/lb.hpp"
@@ -53,6 +53,7 @@ class SimulationMaster
     hemelb::lb::iolets::BoundaryValues* outletValues;
     hemelb::lb::stents::BoundaryValues* stentValues;
     hemelb::lb::iolets::BoundaryValues* advectionDiffusionOutletValues;
+    hemelb::lb::iolets::BoundaryValues* advectionDiffusionInletValues;
 
     virtual void DoTimeStep();
     

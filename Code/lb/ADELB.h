@@ -8,9 +8,9 @@
 #define HEMELB_LB_ADELB_H
 #define HEMELB_ADE_KERNEL ADVECTIONDIFFUSIONLBGK
 #define HEMELB_ADE_WALL_BOUNDARY ADVECTIONDIFFUSIONSBBDIRICHLET
-#define HEMELB_ADE_INLET_BOUNDARY ADVECTIONDIFFUSIONSBBIOLET
+#define HEMELB_ADE_INLET_BOUNDARY ADVECTIONDIFFUSIONINLETDIRICHLET
 #define HEMELB_ADE_OUTLET_BOUNDARY ADVECTIONDIFFUSIONOUTFLOWIOLET
-#define HEMELB_ADE_WALL_INLET_BOUNDARY ADVECTIONDIFFUSIONSBBWALLSBBIOLETDIRICHLET
+#define HEMELB_ADE_WALL_INLET_BOUNDARY ADVECTIONDIFFUSIONSBBWALLINLETDIRICHLETDIRICHLET
 #define HEMELB_ADE_WALL_OUTLET_BOUNDARY ADVECTIONDIFFUSIONSBBWALLOUTFLOWIOLETDIRICHLET
 #include "net/net.h"
 #include "net/IteratedAction.h"
@@ -89,6 +89,7 @@ namespace hemelb
         void Initialise(vis::Control* iControl,
                         stents::BoundaryValues* iStentValues,
                         iolets::BoundaryValues* iOutletValues,
+                        iolets::BoundaryValues* iInletValues,
                         const util::UnitConverter* iUnits);
 
         void ReadVisParameters();
@@ -159,6 +160,7 @@ namespace hemelb
         SimulationState* mState;
         stents::BoundaryValues *mStentValues;
         iolets::BoundaryValues *mOutletValues;
+        iolets::BoundaryValues *mInletValues;
 
         LbmParameters mParams;
         vis::Control* mVisControl;

@@ -41,6 +41,15 @@ namespace hemelb
             radius = r;
           }
 
+          void SetConcentration(const LatticeDensity& rho)
+          {
+            concentrationMean = rho;
+          }
+          LatticeDensity GetConcentration(LatticeTimeStep time_step) const
+          {
+            return concentrationMean;
+          }
+
           virtual LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTimeStep t) const = 0;
 
           //virtual LatticeVelocity GetVelocity2(const util::Vector3D<site_t> globalCoordinates,
@@ -48,6 +57,7 @@ namespace hemelb
 
         protected:
           LatticeDistance radius;
+          LatticeDensity concentrationMean;
       };
     }
   }
