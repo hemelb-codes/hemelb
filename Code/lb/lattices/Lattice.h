@@ -269,10 +269,6 @@ namespace hemelb
                                              const distribn_t &coupledV_z,
                                              distribn_t f_eq[])
           {
-            //const distribn_t density_1 = 1. / density;
-            const distribn_t velocityMagnitudeSquared = coupledV_x * coupledV_x + coupledV_y * coupledV_y
-                  + coupledV_z * coupledV_z;
-
             for (Direction i = 0; i < DmQn::NUMVECTORS; ++i)
             {
               const distribn_t vel_dot_ei = DmQn::CX[i] * coupledV_x
@@ -280,9 +276,7 @@ namespace hemelb
 
               f_eq[i] = DmQn::EQMWEIGHTS[i]
                   * (density
-                        - (3. / 2.) * velocityMagnitudeSquared * density
-                      + (9. / 2.) * density * vel_dot_ei * vel_dot_ei
-                      + 3. * density * vel_dot_ei);
+                     + 3. * density * vel_dot_ei);
             }
           }
           
