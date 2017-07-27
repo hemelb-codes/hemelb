@@ -134,10 +134,7 @@ class XmlWriter(object):
              QuantityElement(condition, 'mean', 1.0, 'kg/m3')
          return
         else:
-         if isinstance(st, SeedPoint):
-             stent = SubElement(stents, 'stent')
-         else:
-             continue
+         stent = SubElement(stents, 'stent')
 
          condition = SubElement(stent, 'condition', type='concentration',
                                    subtype='constant')
