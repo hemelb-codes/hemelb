@@ -120,18 +120,29 @@ class XmlWriter(object):
 
     def DoStents(self, root):
         stents = SubElement(root, 'stents')
+        
+        if len(self.profile.SeedPoints) > 1:
+         for index, st in enumerate(self.profile.SeedPoints):
+          if index > 0:
+             if isinstance(st, SeedPoint):
+                 stent = SubElement(stents, 'stent')
+             else:
+                 continue
 
-        for index, st in enumerate(self.profile.SeedPoints):
-         if index > 0:
-            if isinstance(st, SeedPoint):
-                stent = SubElement(stents, 'stent')
-            else:
-                continue
-
-            condition = SubElement(stent, 'condition', type='concentration',
+             condition = SubElement(stent, 'condition', type='concentration',
                                    subtype='constant')
-            QuantityElement(condition, 'mean', 1.0, 'kg/m3')
-        return
+             QuantityElement(condition, 'mean', 1.0, 'kg/m3')
+         return
+        else:
+         if isinstance(st, SeedPoint):
+             stent = SubElement(stents, 'stent')
+         else:
+             continue
+
+         condition = SubElement(stent, 'condition', type='concentration',
+                                   subtype='constant')
+         QuantityElement(condition, 'mean', 1.0, 'kg/m3')
+         return
 
     def DoVisualisation(self, root):
         vis = SubElement(root, 'visualisation')
