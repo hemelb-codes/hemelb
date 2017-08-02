@@ -444,6 +444,41 @@ namespace hemelb
       public:
         typedef typename streamers::AdvectionDiffusionBFLWallInletDirichletNeumann<Collision>::Type Type;
     };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONOUTFLOWBOUNCEBACKIOLET
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionOutflowBounceBackIolet<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONSBBWALLOUTFLOWBOUNCEBACKIOLETDIRICHLET
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionSBBWallOutflowBounceBackIoletDirichlet<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONSBBWALLOUTFLOWBOUNCEBACKIOLETNEUMANN
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionSBBWallOutflowBounceBackIoletNeumann<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONBFLWALLOUTFLOWBOUNCEBACKIOLETDIRICHLET
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionBFLWallOutflowBounceBackIoletDirichlet<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONBFLWALLOUTFLOWBOUNCEBACKIOLETNEUMANN
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionBFLWallOutflowBounceBackIoletNeumann<Collision>::Type Type;
+    };
   }
 }
 
