@@ -70,7 +70,7 @@ namespace hemelb
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(fOld);
 
               ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
-              hydroVars.tau = lbmParams->GetTau();
+              hydroVars.tau = lbmParams->GetAdvectionDiffusionTau();
 
               collider.CalculatePreCollision(hydroVars, coupledPropertyCache, site);
 
@@ -169,7 +169,7 @@ namespace hemelb
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(fOld);
 
               ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
-              hydroVars.tau = lbmParams->GetTau();
+              hydroVars.tau = lbmParams->GetAdvectionDiffusionTau();
 
               collider.CalculatePreCollision(hydroVars, coupledPropertyCache, site);
 
