@@ -47,6 +47,7 @@ public:
   static constexpr IndT NA() {return ~0;};
   
 private:
+  template<class... T>
   friend class SectionTreeBuilder;
   
   SectionTree(size_t nl);
@@ -60,25 +61,5 @@ private:
   
 };
 
-class SectionTreeBuilder : public MaskTree::ConstVisitor {
-public:
-  using Int = MaskTree::Int;
-  
-  static Int LocalOffset(const MaskTree::Node& n);
-  
-  SectionTreeBuilder(const MaskTree& mask);
-  SectionTree::Ptr operator()();
-  
-  virtual void Arrive(MaskTree::ConstNodePtr np);
-  virtual void Depart(MaskTree::ConstNodePtr n);
-  SectionTree::IndT GetSectionSize() const;
-
-private:
-  const MaskTree& maskTree;
-  Int nLevels;
-  std::vector<SectionTree::IndT> counters;
-  // std::vector<FluidTree::ConstNodePtr> fsTreePtrs;
-  SectionTree::Ptr output;
-};
 
 #endif
