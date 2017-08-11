@@ -12,7 +12,7 @@ LDLIBS = -L$(VTK_LIBRARY_DIR) -Wl,-rpath,$(VTK_LIBRARY_DIR) $(vtk_libs) -L$(CGAL
 
 lib_objects = Vector.o Vector3D.o TriTree.o TriangleSorter.o MkCgalMesh.o \
 	Neighbours.o SegmentFactory.o SurfaceVoxeliser.o FloodFill.o \
-	SectionTree.o
+	SectionTree.o SectionTreeBuilder.o
 
 all : test voxer_bench
 

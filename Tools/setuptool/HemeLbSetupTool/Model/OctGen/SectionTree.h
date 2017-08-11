@@ -47,7 +47,7 @@ public:
   static constexpr IndT NA() {return ~0;};
   
 private:
-  template<class... T>
+  
   friend class SectionTreeBuilder;
   
   SectionTree(size_t nl);
@@ -55,6 +55,7 @@ private:
   MaskTree::Int nLevels;
   Tree indices;
   IndT section_size;
+  Tree counts;
   
   std::list<SectionT> secs;
   std::list<std::string> sec_names;

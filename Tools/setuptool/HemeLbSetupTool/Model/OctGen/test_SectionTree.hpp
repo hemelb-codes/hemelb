@@ -4,6 +4,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include "TestResources/Meshes.hpp"
 #include "SectionTree.h"
+#include "SectionTreeBuilder.h"
 
 class SectionTreeTests : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE(SectionTreeTests);
@@ -54,45 +55,45 @@ public:
     MaskTree::ConstNodePtr node;
     
     node = mt->Get(0,0,0, 0);
-    CPPUNIT_ASSERT(SectionTreeBuilder<>::LocalOffset(*node) == 0);
+    CPPUNIT_ASSERT(SectionTreeBuilder::LocalOffset(*node) == 0);
     node = mt->Get(0,0,2, 0);
-    CPPUNIT_ASSERT(SectionTreeBuilder<>::LocalOffset(*node) == 0);
+    CPPUNIT_ASSERT(SectionTreeBuilder::LocalOffset(*node) == 0);
     node = mt->Get(0,2,0, 0);
-    CPPUNIT_ASSERT(SectionTreeBuilder<>::LocalOffset(*node) == 0);
+    CPPUNIT_ASSERT(SectionTreeBuilder::LocalOffset(*node) == 0);
     node = mt->Get(0,2,2, 0);
-    CPPUNIT_ASSERT(SectionTreeBuilder<>::LocalOffset(*node) == 0);
+    CPPUNIT_ASSERT(SectionTreeBuilder::LocalOffset(*node) == 0);
     
     node = mt->Get(2,0,0, 0);
-    CPPUNIT_ASSERT(SectionTreeBuilder<>::LocalOffset(*node) == 0);
+    CPPUNIT_ASSERT(SectionTreeBuilder::LocalOffset(*node) == 0);
     node = mt->Get(2,0,2, 0);
-    CPPUNIT_ASSERT(SectionTreeBuilder<>::LocalOffset(*node) == 0);
+    CPPUNIT_ASSERT(SectionTreeBuilder::LocalOffset(*node) == 0);
     node = mt->Get(2,2,0, 0);
-    CPPUNIT_ASSERT(SectionTreeBuilder<>::LocalOffset(*node) == 0);
+    CPPUNIT_ASSERT(SectionTreeBuilder::LocalOffset(*node) == 0);
     node = mt->Get(2,2,2, 0);
-    CPPUNIT_ASSERT(SectionTreeBuilder<>::LocalOffset(*node) == 0);
+    CPPUNIT_ASSERT(SectionTreeBuilder::LocalOffset(*node) == 0);
 
     node = mt->Get(0,0,0, 1);
-    CPPUNIT_ASSERT(SectionTreeBuilder<>::LocalOffset(*node) == 0);
+    CPPUNIT_ASSERT(SectionTreeBuilder::LocalOffset(*node) == 0);
     node = mt->Get(0,0,2, 1);
-    CPPUNIT_ASSERT(SectionTreeBuilder<>::LocalOffset(*node) == 1);
+    CPPUNIT_ASSERT(SectionTreeBuilder::LocalOffset(*node) == 1);
     node = mt->Get(0,2,0, 1);
-    CPPUNIT_ASSERT(SectionTreeBuilder<>::LocalOffset(*node) == 2);
+    CPPUNIT_ASSERT(SectionTreeBuilder::LocalOffset(*node) == 2);
     node = mt->Get(0,2,2, 1);
-    CPPUNIT_ASSERT(SectionTreeBuilder<>::LocalOffset(*node) == 3);
+    CPPUNIT_ASSERT(SectionTreeBuilder::LocalOffset(*node) == 3);
 
     node = mt->Get(2,0,0, 1);
-    CPPUNIT_ASSERT(SectionTreeBuilder<>::LocalOffset(*node) == 4);
+    CPPUNIT_ASSERT(SectionTreeBuilder::LocalOffset(*node) == 4);
     node = mt->Get(2,0,2, 1);
-    CPPUNIT_ASSERT(SectionTreeBuilder<>::LocalOffset(*node) == 5);
+    CPPUNIT_ASSERT(SectionTreeBuilder::LocalOffset(*node) == 5);
     node = mt->Get(2,2,0, 1);
-    CPPUNIT_ASSERT(SectionTreeBuilder<>::LocalOffset(*node) == 6);
+    CPPUNIT_ASSERT(SectionTreeBuilder::LocalOffset(*node) == 6);
     node = mt->Get(2,2,2, 1);
-    CPPUNIT_ASSERT(SectionTreeBuilder<>::LocalOffset(*node) == 7);
+    CPPUNIT_ASSERT(SectionTreeBuilder::LocalOffset(*node) == 7);
     
   }
   void TinyFullTree() {
     auto mt = FullTree(2);
-    SectionTreeBuilder<> b(*mt);
+    SectionTreeBuilder b(*mt);
     
     SectionTree::Ptr st = b();
     auto inds = st->GetTree();
@@ -110,7 +111,7 @@ public:
   void TinyCentreTree() {
     auto mt = CentreTree(3);
     
-    SectionTreeBuilder<> b(*mt);
+    SectionTreeBuilder b(*mt);
     SectionTree::Ptr st = b();
     
     auto inds = st->GetTree();
@@ -152,7 +153,7 @@ public:
     FloodFill ff(fluid_tree);
     auto mask_tree = ff();
 
-    SectionTreeBuilder<FluidTree> builder(mask_tree, fluid_tree);
+    SectionTreeBuilder builder(mask_tree);
     auto section_tree = builder();
   }
 };

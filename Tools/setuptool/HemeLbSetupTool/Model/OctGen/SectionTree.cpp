@@ -6,7 +6,7 @@
 #include "enumerate.hpp"
 
 
-SectionTree::SectionTree(size_t nl) : nLevels(nl), indices(nl) {
+SectionTree::SectionTree(size_t nl) : nLevels(nl), indices(nl), counts(nl) {
 }
 
 const SectionTree::Tree& SectionTree::GetTree() const {
