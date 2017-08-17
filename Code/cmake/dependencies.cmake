@@ -1,8 +1,8 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
+
 #------Parmetis  ------------
 find_package(Parmetis REQUIRED)
 include_directories(${PARMETIS_INCLUDE_DIRS})
@@ -11,7 +11,7 @@ include_directories(${PARMETIS_INCLUDE_DIRS})
 find_package(TinyXML REQUIRED)
 OPTION(TIXML_USE_STL "Use STL with TIXML" ON)
 if(TIXML_USE_STL)
-	add_definitions(-DTIXML_USE_STL)
+  add_definitions(-DTIXML_USE_STL)
 endif()
 include_directories(${TINYXML_INCLUDE_DIR})
 #------BOOST ------------------

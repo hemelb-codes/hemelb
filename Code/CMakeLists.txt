@@ -1,4 +1,3 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
@@ -41,13 +40,13 @@ set(HEMELB_EXECUTABLE "hemelb"
 set(HEMELB_READING_GROUP_SIZE 5
   CACHE INTEGER "Number of cores to use to read geometry file.")
 set(HEMELB_LOG_LEVEL Info
-	CACHE STRING "Log level, choose 'Critical', 'Error', 'Warning', 'Info', 'Debug' or 'Trace'" )
+  CACHE STRING "Log level, choose 'Critical', 'Error', 'Warning', 'Info', 'Debug' or 'Trace'" )
 set(HEMELB_STEERING_LIB basic
-	CACHE STRING "Steering library, choose 'basic' or 'none'" )
+  CACHE STRING "Steering library, choose 'basic' or 'none'" )
 set(HEMELB_DEPENDENCIES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../dependencies"
-	CACHE FILEPATH "Path to find dependency find modules")
+  CACHE FILEPATH "Path to find dependency find modules")
 set(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH}
-	CACHE FILEPATH "Path to find dependency includes and libraries")
+  CACHE FILEPATH "Path to find dependency includes and libraries")
 set(HEMELB_OPTIMISATION "-O3" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
 set(HEMELB_LATTICE "D3Q15"
   CACHE STRING "Select the lattice type to use (D3Q15,D3Q19,D3Q27,D3Q15i)")
@@ -66,21 +65,21 @@ set(HEMELB_WALL_INLET_BOUNDARY "NASHZEROTHORDERPRESSURESBB"
 set(HEMELB_WALL_OUTLET_BOUNDARY "NASHZEROTHORDERPRESSURESBB"
   CACHE STRING "Select the boundary conditions to be used at corners between walls and outlets (NASHZEROTHORDERPRESSURESBB,NASHZEROTHORDERPRESSUREBFL,LADDIOLETSBB,LADDIOLETBFL)")
 set(HEMELB_POINTPOINT_IMPLEMENTATION Coalesce
-	CACHE STRING "Point to point comms implementation, choose 'Coalesce', 'Separated', or 'Immediate'" )
+  CACHE STRING "Point to point comms implementation, choose 'Coalesce', 'Separated', or 'Immediate'" )
 set(HEMELB_GATHERS_IMPLEMENTATION Separated
-	CACHE STRING "Gather comms implementation, choose 'Separated', or 'ViaPointPoint'" )
+  CACHE STRING "Gather comms implementation, choose 'Separated', or 'ViaPointPoint'" )
 set(HEMELB_ALLTOALL_IMPLEMENTATION Separated
-	CACHE STRING "Alltoall comms implementation, choose 'Separated', or 'ViaPointPoint'" )
+  CACHE STRING "Alltoall comms implementation, choose 'Separated', or 'ViaPointPoint'" )
 option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
-	
+
 # Add warnings flags to development build types
 if (HEMELB_USE_ALL_WARNINGS_GNU)
-	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-	set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+  set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
 endif()
 if(HEMELB_OPTIMISATION)
-	set( CMAKE_CXX_FLAGS_RELEASE ${HEMELB_OPTIMISATION})
-	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HEMELB_OPTIMISATION}")
+  set( CMAKE_CXX_FLAGS_RELEASE ${HEMELB_OPTIMISATION})
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HEMELB_OPTIMISATION}")
 endif()
 
 
@@ -101,30 +100,30 @@ if(HEMELB_VALIDATE_GEOMETRY)
 endif()
 
 if (NOT HEMELB_USE_STREAKLINES)
-	add_definitions(-DNO_STREAKLINES)
+  add_definitions(-DNO_STREAKLINES)
 endif()
 
 if (HEMELB_WAIT_ON_CONNECT)
-	add_definitions(-DHEMELB_WAIT_ON_CONNECT)
+  add_definitions(-DHEMELB_WAIT_ON_CONNECT)
 endif()
 
 if (NOT HEMELB_STATIC_ASSERT)
-	add_definitions(-DHEMELB_NO_STATIC_ASSERT)
+  add_definitions(-DHEMELB_NO_STATIC_ASSERT)
 endif()
 
 if (HEMELB_IMAGES_TO_NULL)
-	add_definitions(-DHEMELB_IMAGES_TO_NULL)
+  add_definitions(-DHEMELB_IMAGES_TO_NULL)
 endif()
 
 if (HEMELB_USE_SSE3)
-	add_definitions(-DHEMELB_USE_SSE3)
-	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
-	set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -msse3")
-        set( CMAKE_CXX_FLAGS_RELEASE "${HEMELB_OPTIMISATION} -msse3")
+  add_definitions(-DHEMELB_USE_SSE3)
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
+  set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -msse3")
+  set( CMAKE_CXX_FLAGS_RELEASE "${HEMELB_OPTIMISATION} -msse3")
 endif()
 
 if (HEMELB_USE_VELOCITY_WEIGHTS_FILE)
-    add_definitions(-DHEMELB_USE_VELOCITY_WEIGHTS_FILE)
+  add_definitions(-DHEMELB_USE_VELOCITY_WEIGHTS_FILE)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${HEMELB_DEPENDENCIES_PATH}/Modules/")
@@ -133,8 +132,8 @@ list(APPEND CMAKE_LIBRARY_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/lib)
 
 #--- Set up runtime search path for DLLs -----
 if(HEMELB_DEPENDENCIES_SET_RPATH)
-	SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-	SET(CMAKE_INSTALL_RPATH "${HEMELB_DEPENDENCIES_INSTALL_PATH}/lib")
+  SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+  SET(CMAKE_INSTALL_RPATH "${HEMELB_DEPENDENCIES_INSTALL_PATH}/lib")
 endif()
 
 include(build_environment)
@@ -178,18 +177,18 @@ configure_file (
   "${PROJECT_SOURCE_DIR}/resources/path_parameters.h.in"
   "${PROJECT_BINARY_DIR}/resources/path_parameters.h"
   )
- 
+
 # add the binary tree to the search path for include files
 # so that we will find TutorialConfig.h
 include_directories("${PROJECT_BINARY_DIR}")
 
 # ----------- HemeLB ------------------
 if (APPLE)
-	add_definitions(-DHEMELB_CFG_ON_BSD -DHEMELB_CFG_ON_OSX)
+  add_definitions(-DHEMELB_CFG_ON_BSD -DHEMELB_CFG_ON_OSX)
 endif()
 if (HEMELB_USE_DEBUGGER)
-	# Force a debug build, because the debugger makes no sense without debug symbols
-	set(CMAKE_BUILD_TYPE DEBUG)
+  # Force a debug build, because the debugger makes no sense without debug symbols
+  set(CMAKE_BUILD_TYPE DEBUG)
 endif()
 
 set(root_sources SimulationMaster.cc)
@@ -197,142 +196,142 @@ add_executable(${HEMELB_EXECUTABLE} main.cc ${root_sources})
 
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
-	configuration
-	extraction
-	reporting
-	steering
-	vis
-	lb
-	geometry
-	net
-	debug
-	util
-	io
-	log
-        colloids
-	)
+  configuration
+  extraction
+  reporting
+  steering
+  vis
+  lb
+  geometry
+  net
+  debug
+  util
+  io
+  log
+  colloids
+  )
 foreach(subdir ${package_subdirs})
-	set(lib "hemelb_${subdir}")
-	list(APPEND heme_libraries ${lib})
-	add_subdirectory(${subdir})
+  set(lib "hemelb_${subdir}")
+  list(APPEND heme_libraries ${lib})
+  add_subdirectory(${subdir})
 endforeach()
 add_subdirectory(resources)
 target_link_libraries(${HEMELB_EXECUTABLE} 
-	${heme_libraries}
-	${MPI_LIBRARIES}
-	${PARMETIS_LIBRARIES}
-	${TINYXML_LIBRARIES}
-	${Boost_LIBRARIES}
-	${CTEMPLATE_LIBRARIES}
-	${ZLIB_LIBRARIES}
-    ${MPWide_LIBRARIES}
-	)
+  ${heme_libraries}
+  ${MPI_LIBRARIES}
+  ${PARMETIS_LIBRARIES}
+  ${TINYXML_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${CTEMPLATE_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+  ${MPWide_LIBRARIES}
+  )
 INSTALL(TARGETS ${HEMELB_EXECUTABLE} RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
 
 # ----------- HemeLB Multiscale ------------------
 if (HEMELB_BUILD_MULTISCALE)
-	if (APPLE)
-		add_definitions(-DHEMELB_CFG_ON_BSD -DHEMELB_CFG_ON_OSX)
-	endif()
-	if (HEMELB_USE_DEBUGGER)
-		# Force a debug build, because the debugger makes no sense without debug symbols
-		set(CMAKE_BUILD_TYPE DEBUG)
-	endif()
-	
-	set(root_sources SimulationMaster.cc multiscale/MultiscaleSimulationMaster.h)
-	add_executable(multiscale_hemelb mainMultiscale.cc ${root_sources})
-	include_directories(${PROJECT_SOURCE_DIR})
-	set(package_subdirs
-		configuration
-		extraction
-		reporting
-		steering
-		vis
-		lb
-		geometry
-		net
-		debug
-		util
-		io
-		log
-                colloids
-                multiscale
-		)
-	foreach(subdir ${package_subdirs})
-		set(lib "hemelb_${subdir}")
-		list(APPEND heme_libraries ${lib})
-	endforeach()
-        add_subdirectory(multiscale)
-	target_link_libraries(multiscale_hemelb
-		${heme_libraries}
-		${MPI_LIBRARIES}
-		${PARMETIS_LIBRARIES}
-		${TINYXML_LIBRARIES}
-		${Boost_LIBRARIES}
-		${CTEMPLATE_LIBRARIES}
-		${ZLIB_LIBRARIES}
-                ${MPWide_LIBRARIES}
-		)
-	INSTALL(TARGETS multiscale_hemelb RUNTIME DESTINATION bin)
-	list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
+  if (APPLE)
+    add_definitions(-DHEMELB_CFG_ON_BSD -DHEMELB_CFG_ON_OSX)
+  endif()
+  if (HEMELB_USE_DEBUGGER)
+    # Force a debug build, because the debugger makes no sense without debug symbols
+    set(CMAKE_BUILD_TYPE DEBUG)
+  endif()
+  
+  set(root_sources SimulationMaster.cc multiscale/MultiscaleSimulationMaster.h)
+  add_executable(multiscale_hemelb mainMultiscale.cc ${root_sources})
+  include_directories(${PROJECT_SOURCE_DIR})
+  set(package_subdirs
+    configuration
+    extraction
+    reporting
+    steering
+    vis
+    lb
+    geometry
+    net
+    debug
+    util
+    io
+    log
+    colloids
+    multiscale
+    )
+  foreach(subdir ${package_subdirs})
+    set(lib "hemelb_${subdir}")
+    list(APPEND heme_libraries ${lib})
+  endforeach()
+  add_subdirectory(multiscale)
+  target_link_libraries(multiscale_hemelb
+    ${heme_libraries}
+    ${MPI_LIBRARIES}
+    ${PARMETIS_LIBRARIES}
+    ${TINYXML_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${CTEMPLATE_LIBRARIES}
+    ${ZLIB_LIBRARIES}
+    ${MPWide_LIBRARIES}
+    )
+  INSTALL(TARGETS multiscale_hemelb RUNTIME DESTINATION bin)
+  list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
 endif()
 
 # ----------- HEMELB unittests ---------------
 if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
-	#------CPPUnit ---------------
-	find_package(CPPUnit REQUIRED)
-	include_directories(${CPPUNIT_INCLUDE_DIR})
-	add_executable(unittests_hemelb ${root_sources})
-	add_subdirectory(unittests)
-	target_link_libraries(unittests_hemelb 
-		hemelb_unittests 
-		${heme_libraries}
-		${MPI_LIBRARIES}
-		${PARMETIS_LIBRARIES}
-		${TINYXML_LIBRARIES}
-		${CPPUNIT_LIBRARY}
-		${Boost_LIBRARIES}
-		${CTEMPLATE_LIBRARIES}
-		${ZLIB_LIBRARIES}
-		${MPWide_LIBRARIES}
-		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
-	INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
-	list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/four_cube_multiscale.xml
-		unittests/resources/config.xml unittests/resources/config0_2_0.xml
-		unittests/resources/config_file_inlet.xml unittests/resources/iolet.txt 
-		unittests/resources/config-velocity-iolet.xml unittests/resources/config_new_velocity_inlets.xml
+  #------CPPUnit ---------------
+  find_package(CPPUnit REQUIRED)
+  include_directories(${CPPUNIT_INCLUDE_DIR})
+  add_executable(unittests_hemelb ${root_sources})
+  add_subdirectory(unittests)
+  target_link_libraries(unittests_hemelb 
+    hemelb_unittests 
+    ${heme_libraries}
+    ${MPI_LIBRARIES}
+    ${PARMETIS_LIBRARIES}
+    ${TINYXML_LIBRARIES}
+    ${CPPUNIT_LIBRARY}
+    ${Boost_LIBRARIES}
+    ${CTEMPLATE_LIBRARIES}
+    ${ZLIB_LIBRARIES}
+    ${MPWide_LIBRARIES}
+    ${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
+  INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
+  list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/four_cube_multiscale.xml
+    unittests/resources/config.xml unittests/resources/config0_2_0.xml
+    unittests/resources/config_file_inlet.xml unittests/resources/iolet.txt 
+    unittests/resources/config-velocity-iolet.xml unittests/resources/config_new_velocity_inlets.xml
     unittests/resources/velocity_inlet.txt.weights.txt
-		unittests/resources/xmltest.xml unittests/resources/config_file_velocity_inlet.xml unittests/resources/velocity_inlet.txt 
-		)
+    unittests/resources/xmltest.xml unittests/resources/config_file_velocity_inlet.xml unittests/resources/velocity_inlet.txt 
+    )
 endif()
 
 # ----------- HEMELB functionaltests ---------------
 if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
-	#------CPPUnit ---------------
-	find_package(CPPUnit REQUIRED)
-	include_directories(${CPPUNIT_INCLUDE_DIR})
-	add_executable(functionaltests_hemelb ${root_sources})
-	add_subdirectory(functionaltests/cpptests)
-	target_link_libraries(functionaltests_hemelb 
-		hemelb_functionaltests 
-		${heme_libraries}
-		${MPI_LIBRARIES}
-		${PARMETIS_LIBRARIES}
-		${TINYXML_LIBRARIES}
-		${CPPUNIT_LIBRARY}
-		${Boost_LIBRARIES}
-		${CTEMPLATE_LIBRARIES}
-		${MPWide_LIBRARIES}
-		${ZLIB_LIBRARIES}
-		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
-	INSTALL(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
+  #------CPPUnit ---------------
+  find_package(CPPUnit REQUIRED)
+  include_directories(${CPPUNIT_INCLUDE_DIR})
+  add_executable(functionaltests_hemelb ${root_sources})
+  add_subdirectory(functionaltests/cpptests)
+  target_link_libraries(functionaltests_hemelb 
+    hemelb_functionaltests 
+    ${heme_libraries}
+    ${MPI_LIBRARIES}
+    ${PARMETIS_LIBRARIES}
+    ${TINYXML_LIBRARIES}
+    ${CPPUNIT_LIBRARY}
+    ${Boost_LIBRARIES}
+    ${CTEMPLATE_LIBRARIES}
+    ${MPWide_LIBRARIES}
+    ${ZLIB_LIBRARIES}
+    ${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
+  INSTALL(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
 endif()
 
 #-------- Copy and install resources --------------
 
 foreach(resource ${RESOURCES})
-	configure_file(${PROJECT_SOURCE_DIR}/${resource} ${BUILD_RESOURCE_PATH} COPYONLY)
-	get_filename_component(resource_leaf ${resource} NAME)
-	INSTALL(FILES ${BUILD_RESOURCE_PATH}/${resource_leaf} DESTINATION share/hemelb/resources)
+  configure_file(${PROJECT_SOURCE_DIR}/${resource} ${BUILD_RESOURCE_PATH} COPYONLY)
+  get_filename_component(resource_leaf ${resource} NAME)
+  INSTALL(FILES ${BUILD_RESOURCE_PATH}/${resource_leaf} DESTINATION share/hemelb/resources)
 endforeach()
