@@ -250,6 +250,14 @@ namespace hemelb
                     << static_cast<WrittenDataType> (dataSource.GetTangentialProjectionTraction().y)
                     << static_cast<WrittenDataType> (dataSource.GetTangentialProjectionTraction().z);
                 break;
+              case OutputField::VelocityDistributions:
+                std::cout << "Serialisation required." << std::endl;
+		// TO DO: use GetVelocityDistribution.
+                xdrWriter
+                    << static_cast<WrittenDataType> (dataSource.GetTangentialProjectionTraction().x)
+                    << static_cast<WrittenDataType> (dataSource.GetTangentialProjectionTraction().y)
+                    << static_cast<WrittenDataType> (dataSource.GetTangentialProjectionTraction().z);
+                break;
               case OutputField::MpiRank:
                 xdrWriter
                     << static_cast<WrittenDataType> (comms.Rank());
@@ -286,6 +294,8 @@ namespace hemelb
           return 3;
         case OutputField::StressTensor:
           return 6; // We only store the upper triangular part of the symmetric tensor
+        case OutputField::VelocityDistributions:
+          return 15; // TO DO: remove the hard coding of D3Q15.
         default:
           // This should never trip. Only occurs if someone adds a new field and forgets
           // to add to this method.

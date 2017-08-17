@@ -461,6 +461,10 @@ namespace hemelb
       {
         field.type = extraction::OutputField::TangentialProjectionTraction;
       }
+      else if (type == "distributions")
+      {
+        field.type = extraction::OutputField::VelocityDistributions;
+      }
       else if (type == "mpirank")
       {
         field.type = extraction::OutputField::MpiRank;
