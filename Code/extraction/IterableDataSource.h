@@ -93,6 +93,12 @@ namespace hemelb
         virtual util::Vector3D<PhysicalStress> GetTangentialProjectionTraction() const = 0;
 
         /**
+         * Returns the velocity distribution at a site.
+         * @return projected traction vector
+         */
+        virtual util::Vector3D<PhysicalStress> GetVelocityDistribution() const = 0;
+
+        /**
          * Resets the iterator to the beginning again.
          */
         virtual void Reset() = 0;

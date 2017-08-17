@@ -92,6 +92,8 @@ namespace hemelb
          */
         util::Vector3D<PhysicalStress> GetTangentialProjectionTraction() const;
 
+        util::Vector3D<PhysicalStress> GetVelocityDistribution() const;
+
         /**
          * Resets the iterator to the beginning again.
          */
