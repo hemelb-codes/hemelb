@@ -11,6 +11,7 @@
 #include "io/writers/xdr/XdrMemWriter.h"
 #include "net/IOCommunicator.h"
 #include "constants.h"
+#include "units.h"
 
 namespace hemelb
 {
@@ -251,12 +252,15 @@ namespace hemelb
                     << static_cast<WrittenDataType> (dataSource.GetTangentialProjectionTraction().z);
                 break;
               case OutputField::VelocityDistributions:
-                std::cout << "Serialisation required." << std::endl;
-		// TO DO: use GetVelocityDistribution.
-                xdrWriter
-                    << static_cast<WrittenDataType> (dataSource.GetTangentialProjectionTraction().x)
-                    << static_cast<WrittenDataType> (dataSource.GetTangentialProjectionTraction().y)
-                    << static_cast<WrittenDataType> (dataSource.GetTangentialProjectionTraction().z);
+                unsigned numComponents;
+                const distribn_t *d_ptr;
+                numComponents = dataSource.GetNumVectors();
+                d_ptr = dataSource.GetVelocityDistribution();
+                for (int i = 0; i < numComponents; i++)
+		{
+                  xdrWriter << static_cast<WrittenDataType> (*d_ptr);
+		  d_ptr++;
+		}
                 break;
               case OutputField::MpiRank:
                 xdrWriter

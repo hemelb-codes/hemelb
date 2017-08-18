@@ -77,9 +77,9 @@ namespace hemelb
       return converter.ConvertStressToPhysicalUnits(propertyCache.tangentialProjectionTractionCache.Get(position));
     }
 
-    util::Vector3D<PhysicalStress> LbDataSourceIterator::GetVelocityDistribution() const
+    const distribn_t* LbDataSourceIterator::GetVelocityDistribution() const
     {
-      return converter.ConvertStressToPhysicalUnits(propertyCache.tangentialProjectionTractionCache.Get(position));
+      return data.GetFNew(position * data.GetLatticeInfo().GetNumVectors());
     }
 
     void LbDataSourceIterator::Reset()
@@ -112,6 +112,11 @@ namespace hemelb
       site_t localSiteId = data.GetContiguousSiteId(location);
 
       return data.GetSite(localSiteId).IsWall();
+    }
+
+    unsigned LbDataSourceIterator::GetNumVectors() const
+    {
+      return data.GetLatticeInfo().GetNumVectors();
     }
   }
 }

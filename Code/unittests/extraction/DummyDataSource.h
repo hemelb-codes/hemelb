@@ -126,11 +126,17 @@ namespace hemelb
             return retValue;
           }
 
-          util::Vector3D<PhysicalStress> GetVelocityDistribution() const
+          distribn_t* GetVelocityDistribution() const
           {
-            util::Vector3D<PhysicalStress> retValue(0);
-            return retValue;
+            double fval = 1.0;
+            double *p_fval = &fval;
+            return p_fval;
           }
+
+	  unsigned GetNumVectors() const
+	  {
+	    return 15;
+	  }
 
           bool IsValidLatticeSite(const hemelb::util::Vector3D<site_t>&) const
           {

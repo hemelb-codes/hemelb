@@ -10,6 +10,7 @@
 #include "util/Vector3D.h"
 #include "units.h"
 #include "util/Matrix3D.h"
+//#include "lb/kernels/BaseKernel.h"
 
 namespace hemelb
 {
@@ -93,10 +94,10 @@ namespace hemelb
         virtual util::Vector3D<PhysicalStress> GetTangentialProjectionTraction() const = 0;
 
         /**
-         * Returns the velocity distribution at a site.
-         * @return projected traction vector
+         * Returns a pointer to the velocity distribution at a site.
+         * @return pointer to velocity distribution
          */
-        virtual util::Vector3D<PhysicalStress> GetVelocityDistribution() const = 0;
+        virtual const distribn_t* GetVelocityDistribution() const = 0;
 
         /**
          * Resets the iterator to the beginning again.
@@ -138,6 +139,12 @@ namespace hemelb
          * @return whether there is a boundary site at location
          */
         virtual bool IsWallSite(const util::Vector3D<site_t>& location) const = 0;
+
+        /**
+         * Returns the number of components in a velocity distribution.
+         * @return
+         */
+        virtual unsigned GetNumVectors() const = 0;
     };
   }
 }
