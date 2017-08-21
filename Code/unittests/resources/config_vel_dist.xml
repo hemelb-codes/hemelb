@@ -1,0 +1,106 @@
+<?xml version="1.0" ?>
+<hemelbsettings version="3">
+  <simulation>
+    <steps value="3000" units="lattice" />
+    <step_length value="0.0008571428571428571" units="s" />
+    <stresstype value="1" />
+    <voxel_size value="4.0e-4" units="m" />
+    <origin value="(-3.2e-3,-3.2e-3,-5.02e-2)" units="m" />
+  </simulation>
+  <geometry>
+    <datafile path="config.gmy" />
+  </geometry>
+  <initialconditions>
+    <pressure>
+      <uniform value="0.0" units="mmHg"/>
+    </pressure>
+  </initialconditions>  
+  <inlets>
+    <inlet>
+      <condition type="pressure" subtype="cosine">
+        <amplitude value="0.0" units="mmHg" />
+        <mean value="0.02" units="mmHg" />
+        <phase value="0.0" units="rad" />
+        <period value="0.8571428571428571" units="s" />
+      </condition>
+      <normal value="(0.0,0.0,1.0)" units="dimensionless" />
+      <position value="(0.0,0.0,-0.05)" units="m" />
+    </inlet>
+  </inlets>
+  <outlets>
+    <outlet>
+      <condition type="pressure" subtype="cosine">
+        <amplitude value="0.0" units="mmHg" />
+        <mean value="0.0" units="mmHg" />
+        <phase value="0.0" units="rad" />
+        <period value="0.8571428571428571" units="s" />
+      </condition>
+      <normal value="(0.0,0.0,-1.0)" units="dimensionless" />
+      <position value="(0.0,0.0,0.05)" units="m" />
+    </outlet>
+  </outlets>
+  <visualisation>
+    <centre value="(0.0,0.0,0.0)" units="m" />
+    <orientation>
+      <latitude value="45.0" units="deg" />
+      <longitude value="45.0" units="deg" />
+    </orientation>
+    <display brightness="0.03" zoom="1.0" />
+    <range>
+      <maxstress value="0.1" units="Pa" />
+      <maxvelocity value="0.1" units="m/s" />
+    </range>
+  </visualisation>
+  <properties>
+    <propertyoutput file="flow_snapshot.dat" period="1000">
+      <geometry type="whole" />
+      <field type="pressure" />
+      <field type="velocity" name="developed_velocity_field" />
+      <field type="shearstress" />
+      <field type="distributions" name="velocity_distributions" />
+    </propertyoutput>
+  </properties>
+  <monitoring>
+    <steady_flow_convergence tolerance="1e-4" terminate="false">
+      <criterion type="velocity" value="0.1" units="m/s"/>
+    </steady_flow_convergence>
+    <incompressibility/>
+  </monitoring>
+  <!-- <colloids> -->
+  <!--   <particles> -->
+  <!--     <subgridParticle units="metres" ParticleId="1" InputRadiusA0="0.000001" HydrostaticRadiusAh="0.000002" Mass="0.001"> -->
+  <!--       <initialPosition units="metres" x="0.0" y="0.0" z="-0.001"/> -->
+  <!--     </subgridParticle> -->
+  <!--     <subgridParticle units="metres" ParticleId="2" InputRadiusA0="0.000002" HydrostaticRadiusAh="0.000004" Mass="0.001"> -->
+  <!--       <initialPosition units="metres" x="0.0" y="0.0" z="-0.04"/> -->
+  <!--     </subgridParticle> -->
+  <!--     <subgridParticle units="metres" ParticleId="3" InputRadiusA0="0.000003" HydrostaticRadiusAh="0.000006" Mass="0.001"> -->
+  <!--       <initialPosition units="metres" x="0.0" y="0.0" z="0.04"/> -->
+  <!--     </subgridParticle> -->
+  <!--   </particles> -->
+  <!--   <bodyForces> -->
+  <!--     <constant forceName="myFirstForce"> -->
+  <!--       <force units="N" value="(0.0,-0.05005,0.0)"/> -->
+  <!--     </constant> -->
+  <!--     <inv_r_sq forceName="myInvRsqForce"> -->
+  <!--       <magnitude units="N/m^2" value="6.0" /> -->
+  <!--       <centrePoint units="m" value="(0.0,0.0,0.05)"/> -->
+  <!--     </inv_r_sq> -->
+  <!--     <magnetic forceName="magnet1"> -->
+  <!--       <field units="si" xValue="0.0" yValue="0.0" zValue="0.0"/> -->
+  <!--     </magnetic> -->
+  <!--     <magnetic forceName="magnet2"> -->
+  <!--       <field units="si" xValue="0.0" yValue="0.0" zValue="0.0"/> -->
+  <!--     </magnetic> -->
+  <!--   </bodyForces> -->
+  <!--   <boundaryConditions> -->
+  <!--     <lubricationBC appliesTo="wall" effectiveRange="1.0" /> -->
+  <!--     <deletionBC appliesTo="inlet"> -->
+  <!--       <activationDistance units="lattice" value="-0.25" /> -->
+  <!--     </deletionBC> -->
+  <!--     <deletionBC appliesTo="outlet"> -->
+  <!--       <activationDistance units="lattice" value="-0.25" /> -->
+  <!--     </deletionBC> -->
+  <!--   </boundaryConditions> -->
+  <!-- </colloids> -->
+</hemelbsettings>
