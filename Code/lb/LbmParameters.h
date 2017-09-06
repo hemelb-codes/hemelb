@@ -47,6 +47,7 @@ namespace hemelb
           advectionDiffusionOmega = -1.0 / advectionDiffusionTau;
           stressParameter = (1.0 - 1.0 / (2.0 * tau)) / sqrt(2.0);
           beta = -1.0 / (2.0 * tau);
+          alpha = KINETIC_RATE_m_per_s * (timeStepLength / voxelSize);
         }
 
         PhysicalTime GetTimeStep() const
@@ -79,6 +80,11 @@ namespace hemelb
           return advectionDiffusionTau;
         }
 
+        distribn_t GetAdvectionDiffusionAlpha() const
+        {
+          return alpha;
+        }
+
         distribn_t GetStressParameter() const
         {
           return stressParameter;
@@ -96,6 +102,7 @@ namespace hemelb
         PhysicalDistance voxelSize;
         distribn_t omega;
         distribn_t tau;
+        distribn_t alpha;
         distribn_t advectionDiffusionOmega;
         distribn_t advectionDiffusionTau;
         distribn_t stressParameter;
