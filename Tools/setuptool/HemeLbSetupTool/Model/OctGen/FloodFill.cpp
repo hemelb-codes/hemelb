@@ -29,13 +29,41 @@ auto FloodFill::GetStart() const -> Idx {
 
 #define PrintIdx(i) std::cout << "[" << i[0] << ", " << i[1] << ", "<< i[2] << ", "<< i[3] << "]" << std::endl
 
+// Helper functor that will create a leaf node and increment the fluid
+// count all the way up to the root. User must be sure that it will
+// only be called on coordinates that don't exist else the fluid
+// counts will be wrong!!
+class CreateAndIncrementor {
+public:
+  typedef MaskTree::NodePtr NodePtr;
+  typedef MaskTree::Int Int;
+
+  CreateAndIncrementor(MaskTree& t) : tree(t) {
+  }
+  
+  void operator()(Int i, Int j, Int k) {
+    unsigned initial = tree.Root()->Data();
+    auto path = tree.Root()->GetCreatePath(i,j,k, 0);
+    for (auto n: path) {
+      n->Data() += 1;
+    }
+    assert(tree.Root()->Data() == (initial + 1));
+  }
+  
+private:
+  MaskTree& tree;
+};
+
+
 MaskTree FloodFill::operator()() const {
   const auto& dirs = Neighbours::GetDisplacements();
   typedef boost::lockfree::queue<Idx> Queue;
   auto seed = GetStart();
     
   MaskTree seen(tree.Level());
-  seen.GetCreate(unpack(seed));
+  //seen.Root()->Data() = 0;
+  CreateAndIncrementor candi(seen);
+  candi(seed[0], seed[1], seed[2]);
   
   // WorkQ holds sites that are def fluid but we don't know about their
   // neighbours
@@ -60,7 +88,7 @@ MaskTree FloodFill::operator()() const {
 		pt[3]};
       
       if (!seen.Get(unpack(neigh))) {
-	seen.GetCreate(unpack(neigh));
+	candi(neigh[0], neigh[1], neigh[2]);
 	workQ.push(neigh);
       }
     };

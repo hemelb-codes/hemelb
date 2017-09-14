@@ -2,6 +2,6 @@
 #define HEMELBSETUPTOOL_MASKTREE_H
 
 #include "Oct.h"
-typedef Octree<bool> MaskTree;
+typedef Octree<unsigned> MaskTree;
 
 #endif //HEMELBSETUPTOOL_MASKTREE_H
