@@ -13,6 +13,22 @@ const SectionTree::Tree& SectionTree::GetTree() const {
   return indices;
 }
 
+auto SectionTree::FindIndex(Int i, Int j, Int k) const -> IndT {
+  Int cur_level = nLevels;
+  // Root level (==nLevel) has implicit offset of zero
+  IndT cur_offset = 0;
+  while (cur_level) {
+    --cur_level;
+    // Get the local index
+    auto lIndex = LocalOffset(i,j,k, cur_level);
+    cur_offset = indices[cur_level][cur_offset + lIndex];
+    if (cur_offset == NA()) {
+      break;
+    }
+  }
+  return cur_offset;
+}
+
 void SectionTree::Write(const std::string& fn) const {
   // Simple text file in directory format for testing
   namespace fs = boost::filesystem;

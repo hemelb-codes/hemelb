@@ -10,14 +10,10 @@ public:
   using Int = MaskTree::Int;
   
   static inline Int LocalOffset(const MaskTree::Node& n) {
-    Int lvl = n.Level();
-    Int xbit = (n.X() >> lvl) & 1;
-    Int ybit = (n.Y() >> lvl) & 1;
-    Int zbit = (n.Z() >> lvl) & 1;
-    return (xbit << 2) | (ybit << 1) | zbit;
+    return SectionTree::LocalOffset(n.X(), n.Y(), n.Z(), n.Level());
   }
   
-  SectionTreeBuilder(const MaskTree& mask);
+  SectionTreeBuilder(const MaskTree& mask, const FluidTree& edges);
   
   SectionTree::Ptr operator()();
   
@@ -30,13 +26,14 @@ public:
 
 private:
   const MaskTree& maskTree;
+  const FluidTree& edgeTree;
   
-  Int nLevels;
-  
+  const Int nLevels;
+  const unsigned nEdgeSites;
   // Current insertion index for each level
   // Has size == nLevels +1
   std::vector<SectionTree::IndT> offsets;
-  
+  std::vector<FluidTree::ConstNodePtr> edge_ptrs;
   SectionTree::Ptr output;
 };
 

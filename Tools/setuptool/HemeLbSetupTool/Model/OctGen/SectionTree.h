@@ -25,7 +25,8 @@
 class SectionTree {
 public:
   typedef std::shared_ptr<SectionTree> Ptr;
-  
+
+  typedef MaskTree::Int Int;
   typedef uint64_t IndT;
   
   typedef std::vector<IndT> TreeLevel;
@@ -33,6 +34,17 @@ public:
   
   typedef std::pair<IndT, IndT> RangeT;
   typedef std::vector<RangeT> SectionT;
+
+  static constexpr IndT NA() {return ~0;};
+  
+  static inline Int LocalOffset(Int i, Int j, Int k, Int lvl) {
+    Int xbit = (i >> lvl) & 1;
+    Int ybit = (j >> lvl) & 1;
+    Int zbit = (k >> lvl) & 1;
+    return (xbit << 2) | (ybit << 1) | zbit;
+  }
+  
+  IndT FindIndex(Int i, Int j, Int k) const;
   
   void AddSection(std::string& name);
 
@@ -44,7 +56,6 @@ public:
   
   void Write(const std::string& fn) const;
   
-  static constexpr IndT NA() {return ~0;};
   
 private:
   
@@ -52,7 +63,7 @@ private:
   
   SectionTree(size_t nl);
   
-  MaskTree::Int nLevels;
+  Int nLevels;
   Tree indices;
   IndT section_size;
   Tree counts;

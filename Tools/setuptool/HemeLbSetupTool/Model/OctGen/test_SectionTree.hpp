@@ -13,11 +13,12 @@ class SectionTreeTests : public CppUnit::TestFixture {
   CPPUNIT_TEST(TinyFullTree);
   CPPUNIT_TEST(TinyCentreTree);
   CPPUNIT_TEST(Sphere);
+  CPPUNIT_TEST(Duct);
   
   CPPUNIT_TEST_SUITE_END();
 
   // Tree with ALL leaf nodes
-  std::shared_ptr<MaskTree> FullTree(MaskTree::Int lvls) {
+  std::shared_ptr<MaskTree> FullMaskTree(MaskTree::Int lvls) {
     auto mt = std::make_shared<MaskTree>(lvls);
     MaskTree::Int n = 1 << lvls;
     for (auto i: range(n)) {
@@ -29,8 +30,26 @@ class SectionTreeTests : public CppUnit::TestFixture {
     }
     return mt;
   }
+  std::shared_ptr<FluidTree> FullEdgeTree(FluidTree::Int lvls) {
+    auto ft = std::make_shared<FluidTree>(lvls);
+    FluidTree::Int n = 1 << lvls;
+    for (auto i: range(n)) {
+      for (auto j: range(n)) {
+	for (auto k: range(n)) {
+	  bool xedge = (i == 0) || (i == n-1);
+	  bool yedge = (j == 0) || (j == n-1);
+	  bool zedge = (k == 0) || (k == n-1);
+	  if (xedge || yedge || zedge) {
+	    ft->GetCreate(i,j,k, 0);
+	  }
+	}
+      }
+    }
+    return ft;
+  }
+  
   // tree with central eighth of nodes
-  std::shared_ptr<MaskTree> CentreTree(MaskTree::Int lvls) {
+  std::shared_ptr<MaskTree> CentreMaskTree(MaskTree::Int lvls) {
     CPPUNIT_ASSERT(lvls >= 2);
     
     auto mt = std::make_shared<MaskTree>(lvls);
@@ -46,11 +65,32 @@ class SectionTreeTests : public CppUnit::TestFixture {
     }
     return mt;
   }
+  std::shared_ptr<FluidTree> CentreEdgeTree(FluidTree::Int lvls) {
+    CPPUNIT_ASSERT(lvls >= 2);
+    
+    auto mt = std::make_shared<FluidTree>(lvls);
+    FluidTree::Int n = 1 << lvls;
+    FluidTree::Int rmin = n / 4;
+    FluidTree::Int rmax = 3 * rmin;
+    for (auto i: range(rmin, rmax)) {
+      for (auto j: range(rmin, rmax)) {
+	for (auto k: range(rmin, rmax)) {
+	  bool xedge = (i == rmin) || (i == rmax-1);
+	  bool yedge = (j == rmin) || (j == rmax-1);
+	  bool zedge = (k == rmin) || (k == rmax-1);
+	  if (xedge || yedge || zedge)
+	    mt->GetCreate(i,j,k, 0);
+	}
+      }
+    }
+    return mt;
+  }
+  
 public:
 
   
   void LocalOffsets() {
-    auto mt = FullTree(2);
+    auto mt = FullMaskTree(2);
 
     MaskTree::ConstNodePtr node;
     
@@ -92,8 +132,10 @@ public:
     
   }
   void TinyFullTree() {
-    auto mt = FullTree(2);
-    SectionTreeBuilder b(*mt);
+    auto mt = FullMaskTree(2);
+    auto ft = FullEdgeTree(2);
+    
+    SectionTreeBuilder b(*mt, *ft);
     
     SectionTree::Ptr st = b();
     auto inds = st->GetTree();
@@ -109,9 +151,9 @@ public:
   }
 
   void TinyCentreTree() {
-    auto mt = CentreTree(3);
-    
-    SectionTreeBuilder b(*mt);
+    auto mt = CentreMaskTree(3);
+    auto ft = CentreEdgeTree(3);
+    SectionTreeBuilder b(*mt, *ft);
     SectionTree::Ptr st = b();
     
     auto inds = st->GetTree();
@@ -130,6 +172,13 @@ public:
 	CPPUNIT_ASSERT_EQUAL(ii==sd ? i*8 :SectionTree::NA(), inds[1][8*i + ii]);
       }
     }
+
+    auto ind_to_zero = st->FindIndex(0,0,0);
+    CPPUNIT_ASSERT_EQUAL(SectionTree::NA(), ind_to_zero);
+
+    auto ind_to_first = st->FindIndex(2,2,2);
+    CPPUNIT_ASSERT_EQUAL(0ULL, ind_to_first);
+    
     st->Write("tiny.oct");
   }
 
@@ -153,9 +202,37 @@ public:
     FloodFill ff(fluid_tree);
     auto mask_tree = ff();
 
-    SectionTreeBuilder builder(mask_tree);
+    SectionTreeBuilder builder(mask_tree, fluid_tree);
     auto section_tree = builder();
+
+    // 24, 17, 19 is an arbitrary interior point near the surface
+    // Do this block containing this point
+    // Coords in binary are (11000, 10001, 10011)
+    section_tree->Write("sphere.oct");
+    
   }
+ void Duct() {
+    TriTree::Int levels = 4;
+    TriTree::Int tri_level = 2;
+    auto duct = SimpleMeshFactory::MkDuct();
+    auto tree = TrianglesToTreeSerial(levels, tri_level, duct->points, duct->triangles);
+    
+    SurfaceVoxeliser voxer(1 << tri_level, duct->points,
+			   duct->triangles, duct->normals, duct->labels);
+    auto fluid_tree = voxer(tree, tri_level);
+    
+    // Fill the thing
+    FloodFill ff(fluid_tree);
+    auto mask_tree = ff();
+
+    SectionTreeBuilder builder(mask_tree, fluid_tree);
+    auto section_tree = builder();
+
+    section_tree->Write("duct.oct");
+    
+  }
+
+  
 };
 CPPUNIT_TEST_SUITE_REGISTRATION(SectionTreeTests);
 #endif
