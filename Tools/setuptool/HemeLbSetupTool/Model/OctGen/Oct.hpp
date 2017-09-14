@@ -8,7 +8,7 @@
 #include <ostream>
 
 template<class T>
-Octree<T>::Node::Node(Int i, Int j, Int k, Int l) : x(i), y(j), z(k), level(l) {
+Octree<T>::Node::Node(Int i, Int j, Int k, Int l) : x(i), y(j), z(k), level(l), value() {
 }
 template<class T>
 T& Octree<T>::Node::Data() {
@@ -36,6 +36,16 @@ auto Octree<T>::Node::Level() const -> Int{
   return level;
 }
 
+template<class T>
+bool Octree<T>::Node::IsNodeInRange(Int i, Int j, Int k, Int l) const {
+  // the least significant this->level bits represent the relative index
+  // the other bits must match my bits
+  auto tl = this->level;
+  return ((i >> tl) == (this->x >> tl)) &&
+    ((j >> tl) == (this->y >> tl)) &&
+    ((k >> tl) == (this->z >> tl));
+}
+
 // Get a node without creating - returns null pointer if doensn't exist
 template<class T>
 auto Octree<T>::Branch::Get(Int i, Int j, Int k, Int l) -> NodePtr {
@@ -43,19 +53,10 @@ auto Octree<T>::Branch::Get(Int i, Int j, Int k, Int l) -> NodePtr {
     // a parent - error
     throw std::out_of_range("trying to get a parent node");
   }
-      
-  // the least significant this->level bits represent the relative index
-  // the other bits must match my bits
-  // tl = this level
-  Int tl_mask = (~0) << this->level;
-  // logical not(0) == all the ones
-      
-  if ((tl_mask & i) != (tl_mask & this->x) ||
-      (tl_mask & j) != (tl_mask & this->y) ||
-      (tl_mask & k) != (tl_mask & this->z)) {
+  
+  if (!this->IsNodeInRange(i, j, k, l))
     throw std::out_of_range("requested node not in my range");
-  }
-      
+  
   // OK
   return get_nocreate_internal(i, j, k, l);
 }
@@ -68,18 +69,9 @@ auto Octree<T>::Branch::Get(Int i, Int j, Int k, Int l) const -> ConstNodePtr {
     throw std::out_of_range("trying to get a parent node");
   }
       
-  // the least significant this->level bits represent the relative index
-  // the other bits must match my bits
-  // tl = this level
-  Int tl_mask = (~0) << this->level;
-  // logical not(0) == all the ones
-      
-  if ((tl_mask & i) != (tl_mask & this->x) ||
-      (tl_mask & j) != (tl_mask & this->y) ||
-      (tl_mask & k) != (tl_mask & this->z)) {
+  if (!this->IsNodeInRange(i, j, k))
     throw std::out_of_range("requested node not in my range");
-  }
-      
+  
   // OK
   return get_nocreate_internal(i, j, k, l);
 }
@@ -92,21 +84,35 @@ auto Octree<T>::Branch::GetCreate(Int i, Int j, Int k, Int l) -> NodePtr {
     throw std::out_of_range("trying to get a parent node");
   }
       
-  // the least significant this->level bits represent the relative index
-  // the other bits must match my bits
-  // tl = this level
-  Int tl_mask = (~0) << this->level;
-  // logical not(0) == all the ones
-      
-  if ((tl_mask & i) != (tl_mask & this->x) ||
-      (tl_mask & j) != (tl_mask & this->y) ||
-      (tl_mask & k) != (tl_mask & this->z)) {
+  if (!this->IsNodeInRange(i, j, k))
     throw std::out_of_range("requested node not in my range");
-  }
-      
+  
   // OK
   return get_create_internal(i, j, k, l);
 }
+
+template<class T>
+auto Octree<T>::Branch::GetCreatePath(Int i, Int j, Int k, Int l) -> NodeList {
+  // if (l >= this->level) {
+  //   // a parent - error
+  //   throw std::out_of_range("trying to get a parent node");
+  // }
+      
+  // if (!this->IsNodeInRange(i, j, k))
+  //   throw std::out_of_range("requested node not in my range");
+  
+  if (l == this->level) {
+    return NodeList(1, this->shared_from_this());
+  }
+  
+  auto child = GetCreate(i,j,k, this->level - 1);
+  
+  auto ans = child->GetCreatePath(i,j,k, l);
+  ans.push_front(this->shared_from_this());
+  return ans;
+}
+
+
 template<class T>
 void Octree<T>::Branch::Set(Int i, Int j, Int k, Int l, NodePtr n) {
 	Int pl = l + 1;
@@ -118,24 +124,19 @@ void Octree<T>::Branch::Set(Int i, Int j, Int k, Int l, NodePtr n) {
 	auto parent = std::dynamic_pointer_cast<Branch>(GetCreate(pi, pj, pk, pl));
 	if (!parent)
 		throw std::out_of_range("parent of request index not a branch node");
-
-	Int li = (i >> l) & 1;
-	Int lj = (j >> l) & 1;
-	Int lk = (k >> l) & 1;
-	parent->children[li][lj][lk] = n;
+	
+	parent->children[Octree<T>::Node::LocalIndex(i, j, k, l)] = n;
 }
 
 template<class T>
 void Octree<T>::Branch::Accept(Visitor& v) {
   v.Arrive(this->shared_from_this());
   if (v.ShouldDescend(this->shared_from_this()))
-    for (auto i: {0, 1})
-      for (auto j: {0, 1})
-	for (auto k: {0, 1}) {
-	  auto child = children[i][j][k];
-	  if (child)
-	    child->Accept(v);
-	}
+    for (auto i=0; i<8; ++i) {
+      auto child = children[i];
+      if (child)
+	child->Accept(v);
+    }
   
   v.Depart(this->shared_from_this());
 }
@@ -143,25 +144,25 @@ template<class T>
 void Octree<T>::Branch::Accept(ConstVisitor& v) const {
   v.Arrive(this->shared_from_this());
   if (v.ShouldDescend(this->shared_from_this()))
-    for (auto i: {0, 1})
-      for (auto j: {0, 1})
-	for (auto k: {0, 1}) {
-	  auto child = children[i][j][k];
-	  if (child)
-	    child->Accept(v);
-	}
-
+    for (auto i=0; i<8; ++i) {
+      auto child = children[i];
+      if (child)
+	child->Accept(v);
+    }
+  
   v.Depart(this->shared_from_this());
 }
 
 template<class T>
 auto Octree<T>::Branch::get_create_internal(Int i, Int j, Int k, Int l) -> NodePtr {
-  // Get the local index
   Int child_level = this->level - 1;
+  // Get the local index
+  auto i_child = Octree<T>::Node::LocalIndex(i, j, k, child_level);
+
   Int li = (i >> child_level) & 1;
   Int lj = (j >> child_level) & 1;
   Int lk = (k >> child_level) & 1;
-  auto child = children[li][lj][lk];
+  auto child = children[i_child];
       
   if (!child) {
     // Create the child node
@@ -171,10 +172,10 @@ auto Octree<T>::Branch::get_create_internal(Int i, Int j, Int k, Int l) -> NodeP
 	
     if (child_level) {
       // child is branch
-      child = children[li][lj][lk] = NodePtr(new Branch(ci, cj, ck, child_level));
+      child = children[i_child] = NodePtr(new Branch(ci, cj, ck, child_level));
     } else {
       // child is leaf
-      child = children[li][lj][lk] = NodePtr(new Leaf(ci, cj, ck, child_level));
+      child = children[i_child] = NodePtr(new Leaf(ci, cj, ck, child_level));
     }
   }
       
@@ -185,14 +186,12 @@ auto Octree<T>::Branch::get_create_internal(Int i, Int j, Int k, Int l) -> NodeP
     return branch->get_create_internal(i, j, k, l);
   }
 }
+
 template<class T>
 auto Octree<T>::Branch::get_nocreate_internal(Int i, Int j, Int k, Int l) -> NodePtr {
   // Get the local index
   Int child_level = this->level - 1;
-  Int li = (i >> child_level) & 1;
-  Int lj = (j >> child_level) & 1;
-  Int lk = (k >> child_level) & 1;
-  auto child = children[li][lj][lk];
+  auto child = children[Octree<T>::Node::LocalIndex(i, j, k, child_level)];
       
   if (!child) {
     return child;
@@ -209,10 +208,7 @@ template<class T>
 auto Octree<T>::Branch::get_nocreate_internal(Int i, Int j, Int k, Int l) const -> ConstNodePtr {
   // Get the local index
   Int child_level = this->level - 1;
-  Int li = (i >> child_level) & 1;
-  Int lj = (j >> child_level) & 1;
-  Int lk = (k >> child_level) & 1;
-  auto child = children[li][lj][lk];
+  auto child = children[Octree<T>::Node::LocalIndex(i, j, k, child_level)];
       
   if (!child) {
     return child;
@@ -239,6 +235,11 @@ template<class T>
 auto Octree<T>::Leaf::GetCreate(Int i, Int j, Int k, Int l) -> NodePtr {
   throw std::out_of_range("trying to get a child of a leaf node");
 }
+template<class T>
+auto Octree<T>::Leaf::GetCreatePath(Int i, Int j, Int k, Int l) -> NodeList {
+  return NodeList(1, this->shared_from_this());
+}
+
 template<class T>
 void Octree<T>::Leaf::Set(Int i, Int j, Int k, Int l, NodePtr n) {
 	throw std::out_of_range("trying to set a child of a leaf node");
@@ -295,21 +296,21 @@ template<class T>
 void WriteNodeData(std::ostream& os, const T& data);
 
 template<class T>
-class Writer : public Octree<T>::Visitor {
+class Writer : public Octree<T>::ConstVisitor {
 public:
   typedef Octree<T> Tree;
-  typedef typename Tree::Node Node;
+  typedef typename Tree::ConstNodePtr ConstNodePtr;
   
   Writer(std::ostream& stream) : os(stream), padding(0) {}
   
-  virtual void Arrive(Node& node) {
-    os << std::string(padding, ' ') << node.X() << ", " << node.Y() << ", " << node.Z()
+  virtual void Arrive(ConstNodePtr node) {
+    os << std::string(padding, ' ') << node->X() << ", " << node->Y() << ", " << node->Z()
        << " = ";
-    WriteNodeData(os, node.Data());
+    WriteNodeData(os, node->Data());
     os << std::endl;
     padding++;
   }
-  virtual void Depart(Node& node) {
+  virtual void Depart(ConstNodePtr node) {
     padding--;
   }
   
@@ -325,12 +326,12 @@ std::ostream& operator<<(std::ostream& os, Octree<T>& tree) {
   tree.Root()->Accept(w);
   return os;
 }
-template<class T>
-std::ostream& operator<<(std::ostream& os, typename Octree<T>::Node& node) {
-  Writer<T> w(os);
-  node.Accept(w);
-  return os;
-}
+// template<class T>
+// std::ostream& operator<<(std::ostream& os, typename Octree<T>::Node& node) {
+//   Writer<T> w(os);
+//   node.Accept(w);
+//   return os;
+// }
 
 template<class T>
 void WriteNodeData(std::ostream& os, const T& data) {

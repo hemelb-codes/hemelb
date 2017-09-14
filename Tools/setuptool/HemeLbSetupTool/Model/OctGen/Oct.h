@@ -3,7 +3,11 @@
 #define HEMELBSETUPTOOL_OCT_H
 
 #include <memory>
- 
+#include <list>
+
+template<class T>
+class Writer;
+
 template<class T>
 class Octree {
 public:
@@ -13,7 +17,10 @@ public:
   class Node;
   typedef std::shared_ptr<Node> NodePtr;
   typedef std::shared_ptr<const Node> ConstNodePtr;
-
+  
+  typedef std::list<NodePtr> NodeList;
+  typedef std::list<ConstNodePtr> ConstNodeList;
+  
   class Branch;
   class Leaf;
   
@@ -30,6 +37,16 @@ public:
     Int Y() const;
     Int Z() const;
     Int Level() const;
+
+    bool IsNodeInRange(Int i, Int j, Int k, Int l = 0) const;
+    
+    static inline Int LocalIndex(Int i, Int j, Int k, Int level) {
+      // Get the local index
+      Int li = (i >> level) & 1;
+      Int lj = (j >> level) & 1;
+      Int lk = (k >> level) & 1;
+      return li << 2 | lj << 1 | lk;
+    }
     
     // Get a node without creating
     virtual NodePtr Get(Int i, Int j, Int k, Int l) = 0;
@@ -48,9 +65,9 @@ public:
       Accept(v);
     }
     template<class FuncT>
-        void IterDepthFirst(Int bot, Int top, FuncT f) {
-          LevelVisitor<FuncT> v(bot, top, f);
-          Accept(v);
+    void IterDepthFirst(Int bot, Int top, FuncT f) {
+      LevelVisitor<FuncT> v(bot, top, f);
+      Accept(v);
     }
     template<class FuncT>
     void IterDepthFirst(FuncT f) {
@@ -60,7 +77,16 @@ public:
     void IterDepthFirst(Int bot, FuncT f) {
       IterDepthFirst(bot, level, f);
     }
-    
+
+    // Return the list of nodes from the current to the requested, inclusive
+    virtual NodeList GetCreatePath(Int i, Int j, Int k, Int l) = 0;
+        
+    friend std::ostream& operator<<(std::ostream& os, const Node& obj) {
+      Writer<T> w(os);
+      obj.Accept(w);
+      return os;
+    }
+
   protected:
     Int x, y, z, level;
     T value;
@@ -77,6 +103,8 @@ public:
     // Get a node without creating - returns null pointer if doensn't exist
     virtual NodePtr GetCreate(Int i, Int j, Int k, Int l);
     
+    virtual NodeList GetCreatePath(Int i, Int j, Int k, Int l);
+    
     virtual void Accept(Visitor& v);
     virtual void Accept(ConstVisitor& v) const;
     virtual void Set(Int i, Int j, Int k, Int l, NodePtr n);
@@ -86,7 +114,7 @@ public:
     NodePtr get_nocreate_internal(Int i, Int j, Int k, Int l);
     ConstNodePtr get_nocreate_internal(Int i, Int j, Int k, Int l) const;
     
-    NodePtr children[2][2][2];
+    NodePtr children[8];
   };
   
   class Leaf : public Node {
@@ -97,6 +125,8 @@ public:
     virtual ConstNodePtr Get(Int i, Int j, Int k, Int l) const;
 
     virtual NodePtr GetCreate(Int i, Int j, Int k, Int l);
+    virtual NodeList GetCreatePath(Int i, Int j, Int k, Int l);
+    
     virtual void Accept(Visitor& v);
     virtual void Accept(ConstVisitor& v) const;
     virtual void Set(Int i, Int j, Int k, Int l, NodePtr n);
@@ -195,8 +225,8 @@ private:
 
 template<class T>
 std::ostream& operator<<(std::ostream&, const Octree<T>& obj);
-template<class T>
-std::ostream& operator<<(std::ostream&, const typename Octree<T>::Node& obj);
+// template<class T>
+// std::ostream& operator<<(std::ostream&, const typename Octree<T>::Node& obj);
 
 
 #include "Oct.hpp"
