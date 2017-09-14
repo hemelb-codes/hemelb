@@ -34,7 +34,7 @@ namespace hemelb
         // where r is the distance from the centreline
         LatticePosition displ = x - position;
         LatticeDistance z = displ.Dot(normal);
-        LatticeDistance r_distance = displ.GetMagnitudeSquared() - z * z;
+        LatticeDistance r_distance = sqrt(displ.GetMagnitudeSquared() - z * z);
 
         // Get the max velocity
         LatticeSpeed max = maxSpeed;
