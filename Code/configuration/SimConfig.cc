@@ -331,6 +331,10 @@ namespace hemelb
       {
         newIolet = DoIOForParabolicVelocityInOutlet(ioletEl);
       }
+      else if (conditionSubtype == "hollowparabolic")
+      {
+        newIolet = DoIOForHollowParabolicVelocityInOutlet(ioletEl);
+      }
       else if (conditionSubtype == "womersley")
       {
         newIolet = DoIOForWomersleyVelocityInOutlet(ioletEl);
@@ -690,6 +694,34 @@ namespace hemelb
 
       const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
       newIolet->SetRadius(GetDimensionalValueInLatticeUnits<LatticeDistance>(radiusEl, "m"));
+
+      const io::xml::Element maximumEl = conditionEl.GetChildOrThrow("maximum");
+      newIolet->SetMaxSpeed(GetDimensionalValueInLatticeUnits<PhysicalSpeed>(maximumEl, "m/s"));
+
+      const io::xml::Element concentrationEl = conditionEl.GetChildOrThrow("concentration");
+      newIolet->SetConcentration(GetDimensionalValueInLatticeUnits<PhysicalDensity>(concentrationEl, "kg/m3"));
+
+      if (warmUpSteps != 0)
+      {
+        newIolet->SetWarmup(warmUpSteps);
+      }
+
+      return newIolet;
+    }
+
+    lb::iolets::InOutLetHollowParabolicVelocity* SimConfig::DoIOForHollowParabolicVelocityInOutlet(
+        const io::xml::Element& ioletEl)
+    {
+      lb::iolets::InOutLetHollowParabolicVelocity* newIolet = new lb::iolets::InOutLetHollowParabolicVelocity();
+      DoIOForBaseInOutlet(ioletEl, newIolet);
+
+      const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+
+      const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
+      newIolet->SetRadius(GetDimensionalValueInLatticeUnits<LatticeDistance>(radiusEl, "m"));
+
+      const io::xml::Element innerRadiusEl = conditionEl.GetChildOrThrow("innerradius");
+      newIolet->SetInnerRadius(GetDimensionalValueInLatticeUnits<LatticeDistance>(innerRadiusEl, "m"));
 
       const io::xml::Element maximumEl = conditionEl.GetChildOrThrow("maximum");
       newIolet->SetMaxSpeed(GetDimensionalValueInLatticeUnits<PhysicalSpeed>(maximumEl, "m/s"));

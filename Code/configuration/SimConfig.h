@@ -226,6 +226,8 @@ namespace hemelb
         lb::stents::Stent* DoIOForFluxStent(const io::xml::Element& stentEl);
         lb::iolets::InOutLetParabolicVelocity* DoIOForParabolicVelocityInOutlet(
             const io::xml::Element& ioletEl);
+        lb::iolets::InOutLetHollowParabolicVelocity* DoIOForHollowParabolicVelocityInOutlet(
+            const io::xml::Element& ioletEl);
         lb::stents::StentConstantFlux* DoIOForConstantFluxStent(
             const io::xml::Element& stentEl);
         /**
