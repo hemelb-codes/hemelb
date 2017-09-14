@@ -22,7 +22,7 @@ test : $(lib_objects) test.o
 voxer_bench : $(lib_objects) voxer_bench.o
 	$(CXX) $(LDLIBS) $^ -o $@
 
-test.o : test.cpp test_*.hpp
+test.o : test.cpp test_*.hpp TestResources/*
 
 Vector.o : Vector.cpp
 
