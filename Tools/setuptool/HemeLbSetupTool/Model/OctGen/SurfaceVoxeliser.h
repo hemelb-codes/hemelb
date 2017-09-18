@@ -13,15 +13,15 @@
 #include "FluidSiteTree.h"
 
 struct Cut {
-	Cut() : dist(std::numeric_limits<double>::infinity()), id(-1) {
-	}
-	double dist;
-	int id;
+  Cut() : dist(std::numeric_limits<double>::infinity()), id(-1) {
+  }
+  double dist;
+  int id;
 };
 // This represents a site (whether fluid or solid) that has one or more
 // links cutting the surface.
 struct EdgeSite {
-	std::array<Cut, 26> closest_cut;
+  std::array<Cut, 26> closest_cut;
 };
 
 typedef std::shared_ptr<EdgeSite> EdgeSitePtr;
@@ -30,7 +30,7 @@ typedef Octree<EdgeSitePtr> EdgeSiteTree;
 class SurfaceVoxeliser {
 public:
   SurfaceVoxeliser(const int node_size, const std::vector<Vector>& points, const std::vector<Index>& triangles,
-		  const std::vector<Vector>&normals, const std::vector<int>& labels);
+		   const std::vector<Vector>&normals, const std::vector<int>& labels);
 
   // We maybe need a destructor because the order of destruction of mesh and searcher seems to matter?
   //~SurfaceVoxeliser();
