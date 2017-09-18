@@ -8,11 +8,11 @@ CXXFLAGS = -std=c++11 -g -I$(HEMELB_CODE) -I$(VTK_INCLUDE_DIR) -I$(BOOST_INCLUDE
 vtk_needed_libs = vtkIOXML vtkCommonDataModel vtkCommonCore
 vtk_libs = $(foreach vlib,$(vtk_needed_libs),-l$(vlib)-$(VTK_VERSION))
 
-LDLIBS = -L$(VTK_LIBRARY_DIR) -Wl,-rpath,$(VTK_LIBRARY_DIR) $(vtk_libs) -L$(CGAL_LIBRARY_DIR) -lCGAL -lgmp -lcppunit -lboost_system -lboost_filesystem
+LDLIBS = -L$(VTK_LIBRARY_DIR) -Wl,-rpath,$(VTK_LIBRARY_DIR) $(vtk_libs) -L$(CGAL_LIBRARY_DIR) -lCGAL -lgmp -lcppunit -lboost_system -lboost_filesystem -lhdf5
 
 lib_objects = Vector.o Vector3D.o TriTree.o TriangleSorter.o MkCgalMesh.o \
 	Neighbours.o SegmentFactory.o SurfaceVoxeliser.o FloodFill.o \
-	SectionTree.o SectionTreeBuilder.o
+	SectionTree.o SectionTreeBuilder.o H5.o
 
 all : test voxer_bench
 
