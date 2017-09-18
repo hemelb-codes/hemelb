@@ -463,6 +463,8 @@ namespace H5
     H5T_NATIVE_ULLONG;
 
   template<>
+  const hid_t DataTypeTraits<float>::NativeType = H5T_NATIVE_FLOAT;
+  template<>
   const hid_t DataTypeTraits<double>::NativeType = H5T_NATIVE_DOUBLE;
 
   AttributeSharedPtr Attribute::Create(hid_t parent,

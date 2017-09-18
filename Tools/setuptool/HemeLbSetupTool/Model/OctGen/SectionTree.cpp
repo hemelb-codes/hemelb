@@ -4,7 +4,7 @@
 #include <iostream>
 #include "SectionTree.h"
 #include "enumerate.hpp"
-
+#include "H5.h"
 
 SectionTree::SectionTree(size_t nl) : nLevels(nl), indices(nl+1), counts(nl+1) {
 }
@@ -29,27 +29,54 @@ auto SectionTree::FindIndex(Int i, Int j, Int k) const -> IndT {
   return cur_offset;
 }
 
-void SectionTree::Write(const std::string& fn) const {
-  // Simple text file in directory format for testing
-  namespace fs = boost::filesystem;
+namespace H5 {
+  template<>
+  DataTypeSharedPtr DataTypeTraits<SVector>::GetType()
+  {
+    return DataType::Array<float>({3});
+  }
   
-  fs::path dirname(fn);
-  fs::create_directory(dirname);
-  
-  for (auto x: const_enumerate(indices)) {
-    // Each level is a single file 000n.txt
-    std::ostringstream ss;
-    ss << std::setfill('0') << std::setw(4) << x.first << ".txt";
-    auto ifilename = dirname / ss.str();
-    std::ofstream outfile(ifilename.native());
-    // Each file just contains the indices one per line
-    for (auto el: x.second) {
-      outfile << el << std::endl;
-    }
-
-    links.write((dirname / "links").native());
-    wall_normals.write((dirname / "wall_normals").native());
+  template<>
+  DataTypeSharedPtr DataTypeTraits<std::array<Link,26>>::GetType()
+  {
+    return DataType::Array<Link>({26});
   }
 
+  template<>
+  DataTypeSharedPtr DataTypeTraits<Link>::GetType()
+  {
+    hid_t link_id = H5Tcreate(H5T_COMPOUND, sizeof(Link));
+    H5Tinsert (link_id, "type", HOFFSET(Link, type),
+	       H5T_NATIVE_INT);
+    H5Tinsert (link_id, "dist", HOFFSET(Link, dist),
+	       H5T_NATIVE_FLOAT);
+    H5Tinsert (link_id, "id", HOFFSET(Link, id),
+	       H5T_NATIVE_INT);
+    
+    return DataTypeSharedPtr(new DataType(link_id));
+  }
+}
+template <class T>
+void Section<T>::write(H5::GroupPtr grp) const {
+  grp->CreateWriteDataSet("offsets", offsets);
+  grp->CreateWriteDataSet("counts", counts);
+  grp->CreateWriteDataSet("data", data);
+}
+
+void SectionTree::Write(const std::string& fn) const {
+  auto outfile =  H5::File::Create(fn, H5F_ACC_TRUNC);
+  auto root = outfile->CreateGroup("hemelb")->CreateGroup("geometry");
+  root->SetAttribute("version", 1);
+  root->SetAttribute("levels", int(nLevels));
+  for (auto x: const_enumerate(indices)) {
+    // Each level is a single dataset
+    std::ostringstream ss;
+    ss << std::setfill('0') << std::setw(4) << x.first;
+    root->CreateWriteDataSet(ss.str(), x.second);
+  }
+
+  auto wng = root->CreateGroup("wall_normals");
+  wall_normals.write(wng);
+  links.write(root->CreateGroup("links"));
   
 }

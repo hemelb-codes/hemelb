@@ -16,6 +16,10 @@
 
 // This is a pair of integers (offset and a count) and some data. The
 // integers index into the data.
+namespace H5 {
+  class Group;
+  typedef std::shared_ptr<Group> GroupPtr;
+}
 template <class T>
 struct Section {
   typedef uint64_t IndT;
@@ -31,23 +35,9 @@ struct Section {
     counts.push_back(1);
     data.emplace_back(std::forward<Args>(args)...);
   }
-  
-  void write(const std::string fn) const {
-    // Section contains one (offset, count) pair per line
-    std::ofstream sfile(fn + ".section");
-    auto off = offsets.begin();
-    auto cnt = counts.begin();
 
-    for (; off != offsets.end(); ++off, ++cnt) {
-      sfile << *off << "," << *cnt << std::endl;
-    }
-    
-    // data contains data one elem per line
-    std::ofstream dfile(fn + ".data");
-    for (auto el: data) {
-      dfile << el << std::endl;
-    }
-  }
+  void write(H5::GroupPtr grp) const;
+  
   std::vector<IndT> offsets;
   std::vector<IndT> counts;
   std::vector<T> data;

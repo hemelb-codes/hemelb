@@ -318,9 +318,21 @@ namespace H5{
     {
       return DataTypeTraits<T>::GetType();
     }
+    
+    template<class T>
+    static DataTypeSharedPtr Array(std::initializer_list<hsize_t> dims) {
+      hsize_t nd = dims.size();
+      hid_t ans;
+      H5_CONSTRUCT(ans, H5Tarray_create, (DataTypeTraits<T>::GetType()->GetId(), nd, dims.begin()));
+      
+      return DataTypeSharedPtr(new DataType(ans));
+    }
+    
     virtual void Close();
     DataTypeSharedPtr Copy() const;
   protected:
+    template<class T>
+    friend class DataTypeTraits;
     DataType(hid_t id);
   };
 
