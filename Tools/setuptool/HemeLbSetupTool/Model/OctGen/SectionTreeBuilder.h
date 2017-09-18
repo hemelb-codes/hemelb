@@ -5,6 +5,9 @@
 #include "MaskTree.h"
 #include "SectionTree.h"
 
+// This will build a section tree from a MaskTree (i.e. the result of
+// flood filling a domain) and it's source EdgeTree (that contains all
+// the boundary condition data)
 class SectionTreeBuilder : public MaskTree::ConstVisitor {
 public:
   using Int = MaskTree::Int;
@@ -34,6 +37,10 @@ private:
   // Has size == nLevels +1
   std::vector<SectionTree::IndT> offsets;
   std::vector<FluidTree::ConstNodePtr> edge_ptrs;
+  
+  SectionTree::IndT wall_normal_offset;
+  SectionTree::IndT links_offset;
+  
   SectionTree::Ptr output;
 };
 

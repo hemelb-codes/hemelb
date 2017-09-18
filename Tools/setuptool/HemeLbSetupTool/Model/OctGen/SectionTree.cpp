@@ -6,7 +6,7 @@
 #include "enumerate.hpp"
 
 
-SectionTree::SectionTree(size_t nl) : nLevels(nl), indices(nl), counts(nl) {
+SectionTree::SectionTree(size_t nl) : nLevels(nl), indices(nl+1), counts(nl+1) {
 }
 
 const SectionTree::Tree& SectionTree::GetTree() const {
@@ -18,13 +18,13 @@ auto SectionTree::FindIndex(Int i, Int j, Int k) const -> IndT {
   // Root level (==nLevel) has implicit offset of zero
   IndT cur_offset = 0;
   while (cur_level) {
-    --cur_level;
     // Get the local index
-    auto lIndex = LocalOffset(i,j,k, cur_level);
+    auto lIndex = LocalOffset(i,j,k, cur_level-1);
     cur_offset = indices[cur_level][cur_offset + lIndex];
     if (cur_offset == NA()) {
       break;
     }
+    --cur_level;
   }
   return cur_offset;
 }

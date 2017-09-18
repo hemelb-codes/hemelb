@@ -138,16 +138,16 @@ public:
     SectionTreeBuilder b(*mt, *ft);
     
     SectionTree::Ptr st = b();
-    auto inds = st->GetTree();
-
-    CPPUNIT_ASSERT_EQUAL(size_t(64), inds[0].size());
+    const auto& inds = st->indices;
+    
+    CPPUNIT_ASSERT_EQUAL(size_t(64), inds[1].size());
     for(auto i: range<uint64_t>(64))
-      CPPUNIT_ASSERT_EQUAL(i, inds[0][i]);
+      CPPUNIT_ASSERT_EQUAL(i, inds[1][i]);
     
   
-    CPPUNIT_ASSERT_EQUAL(size_t(8), inds[1].size());
+    CPPUNIT_ASSERT_EQUAL(size_t(8), inds[2].size());
     for(auto i: range<uint64_t>(8))
-      CPPUNIT_ASSERT_EQUAL(i*8, inds[1][i]);
+      CPPUNIT_ASSERT_EQUAL(i*8, inds[2][i]);
   }
 
   void TinyCentreTree() {
@@ -156,20 +156,20 @@ public:
     SectionTreeBuilder b(*mt, *ft);
     SectionTree::Ptr st = b();
     
-    auto inds = st->GetTree();
+    const auto& inds = st->indices;
     
-    CPPUNIT_ASSERT_EQUAL(size_t(64), inds[0].size());
-    for(auto i: range<uint64_t>(64))
-      CPPUNIT_ASSERT_EQUAL(i, inds[0][i]);
-
     CPPUNIT_ASSERT_EQUAL(size_t(64), inds[1].size());
+    for(auto i: range<uint64_t>(64))
+      CPPUNIT_ASSERT_EQUAL(i, inds[1][i]);
+
+    CPPUNIT_ASSERT_EQUAL(size_t(64), inds[2].size());
 
     std::vector<uint64_t> specialdirs{7,6,5,4,3,2,1,0};
     
     for (auto i: range<uint64_t>(8)) {
       for (auto ii:range<uint64_t>(8)) {
 	auto sd = specialdirs[i];
-	CPPUNIT_ASSERT_EQUAL(ii==sd ? i*8 :SectionTree::NA(), inds[1][8*i + ii]);
+	CPPUNIT_ASSERT_EQUAL(ii==sd ? i*8 :SectionTree::NA(), inds[2][8*i + ii]);
       }
     }
 
