@@ -17,7 +17,7 @@ int main( int argc, char **argv)
 	auto tree = TrianglesToTreeSerial(levels, tri_level, sphere->points,
 			sphere->triangles);
 	SurfaceVoxeliser voxer(1 << tri_level, sphere->points, sphere->triangles,
-			sphere->normals, sphere->labels);
+			       sphere->normals, sphere->labels, sphere->iolets);
 
 	auto t0 = std::chrono::high_resolution_clock::now();
 	for (auto i: range(10))

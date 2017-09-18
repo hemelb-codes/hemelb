@@ -11,8 +11,8 @@
 SurfaceVoxeliser::SurfaceVoxeliser(const int ns,
 				   const std::vector<Vector>& p,
 				   const std::vector<Index>& t, const std::vector<Vector>&n,
-				   const std::vector<int>& l) :
-  Points(p), Triangles(t), Normals(n), Labels(l),
+				   const std::vector<int>& l, const std::vector<Iolet>&io) :
+  Points(p), Triangles(t), Normals(n), Labels(l), Iolets(io),
   mesh(MkCgalMesh(p, t)),
   searcher(new CgalSearchTree(faces(*mesh).first, faces(*mesh).second, *mesh))
 {
@@ -247,9 +247,11 @@ FluidTree::NodePtr SurfaceVoxeliser::ClassifyRegion(EdgeSiteTree::ConstNodePtr n
 			       } else {
 				 // Iolet
 				 // TODO: implement this properly
-				 fsite.links[i].type = Intersection::Inlet;
+				 auto& iolet = this->Iolets[label];
+				 
+				 fsite.links[i].type = iolet.IsInlet ? Intersection::Inlet : Intersection::Outlet;
 				 fsite.links[i].dist = cuts[i].dist;
-				 fsite.links[i].id = label;
+				 fsite.links[i].id = iolet.Id;
 			       }
 			     } else {
 			       ++nOut;

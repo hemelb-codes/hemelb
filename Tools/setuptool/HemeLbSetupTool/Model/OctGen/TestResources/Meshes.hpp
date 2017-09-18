@@ -11,6 +11,8 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include "../Vector.h"
+#include "../Iolet.h"
+
 #include "helpers.h"
 
 struct MeshData {
@@ -18,6 +20,7 @@ struct MeshData {
   std::vector<Index> triangles;
   std::vector<Vector> normals;
   std::vector<int> labels;
+  std::vector<Iolet> iolets;
 };
 
 class SimpleMeshFactory {
@@ -96,7 +99,7 @@ public:
     };
     
     ans->labels = {-1,-1, -1,-1, -1,-1, -1,-1, 0,0, 1,1};
-    
+    ans->iolets = {Iolet{0, true}, Iolet{0, false}};
     return ans;
   };
 

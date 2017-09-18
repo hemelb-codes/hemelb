@@ -56,7 +56,8 @@ public:
 				      sphere->triangles);
     
     SurfaceVoxeliser voxer(1 << tri_level, sphere->points,
-			   sphere->triangles, sphere->normals, sphere->labels);
+			   sphere->triangles, sphere->normals, sphere->labels,
+			   sphere->iolets);
     auto fluid_tree = voxer(tree, tri_level);
 
     // Fill the thing

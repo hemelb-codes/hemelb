@@ -40,7 +40,7 @@ public:
 				triv->triangles);
 
 		SurfaceVoxeliser voxer(1 << tri_level, triv->points, triv->triangles,
-				triv->normals, triv->labels);
+				       triv->normals, triv->labels, triv->iolets);
 		auto tri_node = tree.Get(0, 0, 0, tri_level);
 		auto edge_node = voxer.ComputeIntersectionsForRegion(tri_node);
 
@@ -71,7 +71,7 @@ public:
 				sphere->triangles);
 
 		SurfaceVoxeliser voxer(1 << tri_level, sphere->points,
-				sphere->triangles, sphere->normals, sphere->labels);
+				       sphere->triangles, sphere->normals, sphere->labels, sphere->iolets);
 
 		// 24, 17, 20 is an arbitrary exterior point near the surface
 		// Do this block containing this point
@@ -147,7 +147,7 @@ public:
 				sphere->triangles);
 
 		SurfaceVoxeliser voxer(1 << tri_level, sphere->points,
-				sphere->triangles, sphere->normals, sphere->labels);
+				       sphere->triangles, sphere->normals, sphere->labels, sphere->iolets);
 		auto fluid_tree = voxer(tree, tri_level);
 
 		// Assert things...
