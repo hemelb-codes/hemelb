@@ -26,6 +26,21 @@ struct Link {
 	int id;
 };
 
+inline std::ostream& operator<<(std::ostream& os, const Link& lnk) {
+  os << '(' << static_cast<int>(lnk.type) << ',' << lnk.dist << ',' << lnk.id << ')';
+  return os;
+}
+
+template<size_t N>
+std::ostream& operator<<(std::ostream& os, const std::array<Link,N>& lnk_ar) {
+  auto iter = lnk_ar.begin();
+  os << *iter;
+  
+  for (;iter != lnk_ar.end(); ++iter)
+    os << "," << *iter;
+  return os;
+}
+
 // Single precision vector
 typedef hemelb::util::Vector3D<float> SVector;
 

@@ -40,7 +40,8 @@ class SectionTreeTests : public CppUnit::TestFixture {
 	  bool yedge = (j == 0) || (j == n-1);
 	  bool zedge = (k == 0) || (k == n-1);
 	  if (xedge || yedge || zedge) {
-	    ft->GetCreate(i,j,k, 0);
+	    auto leaf = ft->GetCreate(i,j,k, 0);
+	    leaf->Data().leaf = std::make_shared<FluidSite>();
 	  }
 	}
       }
@@ -78,8 +79,10 @@ class SectionTreeTests : public CppUnit::TestFixture {
 	  bool xedge = (i == rmin) || (i == rmax-1);
 	  bool yedge = (j == rmin) || (j == rmax-1);
 	  bool zedge = (k == rmin) || (k == rmax-1);
-	  if (xedge || yedge || zedge)
-	    mt->GetCreate(i,j,k, 0);
+	  if (xedge || yedge || zedge) {
+	    auto leaf = mt->GetCreate(i,j,k, 0);
+	    leaf->Data().leaf = std::make_shared<FluidSite>();
+	  }
 	}
       }
     }

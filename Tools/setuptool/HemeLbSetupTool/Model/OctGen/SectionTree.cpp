@@ -46,5 +46,10 @@ void SectionTree::Write(const std::string& fn) const {
     for (auto el: x.second) {
       outfile << el << std::endl;
     }
+
+    links.write((dirname / "links").native());
+    wall_normals.write((dirname / "wall_normals").native());
   }
+
+  
 }

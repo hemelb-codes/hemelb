@@ -58,7 +58,23 @@ void SectionTreeBuilder::Arrive(MaskTree::ConstNodePtr np) {
     // Or zeros in case of counts
     output->counts[lvl].resize(new_size, 0);
   } else {
-    // We are at a leaf node
+    // We are at a leaf node - we must extend the sections
+    if (edge_ptrs[0]) {
+      // We are an edge site so we have data to add
+      auto& edge_site = *(edge_ptrs[0]->Data().leaf);
+
+      output->links.append(edge_site.links);
+      if (edge_site.has_normal) {
+	output->wall_normals.append(edge_site.normal);
+      } else {
+	output->wall_normals.append();
+      }
+      
+    } else {
+      // we are a bulk site
+      output->links.append();
+      output->wall_normals.append();
+    }
   }
 }
 

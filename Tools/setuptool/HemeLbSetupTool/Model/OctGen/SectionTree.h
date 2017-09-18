@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <list>
+#include <fstream>
 
 #include "Oct.h"
 #include "MaskTree.h"
@@ -18,7 +19,35 @@
 template <class T>
 struct Section {
   typedef uint64_t IndT;
+
+  void append() {
+    offsets.push_back(data.size());
+    counts.push_back(0);
+  }
   
+  template <class... Args>
+  void append(Args&&... args) {
+    offsets.push_back(data.size());
+    counts.push_back(1);
+    data.emplace_back(std::forward<Args>(args)...);
+  }
+  
+  void write(const std::string fn) const {
+    // Section contains one (offset, count) pair per line
+    std::ofstream sfile(fn + ".section");
+    auto off = offsets.begin();
+    auto cnt = counts.begin();
+
+    for (; off != offsets.end(); ++off, ++cnt) {
+      sfile << *off << "," << *cnt << std::endl;
+    }
+    
+    // data contains data one elem per line
+    std::ofstream dfile(fn + ".data");
+    for (auto el: data) {
+      dfile << el << std::endl;
+    }
+  }
   std::vector<IndT> offsets;
   std::vector<IndT> counts;
   std::vector<T> data;
