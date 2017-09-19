@@ -14,13 +14,11 @@ lib_objects = Vector.o Vector3D.o TriTree.o TriangleSorter.o MkCgalMesh.o \
 	Neighbours.o SegmentFactory.o SurfaceVoxeliser.o FloodFill.o \
 	SectionTree.o SectionTreeBuilder.o H5.o
 
-all : test voxer_bench
+all : test
 
 test : $(lib_objects) test.o
 	$(CXX) $(LDLIBS) $^ -o $@
 
-voxer_bench : $(lib_objects) voxer_bench.o
-	$(CXX) $(LDLIBS) $^ -o $@
 
 test.o : test.cpp test_*.hpp TestResources/*
 
@@ -33,4 +31,4 @@ TriangleSorter.o : TriangleSorter.cpp
 
 .PHONY : clean
 clean :
-	-rm test test.o voxer_bench voxer_bench.o $(lib_objects)
+	-rm test test.o $(lib_objects)
