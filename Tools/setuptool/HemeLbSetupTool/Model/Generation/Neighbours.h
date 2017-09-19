@@ -1,40 +1,22 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
-
+// -*- mode: c++; -*-
 #ifndef HEMELBSETUPTOOL_NEIGHBOURS_H
 #define HEMELBSETUPTOOL_NEIGHBOURS_H
 
 #include <vector>
-#include "Index.h"
+#include "Vector.h"
 
-#include "io/formats/geometry.h"
-// shortcut to geometry class
-using hemelb::io::formats::geometry;
-
-struct Neighbours {
-	// This assumes that the hemelb lattice descriptor class has a zero vector.
-
-	enum {
-		n = geometry::NumberOfDisplacements
-	};
-	enum {
-		nLater = n / 2
-	};
-
-	static std::vector<unsigned int> laterNeighbourIndices;
-	static geometry::DisplacementVector vectors;
-	static std::vector<double> norms;
-	static std::vector<unsigned int> inverses;
-
-	static void Init();
+class Neighbours {
+public:
+  static const Neighbours& Get();
+  static const std::vector<Index>& GetDisplacements();
+  static const std::vector<int>& GetOpposites();
+  
+  Neighbours(const Neighbours&) = delete;
+  Neighbours& operator=(const Neighbours&) = delete;
+  
 private:
-	// Private to ensure it's not instantiated.
-	Neighbours();
+  Neighbours();
+  std::vector<Index> neighbours;
+  std::vector<int> inverses;
 };
-#endif // HEMELBSETUPTOOL_NEIGHBOURS_H
+#endif
