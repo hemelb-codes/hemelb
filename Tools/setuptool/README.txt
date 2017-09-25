@@ -1,11 +1,50 @@
-You can build the setuptool locally with:
+Step 0 - Requirements
+=====================
 
-   python setup.py build_ext --inplace
+To build the setuptool you require the following python packages
+- numpy
+- VTK
+- hemeTools (see $HEMELB_ROOT/Tools)
+- VMTK (see http://www.vmtk.org/)
 
-As a prerequisite you will need to run the same command in hemelb-dev/hemelb/Tools to generate a number of  C source files from Cython code.
+And the following non-python software:
+- C++11 compiler.
+- Boost
+- HDF5
+- CGAL
 
-In order to do a clean build (after modifications, etc.),  you will need to remove the following files:
+To enable the GUI you have to have wx installed and have this working
+with your VTK module.
 
-   HemeLbSetupTool/Model/Generation.py 
-   HemeLbSetupTool/Model/Generation/Wrap.cpp
-   HemeLbSetupTool/Model/_Generation.so
+Step 1 is mostly automatic if you have CMake >= 3.2
+
+
+Step 1 - Configure
+==================
+
+You must generate a setup.cfg for the build. Try to use CMake if
+possible for this.
+
+Run Cmake for an in-source build. This is usually bad practice, but
+required because Python...
+
+> cmake .
+
+Alternatively, copy setup.cfg.in to setup.cfg and edit it appropriately.
+
+Step 2 - Build
+==============
+
+Usual python setup.py install
+
+If you're developing, consider instead
+
+> python setup.py build_ext --inplace
+
+Step 3 - Clean
+==============
+
+Run clean.sh
+
+
+
