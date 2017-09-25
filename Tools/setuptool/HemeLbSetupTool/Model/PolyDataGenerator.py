@@ -12,7 +12,7 @@ from vtk import vtkTransform, vtkTransformFilter
 from vtk.util import numpy_support
 
 from .Vector import Vector
-#from .GeometryGenerator import GeometryGenerator
+from .GeometryGenerator import GeometryGenerator
 from .Clipper import Clipper
 
 from SurfaceVoxeliser import SurfaceVoxeliser
@@ -20,21 +20,20 @@ import TriangleSorter
 
 import pdb
 
-# class PolyDataGenerator(GeometryGenerator):
-class PolyDataGenerator(object):
+class PolyDataGenerator(GeometryGenerator):
 
     def __init__(self, profile):
         """Clip the STL and set attributes on the SWIG-proxied C++
         GeometryGenerator object.
         """
-        #GeometryGenerator.__init__(self)
+        GeometryGenerator.__init__(self)
         self._profile = profile
-        #self.generator = Generation.PolyDataGenerator()
-        #self._SetCommonGeneratorProperties()
-        #self.generator.SetSeedPointWorking(
-        #    profile.SeedPoint.x / profile.VoxelSize,
-        #    profile.SeedPoint.y / profile.VoxelSize,
-        #    profile.SeedPoint.z / profile.VoxelSize)
+        self.generator = Generation.PolyDataGenerator()
+        self._SetCommonGeneratorProperties()
+        self.generator.SetSeedPointWorking(
+           profile.SeedPoint.x / profile.VoxelSize,
+           profile.SeedPoint.y / profile.VoxelSize,
+           profile.SeedPoint.z / profile.VoxelSize)
         
         # This will create the pipeline for the clipped surface
         clipper = Clipper(profile)
@@ -51,45 +50,14 @@ class PolyDataGenerator(object):
 
         transformer.Update()
         self.ClippedSurface = transformer.GetOutput()
-        #self.generator.SetClippedSurface(self.ClippedSurface)
+        self.generator.SetClippedSurface(self.ClippedSurface)
         
         self._ComputeOriginWorking()
-        #self.generator.SetOriginWorking(*(float(x) for x in originWorking))
-        #self.generator.SetSiteCounts(*(int(x) for x in nSites))
+        self.generator.SetOriginWorking(*(float(x) for x in originWorking))
+        self.generator.SetSiteCounts(*(int(x) for x in nSites))
         self.OriginMetres = Vector(self.OriginWorking * self.VoxelSizeMetres) 
         return
-    
-    def Execute(self):
-        # Just override the base's exec method for now...
         
-        # Get the surface data into numpy arrays, assuming they're all triangles.
-        surf = self.ClippedSurface
-        tridata = numpy_support.vtk_to_numpy(surf.GetPolys().GetData())
-        tridata.shape = (surf.GetNumberOfPolys(), 4)
-        assert np.all(tridata[:,0]==3), "Non triangle in surface!"
-        triangles = tridata[:, 1:]
-        # Note we convert the coords to be relative to the origin
-        points = numpy_support.vtk_to_numpy(surf.GetPoints().GetData()) - self.OriginWorking
-        normals = self.ClippedSurface.GetCellData().GetNormals()
-        normals = numpy_support.vtk_to_numpy(normals)
-        # Also need the labels
-        labels = numpy_support.vtk_to_numpy(self.ClippedSurface.GetCellData().GetScalars())
-        
-        # Sort the mesh onto the octree at a coarse level
-        tri_level = self.TreeLevels / 2
-        self.tree = TriangleSorter.TrianglesToTree(self.TreeLevels, tri_level, points, triangles)
-        
-        # This guy will create an octree with nodes that represent the polydata
-        # surface. They are tagged with those triangles that could intersect 
-        # their 26-neighbourhood links
-        voxer = SurfaceVoxeliser(points, triangles, normals, self.tree, self.TreeLevels)
-        voxer.Execute()
-        
-        # We aren't done yet, but that will do for today!
-        voxer.Tree.Write(self.OutputGeometryFile)
-        
-        return
-    
     def __getattr__(self, attr):
         """Delegate unknown attribute access to profile object.
         """
@@ -160,7 +128,7 @@ class PolyDataGenerator(object):
         
         self.OriginWorking = OriginWorking
         self.CubeSize = nSites
-        self.TreeLevels = nSites.bit_length() - 1
+        
         return
     pass
 

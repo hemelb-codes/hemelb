@@ -51,7 +51,7 @@ class GeometryGenerator(object):
         """
         t = Timer()
         t.Start()
-        self.generator.Execute(self.skipNonIntersectingBlocks)
+        self.generator.Execute()
         XmlWriter(self).Write()
         t.Stop()
         print "Setup time: %f s" % t.GetTime()
