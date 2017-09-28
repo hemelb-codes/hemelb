@@ -6,71 +6,13 @@ cmake_minimum_required (VERSION 3.2)
 
 project(HemeLB)
 
+set(HEMELB_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
+
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 #---- OPTION switches accepted by the build -------
-
-option(HEMELB_BUILD_DEBUGGER "Build the built in debugger" ON)
-# option(HEMELB_DEBUGGER_IMPLEMENTATION "Which implementation to use for the debugger" none)
-# mark_as_advanced(HEMELB_DEBUGGER_IMPLEMENTATION)
-
-option(HEMELB_VALIDATE_GEOMETRY "Validate geometry" OFF)
-option(HEMELB_BUILD_TESTS_ALL "Build all the tests" ON)
-option(HEMELB_BUILD_TESTS_UNIT "Build the unit-tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
-option(HEMELB_BUILD_TESTS_FUNCTIONAL "Build the functional tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
-option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
-option(HEMELB_USE_STREAKLINES "Calculate streakline images" OFF)
-option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
-option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
-option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
-option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
-option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
-option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" ON)
-option(HEMELB_USE_VELOCITY_WEIGHTS_FILE "Use Velocity weights file" OFF)
-option(UBUNTU_BUG_WORKAROUND "Work around the faulty HAVE_ISNAN value in Ubuntu 16.04." OFF)
-
-set(METIS_INCLUDE_DIR "${METIS_INCLUDE_DIR}")
-set(METIS_LIBRARY "${METIS_LIBRARY}")
-set(PARMETIS_INCLUDE_DIR "${PARMETIS_INCLUDE_DIR}")
-set(PARMETIS_LIBRARY "${PARMETIS_LIBRARY}")
-
-set(HEMELB_EXECUTABLE "hemelb"
-  CACHE STRING "File name of executable to produce")
-set(HEMELB_READING_GROUP_SIZE 5
-  CACHE INTEGER "Number of cores to use to read geometry file.")
-set(HEMELB_LOG_LEVEL Info
-  CACHE STRING "Log level, choose 'Critical', 'Error', 'Warning', 'Info', 'Debug' or 'Trace'" )
-set(HEMELB_STEERING_LIB basic
-  CACHE STRING "Steering library, choose 'basic' or 'none'" )
-set(HEMELB_DEPENDENCIES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../dependencies"
-  CACHE FILEPATH "Path to find dependency find modules")
-set(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH}
-  CACHE FILEPATH "Path to find dependency includes and libraries")
-set(HEMELB_OPTIMISATION "-O3" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
-set(HEMELB_LATTICE "D3Q15"
-  CACHE STRING "Select the lattice type to use (D3Q15,D3Q19,D3Q27,D3Q15i)")
-set(HEMELB_KERNEL "LBGK"
-  CACHE STRING "Select the kernel to use (LBGK,EntropicAnsumali,EntropicChik,MRT,TRT,NNCY,NNCYMOUSE,NNC,NNTPL)")
-set(HEMELB_WALL_BOUNDARY "SIMPLEBOUNCEBACK"
-  CACHE STRING "Select the boundary conditions to be used at the walls (BFL,GZS,SIMPLEBOUNCEBACK,JUNKYANG)")
-set(HEMELB_INLET_BOUNDARY "NASHZEROTHORDERPRESSUREIOLET"
-  CACHE STRING "Select the boundary conditions to be used at the inlet (NASHZEROTHORDERPRESSUREIOLET,LADDIOLET)")
-set(HEMELB_OUTLET_BOUNDARY "NASHZEROTHORDERPRESSUREIOLET"
-  CACHE STRING "Select the boundary conditions to be used at the outlets (NASHZEROTHORDERPRESSUREIOLET,LADDIOLET)")
-set(HEMELB_COMPUTE_ARCHITECTURE "AMDBULLDOZER"
-  CACHE STRING "Select the architecture of the machine being used (INTELSANDYBRIDGE,AMDBULLDOZER,NEUTRAL,ISBFILEVELOCITYINLET)")
-set(HEMELB_WALL_INLET_BOUNDARY "NASHZEROTHORDERPRESSURESBB"
-  CACHE STRING "Select the boundary conditions to be used at corners between walls and inlets (NASHZEROTHORDERPRESSURESBB,NASHZEROTHORDERPRESSUREBFL,LADDIOLETSBB,LADDIOLETBFL)")
-set(HEMELB_WALL_OUTLET_BOUNDARY "NASHZEROTHORDERPRESSURESBB"
-  CACHE STRING "Select the boundary conditions to be used at corners between walls and outlets (NASHZEROTHORDERPRESSURESBB,NASHZEROTHORDERPRESSUREBFL,LADDIOLETSBB,LADDIOLETBFL)")
-set(HEMELB_POINTPOINT_IMPLEMENTATION Coalesce
-  CACHE STRING "Point to point comms implementation, choose 'Coalesce', 'Separated', or 'Immediate'" )
-set(HEMELB_GATHERS_IMPLEMENTATION Separated
-  CACHE STRING "Gather comms implementation, choose 'Separated', or 'ViaPointPoint'" )
-set(HEMELB_ALLTOALL_IMPLEMENTATION Separated
-  CACHE STRING "Alltoall comms implementation, choose 'Separated', or 'ViaPointPoint'" )
-option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
+include("cmake/options.cmake")
 
 # Add warnings flags to development build types
 if (HEMELB_USE_ALL_WARNINGS_GNU)
@@ -280,8 +222,7 @@ endif()
 # ----------- HEMELB unittests ---------------
 if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
   #------CPPUnit ---------------
-  find_package(CPPUnit REQUIRED)
-  include_directories(${CPPUNIT_INCLUDE_DIR})
+  hemelb_dependency(CPPUnit use)
   add_executable(unittests_hemelb ${root_sources})
   add_subdirectory(unittests)
   target_link_libraries(unittests_hemelb 
