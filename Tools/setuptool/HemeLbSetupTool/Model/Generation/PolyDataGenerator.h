@@ -22,13 +22,13 @@ public:
   std::string GetOutputGeometryFile(void);
   void SetOutputGeometryFile(std::string val);
 
-  std::vector<Iolet*>& GetIolets();
   void SetIolets(std::vector<Iolet*> iv);
 
   void SetOriginWorking(double x, double y, double z);
 
-  void SetSiteCounts(unsigned x, unsigned y, unsigned z);
-
+  void SetNumberOfLevels(int n);
+  void SetTriangleLevel(int n);
+  
   void GetSeedPointWorking(double out[3]);
   void SetSeedPointWorking(double out[3]);
   void SetSeedPointWorking(double x, double y, double z);
@@ -39,9 +39,10 @@ public:
 private:
   // Members set from outside to initialise
   double OriginWorking[3];
-  unsigned SiteCounts[3];
+  uint16_t NumberOfLevels;
+  uint16_t TriangleLevel;
   std::string OutputGeometryFile;
-  std::vector<Iolet*> Iolets;
+  std::vector<Iolet> Iolets;
   double SeedPointWorking[3];
   vtkPolyData* ClippedSurface;
   

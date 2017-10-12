@@ -461,6 +461,10 @@ namespace H5
   template<>
   const hid_t DataTypeTraits<unsigned int>::NativeType =
     H5T_NATIVE_UINT;
+  
+  template<>
+  const hid_t DataTypeTraits<unsigned long>::NativeType =
+    H5T_NATIVE_ULONG;
 
   template<>
   const hid_t DataTypeTraits<unsigned long long>::NativeType =

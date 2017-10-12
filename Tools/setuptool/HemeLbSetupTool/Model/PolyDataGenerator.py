@@ -10,10 +10,7 @@ from vtk.util import numpy_support
 from .Vector import Vector
 from .GeometryGenerator import GeometryGenerator
 from .Clipper import Clipper
-
-from SurfaceVoxeliser import SurfaceVoxeliser
-import TriangleSorter
-
+from . import Generation
 import pdb
 
 class PolyDataGenerator(GeometryGenerator):
@@ -49,8 +46,10 @@ class PolyDataGenerator(GeometryGenerator):
         self.generator.SetClippedSurface(self.ClippedSurface)
         
         self._ComputeOriginWorking()
-        self.generator.SetOriginWorking(*(float(x) for x in originWorking))
-        self.generator.SetSiteCounts(*(int(x) for x in nSites))
+        self.generator.SetOriginWorking(*(float(x) for x in self.OriginWorking))
+        self.generator.SetNumberOfLevels(self.NumberOfLevels)
+        tri_level = max(self.NumberOfLevels / 3, 2)
+        self.generator.SetTriangleLevel(tri_level)
         self.OriginMetres = Vector(self.OriginWorking * self.VoxelSizeMetres) 
         return
         
@@ -111,6 +110,7 @@ class PolyDataGenerator(GeometryGenerator):
         if nSites > 2**(nBits -1):
             nSites = 2**nBits
             pass
+        self.NumberOfLevels = nBits
         
         for i in xrange(3):
             # Now ensure this extra space is equally balanced before & after the

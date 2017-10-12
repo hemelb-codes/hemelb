@@ -224,7 +224,7 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
         clippingFunction.SetOperationTypeToIntersection()
 
         clipper = vtkClipPolyData()
-        clipper.SetInput(pd)
+        clipper.SetInputData(pd)
         clipper.SetClipFunction(clippingFunction)
 
         # Filter to get part closest to seed point
@@ -259,7 +259,7 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
         newData.DeepCopy(clipped.GetCellData().GetScalars())
 
         boundaryExtractor = vtkvmtkPolyDataBoundaryExtractor()
-        boundaryExtractor.SetInput(clipped)
+        boundaryExtractor.SetInputData(clipped)
         boundaryExtractor.Update()
         boundaries = boundaryExtractor.GetOutput()
         boundariesPointIdMap = boundaries.GetPointData().GetScalars()
@@ -316,7 +316,7 @@ class PolyDataCloser(vtkProgrammableFilter):
         edger.FeatureEdgesOff()
         edger.NonManifoldEdgesOff()
         edger.ManifoldEdgesOff()
-        edger.SetInput(inputPD)
+        edger.SetInputData(inputPD)
 
         # Converts the edges to a polyline
         stripper = vtkStripper()
@@ -330,13 +330,13 @@ class PolyDataCloser(vtkProgrammableFilter):
 
         # Triangulate
         tri = vtkTriangleFilter()
-        tri.SetInput(boundaryPoly)
+        tri.SetInputData(boundaryPoly)
         tri.Update()
 
         # Join to the input
         merger = vtkAppendPolyData()
-        merger.AddInput(inputPD)
-        merger.AddInput(tri.GetOutput())
+        merger.AddInputData(inputPD)
+        merger.AddInputData(tri.GetOutput())
 
         # Clean up by merging duplicate points
         cleaner = vtkCleanPolyData()
