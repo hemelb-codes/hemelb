@@ -50,7 +50,7 @@ typedef hemelb::util::Vector3D<float> SVector;
 
 // This will hold the data for a single fluid site ready to be written
 struct FluidSite {
-	inline FluidSite() : links(), has_normal(false), normal() {
+	inline FluidSite() : links(), normal(), has_normal(false) {
 	}
 
 	std::array<Link, 26> links;

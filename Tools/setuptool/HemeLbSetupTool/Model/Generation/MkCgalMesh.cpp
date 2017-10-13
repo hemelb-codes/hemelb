@@ -34,7 +34,7 @@ void SurfaceCreator::operator()(HDS& hds) {
 	for (size_t i = 0; i < triangles.size(); ++i) {
 		auto& tri = triangles[i];
 		// VTK polygons can contain lines where two vertexes are identical. Forget these
-		if (tri[0] != tri[1] & tri[0] != tri[2] & tri[1] != tri[2]) {
+		if ((tri[0] != tri[1]) & (tri[0] != tri[2]) & (tri[1] != tri[2])) {
 			auto face = B.begin_facet();
 			B.add_vertex_to_facet(tri[0]);
 			B.add_vertex_to_facet(tri[1]);

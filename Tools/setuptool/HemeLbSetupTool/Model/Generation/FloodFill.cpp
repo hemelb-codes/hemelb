@@ -46,7 +46,10 @@ public:
   }
   
   void operator()(Int i, Int j, Int k) {
+#ifndef NDEBUG
+    // Only unused in production mode
     unsigned initial = tree.Root()->Data();
+#endif
     auto path = tree.Root()->GetCreatePath(i,j,k, 0);
     for (auto n: path) {
       n->Data() += 1;
