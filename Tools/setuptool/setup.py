@@ -8,7 +8,7 @@ import os.path
 from setuptools import setup
 from setuptools.extension import Extension
 
-generation_src = '''
+lib_src = '''
 ../../Code/util/Vector3D.cc
 HemeLbSetupTool/Model/Generation/FloodFill.cpp
 HemeLbSetupTool/Model/Generation/H5.cpp
@@ -22,8 +22,12 @@ HemeLbSetupTool/Model/Generation/SurfaceVoxeliser.cpp
 HemeLbSetupTool/Model/Generation/TriTree.cpp
 HemeLbSetupTool/Model/Generation/TriangleSorter.cpp
 HemeLbSetupTool/Model/Generation/Vector.cpp
-HemeLbSetupTool/Model/Generation.i
 '''.strip().split('\n')
+
+
+generation_src = lib_src + ['HemeLbSetupTool/Model/Generation.i']
+test_src = lib_src + ['HemeLbSetupTool/Model/Generation/test.cpp',
+                          'HemeLbSetupTool/Model/Test.i']
 
 if sys.platform == 'darwin':
     # Python thinks it's so smart and sets the
@@ -34,9 +38,18 @@ if sys.platform == 'darwin':
     release, versioninfo, machine = platform.mac_ver()
     os.environ['MACOSX_DEPLOYMENT_TARGET'] = release
 
+main_libs = ['boost_system', 'boost_filesystem', 'hdf5', 'CGAL', 'gmp', 'mpfr']
+
 generation_ext = Extension(
     'HemeLbSetupTool.Model._Generation',
     sources=generation_src,
+    libraries=main_libs,
+    extra_compile_args=['--std=c++11']
+    )
+test_ext = Extension(
+    'HemeLbSetupTool.Model._Test',
+    sources=test_src,
+    libraries=main_libs+['cppunit'],
     extra_compile_args=['--std=c++11']
     )
 
@@ -58,5 +71,5 @@ setup(
         'scripts/hemelb-setup-nogui',
         'scripts/hemelb-countsites',
         'scripts/upgrade-profile'],
-    ext_modules=[generation_ext]
+    ext_modules=[generation_ext, test_ext]
     )

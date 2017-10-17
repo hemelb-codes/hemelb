@@ -184,7 +184,7 @@ public:
     CPPUNIT_ASSERT_EQUAL(SectionTree::NA(), ind_to_zero);
 
     auto ind_to_first = st->FindIndex(2,2,2);
-    CPPUNIT_ASSERT_EQUAL(0ULL, ind_to_first);
+    CPPUNIT_ASSERT_EQUAL(uint64_t(0), ind_to_first);
     
     st->Write("tiny.oct");
   }

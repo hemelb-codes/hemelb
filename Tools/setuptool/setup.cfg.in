@@ -5,4 +5,4 @@
 [build_ext]
 swig_opts = -c++ -I${HEMELB_CODE_DIR}
 include_dirs = ${SETUPTOOL_INCLUDE_DIRS}
-link_objects = ${SETUPTOOL_LIBRARIES}
+library_dirs = ${SETUPTOOL_LIBRARY_DIRS}

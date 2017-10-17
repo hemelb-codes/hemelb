@@ -5,4 +5,6 @@
 # license in the file LICENSE.
 
 rm -rf CMakeCache.txt CMakeFiles setup.cfg Makefile cmake_install.cmake
-rm -rf HemeLbSetupTool/Model/Generation_wrap.cpp HemeLbSetupTool/Model/Generation.py HemeLbSetupTool/Model/Generation.so build
+rm -rf HemeLbSetupTool/Model/Generation_wrap.cpp HemeLbSetupTool/Model/Generation.py HemeLbSetupTool/Model/_Generation.so
+rm -rf HemeLbSetupTool/Model/Test_wrap.cpp HemeLbSetupTool/Model/Test.py HemeLbSetupTool/Model/_Test.so
+rm -rf build Code

@@ -7,3 +7,6 @@ setup.cfg
 HemeLbSetupTool/Model/Generation.py 
 HemeLbSetupTool/Model/Generation_wrap.cpp
 HemeLbSetupTool/Model/_Generation.so
+HemeLbSetupTool/Model/Test.py 
+HemeLbSetupTool/Model/Test_wrap.cpp
+HemeLbSetupTool/Model/_Test.so

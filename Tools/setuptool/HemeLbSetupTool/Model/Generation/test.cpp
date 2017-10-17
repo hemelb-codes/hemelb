@@ -14,11 +14,11 @@
 #include "test_FloodFill.hpp"
 #include "test_SectionTree.hpp"
 
-int main( int argc, char **argv)
-{
+#include "test.hpp"
+
+bool run_all_tests() {
   CppUnit::TextUi::TestRunner runner;
   CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
   runner.addTest( registry.makeTest() );
-  bool wasSuccessful = runner.run( "", false );
-  return wasSuccessful;
+  return runner.run("", false);
 }
