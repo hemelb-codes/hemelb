@@ -63,7 +63,7 @@ private:
 
 	FunctionType func;
 	int nThreads;
-	int maxQueue;
+	unsigned maxQueue;
 	std::vector<std::thread> workers;
 
 	std::atomic<bool> all_work_queued;
