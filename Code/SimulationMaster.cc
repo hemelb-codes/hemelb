@@ -53,7 +53,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options,
   steeringSessionId = options.GetSteeringSessionId();
 
   fileManager = new hemelb::io::PathManager(options, IsCurrentProcTheIOProc(), GetProcessorCount());
-  simConfig = hemelb::configuration::SimConfig::New(fileManager->GetInputFile());
+  simConfig = hemelb::configuration::SimConfig::New(fileManager->GetInputFile(), ioComm);
   unitConverter = &simConfig->GetUnitConverter();
   monitoringConfig = simConfig->GetMonitoringConfiguration();
 

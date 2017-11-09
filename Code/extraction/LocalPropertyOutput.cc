@@ -26,6 +26,20 @@ namespace hemelb
       // already exists.
       outputFile = net::MpiFile::Open(comms, outputSpec->filename,
                                       MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL);
+
+      // Create a new file name by changing the suffix.
+      // It is assumed that the only '.'s in the the original file name are
+      // the leading '.' and the '.' before the suffix.
+      std::stringstream ss(outputSpec->filename);
+      std::string offsetFileName;
+      std::getline(ss, offsetFileName, '.'); // Discard the leading '.'.
+      std::getline(ss, offsetFileName, '.'); // Get the rest before the suffix.
+      // Reinstate the leading '.' and add the suffix ".off".
+      offsetFileName = "." + offsetFileName + ".off";
+      // Now create the file.
+      offsetFile = net::MpiFile::Open(comms, offsetFileName,
+				      MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL);
+
       // Count sites on this task
       uint64_t siteCount = 0;
       dataSource.Reset();
@@ -251,11 +265,11 @@ namespace hemelb
                     << static_cast<WrittenDataType> (dataSource.GetTangentialProjectionTraction().y)
                     << static_cast<WrittenDataType> (dataSource.GetTangentialProjectionTraction().z);
                 break;
-              case OutputField::VelocityDistributions:
+              case OutputField::Distributions:
                 unsigned numComponents;
                 const distribn_t *d_ptr;
                 numComponents = dataSource.GetNumVectors();
-                d_ptr = dataSource.GetVelocityDistribution();
+                d_ptr = dataSource.GetDistribution();
                 for (int i = 0; i < numComponents; i++)
 		{
                   xdrWriter << static_cast<WrittenDataType> (*d_ptr);
@@ -278,6 +292,20 @@ namespace hemelb
       // Actually do the MPI writing.
       outputFile.WriteAt(localDataOffsetIntoFile, buffer);
 
+      // Write out the offsets used.
+      std::vector<char> offsetBuffer(sizeof(uint64_t));
+      io::writers::xdr::XdrMemWriter offsetWriter(&offsetBuffer[0], sizeof(uint64_t));
+      offsetWriter << localDataOffsetIntoFile;
+      uint64_t offsetForOffset = comms.Rank() * sizeof(uint64_t);
+      offsetFile.WriteAt(offsetForOffset, offsetBuffer);
+      if (comms.Rank() == (comms.Size()-1))
+      {
+	std::vector<char> extraOffsetBuffer(sizeof(uint64_t));
+	io::writers::xdr::XdrMemWriter extraOffsetWriter(&extraOffsetBuffer[0], sizeof(uint64_t));
+	extraOffsetWriter << localDataOffsetIntoFile+writeLength;
+	offsetFile.WriteAt(offsetForOffset+sizeof(uint64_t), extraOffsetBuffer);
+      }
+
       // Set the offset to the right place for writing on the next iteration.
       localDataOffsetIntoFile += allCoresWriteLength;
     }
@@ -298,8 +326,9 @@ namespace hemelb
           return 3;
         case OutputField::StressTensor:
           return 6; // We only store the upper triangular part of the symmetric tensor
-        case OutputField::VelocityDistributions:
-          return 15; // TO DO: remove the hard coding of D3Q15.
+        case OutputField::Distributions:
+	  // TO DO: is this the best way to do this?
+          return latticeType::NUMVECTORS;
         default:
           // This should never trip. Only occurs if someone adds a new field and forgets
           // to add to this method.
@@ -308,7 +337,7 @@ namespace hemelb
       }
     }
 
-    double LocalPropertyOutput::GetOffset(OutputField::FieldType field) const
+    double LocalPropertyOutput::GetOffset(OutputField::FieldType field)
     {
       switch (field)
       {

@@ -14,6 +14,7 @@
 #endif
 #include <rpc/types.h>
 #include <rpc/xdr.h>
+#include <string>
 
 namespace hemelb
 {
@@ -36,6 +37,7 @@ namespace hemelb
             bool readInt(int& outInt);
             bool readUnsignedInt(unsigned int& outUInt);
             bool readUnsignedLong(uint64_t& outULong);
+	    bool readString(std::string& outStr, unsigned strLength);
 
             // Get the position in the stream.
             unsigned int GetPosition();

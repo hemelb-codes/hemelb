@@ -11,9 +11,11 @@
 #include "util/Vector3D.h"
 #include "lb/LbmParameters.h"
 #include "lb/iolets/InOutLets.h"
-#include "extraction/PropertyOutputFile.h"
 #include "extraction/GeometrySelectors.h"
+#include "extraction/PropertyOutputFile.h"
+#include "extraction/LocalDistributionInput.h"
 #include "io/xml/XmlAbstractionLayer.h"
+#include "net/IOCommunicator.h"
 
 namespace hemelb
 {
@@ -53,10 +55,14 @@ namespace hemelb
             bool doIncompressibilityCheck; ///< Whether to turn on the IncompressibilityChecker or not
         };
 
-        static SimConfig* New(const std::string& path);
+	// This is here to keep the unit tests happy.
+	// TO DO: remove this if possible.
+	static SimConfig* New(const std::string& path);
+        static SimConfig* New(const std::string& path, const hemelb::net::IOCommunicator& ioComm);
 
       protected:
-        SimConfig(const std::string& path);
+	SimConfig(const std::string& path);
+        SimConfig(const std::string& path, const hemelb::net::IOCommunicator& ioComm);
         void Init();
 
       public:
@@ -108,6 +114,10 @@ namespace hemelb
         const std::string & GetDataFilePath() const
         {
           return dataFilePath;
+        }
+        extraction::LocalDistributionInput* GetDistributionInputPtr() const
+        {
+          return distributionInput_ptr;
         }
         LatticeTimeStep GetTotalTimeSteps() const
         {
@@ -244,6 +254,7 @@ namespace hemelb
         extraction::SurfacePointSelector* DoIOForSurfacePoint(const io::xml::Element&);
 
         void DoIOForInitialConditions(io::xml::Element parent);
+	void DoIOForCheckpointFile(const io::xml::Element& checkpointEl);
         void DoIOForVisualisation(const io::xml::Element& visEl);
 
         /**
@@ -270,6 +281,7 @@ namespace hemelb
         const std::string& xmlFilePath;
         io::xml::Document* rawXmlDoc;
         std::string dataFilePath;
+	hemelb::extraction::LocalDistributionInput* distributionInput_ptr;
 
         util::Vector3D<float> visualisationCentre;
         float visualisationLongitude;
@@ -299,6 +311,9 @@ namespace hemelb
         PhysicalDistance voxelSizeMetres;
         PhysicalPosition geometryOriginMetres;
         util::UnitConverter* unitConverter;
+
+      private:
+	const hemelb::net::IOCommunicator& ioComms;
     };
   }
 }

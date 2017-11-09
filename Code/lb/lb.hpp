@@ -7,6 +7,7 @@
 #ifndef HEMELB_LB_LB_HPP
 #define HEMELB_LB_LB_HPP
 
+#include "extraction/LocalDistributionInput.h"
 #include "io/writers/xdr/XdrMemWriter.h"
 #include "lb/lb.h"
 
@@ -173,21 +174,32 @@ namespace hemelb
     template<class LatticeType>
     void LBM<LatticeType>::SetInitialConditions()
     {
-      distribn_t density = mUnits->ConvertPressureToLatticeUnits(mSimConfig->GetInitialPressure()) / Cs2;
-
-      for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
+      extraction::LocalDistributionInput* distributionInput_ptr = mSimConfig->GetDistributionInputPtr();
+      if (distributionInput_ptr)
       {
-        distribn_t f_eq[LatticeType::NUMVECTORS];
+	//distributionInput_ptr->BufferData();
+	//distributionInput_ptr->ReadDistributions();
+	distributionInput_ptr->LoadDistribution(mLatDat);
+	delete distributionInput_ptr;
+      }
+      else
+      {
+	distribn_t density = mUnits->ConvertPressureToLatticeUnits(mSimConfig->GetInitialPressure()) / Cs2;
 
-        LatticeType::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
+	for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
+	{
+	  distribn_t f_eq[LatticeType::NUMVECTORS];
 
-        distribn_t* f_old_p = mLatDat->GetFOld(i * LatticeType::NUMVECTORS);
-        distribn_t* f_new_p = mLatDat->GetFNew(i * LatticeType::NUMVECTORS);
+	  LatticeType::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
 
-        for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
-        {
-          f_new_p[l] = f_old_p[l] = f_eq[l];
-        }
+	  distribn_t* f_old_p = mLatDat->GetFOld(i * LatticeType::NUMVECTORS);
+	  distribn_t* f_new_p = mLatDat->GetFNew(i * LatticeType::NUMVECTORS);
+
+	  for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
+	  {
+	    f_new_p[l] = f_old_p[l] = f_eq[l];
+	  }
+	}
       }
     }
 

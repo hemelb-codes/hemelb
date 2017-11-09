@@ -10,7 +10,6 @@
 #include "util/Vector3D.h"
 #include "units.h"
 #include "util/Matrix3D.h"
-//#include "lb/kernels/BaseKernel.h"
 
 namespace hemelb
 {
@@ -97,7 +96,7 @@ namespace hemelb
          * Returns a pointer to the velocity distribution at a site.
          * @return pointer to velocity distribution
          */
-        virtual const distribn_t* GetVelocityDistribution() const = 0;
+        virtual const distribn_t* GetDistribution() const = 0;
 
         /**
          * Resets the iterator to the beginning again.

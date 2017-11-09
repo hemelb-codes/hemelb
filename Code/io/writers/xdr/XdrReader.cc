@@ -5,6 +5,8 @@
 // license in the file LICENSE.
 
 #include "io/writers/xdr/XdrReader.h"
+#include <cstdlib>
+#include <iostream>
 
 namespace hemelb
 {
@@ -46,6 +48,35 @@ namespace hemelb
           bool ret = xdr_uint64_t(&mXdr, &temporary);
           outULong = temporary;
           return ret;
+        }
+
+        bool XdrReader::readString(std::string& outStr, unsigned strLength)
+        {
+	  std::cout << "strLength = " << strLength << std::endl;
+	  char c[4];
+	  for (int i = 0; i < strLength; i++)
+	  {
+	    std::cout << "posn a" << i << " " << GetPosition() << std::endl;
+	    xdr_char(&mXdr, c);
+            for (int k = 0; k < 4; k++)
+	    {
+	      std::cout << k << ":" << c[k];
+
+	    }
+	    std::cout << std::endl;
+	  }
+	  return false;
+	  /*
+          char *p;
+	  bool flag;
+	  p = (char *)malloc((size_t) (strLength + 1));
+	  p[strLength] = '\0';
+          flag = xdr_string(&mXdr, &p, strLength);
+	  std::cout << p << std::endl;
+	  std::cout << *p << std::endl;
+          if (flag) outStr = std::string(p);
+          return flag;
+	  */
         }
 
         unsigned int XdrReader::GetPosition()

@@ -25,11 +25,25 @@ namespace hemelb
       return ans;
     }
 
+    SimConfig* SimConfig::New(const std::string& path, const hemelb::net::IOCommunicator& ioComm)
+    {
+      SimConfig* ans = new SimConfig(path, ioComm);
+      ans->Init();
+      return ans;
+    }
+
     SimConfig::SimConfig(const std::string& path) :
-        xmlFilePath(path), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0),
+      xmlFilePath(path), ioComms(net::IOCommunicator(net::MpiCommunicator::World())), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0),
             unitConverter(NULL)
     {
     }
+
+    SimConfig::SimConfig(const std::string& path, const hemelb::net::IOCommunicator& ioComm) :
+      xmlFilePath(path), ioComms(ioComm), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0),
+            unitConverter(NULL)
+    {
+    }
+
     void SimConfig::Init()
     {
       if (!util::file_exists(xmlFilePath.c_str()))
@@ -463,7 +477,7 @@ namespace hemelb
       }
       else if (type == "distributions")
       {
-        field.type = extraction::OutputField::VelocityDistributions;
+        field.type = extraction::OutputField::Distributions;
       }
       else if (type == "mpirank")
       {
@@ -493,11 +507,23 @@ namespace hemelb
 
     void SimConfig::DoIOForInitialConditions(io::xml::Element initialconditionsEl)
     {
-      //, isLoading, initialPressure
-      io::xml::Element pressureEl = initialconditionsEl.GetChildOrThrow("pressure");
-      io::xml::Element uniformEl = pressureEl.GetChildOrThrow("uniform");
+      // Either a pressure element must be present or a checkpoint element but not both.
+      // If both are present the checkpoint element is preferred.
+      // TO DO: enforce that at least one is present (and, perhaps, only one).
 
-      GetDimensionalValue(uniformEl, "mmHg", initialPressure_mmHg);
+      io::xml::Element pressureEl = initialconditionsEl.GetChildOrNull("pressure");
+      if (pressureEl != io::xml::Element::Missing())
+      {
+        io::xml::Element uniformEl = pressureEl.GetChildOrThrow("uniform");
+	GetDimensionalValue(uniformEl, "mmHg", initialPressure_mmHg);
+      }
+
+      io::xml::Element checkpointEl = initialconditionsEl.GetChildOrNull("checkpoint");
+      if (checkpointEl != io::xml::Element::Missing())
+      {
+	std::string checkpointFilePath = checkpointEl.GetAttributeOrThrow("file");
+	distributionInput_ptr = new extraction::LocalDistributionInput(checkpointFilePath, ioComms);
+      }
     }
 
     lb::iolets::InOutLetCosine* SimConfig::DoIOForCosinePressureInOutlet(

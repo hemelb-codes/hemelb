@@ -5,7 +5,7 @@
 // license in the file LICENSE.
 
 /*
- * XdrFileReader.cc
+ * XdrMemReader.cc
  *
  *  Created on: Oct 25, 2010
  *      Author: rupert
