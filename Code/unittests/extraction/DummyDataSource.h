@@ -126,7 +126,7 @@ namespace hemelb
             return retValue;
           }
 
-          distribn_t* GetVelocityDistribution() const
+          distribn_t* GetDistribution() const
           {
             double fval = 1.0;
             double *p_fval = &fval;

@@ -93,10 +93,10 @@ namespace hemelb
         util::Vector3D<PhysicalStress> GetTangentialProjectionTraction() const;
 
         /**
-         * Returns a pointer to the velocity ditribution of a site.
+         * Returns a pointer to the velocity distribution of a site.
          * @return pointer to a velocity distribution
          */
-        const distribn_t* GetVelocityDistribution() const;
+        const distribn_t* GetDistribution() const;
 
         /**
          * Resets the iterator to the beginning again.

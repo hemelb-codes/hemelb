@@ -13,6 +13,7 @@
 #include "net/net.h"
 #include "constants.h"
 #include "configuration/SimConfig.h"
+#include "extraction/LocalDistributionInput.h"
 #include "geometry/Block.h"
 #include "geometry/GeometryReader.h"
 #include "geometry/NeighbouringProcessor.h"
@@ -35,6 +36,8 @@ namespace hemelb
   {
     class LatticeData : public reporting::Reportable
     {
+      friend class extraction::LocalDistributionInput; //! Give access to the methods GetFOld and GetFNew.
+
       public:
         template<class Lattice> friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
         template<class LatticeData> friend class Site; //! Let the inner classes have access to site-related data that's otherwise private.

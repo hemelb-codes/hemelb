@@ -24,7 +24,7 @@ namespace hemelb
           StressTensor,
           Traction,
           TangentialProjectionTraction,
-          VelocityDistributions,
+          Distributions,
           MpiRank
         };
 
