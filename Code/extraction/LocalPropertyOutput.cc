@@ -278,7 +278,7 @@ namespace hemelb
                 break;
               case OutputField::MpiRank:
                 xdrWriter
-                    << static_cast<WrittenDataType> (comms.Rank());
+                    << (uint32_t) comms.Rank();
                 break;
               default:
                 // This should never trip. It only occurs when a new OutputField field is added and no
