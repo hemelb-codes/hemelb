@@ -19,105 +19,6 @@ namespace hemelb
     {
     }
 
-    void LocalDistributionInput::BufferData()
-    {
-      // We could supply hints regarding how the file should be read but
-      // We are not doing so yet.
-      MPI_Info fileInfo;
-      HEMELB_MPI_CALL(MPI_Info_create, (&fileInfo));
-
-      // Open the file as read-only.
-      // TO DO: raise an exception if the file does not exist.
-      // TO DO: there seems to be a missing argument in the call to Open in LocalPropertyOutput.cc.
-      inputFile = net::MpiFile::Open(comms, filePath, MPI_MODE_RDONLY, fileInfo);
-      //inputFile = net::MpiFile::Open(comms, inputSpec->filename, MPI_MODE_RDONLY, fileInfo);
-      //net::MpiFile inputFile;
-      // Set the view to the file.
-      inputFile.SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);
-
-      std::stringstream ss(filePath);
-      std::string offsetFileName;
-      std::getline(ss, offsetFileName, '.'); // Discard the leading '.'.
-      std::getline(ss, offsetFileName, '.'); // Get the rest before the suffix.
-      // Reinstate the leading '.' and add the suffix ".off".
-      offsetFileName = "." + offsetFileName + ".off";
-      // Now open the offset file.
-      offsetFile = net::MpiFile::Open(comms, offsetFileName, MPI_MODE_RDONLY, fileInfo);
-      offsetFile.SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);
-
-      CheckPreamble();
-
-      ReadHeaderInfo();
-
-      // Read the data section.
-      // Read just one timestep.
-      if (comms.Rank() == HEADER_READING_RANK)
-      {
-        const unsigned timestepBytes = sizeof(uint64_t);
-
-	std::vector<char> timestepBuffer(timestepBytes);
-	inputFile.Read(timestepBuffer);
-
-	// Create an XDR translator based on the read buffer.
-	io::writers::xdr::XdrReader timestepReader = io::writers::xdr::XdrMemReader(&timestepBuffer[0],
-										    timestepBytes);
-
-	// Obtain the timestep.
-	uint64_t timestep;
-	timestepReader.readUnsignedLong(timestep);
-      }
-
-      if (!comms.OnIORank())
-      {
-        // Read the offset for this rank and the subsequent rank.
-        const unsigned offsetBytes = 2*sizeof(uint64_t);
-        std::vector<char> offsetBuffer(offsetBytes);
-        offsetFile.ReadAt(comms.Rank()*sizeof(uint64_t), offsetBuffer);
-        io::writers::xdr::XdrReader offsetReader = io::writers::xdr::XdrMemReader(&offsetBuffer[0],
-                                                                                  offsetBytes);
-        offsetReader.readUnsignedLong(thisOffset);
-        offsetReader.readUnsignedLong(nextOffset);
-
-        // Read the grid and distribution data.
-        unsigned readLength = nextOffset - thisOffset;
-        dataBufferPtr = new std::vector<char>(readLength);
-        inputFile.ReadAt(thisOffset, *dataBufferPtr);
-
-        dataReaderPtr = new io::writers::xdr::XdrMemReader(&(*dataBufferPtr)[0], readLength);
-	// TO DO: is this the best way to do this?
-        uint32_t numberOfFloats = LocalPropertyOutput::GetFieldLength(hemelb::extraction::OutputField::Distributions);
-        lengthOfSegment = 3*sizeof(uint32_t) + numberOfFloats*sizeof(float);
-      }
-    }
-
-    void LocalDistributionInput::ReadDistributions()
-    {
-      if (!comms.OnIORank())
-      {
-        uint32_t numberOfLocalSites = 0;
-        unsigned position = thisOffset;
-        uint32_t numberOfFloats = LocalPropertyOutput::GetFieldLength(hemelb::extraction::OutputField::Distributions);
-        while (position < nextOffset)
-        {
-          uint32_t x, y, z;
-          dataReaderPtr->readUnsignedInt(x);
-          dataReaderPtr->readUnsignedInt(y);
-          dataReaderPtr->readUnsignedInt(z);
-
-	  float offset = LocalPropertyOutput::GetOffset(hemelb::extraction::OutputField::Distributions);
-          for (int i = 0; i < numberOfFloats; i++)
-          {
-            float field_val;
-            dataReaderPtr->readFloat(field_val);
-            field_val += offset;
-          }
-
-          position += lengthOfSegment;
-          numberOfLocalSites++;
-        }
-      }
-    }
-
     void LocalDistributionInput::LoadDistribution(geometry::LatticeData* latDat)
     {
       // We could supply hints regarding how the file should be read but
@@ -311,7 +212,7 @@ namespace hemelb
 	    name += fieldHeaderBuffer[j];
 	  }
 
-	  // TO DO: This not work s expected so change it.
+	  // TO DO: This does not work as expected so change it.
 	  if ((i == 1) & (name != "distributions"))
 	  {
 	    throw Exception() << "The first fields must be 'distributions'."

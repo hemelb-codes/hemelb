@@ -46,10 +46,6 @@ namespace hemelb
 
         void LoadDistribution(geometry::LatticeData* latDat);
 
-        void BufferData();
-
-        void ReadDistributions();
-
       private:
 	typedef hemelb::lb::lattices:: HEMELB_LATTICE LatticeType;
 
