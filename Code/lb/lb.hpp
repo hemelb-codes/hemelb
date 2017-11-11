@@ -177,8 +177,6 @@ namespace hemelb
       extraction::LocalDistributionInput* distributionInput_ptr = mSimConfig->GetDistributionInputPtr();
       if (distributionInput_ptr)
       {
-	//distributionInput_ptr->BufferData();
-	//distributionInput_ptr->ReadDistributions();
 	distributionInput_ptr->LoadDistribution(mLatDat);
 	delete distributionInput_ptr;
       }
