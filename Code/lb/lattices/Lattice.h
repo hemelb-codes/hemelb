@@ -229,6 +229,63 @@ namespace hemelb
              
             }
           }
+
+
+          inline static void CalculateADEFeq(const distribn_t &density,
+                                             const distribn_t &coupledV_x,
+                                             const distribn_t &coupledV_y,
+                                             const distribn_t &coupledV_z,
+                                             distribn_t f_eq[])
+          {   
+            const __m128d density_SSE2   = _mm_set1_pd(density);
+            
+            const __m128d coupledV_x_SSE2 = _mm_set1_pd(coupledV_x);
+            const __m128d coupledV_y_SSE2 = _mm_set1_pd(coupledV_y);
+            const __m128d coupledV_z_SSE2 = _mm_set1_pd(coupledV_z);
+            
+            const __m128d three_SSE2      = _mm_set1_pd(3.) ;
+            
+            
+            // sse loop (the loop is virtually twice unrolled)
+            Direction numVect2 = ((DmQn::NUMVECTORS >> 1) << 1); 
+            for (Direction i = 0; i < numVect2 ; i+=2)            
+            {
+              // mom_dot_ei = DmQn::CX[i] * momentum_x + DmQn::CY[i] * momentum_y + DmQn::CZ[i] * momentum_z;
+              const __m128d CXD_coupledV_x_SSE2 = _mm_mul_pd(_mm_load_pd(&DmQn::CXD[i]),coupledV_x_SSE2);            
+              const __m128d CYD_coupledV_y_SSE2 = _mm_mul_pd(_mm_load_pd(&DmQn::CYD[i]),coupledV_y_SSE2);            
+              const __m128d CZD_coupledV_z_SSE2 = _mm_mul_pd(_mm_load_pd(&DmQn::CZD[i]),coupledV_z_SSE2);            
+              
+              const __m128d EQMWEIGHTS_SSE2 = _mm_load_pd(&DmQn::EQMWEIGHTS[i]);
+              
+              const __m128d vel_dot_ei_SSE2 =  _mm_add_pd(
+                                                    _mm_add_pd(CXD_coupledV_x_SSE2, CYD_coupledV_y_SSE2), 
+                                                    CZD_coupledV_z_SSE2
+                                               );
+                                                
+              
+              //  (density - (3. / 2.) * momentumMagnitudeSquared * density_1
+              const __m128d tmp = _mm_add_pd(density_SSE2,
+                                              _mm_mul_pd(three_SSE2, vel_dot_ei_SSE2 )
+                                             );
+                                          
+              // f_eq is not 16B aligned
+              _mm_storeu_pd(&f_eq[i],_mm_mul_pd(EQMWEIGHTS_SSE2,tmp));
+            }
+              
+            
+            // do the odd element (15/19/27) 
+            if (DmQn::NUMVECTORS != numVect2) // constants are reduced
+            {
+                          
+              const distribn_t vel_dot_ei = DmQn::CX[DmQn::NUMVECTORS-1] * coupledV_x
+                  + DmQn::CY[DmQn::NUMVECTORS-1] * coupledV_y + DmQn::CZ[DmQn::NUMVECTORS-1] * coupledV_z;
+
+              f_eq[DmQn::NUMVECTORS-1] = DmQn::EQMWEIGHTS[DmQn::NUMVECTORS - 1]
+                  * (density + 3. * vel_dot_ei);
+             
+            }
+          }
+
          #else                    
           
           /**
@@ -260,8 +317,6 @@ namespace hemelb
                       + 3. * mom_dot_ei);
             }
           }
-          #endif
-          
 
           inline static void CalculateADEFeq(const distribn_t &density,
                                              const distribn_t &coupledV_x,
@@ -279,6 +334,8 @@ namespace hemelb
                      + 3. * density * vel_dot_ei);
             }
           }
+
+          #endif
           
                                         
           // Calculate density, momentum and the equilibrium distribution
