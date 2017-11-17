@@ -265,7 +265,7 @@ namespace hemelb
               
               //  (density - (3. / 2.) * momentumMagnitudeSquared * density_1
 
-              const __m128d tmp1 = _mm_mul_pd(density_SSE2, vel_dot_ei_SSE2)
+              const __m128d tmp1 = _mm_mul_pd(density_SSE2, vel_dot_ei_SSE2);
               const __m128d tmp2 = _mm_add_pd(density_SSE2,
                                               _mm_mul_pd(three_SSE2, tmp1 )
                                              );
