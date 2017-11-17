@@ -249,7 +249,8 @@ namespace hemelb
          */
         lb::iolets::InOutLetFileVelocity* DoIOForFileVelocityInOutlet(
             const io::xml::Element& ioletEl);
-
+        lb::iolets::InOutLetHollowFileVelocity* DoIOForHollowFileVelocityInOutlet(
+            const io::xml::Element& ioletEl);
         lb::stents::StentFileFlux* DoIOForFileFluxStent(
             const io::xml::Element& stentEl);
 

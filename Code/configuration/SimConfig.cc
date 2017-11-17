@@ -343,6 +343,10 @@ namespace hemelb
       {
         newIolet = DoIOForFileVelocityInOutlet(ioletEl);
       }
+      else if (conditionSubtype == "hollowfile")
+      {
+        newIolet = DoIOForHollowFileVelocityInOutlet(ioletEl);
+      }
       else
       {
         throw Exception() << "Invalid boundary condition subtype '" << conditionSubtype << "' in "
@@ -793,6 +797,31 @@ namespace hemelb
 
       const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
       newIolet->SetRadius(GetDimensionalValueInLatticeUnits<LatticeDistance>(radiusEl, "m"));
+
+      const io::xml::Element concentrationEl = conditionEl.GetChildOrThrow("concentration");
+      newIolet->SetConcentration(GetDimensionalValueInLatticeUnits<PhysicalDensity>(concentrationEl, "kg/m3"));
+
+      return newIolet;
+    }
+
+    lb::iolets::InOutLetHollowFileVelocity* SimConfig::DoIOForHollowFileVelocityInOutlet(
+        const io::xml::Element& ioletEl)
+    {
+      lb::iolets::InOutLetHollowFileVelocity* newIolet = new lb::iolets::InOutLetHollowFileVelocity();
+      DoIOForBaseInOutlet(ioletEl, newIolet);
+
+      const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+
+      std::string velocityFilePath = conditionEl.GetChildOrThrow("path").GetAttributeOrThrow("value");
+
+      velocityFilePath = util::NormalizePathRelativeToPath(velocityFilePath, xmlFilePath);
+      newIolet->SetFilePath(velocityFilePath);
+
+      const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
+      newIolet->SetRadius(GetDimensionalValueInLatticeUnits<LatticeDistance>(radiusEl, "m"));
+
+      const io::xml::Element innerRadiusEl = conditionEl.GetChildOrThrow("innerradius");
+      newIolet->SetInnerRadius(GetDimensionalValueInLatticeUnits<LatticeDistance>(innerRadiusEl, "m"));
 
       const io::xml::Element concentrationEl = conditionEl.GetChildOrThrow("concentration");
       newIolet->SetConcentration(GetDimensionalValueInLatticeUnits<PhysicalDensity>(concentrationEl, "kg/m3"));

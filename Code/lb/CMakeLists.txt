@@ -9,7 +9,7 @@ add_library(hemelb_lb
 	iolets/InOutLetCosine.cc iolets/InOutLetFile.cc
 	iolets/InOutLetMultiscale.cc
     iolets/InOutLetVelocity.cc
-	iolets/InOutLetParabolicVelocity.cc iolets/InOutLetHollowParabolicVelocity.cc iolets/InOutLetWomersleyVelocity.cc iolets/InOutLetFileVelocity.cc
+	iolets/InOutLetParabolicVelocity.cc iolets/InOutLetHollowParabolicVelocity.cc iolets/InOutLetWomersleyVelocity.cc iolets/InOutLetFileVelocity.cc iolets/InOutLetHollowFileVelocity.cc
         stents/Stent.cc
         stents/StentConstant.cc stents/StentFile.cc
         stents/StentFlux.cc
