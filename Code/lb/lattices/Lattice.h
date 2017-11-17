@@ -264,12 +264,14 @@ namespace hemelb
                                                 
               
               //  (density - (3. / 2.) * momentumMagnitudeSquared * density_1
-              const __m128d tmp = _mm_add_pd(density_SSE2,
-                                              _mm_mul_pd(three_SSE2, vel_dot_ei_SSE2 )
+
+              const __m128d tmp1 = _mm_mul_pd(density_SSE2, vel_dot_ei_SSE2)
+              const __m128d tmp2 = _mm_add_pd(density_SSE2,
+                                              _mm_mul_pd(three_SSE2, tmp1 )
                                              );
                                           
               // f_eq is not 16B aligned
-              _mm_storeu_pd(&f_eq[i],_mm_mul_pd(EQMWEIGHTS_SSE2,tmp));
+              _mm_storeu_pd(&f_eq[i],_mm_mul_pd(EQMWEIGHTS_SSE2,tmp2));
             }
               
             
@@ -281,7 +283,7 @@ namespace hemelb
                   + DmQn::CY[DmQn::NUMVECTORS-1] * coupledV_y + DmQn::CZ[DmQn::NUMVECTORS-1] * coupledV_z;
 
               f_eq[DmQn::NUMVECTORS-1] = DmQn::EQMWEIGHTS[DmQn::NUMVECTORS - 1]
-                  * (density + 3. * vel_dot_ei);
+                  * (density + 3. * density * vel_dot_ei);
              
             }
           }
