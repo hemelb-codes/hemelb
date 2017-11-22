@@ -142,6 +142,10 @@ namespace hemelb
          * @return whether there is a boundary site at location
          */
         virtual bool IsWallSite(const util::Vector3D<site_t>& location) const = 0;
+
+        virtual bool IsVesselWallSite(const util::Vector3D<site_t>& location) const = 0;
+     
+        virtual bool IsStentWallSite(const util::Vector3D<site_t>& location) const = 0;
     };
   }
 }

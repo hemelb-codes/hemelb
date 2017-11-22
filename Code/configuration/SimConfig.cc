@@ -434,6 +434,14 @@ namespace hemelb
       {
         file->geometry = new extraction::GeometrySurfaceSelector();
       }
+      else if (type == "vesselsurface")
+      {
+        file->geometry = new extraction::GeometryVesselSurfaceSelector();
+      }
+      else if (type == "stentsurface")
+      {
+        file->geometry = new extraction::GeometryStentSurfaceSelector();
+      }
       else if (type == "surfacepoint")
       {
         file->geometry = DoIOForSurfacePoint(geometryEl);

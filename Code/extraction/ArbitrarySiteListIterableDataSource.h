@@ -146,6 +146,14 @@ namespace hemelb
           return false;
         }
 
+        bool IsVesselWallSite(const util::Vector3D<site_t>& location) const {
+          return false;
+        }
+
+        bool IsStentWallSite(const util::Vector3D<site_t>& location) const {
+          return false;
+        }
+
       protected:
         std::vector<site_t> sitesWhichAreIteratedOver;
         util::Vector3D<distribn_t> origin;

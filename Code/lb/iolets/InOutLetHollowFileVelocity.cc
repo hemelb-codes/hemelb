@@ -88,9 +88,9 @@ namespace hemelb
         int TimeStepsInInletVelocityProfile = times.back() / timeStepLength;
 
         // Check if last point's value matches the first
-        if (values.back() != values.front())
-          throw Exception() << "Last point's value does not match the first point's value in "
-              << velocityFilePath;
+        //if (values.back() != values.front())
+          //throw Exception() << "Last point's value does not match the first point's value in "
+              //<< velocityFilePath;
 
         // extend the table to one past the total time steps, so that the table is valid in the end-state, where the zero indexed time step is equal to the limit.
         velocityTable.resize(totalTimeSteps + 1);

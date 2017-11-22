@@ -11,6 +11,8 @@
 #include "extraction/PlaneGeometrySelector.h"
 #include "extraction/WholeGeometrySelector.h"
 #include "extraction/GeometrySurfaceSelector.h"
+#include "extraction/GeometryVesselSurfaceSelector.h"
+#include "extraction/GeometryStentSurfaceSelector.h"
 #include "extraction/SurfacePointSelector.h"
 
 #endif /* HEMELB_EXTRACTION_GEOMETRYSELECTORS_H */

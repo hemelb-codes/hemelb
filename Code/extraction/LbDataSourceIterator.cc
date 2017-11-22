@@ -118,5 +118,19 @@ namespace hemelb
 
       return data.GetSite(localSiteId).IsWall();
     }
+
+    bool LbDataSourceIterator::IsVesselWallSite(const util::Vector3D<site_t>& location) const
+    {
+      site_t localSiteId = data.GetContiguousSiteId(location);
+
+      return data.GetSite(localSiteId).IsVesselWall();
+    }
+
+    bool LbDataSourceIterator::IsStentWallSite(const util::Vector3D<site_t>& location) const
+    {
+      site_t localSiteId = data.GetContiguousSiteId(location);
+
+      return data.GetSite(localSiteId).IsStentWall();
+    }
   }
 }

@@ -141,6 +141,9 @@ namespace hemelb
          */
         bool IsWallSite(const util::Vector3D<site_t>& location) const;
 
+        bool IsVesselWallSite(const util::Vector3D<site_t>& location) const;
+
+        bool IsStentWallSite(const util::Vector3D<site_t>& location) const;
 
       private:
         /**
