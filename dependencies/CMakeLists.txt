@@ -303,7 +303,7 @@ else()
     )
     if (NOT HDF5_TARBALL)
         message("No HDF5 source found, will download")
-        set(HDF5_TARBALL http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.15-patch1/src/hdf5-1.8.15-patch1.tar.gz
+        set(HDF5_TARBALL https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8/hdf5-1.8.15-patch1/src/hdf5-1.8.15-patch1.tar.gz
             CACHE STRING "Path to download HDF5 (can be local file://)" FORCE)
     endif()
     ExternalProject_Add(
