@@ -49,7 +49,7 @@ set(HEMELB_DEPENDENCIES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../dependencies"
 set(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH}
 	CACHE FILEPATH "Path to find dependency includes and libraries")
 set(HEMELB_OPTIMISATION "-O3" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
-set(HEMELB_LATTICE "D3Q15"
+set(HEMELB_LATTICE "D3Q19"
   CACHE STRING "Select the lattice type to use (D3Q15,D3Q19,D3Q27,D3Q15i)")
 set(HEMELB_KERNEL "LBGK"
   CACHE STRING "Select the kernel to use (LBGK,EntropicAnsumali,EntropicChik,MRT,TRT,NNCY,NNCYMOUSE,NNC,NNTPL)")
