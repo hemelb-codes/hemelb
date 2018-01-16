@@ -29,7 +29,7 @@ option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development bu
 option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
 set(HEMELB_OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
 option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
-set(HEMELB_LATTICE "D3Q19"
+set(HEMELB_LATTICE "D3Q15"
   CACHE STRING "Select the lattice type to use (D3Q15,D3Q19,D3Q27)")
 set(HEMELB_KERNEL "LBGK"
   CACHE STRING "Select the kernel to use (LBGK,EntropicAnsumali,EntropicChik,MRT,NNCY,NNC,NNTPL)")
