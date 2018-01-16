@@ -14,6 +14,7 @@ namespace hemelb
                                                        const geometry::LatticeData& latticeData) :
       densityCache(simState, latticeData.GetLocalFluidSiteCount()),
       velocityCache(simState, latticeData.GetLocalFluidSiteCount()),
+      fluxCache(simState, latticeData.GetLocalFluidSiteCount()),
       wallShearStressMagnitudeCache(simState, latticeData.GetLocalFluidSiteCount()),
       vonMisesStressCache(simState, latticeData.GetLocalFluidSiteCount()),
       shearRateCache(simState, latticeData.GetLocalFluidSiteCount()),
@@ -29,6 +30,7 @@ namespace hemelb
     {
       densityCache.UnsetRefreshFlag();
       velocityCache.UnsetRefreshFlag();
+      fluxCache.UnsetRefreshFlag();
       vonMisesStressCache.UnsetRefreshFlag();
       wallShearStressMagnitudeCache.UnsetRefreshFlag();
       shearRateCache.UnsetRefreshFlag();

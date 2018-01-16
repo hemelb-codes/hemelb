@@ -58,6 +58,8 @@ namespace hemelb
          */
         util::Vector3D<FloatingType> GetVelocity() const;
 
+        util::Vector3D<FloatingType> GetFlux() const;
+
         /**
          * Returns the shear stress at the site.
          * @return

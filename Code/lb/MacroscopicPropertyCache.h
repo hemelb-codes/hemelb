@@ -53,6 +53,8 @@ namespace hemelb
          */
         util::RefreshableCache<util::Vector3D<distribn_t> > velocityCache;
 
+        util::RefreshableCache<util::Vector3D<distribn_t> > fluxCache;
+
         /**
          * The cache of wall shear stress magnitudes for each fluid site on this core.
          */

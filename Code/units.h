@@ -76,6 +76,8 @@ namespace hemelb
 
   typedef double PhysicalSpeed;
   typedef double LatticeSpeed;
+  typedef double PhysicalFlux;
+  typedef double LatticeFlux;
   typedef util::Vector3D<PhysicalSpeed> PhysicalVelocity;
   typedef util::Vector3D<LatticeSpeed> LatticeVelocity;
 

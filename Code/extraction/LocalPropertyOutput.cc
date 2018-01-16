@@ -257,9 +257,9 @@ namespace hemelb
                 break;
 	      case OutputField::Flux:
                 xdrWriter
-		  << static_cast<WrittenDataType> (dataSource.GetVelocity().x)
-		  << static_cast<WrittenDataType> (dataSource.GetVelocity().y)
-		  << static_cast<WrittenDataType> (dataSource.GetVelocity().z);
+		  << static_cast<WrittenDataType> (dataSource.GetFlux().x)
+		  << static_cast<WrittenDataType> (dataSource.GetFlux().y)
+		  << static_cast<WrittenDataType> (dataSource.GetFlux().z);
 		break;
               case OutputField::Concentration:
                 xdrWriter << static_cast<WrittenDataType> (dataSource.GetDensity());

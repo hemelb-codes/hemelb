@@ -111,6 +111,26 @@ namespace hemelb
           // convert velocity from lattice units to physical units (m/s)
           return velocity * latticeSpeed;
         }
+
+
+        template<class InputType>
+        InputType ConvertFluxToLatticeUnits(InputType flux) const
+        {
+          return flux / (latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
+        }
+
+        /**
+         * Templated to handle both absolute and directional velocity.
+         * @param velocity
+         * @return
+         */
+        template<class InputType>
+        InputType ConvertFluxToPhysicalUnits(InputType flux) const
+        {
+          // convert velocity from lattice units to physical units (m/s)
+          return flux * latticeSpeed * BLOOD_DENSITY_Kg_per_m3;
+        }
+
         double ConvertPressureDifferenceToPhysicalUnits(distribn_t pressure_grad) const;
 
         LatticeTime ConvertTimeToLatticeUnits(const PhysicalTime& t) const;
@@ -187,6 +207,10 @@ namespace hemelb
           else if (units == "kg/m3")
           {
             scale_factor = latticeMass / (latticeDistance * latticeDistance * latticeDistance);
+          }
+          else if (units == "kg/m2s")
+          {
+            scale_factor = latticeMass / (latticeDistance * latticeDistance * latticeTime);
           }
           else
           {

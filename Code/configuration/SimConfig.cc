@@ -757,7 +757,7 @@ namespace hemelb
       const io::xml::Element conditionEl = stentEl.GetChildOrThrow("condition");
 
       const io::xml::Element meanEl = conditionEl.GetChildOrThrow("mean");
-      newStent->SetFlux(GetDimensionalValueInLatticeUnits<PhysicalSpeed>(meanEl, "m/s"));
+      newStent->SetFlux(GetDimensionalValueInLatticeUnits<PhysicalFlux>(meanEl, "kg/m2s"));
 
       return newStent;
     }

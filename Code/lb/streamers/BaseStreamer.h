@@ -245,9 +245,17 @@ namespace hemelb
               propertyCache.densityCache.Put(site.GetIndex(), hydroVars.density);
             }
 
-            if (propertyCache.velocityCache.RequiresRefresh())
+            if (propertyCache.fluxCache.RequiresRefresh())
             {
-              propertyCache.velocityCache.Put(site.GetIndex(), hydroVars.velocity);
+
+              util::Vector3D<LatticeFlux> flux(0);
+
+              StreamerImpl::CollisionType::CKernel::LatticeType::CalculateFlux(hydroVars.tau,
+                                                                               hydroVars.GetFNeq().f,
+                                                                               hydroVars.GetFEq().f,
+                                                                               flux);
+
+              propertyCache.fluxCache.Put(site.GetIndex(), flux);
             }
           }
       };

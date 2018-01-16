@@ -385,6 +385,42 @@ namespace hemelb
             CalculateADEFeq(density, coupledV_x, coupledV_y, coupledV_z, f_eq);
           }
 
+
+          inline static void CalculateFlux(const distribn_t &iTau,
+                                           const distribn_t iFNeq[],
+                                           const distribn_t iFEq[],
+                                           util::Vector3D<LatticeFlux>& flux)
+
+          {
+            
+            distribn_t fluxNEq_0 = 0.0; distribn_t fluxNEq_1 = 0.0; distribn_t fluxNEq_2 = 0.0;
+            distribn_t fluxEq_0 = 0.0; distribn_t fluxEq_1 = 0.0; distribn_t fluxEq_2 = 0.0;
+            distribn_t flux_0 = 0.0; distribn_t flux_1 = 0.0; distribn_t flux_2 = 0.0;
+
+            distribn_t dLattice = 1.0 - ((1.0) / (2.0 * iTau));
+            distribn_t cLattice = 1.0 - (dLattice / 3.0);
+
+            for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
+            {
+ 
+              fluxNEq_0 = fluxNEq_0 + DmQn::CX[direction] * iFNeq[direction];
+              fluxNEq_1 = fluxNEq_1 + DmQn::CY[direction] * iFNeq[direction];
+              fluxNEq_2 = fluxNEq_2 + DmQn::CZ[direction] * iFNeq[direction];
+
+              fluxEq_0 = fluxEq_0 + DmQn::CX[direction] * iFEq[direction];
+              fluxEq_1 = fluxEq_1 + DmQn::CY[direction] * iFEq[direction];
+              fluxEq_2 = fluxEq_2 + DmQn::CZ[direction] * iFEq[direction];
+    
+            }
+
+            flux_0 = dLattice * fluxNEq_0 + cLattice * fluxEq_0;
+            flux_1 = dLattice * fluxNEq_1 + cLattice * fluxEq_1;
+            flux_2 = dLattice * fluxNEq_2 + cLattice * fluxEq_2;
+
+            flux[0] = flux_0; flux[1] = flux_1; flux[2] = flux_2;
+            
+          }
+
           // von Mises stress computation given the non-equilibrium distribution functions.
           inline static void CalculateVonMisesStress(const distribn_t f[],
                                                      distribn_t &stress,

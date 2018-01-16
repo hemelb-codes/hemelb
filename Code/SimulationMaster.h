@@ -6,7 +6,7 @@
 
 #ifndef HEMELB_SIMULATIONMASTER_H
 #define HEMELB_SIMULATIONMASTER_H
-#define HEMELB_ADE_LATTICE D3Q19
+#define HEMELB_ADE_LATTICE D3Q15
 #include "lb/lattices/Lattices.h"
 #include "extraction/PropertyActor.h"
 #include "lb/lb.hpp"

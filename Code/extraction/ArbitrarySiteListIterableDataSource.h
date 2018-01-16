@@ -69,6 +69,11 @@ namespace hemelb
           return origin;
         }
 
+        util::Vector3D<float> GetFlux() const {
+          //TODO: Makes this work properly!
+          return origin;
+        }
+
         /**
          * Returns the shear stress at the site.
          * @return
