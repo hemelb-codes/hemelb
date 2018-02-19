@@ -1,20 +1,49 @@
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
+
+# This file defines all the CMake options and cache variables needed
+# by HemeLB (main application). It can be included from either the the
+# master-build CMakeLists.txt or the app CMakeLists.txt
+
+# Private: list of options
 SET(_HEMELB_OPTIONS "")
+
+#
+# Declare an option (ON/OFF value)
+#
 macro(hemelb_option NAME DESC DEFAULT)
   option(${NAME} ${DESC} ${DEFAULT})
   list(APPEND _HEMELB_OPTIONS ${NAME})
 endmacro()
 
+# Private: list of the cached variables
 SET(_HEMELB_CACHEVARS "")
+
+#
+# Declare a cache variable
+#
 macro(hemelb_cachevar NAME DEFAULT TYPE DESC)
   set(${NAME} ${DEFAULT} CACHE ${TYPE} ${DESC})
   list(APPEND _HEMELB_CACHEVARS ${NAME})
 endmacro()
 
+# Private: list of variables to be forwarded from the master to the
+# code builds
 SET(_HEMELB_FWDVARS "")
+
+#
+# Declare a variable to be forwarded from master build to code build
+#
 macro(hemelb_fwdvar NAME)
   list(APPEND _HEMELB_FWDVARS ${NAME})
 endmacro()
-  
+
+#
+# Function to produce the CMake defines to pass data from master to
+# code runs of cmake.
+#
 function(hemelb_pass_cmake_defines output)
   set(ans "")
 
@@ -35,6 +64,9 @@ function(hemelb_pass_cmake_defines output)
 endfunction()
 
 
+#
+# Specify the options
+#
 hemelb_option(HEMELB_BUILD_DEBUGGER "Build the built in debugger" ON)
 # hemelb_option(HEMELB_DEBUGGER_IMPLEMENTATION "Which implementation to use for the debugger" none)
 # mark_as_advanced(HEMELB_DEBUGGER_IMPLEMENTATION)
@@ -54,6 +86,9 @@ hemelb_option(HEMELB_USE_VELOCITY_WEIGHTS_FILE "Use Velocity weights file" OFF)
 hemelb_option(UBUNTU_BUG_WORKAROUND "Work around the faulty HAVE_ISNAN value in Ubuntu 16.04." OFF)
 hemelb_option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
 
+#
+# Specify the variables
+#
 hemelb_cachevar(HEMELB_EXECUTABLE "hemelb"
   STRING "File name of executable to produce")
 hemelb_cachevar(HEMELB_READING_GROUP_SIZE 5
@@ -91,6 +126,9 @@ hemelb_cachevar(HEMELB_GATHERS_IMPLEMENTATION Separated
 hemelb_cachevar(HEMELB_ALLTOALL_IMPLEMENTATION Separated
   STRING "Alltoall comms implementation, choose 'Separated', or 'ViaPointPoint'" )
 
+#
+# Specify the variables requiring forwarding
+#
 hemelb_fwdvar(BOOST_ROOT)
 hemelb_fwdvar(CMAKE_INSTALL_PREFIX)
 hemelb_fwdvar(CMAKE_C_COMPILER)
