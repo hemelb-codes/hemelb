@@ -398,7 +398,6 @@ namespace hemelb
             distribn_t flux_0 = 0.0; distribn_t flux_1 = 0.0; distribn_t flux_2 = 0.0;
 
             distribn_t dLattice = 1.0 - ((1.0) / (2.0 * iTau));
-            distribn_t cLattice = 1.0 - (dLattice / 3.0);
 
             for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
             {
@@ -413,9 +412,9 @@ namespace hemelb
     
             }
 
-            flux_0 = dLattice * fluxNEq_0 + cLattice * fluxEq_0;
-            flux_1 = dLattice * fluxNEq_1 + cLattice * fluxEq_1;
-            flux_2 = dLattice * fluxNEq_2 + cLattice * fluxEq_2;
+            flux_0 = dLattice * fluxNEq_0 + fluxEq_0;
+            flux_1 = dLattice * fluxNEq_1 + fluxEq_1;
+            flux_2 = dLattice * fluxNEq_2 + fluxEq_2;
 
             flux[0] = flux_0; flux[1] = flux_1; flux[2] = flux_2;
             
