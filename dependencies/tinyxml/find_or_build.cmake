@@ -15,7 +15,7 @@ else()
   endif()
   ExternalProject_Add(
     tinyxml
-    INSTALL_DIR ${install_prefix}
+    INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
     URL ${TINYXML_TARBALL}
     CONFIGURE_COMMAND cmake <SOURCE_DIR>
     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
