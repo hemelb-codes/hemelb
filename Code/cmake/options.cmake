@@ -129,19 +129,23 @@ hemelb_cachevar(HEMELB_ALLTOALL_IMPLEMENTATION Separated
 #
 # Specify the variables requiring forwarding
 #
-hemelb_fwdvar(BOOST_ROOT)
 hemelb_fwdvar(CMAKE_INSTALL_PREFIX)
 hemelb_fwdvar(CMAKE_C_COMPILER)
 hemelb_fwdvar(CMAKE_CXX_COMPILER)
+
 hemelb_fwdvar(MPI_C_COMPILER)
 hemelb_fwdvar(MPI_CXX_COMPILER)
 hemelb_fwdvar(MPI_C_NO_INTERROGATE)
 hemelb_fwdvar(MPI_CXX_NO_INTERROGATE)
+hemelb_fwdvar(MPI_C_LIBRARIES)
+hemelb_fwdvar(MPI_C_INCLUDE_PATH)
+
+hemelb_fwdvar(BOOST_ROOT)
 hemelb_fwdvar(CTEMPLATE_USE_STATIC)
 hemelb_fwdvar(CPPUNIT_USE_STATIC)
 hemelb_fwdvar(METIS_INCLUDE_DIR)
 hemelb_fwdvar(METIS_LIBRARY)
 hemelb_fwdvar(PARMETIS_INCLUDE_DIR)
 hemelb_fwdvar(PARMETIS_LIBRARY)
-hemelb_fwdvar(MPI_C_LIBRARIES)
-hemelb_fwdvar(MPI_C_INCLUDE_PATH)
+hemelb_fwdvar(TINYXML_INCLUDE_DIR)
+hemelb_fwdvar(TINYXML_LIBRARIES)
