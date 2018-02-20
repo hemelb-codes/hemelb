@@ -51,7 +51,7 @@ namespace hemelb
     // Note: Clang likes to pretend to be GCC, so this works there too
 #define HEMELB_IGNORE_WULT_START					\
     _Pragma("GCC diagnostic push")					\
-    _Pragma("GCC diagnostic ignored \"-Wunused-local-typedef\"")
+    _Pragma("GCC diagnostic ignored \"-Wunused-local-typedefs\"")
 #define HEMELB_IGNORE_WULT_END			\
     _Pragma("GCC diagnostic pop")
 
