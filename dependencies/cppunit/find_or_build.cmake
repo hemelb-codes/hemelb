@@ -1,4 +1,4 @@
-hemelb_dependency(CPPUnit find)
+hemelb_dependency(cppunit find)
 if (CPPUNIT_FOUND)
   message("CPPUnit already installed, no need to download")
   add_custom_target(cppunit)

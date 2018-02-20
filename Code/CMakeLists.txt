@@ -222,7 +222,7 @@ endif()
 # ----------- HEMELB unittests ---------------
 if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
   #------CPPUnit ---------------
-  hemelb_dependency(CPPUnit use)
+  hemelb_dependency(cppunit use)
   add_executable(unittests_hemelb ${root_sources})
   add_subdirectory(unittests)
   target_link_libraries(unittests_hemelb 
