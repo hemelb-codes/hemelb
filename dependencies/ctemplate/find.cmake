@@ -1,1 +1,1 @@
-find_package(CTemplate QUIET)
+find_package(CTemplate REQUIRED)

@@ -10,12 +10,14 @@
 # sparse matrices. It can be found at:
 # 	http://www-users.cs.umn.edu/~karypis/metis/parmetis/index.html
 #
+# You can help this script by setting METIS_ROOT, if you know it
+#
 # METIS_INCLUDE_DIR - where to find autopack.h
 # METIS_LIBRARY     - List of fully qualified libraries to link against.
 # METIS_FOUND       - Do not attempt to use if "no" or undefined.
 
-FIND_PATH(METIS_INCLUDE_DIR metis.h)
-FIND_LIBRARY(METIS_LIBRARY metis)
+FIND_PATH(METIS_INCLUDE_DIR metis.h HITNS ${METIS_ROOT}/include)
+FIND_LIBRARY(METIS_LIBRARY metis HINTS ${METIS_ROOT}/lib)
 
 set(METIS_INCLUDE_DIRS ${METIS_INCLUDE_DIR})
 set(METIS_LIBRARIES ${METIS_LIBRARY})
