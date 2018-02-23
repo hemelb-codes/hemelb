@@ -57,7 +57,7 @@ set(HEMELB_INLET_BOUNDARY "NASHZEROTHORDERPRESSUREIOLET"
 set_property(CACHE HEMELB_INLET_BOUNDARY PROPERTY STRINGS NASHZEROTHORDERPRESSUREIOLET LADDIOLET)
 set(HEMELB_OUTLET_BOUNDARY "NASHZEROTHORDERPRESSUREIOLET"
   CACHE STRING "Select the boundary conditions to be used at the outlets (NASHZEROTHORDERPRESSUREIOLET,LADDIOLET)")
-set_property(CACHE HEMELB_OUTLET_BOUNDARY PROPERTY STRINGS NASHZEROTHORDERPRESSUREIOLET,LADDIOLET)
+set_property(CACHE HEMELB_OUTLET_BOUNDARY PROPERTY STRINGS NASHZEROTHORDERPRESSUREIOLET LADDIOLET)
 set(HEMELB_COMPUTE_ARCHITECTURE "AMDBULLDOZER"
   CACHE STRING "Select the architecture of the machine being used (INTELSANDYBRIDGE,AMDBULLDOZER,NEUTRAL,ISBFILEVELOCITYINLET)")
 set(HEMELB_WALL_INLET_BOUNDARY "NASHZEROTHORDERPRESSURESBB"
@@ -78,6 +78,9 @@ option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
 set(HEMELB_STENCIL "FourPoint"
     CACHE STRING "HemeLB stencil type")
 set_property(CACHE HEMELB_STENCIL PROPERTY STRINGS TwoPoint ThreePoint FourPoint CosineApprox)
+set(EXTRAE_PATH "/marconi/home/userexternal/jgimenez/tools/extrae-3.5.2"
+  CACHE STRING "Directory for BSC's Extrae installation")
+
 
 # Add warnings flags to development build types
 if (HEMELB_USE_ALL_WARNINGS_GNU)
@@ -235,6 +238,7 @@ add_executable(${HEMELB_EXECUTABLE} main.cc)
 add_codesign(${HEMELB_EXECUTABLE})
 
 include_directories(${PROJECT_SOURCE_DIR})
+include_directories(${EXTRAE_PATH}/include)
 set(package_subdirs configuration extraction reporting steering vis lb geometry debug util io net
   log colloids redblood)
 foreach(subdir ${package_subdirs})
@@ -245,6 +249,13 @@ endforeach()
 add_subdirectory(resources)
 target_link_libraries(${HEMELB_EXECUTABLE} 
 	${heme_libraries}
+	${EXTRAE_PATH}/lib/libmpitrace.so
+	/marconi/home/userexternal/fgomezpe/papi/lib/libpapi.a
+	/usr/lib64/libxml2.so
+	/marconi/home/userexternal/gllort00/deps/binutils/2.29/lib/libbfd.a
+	/marconi/home/userexternal/gllort00/deps/binutils/2.29/lib/libiberty.a
+	/marconi/home/userexternal/gllort00/deps/libunwind/1.2/lib/libunwind.a
+	/lib64/liblzma.so
 	${MPI_LIBRARIES}
 	${HDF5_LIBRARIES}
 	${PARMETIS_LIBRARIES}
