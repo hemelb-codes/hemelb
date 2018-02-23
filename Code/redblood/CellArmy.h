@@ -26,6 +26,7 @@
 #include "Exception.h"
 #include "redblood/parallel/IntegrateVelocities.h"
 #include <boost/uuid/uuid_io.hpp>
+#include "extrae_user_events.h"
 
 namespace hemelb
 {
@@ -60,7 +61,8 @@ namespace hemelb
                 velocityIntegrator(neighbourDependenciesGraph),
                 forceSpreader(neighbourDependenciesGraph),
                 globalCoordsToProcMap(parallel::ComputeGlobalCoordsToProcMap(neighbourDependenciesGraph, latticeData)),
-                nodeDistributions(parallel::nodeDistributions(globalCoordsToProcMap, cells))
+                nodeDistributions(parallel::nodeDistributions(globalCoordsToProcMap, cells)),
+                isExtraeOn(false)
         {
         }
 
@@ -208,7 +210,8 @@ namespace hemelb
         parallel::GlobalCoordsToProcMap globalCoordsToProcMap;
         //! Object describing how the cells affect different subdomains
         parallel::NodeDistributions nodeDistributions;
-
+	//! Keep track of whether we turned on profiling to avoid unnecessary synchronisation afterwards
+	bool isExtraeOn;
     };
 
     template<class TRAITS>
@@ -308,6 +311,7 @@ namespace hemelb
     void CellArmy<TRAITS>::CellRemoval()
     {
       timings[hemelb::reporting::Timers::cellRemoval].Start();
+      bool turnExtraeOnThisTimestep = false;
       auto i_first = cells.cbegin();
       auto const i_end = cells.cend();
       while (i_first != i_end)
@@ -331,8 +335,21 @@ namespace hemelb
           cells.erase(i_current);
           auto const numErased = nodeDistributions.erase((*i_current)->GetTag());
           assert(numErased == 1);
+
+          turnExtraeOnThisTimestep = true;
         }
       }
+
+      if (not isExtraeOn)
+      {
+        if(neighbourDependenciesGraph.AllReduce((int) turnExtraeOnThisTimestep, MPI_SUM))
+        {
+          log::Logger::Log<log::Info, log::Singleton>("Turning on extrae profiler");
+          Extrae_restart();
+          isExtraeOn = true;
+        }
+      }
+
       timings[hemelb::reporting::Timers::cellRemoval].Stop();
     }
 

@@ -11,6 +11,7 @@
 #include "net/MpiEnvironment.h"
 #include "net/MpiError.h"
 #include "net/MpiCommunicator.h"
+#include "extrae_user_events.h"
 
 namespace hemelb
 {
@@ -23,6 +24,7 @@ namespace hemelb
       if (!Initialized())
       {
         HEMELB_MPI_CALL(MPI_Init, (&argc, &argv));
+        Extrae_shutdown();
         HEMELB_MPI_CALL(MPI_Comm_set_errhandler, (MPI_COMM_WORLD, MPI_ERRORS_RETURN));
         doesOwnMpi = true;
       }
