@@ -4,7 +4,7 @@
 // license in the file LICENSE.
 
 #include "reporting/Dict.h"
-#include <ctemplate/template_dictionary.h>
+#include <ctemplate/template.h>
 
 namespace hemelb
 {
