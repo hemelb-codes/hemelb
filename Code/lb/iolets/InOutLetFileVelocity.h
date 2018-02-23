@@ -6,6 +6,7 @@
 #ifndef HEMELB_LB_IOLETS_INOUTLETFILEVELOCITY_H
 #define HEMELB_LB_IOLETS_INOUTLETFILEVELOCITY_H
 
+#include <map>
 #include "lb/iolets/InOutLetVelocity.h"
 
 namespace hemelb
