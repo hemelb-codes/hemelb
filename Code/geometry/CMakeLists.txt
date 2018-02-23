@@ -13,6 +13,7 @@ add_library(
   )
 
 hemelb_add_target_dependency_parmetis(hemelb_geometry)
+hemelb_add_target_dependency_zlib(hemelb_geometry)
 
 configure_file (
   "${PROJECT_SOURCE_DIR}/geometry/decomposition/DecompositionWeights.h.in"

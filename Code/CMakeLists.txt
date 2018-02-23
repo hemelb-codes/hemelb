@@ -155,8 +155,6 @@ target_link_libraries(${HEMELB_EXECUTABLE}
   ${heme_libraries}
   ${MPI_LIBRARIES}
   ${Boost_LIBRARIES}
-  ${ZLIB_LIBRARIES}
-  ${MPWide_LIBRARIES}
   )
 INSTALL(TARGETS ${HEMELB_EXECUTABLE} RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
@@ -173,6 +171,8 @@ if (HEMELB_BUILD_MULTISCALE)
   
   set(root_sources SimulationMaster.cc multiscale/MultiscaleSimulationMaster.h)
   add_executable(multiscale_hemelb mainMultiscale.cc ${root_sources})
+  hemelb_add_target_dependency_mpwide(multiscale_hemelb)
+  
   include_directories(${PROJECT_SOURCE_DIR})
   set(package_subdirs
     configuration
@@ -199,8 +199,6 @@ if (HEMELB_BUILD_MULTISCALE)
     ${heme_libraries}
     ${MPI_LIBRARIES}
     ${Boost_LIBRARIES}
-    ${ZLIB_LIBRARIES}
-    ${MPWide_LIBRARIES}
     )
   INSTALL(TARGETS multiscale_hemelb RUNTIME DESTINATION bin)
   list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
@@ -216,11 +214,7 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
     hemelb_unittests 
     ${heme_libraries}
     ${MPI_LIBRARIES}
-    ${CPPUNIT_LIBRARY}
-    ${Boost_LIBRARIES}
-    ${ZLIB_LIBRARIES}
-    ${MPWide_LIBRARIES}
-    ${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
+    ${Boost_LIBRARIES})
   INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
   list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/four_cube_multiscale.xml
     unittests/resources/config.xml unittests/resources/config0_2_0.xml
@@ -234,19 +228,14 @@ endif()
 # ----------- HEMELB functionaltests ---------------
 if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
   #------CPPUnit ---------------
-  find_package(CPPUnit REQUIRED)
-  include_directories(${CPPUNIT_INCLUDE_DIR})
+  hemelb_dependency(cppunit use)
   add_executable(functionaltests_hemelb ${root_sources})
   add_subdirectory(functionaltests/cpptests)
   target_link_libraries(functionaltests_hemelb 
     hemelb_functionaltests 
     ${heme_libraries}
     ${MPI_LIBRARIES}
-    ${CPPUNIT_LIBRARY}
-    ${Boost_LIBRARIES}
-    ${MPWide_LIBRARIES}
-    ${ZLIB_LIBRARIES}
-    ${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
+    ${Boost_LIBRARIES})
   INSTALL(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
 endif()
 
