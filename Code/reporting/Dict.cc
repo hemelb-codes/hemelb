@@ -58,9 +58,5 @@ namespace hemelb
     template 
     void Dict::SetFormattedValue<double>(const std::string& variable, const char* format, const double& value);
 
-    // void Dict::SetFormattedValue<double const&>(const std::string&, const char *, const double& value)
-    // {
-    //   raw->SetFormattedValue(variable, format, value);
-    // }
   }
 }
