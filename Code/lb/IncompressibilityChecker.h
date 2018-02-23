@@ -134,7 +134,7 @@ namespace hemelb
          */
         virtual ~IncompressibilityChecker();
 
-        void Report(ctemplate::TemplateDictionary& dictionary);
+        void Report(reporting::Dict& dictionary);
 
         /**
          * Returns smallest density in the domain as agreed by all the processes.

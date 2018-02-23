@@ -7,7 +7,7 @@
 #ifndef HEMELB_REPORTING_REPORTABLE_H
 #define HEMELB_REPORTING_REPORTABLE_H
 
-#include "ctemplate/template.h"
+#include "reporting/Dict.h"
 
 namespace hemelb
 {
@@ -20,7 +20,7 @@ namespace hemelb
     {
       public:
         virtual ~Reportable() {}
-        virtual void Report(ctemplate::TemplateDictionary& dictionary) = 0;
+        virtual void Report(Dict& dictionary) = 0;
     };
   }
 }

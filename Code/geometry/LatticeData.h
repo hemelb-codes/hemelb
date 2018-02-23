@@ -325,7 +325,7 @@ namespace hemelb
           return globalSiteMaxes;
         }
 
-        void Report(ctemplate::TemplateDictionary& dictionary);
+        void Report(reporting::Dict& dictionary);
 
         neighbouring::NeighbouringLatticeData &GetNeighbouringData();
         neighbouring::NeighbouringLatticeData const &GetNeighbouringData() const;
