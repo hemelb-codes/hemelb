@@ -99,13 +99,6 @@ if(LINUX_SCANDIR)
   add_definitions(-DLINUX_SCANDIR)
 endif()
 
-if(NOT HAVE_XDRUINTXX_T)
-  #Without the standard names for the xdr functions, create aliases for the existing ones.
-  add_definitions(-Dxdr_uint16_t=xdr_u_int16_t)
-  add_definitions(-Dxdr_uint32_t=xdr_u_int32_t)
-  add_definitions(-Dxdr_uint64_t=xdr_u_int64_t)
-endif()
-
 include(mpi)
 include(dependencies)
 
@@ -161,10 +154,7 @@ add_subdirectory(resources)
 target_link_libraries(${HEMELB_EXECUTABLE} 
   ${heme_libraries}
   ${MPI_LIBRARIES}
-  ${PARMETIS_LIBRARIES}
-  ${TINYXML_LIBRARIES}
   ${Boost_LIBRARIES}
-  ${CTEMPLATE_LIBRARIES}
   ${ZLIB_LIBRARIES}
   ${MPWide_LIBRARIES}
   )
@@ -208,10 +198,7 @@ if (HEMELB_BUILD_MULTISCALE)
   target_link_libraries(multiscale_hemelb
     ${heme_libraries}
     ${MPI_LIBRARIES}
-    ${PARMETIS_LIBRARIES}
-    ${TINYXML_LIBRARIES}
     ${Boost_LIBRARIES}
-    ${CTEMPLATE_LIBRARIES}
     ${ZLIB_LIBRARIES}
     ${MPWide_LIBRARIES}
     )
@@ -229,11 +216,8 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
     hemelb_unittests 
     ${heme_libraries}
     ${MPI_LIBRARIES}
-    ${PARMETIS_LIBRARIES}
-    ${TINYXML_LIBRARIES}
     ${CPPUNIT_LIBRARY}
     ${Boost_LIBRARIES}
-    ${CTEMPLATE_LIBRARIES}
     ${ZLIB_LIBRARIES}
     ${MPWide_LIBRARIES}
     ${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
@@ -258,11 +242,8 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
     hemelb_functionaltests 
     ${heme_libraries}
     ${MPI_LIBRARIES}
-    ${PARMETIS_LIBRARIES}
-    ${TINYXML_LIBRARIES}
     ${CPPUNIT_LIBRARY}
     ${Boost_LIBRARIES}
-    ${CTEMPLATE_LIBRARIES}
     ${MPWide_LIBRARIES}
     ${ZLIB_LIBRARIES}
     ${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
