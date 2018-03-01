@@ -212,7 +212,7 @@ if (CTEMPLATE_FOUND)
 	message("Ctemplate already installed, no need to download")
 else()
 	message("Ctemplate not installed, will build from source")
-	find_file(CTEMPLATE_TARBALL ctemplate-2.2.tar.gz
+	find_file(CTEMPLATE_TARBALL ctemplate-2.3.tar.gz
 		DOC "Path to download CTemplate (can be url http://)"
 		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 	)
@@ -272,15 +272,24 @@ else()
 	)
 endif()
 
+#-----------------CMakeCookOff--------------------
+#
 find_package(GreatCMakeCookOff QUIET)
-get_tarball(
-       https://github.com/UCL/GreatCMakeCookOff/archive/v2.0.7.tar.gz
-       cooktar
-)
 if(GreatCMakeCookOff_FOUND)
     message("Found cmake cookoff.")
 else()
     message("CMake cookoff not installed, will build from source")
+	find_file(cooktar v2.0.7.tar.gz
+		DOC "Path to download GreatCMakeCookOff (can be url http://)"
+		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
+	)
+	if(NOT cooktar)
+		get_tarball(
+		       https://github.com/UCL/GreatCMakeCookOff/archive/v2.0.7.tar.gz
+		       cooktar
+		)
+	endif()
+
     ExternalProject_Add(
         cookoff
         INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
