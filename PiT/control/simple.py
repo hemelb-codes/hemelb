@@ -3,6 +3,9 @@ import yaml
 
 class State(luigi.LocalTarget):
     def __init__(self, i, k):
+        if i == 0:
+            k = 0
+        
         self.i = i
         self.k = k
         path = '{}_{:04d}_{:02d}'.format(self.prefix, i, k)
@@ -15,17 +18,8 @@ class State(luigi.LocalTarget):
 
     def save(self, obj):
         with self.open('w') as writer:
-            return yaml.dump(obj, stream=writer)
+            yaml.dump(obj, stream=writer)
         
-    # @property
-    # def val(self):
-    #     return self._db.get((self.i, self.k), None)
-
-    # @val.setter
-    # def val(self, v):
-    #     self._db[(self.i, self.k)] = v
-    #     return
-
     pass
 
 class y(State):
@@ -37,7 +31,7 @@ class y(State):
             return InitialCondition()
         else:
             if k == 0:
-                return Coarse(i=i, k=k)
+                return Coarse(i=i-1, k=k)
             else:
                 return ParaUpdate(i=i, k=k)
     def __str__(self):
@@ -49,6 +43,8 @@ class Gy(State):
     prefix = 'Gy'
     @staticmethod
     def producer(i, k):
+        if i == 0:
+            k = 0
         return Coarse(i=i, k=k)
     def __str__(self):
         return "G(y[i={}, k={}])".format(self.i, self.k)
@@ -59,6 +55,8 @@ class Fy(State):
     prefix = 'Fy'
     @staticmethod
     def producer(i, k):
+        if i == 0:
+            k = 0
         return Fine(i=i, k=k)
     def __str__(self):
         return "F(y[i={}, k={}])".format(self.i, self.k)
@@ -83,7 +81,10 @@ class Coarse(Op):
     def run(self):
         log(self.output())
         yik = self.input()
-        self.output().save(yik.load())
+        data = yik.load()
+        assert data['t'] == self.i
+        data['t'] += 1
+        self.output().save(data)
         return
     pass
 
@@ -97,7 +98,11 @@ class Fine(Op):
     def run(self):
         log(self.output())
         yik = self.input()
-        self.output().save(yik.load())
+        data = yik.load()
+        assert data['t'] == self.i
+        data['t'] += 1
+        self.output().save(data)
+        return
     pass
 
 class ParaUpdate(Op):
@@ -108,8 +113,18 @@ class ParaUpdate(Op):
         return [Gy.producer(self.i-1, self.k), Fy.producer(self.i-1, self.k-1), Gy.producer(self.i-1, self.k-1)]
         
     def run(self):
-        g_cur, f_last, g_last = self.input()
-        self.output().save(g_cur.load() + f_last.load() - g_last.load())
+        inputs = self.input()
+        idata = [i.load() for i in inputs]        
+        uniq_t = set(i['t'] for i in idata)
+        assert len(uniq_t) == 1
+        assert uniq_t.pop() == self.i
+
+        g_cur, f_last, g_last = [i['y'] for i in idata]
+        ans = g_cur + f_last - g_last
+        
+        self.output().save({'t': self.i, 'y': ans})
+        
+        g_cur, f_last, g_last = inputs
         log("{} = {} + {} - {}".format(self.output(), g_cur, f_last, g_last))
     pass
 
@@ -123,13 +138,12 @@ if __name__ == "__main__":
     def log(*things):
         logfile.write(' '.join(str(t) for t in things) + '\n')
         
-    num_time_slices = 12
-    num_parareal_iters = 3
+    num_time_slices = 4
+    num_parareal_iters = 2
 
     ic = y(0,0)
-    ic.save(1.0)
+    ic.save({'t': 0, 'y': 1.0})
         
     final_task = y.producer(num_time_slices, num_parareal_iters)
-    luigi.build([final_task])
-
+    luigi.build([final_task], local_scheduler=True)
     logfile.close()
