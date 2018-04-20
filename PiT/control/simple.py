@@ -23,15 +23,20 @@ class State(luigi.LocalTarget):
     pass
 
 class y(State):
-    _db = {}
     prefix = 'y'
     @staticmethod
     def producer(i, k):
+        assert i >= 0
+        assert k >= 0
+        assert k <= i
+        
         if i == 0:
             return InitialCondition()
         else:
             if k == 0:
                 return Coarse(i=i-1, k=k)
+            elif k == i:
+                return Fine(i=i-1, k=k-1)
             else:
                 return ParaUpdate(i=i, k=k)
     def __str__(self):
@@ -39,7 +44,6 @@ class y(State):
     pass
 
 class Gy(State):
-    _db = {}
     prefix = 'Gy'
     @staticmethod
     def producer(i, k):
@@ -51,7 +55,6 @@ class Gy(State):
     pass
 
 class Fy(State):
-    _db = {}
     prefix = 'Fy'
     @staticmethod
     def producer(i, k):
