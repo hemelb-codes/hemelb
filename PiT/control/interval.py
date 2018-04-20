@@ -31,7 +31,7 @@ class Interval(object):
         bounds = np.arange(num_time_slices + 1, dtype=float) * ((self.end-self.start) / float(num_time_slices)) + self.start
         starts = bounds[:-1]
         ends = bounds[1:]
-        return [Interval(starts[i], ends[i], nsteps=slice_steps) for i in range(num_time_slices)]
+        return [Interval(float(starts[i]), float(ends[i]), nsteps=slice_steps) for i in range(num_time_slices)]
 
     def to_dict(self):
         return {
