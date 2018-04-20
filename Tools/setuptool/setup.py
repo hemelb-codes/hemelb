@@ -238,6 +238,30 @@ def GetVtkCompileFlags(vtkLibDir):
     
     return []
 
+def removePrefix(text, prefix):
+    return text[text.startswith(prefix) and len(prefix):]
+
+def GetVtkLinkerFlags(vtkLibDir):
+
+ vtk_link_flags = []
+ major, minor = GetVtkVersion()
+
+ for filev in os.listdir(vtkLibDir):
+  filev_splitted = filev.split(".")
+  if len(filev_splitted) == 3:
+   for names in filev_splitted:
+    try:
+     key, value = names.split("-")
+    except ValueError:
+     continue
+    else:
+     if value == str(major):
+      newstr = removePrefix(key, "lib")
+      newstr = "-l"+newstr
+      newstr = newstr+"-"+str(major)+"."+str(minor)
+      vtk_link_flags.append(newstr)
+ return vtk_link_flags
+
 def HaveXdrUint():
     import tempfile
     import shutil
@@ -299,7 +323,7 @@ if __name__ == "__main__":
     libraries = []
     library_dirs = []
     extra_compile_args = ['-std=c++11'] + GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags()
-    extra_link_args = ['-lCGAL', '-lgmp', '-lz']
+    extra_link_args = ['-lCGAL', '-lgmp', '-lz'] + GetVtkLinkerFlags(vtkLibDir)
     
     # Create the list of extension modules
     ext_modules = []
