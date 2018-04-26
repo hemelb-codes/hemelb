@@ -471,7 +471,7 @@ def update_environment(*dicts):
 @task(alias='test')
 def unit_test(**args):
     """Submit a unit-testing job to the remote queue."""
-    job(dict(script='unittests', job_name_template='unittests_${build_number}_${machine_name}', cores=1, wall_time='0:1:0', memory='2G'), args)
+    job(dict(script='unittests', job_name_template='unittests_${build_number}_${machine_name}', cores=1, corespernode=1, wall_time='0:1:0', memory='2G'), args)
 
 @task
 def batch_build_code(*configurations, **extras):
