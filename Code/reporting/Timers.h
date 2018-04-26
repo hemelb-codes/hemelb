@@ -200,7 +200,7 @@ namespace hemelb
          */
         void Reduce();
 
-        void Report(ctemplate::TemplateDictionary& dictionary);
+        void Report(Dict& dictionary);
 
       private:
         std::vector<Timer> timers; //! The set of timers

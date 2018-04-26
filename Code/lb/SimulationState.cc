@@ -70,7 +70,7 @@ namespace hemelb
       return stability;
     }
 
-    void SimulationState::Report(ctemplate::TemplateDictionary& dictionary)
+    void SimulationState::Report(reporting::Dict& dictionary)
     {
       dictionary.SetFormattedValue("TIME_STEP_LENGTH", "%lf", GetTimeStepLength());
       dictionary.SetIntValue("STEPS", GetTimeStep() - 1);

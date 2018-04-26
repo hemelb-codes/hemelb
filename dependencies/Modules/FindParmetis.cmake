@@ -1,9 +1,8 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
-#
+
 # Find the METIS includes and libraries
 #
 # METIS is a library that implements a variety of algorithms for 
@@ -26,13 +25,14 @@ else()
 endif()
 
 if(METIS_FOUND)
-  FIND_PATH(PARMETIS_INCLUDE_DIR parmetis.h)
-  FIND_LIBRARY(PARMETIS_LIBRARY parmetis)
+  FIND_PATH(PARMETIS_INCLUDE_DIR parmetis.h HINTS ${METIS_INCLUDE_DIR})
+  get_filename_component(METIS_LIB_DIR ${METIS_LIBRARY} DIRECTORY)
+  FIND_LIBRARY(PARMETIS_LIBRARY parmetis HINTS ${METIS_LIB_DIR})
 endif()
 
 if(PARMETIS_INCLUDE_DIR)
   set(PARMETIS_INCLUDE_DIRS
-     ${PARMETIS_INCLUDE_DIR} ${METIS_INCLUDE_DIRS})
+    ${PARMETIS_INCLUDE_DIR} ${METIS_INCLUDE_DIRS})
 endif()
 if(PARMETIS_LIBRARY)
   set(PARMETIS_LIBRARIES ${PARMETIS_LIBRARY} ${METIS_LIBRARIES})

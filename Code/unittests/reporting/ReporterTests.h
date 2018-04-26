@@ -8,6 +8,7 @@
 #define HEMELB_UNITTESTS_REPORTING_REPORTERTESTS_H
 
 #include <cppunit/TestFixture.h>
+#include <ctemplate/template.h>
 #include "reporting/Reporter.h"
 #include "reporting/Timers.h"
 #include "unittests/FourCubeLatticeData.h"
@@ -123,7 +124,7 @@ namespace hemelb
             std::string result;
             CPPUNIT_ASSERT(ctemplate::ExpandTemplate("TestFor" + ttemplate,
                                                      ctemplate::DO_NOT_STRIP,
-                                                     &reporter->GetDictionary(),
+                                                     reporter->GetDictionary().GetRaw(),
                                                      &result));
             CPPUNIT_ASSERT_EQUAL(expectation, result);
           }
