@@ -1,8 +1,8 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
+
 # - Find MPWide
 # Find the native MPWide includes and library
 #
@@ -12,16 +12,16 @@
 #
 
 IF( MPWide_INCLUDE_DIR )
-    # Already in cache, be silent
-    SET( MPWide_FIND_QUIETLY TRUE )
+  # Already in cache, be silent
+  SET( MPWide_FIND_QUIETLY TRUE )
 ENDIF( MPWide_INCLUDE_DIR )
 
 FIND_PATH( MPWide_INCLUDE_DIR "MPWide.h"
-           PATH_SUFFIXES "MPWide" ".mpwide" )
+  PATH_SUFFIXES "MPWide" ".mpwide" )
 
 FIND_LIBRARY( MPWide_LIBRARIES
-              NAMES "MPW"
-              PATH_SUFFIXES "MPWide" ".mpwide" )
+  NAMES "MPW"
+  PATH_SUFFIXES "MPWide" ".mpwide" )
 
 # handle the QUIETLY and REQUIRED arguments and set MPWide_FOUND to TRUE if
 # all listed variables are TRUE

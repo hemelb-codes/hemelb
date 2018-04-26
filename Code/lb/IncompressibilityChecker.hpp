@@ -244,13 +244,13 @@ namespace hemelb
     }
 
     template<class BroadcastPolicy>
-    void IncompressibilityChecker<BroadcastPolicy>::Report(ctemplate::TemplateDictionary& dictionary)
+    void IncompressibilityChecker<BroadcastPolicy>::Report(reporting::Dict& dictionary)
     {
       if (AreDensitiesAvailable() && !IsDensityDiffWithinRange())
       {
-        ctemplate::TemplateDictionary *incomp = dictionary.AddSectionDictionary("DENSITIES");
-        incomp->SetFormattedValue("ALLOWED", "%.1f%%", GetMaxRelativeDensityDifferenceAllowed() * 100);
-        incomp->SetFormattedValue("ACTUAL", "%.1f%%", GetMaxRelativeDensityDifference() * 100);
+        reporting::Dict incomp = dictionary.AddSectionDictionary("DENSITIES");
+        incomp.SetFormattedValue("ALLOWED", "%.1f%%", GetMaxRelativeDensityDifferenceAllowed() * 100);
+        incomp.SetFormattedValue("ACTUAL", "%.1f%%", GetMaxRelativeDensityDifference() * 100);
       }
     }
 

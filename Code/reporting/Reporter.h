@@ -14,7 +14,6 @@
 #include "log/Logger.h"
 #include "util/fileutils.h"
 #include "reporting/Policies.h"
-#include "ctemplate/template.h"
 #include "reporting/Reportable.h"
 #include "resources/Resource.h"
 
@@ -58,7 +57,7 @@ namespace hemelb
           WriteXML();
           WriteTxt();
         }
-        ctemplate::TemplateDictionary const & GetDictionary()
+        const Dict& GetDictionary() const
         {
           return dictionary;
         }
@@ -66,7 +65,7 @@ namespace hemelb
         const std::string &path;
         void Write(const std::string &ctemplate, const std::string &as); //! Write the report to disk, (or wherever the WriterPolicy decides.)
         unsigned int imageCount; //! Number of images written.
-        ctemplate::TemplateDictionary dictionary;
+	Dict dictionary;
         std::vector<Reportable*> reportableObjects;
     };
   }

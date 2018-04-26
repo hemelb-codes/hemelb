@@ -5,6 +5,7 @@
 // license in the file LICENSE.
 
 #include "reporting/Reporter.h"
+#include "ctemplate/template.h"
 
 namespace hemelb
 {
@@ -29,7 +30,7 @@ namespace hemelb
     void Reporter::Write(const std::string &ctemplate, const std::string &as)
     {
       std::string output;
-      ctemplate::ExpandTemplate(ctemplate, ctemplate::STRIP_BLANK_LINES, &dictionary, &output);
+      ctemplate::ExpandTemplate(ctemplate, ctemplate::STRIP_BLANK_LINES, dictionary.GetRaw(), &output);
       std::string to = path + "/" + as;
       std::fstream file(to.c_str(), std::ios_base::out);
       file << output << std::flush;
