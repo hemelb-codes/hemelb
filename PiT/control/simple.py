@@ -3,9 +3,6 @@ import yaml
 
 class State(luigi.LocalTarget):
     def __init__(self, i, k):
-        if i == 0:
-            k = 0
-        
         self.i = i
         self.k = k
         path = '{}_{:04d}_{:02d}'.format(self.prefix, i, k)
