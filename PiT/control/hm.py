@@ -88,7 +88,7 @@ class Problem(object):
     def from_dict(cls, state):
         params = state['params']
         time = state['time']
-        iv = Interval(time['start'], time['stop'], time['nstep'])
+        iv = Interval(time['dt'], time['start'], time['n'])
         return cls(
             state['params'],
             state['initial'], iv,

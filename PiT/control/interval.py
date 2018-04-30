@@ -3,40 +3,31 @@ import numpy as np
 class Interval(object):
     """Simple time interval representation.
     """
-    def __init__(self, ti, tf, nsteps=None, dt=None):
-        if nsteps is None:
-            if dt is None:
-                raise ValueError("nsteps and dt can't both be None")
-            else:
-                nsteps = int((tf-ti)/dt)
-                pass
-        else:
-            if dt is None:
-                dt = (tf - ti)/nsteps
-            else:
-                raise ValueError("Can't specify both nsteps and dt")
-            pass
-
-        self.start = ti
-        self.end = tf
+    def __init__(self, dt, start, n):
         self.dt = dt
-        self.nsteps = nsteps
+        self.start = start
+        self.n = n
         return
 
     def generate(self):
-        return np.arange(self.start, self.end, self.dt)
+        return self.dt * (np.arange(self.n+1) + self.start)
     
     def subdivide(self, num_time_slices):
-        slice_steps = self.nsteps / num_time_slices
-        bounds = np.arange(num_time_slices + 1, dtype=float) * ((self.end-self.start) / float(num_time_slices)) + self.start
-        starts = bounds[:-1]
-        ends = bounds[1:]
-        return [Interval(float(starts[i]), float(ends[i]), nsteps=slice_steps) for i in range(num_time_slices)]
+        if self.n % num_time_slices:
+            raise ValueError("time interval cannot be subdivided exactly")
+        
+        slice_steps = self.n / num_time_slices
+        return [Interval(self.dt, self.start + slice_steps*i, slice_steps) for i in range(num_time_slices)]
 
     def to_dict(self):
         return {
             'start': self.start,
-            'stop': self.end,
-            'nstep': self.nsteps
+            'n': self.n,
+            'dt': self.dt
             }
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(d['dt'], d['start'], d['n'])
+    
     pass
