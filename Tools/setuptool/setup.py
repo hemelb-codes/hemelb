@@ -302,7 +302,7 @@ if __name__ == "__main__":
     libraries = []
     library_dirs = []
     extra_compile_args = GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags() + ['-std=c++11']
-    extra_link_args = ['-lCGAL', '-lgmp']
+    extra_link_args = ['-lCGAL', '-lgmp', '-lvtkCommonCore-8.0', '-lvtkCommonDataModel-8.0', '-lvtkFiltersGeneral-8.0', '-lvtkFiltersSources-8.0']
     
     # Create the list of extension modules
     ext_modules = []

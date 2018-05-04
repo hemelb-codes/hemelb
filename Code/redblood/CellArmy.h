@@ -62,7 +62,7 @@ namespace hemelb
                 forceSpreader(neighbourDependenciesGraph),
                 globalCoordsToProcMap(parallel::ComputeGlobalCoordsToProcMap(neighbourDependenciesGraph, latticeData)),
                 nodeDistributions(parallel::nodeDistributions(globalCoordsToProcMap, cells)),
-                isExtraeOn(false)
+                isExtraeOn(false), timestep(1), traced_timesteps(0)
         {
         }
 
@@ -210,8 +210,10 @@ namespace hemelb
         parallel::GlobalCoordsToProcMap globalCoordsToProcMap;
         //! Object describing how the cells affect different subdomains
         parallel::NodeDistributions nodeDistributions;
-	//! Keep track of whether we turned on profiling to avoid unnecessary synchronisation afterwards
-	bool isExtraeOn;
+        //! Keep track of whether we turned on profiling to avoid unnecessary synchronisation afterwards
+        bool isExtraeOn;
+        unsigned timestep;
+        unsigned traced_timesteps;
     };
 
     template<class TRAITS>
@@ -342,13 +344,35 @@ namespace hemelb
 
       if (not isExtraeOn)
       {
-        if(neighbourDependenciesGraph.AllReduce((int) turnExtraeOnThisTimestep, MPI_SUM))
+        if((neighbourDependenciesGraph.AllReduce((int) turnExtraeOnThisTimestep, MPI_SUM) == 2) or (timestep == 599000) )
         {
-          log::Logger::Log<log::Info, log::Singleton>("Turning on extrae profiler");
+          std::stringstream message;
+          message << "Turning ON extrae profiler at the end of timestep " << timestep;
+          log::Logger::Log<log::Info, log::Singleton>(message.str());
           Extrae_restart();
           isExtraeOn = true;
         }
       }
+      else
+      {
+        traced_timesteps++;
+      }
+
+      if (traced_timesteps == 5)
+      {
+        std::stringstream message;
+        message << "Turning OFF extrae profiler at the end of timestep " << timestep;
+        log::Logger::Log<log::Info, log::Singleton>(message.str());
+        Extrae_shutdown();
+      }
+
+      // if (timestep == 15)
+      // {
+      //     log::Logger::Log<log::Info, log::Singleton>("Turning on extrae profiler");
+      //     Extrae_restart();
+      //     isExtraeOn = true;
+      // }
+      ++timestep;
 
       timings[hemelb::reporting::Timers::cellRemoval].Stop();
     }

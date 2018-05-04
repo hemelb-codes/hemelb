@@ -273,3 +273,23 @@ marigold:
 marigold_run:
   import: marigold
   remote: marigold_run
+
+mn4:
+  make_jobs: 12
+  no_git: true
+  needs_tarballs: true
+  remote: "mn1.bsc.es"
+  modules: ["load gcc cmake hdf5 metis EXTRAE zlib python/2.7.13 boost/1.64.0_py2 prace"]
+  corespernode: 48
+  install_path_template: "$work_path/install"
+  home_path_template: "/home/$project/$username"
+  runtime_path_template: "/gpfs/scratch/$project/$username"
+  verbose: 1
+  cmake_options:
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_USE_SSE3: "ON"
+#    HEMELB_COMPUTE_ARCHITECTURE: "INTELSANDYBRIDGE"
+    # METIS_INCLUDE_DIR: "/apps/METIS/5.1.0/INTEL/include"
+    # METIS_LIBRARY: "/apps/METIS/5.1.0/INTEL/lib/libmetis.a"
+    # PARMETIS_INCLUDE_DIR: "/apps/PARMETIS/4.0.3/INTEL/IMPI/include"
+    # PARMETIS_LIBRARY: "/apps/PARMETIS/4.0.3/INTEL/IMPI/lib/libparmetis.a"

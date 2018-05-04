@@ -78,8 +78,10 @@ option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
 set(HEMELB_STENCIL "FourPoint"
     CACHE STRING "HemeLB stencil type")
 set_property(CACHE HEMELB_STENCIL PROPERTY STRINGS TwoPoint ThreePoint FourPoint CosineApprox)
-set(EXTRAE_PATH "/marconi/home/userexternal/jgimenez/tools/extrae-3.5.2"
+set(EXTRAE_PATH "/apps/BSCTOOLS/extrae/3.5.4-rc1/impi_2017_4/"
   CACHE STRING "Directory for BSC's Extrae installation")
+#set(EXTRAE_PATH "/apps/BSCTOOLS/extrae/3.5.2/impi_2017_4"
+#  CACHE STRING "Directory for BSC's Extrae installation")
 
 
 # Add warnings flags to development build types
@@ -250,12 +252,12 @@ add_subdirectory(resources)
 target_link_libraries(${HEMELB_EXECUTABLE} 
 	${heme_libraries}
 	${EXTRAE_PATH}/lib/libmpitrace.so
-	/marconi/home/userexternal/fgomezpe/papi/lib/libpapi.a
-	/usr/lib64/libxml2.so
-	/marconi/home/userexternal/gllort00/deps/binutils/2.29/lib/libbfd.a
-	/marconi/home/userexternal/gllort00/deps/binutils/2.29/lib/libiberty.a
-	/marconi/home/userexternal/gllort00/deps/libunwind/1.2/lib/libunwind.a
-	/lib64/liblzma.so
+	/apps/BSCTOOLS/deps/papi/5.5.1/lib/libpapi.a
+	/apps/BSCTOOLS/deps/libxml/2.9.4/lib/libxml2.so
+	/apps/BSCTOOLS/deps/binutils/2.28/lib/libbfd.a
+	/apps/BSCTOOLS/deps/binutils/2.28/lib/libiberty.a
+	/apps/BSCTOOLS/deps/libunwind/1.2.1/lib/libunwind.a
+	/usr/lib64/liblzma.so
 	${MPI_LIBRARIES}
 	${HDF5_LIBRARIES}
 	${PARMETIS_LIBRARIES}
@@ -316,30 +318,30 @@ if (HEMELB_BUILD_MULTISCALE)
 	add_to_resources(resources/report.txt.ctp resources/report.xml.ctp)
 endif()
 
-# ----------- HEMELB unittests ---------------
-if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
-  enable_testing()
-  add_subdirectory(unittests)
-endif()
+## ----------- HEMELB unittests ---------------
+#if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
+#  enable_testing()
+#  add_subdirectory(unittests)
+#endif()
 
-# ----------- HEMELB functionaltests ---------------
-if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
-	#------CPPUnit ---------------
-	find_package(CPPUnit REQUIRED)
-	include_directories(${CPPUNIT_INCLUDE_DIR})
-	add_executable(functionaltests_hemelb functionaltests/cpptests/main.cc)
-	target_link_libraries(functionaltests_hemelb 
-		${heme_libraries}
-		${MPI_LIBRARIES}
-        ${HDF5_LIBRARIES}
-		${PARMETIS_LIBRARIES}
-		${TINYXML_LIBRARIES}
-		${CPPUNIT_LIBRARY}
-		${Boost_LIBRARIES}
-		${CTEMPLATE_LIBRARIES}
-		${MPWide_LIBRARIES}
-		${ZLIB_LIBRARIES}
-		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
-	INSTALL(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
-endif()
+## ----------- HEMELB functionaltests ---------------
+#if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
+#	#------CPPUnit ---------------
+#	find_package(CPPUnit REQUIRED)
+#	include_directories(${CPPUNIT_INCLUDE_DIR})
+#	add_executable(functionaltests_hemelb functionaltests/cpptests/main.cc)
+#	target_link_libraries(functionaltests_hemelb 
+#		${heme_libraries}
+#		${MPI_LIBRARIES}
+#        ${HDF5_LIBRARIES}
+#		${PARMETIS_LIBRARIES}
+#		${TINYXML_LIBRARIES}
+#		${CPPUNIT_LIBRARY}
+#		${Boost_LIBRARIES}
+#		${CTEMPLATE_LIBRARIES}
+#		${MPWide_LIBRARIES}
+#		${ZLIB_LIBRARIES}
+#		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
+#	INSTALL(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
+#endif()
 
