@@ -686,6 +686,7 @@ namespace hemelb
         std::vector<site_t> streamingIndicesForReceivedDistributions; //! The indices to stream to for distributions received from other processors.
         neighbouring::NeighbouringLatticeData *neighbouringData;
         const net::IOCommunicator& comms;
+        const proc_t localRank;
     };
   }
 }

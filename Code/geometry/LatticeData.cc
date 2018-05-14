@@ -25,7 +25,7 @@ namespace hemelb
     LatticeData::LatticeData(const lb::lattices::LatticeInfo& latticeInfo,
                              const net::IOCommunicator& comms_) :
         latticeInfo(latticeInfo),
-            neighbouringData(new neighbouring::NeighbouringLatticeData(latticeInfo)), comms(comms_)
+            neighbouringData(new neighbouring::NeighbouringLatticeData(latticeInfo)), comms(comms_), localRank(comms.Rank())
     {
     }
 
@@ -37,7 +37,7 @@ namespace hemelb
     LatticeData::LatticeData(const lb::lattices::LatticeInfo& latticeInfo,
                              const Geometry& readResult, const net::IOCommunicator& comms_) :
         latticeInfo(latticeInfo),
-            neighbouringData(new neighbouring::NeighbouringLatticeData(latticeInfo)), comms(comms_)
+            neighbouringData(new neighbouring::NeighbouringLatticeData(latticeInfo)), comms(comms_), localRank(comms.Rank())
     {
       SetBasicDetails(readResult.GetBlockDimensions(), readResult.GetBlockSize());
 
@@ -45,7 +45,6 @@ namespace hemelb
       // if debugging then output beliefs regarding geometry and neighbour list
       if (log::Logger::ShouldDisplay<log::Trace>())
       {
-        proc_t localRank = comms.Rank();
         for (std::vector<NeighbouringProcessor>::iterator itNeighProc = neighbouringProcs.begin();
             itNeighProc != neighbouringProcs.end(); ++itNeighProc)
         {
@@ -87,7 +86,6 @@ namespace hemelb
       std::vector<float> domainEdgeWallDistance[COLLISION_TYPES];
       std::vector<float> midDomainWallDistance[COLLISION_TYPES];
 
-      proc_t localRank = comms.Rank();
       // Iterate over all blocks in site units
       for (BlockTraverser blockTraverser(*this); blockTraverser.CurrentLocationValid();
           blockTraverser.TraverseOne())
@@ -322,7 +320,7 @@ namespace hemelb
         for (geometry::SiteTraverser siteSet = blockSet.GetSiteTraverser();
             siteSet.CurrentLocationValid(); siteSet.TraverseOne())
         {
-          if (block.GetProcessorRankForSite(siteSet.GetCurrentIndex()) == comms.Rank())
+          if (block.GetProcessorRankForSite(siteSet.GetCurrentIndex()) == localRank)
           {
             util::Vector3D<site_t> globalCoords = blockSet.GetCurrentLocation() * GetBlockSize()
                 + siteSet.GetCurrentLocation();
@@ -373,7 +371,6 @@ namespace hemelb
     void LatticeData::InitialiseNeighbourLookup(
         std::vector<std::vector<site_t> >& sharedFLocationForEachProc)
     {
-      const proc_t localRank = comms.Rank();
       neighbourIndices.resize(latticeInfo.GetNumVectors() * localFluidSites);
       for (BlockTraverser blockTraverser(*this); blockTraverser.CurrentLocationValid();
           blockTraverser.TraverseOne())
@@ -462,7 +459,6 @@ namespace hemelb
     void LatticeData::InitialisePointToPointComms(
         std::vector<std::vector<site_t> >& sharedFLocationForEachProc)
     {
-      proc_t localRank = comms.Rank();
       // point-to-point communications are performed to match data to be
       // sent to/receive from different partitions; in this way, the
       // communication of the locations of the interface-dependent fluid
@@ -497,7 +493,6 @@ namespace hemelb
     void LatticeData::InitialiseReceiveLookup(
         std::vector<std::vector<site_t> >& sharedFLocationForEachProc)
     {
-      proc_t localRank = comms.Rank();
       streamingIndicesForReceivedDistributions.resize(totalSharedFs);
       site_t f_count = GetLocalFluidSiteCount() * latticeInfo.GetNumVectors();
       site_t sharedSitesSeen = 0;
@@ -632,7 +627,7 @@ namespace hemelb
 
       // get the rank of the processor that owns the site
       procId = block.GetProcessorRankForSite(localSiteIndex);
-      if (procId != comms.Rank())
+      if (procId != localRank)
         return false;
       if (procId == BIG_NUMBER2) // means that the site is solid
         return false;
@@ -742,7 +737,7 @@ namespace hemelb
 
     int LatticeData::GetLocalRank() const
     {
-      return comms.Rank();
+      return localRank;
     }
 
   }
