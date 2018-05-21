@@ -5,6 +5,7 @@ import scipy.integrate
 import yaml
 
 from interval import Interval
+from iohelp import LoadableMixin
 
 class Integrator(object):
     """Our system is:
@@ -65,7 +66,7 @@ class FineInt(Integrator):
         return (ts, vals)
     pass
 
-class Problem(object):
+class Problem(LoadableMixin):
     def __init__(self, params, ic, iv, solver):
         self.yi = np.array((ic['x'], ic['v']), dtype=float)
         self.iv = iv
@@ -73,17 +74,7 @@ class Problem(object):
         IntCls = {'fine': FineInt, 'coarse': CoarseInt}[solver]
         self.integrator = IntCls(params)
         return
-    
-    @classmethod
-    def from_file(cls, fn):
-        with open(fn) as f:
-            return cls.from_stream(f)
         
-    @classmethod
-    def from_stream(cls, stream):
-        state = yaml.load(stream)
-        return cls.from_dict(state)
-    
     @classmethod
     def from_dict(cls, state):
         params = state['params']
