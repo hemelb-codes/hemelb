@@ -27,6 +27,36 @@ class Resolution(enum.Enum):
         
     pass
 
+class PararealParams(luigi.Config):
+    '''Luigi might run tasks in a new process, so we have to make sure
+    our PararealParameters instance is available to it. We make that
+    file a parameter of this Config object, who's value is picked up by
+    Luigi's standard mechanism.
+
+    I suggest adding a section like
+
+    [PararealParams]
+    filename: foobar.yml
+    
+    to master.cfg in your run directory
+    '''
+    filename = luigi.Parameter()
+    
+    @property
+    def data(self):
+        try:
+            # Ensure we don't use our custom getattr
+            return super().__getattribute__('_data')
+        except AttributeError:
+            ans = self._data = PararealParameters.from_file(self.filename)
+            return ans
+
+    def __getattr__(self, attr):
+        '''Delegate to the Parameters object'''
+        return getattr(self.data, attr)
+    
+    pass
+
 
 class PararealParameters(LoadableMixin):
     '''This class is responsible for describing the overall set of
@@ -99,16 +129,6 @@ class PararealParameters(LoadableMixin):
     
     pass
 
-# luigi might run tasks in a new process, so we have to make sure the
-# our PararealParameters instance is available to it. Yes this is
-# horrible - should probably be a task and target to load from a config
-# file.
-_master = None
-def get_master():
-    global _master    
-    if _master is None:
-        _master = PararealParameters.from_file('master.yml')
-    return _master
 
 ########################################################################
 # Targets
@@ -305,8 +325,7 @@ class InitialConditionMaker(luigi.ExternalTask):
         return Input(self.res, 0, 0)
     
     def run(self):
-        mst = get_master()
-        mst.write_icond_input(self.output())
+        PararealParams().write_icond_input(self.output())
         return
     pass
 
@@ -340,8 +359,7 @@ class InputMaker(Op):
     def run(self):
         state = self.input().load()
         ic = {'x': state['x'], 'v': state['v']}
-        mst = get_master()
-        mst.write_input(self.output(), ic)
+        PararealParams().write_input(self.output(), ic)
         return
     pass
 
