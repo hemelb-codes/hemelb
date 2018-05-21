@@ -8,6 +8,7 @@ import numpy as np
 import luigi
 
 from interval import Interval
+from iohelp import LoadableMixin
 import hm
 
 import pdb
@@ -27,7 +28,7 @@ class Resolution(enum.Enum):
     pass
 
 
-class PararealParameters(object):
+class PararealParameters(LoadableMixin):
     '''This class is responsible for describing the overall set of
     simulations and performing some set up on behalf of the actual luigi
     tasks.
@@ -56,7 +57,22 @@ class PararealParameters(object):
         self.sub_times = time.subdivide(num_time_slices)
         
         return
+    
+    @classmethod
+    def from_dict(cls, d):
+        time = Interval.from_dict(d['time'])
+        return cls(d['params'], d['initial_conditions'], time,
+                    d['num_parareal_iters'], d['num_time_slices'])
 
+    def to_dict(self):
+        return {
+            'params': self.params,
+            'initial_conditions': self.initial_conditions,
+            'time': self.time.to_dict(),
+            'num_parareal_iters': self.num_parareal_iters,
+            'num_time_slices': self.num_time_slices
+            }
+    
     def write_icond_input(self, input_target):
         self.write_input(input_target, self.initial_conditions)
         
@@ -89,22 +105,9 @@ class PararealParameters(object):
 # file.
 _master = None
 def get_master():
-    global _master
-    
+    global _master    
     if _master is None:
-        num_time_slices = 4
-        num_parareal_iters = 2
-
-        params = {'b': 0.1, 'omega': 1.0}
-        initial = {
-                'x': 1.0,
-                'v': 0.0
-            }
-        time = Interval(2.0 * np.pi/1000, 0, 1000)
-
-        _master = PararealParameters(
-            params, initial, time, num_parareal_iters, num_time_slices
-            )
+        _master = PararealParameters.from_file('master.yml')
     return _master
 
 ########################################################################

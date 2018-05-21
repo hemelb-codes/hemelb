@@ -1,6 +1,7 @@
 import numpy as np
+from iohelp import LoadableMixin
 
-class Interval(object):
+class Interval(LoadableMixin):
     """Simple time interval representation.
     """
     def __init__(self, dt, start, n):
@@ -27,7 +28,13 @@ class Interval(object):
             }
 
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, rawd):
+        d = {}
+        for k, v in rawd.items():
+            if isinstance(v, str):
+                d[k] = eval(v, np.__dict__, d)
+            else:
+                d[k] = float(v)
         return cls(d['dt'], d['start'], d['n'])
     
     pass
