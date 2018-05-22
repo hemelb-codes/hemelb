@@ -2,6 +2,7 @@ import os.path
 import enum
 from functools import wraps
 from abc import abstractmethod
+import logging
 
 import yaml
 import numpy as np
@@ -156,6 +157,10 @@ class ParaRealTarget(luigi.LocalTarget):
         path = self._pattern.format(**locals())
         super(ParaRealTarget, self).__init__(path)
         return
+
+    def __str__(self):
+        return '{}[res={res.name}, i={i:d}, k={i:d}]'.format(type(self).__name__,
+                                                                 **vars(self))
     
     @classmethod
     @abstractmethod
@@ -190,6 +195,16 @@ def check_producer(prod_func):
         return wrapper
     else:
         return prod_func
+
+def logrun(run_func):
+    '''Helper to log run events consistently'''
+    logger = logging.getLogger('parareal')
+    @wraps(run_func)
+    def wrapper(self):
+        target = self.output()
+        logger.info('%s -> %s', type(self).__name__, target)
+        return run_func(self)
+    return wrapper
 
 class Input(ParaRealTarget):
     '''Represent an input file, ready to be run.
@@ -323,7 +338,7 @@ class InitialConditionMaker(luigi.ExternalTask):
     
     def output(self):
         return Input(self.res, 0, 0)
-    
+    @logrun
     def run(self):
         PararealParams().write_icond_input(self.output())
         return
@@ -355,7 +370,7 @@ class InputMaker(Op):
     
     def requires(self):
         return y.producer(self.res, self.i, self.k)
-    
+    @logrun
     def run(self):
         state = self.input().load()
         ic = {'x': state['x'], 'v': state['v']}
@@ -374,7 +389,7 @@ class Solver(Op):
     
     def requires(self):
         return Input.producer(self.res, self.i, self.k)
-    
+    @logrun
     def run(self):
         prob = hm.Problem.from_file(self.input().path)
         prob.run(self.output().path)
@@ -392,7 +407,7 @@ class SolutionExtractor(Op):
     
     def requires(self):
         return Trajectory.producer(self.res, self.i, self.k)
-    
+    @logrun
     def run(self):
         t, x, v = self.input().get_last()
         self.output().save({'t': t, 'x': x, 'v': v})
@@ -424,7 +439,7 @@ class Assignment(Op):
         
     def output(self):
         return y(self.res, self.i, self.k)
-    
+    @logrun
     def run(self):
         os.link(self.input().path, self.output().path)
         return
@@ -445,7 +460,7 @@ class Coarsening(luigi.Task):
     
     def output(self):
         return self.state_cls(Resolution.Coarse, self.i, self.k)
-
+    @logrun
     def run(self):
         self.output().save(self.input().load())
         return
@@ -471,14 +486,14 @@ class Refinement(luigi.Task):
     
     def output(self):
         return self.state_cls(Resolution.Fine, self.i, self.k)
-
+    @logrun
     def run(self):
         self.output().save(self.input().load())
         return
     
 class SolutionRefinement(Refinement):
     '''Refine a solution.'''
-    state_cls = Gy    
+    state_cls = Gy
     pass
 
 class DiffRefinement(Refinement):
@@ -503,7 +518,7 @@ class CoarseDiffer(luigi.Task):
     
     def output(self):
         return DeltaGy(Resolution.Coarse, self.i, self.k)
-
+    @logrun
     def run(self):
         gk, gk_1 = [i.load() for i in self.input()]
         # TODO: check time is equal to times[self.i + 1]
@@ -534,7 +549,7 @@ class ParaUpdate(Op):
             DeltaGy.producer(self.res, self.i-1, self.k),
             Fy.producer(self.res, self.i-1, self.k-1)
             ]
-    
+    @logrun
     def run(self):
         DGy, Fy = [i.load() for i in self.input()]
         # TODO: check time is equal to times[self.i + 1]
