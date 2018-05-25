@@ -513,6 +513,11 @@ namespace hemelb
 
       void CellParallelizationTests::testUpdateNodeDistributions()
       {
+        if(not graph)
+        {
+          return;
+        }
+
         typedef ExchangeCells::ChangedCells Changes;
         CellContainer::value_type const cells[4] = { GivenCell(0),
                                                      GivenCell(1),

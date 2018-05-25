@@ -196,6 +196,11 @@ namespace hemelb
 
       void NeighborCommTests::testRankMap()
       {
+        if(not graph)
+        {
+          return;
+        }
+
         int const N = graph.Size();
         auto newRank = [N](int i) { return (i + 5) % N; };
         auto const newComm = graph.Split(0, newRank(graph.Rank()));

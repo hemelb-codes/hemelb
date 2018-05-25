@@ -32,20 +32,16 @@ namespace hemelb
          * @param communicator
          */
         MpiCommunicator();
+
         /**
          * Move Constructor
          */
-        MpiCommunicator(MpiCommunicator const & comm) :
-            commPtr(comm.commPtr)
-        {
-        }
+        MpiCommunicator(MpiCommunicator const & comm);
+
         /**
          * Move Constructor
          */
-        MpiCommunicator(MpiCommunicator && comm) :
-            commPtr(std::move(comm.commPtr))
-        {
-        }
+        MpiCommunicator(MpiCommunicator && comm);
 
         /**
          * Class has virtual methods so should have virtual d'tor.
@@ -206,6 +202,12 @@ namespace hemelb
         MpiCommunicator(MPI_Comm communicator, bool willOwn);
 
         std::shared_ptr<MPI_Comm> commPtr;
+
+      private:
+        //! Size of underlying communicator. Cached for performance
+        int communicatorSize;
+        //! Local MPI rank on the underlying communicator. Cached for performance
+        int localRankInCommunicator;
     };
 
     bool operator==(const MpiCommunicator& comm1, const MpiCommunicator& comm2);
