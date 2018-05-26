@@ -14,6 +14,7 @@
 #include <map>
 #include "net/MpiError.h"
 #include <memory>
+#include <cassert>
 
 namespace hemelb
 {
@@ -52,13 +53,21 @@ namespace hemelb
          * Returns the local rank on the communicator
          * @return
          */
-        virtual int Rank() const;
+        inline virtual int Rank() const
+        {
+          assert(localRankInCommunicator != -1);
+          return localRankInCommunicator;
+        }
 
         /**
          * Returns the size of the communicator (i.e. total number of procs involved).
          * @return
          */
-        virtual int Size() const;
+        inline virtual int Size() const
+        {
+          assert(communicatorSize != -1);
+          return communicatorSize;
+        }
 
         /**
          * Creates a new communicator - see MPI_COMM_GROUP

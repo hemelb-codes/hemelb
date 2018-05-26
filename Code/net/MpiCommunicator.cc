@@ -28,20 +28,6 @@ namespace hemelb
           HEMELB_MPI_CALL(MPI_Comm_free, (comm));
         delete comm;
       }
-
-      int GetMPICommRank(MPI_Comm comm)
-      {
-        int rank;
-        HEMELB_MPI_CALL(MPI_Comm_rank, (comm, &rank));
-        return rank;
-      }
-
-      int GetMPICommSize(MPI_Comm comm)
-      {
-        int size;
-        HEMELB_MPI_CALL(MPI_Comm_size, (comm, &size));
-        return size;
-      }
     }
 
     MpiCommunicator MpiCommunicator::World()
@@ -79,8 +65,8 @@ namespace hemelb
         commPtr.reset(new MPI_Comm(communicator));
       }
 
-      communicatorSize = GetMPICommSize(communicator);
-      localRankInCommunicator = GetMPICommRank(communicator);
+      HEMELB_MPI_CALL(MPI_Comm_size, (communicator, &communicatorSize));
+      HEMELB_MPI_CALL(MPI_Comm_rank, (communicator, &localRankInCommunicator));
     }
 
     MpiCommunicator::~MpiCommunicator()
@@ -121,21 +107,9 @@ namespace hemelb
       return ! (comm1 == comm2);
     }
 
-    inline int MpiCommunicator::Rank() const
-    {
-      assert(localRankInCommunicator != -1);
-      return localRankInCommunicator;
-    }
-
     void MpiCommunicator::Barrier() const
     {
       HEMELB_MPI_CALL(MPI_Barrier, (*commPtr));
-    }
-
-    inline int MpiCommunicator::Size() const
-    {
-      assert(communicatorSize != -1);
-      return communicatorSize;
     }
 
     MpiGroup MpiCommunicator::Group() const
