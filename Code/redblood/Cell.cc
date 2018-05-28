@@ -138,7 +138,17 @@ namespace hemelb
       log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
                                                    filename.c_str());
       std::ofstream file(filename.c_str());
-      assert(file.is_open());
+
+      if (!file.is_open())
+      {
+        std::stringstream message;
+        message << "Cannot create file '" << filename.c_str() << "', RBC won't be written to disk." << std::endl
+                << "Error " << errno << ": " << std::strerror(errno) << std::endl
+                << "Bits: " << file.eof() << " " << file.bad() << " " <<  file.fail();
+        log::Logger::Log<log::Error, log::OnePerCore>(message.str());
+        return;
+      }
+
       writeVTKMeshWithForces(file, cell, converter);
     }
 

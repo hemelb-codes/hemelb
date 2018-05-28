@@ -203,7 +203,20 @@ namespace hemelb
 
               // Create output directory for current writing step. Requires syncing to
               // ensure no process goes ahead before directory is created.
-              std::string rbcOutputDir = fileManager->GetRBCOutputPathWithSubdir(std::to_string(timestep));
+              std::string rbcOutputDir;
+              try
+              {
+                rbcOutputDir = fileManager->GetRBCOutputPathWithSubdir(std::to_string(timestep));
+              }
+              catch(Exception& e)
+              {
+                std::stringstream message;
+                message << e.what() << std::endl
+                        << "Error " << errno << ": " << std::strerror(errno);
+                log::Logger::Log<log::Critical, log::OnePerCore>(message.str());
+                ioComms.Abort(-1);
+                exit(-1);
+              }
               ioComms.Barrier();
 
               for (auto cell : cells)

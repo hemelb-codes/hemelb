@@ -123,7 +123,11 @@ namespace hemelb
         if (hemelb::util::DoesDirectoryExist(rbcSubdir.c_str()))
           throw Exception() << "Output directory '" << rbcSubdir << "' already exists.";
 
-        hemelb::util::MakeDirAllRXW(rbcSubdir);
+        bool created = hemelb::util::MakeDirAllRXW(rbcSubdir);
+        if (!created)
+        {
+          throw Exception() << "Output directory '" << rbcSubdir << "' could not be created.";
+        }
       }
 
       return rbcSubdir;
