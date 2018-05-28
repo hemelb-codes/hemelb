@@ -39,7 +39,7 @@ class PararealParams(luigi.Config):
     [PararealParams]
     filename: foobar.yml
     
-    to master.cfg in your run directory
+    to luigi.cfg in your run directory
     '''
     filename = luigi.Parameter()
     
@@ -65,9 +65,9 @@ class PararealParameters(LoadableMixin):
     tasks.
     '''
 
-    def __init__(self, params, initial_conditions, time,
+    def __init__(self, sim_params, initial_conditions, time,
                      num_parareal_iters, num_time_slices):
-        '''params - parameters needed to do a time integration.
+        '''sim_params - parameters needed to do a time integration.
         
         initial_conditions - overall ICs
 
@@ -79,7 +79,7 @@ class PararealParameters(LoadableMixin):
         interval into
         '''
 
-        self.params = params
+        self.sim_params = sim_params
         self.initial_conditions = initial_conditions
         self.time = time
         self.num_parareal_iters = num_parareal_iters
@@ -92,12 +92,12 @@ class PararealParameters(LoadableMixin):
     @classmethod
     def from_dict(cls, d):
         time = Interval.from_dict(d['time'])
-        return cls(d['params'], d['initial_conditions'], time,
+        return cls(d['sim_params'], d['initial_conditions'], time,
                     d['num_parareal_iters'], d['num_time_slices'])
 
     def to_dict(self):
         return {
-            'params': self.params,
+            'sim_params': self.sim_params,
             'initial_conditions': self.initial_conditions,
             'time': self.time.to_dict(),
             'num_parareal_iters': self.num_parareal_iters,
@@ -115,7 +115,7 @@ class PararealParameters(LoadableMixin):
             }[input_target.res]
             
         state = {
-            'params': self.params,
+            'params': self.sim_params,
             'initial': ic,
             'time': sub_ival.to_dict(),
             'solver': input_target.res.name.lower()
