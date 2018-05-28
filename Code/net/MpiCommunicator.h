@@ -35,7 +35,7 @@ namespace hemelb
         MpiCommunicator();
 
         /**
-         * Move Constructor
+         * Copy Constructor
          */
         MpiCommunicator(MpiCommunicator const & comm);
 
@@ -55,7 +55,7 @@ namespace hemelb
          */
         inline int Rank() const
         {
-          assert(localRankInCommunicator != -1);
+          assert(localRankInCommunicator >= 0);
           return localRankInCommunicator;
         }
 
@@ -65,7 +65,7 @@ namespace hemelb
          */
         inline int Size() const
         {
-          assert(communicatorSize != -1);
+          assert(communicatorSize > 0);
           return communicatorSize;
         }
 
