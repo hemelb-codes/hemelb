@@ -1,7 +1,7 @@
 num_time_slices: 4
 num_parareal_iters: 2
 
-params:
+sim_params:
     b: 0.1
     omega: 1.0
 
