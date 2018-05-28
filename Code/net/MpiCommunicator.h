@@ -53,7 +53,7 @@ namespace hemelb
          * Returns the local rank on the communicator
          * @return
          */
-        inline virtual int Rank() const
+        inline int Rank() const
         {
           assert(localRankInCommunicator != -1);
           return localRankInCommunicator;
@@ -63,7 +63,7 @@ namespace hemelb
          * Returns the size of the communicator (i.e. total number of procs involved).
          * @return
          */
-        inline virtual int Size() const
+        inline int Size() const
         {
           assert(communicatorSize != -1);
           return communicatorSize;
@@ -209,6 +209,13 @@ namespace hemelb
          * @param communicator
          */
         MpiCommunicator(MPI_Comm communicator, bool willOwn);
+
+        /**
+         * Constructor used during testing to mock a communicator configuration
+         * @param localRankInCommunicator hypothetical local rank in communicator
+         * @param communicatorSize hypothetical number of MPI processes in communicator
+         */
+        MpiCommunicator(int localRankInCommunicator, int communicatorSize);
 
         std::shared_ptr<MPI_Comm> commPtr;
 

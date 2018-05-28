@@ -27,21 +27,10 @@ namespace hemelb
            * @param size
            */
           MockMpiCommunicator(int rank_, int size_) :
-              MpiCommunicator(), rank(rank_), size(size_)
+              MpiCommunicator(rank_, size_)
           {
 
           }
-
-          virtual inline int Rank() const
-          {
-            return rank;
-          }
-          virtual inline int Size() const
-          {
-            return size;
-          }
-        private:
-          int rank, size;
       };
 
       class MockNetHelper
