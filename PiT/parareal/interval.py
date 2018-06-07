@@ -1,5 +1,5 @@
 import numpy as np
-from iohelp import *
+from .iohelp import *
 
 class Interval(LoadableMixin, DumpableMixin):
     """Simple time interval representation.
