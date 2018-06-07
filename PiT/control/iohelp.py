@@ -16,3 +16,19 @@ class LoadableMixin:
         return cls.from_dict(state)
 
     pass
+
+class DumpableMixin:
+    '''Define a method to_dict and this will add writing to streams and
+    files.
+    '''
+    def to_file(self, fn):
+        with open(fn, 'w') as f:
+            self.to_stream(f)
+
+    def to_stream(self, stream):
+        state = self.to_dict()
+        yaml.dump(state, stream)
+        
+    pass
+
+__all__ = ['LoadableMixin', 'DumpableMixin']

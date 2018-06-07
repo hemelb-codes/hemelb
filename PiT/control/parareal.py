@@ -9,7 +9,7 @@ import numpy as np
 import luigi
 
 from interval import Interval
-from iohelp import LoadableMixin
+from iohelp import *
 import hm
 
 import pdb
@@ -28,7 +28,7 @@ class Resolution(enum.Enum):
         
     pass
 
-class PararealParams(luigi.Config):
+class parareal(luigi.Config):
     '''Luigi might run tasks in a new process, so we have to make sure
     our PararealParameters instance is available to it. We make that
     file a parameter of this Config object, who's value is picked up by
@@ -36,7 +36,7 @@ class PararealParams(luigi.Config):
 
     I suggest adding a section like
 
-    [PararealParams]
+    [parareal]
     filename: foobar.yml
     
     to luigi.cfg in your run directory
@@ -59,7 +59,7 @@ class PararealParams(luigi.Config):
     pass
 
 
-class PararealParameters(LoadableMixin):
+class PararealParameters(LoadableMixin, DumpableMixin):
     '''This class is responsible for describing the overall set of
     simulations and performing some set up on behalf of the actual luigi
     tasks.
@@ -124,9 +124,9 @@ class PararealParameters(LoadableMixin):
             yaml.dump(state, stream=f)
 
     def final_task(self):
-        return ParaUpdate(res=Resolution.Fine,
-                              i=self.num_time_slices,
-                              k=self.num_parareal_iters)
+        return y.producer(Resolution.Fine,
+                              self.num_time_slices,
+                              self.num_parareal_iters)
     
     pass
 
@@ -340,7 +340,7 @@ class InitialConditionMaker(luigi.ExternalTask):
         return Input(self.res, 0, 0)
     @logrun
     def run(self):
-        PararealParams().write_icond_input(self.output())
+        parareal().write_icond_input(self.output())
         return
     pass
 
@@ -374,7 +374,7 @@ class InputMaker(Op):
     def run(self):
         state = self.input().load()
         ic = {'x': state['x'], 'v': state['v']}
-        PararealParams().write_input(self.output(), ic)
+        parareal().write_input(self.output(), ic)
         return
     pass
 
