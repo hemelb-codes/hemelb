@@ -62,6 +62,7 @@ class FineInt(Integrator):
             Dfun=self.jac,
             rtol=1e-4,
             atol=1e-6,
+            h0=iv.dt,
             full_output=True)
         return (ts, vals)
     pass
