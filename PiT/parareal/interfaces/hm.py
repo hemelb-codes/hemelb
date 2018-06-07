@@ -4,8 +4,8 @@ import numpy as np
 import scipy.integrate
 import yaml
 
-from interval import Interval
-from iohelp import LoadableMixin
+from ..interval import Interval
+from ..iohelp import LoadableMixin
 
 class Integrator(object):
     """Our system is:

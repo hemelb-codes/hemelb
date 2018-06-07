@@ -8,9 +8,9 @@ import yaml
 import numpy as np
 import luigi
 
-from interval import Interval
-from iohelp import *
-import hm
+from .interval import Interval
+from .iohelp import *
+from .interfaces import hm
 
 import pdb
 

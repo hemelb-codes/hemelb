@@ -3,8 +3,8 @@ import pytest
 import numpy as np
 
 import parareal
-import interval
-import hm
+from parareal.interval import Interval
+from parareal.interfaces import hm
 
 @pytest.fixture
 def clean_luigi(monkeypatch):
@@ -45,7 +45,7 @@ def test_simple_runs(tmpdir, clean_luigi):
     params = parareal.PararealParameters(
         {'b': 0.1, 'omega': 1.0},
         {'x': 1.0, 'v': 0.0},
-        interval.Interval(2.0 * np.pi/1000,0.0, 1000),
+        Interval(2.0 * np.pi/1000,0.0, 1000),
         2, 4)
     
     with tmpdir.as_cwd() as old:
@@ -90,7 +90,7 @@ def test_44_equiv_serial(tmpdir, clean_luigi, plot_mode=False):
     params = parareal.PararealParameters(
         {'b': 0.1, 'omega': 1.0},
         {'x': 1.0, 'v': 0.0},
-        interval.Interval(2.0 * np.pi/1000,0.0, 1000),
+        Interval(2.0 * np.pi/1000,0.0, 1000),
         i_max, i_max)
     
     with tmpdir.as_cwd() as old:
