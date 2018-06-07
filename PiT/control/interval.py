@@ -1,7 +1,7 @@
 import numpy as np
-from iohelp import LoadableMixin
+from iohelp import *
 
-class Interval(LoadableMixin):
+class Interval(LoadableMixin, DumpableMixin):
     """Simple time interval representation.
     """
     def __init__(self, dt, start, n):
