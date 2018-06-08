@@ -5,8 +5,6 @@ from scipy.interpolate import interp1d
 
 from ..interval import Interval
 
-import pdb
-
 class Integrator:
     def __init__(self, A):
         self.A = A
@@ -17,9 +15,7 @@ class ImplicitEuler(Integrator):
     def __call__(self, y0, iv):
         
         for ignored in range(iv.n):
-            # I think I can skip this?
-            b = np.copy(y0)
-            y0 = spsolve(self.Id - iv.dt * self.A, b)
+            y0 = spsolve(self.Id - iv.dt * self.A, y0)
         return y0
 
     pass
