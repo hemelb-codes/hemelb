@@ -5,6 +5,12 @@ class Interval(LoadableMixin, DumpableMixin):
     """Simple time interval representation.
     """
     def __init__(self, dt, start, n):
+        '''
+        dt - time step
+        start - real start time
+        n - number of steps to take
+        '''
+
         self.dt = dt
         self.start = start
         self.n = n
