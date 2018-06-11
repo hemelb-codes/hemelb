@@ -38,7 +38,9 @@ class Interval(LoadableMixin, DumpableMixin):
         d = {}
         for k, v in rawd.items():
             if isinstance(v, str):
-                d[k] = eval(v, np.__dict__, d)
+                ctx = rawd.copy()
+                ctx.update(d)
+                d[k] = eval(v, np.__dict__, ctx)
             else:
                 d[k] = float(v)
         return cls(d['dt'], d['start'], d['n'])

@@ -4,6 +4,7 @@ from scipy.sparse.linalg import spsolve
 from scipy.interpolate import interp1d
 
 from ..interval import Interval
+from ..iohelp import LoadableMixin
 
 class Integrator:
     def __init__(self, A):
@@ -29,7 +30,7 @@ class Trapezoidal(Integrator):
         return y0
     
 
-class Problem:
+class Problem(LoadableMixin):
     '''Solves the heat equation:
     u_t = nu*u_xx
     on [0,1] with boundary values u(0) = u(1) = 0.0.
@@ -89,7 +90,23 @@ class Problem:
 
     def run(self):
         return self.integrator(self.y0, self.iv)
-        
+
+    @classmethod
+    def from_dict(cls, state):
+        iv = Interval.from_dict(state['time'])
+        ic = state['initial']
+        if isinstance(ic, str):
+            # Probably should be treated as a function
+            # Assume it's in np context
+            ic = eval('lambda x:' + ic, np.__dict__)
+
+        return cls(
+            state['params'],
+            ic,
+            iv,
+            state['solver'])
+    pass
+
 def interpolate(x_fine, x_coarse, fx_coarse):
     # To interpolate, need to add boundary values manually
     xc_bc  = np.insert(x_coarse, 0, 0.0)
