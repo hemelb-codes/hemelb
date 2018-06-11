@@ -80,7 +80,7 @@ class Problem(LoadableMixin):
     def from_dict(cls, state):
         params = state['params']
         time = state['time']
-        iv = Interval(time['dt'], time['start'], time['n'])
+        iv = Interval.from_dict(time)
         return cls(
             state['params'],
             state['initial'], iv,

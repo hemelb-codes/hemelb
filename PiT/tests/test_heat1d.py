@@ -1,10 +1,10 @@
 import pytest
-
+import io
 import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import spsolve
 
-from parareal.interfaces.heat1d import Problem
+from parareal.interfaces.heat1d import Problem, ImplicitEuler
 from parareal.interval import Interval
 
 
@@ -99,3 +99,23 @@ def test_vs_daniel(daniels_results, solver, resolution):
     y = p.run()
     assert np.all(y == daniels_results[solver][resolution])
     
+probspec = '''
+time:
+  start: 0.0
+  dt: 1.1 / n
+  n: 1001
+params:
+  nu: 0.1
+  nx: 501
+initial:
+  sin(pi*x)
+solver:
+  euler
+'''
+def test_from_file():
+    p = Problem.from_stream(io.StringIO(probspec))
+    assert p.nx == 501
+    assert p.nu == 0.1
+    expected = np.sin(np.pi*np.linspace(0.0, 1.0, p.nx)[1:-1])
+    assert np.all(p.y0 == expected)
+    assert isinstance(p.integrator, ImplicitEuler)
