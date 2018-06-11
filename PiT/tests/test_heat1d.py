@@ -7,32 +7,32 @@ from scipy.sparse.linalg import spsolve
 from parareal.interfaces.heat1d import Problem
 from parareal.interval import Interval
 
-def getA(N, dx, nu):
-    stencil = [1.0, -2.0, 1.0]
-    A = sp.diags(stencil, [-1, 0, 1], shape=(N,N), format='csc')
-    A *= nu/(dx**2.0)
-    return A
-
-def restrict(y):
-    return y[1::2] # use injection, that is remove every second data point
-
-def implicitEuler(nsteps, dt, A, y0):
-    Id = sp.identity(np.shape(A)[0])
-    for i in range(nsteps):
-        b = np.copy(y0)
-        y0 = spsolve(Id - dt*A, b)
-    return y0
-
-def trapezoidal(nsteps, dt, A, y0):
-    Id = sp.identity(np.shape(A)[0])
-    for i in range(nsteps):
-        b = np.copy(y0)
-        b *= (Id + 0.5*dt*A)
-        y0 = spsolve(Id - 0.5*dt*A, b)
-    return y0
 
 @pytest.fixture(scope='module')
 def daniels_results():
+    def getA(N, dx, nu):
+        stencil = [1.0, -2.0, 1.0]
+        A = sp.diags(stencil, [-1, 0, 1], shape=(N,N), format='csc')
+        A *= nu/(dx**2.0)
+        return A
+
+    def restrict(y):
+        return y[1::2] # use injection, that is remove every second data point
+
+    def implicitEuler(nsteps, dt, A, y0):
+        Id = sp.identity(np.shape(A)[0])
+        for i in range(nsteps):
+            b = np.copy(y0)
+            y0 = spsolve(Id - dt*A, b)
+        return y0
+
+    def trapezoidal(nsteps, dt, A, y0):
+        Id = sp.identity(np.shape(A)[0])
+        for i in range(nsteps):
+            b = np.copy(y0)
+            b *= (Id + 0.5*dt*A)
+            y0 = spsolve(Id - 0.5*dt*A, b)
+        return y0
     # parameter
     nu     = 0.1 # diffusivity
     N      = 1001 # number of total finite difference nodes on fine mesh (boundary nodes not included).. needs to be odd to work properly!
