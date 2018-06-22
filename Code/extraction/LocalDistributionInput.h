@@ -63,31 +63,6 @@ namespace hemelb
          */
         const std::string filePath;
 
-        /**
-         * Where to begin reading from the file.
-         */
-        //uint64_t localDataOffsetIntoFile;
-
-        /**
-         * The length, in bytes, of the local read.
-         */
-        //uint64_t readLength;
-
-        /**
-         * The length, in bytes, of the total read length;
-         */
-        //uint64_t allCoresReadLength;
-
-        /**
-         * Buffer to write into before writing to disk.
-         */
-        //std::vector<char> buffer;
-
-        /**
-         * Type of written values
-         */
-        //typedef float WrittenDataType;
-
         // File accessed to read in the distributions.
         net::MpiFile inputFile;
 
@@ -97,16 +72,6 @@ namespace hemelb
 	uint64_t numberOfSites;
 
         std::vector<InputField> fields;
-
-        uint64_t thisOffset;
-
-        uint64_t nextOffset;
-
-	uint32_t lengthOfSegment;
-
-	std::vector<char>* dataBufferPtr;
-
-	io::writers::xdr::XdrReader* dataReaderPtr;
     };
   }
 }
