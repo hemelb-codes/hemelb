@@ -30,18 +30,13 @@ namespace hemelb
       // TO DO: raise an exception if the file does not exist.
       // TO DO: there seems to be a missing argument in the call to Open in LocalPropertyOutput.cc.
       inputFile = net::MpiFile::Open(comms, filePath, MPI_MODE_RDONLY, fileInfo);
-      //inputFile = net::MpiFile::Open(comms, inputSpec->filename, MPI_MODE_RDONLY, fileInfo);
-      //net::MpiFile inputFile;
       // Set the view to the file.
       inputFile.SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);
 
-      std::stringstream ss(filePath);
-      std::string offsetFileName;
-      std::getline(ss, offsetFileName, '.'); // Discard the leading '.'.
-      std::getline(ss, offsetFileName, '.'); // Get the rest before the suffix.
-      // Reinstate the leading '.' and add the suffix ".off".
-      offsetFileName = "." + offsetFileName + ".off";
       // Now open the offset file.
+      std::string offsetFileName;
+      int32_t pathLength = filePath.length();
+      offsetFileName = filePath.substr(0, pathLength-3) + "off";
       offsetFile = net::MpiFile::Open(comms, offsetFileName, MPI_MODE_RDONLY, fileInfo);
       offsetFile.SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);
 
@@ -72,7 +67,7 @@ namespace hemelb
         // Read the offset for this rank and the subsequent rank.
         const unsigned offsetBytes = 2*sizeof(uint64_t);
         std::vector<char> offsetBuffer(offsetBytes);
-        offsetFile.ReadAt(comms.Rank()*sizeof(uint64_t), offsetBuffer);
+        offsetFile.ReadAt((comms.Rank()+1)*sizeof(uint64_t), offsetBuffer);
         io::writers::xdr::XdrReader offsetReader = io::writers::xdr::XdrMemReader(&offsetBuffer[0],
                                                                                   offsetBytes);
         uint64_t thisOffset, nextOffset;

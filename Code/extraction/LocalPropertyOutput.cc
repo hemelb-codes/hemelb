@@ -278,7 +278,7 @@ namespace hemelb
                 break;
               case OutputField::MpiRank:
                 xdrWriter
-                    << (uint32_t) comms.Rank();
+		  << static_cast<WrittenDataType> (comms.Rank());
                 break;
               default:
                 // This should never trip. It only occurs when a new OutputField field is added and no
@@ -293,10 +293,18 @@ namespace hemelb
       outputFile.WriteAt(localDataOffsetIntoFile, buffer);
 
       // Write out the offsets used.
+      // On process 0 only write the number of MPI processes first.
+      if (comms.Rank() == 0)
+      {
+	std::vector<char> rankBuffer(sizeof(uint64_t));
+	io::writers::xdr::XdrMemWriter rankWriter(&rankBuffer[0], sizeof(uint64_t));
+	rankWriter << uint64_t(comms.Size());
+	offsetFile.WriteAt(0, rankBuffer);
+      }
       std::vector<char> offsetBuffer(sizeof(uint64_t));
       io::writers::xdr::XdrMemWriter offsetWriter(&offsetBuffer[0], sizeof(uint64_t));
       offsetWriter << localDataOffsetIntoFile;
-      uint64_t offsetForOffset = comms.Rank() * sizeof(uint64_t);
+      uint64_t offsetForOffset = (comms.Rank() + 1) * sizeof(uint64_t);
       offsetFile.WriteAt(offsetForOffset, offsetBuffer);
       if (comms.Rank() == (comms.Size()-1))
       {
