@@ -8,9 +8,10 @@
 # specifically made by you with University College London.
 # 
 
-from distutils.core import setup
-from distutils.extension import Extension
-from Cython.Distutils import build_ext
+from setuptools import setup, find_packages
+from setuptools.extension import Extension
+from Cython.Build import cythonize
+
 import numpy as np
 
 ext_modules = [
@@ -25,6 +26,6 @@ setup(name='HemeTools',
       author='Rupert Nash',
       author_email='rupert.nash@ucl.ac.uk',
       packages=['hemeTools', 'hemeTools.converters', 'hemeTools.parsers', 'hemeTools.parsers.snapshot', 'hemeTools.parsers.geometry', 'hemeTools.parsers.extraction', 'hemeTools.surfacegenerator', 'hemeTools.utils'],
-      cmdclass = {'build_ext': build_ext},
-      ext_modules=ext_modules
+      ext_modules=cythonize(ext_modules),
+      zip_safe=False
      )
