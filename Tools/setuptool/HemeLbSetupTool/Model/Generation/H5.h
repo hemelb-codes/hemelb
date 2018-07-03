@@ -337,7 +337,7 @@ namespace H5{
     DataTypeSharedPtr Copy() const;
   protected:
     template<class T>
-    friend class DataTypeTraits;
+    friend struct DataTypeTraits;
     DataType(hid_t id);
   };
 
