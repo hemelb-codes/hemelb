@@ -12,6 +12,19 @@
 #include "ParallelApply.h"
 #include "range.hpp"
 
+#include <boost/function_output_iterator.hpp>
+
+#ifndef HAVE_STD_MAKE_UNIQUE
+namespace std {
+  // note: this implementation does not disable this overload for array types
+  template<typename T, typename... Args>
+  unique_ptr<T> make_unique(Args&&... args)
+  {
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+  }
+}
+#endif
+
 SurfaceVoxeliser::SurfaceVoxeliser(const int ns,
 				   const std::vector<Vector>& p,
 				   const std::vector<Index>& t, const std::vector<Vector>&n,
@@ -20,48 +33,15 @@ SurfaceVoxeliser::SurfaceVoxeliser(const int ns,
   mesh(MkCgalMesh(p, t)),
   searcher(new CgalSearchTree(faces(*mesh).first, faces(*mesh).second, *mesh))
 {
-  SegmentFactory cube(ns);
-  const auto& opps = Neighbours::GetOpposites();
-  const auto& neighs = Neighbours::GetDisplacements();
-
-  direction_indices.reserve(NDIR);
-  directions.reserve(NDIR);
-  relative_segments.reserve(NDIR);
-
-  for (int i = 0; i < 2*NDIR; ++i) {
-    int iOpp = opps[i];
-    if (iOpp > i) {
-      direction_indices.push_back(i);
-      directions.push_back(neighs[i]);
-      relative_segments.emplace_back(cube.MakeSegments(neighs[i]));
-    }
-  }
-  assert(relative_segments.size() == NDIR);
-}
-
-void AddIntersection(EdgeSiteTree::NodePtr ans,
-		     const Index& idx, int iDir, double cut_dist, int id) {
-  try {
-    auto vox = ans->GetCreate(idx.x, idx.y, idx.z, 0);
-    if (!vox->Data())
-      vox->Data() = std::make_shared<EdgeSite>();
-    auto& cuts = vox->Data()->closest_cut;
-    if (cut_dist < cuts[iDir].dist) {
-      cuts[iDir].dist = cut_dist;
-      cuts[iDir].id = id;
-    }
-  } catch (std::out_of_range& e) {
-    // this is on a neighbouring subtree
-  }
 }
 
 typedef boost::optional< CgalSearchTree::Intersection_and_primitive_id<CgalSegment>::Type > Segment_intersection;
-typedef std::pair<double, Segment_intersection> dist_isec;
+typedef std::pair<double, int> dist_isec;
 
 // Helper class for filtering out clusters of intersections
 struct Clusterer {
   const std::vector<Vector>& normals;
-  std::list<dist_isec>& output;
+  std::vector<dist_isec>& output;
   const Vector& direction;
   
   int n_pts;
@@ -69,7 +49,7 @@ struct Clusterer {
   int n_neg;
   const dist_isec* current;
   
-  Clusterer(const std::vector<Vector>& n, std::list<dist_isec>& o, const Vector& d)
+  Clusterer(const std::vector<Vector>& n, std::vector<dist_isec>& o, const Vector& d)
     : normals(n), output(o), direction(d), n_pts(0), n_pos(0), n_neg(0), current(nullptr) {
   }
 
@@ -92,9 +72,7 @@ struct Clusterer {
   
   void Extend(const dist_isec& di) {
     n_pts++;
-    auto isec = di.second;
-    auto face_id = isec->second->id();
-    auto dp = Vector::Dot(normals[face_id], direction);
+    auto dp = Vector::Dot(normals[di.second], direction);
     if (dp > 0.0) {
       n_pos++;
     } else {
@@ -113,36 +91,19 @@ struct Clusterer {
 };
 
 // This filters a list of intersections for clusters of intersections that should be merged
-std::list<dist_isec> FilterClusters(const CgalPoint& start, const Vector direction, const std::vector<Vector>& normals,
-				    const std::list<Segment_intersection>& intersections, double tol=1e-3) {
-  std::list<dist_isec> ans;
-  auto link_dist = [&](const Segment_intersection& isec) -> double {
-    const CgalPoint& pt = boost::get<CgalPoint>(isec->first);
-    return std::sqrt(CGAL::squared_distance(start, pt));
-  };
-  
-  if (intersections.size() > 1) {
-    // iterator pointing to elememt, dist squared, in cluster flag
-    std::vector<dist_isec> dists;
-    dists.reserve(intersections.size());
-    for (auto in_it = intersections.begin(); in_it != intersections.end(); ++in_it) {
-      dists.emplace_back(link_dist(*in_it), *in_it);
-    }
-    
-    // Sort by dist squared
-    std::sort(dists.begin(), dists.end(),
-	      [](const dist_isec& a, const dist_isec& b) {
-		return a.first < b.first;
-	      });
-    
+std::vector<dist_isec> FilterClusters(const CgalPoint& start, const Vector direction, const std::vector<Vector>& normals,
+				      std::vector<dist_isec>& dirty, double tol=1e-3) {
+  std::vector<dist_isec> clean;
+  if (dirty.size() > 1) {
     // Look for "clusters" of points where they are really close together
     
     // Cluster intersections should either be ignored (if a mix of
     // inner and outer) or merged to a single intersection (with an
     // arbitrary face picked).    
     bool first = true;
-    Clusterer clst(normals, ans, direction);
-    for (const auto& cur: dists) {
+    clean.reserve(dirty.size());
+    Clusterer clst(normals, clean, direction);
+    for (const auto& cur: dirty) {
       if (first) {
 	clst.Start(cur);
 	first = false;
@@ -159,160 +120,177 @@ std::list<dist_isec> FilterClusters(const CgalPoint& start, const Vector directi
     clst.Finish();
     
   } else {
-    // zero or one intersections: just compute distances and add to output
-    std::for_each(intersections.begin(), intersections.end(),
-		  [&ans, &link_dist](const Segment_intersection& isec) {
-		    auto d = link_dist(isec);
-		    ans.emplace_back(d, isec);
-		  });
+    // zero or one intersections: just swap vectors
+    std::swap(clean, dirty);
   }
-  return ans;
+  return clean;
 }
 
-EdgeSiteTree::NodePtr SurfaceVoxeliser::ComputeIntersectionsForRegion(TriTree::ConstNodePtr node) const {
-  // We're going to work on lines that span the whole node,
-  // starting from and ending at the halo voxels.
-  EdgeSiteTree::NodePtr ans(new EdgeSiteTree::Branch(node->X(), node->Y(), node->Z(), node->Level()));
-  Index node_origin(node->X(), node->Y(), node->Z());
-	
-  for (int i = 0; i < NDIR; ++i) {
-    Index direction = directions[i];
-		
-    int iDir = direction_indices[i];
-    int iOpp = Neighbours::GetOpposites()[iDir];
+void SurfaceVoxeliser::ComputeIntersectionsForSite(Int x, Int y, Int z, EdgeSite& outleaf) const {
+  auto& directions = Neighbours::GetDisplacements();
+  Index siteIdx(x,y,z);
+  
+  for (unsigned iDir = 0; iDir < directions.size(); ++iDir) {
+    auto& direction = directions[iDir];
+    double inorm = 1.0 / std::sqrt(direction.GetMagnitudeSquared());
+    auto neighIdx = siteIdx + direction;
+    
+    CgalPoint start(siteIdx.x, siteIdx.y, siteIdx.z);
+    CgalPoint end(neighIdx.x, neighIdx.y, neighIdx.z);
+    CgalSegment link(start, end);
 
-    double norm = std::sqrt(direction.GetMagnitudeSquared());
-    for (const auto& seg: relative_segments[i]) {
-      auto startIdx = node_origin + seg.first;
-      auto endIdx = node_origin + seg.second;
-			
-      CgalPoint start(startIdx.x, startIdx.y, startIdx.z);
-      CgalPoint end(endIdx.x, endIdx.y, endIdx.z);
-      CgalSegment link(start, end);
-      // compute all intersections with segment query (as pairs object - primitive_id)
-      std::list<Segment_intersection> intersections;
-      searcher->all_intersections(link, std::back_inserter(intersections));
-      auto clean_intersections = FilterClusters(start, direction, Normals, intersections);
-      for (auto dist_isec: clean_intersections) {
-	auto link_dist = dist_isec.first / norm;
-	auto isec = dist_isec.second;
-			  
-	auto id = isec->second->id();
-	int offset = link_dist;
-	double cut_dist = link_dist - offset;
-			  
-	auto idxA = startIdx + direction*offset;
-	auto idxB = startIdx + direction*(offset+1);
-	AddIntersection(ans, idxA, iDir, cut_dist, id);
-	AddIntersection(ans, idxB, iOpp, 1-cut_dist, id);
-      }
-			
+    // This will hold all dist, intersection pairs
+    std::vector<dist_isec> intersections;
+    // Computes dist
+    auto dist_from_start = [&start, &inorm](const CgalPoint& pt) -> double {
+      return std::sqrt(CGAL::squared_distance(start, pt)) * inorm;
+    };
+    // Lambda will add intersections keeping them sorted
+    auto add_isec = boost::make_function_output_iterator([&intersections, &dist_from_start](const Segment_intersection& isec) {
+	try {
+	  // Calculate the cut distance
+	  auto d = dist_from_start(boost::get<CgalPoint>(isec->first));
+	  // Figure out where to insert it
+	  auto insertion_point = std::lower_bound(
+	    intersections.begin(), intersections.end(), d,
+	    [](const dist_isec& d_i, const double& d) -> bool {
+	      return d_i.first < d;
+	    });
+	  auto& id = isec->second->id();
+	  intersections.emplace(insertion_point, d, id);
+	} catch (boost::bad_get& e) {
+	  // Segment - ignore
+	}
+      });
+    // Run
+    searcher->all_intersections(link, add_isec);
+    
+    // Clean up clusters
+    auto clean_intersections = FilterClusters(start, direction, Normals, intersections);
+
+    // Get the closest and add if it exists
+    auto closest = clean_intersections.begin();
+    if (closest != clean_intersections.end()) {
+      auto& cuts = outleaf.closest_cut;
+      cuts[iDir].dist = closest->first;
+      cuts[iDir].id = closest->second;
     }
   }
-  return ans;
 }
 
-
-FluidTree::NodePtr SurfaceVoxeliser::ClassifyRegion(EdgeSiteTree::ConstNodePtr node) const {
+std::unique_ptr<FluidSite> SurfaceVoxeliser::ClassifySite(const EdgeSite& node) const {
   // Create output subtree
-  auto ans = std::make_shared<FluidTree::Branch>(node->X(), node->Y(),
-						 node->Z(), node->Level());
   const auto& dirs = Neighbours::GetDisplacements();
+ 
+  auto& cuts = node.closest_cut;
+  // Examine all the links totting up how many are different types
+  unsigned nIn = 0;
+  unsigned nOut = 0;
+  unsigned nNA = 0;
+  
+  auto fsite = std::make_unique<FluidSite>();
+  for (auto i: range(26)) {
+    if (cuts[i].dist < 1) {
+      // there's a cut
+      auto& dir = dirs[i];
+      auto& faceId = cuts[i].id;
+      auto& norm = this->Normals[faceId];
+      auto dp = Vector::Dot(dir, norm);
+      if (dp > 0) {
+	// We are inside
+	++nIn;
+	
+	auto& label = this->Labels[faceId];
+	fsite->links[i].dist = cuts[i].dist;
+	if (label < 0) {
+	  // Wall
+	  fsite->links[i].type = Intersection::Wall;
+	} else {
+	  // Iolet
+	  // TODO: implement this properly
+	  auto& iolet = this->Iolets[label];
+	  fsite->links[i].type = iolet.IsInlet ? Intersection::Inlet : Intersection::Outlet;
+	  fsite->links[i].id = iolet.Id;
+	}
+      } else {
+	++nOut;
+	// This site better not have any inside!
+      }
+    } else {
+      // no cut
+      ++nNA;
+      fsite->links[i].type = Intersection::None;
+    }
+  }
 
-  // Iter over leaf nodes
-  unsigned nLeafNodes = 0;
-  node->IterDepthFirst(0, 0,
-		       [&](EdgeSiteTree::ConstNodePtr edge_site_node) {
-			 EdgeSitePtr edge_site = edge_site_node->Data();
-			 auto& cuts = edge_site->closest_cut;
-			 //assert(edge_site->Data())
-			 // Examine all the links totting up how many are different types
-			 unsigned nIn = 0;
-			 unsigned nOut = 0;
-			 unsigned nNA = 0;
-
-			 FluidSite fsite;
-			 for (auto i: range(26)) {
-			   if (cuts[i].dist < 1) {
-			     // there's a cut
-			     auto& dir = dirs[i];
-			     auto& faceId = cuts[i].id;
-			     auto& norm = this->Normals[faceId];
-			     auto dp = Vector::Dot(dir, norm);
-			     if (dp > 0) {
-			       // We are inside
-			       ++nIn;
-
-			       auto& label = this->Labels[faceId];
-			       if (label < 0) {
-				 // Wall
-				 fsite.links[i].type = Intersection::Wall;
-				 fsite.links[i].dist = cuts[i].dist;
-			       } else {
-				 // Iolet
-				 // TODO: implement this properly
-				 auto& iolet = this->Iolets[label];
-				 
-				 fsite.links[i].type = iolet.IsInlet ? Intersection::Inlet : Intersection::Outlet;
-				 fsite.links[i].dist = cuts[i].dist;
-				 fsite.links[i].id = iolet.Id;
-			       }
-			     } else {
-			       ++nOut;
-			       // This site better not have any inside!
-			     }
-			   } else {
-			     // no cut
-			     ++nNA;
-			     fsite.links[i].type = Intersection::None;
-			   }
-			 }
-
-			 // Now some sanity checks
-			 assert((nIn + nOut + nNA) == 26);
-
-			 if (nIn) {
-			   // One or more interior sites, this one must be added to output
-			   if (nOut) {
-			     std::cout << *edge_site_node << std::endl;
-			   }
-			   assert (nOut == 0);
-
-			   // Find closest wall link
-			   float wall_dist = std::numeric_limits<float>::infinity();
-			   int faceId;
-			   for (auto i: range(26)) {
-			     if (fsite.links[i].type == Intersection::Wall) {
-			       if (fsite.links[i].dist < wall_dist) {
-				 wall_dist = fsite.links[i].dist;
-				 faceId = fsite.links[i].id;
-			       }
-			     }
-			   }
-			   if (wall_dist < 1) {
-			     fsite.has_normal = true;
-			     fsite.normal = this->Normals[faceId];
-			   } else {
-			     fsite.has_normal = false;
-			   }
-
-			   auto outsite = ans->GetCreate(edge_site_node->X(), edge_site_node->Y(), edge_site_node->Z(), 0);
-			   outsite->Data().count = 1;
-			   outsite->Data().leaf = std::make_shared<FluidSite>(fsite);
-			   nLeafNodes += 1;
-			 }
-		       });
-  ans->Data().count = nLeafNodes;
-  return ans;
+  // Now some sanity checks
+  assert((nIn + nOut + nNA) == 26);
+  
+  if (nIn) {
+    // One or more interior sites, this one must be added to output
+    if (nOut) {
+      //std::cout << node << std::endl;
+    }
+    assert (nOut == 0);
+    
+    // Find closest wall link
+    float wall_dist = std::numeric_limits<float>::infinity();
+    int faceId;
+    for (auto i: range(26)) {
+      if (fsite->links[i].type == Intersection::Wall) {
+	if (cuts[i].dist < wall_dist) {
+	  wall_dist = cuts[i].dist;
+	  faceId = cuts[i].id;
+	}
+      }
+    }
+    if (wall_dist < 1) {
+      fsite->has_normal = true;
+      fsite->normal = this->Normals[faceId];
+    } else {
+      fsite->has_normal = false;
+    }
+    
+  } else {
+    fsite = nullptr;
+  }
+  return fsite;
 }
+
+// This will voxelise the entire input tree.
+// Nodes at tri_level will be treated as solid blocks.
+// Nodes at that level will be handled in parallel.
 FluidTree SurfaceVoxeliser::operator()(const TriTree& inTree, const TriTree::Int tri_level) {
   typedef ParallelApply<FluidTree::NodePtr, TriTree::ConstNodePtr> Pool;
-
+  typedef hemelb::util::Vector3D<Int> Coord;
+  
+  // Set up pool to call block processing lambda on each tri_level node
   Pool pool([this](TriTree::ConstNodePtr in) {
-      auto edge_sites = ComputeIntersectionsForRegion(in);
-      return ClassifyRegion(edge_sites);
+      Coord start(in->X(), in->Y(), in->Z());
+      Coord stop = start + (1 << in->Level());
+      auto ans = FluidTree::NodePtr(new FluidTree::Branch(in->X(), in->Y(), in->Z(), in->Level()));
+      unsigned nleaf = 0;
+      
+      // Iter over all coords in input node
+      for (auto x: range(start.x, stop.x))
+	for (auto y: range(start.y, stop.y))
+	  for (auto z: range(start.z, stop.z)) {
+	    EdgeSite intersec_data;
+	    ComputeIntersectionsForSite(x,y,z, intersec_data);
+	    auto outleafdata = ClassifySite(intersec_data);
+	    if (outleafdata) {
+	      auto outleaf = ans->GetCreate(x,y,z, 0);
+	      outleaf->Data().leaf = std::move(outleafdata);
+	      outleaf->Data().count = 1;
+	      ++nleaf;
+	    }
+	  }
+      ans->Data().count = nleaf;
+      return ans;
     }, 1, std::numeric_limits<int>::max());
-
+  
+  // Submit all the tri_level blocks for processing
+  // Merging of output done below  
   std::deque<Pool::Future> result_queue;
   inTree.IterDepthFirst(tri_level, tri_level,
 			[&](TriTree::ConstNodePtr node) {
@@ -320,6 +298,7 @@ FluidTree SurfaceVoxeliser::operator()(const TriTree& inTree, const TriTree::Int
 			});
   pool.Done();
 
+  // Merge blocks
   FluidTree outTree(inTree.Level());
 	
   unsigned nLeafNodes = 0;

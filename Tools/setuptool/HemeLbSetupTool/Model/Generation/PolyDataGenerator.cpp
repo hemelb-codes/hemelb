@@ -160,7 +160,7 @@ void PolyDataGenerator::Execute() throw (GenerationError) {
   section_t.Report(std::cout);
 
   Timer write_t("Write the data");
-  section_tree->Write("sphere.oct");
+  section_tree->Write(this->OutputGeometryFile);
   write_t.Report(std::cout);
   
   total_t.Report(std::cout);

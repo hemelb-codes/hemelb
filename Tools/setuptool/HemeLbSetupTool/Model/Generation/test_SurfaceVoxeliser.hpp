@@ -36,31 +36,37 @@ public:
 	}
 
 	void Trivial() {
-		// 16 cube
-		auto levels = 4;
-		auto tri_level = 2;
-		auto triv = SimpleMeshFactory::MkTrivial();
-		auto tree = TrianglesToTreeSerial(levels, tri_level, triv->points,
-				triv->triangles);
-
-		SurfaceVoxeliser voxer(1 << tri_level, triv->points, triv->triangles,
-				       triv->normals, triv->labels, triv->iolets);
-		auto tri_node = tree.Get(0, 0, 0, tri_level);
-		auto edge_node = voxer.ComputeIntersectionsForRegion(tri_node);
-
-		auto dirs = Neighbours::GetDisplacements();
-		edge_node->IterDepthFirst(0, 0, [&](EdgeSiteTree::NodePtr node) {
-			// the 2 triangles are at x = 1.2
-			// with y = {1.2, 2.2}
-			//  and z = {1.2, 2.2}
-				CPPUNIT_ASSERT(node->X() == 1 || node->X() == 2);
-				auto cuts = node->Data()->closest_cut;
-				for (int i = 0; i<26; ++i)
-				if (cuts[i].id >= 0) {
-					double expected = dirs[i].x > 0 ? 0.2 : 0.8;
-					CPPUNIT_ASSERT_DOUBLES_EQUAL(expected, cuts[i].dist, 1e-9);
-				}
-			});
+	  // 16 cube
+	  auto levels = 4;
+	  auto tri_level = 2;
+	  auto triv = SimpleMeshFactory::MkTrivial();
+	  auto tree = TrianglesToTreeSerial(levels, tri_level, triv->points,
+					    triv->triangles);
+	  
+	  SurfaceVoxeliser voxer(1 << tri_level, triv->points, triv->triangles,
+				 triv->normals, triv->labels, triv->iolets);
+	  auto tri_node = tree.Get(0, 0, 0, tri_level);
+	  
+	  auto dirs = Neighbours::GetDisplacements();
+	  
+	  for (auto x: range(1, 3))
+	    for (auto y: range(4))
+	      for (auto z: range(4)) {
+		EdgeSite outleaf;
+		voxer.ComputeIntersectionsForSite(x,y,z, outleaf);
+		
+		// the 2 triangles are at x = 1.2
+		// with y = {1.2, 2.2}
+		//  and z = {1.2, 2.2}
+		auto& cuts = outleaf.closest_cut;
+		for (auto i: range(26)) {
+		  if (cuts[i].id >= 0) {
+		    double expected = dirs[i].x > 0 ? 0.2 : 0.8;
+		    CPPUNIT_ASSERT_DOUBLES_EQUAL(expected, cuts[i].dist, 1e-9);
+		  }
+		}
+	      }
+	  
 	}
 
 	void SphereIntersections() {
@@ -84,13 +90,13 @@ public:
 		auto in_box = tree.Get(24, 16, 16, tri_level);
 
 		// Process it
-		auto edge_box = voxer.ComputeIntersectionsForRegion(in_box);
+		EdgeSite vox;
+		voxer.ComputeIntersectionsForSite(24,17,20, vox);
+		
 		// Check it
-		auto vox = edge_box->Get(24, 17, 20, 0);
-		CPPUNIT_ASSERT(vox);
 		Index coord(24, 17, 20);
 
-		const auto& cuts = vox->Data()->closest_cut;
+		const auto& cuts = vox.closest_cut;
 		auto directions = Neighbours::GetDisplacements();
 		for (auto i : range(26)) {
 			const Index& dir = directions[i];

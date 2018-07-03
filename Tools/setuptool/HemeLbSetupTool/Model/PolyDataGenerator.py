@@ -4,7 +4,7 @@
 # license in the file LICENSE.
 
 import numpy as np
-from vtk import vtkTransform, vtkTransformFilter
+from vtk import vtkTransform, vtkTransformFilter, vtkXMLPolyDataWriter
 from vtk.util import numpy_support
 
 from .Vector import Vector
@@ -32,20 +32,32 @@ class PolyDataGenerator(GeometryGenerator):
         clipper = Clipper(profile)
 
         # Scale by the voxel size
-        trans = vtkTransform()
+        scaleToLattice = vtkTransform()
         scale = 1. / profile.VoxelSize
-        trans.Scale(scale, scale, scale)
+        scaleToLattice.Scale(scale, scale, scale)
 
         transformer = vtkTransformFilter()
-        transformer.SetTransform(trans)
+        transformer.SetTransform(scaleToLattice)
         transformer.SetInputConnection(
             clipper.ClippedSurfaceSource.GetOutputPort())
 
         transformer.Update()
-        self.ClippedSurface = transformer.GetOutput()
+        self._ComputeOriginWorking(transformer.GetOutput())
+        
+        shiftOrigin = vtkTransform()
+        shiftOrigin.Translate(-self.OriginWorking[0], -self.OriginWorking[1], -self.OriginWorking[2])
+        shifter = vtkTransformFilter()
+        shifter.SetTransform(shiftOrigin)
+        shifter.SetInputConnection(transformer.GetOutputPort())
+        
+        writer = vtkXMLPolyDataWriter()
+        writer.SetFileName('clipped.vtp')
+        writer.SetInputConnection(shifter.GetOutputPort())
+        writer.Write()
+        
+        self.ClippedSurface = shifter.GetOutput()
         self.generator.SetClippedSurface(self.ClippedSurface)
         
-        self._ComputeOriginWorking()
         self.generator.SetOriginWorking(*(float(x) for x in self.OriginWorking))
         self.generator.SetNumberOfLevels(self.NumberOfLevels)
         tri_level = max(self.NumberOfLevels / 3, 2)
@@ -58,7 +70,7 @@ class PolyDataGenerator(GeometryGenerator):
         """
         return getattr(self._profile, attr)
     
-    def _ComputeOriginWorking(self):
+    def _ComputeOriginWorking(self, surface):
         """
         Here we are setting the location of our domain's origin in the input
         space and the number of sites along each axis. Sites will all have
@@ -74,7 +86,7 @@ class PolyDataGenerator(GeometryGenerator):
         close to the surface so we further require that these sites are a
         little further from the bounding box of the PolyData.
         """
-        SurfaceBoundsWorking = self.ClippedSurface.GetBounds()
+        SurfaceBoundsWorking = surface.GetBounds()
         OriginWorking = np.zeros(3, dtype=float)
         nSites = np.zeros(3, dtype=int)
         
