@@ -5,8 +5,55 @@
 
 import sys
 import os.path
+import warnings
 from setuptools import setup
 from setuptools.extension import Extension
+
+def conda_monkey_patch():
+    import setuptools.command.easy_install
+    BaseScriptWriter = setuptools.command.easy_install.ScriptWriter
+    
+    class CondaOsxScriptWriter(BaseScriptWriter):
+        @classmethod
+        def _get_script_args(cls, type_, name, header, script_text):
+            
+            if type_ == 'gui':
+                warnings.warn('Using custom hack to work around Conda on macOS for scripts that launch a GUI', UserWarning)
+                old_exe = cls.command_spec_class.best().from_param(None)[0]
+                dirname, python = os.path.split(old_exe)
+                new_exe = os.path.join(dirname, 'python.app')
+                assert os.path.exists(new_exe)
+                header = header.replace(old_exe, new_exe)
+
+            yield (name, header + script_text)
+        pass
+    
+    setuptools.command.easy_install.BaseScriptWriter = BaseScriptWriter
+    setuptools.command.easy_install.ScriptWriter = CondaOsxScriptWriter
+    
+    return
+
+def on_conda():
+    '''Try to figure out if we running on a conda interpreter by looking
+    for the conda command line tool in the same directory as this
+    interpreter.
+    '''
+    bindir, python = os.path.split(sys.executable)
+    return os.path.exists(os.path.join(bindir, 'conda'))
+    
+    
+if sys.platform == 'darwin':
+    # Python thinks it's so smart and sets the
+    # MACOSX_DEPLOYMENT_TARGET environment variable that messes around
+    # with what features of the compiler and C++ std lib are
+    # available. Set this to use your current one.
+    import platform
+    release, versioninfo, machine = platform.mac_ver()
+    os.environ['MACOSX_DEPLOYMENT_TARGET'] = release
+
+    if on_conda():
+        conda_monkey_patch()
+    
 
 lib_src = '''
 ../../Code/util/Vector3D.cc
@@ -29,14 +76,6 @@ generation_src = lib_src + ['HemeLbSetupTool/Model/Generation.i']
 test_src = lib_src + ['HemeLbSetupTool/Model/Generation/test.cpp',
                           'HemeLbSetupTool/Model/Test.i']
 
-if sys.platform == 'darwin':
-    # Python thinks it's so smart and sets the
-    # MACOSX_DEPLOYMENT_TARGET environment variable that messes around
-    # with what features of the compiler and C++ std lib are
-    # available. Set this to use your current one.
-    import platform
-    release, versioninfo, machine = platform.mac_ver()
-    os.environ['MACOSX_DEPLOYMENT_TARGET'] = release
 
 main_libs = ['boost_system', 'boost_filesystem', 'hdf5', 'CGAL', 'gmp', 'mpfr']
 
@@ -64,12 +103,20 @@ setup(
         'HemeLbSetupTool.Util',
         'HemeLbSetupTool.Model',
         'HemeLbSetupTool.View',
-        'HemeLbSetupTool.Controller'
+        'HemeLbSetupTool.Controller',
+        'HemeLbSetupTool.scripts'
         ],
-    scripts=[
-        'scripts/hemelb-setup',
-        'scripts/hemelb-setup-nogui',
-        'scripts/hemelb-countsites',
-        'scripts/upgrade-profile'],
+        # Define entry points instead of scripts
+        # https://setuptools.readthedocs.io/en/latest/setuptools.html#automatic-script-creation
+    entry_points={
+        'console_scripts': [
+            'hemelb-setup-nogui=HemeLbSetupTool.scripts.setup_cli:main',
+            'hemelb-countsites=HemeLbSetupTool.scripts.countsites:main',
+            'upgrade-profile=HemeLbSetupTool.scripts.upgrade_profile:main'
+            ],
+        'gui_scripts': [
+            'hemelb-setup=HemeLbSetupTool.scripts.setup_gui:main'
+            ]
+        },
     ext_modules=[generation_ext, test_ext]
     )
