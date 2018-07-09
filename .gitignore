@@ -45,3 +45,4 @@ Tools/hemeTools/utils/xdr.c
 Tools/hemeTools/utils/xdr.so
 hemelb-prefix/src/hemelb-stamp/hemelb-urlinfo.txt
 *-slack-token
+venv
