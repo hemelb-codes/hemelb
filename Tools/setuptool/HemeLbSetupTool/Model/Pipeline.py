@@ -36,12 +36,19 @@ class Pipeline(Observable):
 
         self.PlacedSeed = PlacedSeed(self)
         self.PlacedSeed.AddObserver('Enabled', self.HandlePlacedItemEnabledChange)
+        self.AddObserver('WidgetSize', self.PlacedSeed.HandleWidgetSizeChange)
         
         self.PlacedIolets = PlacedIoletList()
         self.PlacedIolets.SetItemEnabledChangeHandler(self.HandlePlacedItemEnabledChange)
         
         return
-            
+    
+    def SetSurfaceSource(self, src):
+        self.SurfaceMapper.SetInputConnection(src)
+        self.PlacedIolets.SetSurfaceSource(src)
+        return
+    
+                    
     def ResetView(self):
         """Reset the view on the current scene.
         """
@@ -179,13 +186,11 @@ class Pipeline(Observable):
         item = change.obj
         if item.Enabled:
             if not self.IsActorAdded(item.actor):
-                self.AddObserver('WidgetSize', item.HandleWidgetSizeChange)
                 self.Renderer.AddActor(item.actor)
                 pass
         else:
             if self.IsActorAdded(item.actor):
                 self.Renderer.RemoveActor(item.actor)
-                self.RemoveObserver('WidgetSize', item.HandleWidgetSizeChange)
                 pass
             pass
         return

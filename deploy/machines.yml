@@ -1,11 +1,8 @@
-# 
-# Copyright (C) University College London, 2007-2012, all rights reserved.
-# 
-# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-# with, install, use, duplicate, modify, redistribute or share this
-# file, or any part thereof, other than as allowed by any agreement
-# specifically made by you with University College London.
-# 
+
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
 
 default: 
   # General default values for all machines live in the default dictionary.
@@ -65,55 +62,29 @@ archer: #the ARCHER supercomputer at EPCC
   make_jobs: 4
   verbose: 1
   job_dispatch: "qsub"
-  run_command: "aprun -n $cores"
+  run_command: "aprun -n $cores -N $corespernode"
   batch_header: pbs-archer
+  no_ssh: true
+  no_git: true
   remote: "login.archer.ac.uk"
   # On ARCHER, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
   install_path_template: "$work_path/install"
   home_path_template: "/home/$project/$project/$username"
   runtime_path_template: "/work/$project/$project/$username"
   fabric_dir: "FabricHemeLb"
-  modules: ["load cmake", "swap PrgEnv-cray PrgEnv-gnu", "load anaconda"]
-  # Tell autoconf for dependencies where the compilers are
-  build_prefix_commands: ["export LDFLAGS=-dynamic","export CXX=CC","export CC=cc", "export LD=CC", "export XTPE_LINK_TYPE=dynamic" ]
+  modules: ["load cmake/3.2.3", "swap PrgEnv-cray PrgEnv-gnu", "load boost", "load cray-hdf5-parallel", "load cray-tpsl"]
+  build_prefix_commands: ["export LDFLAGS=-dynamic"] # Required for HDF5 to compile
   temp_path_template: "$work_path/tmp"
   regression_test_path_template: "$work_path/regression"
   queue: "standard"
   python_build: "lib/python2.7"
   corespernode: 24
-#  build_prefix_command: [ "export LDFLAGS=-dynamic", "export XTPE_LINK_TYPE=dynamic" ]
   cmake_options:
-    CMAKE_CXX_FLAGS: "-dynamic"
-    CMAKE_C_FLAGS: "-dynamic"
-    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
-    CMAKE_CXX_COMPILER: "/opt/cray/craype/2.1.1/bin/CC"
-    CMAKE_C_COMPILER: "/opt/cray/craype/2.1.1/bin/cc"
-    CMAKE_CXX_FLAGS_RELEASE: ""
-    CPPUNIT_PATCH_LDL: OFF
-    CPPUNIT_PATCH_DYNAMIC: ON
     HEMELB_OPTIMISATION: "-O3"
-    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
     HEMELB_USE_SSE3: "ON"
-    CTEMPLATE_PATCH_ALIGN: "ON"
-    CTEMPLATE_USE_STATIC: "OFF"
     HEMELB_COMPUTE_ARCHITECTURE: "INTELSANDYBRIDGE"
-    #  CMAKE_VERBOSE_MAKEFILE: "TRUE"
+    METIS_ROOT: "$CRAY_TPSL_PREFIX_DIR"
 
-##    CMAKE_SKIP_RPATH: "TRUE"
-##    CMAKE_SKIP_INSTALL_RPATH: "TRUE"
-#    CMAKE_CXX_FLAGS: "-dynamic"
-#    CMAKE_C_FLAGS: "-dynamic"
-#    CMAKE_VERBOSE_MAKEFILE: "TRUE"
-##    CPPUNIT_USE_STATIC: "ON"
-#    CPPUNIT_PATCH_LDL: "OFF"
-#    CPPUNIT_PATCH_DYNAMIC: "OFF"
-##    CTEMPLATE_USE_STATIC: "ON"
-#    CTEMPLATE_PATCH_ALIGN: "ON"
-#    CTEMPLATE_USE_STATIC: "OFF"
-##    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
-#    HEMELB_OPTIMISATION: "-O3"
-#    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
-#    HEMELB_USE_SSE3: "ON"
 legion: 
   job_dispatch: "qsub"
   run_command: "mpirun -np $cores -machinefile $$TMPDIR/machines"

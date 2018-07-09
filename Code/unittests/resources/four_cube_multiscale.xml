@@ -59,7 +59,7 @@
       <geometry type="line">
         <point value="(2.5,2.5,0)" units="m" />
         <point value="(2.5,2.5,5)" units="m" /> 
-      </linegeometry>
+      </geometry>
       <field type="pressure"/>    
     </propertyoutput>
   </properties>

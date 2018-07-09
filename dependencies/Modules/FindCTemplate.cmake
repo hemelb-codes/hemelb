@@ -1,3 +1,8 @@
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
+
 # - Find CTEMPLATE
 # Find the native CTEMPLATE includes and library
 #
@@ -8,22 +13,22 @@
 
 option(CTEMPLATE_USE_STATIC "Prefer Static CTemplate library" OFF)
 IF( CTEMPLATE_INCLUDE_DIR )
-    # Already in cache, be silent
-    SET( CTEMPLATE_FIND_QUIETLY TRUE )
+  # Already in cache, be silent
+  SET( CTEMPLATE_FIND_QUIETLY TRUE )
 ENDIF( CTEMPLATE_INCLUDE_DIR )
 
 FIND_PATH( CTEMPLATE_INCLUDE_DIR "ctemplate/template.h")
 if(CTEMPLATE_USE_STATIC)
-set(__old_cmake_find_lib_suffixes ${CMAKE_FIND_LIBRARY_SUFFIXES})
-	set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_STATIC_LIBRARY_SUFFIX})
+  set(__old_cmake_find_lib_suffixes ${CMAKE_FIND_LIBRARY_SUFFIXES})
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_STATIC_LIBRARY_SUFFIX})
 endif()
 
 FIND_LIBRARY( CTEMPLATE_LIBRARIES
-              NAMES "ctemplate"
-              PATH_SUFFIXES "ctemplate" )
+  NAMES "ctemplate"
+  PATH_SUFFIXES "ctemplate" )
 
 if(CTEMPLATE_USE_STATIC)
-	set(CMAKE_FIND_LIBRARY_SUFFIXES ${__old_cmake_find_lib_suffixes})
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ${__old_cmake_find_lib_suffixes})
 endif()
 
 # handle the QUIETLY and REQUIRED arguments and set CTEMPLATE_FOUND to TRUE if

@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #include "colloids/PersistedParticle.h"
 #include "constants.h"
@@ -31,7 +28,7 @@ namespace hemelb
       initPosElem.GetAttributeOrThrow("z", globalPosition.z);
 
       lastCheckpointTimestep = 0;
-      markedForDeletionTimestep = BIG_NUMBER2;
+      markedForDeletionTimestep = SITE_OR_BLOCK_SOLID;
     };
   }
 }

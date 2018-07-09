@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_COLLOIDS_PARTICLE_H
 #define HEMELB_COLLOIDS_PARTICLE_H
@@ -87,7 +84,7 @@ namespace hemelb
         /** unsets the deletion marker - the particle will not be deleted */
         const void SetDeletionMarker()
         {
-          markedForDeletionTimestep = BIG_NUMBER2;
+          markedForDeletionTimestep = SITE_OR_BLOCK_SOLID;
         }
 
         /** sets the deletion marker to the current timestep
@@ -197,6 +194,13 @@ namespace hemelb
         // Allow the sorter class to see our private members.
         friend struct ParticleSorter;
     };
+  }
+  namespace net
+  {
+    template<>
+    MPI_Datatype MpiDataTypeTraits<colloids::Particle>::RegisterMpiDataType();
+    template<>
+    MPI_Datatype MpiDataTypeTraits<std::pair<unsigned long, util::Vector3D<double> > >::RegisterMpiDataType();
   }
 }
 

@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_GEOMETRY_GEOMETRYSITE_H
 #define HEMELB_GEOMETRY_GEOMETRYSITE_H
@@ -34,7 +31,7 @@ namespace hemelb
         GeometrySite(bool siteIsFluid) :
             targetProcessor(siteIsFluid ?
               -1 :
-              BIG_NUMBER2), isFluid(siteIsFluid), wallNormalAvailable(false)
+              SITE_OR_BLOCK_SOLID), isFluid(siteIsFluid), wallNormalAvailable(false)
         {
         }
 

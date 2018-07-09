@@ -2,7 +2,6 @@
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
-# 
 
 from hemeTools.parsers.geometry.simple import ConfigLoader
 from hemeTools.parsers.geometry.generic import Domain

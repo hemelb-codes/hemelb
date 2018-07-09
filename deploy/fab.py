@@ -1,11 +1,8 @@
-# 
-# Copyright (C) University College London, 2007-2012, all rights reserved.
-# 
-# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-# with, install, use, duplicate, modify, redistribute or share this
-# file, or any part thereof, other than as allowed by any agreement
-# specifically made by you with University College London.
-# 
+
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
 
 """
 Fabric definitions for HemeLB
@@ -162,15 +159,18 @@ def configure_cmake(configurations, extras):
         options.update(cmake_options[configuration])
     options.update(extras)
     options.update(env.cmake_options)
-    options.update({'CMAKE_INSTALL_PREFIX':env.install_path,
-        "HEMELB_DEPENDENCIES_INSTALL_PATH":env.install_path,
-        "HEMELB_SUBPROJECT_MAKE_JOBS":env.make_jobs})
+    options.update({
+        'CMAKE_INSTALL_PREFIX': env.install_path,
+        'HEMELB_DEPENDENCIES_INSTALL_PATH': env.install_path,
+        })
     env.total_cmake_options = options
     env.cmake_flags = ' '.join(["-D%s=%s" % option for option in env.total_cmake_options.iteritems()])
 
 @task
 def configure(*configurations, **extras):
     """CMake configure step for HemeLB and dependencies."""
+    # Set make parallism for master build
+    extras['HEMELB_SUBPROJECT_MAKE_JOBS'] = env.make_jobs
     configure_cmake(configurations, extras)
 
     with cd(env.build_path):
@@ -221,9 +221,9 @@ def build(verbose=False):
         run(template("rm -rf hemelb_prefix/build"))
         with prefix(env.build_prefix):
             if verbose or env.verbose:
-                run("make VERBOSE=1")
+                run("make -j$make_jobs VERBOSE=1")
             else:
-                run("make")
+                run("make -j$make_jobs")
 
 @task
 def install():
@@ -474,7 +474,7 @@ def update_environment(*dicts):
 @task(alias='test')
 def unit_test(**args):
     """Submit a unit-testing job to the remote queue."""
-    job(dict(script='unittests', job_name_template='unittests_${build_number}_${machine_name}', cores=1, wall_time='0:1:0', memory='2G'), args)
+    job(dict(script='unittests', job_name_template='unittests_${build_number}_${machine_name}', cores=1, corespernode=1, wall_time='0:1:0', memory='2G'), args)
 
 @task
 def batch_build_code(*configurations, **extras):
@@ -486,6 +486,8 @@ def batch_build_code(*configurations, **extras):
 @task
 def batch_build(*configurations, **extras):
     """Submit a build job to the remote serial queue."""
+    # Set make parallism for master build
+    extras['HEMELB_SUBPROJECT_MAKE_JOBS'] = env.make_jobs
     configure_cmake(configurations, extras)
     with settings(batch_header=env.batch_header + '_serial'):
       job(dict(script='batch_build', job_name_template='build_${build_number}_${machine_name}', queue='serial', cores=1, wall_time='1:0:0', memory='2G'), extras)
@@ -567,6 +569,19 @@ def hemelbs(config, **args):
         hemeconfig.update(args)
         hemeconfig['cores'] = currentCores
         execute(hemelb, config, **hemeconfig)
+
+@task
+def hemelb_benchmark(config, min_cores, max_cores, **args):
+    """ Performs a strong scaling test from <min_cores> cores to <max_cores> cores, in steps of a factor 2. """
+    cores_used = int(min_cores)
+    while cores_used < int(max_cores):
+        args['cores'] = cores_used
+        
+        with_config(config)
+        execute(put_configs, config)
+        job(dict(script='hemelb',
+            cores=cores_used, images=10, steering=1111, wall_time='0:15:0', memory='2G'), args)
+        cores_used *= 2
 
 @task(alias='regress')
 def regression_test(**args):

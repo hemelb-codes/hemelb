@@ -1,12 +1,8 @@
 #!/usr/bin/env python
-# encoding: utf-8
-"""
-__init__.py
-
-Created by James Hetherington on 2012-10-18.
-Copyright (c) 2012 __MyCompanyName__. All rights reserved.
-"""
-
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
 import sys
 import os
 from utils import *

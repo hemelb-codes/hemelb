@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #include <algorithm>
 
@@ -145,7 +142,7 @@ namespace hemelb
         hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("NDM ShareNeeds().");
         //if (needsHaveBeenShared == true)
         //  return; //TODO: Fix!
-
+        
         // build a table of which procs needs can be achieved from which proc
         std::vector<std::vector<site_t> > needsIHaveFromEachProc(net.Size());
         std::vector<int> countOfNeedsIHaveFromEachProc(net.Size(), 0);
@@ -165,7 +162,8 @@ namespace hemelb
         net.RequestAllToAllReceive(countOfNeedsOnEachProcFromMe);
         net.Dispatch();
 
-        for (proc_t other = 0; other < net.Size(); other++)
+        const int netSize = net.Size(); // avoid calling e.g. MPI_Comm_size many times; it is not inlined
+        for (proc_t other = 0; other < netSize; other++)
         {
 
           // now, for every proc, which I need something from,send the ids of those

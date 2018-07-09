@@ -8,6 +8,7 @@ import wx
 from HemeLbSetupTool.Bindings.ObjectController import ObjectController
 from HemeLbSetupTool.Bindings.Translators import QuickTranslator
 from HemeLbSetupTool.Bindings.VtkObject import HasVtkObjectKeys
+from HemeLbSetupTool.Bindings.Mappers import SimpleObservingMapper
 from HemeLbSetupTool.Controller.IoletListController import HasIoletListKeys
 from HemeLbSetupTool.Controller.VectorController import HasVectorKeys
 
@@ -19,7 +20,10 @@ class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, Objec
     def __init__(self, delegate):
         ObjectController.__init__(self, delegate)
         self.DefineVectorKey("SeedPoint")
+        
         self.DefineIoletListKey("Iolets")
+        self.BindValue('DefaultIoletRadius', SimpleObservingMapper(self.Iolets, 'DefaultIoletRadius'))
+        
         self.DefineVtkObjectKey("StlReader")
         self.DefineVtkObjectKey('SideLengthCalculator')
         
@@ -35,6 +39,15 @@ class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, Objec
         """Drop into the debugger.
         """
         pdb.set_trace()
+        return
+    
+    def Generate(self, ignored=None):
+        # Pop up the dialog
+        dialog = wx.ProgressDialog("Geometry generating",
+                                   "Generating geometry, please wait for this window to close.")
+        dialog.Pulse()
+        self.delegate.Generate()
+        dialog.Destroy()
         return
     
     def ChooseStl(self, ignored=None):
@@ -92,7 +105,7 @@ class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, Objec
     def LoadFromFile(self, ignored=None):
         dialog = wx.FileDialog(None,
                                style=wx.FD_OPEN,
-                               wildcard='*.pro')
+                               wildcard='*.pro|*.pr2')
         
         if dialog.ShowModal() == wx.ID_OK:
             self.delegate.LoadFromFile(dialog.GetPath())
