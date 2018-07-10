@@ -60,11 +60,26 @@ namespace H5 {
     return DataTypeSharedPtr(new DataType(link_id));
   }
 }
+
+// H5 does not allow the chunk size to be bigger than the data set's
+// size. Make a plist that satisfies this constraint.
+H5::PListSharedPtr compression_plist(int size) {
+  const int CHUNK = 512;
+  if (size < CHUNK)
+    // Don't bother with compression
+    return H5::PList::Default();
+  
+  auto pl = H5::PList::DatasetCreate();
+  pl->SetChunk({CHUNK});
+  pl->SetDeflate(6);
+  return pl;
+}
+
 template <class T>
 void Section<T>::write(H5::GroupPtr grp) const {
-  grp->CreateWriteDataSet("offsets", offsets);
-  grp->CreateWriteDataSet("counts", counts);
-  grp->CreateWriteDataSet("data", data);
+  grp->CreateWriteDataSet("offsets", offsets, compression_plist(offsets.size()));
+  grp->CreateWriteDataSet("counts", counts, compression_plist(counts.size()));
+  grp->CreateWriteDataSet("data", data, compression_plist(data.size()));
 }
 
 void SectionTree::Write(const std::string& fn) const {
@@ -72,15 +87,16 @@ void SectionTree::Write(const std::string& fn) const {
   auto root = outfile->CreateGroup("hemelb")->CreateGroup("geometry");
   root->SetAttribute("version", 1);
   root->SetAttribute("levels", int(nLevels));
+    
   for (auto x: const_enumerate(indices)) {
     // Each level is a single dataset
     std::ostringstream ss;
     ss << std::setfill('0') << std::setw(4) << x.first;
-    root->CreateWriteDataSet(ss.str(), x.second);
+    // Enable compression with a chunk size of 1k
+    root->CreateWriteDataSet(ss.str(), x.second, compression_plist(x.second.size()));
   }
-
-  auto wng = root->CreateGroup("wall_normals");
-  wall_normals.write(wng);
+  
+  wall_normals.write(root->CreateGroup("wall_normals"));
   links.write(root->CreateGroup("links"));
   
 }
