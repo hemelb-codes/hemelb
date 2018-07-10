@@ -3,9 +3,12 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
+import numpy as np
+
 from hemeTools.parsers.geometry.simple import ConfigLoader
 from hemeTools.parsers.geometry.generic import Domain
-import numpy as np
+
+from hemeTools.parsers.octree import SectionTree
 
 class HeaderEndException(Exception):
     pass
@@ -22,7 +25,7 @@ class CountingLoader(ConfigLoader):
         raise HeaderEndException()
     pass
 
-def CountFluidSites(filename, verbosity=1):
+def CountFluidSitesGmy(filename, verbosity=1):
     summary = 'FileName = "{filename}"\n'
     for var in 'BlockCounts BlockSize TotalFluidSites BlocksWithFluidSites'.split():
         summary += '\t%s = {%s}\n' % (var,var)
@@ -61,6 +64,68 @@ def CountFluidSites(filename, verbosity=1):
         continue
     
     return summary
+
+def CountFluidSitesOct(filename, verbosity=1):
+    tree = SectionTree(filename)
+    
+    def valid_child_count(level):
+        ds = tree.indices[level]
+        last_8 = tree.indices[level][-8:]
+        valid = (last_8 != SectionTree.NA)
+        last_i = int(last_8[valid].max())
+        if level > 1:
+            last_i /= 8
+        return last_i + 1
+    
+    tot_fluid = valid_child_count(1)
+    
+    if verbosity == 0:
+        return tot_fluid
+    
+    nlevels = int(tree.levels)
+    boxsize = 2**nlevels
+    
+    summary = '''FileName = "{filename}"
+\tLevels = {nlevels}
+\tBoxSize = {boxsize}
+\tTotalFluidSites = {tot_fluid}
+'''.format(**locals())
+
+    if verbosity == 1:
+        return summary
+    
+    # v >= 2
+    summary += '\t\tLevel\tNodes\tFrac\tCumulative fraction\n'
+    t = '\t\t{: 2d}\t{: %dd}\t{:.2f}\t{:.2e}\n' % (int(np.ceil(np.log10(tot_fluid)))+1)
+    
+    # Root node always there
+    summary += t.format(nlevels, 1, 1.0, 1.0)
+    last = 1
+    cum_frac = 1.0
+    for lvl in xrange(nlevels-1, 0, -1):
+        x = valid_child_count(lvl+1)
+        frac = x/(last*8.0)
+        cum_frac *= frac
+        summary += t.format(lvl, x, frac, cum_frac)
+        last = x
+        
+    frac = tot_fluid/(8.0*last)
+    cum_frac *= frac
+    summary += t.format(0, tot_fluid, frac, cum_frac)
+    return summary
+
+def get_magic(fn):
+    '''Gets the magic number from the file.'''
+    with open(fn) as f:
+        return f.read(8)
+
+magic = {
+    'hlb!gmy\x04': CountFluidSitesGmy,
+    '\x89HDF\r\n\x1a\n': CountFluidSitesOct
+}
+
+def CountFluidSites(filename, verbosity=1):
+    return magic[get_magic(filename)](filename, verbosity)
 
 def main():
     import sys
