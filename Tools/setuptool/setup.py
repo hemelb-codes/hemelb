@@ -20,11 +20,12 @@ def conda_monkey_patch():
             if type_ == 'gui':
                 warnings.warn('Using custom hack to work around Conda on macOS for scripts that launch a GUI', UserWarning)
                 old_exe = cls.command_spec_class.best().from_param(None)[0]
-                dirname, python = os.path.split(old_exe)
-                new_exe = os.path.join(dirname, 'python.app')
+                bindir, python = os.path.split(old_exe)
+                envdir, bin = os.path.split(bindir)
+                new_exe = os.path.join(envdir, 'python.app', 'Contents', 'MacOS', 'python')
                 assert os.path.exists(new_exe)
                 header = header.replace(old_exe, new_exe)
-
+                
             yield (name, header + script_text)
         pass
     
