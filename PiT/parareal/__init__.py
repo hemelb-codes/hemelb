@@ -47,7 +47,7 @@ class parareal(luigi.Config):
     def data(self):
         try:
             # Ensure we don't use our custom getattr
-            return super().__getattribute__('_data')
+            return super(parareal, self).__getattribute__('_data')
         except AttributeError:
             ans = self._data = PararealParameters.from_file(self.filename)
             return ans
@@ -188,9 +188,8 @@ def check_producer(prod_func):
             assert k <= i, 'Parareal iteration must not be greater than time slice'
             
             tsk = prod_func(cls, res, i, k)
-            if tsk.output() != cls(res, i, k):
-                import pdb
-                pdb.set_trace()
+            assert tsk.output() == cls(res, i, k)
+                
             return tsk
         return wrapper
     else:
