@@ -99,7 +99,7 @@ def test_vs_daniel(daniels_results, solver, resolution):
     y = p.run()
     assert np.all(y == daniels_results[solver][resolution])
     
-probspec = '''
+probspec = u'''
 time:
   start: 0.0
   dt: 1.1 / n
