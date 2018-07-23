@@ -169,6 +169,9 @@ namespace hemelb
         auto seed = std::chrono::system_clock::now().time_since_epoch().count();
         auto comm_world = hemelb::net::MpiCommunicator::World();
         comm_world.Broadcast(seed, 0);
+        std::stringstream message;
+        message << "RBC insertion random seed: " << std::hex << std::showbase << seed;
+        hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>(message.str());
 
         // Now gets data for cell insertion
 
@@ -224,12 +227,16 @@ namespace hemelb
                                                               0e0);
           auto time = std::make_shared<LatticeTime>(timeStep - 1e0
               + std::numeric_limits<LatticeTime>::epsilon() - offset);
-          auto condition = [time, timeStep, dt, offset]()
+
+          std::default_random_engine randomGenerator(seed);
+          std::uniform_real_distribution<double> uniformDistribution(-1.0, 1.0);
+
+          auto condition = [time, timeStep, dt, uniformDistribution, randomGenerator]() mutable
           {
             *time += 1e0;
             if(*time >= timeStep)
             {
-              *time -= timeStep + dt * (double(rand() % 10000) / 10000.e0);
+              *time -= timeStep + dt * uniformDistribution(randomGenerator);
               return true;
             }
             return false;
