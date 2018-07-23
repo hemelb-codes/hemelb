@@ -53,7 +53,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options,
   steeringSessionId = options.GetSteeringSessionId();
 
   fileManager = new hemelb::io::PathManager(options, IsCurrentProcTheIOProc(), GetProcessorCount());
-  simConfig = hemelb::configuration::SimConfig::New(fileManager->GetInputFile(), ioComm);
+  simConfig = hemelb::configuration::SimConfig::New(fileManager->GetInputFile());
   unitConverter = &simConfig->GetUnitConverter();
   monitoringConfig = simConfig->GetMonitoringConfiguration();
 
@@ -268,6 +268,7 @@ void SimulationMaster::Initialise()
                                                         *unitConverter);
 
   latticeBoltzmannModel->Initialise(visualisationControl, inletValues, outletValues, unitConverter);
+  latticeBoltzmannModel->SetInitialConditions(ioComms);
   neighbouringDataManager->ShareNeeds();
   neighbouringDataManager->TransferNonFieldDependentInformation();
 
