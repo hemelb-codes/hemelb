@@ -85,8 +85,6 @@ namespace hemelb
             FourCubeBasedTestFixture::setUp();
             propertyCache = new lb::MacroscopicPropertyCache(*simState, *latDat);
 
-            lattice = &Lattice::GetLatticeInfo();
-
             inletBoundary = new lb::iolets::BoundaryValues(geometry::INLET_TYPE,
                                                            latDat,
                                                            simConfig->GetInlets(),
@@ -111,9 +109,9 @@ namespace hemelb
               {
                 site_t siteId = latDat->GetContiguousSiteId(LatticeVector(i, j, 1));
                 geometry::Site < geometry::LatticeData > site = latDat->GetSite(siteId);
-                for (Direction p = 0; p < lattice->GetNumVectors(); ++p)
+                for (Direction p = 0; p < Info().GetNumVectors(); ++p)
                 {
-                  if (lattice->GetVector(p).z < 0.)
+                  if (Info().GetVector(p).z < 0.)
                   {
                     // Sanity check
                     CPPUNIT_ASSERT(site.HasIolet(p));
@@ -147,9 +145,9 @@ namespace hemelb
               {
                 site_t siteId = latDat->GetContiguousSiteId(LatticeVector(i, j, 4));
                 geometry::Site < geometry::LatticeData > site = latDat->GetSite(siteId);
-                for (Direction p = 0; p < lattice->GetNumVectors(); ++p)
+                for (Direction p = 0; p < Info().GetNumVectors(); ++p)
                 {
-                  if (lattice->GetVector(p).z > 0.)
+                  if (Info().GetVector(p).z > 0.)
                   {
                     // Sanity check
                     CPPUNIT_ASSERT(site.HasIolet(p));
@@ -222,9 +220,9 @@ namespace hemelb
             // each with q = 0.5
             CPPUNIT_ASSERT_DOUBLES_EQUAL(1.25, vSite.sumQiSq, allowedError);
             // For each site index in the neighbourhood
-            for (Direction p = 0; p < lattice->GetNumVectors(); ++p)
+            for (Direction p = 0; p < Info().GetNumVectors(); ++p)
             {
-              //              if (lattice->GetVector(p).z < 0.)
+              //              if (Info().GetVector(p).z < 0.)
               //              {
               //                CPPUNIT_ASSERT(vSite.streamingIndices[p] < 4 * 4 * 4 * 15);
               //              }
@@ -434,8 +432,11 @@ namespace hemelb
           lb::MacroscopicPropertyCache* propertyCache;
           lb::iolets::BoundaryValues* outletBoundary;
           lb::iolets::BoundaryValues* inletBoundary;
-          lb::lattices::LatticeInfo* lattice;
 
+	  const lb::lattices::LatticeInfo& Info() {
+	    return Lattice::GetLatticeInfo();
+	  }
+	  
           void CheckAllHVUpdated(lb::iolets::BoundaryValues* iolets, LatticeTimeStep expectedT)
           {
             VSExtra<Lattice> * extra =
