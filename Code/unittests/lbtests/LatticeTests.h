@@ -240,7 +240,7 @@ namespace hemelb
              *
              * This must have the same values as the corresponding properties on the main lattice object.
              */
-            lb::lattices::LatticeInfo& latticeInfo = LatticeType::GetLatticeInfo();
+            auto& latticeInfo = LatticeType::GetLatticeInfo();
 
             CPPUNIT_ASSERT(latticeInfo.GetNumVectors() == LatticeType::NUMVECTORS);
 
