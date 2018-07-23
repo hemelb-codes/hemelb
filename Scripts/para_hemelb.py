@@ -34,8 +34,8 @@ def cd(newdir):
 def run_hemelb(mpiTasks):
     sys.stdout.write('Running hemelb on ' + str(mpiTasks) + ' procs\n')
     runcommand = []
-    runcommand.append("mpirun")
-    runcommand.append("-np")
+    runcommand.append("aprun")
+    runcommand.append("-n")
     runcommand.append("{0}".format(mpiTasks))
     execName = "../hemelb"
     runcommand.append(execName)
@@ -47,8 +47,8 @@ def run_hemelb(mpiTasks):
     runcommand.append("1111")
     sys.stdout.write('Run command:')
     for item in runcommand:
-        sys.stdout.write(' ' + item)
-    sys.stdout.write('\n')
+        sys.stderr.write(' ' + item)
+    sys.stderr.write('\n')
     p = subprocess.Popen(runcommand, stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdoutdata, stderrdata = p.communicate()
@@ -56,7 +56,7 @@ def run_hemelb(mpiTasks):
     sys.stderr.write(stderrdata)
     pass
 
-useHemeLB = False
+useHemeLB = True
 
 numFineProcs = 4
 numCoarseProcs = 3
@@ -206,6 +206,7 @@ class Gy(Op):
         self.output().save(data)
         configTemplateFile = open('coarse_restart_template.xml', 'r')
         configTemplateStr = configTemplateFile.read()
+        configTemplateFile.close()
         configTemplate = Template(configTemplateStr)
         inputStr = os.path.abspath(inputStr)
         configStr = configTemplate.substitute(checkpoint_in=inputStr)
@@ -215,6 +216,7 @@ class Gy(Op):
             with cd(dirStr):
                 configFile = open('config.xml', 'w')
                 configFile.write(configStr)
+                configFile.close()
                 run_hemelb(numCoarseProcs)
         else:  # Fake the production of the output.
             longStr = dirStr + '/results/Extracted/checkpoint'
@@ -249,6 +251,7 @@ class Fy(Op):
         self.output().save(data)
         configTemplateFile = open('fine_restart_template.xml', 'r')
         configTemplateStr = configTemplateFile.read()
+        configTemplateFile.close()
         configTemplate = Template(configTemplateStr)
         inputStr = os.path.abspath(inputStr)
         configStr = configTemplate.substitute(checkpoint_in=inputStr)
@@ -258,6 +261,7 @@ class Fy(Op):
             with cd(dirStr):
                 configFile = open('config.xml','w')
                 configFile.write(configStr)
+                configFile.close()
                 run_hemelb(numFineProcs)
         else: # Fake the production of the output.
             longStr = dirStr + '/results/Extracted/checkpoint'
@@ -359,9 +363,11 @@ if __name__ == "__main__":
 
     print "num_time_slices =", sys.argv[1]
     print "num_parareal_iters =", sys.argv[2]
+    print "num_workers =", sys.argv[3]
         
     num_time_slices = int(sys.argv[1])
     num_parareal_iters = int(sys.argv[2])
+    num_workers = int(sys.argv[3])
 
     ic = y(0, 0)
     ic.save({'state': 'y', 't': 0, 'y': 1.0})
@@ -373,5 +379,5 @@ if __name__ == "__main__":
         final_task = yC.producer(num_time_slices, num_parareal_iters)
     else:
         final_task = y.producer(num_time_slices, num_parareal_iters)
-    luigi.build([final_task], workers=1, local_scheduler=True)
+    luigi.build([final_task], workers=num_workers, local_scheduler=True)
     logfile.close()
