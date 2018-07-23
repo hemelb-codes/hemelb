@@ -13,9 +13,7 @@
 #include "lb/iolets/InOutLets.h"
 #include "extraction/GeometrySelectors.h"
 #include "extraction/PropertyOutputFile.h"
-#include "extraction/LocalDistributionInput.h"
 #include "io/xml/XmlAbstractionLayer.h"
-#include "net/IOCommunicator.h"
 
 namespace hemelb
 {
@@ -55,14 +53,10 @@ namespace hemelb
             bool doIncompressibilityCheck; ///< Whether to turn on the IncompressibilityChecker or not
         };
 
-	// This is here to keep the unit tests happy.
-	// TO DO: remove this if possible.
 	static SimConfig* New(const std::string& path);
-        static SimConfig* New(const std::string& path, const hemelb::net::IOCommunicator& ioComm);
 
       protected:
 	SimConfig(const std::string& path);
-        SimConfig(const std::string& path, const hemelb::net::IOCommunicator& ioComm);
         void Init();
 
       public:
@@ -111,13 +105,9 @@ namespace hemelb
         {
           return maxStress;
         }
-        const std::string & GetDataFilePath() const
+        const std::string& GetDataFilePath() const
         {
           return dataFilePath;
-        }
-        extraction::LocalDistributionInput* GetDistributionInputPtr() const
-        {
-          return distributionInput_ptr;
         }
         LatticeTimeStep GetTotalTimeSteps() const
         {
@@ -166,6 +156,13 @@ namespace hemelb
          * @return initial pressure
          */
         LatticeDensity GetInitialPressure() const;
+
+        inline const std::string& GetCheckpointFile() const {
+	  return checkpointFilePath;
+	}
+        inline const std::string& GetGridFile() const {
+	  return gridFilePath;
+	}
 
         const util::UnitConverter& GetUnitConverter() const;
 
@@ -281,7 +278,6 @@ namespace hemelb
         const std::string& xmlFilePath;
         io::xml::Document* rawXmlDoc;
         std::string dataFilePath;
-	hemelb::extraction::LocalDistributionInput* distributionInput_ptr;
 
         util::Vector3D<float> visualisationCentre;
         float visualisationLongitude;
@@ -298,6 +294,9 @@ namespace hemelb
          */
         bool hasColloidSection;
         PhysicalPressure initialPressure_mmHg; ///< Pressure used to initialise the domain
+        std::string checkpointFilePath;
+        std::string gridFilePath;
+
         MonitoringConfig monitoringConfig; ///< Configuration of various checks/tests
 
       protected:
@@ -313,7 +312,6 @@ namespace hemelb
         util::UnitConverter* unitConverter;
 
       private:
-	const hemelb::net::IOCommunicator& ioComms;
     };
   }
 }

@@ -25,22 +25,9 @@ namespace hemelb
       return ans;
     }
 
-    SimConfig* SimConfig::New(const std::string& path, const hemelb::net::IOCommunicator& ioComm)
-    {
-      SimConfig* ans = new SimConfig(path, ioComm);
-      ans->Init();
-      return ans;
-    }
 
     SimConfig::SimConfig(const std::string& path) :
-      xmlFilePath(path), ioComms(net::IOCommunicator(net::MpiCommunicator::World())), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0),
-            unitConverter(NULL)
-    {
-    }
-
-    SimConfig::SimConfig(const std::string& path, const hemelb::net::IOCommunicator& ioComm) :
-      xmlFilePath(path), ioComms(ioComm), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0),
-            unitConverter(NULL)
+      xmlFilePath(path), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0), unitConverter(NULL)
     {
     }
 
@@ -522,7 +509,6 @@ namespace hemelb
       if (checkpointEl != io::xml::Element::Missing())
       {
 	std::string checkpointFilePath = checkpointEl.GetAttributeOrThrow("file");
-	distributionInput_ptr = new extraction::LocalDistributionInput(checkpointFilePath, ioComms);
       }
     }
 

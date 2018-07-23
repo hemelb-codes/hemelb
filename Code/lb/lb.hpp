@@ -10,6 +10,7 @@
 #include "extraction/LocalDistributionInput.h"
 #include "io/writers/xdr/XdrMemWriter.h"
 #include "lb/lb.h"
+#include "util/unique.h"
 
 namespace hemelb
 {
@@ -138,8 +139,6 @@ namespace hemelb
 
       InitCollisions();
 
-      SetInitialConditions();
-
       mVisControl = iControl;
     }
 
@@ -172,16 +171,13 @@ namespace hemelb
     }
 
     template<class LatticeType>
-    void LBM<LatticeType>::SetInitialConditions()
+    void LBM<LatticeType>::SetInitialConditions(const net::IOCommunicator& ioComms)
     {
-      extraction::LocalDistributionInput* distributionInput_ptr = mSimConfig->GetDistributionInputPtr();
-      if (distributionInput_ptr)
-      {
-	distributionInput_ptr->LoadDistribution(mLatDat);
-	delete distributionInput_ptr;
-      }
-      else
-      {
+      auto& cpFile = mSimConfig->GetCheckpointFile();
+      if (cpFile.size()) {
+	auto distributionInputPtr = std::make_unique<extraction::LocalDistributionInput>(cpFile, ioComms);
+	distributionInputPtr->LoadDistribution(mLatDat);
+      } else {
 	distribn_t density = mUnits->ConvertPressureToLatticeUnits(mSimConfig->GetInitialPressure()) / Cs2;
 
 	for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
