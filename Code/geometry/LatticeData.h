@@ -30,17 +30,22 @@ namespace hemelb
   {
     // Ugly forward definition is currently necessary.
     template<class LatticeType> class LBM;
+
+    struct InitialConditionBase;
   }
 
   namespace geometry
   {
     class LatticeData : public reporting::Reportable
     {
-      friend class extraction::LocalDistributionInput; //! Give access to the methods GetFOld and GetFNew.
-
+        friend class extraction::LocalDistributionInput; //! Give access to the methods GetFOld and GetFNew.
+        friend lb::InitialConditionBase;
       public:
-        template<class Lattice> friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
-        template<class LatticeData> friend class Site; //! Let the inner classes have access to site-related data that's otherwise private.
+        template<class Lattice>
+        friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
+
+        template<class LatticeData>
+        friend class Site; //! Let the inner classes have access to site-related data that's otherwise private.
 
         LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult, const net::IOCommunicator& comms);
 

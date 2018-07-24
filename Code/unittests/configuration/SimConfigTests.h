@@ -6,6 +6,7 @@
 
 #ifndef HEMELB_UNITTESTS_CONFIGURATION_SIMCONFIGTESTS_H
 #define HEMELB_UNITTESTS_CONFIGURATION_SIMCONFIGTESTS_H
+
 #include "configuration/SimConfig.h"
 #include "resources/Resource.h"
 #include "unittests/helpers/FolderTestFixture.h"
@@ -25,7 +26,9 @@ namespace hemelb
           CPPUNIT_TEST_SUITE (SimConfigTests);
           CPPUNIT_TEST (Test_0_2_0_Read);
           CPPUNIT_TEST (Test_0_2_1_Read);
-          CPPUNIT_TEST (TestXMLFileContent);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (TestXMLFileContent);
+	  CPPUNIT_TEST_SUITE_END();
+
         public:
           void setUp()
           {
@@ -83,11 +86,22 @@ namespace hemelb
             CopyResourceToTempdir("config.xml");
             SimConfig* config = SimConfig::New("config.xml");
 
-            CPPUNIT_ASSERT_EQUAL(80.0, config->GetInitialPressure());
+	    auto& ICconfig = config->GetInitialCondition();
+	    CPPUNIT_ASSERT(boost::apply_visitor(CfgChecker{}, ICconfig));
           }
 
         private:
           std::string exemplar;
+	  struct CfgChecker {
+	    using result_type = bool;
+	    template<typename T>
+	    bool operator()(T) const {
+	      return false;
+	    }
+	    bool operator()(const EquilibriumIC& eqIC) const {
+	      return 80.0 == eqIC.p_mmHg;
+	    }
+	  };
       };
       CPPUNIT_TEST_SUITE_REGISTRATION (SimConfigTests);
     }
