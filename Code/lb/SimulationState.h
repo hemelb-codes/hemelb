@@ -53,6 +53,7 @@ namespace hemelb
         bool isTerminating;
         bool isRendering;
         Stability stability;
+        friend struct InitialConditionBase;
     };
   }
 }

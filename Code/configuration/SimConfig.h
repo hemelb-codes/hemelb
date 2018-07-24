@@ -8,6 +8,8 @@
 #define HEMELB_CONFIGURATION_SIMCONFIG_H
 
 #include <vector>
+#include <boost/variant.hpp>
+
 #include "util/Vector3D.h"
 #include "lb/LbmParameters.h"
 #include "lb/iolets/InOutLets.h"
@@ -31,6 +33,31 @@ namespace hemelb
 
       elem.GetAttributeOrThrow("value", value);
     }
+
+    // Base for initial conditions configuration
+    struct ICConfigBase {
+      ICConfigBase(const util::UnitConverter* units, LatticeTimeStep t);
+
+      const util::UnitConverter* unitConverter;
+      LatticeTimeStep t0;
+    };
+
+    // Uniform equilibrium IC
+    struct EquilibriumIC : ICConfigBase {
+      EquilibriumIC(const util::UnitConverter* units, LatticeTimeStep t, PhysicalPressure p);
+      EquilibriumIC(const util::UnitConverter* units, LatticeTimeStep t, PhysicalPressure p, const PhysicalVelocity& v);
+      PhysicalPressure p_mmHg;
+      PhysicalVelocity v_ms;
+    };
+
+    // Read from checkpoint IC
+    struct CheckpointIC : ICConfigBase {
+      CheckpointIC(const util::UnitConverter* units, LatticeTimeStep t, const std::string& cp);
+      std::string cpFile;
+    };
+
+    // Variant including null state
+    using ICConfig = boost::variant<std::nullptr_t, EquilibriumIC, CheckpointIC>;
 
     class SimConfig
     {
@@ -151,17 +178,9 @@ namespace hemelb
          */
         bool HasColloidSection() const;
 
-        /**
-         * Returns the pressure to be used to initialise all the fluid sites in the domain
-         * @return initial pressure
-         */
-        LatticeDensity GetInitialPressure() const;
-
-        inline const std::string& GetCheckpointFile() const {
-	  return checkpointFilePath;
-	}
-        inline const std::string& GetGridFile() const {
-	  return gridFilePath;
+        // Get the initial condtion config
+        inline const ICConfig& GetInitialCondition() const {
+	  return icConfig;
 	}
 
         const util::UnitConverter& GetUnitConverter() const;
@@ -293,9 +312,6 @@ namespace hemelb
          * True if the file has a colloids section.
          */
         bool hasColloidSection;
-        PhysicalPressure initialPressure_mmHg; ///< Pressure used to initialise the domain
-        std::string checkpointFilePath;
-        std::string gridFilePath;
 
         MonitoringConfig monitoringConfig; ///< Configuration of various checks/tests
 
@@ -310,7 +326,7 @@ namespace hemelb
         PhysicalDistance voxelSizeMetres;
         PhysicalPosition geometryOriginMetres;
         util::UnitConverter* unitConverter;
-
+        ICConfig icConfig;
       private:
     };
   }

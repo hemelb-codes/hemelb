@@ -11,6 +11,8 @@
 #include "io/writers/xdr/XdrMemWriter.h"
 #include "lb/lb.h"
 #include "util/unique.h"
+#include "lb/InitialCondition.h"
+#include "lb/InitialCondition.hpp"
 
 namespace hemelb
 {
@@ -173,28 +175,9 @@ namespace hemelb
     template<class LatticeType>
     void LBM<LatticeType>::SetInitialConditions(const net::IOCommunicator& ioComms)
     {
-      auto& cpFile = mSimConfig->GetCheckpointFile();
-      if (cpFile.size()) {
-	auto distributionInputPtr = std::make_unique<extraction::LocalDistributionInput>(cpFile, ioComms);
-	distributionInputPtr->LoadDistribution(mLatDat);
-      } else {
-	distribn_t density = mUnits->ConvertPressureToLatticeUnits(mSimConfig->GetInitialPressure()) / Cs2;
-
-	for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
-	{
-	  distribn_t f_eq[LatticeType::NUMVECTORS];
-
-	  LatticeType::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
-
-	  distribn_t* f_old_p = mLatDat->GetFOld(i * LatticeType::NUMVECTORS);
-	  distribn_t* f_new_p = mLatDat->GetFNew(i * LatticeType::NUMVECTORS);
-
-	  for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
-	  {
-	    f_new_p[l] = f_old_p[l] = f_eq[l];
-	  }
-	}
-      }
+      auto icond = InitialCondition::FromConfig(mSimConfig->GetInitialCondition());
+      icond.SetTime(mState);
+      icond.SetFs<LatticeType>(mLatDat, ioComms);
     }
 
     template<class LatticeType>

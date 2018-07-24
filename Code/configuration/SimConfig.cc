@@ -13,11 +13,28 @@
 #include "configuration/SimConfig.h"
 #include "log/Logger.h"
 #include "util/fileutils.h"
+#include "lb/InitialCondition.h"
 
 namespace hemelb
 {
   namespace configuration
   {
+    // Base IC
+    ICConfigBase::ICConfigBase(const util::UnitConverter* units, LatticeTimeStep t) : unitConverter(units), t0(t) {
+    }
+
+    // Uniform equilibrium IC
+    EquilibriumIC::EquilibriumIC(const util::UnitConverter* units, LatticeTimeStep t, PhysicalPressure p) : ICConfigBase(units, t), p_mmHg(p), v_ms(0.0) {
+    }
+
+    EquilibriumIC::EquilibriumIC(const util::UnitConverter* units, LatticeTimeStep t, PhysicalPressure p, const PhysicalVelocity& v) : ICConfigBase(units, t), p_mmHg(p), v_ms(v) {
+    }
+
+    // checkpoint IC
+    CheckpointIC::CheckpointIC(const util::UnitConverter* units, LatticeTimeStep t, const std::string& cp) : ICConfigBase(units, t), cpFile(cp) {
+    }
+
+
     SimConfig* SimConfig::New(const std::string& path)
     {
       SimConfig* ans = new SimConfig(path);
@@ -494,21 +511,40 @@ namespace hemelb
 
     void SimConfig::DoIOForInitialConditions(io::xml::Element initialconditionsEl)
     {
-      // Either a pressure element must be present or a checkpoint element but not both.
-      // If both are present the checkpoint element is preferred.
-      // TO DO: enforce that at least one is present (and, perhaps, only one).
+      // The <time> element may be present - if so, it will set the
+      // initial timestep value
+      const LatticeTimeStep t0 = [&initialconditionsEl]() {
+	LatticeTimeStep t0 = 1;
+	if (auto timeEl = initialconditionsEl.GetChildOrNull("time")) {
+	  GetDimensionalValue(timeEl, "lattice", t0);
+	}
+	return t0;
+      }();
 
-      io::xml::Element pressureEl = initialconditionsEl.GetChildOrNull("pressure");
-      if (pressureEl != io::xml::Element::Missing())
-      {
-        io::xml::Element uniformEl = pressureEl.GetChildOrThrow("uniform");
-	GetDimensionalValue(uniformEl, "mmHg", initialPressure_mmHg);
-      }
-
-      io::xml::Element checkpointEl = initialconditionsEl.GetChildOrNull("checkpoint");
-      if (checkpointEl != io::xml::Element::Missing())
-      {
-	std::string checkpointFilePath = checkpointEl.GetAttributeOrThrow("file");
+      // Exactly one of {<pressure>, <checkpoint>} must be present
+      // TODO: use something other than an if-tree
+      auto pressureEl = initialconditionsEl.GetChildOrNull("pressure");
+      auto checkpointEl = initialconditionsEl.GetChildOrNull("checkpoint");
+      if (pressureEl) {
+	if (checkpointEl) {
+	  // Both are present - this is an error
+	  throw Exception()
+	    << "XML contains both <pressure> and <checkpoint> sub elements of <initialconditions>";
+	} else {
+	  // Only pressure
+	  io::xml::Element uniformEl = pressureEl.GetChildOrThrow("uniform");
+	  PhysicalPressure p0_mmHg;
+	  GetDimensionalValue(uniformEl, "mmHg", p0_mmHg);
+	  icConfig = EquilibriumIC(unitConverter, t0, p0_mmHg);
+	}
+      } else {
+	if (checkpointEl) {
+	  // Only checkpoint
+	  icConfig = CheckpointIC(unitConverter, t0, checkpointEl.GetAttributeOrThrow("file"));
+	} else {
+	  // No IC!
+	  throw Exception() << "XML <initialconditions> element contains no known initial condition type";
+	}
       }
     }
 
@@ -643,11 +679,6 @@ namespace hemelb
     bool SimConfig::HasColloidSection() const
     {
       return hasColloidSection;
-    }
-
-    PhysicalPressure SimConfig::GetInitialPressure() const
-    {
-      return initialPressure_mmHg;
     }
 
     const util::UnitConverter& SimConfig::GetUnitConverter() const
