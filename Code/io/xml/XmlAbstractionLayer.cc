@@ -168,6 +168,10 @@ namespace hemelb
         ans << "/" << el->Value() << "(" << el->Row() << ")";
       }
 
+      Element::operator bool() const {
+	return el != NULL;
+      }
+
       /**
        * Default constructor
        */
