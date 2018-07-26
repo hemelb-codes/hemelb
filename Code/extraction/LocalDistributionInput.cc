@@ -46,7 +46,7 @@ namespace hemelb
 
       // Read the data section.
       // Read just one timestep.
-      if (comms.Rank() == HEADER_READING_RANK)
+      if (comms.OnIORank())
       {
         const unsigned timestepBytes = sizeof(uint64_t);
 
@@ -61,8 +61,7 @@ namespace hemelb
 	uint64_t timestep;
 	timestepReader.readUnsignedLong(timestep);
       }
-
-      if (!comms.OnIORank())
+      else
       {
         // Read the offset for this rank and the subsequent rank.
         const unsigned offsetBytes = 2*sizeof(uint64_t);
@@ -113,7 +112,7 @@ namespace hemelb
 
     void LocalDistributionInput::CheckPreamble()
     {
-      if (comms.Rank() == HEADER_READING_RANK)
+      if (comms.OnIORank())
       {
 	const unsigned preambleBytes = 3*sizeof(uint32_t) + 4*sizeof(double) + sizeof(uint64_t);
 
@@ -171,7 +170,7 @@ namespace hemelb
 
     void LocalDistributionInput::ReadHeaderInfo()
     {
-      if (comms.Rank() == HEADER_READING_RANK)
+      if (comms.OnIORank())
       {
 	const unsigned infoBytes = 2*sizeof(uint32_t);
 

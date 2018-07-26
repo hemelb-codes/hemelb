@@ -55,9 +55,6 @@ namespace hemelb
 
         const net::IOCommunicator& comms;
 
-        // The rank which reads in the header information.
-        static const proc_t HEADER_READING_RANK = 0;
-
         /**
          * The path to the file to read from.
          */
