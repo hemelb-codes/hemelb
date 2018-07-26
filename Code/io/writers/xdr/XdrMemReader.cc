@@ -22,10 +22,15 @@ namespace hemelb
       namespace xdr
       {
         // Constructor to create an Xdr object based on a memory buffer
-        XdrMemReader::XdrMemReader(char* dataBuffer, unsigned int dataLength)
+        XdrMemReader::XdrMemReader(const char* dataBuffer, unsigned int dataLength)
         {
-          xdrmem_create(&mXdr, dataBuffer, dataLength, XDR_DECODE);
+          xdrmem_create(&mXdr, const_cast<char*>(dataBuffer), dataLength, XDR_DECODE);
         }
+
+	XdrMemReader::XdrMemReader(const std::vector<char>& dataVec)
+	{
+	  xdrmem_create(&mXdr, const_cast<char*>(dataVec.data()), dataVec.size(), XDR_DECODE);
+	}
 
       } // namespace xdr
     } // namespace writers
