@@ -54,12 +54,11 @@ namespace hemelb
 	inputFile.Read(timestepBuffer);
 
 	// Create an XDR translator based on the read buffer.
-	io::writers::xdr::XdrReader timestepReader = io::writers::xdr::XdrMemReader(&timestepBuffer[0],
-										    timestepBytes);
+	io::writers::xdr::XdrMemReader timestepReader(&timestepBuffer[0], timestepBytes);
 
 	// Obtain the timestep.
 	uint64_t timestep;
-	timestepReader.readUnsignedLong(timestep);
+	timestepReader.read(timestep);
       }
       else
       {
@@ -67,18 +66,16 @@ namespace hemelb
         const unsigned offsetBytes = 2*sizeof(uint64_t);
         std::vector<char> offsetBuffer(offsetBytes);
         offsetFile.ReadAt((comms.Rank()+1)*sizeof(uint64_t), offsetBuffer);
-        io::writers::xdr::XdrReader offsetReader = io::writers::xdr::XdrMemReader(&offsetBuffer[0],
-                                                                                  offsetBytes);
+	io::writers::xdr::XdrMemReader offsetReader(&offsetBuffer[0], offsetBytes);
         uint64_t thisOffset, nextOffset;
-        offsetReader.readUnsignedLong(thisOffset);
-        offsetReader.readUnsignedLong(nextOffset);
+        offsetReader.read(thisOffset);
+        offsetReader.read(nextOffset);
 
         // Read the grid and distribution data.
         unsigned readLength = nextOffset - thisOffset;
         std::vector<char> dataBuffer(readLength);
         inputFile.ReadAt(thisOffset, dataBuffer);
-        io::writers::xdr::XdrReader dataReader = io::writers::xdr::XdrMemReader(&dataBuffer[0],
-                                                                                readLength);
+	io::writers::xdr::XdrMemReader dataReader(&dataBuffer[0], readLength);
 	// TO DO: is this the best way to do this?
         uint32_t numberOfFloats = LocalPropertyOutput::GetFieldLength(hemelb::extraction::OutputField::Distributions);
         uint32_t lengthOfSegment = 3*sizeof(uint32_t) + numberOfFloats*sizeof(float);
@@ -88,9 +85,9 @@ namespace hemelb
         while (position < nextOffset)
         {
           uint32_t x, y, z;
-          dataReader.readUnsignedInt(x);
-          dataReader.readUnsignedInt(y);
-          dataReader.readUnsignedInt(z);
+          dataReader.read(x);
+          dataReader.read(y);
+          dataReader.read(z);
 
 	  distribn_t* f_old_p = latDat->GetFOld(numberOfLocalSites * LatticeType::NUMVECTORS);
 	  distribn_t* f_new_p = latDat->GetFNew(numberOfLocalSites * LatticeType::NUMVECTORS);
@@ -99,7 +96,7 @@ namespace hemelb
           for (int i = 0; i < numberOfFloats; i++)
           {
             float field_val;
-            dataReader.readFloat(field_val);
+            dataReader.read(field_val);
             field_val += offset;
 	    f_new_p[i] = f_old_p[i] = field_val;
           }
@@ -120,14 +117,13 @@ namespace hemelb
 	inputFile.Read(preambleBuffer);
 
 	// Create an XDR translator based on the read buffer.
-	io::writers::xdr::XdrReader preambleReader = io::writers::xdr::XdrMemReader(&preambleBuffer[0],
-										    preambleBytes);
+	io::writers::xdr::XdrMemReader preambleReader(&preambleBuffer[0], preambleBytes);
 
 	// Read the magic numbers.
 	uint32_t hlbMagicNumber, extMagicNumber, version;
-	preambleReader.readUnsignedInt(hlbMagicNumber);
-	preambleReader.readUnsignedInt(extMagicNumber);
-	preambleReader.readUnsignedInt(version);
+	preambleReader.read(hlbMagicNumber);
+	preambleReader.read(extMagicNumber);
+	preambleReader.read(version);
 
 	// Check the value of the HemeLB magic number.
 	if (hlbMagicNumber != io::formats::HemeLbMagicNumber)
@@ -155,16 +151,16 @@ namespace hemelb
 
 	// Obtain the size of voxel in metres.
 	double voxelSize;
-	preambleReader.readDouble(voxelSize);
+	preambleReader.read(voxelSize);
 
 	// Obtain the origin.
 	double origin[3];
-	preambleReader.readDouble(origin[0]);
-	preambleReader.readDouble(origin[1]);
-	preambleReader.readDouble(origin[2]);
+	preambleReader.read(origin[0]);
+	preambleReader.read(origin[1]);
+	preambleReader.read(origin[2]);
 
 	// Obtain the total number of sites.
-	preambleReader.readUnsignedLong(numberOfSites);
+	preambleReader.read(numberOfSites);
       }
     }
 
@@ -178,27 +174,25 @@ namespace hemelb
 	inputFile.Read(infoBuffer);
 
 	// Create an XDR translator based on the read buffer.
-	io::writers::xdr::XdrReader infoReader = io::writers::xdr::XdrMemReader(&infoBuffer[0],
-										infoBytes);
+	io::writers::xdr::XdrMemReader infoReader(&infoBuffer[0], infoBytes);
 	uint32_t numberOfFields;
-	infoReader.readUnsignedInt(numberOfFields);
+	infoReader.read(numberOfFields);
 
 	uint32_t lengthOfFieldHeader;
-	infoReader.readUnsignedInt(lengthOfFieldHeader);
+	infoReader.read(lengthOfFieldHeader);
 
 	std::vector<char> fieldHeaderBuffer(lengthOfFieldHeader);
 	inputFile.Read(fieldHeaderBuffer);
 
 	// Create an XDR translator based on the read buffer.
-	io::writers::xdr::XdrReader fieldHeaderReader =
-	  io::writers::xdr::XdrMemReader(&fieldHeaderBuffer[0], lengthOfFieldHeader);
+	io::writers::xdr::XdrMemReader fieldHeaderReader(&fieldHeaderBuffer[0], lengthOfFieldHeader);
 
 	for (int i = 0; i < numberOfFields; i++)
 	{
 	  // When encoding a string XDR places an unsigned int at its head which gives the
 	  // length of the string.
 	  uint32_t lengthOfFieldName;
-	  fieldHeaderReader.readUnsignedInt(lengthOfFieldName);
+	  fieldHeaderReader.read(lengthOfFieldName);
           uint32_t position = fieldHeaderReader.GetPosition();
 	  std::string name;
 	  for (int j = position; j < lengthOfFieldName + position; j++)
@@ -216,9 +210,9 @@ namespace hemelb
 	  uint32_t lengthOfPaddedFieldName = ((lengthOfFieldName +3)/4)*4;
 	  fieldHeaderReader.SetPosition(fieldHeaderReader.GetPosition() + lengthOfPaddedFieldName);
 	  uint32_t numberOfFloats;
-	  fieldHeaderReader.readUnsignedInt(numberOfFloats);
+	  fieldHeaderReader.read(numberOfFloats);
 	  double offset;
-	  fieldHeaderReader.readDouble(offset);
+	  fieldHeaderReader.read(offset);
 
 	  extraction::InputField field;
 	  field.name = name;
