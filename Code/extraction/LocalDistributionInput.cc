@@ -21,24 +21,21 @@ namespace hemelb
 
     void LocalDistributionInput::LoadDistribution(geometry::LatticeData* latDat)
     {
-      // We could supply hints regarding how the file should be read but
-      // We are not doing so yet.
-      MPI_Info fileInfo;
-      HEMELB_MPI_CALL(MPI_Info_create, (&fileInfo));
+      // We could supply hints regarding how the file should be read
+      // but we are not doing so yet.
 
       // Open the file as read-only.
       // TO DO: raise an exception if the file does not exist.
-      // TO DO: there seems to be a missing argument in the call to Open in LocalPropertyOutput.cc.
-      inputFile = net::MpiFile::Open(comms, filePath, MPI_MODE_RDONLY, fileInfo);
+      inputFile = net::MpiFile::Open(comms, filePath, MPI_MODE_RDONLY);
       // Set the view to the file.
-      inputFile.SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);
+      inputFile.SetView(0, MPI_CHAR, MPI_CHAR, "native");
 
       // Now open the offset file.
       std::string offsetFileName;
       int32_t pathLength = filePath.length();
       offsetFileName = filePath.substr(0, pathLength-3) + "off";
-      offsetFile = net::MpiFile::Open(comms, offsetFileName, MPI_MODE_RDONLY, fileInfo);
-      offsetFile.SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);
+      offsetFile = net::MpiFile::Open(comms, offsetFileName, MPI_MODE_RDONLY);
+      offsetFile.SetView(0, MPI_CHAR, MPI_CHAR, "native");
 
       CheckPreamble();
 
