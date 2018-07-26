@@ -27,15 +27,15 @@ namespace hemelb
       outputFile = net::MpiFile::Open(comms, outputSpec->filename,
                                       MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL);
 
-      // Create a new file name by changing the suffix.
-      // It is assumed that the only '.'s in the the original file name are
-      // the leading '.' and the '.' before the suffix.
-      std::stringstream ss(outputSpec->filename);
-      std::string offsetFileName;
-      std::getline(ss, offsetFileName, '.'); // Discard the leading '.'.
-      std::getline(ss, offsetFileName, '.'); // Get the rest before the suffix.
-      // Reinstate the leading '.' and add the suffix ".off".
-      offsetFileName = "." + offsetFileName + ".off";
+      // Create a new file name by changing the suffix - outputSpec
+      // must have a .-separated extension!
+      const auto offsetFileName = [](const std::string& xtrPath) {
+	auto iDot = xtrPath.rfind('.');
+	if (iDot == std::string::npos)
+	  throw Exception() << "Cannot split extension from extraction filename";
+	return xtrPath.substr(0, iDot) + ".off";
+      } (outputSpec->filename);
+
       // Now create the file.
       offsetFile = net::MpiFile::Open(comms, offsetFileName,
 				      MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL);
