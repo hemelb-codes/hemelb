@@ -8,7 +8,9 @@
 #include "extraction/LocalPropertyOutput.h"
 #include "io/formats/formats.h"
 #include "io/formats/extraction.h"
+#include "io/formats/offset.h"
 #include "io/writers/xdr/XdrMemWriter.h"
+#include "io/writers/xdr/XdrVectorWriter.h"
 #include "net/IOCommunicator.h"
 #include "constants.h"
 #include "units.h"
@@ -17,6 +19,29 @@ namespace hemelb
 {
   namespace extraction
   {
+    // Declare recursive helper
+    template <typename... Ts>
+    io::writers::Writer& encode(io::writers::Writer& enc, Ts... args);
+    // Terminating case - one arg
+    template <typename T>
+    io::writers::Writer& encode(io::writers::Writer& enc, T arg) {
+      return enc << arg;
+    }
+    // Recursive case - N + 1 args
+    template <typename T, typename... Ts>
+    io::writers::Writer& encode(io::writers::Writer& enc, T arg, Ts... args) {
+      return encode(enc << arg, args...);
+    }
+
+    // XDR encode some values and return the result buffer
+    template <typename... Ts>
+    std::vector<char> quick_encode(Ts... args) {
+      io::writers::xdr::XdrVectorWriter encoder;
+      encode(encoder, args...);
+      auto ans = encoder.GetBuf();
+      return ans;
+    }
+
     LocalPropertyOutput::LocalPropertyOutput(IterableDataSource& dataSource,
                                              const PropertyOutputFile* outputSpec,
                                              const net::IOCommunicator& ioComms) :
@@ -29,12 +54,7 @@ namespace hemelb
 
       // Create a new file name by changing the suffix - outputSpec
       // must have a .-separated extension!
-      const auto offsetFileName = [](const std::string& xtrPath) {
-	auto iDot = xtrPath.rfind('.');
-	if (iDot == std::string::npos)
-	  throw Exception() << "Cannot split extension from extraction filename";
-	return xtrPath.substr(0, iDot) + ".off";
-      } (outputSpec->filename);
+      const auto offsetFileName = io::formats::offset::ExtractionToOffset(outputSpec->filename);
 
       // Now create the file.
       offsetFile = net::MpiFile::Open(comms, offsetFileName,
@@ -101,46 +121,32 @@ namespace hemelb
           fieldHeaderLength += 8;
         }
 
-        // Create a header buffer
         totalHeaderLength = io::formats::extraction::MainHeaderLength + fieldHeaderLength;
-        std::vector<char> headerBuffer(totalHeaderLength);
 
-        {
-          // Encoder for ONLY the main header (note shorter length)
-          io::writers::xdr::XdrMemWriter
-              mainHeaderWriter(&headerBuffer[0], io::formats::extraction::MainHeaderLength);
+	io::writers::xdr::XdrVectorWriter headerWriter;
 
-          // Fill it
-          mainHeaderWriter << uint32_t(io::formats::HemeLbMagicNumber)
-              << uint32_t(io::formats::extraction::MagicNumber)
-              << uint32_t(io::formats::extraction::VersionNumber);
-          mainHeaderWriter << double(dataSource.GetVoxelSize());
-          const util::Vector3D<distribn_t> &origin = dataSource.GetOrigin();
-          mainHeaderWriter << double(origin[0]) << double(origin[1]) << double(origin[2]);
+	// Encoder for ONLY the main header (note shorter length)
+	headerWriter << uint32_t(io::formats::HemeLbMagicNumber)
+		     << uint32_t(io::formats::extraction::MagicNumber)
+		     << uint32_t(io::formats::extraction::VersionNumber);
+	headerWriter << double(dataSource.GetVoxelSize());
+	const util::Vector3D<distribn_t> &origin = dataSource.GetOrigin();
+	headerWriter << double(origin[0]) << double(origin[1]) << double(origin[2]);
 
-          // Write the total site count and number of fields
-          mainHeaderWriter << uint64_t(allSiteCount) << uint32_t(outputSpec->fields.size())
-              << uint32_t(fieldHeaderLength);
-          // Main header now finished.
-          // Exiting the block kills the mainHeaderWriter.
-        }
-        {
-          // Create the field header writer
-          io::writers::xdr::XdrMemWriter
-              fieldHeaderWriter(&headerBuffer[io::formats::extraction::MainHeaderLength],
-                                fieldHeaderLength);
-          // Write it
-          for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
-          {
-            fieldHeaderWriter << outputSpec->fields[outputNumber].name
-                << uint32_t(GetFieldLength(outputSpec->fields[outputNumber].type))
-                << GetOffset(outputSpec->fields[outputNumber].type);
-          }
-          //Exiting the block cleans up the writer
-        }
+	// Write the total site count and number of fields
+	headerWriter << uint64_t(allSiteCount) << uint32_t(outputSpec->fields.size())
+		     << uint32_t(fieldHeaderLength);
 
+	// Main header now finished - do field headers
+	for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber) {
+	  headerWriter << outputSpec->fields[outputNumber].name
+		       << uint32_t(GetFieldLength(outputSpec->fields[outputNumber].type))
+		       << GetOffset(outputSpec->fields[outputNumber].type);
+	}
+
+	assert(headerWriter.GetBuf().size() == totalHeaderLength);
         // Write from the buffer
-        outputFile.WriteAt(0, headerBuffer);
+        outputFile.WriteAt(0, headerWriter.GetBuf());
       }
 
       // Calculate where each core should start writing
@@ -168,6 +174,8 @@ namespace hemelb
 
       // Create the buffer that we'll write each iteration's data into.
       buffer.resize(writeLength);
+
+      WriteOffsetFile();
     }
 
     LocalPropertyOutput::~LocalPropertyOutput()
@@ -292,30 +300,35 @@ namespace hemelb
       // Actually do the MPI writing.
       outputFile.WriteAt(localDataOffsetIntoFile, buffer);
 
-      // Write out the offsets used.
-      // On process 0 only write the number of MPI processes first.
-      if (comms.Rank() == 0)
-      {
-	std::vector<char> rankBuffer(sizeof(uint64_t));
-	io::writers::xdr::XdrMemWriter rankWriter(&rankBuffer[0], sizeof(uint64_t));
-	rankWriter << uint64_t(comms.Size());
-	offsetFile.WriteAt(0, rankBuffer);
-      }
-      std::vector<char> offsetBuffer(sizeof(uint64_t));
-      io::writers::xdr::XdrMemWriter offsetWriter(&offsetBuffer[0], sizeof(uint64_t));
-      offsetWriter << localDataOffsetIntoFile;
-      uint64_t offsetForOffset = (comms.Rank() + 1) * sizeof(uint64_t);
-      offsetFile.WriteAt(offsetForOffset, offsetBuffer);
-      if (comms.Rank() == (comms.Size()-1))
-      {
-	std::vector<char> extraOffsetBuffer(sizeof(uint64_t));
-	io::writers::xdr::XdrMemWriter extraOffsetWriter(&extraOffsetBuffer[0], sizeof(uint64_t));
-	extraOffsetWriter << localDataOffsetIntoFile+writeLength;
-	offsetFile.WriteAt(offsetForOffset+sizeof(uint64_t), extraOffsetBuffer);
-      }
-
       // Set the offset to the right place for writing on the next iteration.
       localDataOffsetIntoFile += allCoresWriteLength;
+    }
+
+    // Write the offset file.
+    void LocalPropertyOutput::WriteOffsetFile() {
+      namespace fmt = io::formats;
+
+      // On process 0 only, write the header
+      if (comms.OnIORank()) {
+	auto buf = quick_encode(
+				uint32_t(fmt::HemeLbMagicNumber),
+				uint32_t(fmt::offset::MagicNumber),
+				uint32_t(fmt::offset::VersionNumber),
+				uint32_t(comms.Size())
+				);
+	assert(buf.size() == fmt::offset::HeaderLength);
+	offsetFile.WriteAt(0, buf);
+      }
+      // Every rank writes its offset
+      uint64_t offsetForOffset = comms.Rank() * sizeof(localDataOffsetIntoFile)
+	+ fmt::offset::HeaderLength;
+      offsetFile.WriteAt(offsetForOffset, quick_encode(localDataOffsetIntoFile));
+
+      // Last process writes total
+      if (comms.Rank() == (comms.Size()-1)) {
+	offsetFile.WriteAt(offsetForOffset + sizeof(localDataOffsetIntoFile),
+			   quick_encode(localDataOffsetIntoFile + writeLength));
+      }
     }
 
     unsigned LocalPropertyOutput::GetFieldLength(OutputField::FieldType field)
