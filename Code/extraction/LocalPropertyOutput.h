@@ -59,6 +59,11 @@ namespace hemelb
          */
         void Write(unsigned long timestepNumber);
 
+	/**
+	 * Write the offset file
+	 */
+	void WriteOffsetFile();
+
         /**
          * Returns the number of floats written for the field.
          * @param field
