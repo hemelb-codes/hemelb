@@ -28,7 +28,6 @@ namespace hemelb {
 
     template<class LatticeType>
     void EquilibriumInitialCondition::SetFs(geometry::LatticeData* latDat, const net::IOCommunicator& ioComms) const {
-      std::cout << "EquilibriumInitialCondition" << std::endl;
       distribn_t f_eq[LatticeType::NUMVECTORS];
       LatticeType::CalculateFeq(density, mom_x, mom_y, mom_z, f_eq);
       
@@ -45,7 +44,6 @@ namespace hemelb {
 
     template<class LatticeType>
     void CheckpointInitialCondition::SetFs(geometry::LatticeData* latDat, const net::IOCommunicator& ioComms) const {
-      std::cout << "CheckpointInitialCondition" << std::endl;
       auto distributionInputPtr = std::make_unique<extraction::LocalDistributionInput>(cpFile, ioComms);
       distributionInputPtr->LoadDistribution(latDat);
     }
