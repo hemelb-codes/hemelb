@@ -46,6 +46,8 @@ namespace hemelb
         void SetView(MPI_Offset disp, MPI_Datatype etype, MPI_Datatype filetype,
 		     const std::string& datarep, const MPI_Info info = MPI_INFO_NULL);
 
+	MPI_Offset GetSize() const;
+
         const MpiCommunicator& GetCommunicator() const;
 
         template<typename T>
