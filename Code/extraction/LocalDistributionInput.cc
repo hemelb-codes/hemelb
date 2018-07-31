@@ -4,6 +4,8 @@
 #include "geometry/LatticeData.h"
 #include "io/formats/formats.h"
 #include "io/formats/extraction.h"
+#include "io/formats/offset.h"
+#include "io/writers/xdr/XdrFileReader.h"
 
 namespace hemelb
 {
@@ -19,102 +21,102 @@ namespace hemelb
     {
     }
 
+    namespace {
+      // Helper class to simplify pulling data out of the file and XDR
+      // decoding it
+      struct MpiFileReader : public io::writers::xdr::XdrReader {
+
+	MpiFileReader(net::MpiFile& f, size_t len) : file(f), buffer(len) {
+	  file.Read(buffer);
+	  xdrmem_create(&mXdr, buffer.data(), buffer.size(), XDR_DECODE);
+	}
+
+      private:
+	net::MpiFile& file;
+	std::vector<char> buffer;
+      };
+    }
+
     void LocalDistributionInput::LoadDistribution(geometry::LatticeData* latDat)
     {
       // We could supply hints regarding how the file should be read
       // but we are not doing so yet.
 
       // Open the file as read-only.
-      // TO DO: raise an exception if the file does not exist.
-      inputFile = net::MpiFile::Open(comms, filePath, MPI_MODE_RDONLY);
+      // TODO: raise an exception if the file does not exist.
+      auto inputFile = net::MpiFile::Open(comms, filePath, MPI_MODE_RDONLY);
       // Set the view to the file.
       inputFile.SetView(0, MPI_CHAR, MPI_CHAR, "native");
+      ReadExtractionHeaders(inputFile);
 
       // Now open the offset file.
-      std::string offsetFileName;
-      int32_t pathLength = filePath.length();
-      offsetFileName = filePath.substr(0, pathLength-3) + "off";
-      offsetFile = net::MpiFile::Open(comms, offsetFileName, MPI_MODE_RDONLY);
-      offsetFile.SetView(0, MPI_CHAR, MPI_CHAR, "native");
+      ReadOffsets(io::formats::offset::ExtractionToOffset(filePath));
 
-      CheckPreamble();
+      // Read the local part of the checkpoint
+      unsigned readLength = localStop - localStart;
 
-      ReadHeaderInfo();
+      std::vector<char> dataBuffer(readLength);
+      inputFile.ReadAt(localStart, dataBuffer);
+      io::writers::xdr::XdrMemReader dataReader(&dataBuffer[0], readLength);
 
-      // Read the data section.
-      // Read just one timestep.
-      if (comms.OnIORank())
-      {
-        const unsigned timestepBytes = sizeof(uint64_t);
-
-	std::vector<char> timestepBuffer(timestepBytes);
-	inputFile.Read(timestepBuffer);
-
-	// Create an XDR translator based on the read buffer.
-	io::writers::xdr::XdrMemReader timestepReader(&timestepBuffer[0], timestepBytes);
-
-	// Obtain the timestep.
-	uint64_t timestep;
-	timestepReader.read(timestep);
+      // Read the timestep
+      if (comms.OnIORank()) {
+	dataReader.read(timestep);
       }
-      else
-      {
-        // Read the offset for this rank and the subsequent rank.
-        const unsigned offsetBytes = 2*sizeof(uint64_t);
-        std::vector<char> offsetBuffer(offsetBytes);
-        offsetFile.ReadAt((comms.Rank()+1)*sizeof(uint64_t), offsetBuffer);
-	io::writers::xdr::XdrMemReader offsetReader(&offsetBuffer[0], offsetBytes);
-        uint64_t thisOffset, nextOffset;
-        offsetReader.read(thisOffset);
-        offsetReader.read(nextOffset);
+      comms.Broadcast(timestep, comms.GetIORank());
 
-        // Read the grid and distribution data.
-        unsigned readLength = nextOffset - thisOffset;
-        std::vector<char> dataBuffer(readLength);
-        inputFile.ReadAt(thisOffset, dataBuffer);
-	io::writers::xdr::XdrMemReader dataReader(&dataBuffer[0], readLength);
-	// TO DO: is this the best way to do this?
-        uint32_t numberOfFloats = LocalPropertyOutput::GetFieldLength(hemelb::extraction::OutputField::Distributions);
-        uint32_t lengthOfSegment = 3*sizeof(uint32_t) + numberOfFloats*sizeof(float);
+      site_t iSite = 0;
+      // while (dataReader.GetPosition() < readLength) {
+      for (; dataReader.GetPosition() < readLength; iSite++) {
+	// Read the grid coord and check it's consistent with latDat.
+	[&](){
+	  // Stored as 32 b unsigned
+	  util::Vector3D<uint32_t> tmp;
+	  dataReader.read(tmp.x);
+	  dataReader.read(tmp.y);
+	  dataReader.read(tmp.z);
 
-        uint32_t numberOfLocalSites = 0;
-        unsigned position = thisOffset;
-        while (position < nextOffset)
-        {
-          uint32_t x, y, z;
-          dataReader.read(x);
-          dataReader.read(y);
-          dataReader.read(z);
+	  // Convert to canonical type
+	  util::Vector3D<site_t> grid = tmp;
+	  // Look up the site ID and rank, as decomposed by this run
+	  // of HemeLB, for the grid coordinate read from the
+	  // checkpoint file.
+	  proc_t rank; site_t index;
+	  if (!latDat->GetContiguousSiteId(grid, rank, index)) {
+	    // function returns a 'valid' flag
+	    throw Exception() << "Cannot get valid site from extracted site coordinate";
+	  }
+	  if (rank != comms.Rank())
+	    throw Exception() << "Site read on rank " << comms.Rank()
+			      << " but should be read on " << rank;
+	  if (index != iSite)
+	    throw Exception() << "Site read at index " << iSite
+			      << " but should be read at " << index;
+	}();
 
-	  distribn_t* f_old_p = latDat->GetFOld(numberOfLocalSites * LatticeType::NUMVECTORS);
-	  distribn_t* f_new_p = latDat->GetFNew(numberOfLocalSites * LatticeType::NUMVECTORS);
-
-	  float offset = LocalPropertyOutput::GetOffset(hemelb::extraction::OutputField::Distributions);
-          for (int i = 0; i < numberOfFloats; i++)
-          {
-            float field_val;
-            dataReader.read(field_val);
-            field_val += offset;
-	    f_new_p[i] = f_old_p[i] = field_val;
-          }
-
-          position += lengthOfSegment;
-          numberOfLocalSites++;
-        }
+	distribn_t* f_old_p = latDat->GetFOld(iSite * LatticeType::NUMVECTORS);
+	distribn_t* f_new_p = latDat->GetFNew(iSite * LatticeType::NUMVECTORS);
+	// distField.numberOfFloats is read on IO rank and checked to
+	// be equal to LatticeType::NUMVECTORS so we use that instead
+	// of broadcasting and storing.
+	for (int i = 0; i < LatticeType::NUMVECTORS; i++) {
+	  float field_val;
+	  dataReader.read(field_val);
+	  field_val += distField.offset;
+	  f_new_p[i] = f_old_p[i] = field_val;
+	}
       }
+
+      if (iSite != latDat->GetLocalFluidSiteCount())
+	throw Exception() << "Read " << iSite
+			  << " sites but expected " << latDat->GetLocalFluidSiteCount();
     }
 
-    void LocalDistributionInput::CheckPreamble()
-    {
-      if (comms.OnIORank())
-      {
-	const unsigned preambleBytes = 3*sizeof(uint32_t) + 4*sizeof(double) + sizeof(uint64_t);
+    void LocalDistributionInput::ReadExtractionHeaders(net::MpiFile& inputFile) {
+      namespace fmt = hemelb::io::formats;
 
-	std::vector<char> preambleBuffer(preambleBytes);
-	inputFile.Read(preambleBuffer);
-
-	// Create an XDR translator based on the read buffer.
-	io::writers::xdr::XdrMemReader preambleReader(&preambleBuffer[0], preambleBytes);
+      if (comms.OnIORank()) {
+	MpiFileReader preambleReader(inputFile, fmt::extraction::MainHeaderLength);
 
 	// Read the magic numbers.
 	uint32_t hlbMagicNumber, extMagicNumber, version;
@@ -146,79 +148,99 @@ namespace hemelb
 			    << " Input: " << version;
 	}
 
-	// Obtain the size of voxel in metres.
-	double voxelSize;
-	preambleReader.read(voxelSize);
+	{
+	  // Obtain the size of voxel in metres.
+	  double voxelSize;
+	  preambleReader.read(voxelSize);
 
-	// Obtain the origin.
-	double origin[3];
-	preambleReader.read(origin[0]);
-	preambleReader.read(origin[1]);
-	preambleReader.read(origin[2]);
-
-	// Obtain the total number of sites.
+	  // Obtain the origin.
+	  double origin[3];
+	  preambleReader.read(origin[0]);
+	  preambleReader.read(origin[1]);
+	  preambleReader.read(origin[2]);
+	}
+	// Obtain the total number of sites, fields & header len
+	uint64_t numberOfSites;
+	uint32_t numberOfFields, lengthOfFieldHeader;
 	preambleReader.read(numberOfSites);
+	preambleReader.read(numberOfFields);
+	preambleReader.read(lengthOfFieldHeader);
+
+	if (numberOfFields != 1 )
+	  throw Exception() << "Checkpoint file must contain exactly one field, the distributions, but has "
+			    << numberOfFields;
+	if (lengthOfFieldHeader != 32 )
+	  throw Exception() << "Checkpoint file's field header must be 32 B long, but is "
+			    <<  lengthOfFieldHeader;
+
+	MpiFileReader fieldHeaderReader(inputFile, lengthOfFieldHeader);
+	fieldHeaderReader.read(distField.name);
+	fieldHeaderReader.read(distField.numberOfFloats);
+	fieldHeaderReader.read(distField.offset);
+	if (distField.name != "distributions")
+	  throw Exception() << "Checkpoint file must contain field named 'distributions', but has '"
+			    << distField.name << "'";
+
+	if (distField.numberOfFloats != LatticeType::NUMVECTORS)
+	  throw Exception() << "Checkpoint field distributions contains " << distField.numberOfFloats
+			    << " distributions but this build of HemeLB requires " << LatticeType::NUMVECTORS;
+
       }
+      comms.Broadcast(distField.offset, comms.GetIORank());
     }
 
-    void LocalDistributionInput::ReadHeaderInfo()
-    {
-      if (comms.OnIORank())
-      {
-	const unsigned infoBytes = 2*sizeof(uint32_t);
+    void LocalDistributionInput::ReadOffsets(const std::string& offsetFileName) {
+      std::vector<uint64_t> offsets;
 
-	std::vector<char> infoBuffer(infoBytes);
-	inputFile.Read(infoBuffer);
+      // Only actually read on IO rank
+      if (comms.OnIORank()) {
+	namespace fmt = hemelb::io::formats;
+	io::writers::xdr::XdrFileReader offsetReader(offsetFileName);
+	uint32_t hlbMagicNumber, offMagicNumber, version, nRanks;
+	offsetReader.read(hlbMagicNumber);
+	offsetReader.read(offMagicNumber);
+	offsetReader.read(version);
+	offsetReader.read(nRanks);
 
-	// Create an XDR translator based on the read buffer.
-	io::writers::xdr::XdrMemReader infoReader(&infoBuffer[0], infoBytes);
-	uint32_t numberOfFields;
-	infoReader.read(numberOfFields);
+	if (hlbMagicNumber != io::formats::HemeLbMagicNumber)
+	  throw Exception() << "This file does not start with the HemeLB magic number."
+			    << " Expected: " << unsigned(io::formats::HemeLbMagicNumber)
+			    << " Actual: " << hlbMagicNumber;
 
-	uint32_t lengthOfFieldHeader;
-	infoReader.read(lengthOfFieldHeader);
+	if (offMagicNumber != io::formats::offset::MagicNumber)
+	  throw Exception() << "This file does not have the offset magic number."
+			    << " Expected: " << unsigned(io::formats::offset::MagicNumber)
+			    << " Actual: " << offMagicNumber;
 
-	std::vector<char> fieldHeaderBuffer(lengthOfFieldHeader);
-	inputFile.Read(fieldHeaderBuffer);
+	if (version != io::formats::offset::VersionNumber)
+	  throw Exception() << "Version number incorrect."
+			    << " Supported: " << unsigned(io::formats::offset::VersionNumber)
+			    << " Input: " << version;
 
-	// Create an XDR translator based on the read buffer.
-	io::writers::xdr::XdrMemReader fieldHeaderReader(&fieldHeaderBuffer[0], lengthOfFieldHeader);
+	if (nRanks != comms.Size())
+	  throw Exception() << "Offset file has wrong number of MPI ranks."
+			    << " Running with: " << comms.Size()
+			    << " Input: " << nRanks;
 
-	for (int i = 0; i < numberOfFields; i++)
-	{
-	  // When encoding a string XDR places an unsigned int at its head which gives the
-	  // length of the string.
-	  uint32_t lengthOfFieldName;
-	  fieldHeaderReader.read(lengthOfFieldName);
-          uint32_t position = fieldHeaderReader.GetPosition();
-	  std::string name;
-	  for (int j = position; j < lengthOfFieldName + position; j++)
-	  {
-	    name += fieldHeaderBuffer[j];
-	  }
-
-	  // TO DO: This does not work as expected so change it.
-	  if ((i == 1) & (name != "distributions"))
-	  {
-	    throw Exception() << "The first fields must be 'distributions'."
-			      << " Actual: " << name;
-	  }
-
-	  uint32_t lengthOfPaddedFieldName = ((lengthOfFieldName +3)/4)*4;
-	  fieldHeaderReader.SetPosition(fieldHeaderReader.GetPosition() + lengthOfPaddedFieldName);
-	  uint32_t numberOfFloats;
-	  fieldHeaderReader.read(numberOfFloats);
-	  double offset;
-	  fieldHeaderReader.read(offset);
-
-	  extraction::InputField field;
-	  field.name = name;
-	  field.numberOfFloats = numberOfFloats;
-	  field.offset = offset;
-
-	  fields.push_back(field);
+	// Now read the encoded nProcs+1 values
+	// We are going to duplicate these into a flattened array of shape (nRanks, 2)
+	// [start0, end0, start1, end1, ...]
+	// where end_i == start_i+1 (except for the start finish obvs)
+	offsets.resize(2*nRanks);
+	offsetReader.read(offsets[0]);
+	for (unsigned i = 1; i < nRanks; ++i) {
+	  offsetReader.read(offsets[2*i]);
+	  offsets[2*i - 1] = offsets[2*i];
 	}
+	offsetReader.read(offsets[2*nRanks-1]);
+	// Compute the total length of a record
+	allCoresWriteLength = offsets[2*nRanks-1] - offsets[0];
       }
+      // Now bcast/scatter from IO rank to all
+      comms.Broadcast(allCoresWriteLength, comms.GetIORank());
+      auto start_finish = comms.Scatter(offsets, 2, comms.GetIORank());
+      localStart = start_finish[0];
+      localStop = start_finish[1];
     }
   }
 }

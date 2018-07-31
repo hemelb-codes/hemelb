@@ -49,9 +49,8 @@ namespace hemelb
       private:
 	typedef hemelb::lb::lattices:: HEMELB_LATTICE LatticeType;
 
-	void CheckPreamble();
-
-	void ReadHeaderInfo();
+        void ReadExtractionHeaders(net::MpiFile&);
+        void ReadOffsets(const std::string&);
 
         const net::IOCommunicator& comms;
 
@@ -60,15 +59,11 @@ namespace hemelb
          */
         const std::string filePath;
 
-        // File accessed to read in the distributions.
-        net::MpiFile inputFile;
-
-        // File accessed to read in the offsets of the distributions.
-        net::MpiFile offsetFile;
-
-	uint64_t numberOfSites;
-
-        std::vector<InputField> fields;
+        InputField distField;
+        uint64_t localStart;
+        uint64_t localStop;
+        uint64_t timestep;
+        uint64_t allCoresWriteLength;
     };
   }
 }
