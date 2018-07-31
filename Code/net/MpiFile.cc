@@ -56,6 +56,15 @@ namespace hemelb
       return *filePtr;
     }
 
+    MPI_Offset MpiFile::GetSize() const {
+      MPI_Offset ans;
+      HEMELB_MPI_CALL(
+		      MPI_File_get_size,
+		      (*filePtr, &ans)
+		      );
+      return ans;
+    }
+
     const MpiCommunicator& MpiFile::GetCommunicator() const
     {
       return *comm;
