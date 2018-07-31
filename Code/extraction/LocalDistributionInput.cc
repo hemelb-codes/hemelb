@@ -6,11 +6,14 @@
 #include "io/formats/extraction.h"
 #include "io/formats/offset.h"
 #include "io/writers/xdr/XdrFileReader.h"
+#include "log/Logger.h"
 
 namespace hemelb
 {
   namespace extraction
   {
+    namespace fmt = hemelb::io::formats;
+
     LocalDistributionInput::LocalDistributionInput(const std::string dataFilePath,
 						   const net::IOCommunicator& ioComm) :
       comms(ioComm), filePath(dataFilePath)
@@ -35,6 +38,10 @@ namespace hemelb
 	net::MpiFile& file;
 	std::vector<char> buffer;
       };
+
+      // The required xtr field header len
+      constexpr uint64_t expectedFieldHeaderLength = 32U;
+      constexpr uint64_t totalXtrHeaderLength = fmt::extraction::MainHeaderLength + expectedFieldHeaderLength;
     }
 
     void LocalDistributionInput::LoadDistribution(geometry::LatticeData* latDat)
@@ -49,21 +56,33 @@ namespace hemelb
       inputFile.SetView(0, MPI_CHAR, MPI_CHAR, "native");
       ReadExtractionHeaders(inputFile);
 
-      // Now open the offset file.
-      ReadOffsets(io::formats::offset::ExtractionToOffset(filePath));
+      // Now read offset file.
+      ReadOffsets(fmt::offset::ExtractionToOffset(filePath));
+
+      // Figure out how many checkpoints are in the XTR file and
+      // therefore the position to start at.
+      auto timeStart = [&](){
+	uint64_t fileSize = inputFile.GetSize();
+	auto dataSize = fileSize - totalXtrHeaderLength;
+	if (dataSize % allCoresWriteLength)
+	  throw Exception() << "Checkpoint file length not consistent with integer number of checkpoints";
+	auto nTimes = dataSize / allCoresWriteLength;
+	return (nTimes - 1) * allCoresWriteLength;
+      }();
 
       // Read the local part of the checkpoint
-      unsigned readLength = localStop - localStart;
+      const auto readLength = localStop - localStart;
 
       std::vector<char> dataBuffer(readLength);
-      inputFile.ReadAt(localStart, dataBuffer);
-      io::writers::xdr::XdrMemReader dataReader(&dataBuffer[0], readLength);
+      inputFile.ReadAt(timeStart + localStart, dataBuffer);
+      io::writers::xdr::XdrMemReader dataReader(dataBuffer);
 
       // Read the timestep
       if (comms.OnIORank()) {
 	dataReader.read(timestep);
       }
       comms.Broadcast(timestep, comms.GetIORank());
+      log::Logger::Log<log::Info, log::Singleton>("Reading checkpoint from timestep %d", timestep);
 
       site_t iSite = 0;
       // while (dataReader.GetPosition() < readLength) {
@@ -113,8 +132,6 @@ namespace hemelb
     }
 
     void LocalDistributionInput::ReadExtractionHeaders(net::MpiFile& inputFile) {
-      namespace fmt = hemelb::io::formats;
-
       if (comms.OnIORank()) {
 	MpiFileReader preambleReader(inputFile, fmt::extraction::MainHeaderLength);
 
@@ -125,26 +142,26 @@ namespace hemelb
 	preambleReader.read(version);
 
 	// Check the value of the HemeLB magic number.
-	if (hlbMagicNumber != io::formats::HemeLbMagicNumber)
+	if (hlbMagicNumber != fmt::HemeLbMagicNumber)
 	{
 	  throw Exception() << "This file does not start with the HemeLB magic number."
-			    << " Expected: " << unsigned(io::formats::HemeLbMagicNumber)
+			    << " Expected: " << unsigned(fmt::HemeLbMagicNumber)
 			    << " Actual: " << hlbMagicNumber;
 	}
 
 	// Check the value of the extraction file magic number.
-	if (extMagicNumber != io::formats::extraction::MagicNumber)
+	if (extMagicNumber != fmt::extraction::MagicNumber)
         {
 	  throw Exception() << "This file does not have the extraction magic number."
-			    << " Expected: " << unsigned(io::formats::extraction::MagicNumber)
+			    << " Expected: " << unsigned(fmt::extraction::MagicNumber)
 			    << " Actual: " << extMagicNumber;
 	}
 
 	// Check the version number.
-	if (version != io::formats::extraction::VersionNumber)
+	if (version != fmt::extraction::VersionNumber)
 	{
 	  throw Exception() << "Version number incorrect."
-			    << " Supported: " << unsigned(io::formats::extraction::VersionNumber)
+			    << " Supported: " << unsigned(fmt::extraction::VersionNumber)
 			    << " Input: " << version;
 	}
 
@@ -169,9 +186,10 @@ namespace hemelb
 	if (numberOfFields != 1 )
 	  throw Exception() << "Checkpoint file must contain exactly one field, the distributions, but has "
 			    << numberOfFields;
-	if (lengthOfFieldHeader != 32 )
-	  throw Exception() << "Checkpoint file's field header must be 32 B long, but is "
-			    <<  lengthOfFieldHeader;
+	if (lengthOfFieldHeader != expectedFieldHeaderLength)
+	  throw Exception() << "Checkpoint file's field header must be "
+			    << expectedFieldHeaderLength << " B long, but is "
+			    << lengthOfFieldHeader << " B";
 
 	MpiFileReader fieldHeaderReader(inputFile, lengthOfFieldHeader);
 	fieldHeaderReader.read(distField.name);
@@ -194,7 +212,6 @@ namespace hemelb
 
       // Only actually read on IO rank
       if (comms.OnIORank()) {
-	namespace fmt = hemelb::io::formats;
 	io::writers::xdr::XdrFileReader offsetReader(offsetFileName);
 	uint32_t hlbMagicNumber, offMagicNumber, version, nRanks;
 	offsetReader.read(hlbMagicNumber);
@@ -202,19 +219,19 @@ namespace hemelb
 	offsetReader.read(version);
 	offsetReader.read(nRanks);
 
-	if (hlbMagicNumber != io::formats::HemeLbMagicNumber)
+	if (hlbMagicNumber != fmt::HemeLbMagicNumber)
 	  throw Exception() << "This file does not start with the HemeLB magic number."
-			    << " Expected: " << unsigned(io::formats::HemeLbMagicNumber)
+			    << " Expected: " << unsigned(fmt::HemeLbMagicNumber)
 			    << " Actual: " << hlbMagicNumber;
 
-	if (offMagicNumber != io::formats::offset::MagicNumber)
+	if (offMagicNumber != fmt::offset::MagicNumber)
 	  throw Exception() << "This file does not have the offset magic number."
-			    << " Expected: " << unsigned(io::formats::offset::MagicNumber)
+			    << " Expected: " << unsigned(fmt::offset::MagicNumber)
 			    << " Actual: " << offMagicNumber;
 
-	if (version != io::formats::offset::VersionNumber)
+	if (version != fmt::offset::VersionNumber)
 	  throw Exception() << "Version number incorrect."
-			    << " Supported: " << unsigned(io::formats::offset::VersionNumber)
+			    << " Supported: " << unsigned(fmt::offset::VersionNumber)
 			    << " Input: " << version;
 
 	if (nRanks != comms.Size())
