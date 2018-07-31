@@ -21,10 +21,12 @@ namespace hemelb
       namespace xdr
       {
 
-        class XdrFileReader : public XdrReader
-        {
-          public:
-            XdrFileReader(FILE* xdrFile);
+        class XdrFileReader : public XdrReader {
+	public:
+	  XdrFileReader(const std::string& fn);
+	  virtual ~XdrFileReader();
+	private:
+	  std::FILE* fh;
         };
 
       } // namespace xdr
