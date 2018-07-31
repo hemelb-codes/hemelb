@@ -22,7 +22,6 @@
 #include <netdb.h>
 #include <sys/utsname.h>
 
-#include "debug/Debugger.h"
 #include "log/Logger.h"
 #include "steering/basic/HttpPost.h"
 

@@ -9,7 +9,6 @@
 
 #include <vector>
 
-#include "debug/Debugger.h"
 #include "net/IteratedAction.h"
 #include "net/net.h"
 #include "lb/SimulationState.h"

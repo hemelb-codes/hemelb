@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <zlib.h>
 
-#include "debug/Debugger.h"
 #include "io/formats/geometry.h"
 #include "io/writers/xdr/XdrMemReader.h"
 #include "geometry/decomposition/BasicDecomposition.h"

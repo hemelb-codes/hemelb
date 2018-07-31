@@ -12,8 +12,6 @@
 #include "util/utilityFunctions.h"
 #include "lb/kernels/BaseKernel.h"
 
-#include "debug/Debugger.h"
-
 namespace hemelb
 {
   namespace lb
