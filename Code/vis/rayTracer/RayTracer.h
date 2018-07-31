@@ -15,7 +15,6 @@
 #include <limits>
 
 #include "constants.h"
-#include "debug/Debugger.h"
 #include "geometry/LatticeData.h"
 #include "lb/LbmParameters.h"
 #include "log/Logger.h"

@@ -8,7 +8,6 @@
 #include <vector>
 #include <cassert>
 
-#include "debug/Debugger.h"
 #include "geometry/BlockTraverser.h"
 #include "geometry/SiteTraverser.h"
 #include "vis/streaklineDrawer/VelocityField.h"

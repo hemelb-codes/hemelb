@@ -15,7 +15,6 @@
 #include <sys/stat.h>
 #include <cstdio>
 
-#include "debug/Debugger.h"
 #include "log/Logger.h"
 #include "steering/Network.h"
 #include "util/utilityFunctions.h"

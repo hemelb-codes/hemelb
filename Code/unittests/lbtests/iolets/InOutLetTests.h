@@ -12,7 +12,6 @@
 #include "unittests/helpers/FolderTestFixture.h"
 #include "lb/iolets/InOutLets.h"
 #include "resources/Resource.h"
-#include "debug/Debugger.h"
 
 namespace hemelb
 {

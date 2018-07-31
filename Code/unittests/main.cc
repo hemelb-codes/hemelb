@@ -29,6 +29,7 @@
 #include <unistd.h>
 
 #include "unittests/helpers/HasCommsTestFixture.h"
+#include "debug/Debugger.h"
 
 int main(int argc, char **argv)
 {

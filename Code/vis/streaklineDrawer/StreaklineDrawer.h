@@ -13,7 +13,6 @@
 #include "constants.h"
 #include "net/mpi.h"
 
-#include "debug/Debugger.h"
 #include "geometry/LatticeData.h"
 #include "net/IOCommunicator.h"
 #include "vis/PixelSet.h"

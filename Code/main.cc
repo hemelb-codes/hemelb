@@ -7,6 +7,7 @@
 #include "net/mpi.h"
 #include "net/IOCommunicator.h"
 #include "configuration/CommandLine.h"
+#include "debug/Debugger.h"
 #include "SimulationMaster.h"
 
 int main(int argc, char *argv[])
