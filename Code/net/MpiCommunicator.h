@@ -107,6 +107,11 @@ namespace hemelb
         std::vector<T> Gather(const T& val, const int root) const;
 
         template <typename T>
+        T Scatter(const std::vector<T>& vals, const int root) const;
+        template <typename T>
+        std::vector<T> Scatter(const std::vector<T>& vals, const size_t n, const int root) const;
+
+        template <typename T>
         std::vector<T> AllGather(const T& val) const;
 
         template <typename T>
