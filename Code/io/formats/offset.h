@@ -44,6 +44,9 @@ namespace hemelb
 	// Body contains, an array of size (number of ranks + 1),
 	// where elem[i] contains the offset for rank i and elem[i+1]
 	// contains the past the end element for that rank.
+	enum {
+	  RecordLength = sizeof(uint64_t)
+	};
 
 	// Helper function
 	inline std::string ExtractionToOffset(const std::string& xtrPath) {
