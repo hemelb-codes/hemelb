@@ -7,7 +7,6 @@
 #ifndef HEMELB_LB_LB_HPP
 #define HEMELB_LB_LB_HPP
 
-#include "extraction/LocalDistributionInput.h"
 #include "io/writers/xdr/XdrMemWriter.h"
 #include "lb/lb.h"
 #include "util/unique.h"
@@ -176,8 +175,8 @@ namespace hemelb
     void LBM<LatticeType>::SetInitialConditions(const net::IOCommunicator& ioComms)
     {
       auto icond = InitialCondition::FromConfig(mSimConfig->GetInitialCondition());
-      icond.SetTime(mState);
       icond.SetFs<LatticeType>(mLatDat, ioComms);
+      icond.SetTime(mState);
     }
 
     template<class LatticeType>
