@@ -45,7 +45,7 @@ namespace hemelb {
     template<class LatticeType>
     void CheckpointInitialCondition::SetFs(geometry::LatticeData* latDat, const net::IOCommunicator& ioComms) const {
       auto distributionInputPtr = std::make_unique<extraction::LocalDistributionInput>(cpFile, ioComms);
-      distributionInputPtr->LoadDistribution(latDat);
+      distributionInputPtr->LoadDistribution(latDat, initial_time);
     }
 
   }

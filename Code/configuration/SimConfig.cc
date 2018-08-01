@@ -20,18 +20,18 @@ namespace hemelb
   namespace configuration
   {
     // Base IC
-    ICConfigBase::ICConfigBase(const util::UnitConverter* units, LatticeTimeStep t) : unitConverter(units), t0(t) {
+    ICConfigBase::ICConfigBase(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t) : unitConverter(units), t0(t) {
     }
 
     // Uniform equilibrium IC
-    EquilibriumIC::EquilibriumIC(const util::UnitConverter* units, LatticeTimeStep t, PhysicalPressure p) : ICConfigBase(units, t), p_mmHg(p), v_ms(0.0) {
+    EquilibriumIC::EquilibriumIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, PhysicalPressure p) : ICConfigBase(units, t), p_mmHg(p), v_ms(0.0) {
     }
 
-    EquilibriumIC::EquilibriumIC(const util::UnitConverter* units, LatticeTimeStep t, PhysicalPressure p, const PhysicalVelocity& v) : ICConfigBase(units, t), p_mmHg(p), v_ms(v) {
+    EquilibriumIC::EquilibriumIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, PhysicalPressure p, const PhysicalVelocity& v) : ICConfigBase(units, t), p_mmHg(p), v_ms(v) {
     }
 
     // checkpoint IC
-    CheckpointIC::CheckpointIC(const util::UnitConverter* units, LatticeTimeStep t, const std::string& cp) : ICConfigBase(units, t), cpFile(cp) {
+    CheckpointIC::CheckpointIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, const std::string& cp) : ICConfigBase(units, t), cpFile(cp) {
     }
 
 
@@ -513,13 +513,12 @@ namespace hemelb
     {
       // The <time> element may be present - if so, it will set the
       // initial timestep value
-      const LatticeTimeStep t0 = [&initialconditionsEl]() {
-	LatticeTimeStep t0 = 1;
-	if (auto timeEl = initialconditionsEl.GetChildOrNull("time")) {
-	  GetDimensionalValue(timeEl, "lattice", t0);
-	}
-	return t0;
-      }();
+      boost::optional<LatticeTimeStep> t0;
+      if (auto timeEl = initialconditionsEl.GetChildOrNull("time")) {
+	LatticeTimeStep tmp;
+	GetDimensionalValue(timeEl, "lattice", tmp);
+	t0 = tmp;
+      }
 
       // Exactly one of {<pressure>, <checkpoint>} must be present
       // TODO: use something other than an if-tree

@@ -7,6 +7,8 @@
 #ifndef HEMELB_EXTRACTION_LOCALDISTRIBUTIONINPUT_H
 #define HEMELB_EXTRACTION_LOCALDISTRIBUTIONINPUT_H
 
+#include <boost/optional.hpp>
+
 #include "extraction/IterableDataSource.h"
 #include "extraction/InputField.h"
 #include "io/writers/xdr/XdrMemReader.h"
@@ -44,7 +46,7 @@ namespace hemelb
          */
         ~LocalDistributionInput();
 
-        void LoadDistribution(geometry::LatticeData* latDat);
+        void LoadDistribution(geometry::LatticeData* latDat, boost::optional<LatticeTimeStep>& initalTime);
 
       private:
 	typedef hemelb::lb::lattices:: HEMELB_LATTICE LatticeType;

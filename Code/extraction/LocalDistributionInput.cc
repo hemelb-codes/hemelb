@@ -13,6 +13,7 @@ namespace hemelb
   namespace extraction
   {
     namespace fmt = hemelb::io::formats;
+    namespace xdr = hemelb::io::writers::xdr;
 
     LocalDistributionInput::LocalDistributionInput(const std::string dataFilePath,
 						   const net::IOCommunicator& ioComm) :
@@ -27,7 +28,7 @@ namespace hemelb
     namespace {
       // Helper class to simplify pulling data out of the file and XDR
       // decoding it
-      struct MpiFileReader : public io::writers::xdr::XdrReader {
+      struct MpiFileReader : public xdr::XdrReader {
 
 	MpiFileReader(net::MpiFile& f, size_t len) : file(f), buffer(len) {
 	  file.Read(buffer);
@@ -44,7 +45,7 @@ namespace hemelb
       constexpr uint64_t totalXtrHeaderLength = fmt::extraction::MainHeaderLength + expectedFieldHeaderLength;
     }
 
-    void LocalDistributionInput::LoadDistribution(geometry::LatticeData* latDat)
+    void LocalDistributionInput::LoadDistribution(geometry::LatticeData* latDat, boost::optional<LatticeTimeStep>& targetTime)
     {
       // We could supply hints regarding how the file should be read
       // but we are not doing so yet.
@@ -61,34 +62,70 @@ namespace hemelb
 
       // Figure out how many checkpoints are in the XTR file and
       // therefore the position to start at.
-      auto timeStart = [&](){
+      auto nTimes = [&](){
 	uint64_t fileSize = inputFile.GetSize();
 	auto dataSize = fileSize - totalXtrHeaderLength;
 	if (dataSize % allCoresWriteLength)
 	  throw Exception() << "Checkpoint file length not consistent with integer number of checkpoints";
-	auto nTimes = dataSize / allCoresWriteLength;
-	return (nTimes - 1) * allCoresWriteLength;
+	return dataSize / allCoresWriteLength;
       }();
 
+      auto ReadTimeByIndex = [&](uint64_t iTS) {
+	uint64_t ans;
+	std::vector<char> tsbuf(8);
+	inputFile.ReadAt(localStart + iTS*allCoresWriteLength, tsbuf);
+	xdr::XdrMemReader dataReader(tsbuf);
+	dataReader.read(ans);
+	return ans;
+      };
+
+      uint64_t iTS;
+      if (comms.OnIORank()) {
+	if (targetTime) {
+	  // We have a target time - look for it in the file
+	  iTS = 0;
+	  uint64_t len = nTimes;
+	  while(len != 0) {
+	    auto l2 = len/2;
+	    auto m = iTS + l2;
+	    timestep = ReadTimeByIndex(m);
+	    if (timestep < *targetTime) {
+	      iTS = m + 1;
+	      len -= l2 + 1;
+	    } else {
+	      len = l2;
+	    }
+	  }
+
+	  if (timestep != *targetTime)
+	    throw Exception() << "Target timestep " << *targetTime << " not found in checkpoint file.";
+	} else {
+	  // initial time unspecified, use the last one
+	  iTS = nTimes - 1;
+	  timestep = ReadTimeByIndex(iTS);
+	}
+      }
+      comms.Broadcast(timestep, comms.GetIORank());
+      comms.Broadcast(iTS, comms.GetIORank());
+      log::Logger::Log<log::Info, log::Singleton>("Reading checkpoint from timestep %d with index %d", timestep, iTS);
       // Read the local part of the checkpoint
       const auto readLength = localStop - localStart;
+      const auto timeStart = iTS * allCoresWriteLength;
 
       std::vector<char> dataBuffer(readLength);
       inputFile.ReadAt(timeStart + localStart, dataBuffer);
-      io::writers::xdr::XdrMemReader dataReader(dataBuffer);
+      xdr::XdrMemReader dataReader(dataBuffer);
 
       // Read the timestep
       if (comms.OnIORank()) {
 	dataReader.read(timestep);
       }
-      comms.Broadcast(timestep, comms.GetIORank());
-      log::Logger::Log<log::Info, log::Singleton>("Reading checkpoint from timestep %d", timestep);
 
       site_t iSite = 0;
       // while (dataReader.GetPosition() < readLength) {
       for (; dataReader.GetPosition() < readLength; iSite++) {
 	// Read the grid coord and check it's consistent with latDat.
-	[&](){
+	{
 	  // Stored as 32 b unsigned
 	  util::Vector3D<uint32_t> tmp;
 	  dataReader.read(tmp.x);
@@ -111,7 +148,7 @@ namespace hemelb
 	  if (index != iSite)
 	    throw Exception() << "Site read at index " << iSite
 			      << " but should be read at " << index;
-	}();
+	}
 
 	distribn_t* f_old_p = latDat->GetFOld(iSite * LatticeType::NUMVECTORS);
 	distribn_t* f_new_p = latDat->GetFNew(iSite * LatticeType::NUMVECTORS);
@@ -212,7 +249,7 @@ namespace hemelb
 
       // Only actually read on IO rank
       if (comms.OnIORank()) {
-	io::writers::xdr::XdrFileReader offsetReader(offsetFileName);
+	xdr::XdrFileReader offsetReader(offsetFileName);
 	uint32_t hlbMagicNumber, offMagicNumber, version, nRanks;
 	offsetReader.read(hlbMagicNumber);
 	offsetReader.read(offMagicNumber);

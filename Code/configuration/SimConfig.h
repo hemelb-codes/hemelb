@@ -9,6 +9,7 @@
 
 #include <vector>
 #include <boost/variant.hpp>
+#include <boost/optional.hpp>
 
 #include "util/Vector3D.h"
 #include "lb/LbmParameters.h"
@@ -36,23 +37,23 @@ namespace hemelb
 
     // Base for initial conditions configuration
     struct ICConfigBase {
-      ICConfigBase(const util::UnitConverter* units, LatticeTimeStep t);
+      ICConfigBase(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t);
 
       const util::UnitConverter* unitConverter;
-      LatticeTimeStep t0;
+      boost::optional<LatticeTimeStep> t0;
     };
 
     // Uniform equilibrium IC
     struct EquilibriumIC : ICConfigBase {
-      EquilibriumIC(const util::UnitConverter* units, LatticeTimeStep t, PhysicalPressure p);
-      EquilibriumIC(const util::UnitConverter* units, LatticeTimeStep t, PhysicalPressure p, const PhysicalVelocity& v);
+      EquilibriumIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, PhysicalPressure p);
+      EquilibriumIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, PhysicalPressure p, const PhysicalVelocity& v);
       PhysicalPressure p_mmHg;
       PhysicalVelocity v_ms;
     };
 
     // Read from checkpoint IC
     struct CheckpointIC : ICConfigBase {
-      CheckpointIC(const util::UnitConverter* units, LatticeTimeStep t, const std::string& cp);
+      CheckpointIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, const std::string& cp);
       std::string cpFile;
     };
 
