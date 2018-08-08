@@ -6,15 +6,17 @@
 add_library(hemelb_colloidsBCs
   BoundaryConditions.cc
   )
-target_link_libraries(hemelb_colloidsBCs
+target_link_libraries(hemelb_colloidsBCs PRIVATE
   hemelb_io
   )
+hemelb_add_target_dependency_parmetis(hemelb_colloidsBCs)
 add_library(hemelb_colloidsForces
   BodyForces.cc
   )
-target_link_libraries(hemelb_colloidsForces
+target_link_libraries(hemelb_colloidsForces PRIVATE
   hemelb_io
   )
+hemelb_add_target_dependency_parmetis(hemelb_colloidsForces)
 add_library(hemelb_colloids
   ParticleMpiDatatypes.cc
   ParticleSet.cc
@@ -22,9 +24,10 @@ add_library(hemelb_colloids
   PersistedParticle.cc
   ColloidController.cc
   )
-target_link_libraries(hemelb_colloids
+target_link_libraries(hemelb_colloids PRIVATE
   hemelb_io
   hemelb_lb
   hemelb_colloidsForces
   hemelb_colloidsBCs
   )
+hemelb_add_target_dependency_parmetis(hemelb_colloids)

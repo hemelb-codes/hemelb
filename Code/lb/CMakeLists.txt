@@ -17,3 +17,5 @@ add_library(hemelb_lb
   lattices/LatticeInfo.cc lattices/D3Q15.cc lattices/D3Q19.cc lattices/D3Q27.cc lattices/D3Q15i.cc
   MacroscopicPropertyCache.cc SimulationState.cc StabilityTester.cc
   )
+
+hemelb_add_target_dependency_parmetis(hemelb_lb)

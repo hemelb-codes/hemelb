@@ -48,3 +48,5 @@ add_library(hemelb_steering
   )
 
 target_link_libraries(hemelb_steering ${CMAKE_THREAD_LIBS_INIT})
+
+hemelb_add_target_dependency_parmetis(hemelb_steering)
