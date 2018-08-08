@@ -151,13 +151,14 @@ foreach(subdir ${package_subdirs})
   add_subdirectory(${subdir})
 endforeach()
 add_subdirectory(resources)
-target_link_libraries(${HEMELB_EXECUTABLE} 
+target_link_libraries(${HEMELB_EXECUTABLE} PRIVATE
   ${heme_libraries}
   ${MPI_LIBRARIES}
   ${Boost_LIBRARIES}
   )
 INSTALL(TARGETS ${HEMELB_EXECUTABLE} RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
+hemelb_add_target_dependency_parmetis(${HEMELB_EXECUTABLE})
 
 # ----------- HemeLB Multiscale ------------------
 if (HEMELB_BUILD_MULTISCALE)
@@ -210,7 +211,7 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
   hemelb_dependency(cppunit use)
   add_executable(unittests_hemelb ${root_sources})
   add_subdirectory(unittests)
-  target_link_libraries(unittests_hemelb 
+  target_link_libraries(unittests_hemelb PRIVATE
     hemelb_unittests 
     ${heme_libraries}
     ${MPI_LIBRARIES}
@@ -223,6 +224,7 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
     unittests/resources/velocity_inlet.txt.weights.txt
     unittests/resources/xmltest.xml unittests/resources/config_file_velocity_inlet.xml unittests/resources/velocity_inlet.txt 
     )
+  hemelb_add_target_dependency_parmetis(unittests_hemelb)
 endif()
 
 # ----------- HEMELB functionaltests ---------------
@@ -231,12 +233,13 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
   hemelb_dependency(cppunit use)
   add_executable(functionaltests_hemelb ${root_sources})
   add_subdirectory(functionaltests/cpptests)
-  target_link_libraries(functionaltests_hemelb 
+  target_link_libraries(functionaltests_hemelb PRIVATE
     hemelb_functionaltests 
     ${heme_libraries}
     ${MPI_LIBRARIES}
     ${Boost_LIBRARIES})
   INSTALL(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
+  hemelb_add_target_dependency_parmetis(functionaltests_hemelb)
 endif()
 
 #-------- Copy and install resources --------------

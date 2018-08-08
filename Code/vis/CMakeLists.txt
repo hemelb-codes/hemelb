@@ -10,3 +10,5 @@ add_library(hemelb_vis
   streaklineDrawer/NeighbouringProcessor.cc streaklineDrawer/Particle.cc streaklineDrawer/ParticleManager.cc
   streaklineDrawer/StreaklineDrawer.cc streaklineDrawer/VelocityField.cc streaklineDrawer/StreakPixel.cc
   )
+
+hemelb_add_target_dependency_parmetis(hemelb_vis)

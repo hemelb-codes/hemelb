@@ -25,3 +25,5 @@ configure_file (
   "${PROJECT_SOURCE_DIR}/net/MpiConstness.h.in"
   "${PROJECT_BINARY_DIR}/net/MpiConstness.h"
   )
+
+hemelb_add_target_dependency_parmetis(hemelb_net)

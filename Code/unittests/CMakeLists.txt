@@ -5,3 +5,4 @@
 
 add_library(hemelb_unittests main.cc)
 hemelb_add_target_dependency_cppunit(hemelb_unittests)
+hemelb_add_target_dependency_parmetis(hemelb_unittests)
