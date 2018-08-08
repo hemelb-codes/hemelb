@@ -1,2 +1,2 @@
-find_package(Parmetis REQUIRED)
-find_package(Metis REQUIRED)
+find_package(Parmetis QUIET)
+find_package(Metis QUIET)

@@ -1,0 +1,11 @@
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
+
+#ifndef HEMELB_GEOMETRY_PARMETISFORWARD_H_IN
+#define HEMELB_GEOMETRY_PARMETISFORWARD_H_IN
+
+typedef @METIS_IDX_T@ idx_t;
+typedef @METIS_REAL_T@ real_t;
+#endif
