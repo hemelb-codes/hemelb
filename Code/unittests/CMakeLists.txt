@@ -5,3 +5,5 @@
 
 add_library(hemelb_unittests main.cc)
 hemelb_add_target_dependency_cppunit(hemelb_unittests)
+# ReporterTests directly use ctemplate
+hemelb_add_target_dependency_ctemplate(hemelb_unittests)
