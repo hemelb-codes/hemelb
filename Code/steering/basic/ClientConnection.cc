@@ -12,7 +12,6 @@
 #include <fcntl.h>
 #include <netinet/in.h>
 
-#include "debug/Debugger.h"
 #include "log/Logger.h"
 #include "steering/ClientConnection.h"
 #include "steering/basic/HttpPost.h"

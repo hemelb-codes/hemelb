@@ -10,13 +10,14 @@ namespace hemelb {
 
     // InitialConditionBase
     
-    InitialConditionBase::InitialConditionBase() : initial_time(0) {
+    InitialConditionBase::InitialConditionBase() {
     }
-    InitialConditionBase::InitialConditionBase(LatticeTimeStep t) : initial_time(t) {
+    InitialConditionBase::InitialConditionBase(boost::optional<LatticeTimeStep> t) : initial_time(t) {
     }
     
     void InitialConditionBase::SetTime(SimulationState* sim) const {
-      sim->timeStep = initial_time;
+      if (initial_time)
+	sim->timeStep = *initial_time;
     }
 
 
@@ -28,7 +29,7 @@ namespace hemelb {
     }
     
     EquilibriumInitialCondition::EquilibriumInitialCondition(
-      LatticeTimeStep t0,
+      boost::optional<LatticeTimeStep> t0,
       distribn_t rho,
       distribn_t mx, distribn_t my, distribn_t mz) :
       InitialConditionBase(t0),
@@ -36,7 +37,7 @@ namespace hemelb {
       mom_x(mx), mom_y(my), mom_z(mz) {
     }
     
-    CheckpointInitialCondition::CheckpointInitialCondition(LatticeTimeStep t0, const std::string& cp)
+    CheckpointInitialCondition::CheckpointInitialCondition(boost::optional<LatticeTimeStep> t0, const std::string& cp)
       : InitialConditionBase(t0), cpFile(cp) {
     }
 

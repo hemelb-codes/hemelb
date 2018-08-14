@@ -20,3 +20,7 @@ configure_file (
   "${PROJECT_BINARY_DIR}/geometry/decomposition/DecompositionWeights.h"
   )
 
+configure_file (
+  "${PROJECT_SOURCE_DIR}/geometry/ParmetisForward.h.in"
+  "${PROJECT_BINARY_DIR}/geometry/ParmetisForward.h"
+  )

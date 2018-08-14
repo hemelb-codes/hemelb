@@ -7,6 +7,7 @@
 #define HEMELB_LB_INITIALCONDITION_H
 
 #include <boost/variant.hpp>
+#include <boost/optional.hpp>
 #include "geometry/LatticeData.h"
 #include "configuration/SimConfig.h"
 
@@ -17,7 +18,7 @@ namespace hemelb {
     // the timestep
     struct InitialConditionBase {
       InitialConditionBase();
-      InitialConditionBase(LatticeTimeStep t);
+      InitialConditionBase(boost::optional<LatticeTimeStep> t);
 
       void SetTime(SimulationState* sim) const;
 
@@ -29,15 +30,15 @@ namespace hemelb {
       inline distribn_t* GetFNew(geometry::LatticeData* ld, site_t i) const {
 	return ld->GetFNew(i);
       }
-    private:
-      LatticeTimeStep initial_time;
+
+      mutable boost::optional<LatticeTimeStep> initial_time;
     };
     
     struct EquilibriumInitialCondition : InitialConditionBase {
       
       EquilibriumInitialCondition();
       
-      EquilibriumInitialCondition(LatticeTimeStep t0,
+      EquilibriumInitialCondition(boost::optional<LatticeTimeStep> t0,
 				  distribn_t rho,
 				  distribn_t mx = 0.0, distribn_t my = 0.0, distribn_t mz = 0.0);
       
@@ -52,7 +53,7 @@ namespace hemelb {
     };
     
     struct CheckpointInitialCondition : InitialConditionBase {
-      CheckpointInitialCondition(LatticeTimeStep t0, const std::string& cp);
+      CheckpointInitialCondition(boost::optional<LatticeTimeStep> t0, const std::string& cp);
       
       template<class LatticeType>
       void SetFs(geometry::LatticeData* latDat, const net::IOCommunicator& ioComms) const;

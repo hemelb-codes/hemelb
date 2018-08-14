@@ -7,7 +7,7 @@
 #ifndef HEMELB_IO_WRITERS_XDR_XDRMEMREADER_H
 #define HEMELB_IO_WRITERS_XDR_XDRMEMREADER_H
 
-#include <cstdio>
+#include <vector>
 
 #include "io/writers/xdr/XdrReader.h"
 
@@ -23,7 +23,8 @@ namespace hemelb
         class XdrMemReader : public XdrReader
         {
           public:
-            XdrMemReader(char* dataBuffer, unsigned int dataLength);
+            XdrMemReader(const char* dataBuffer, unsigned int dataLength);
+            XdrMemReader(const std::vector<char>& dataVec);
 
         };
       } // namespace xdr

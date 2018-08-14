@@ -7,6 +7,8 @@
 #ifndef HEMELB_EXTRACTION_LOCALDISTRIBUTIONINPUT_H
 #define HEMELB_EXTRACTION_LOCALDISTRIBUTIONINPUT_H
 
+#include <boost/optional.hpp>
+
 #include "extraction/IterableDataSource.h"
 #include "extraction/InputField.h"
 #include "io/writers/xdr/XdrMemReader.h"
@@ -44,34 +46,26 @@ namespace hemelb
          */
         ~LocalDistributionInput();
 
-        void LoadDistribution(geometry::LatticeData* latDat);
+        void LoadDistribution(geometry::LatticeData* latDat, boost::optional<LatticeTimeStep>& initalTime);
 
       private:
 	typedef hemelb::lb::lattices:: HEMELB_LATTICE LatticeType;
 
-	void CheckPreamble();
-
-	void ReadHeaderInfo();
+        void ReadExtractionHeaders(net::MpiFile&);
+        void ReadOffsets(const std::string&);
 
         const net::IOCommunicator& comms;
-
-        // The rank which reads in the header information.
-        static const proc_t HEADER_READING_RANK = 0;
 
         /**
          * The path to the file to read from.
          */
         const std::string filePath;
 
-        // File accessed to read in the distributions.
-        net::MpiFile inputFile;
-
-        // File accessed to read in the offsets of the distributions.
-        net::MpiFile offsetFile;
-
-	uint64_t numberOfSites;
-
-        std::vector<InputField> fields;
+        InputField distField;
+        uint64_t localStart;
+        uint64_t localStop;
+        uint64_t timestep;
+        uint64_t allCoresWriteLength;
     };
   }
 }

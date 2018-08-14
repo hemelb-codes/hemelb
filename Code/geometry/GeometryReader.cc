@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <zlib.h>
 
-#include "debug/Debugger.h"
 #include "io/formats/geometry.h"
 #include "io/writers/xdr/XdrMemReader.h"
 #include "geometry/decomposition/BasicDecomposition.h"
@@ -200,9 +199,9 @@ namespace hemelb
 
       unsigned hlbMagicNumber, gmyMagicNumber, version;
       // Read in housekeeping values
-      preambleReader.readUnsignedInt(hlbMagicNumber);
-      preambleReader.readUnsignedInt(gmyMagicNumber);
-      preambleReader.readUnsignedInt(version);
+      preambleReader.read(hlbMagicNumber);
+      preambleReader.read(gmyMagicNumber);
+      preambleReader.read(version);
 
       // Check the value of the HemeLB magic number.
       if (hlbMagicNumber != io::formats::HemeLbMagicNumber)
@@ -235,19 +234,19 @@ namespace hemelb
       util::Vector3D<double> origin;
 
       // Read in the values.
-      preambleReader.readUnsignedInt(blocksX);
-      preambleReader.readUnsignedInt(blocksY);
-      preambleReader.readUnsignedInt(blocksZ);
-      preambleReader.readUnsignedInt(blockSize);
-      preambleReader.readDouble(voxelSize);
+      preambleReader.read(blocksX);
+      preambleReader.read(blocksY);
+      preambleReader.read(blocksZ);
+      preambleReader.read(blockSize);
+      preambleReader.read(voxelSize);
       for (unsigned int i = 0; i < 3; ++i)
       {
-        preambleReader.readDouble(origin[i]);
+        preambleReader.read(origin[i]);
       }
 
       // Read the padding unsigned int.
       unsigned paddingValue;
-      preambleReader.readUnsignedInt(paddingValue);
+      preambleReader.read(paddingValue);
 
       return Geometry(util::Vector3D<site_t>(blocksX, blocksY, blocksZ),
                       blockSize);
@@ -272,9 +271,9 @@ namespace hemelb
       for (site_t block = 0; block < blockCount; block++)
       {
         unsigned int sites, bytes, uncompressedBytes;
-        preambleReader.readUnsignedInt(sites);
-        preambleReader.readUnsignedInt(bytes);
-        preambleReader.readUnsignedInt(uncompressedBytes);
+        preambleReader.read(sites);
+        preambleReader.read(bytes);
+        preambleReader.read(uncompressedBytes);
 
         fluidSitesOnEachBlock.push_back(sites);
         bytesPerCompressedBlock.push_back(bytes);
@@ -495,7 +494,7 @@ namespace hemelb
     {
       // Read the fluid property.
       unsigned isFluid;
-      bool success = reader.readUnsignedInt(isFluid);
+      bool success = reader.read(isFluid);
 
       if (!success)
       {
@@ -523,7 +522,7 @@ namespace hemelb
       {
         // read the type of the intersection and create a link...
         unsigned intersectionType;
-        reader.readUnsignedInt(intersectionType);
+        reader.read(intersectionType);
 
         GeometrySiteLink link;
         link.type = (GeometrySiteLink::IntersectionType) intersectionType;
@@ -533,7 +532,7 @@ namespace hemelb
         {
           isGmyWallSite = true;
           float distance;
-          reader.readFloat(distance);
+          reader.read(distance);
           link.distanceToIntersection = distance;
         }
         // inlets and outlets (which together with none make up the other intersection types)
@@ -542,8 +541,8 @@ namespace hemelb
         {
           float distance;
           unsigned ioletId;
-          reader.readUnsignedInt(ioletId);
-          reader.readFloat(distance);
+          reader.read(ioletId);
+          reader.read(distance);
 
           link.ioletId = ioletId;
           link.distanceToIntersection = distance;
@@ -564,7 +563,7 @@ namespace hemelb
       }
 
       unsigned normalAvailable;
-      reader.readUnsignedInt(normalAvailable);
+      reader.read(normalAvailable);
       readInSite.wallNormalAvailable = (normalAvailable
           == io::formats::geometry::WALL_NORMAL_AVAILABLE);
 
@@ -579,9 +578,9 @@ namespace hemelb
 
       if (readInSite.wallNormalAvailable)
       {
-        reader.readFloat(readInSite.wallNormal[0]);
-        reader.readFloat(readInSite.wallNormal[1]);
-        reader.readFloat(readInSite.wallNormal[2]);
+        reader.read(readInSite.wallNormal[0]);
+        reader.read(readInSite.wallNormal[1]);
+        reader.read(readInSite.wallNormal[2]);
       }
 
       return readInSite;

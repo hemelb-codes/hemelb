@@ -16,8 +16,6 @@
 #include "util/FlatMap.h"
 #include <map>
 
-#include "debug/Debugger.h"
-
 namespace hemelb
 {
   namespace lb

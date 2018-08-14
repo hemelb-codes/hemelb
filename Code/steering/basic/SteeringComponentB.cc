@@ -95,7 +95,7 @@ namespace hemelb
         io::writers::xdr::XdrMemReader steeringStream(steeringRecvBuffer, bytes);
 
         for (int i = 0; i < STEERABLE_PARAMETERS; i++)
-          steeringStream.readFloat(privateSteeringParams[i]);
+          steeringStream.read(privateSteeringParams[i]);
       }
     }
 

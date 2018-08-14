@@ -23,11 +23,15 @@ namespace hemelb
       {
 
         // Constructor to create an Xdr object based on a file.
-        XdrFileReader::XdrFileReader(FILE* xdrFile)
-        {
-          xdrstdio_create(&mXdr, xdrFile, XDR_DECODE);
+        XdrFileReader::XdrFileReader(const std::string& fn) {
+	  fh = std::fopen(fn.c_str(), "r");
+	  assert(fh != nullptr);
+          xdrstdio_create(&mXdr, fh, XDR_DECODE);
         }
 
+	XdrFileReader::~XdrFileReader() {
+	  std::fclose(fh);
+	}
       } // namespace name
 
     } // namespace writers

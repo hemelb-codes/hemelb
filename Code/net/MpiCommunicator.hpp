@@ -105,6 +105,32 @@ namespace hemelb
       return ans;
     }
 
+    template <typename T>
+    T MpiCommunicator::Scatter(const std::vector<T>& vals, const int root) const {
+      T ans;
+      const T* ptr = (Rank() == root) ? vals.data() : nullptr;
+      HEMELB_MPI_CALL(
+		      MPI_Scatter,
+		      (MpiConstCast(ptr), 1, MpiDataType<T>(),
+		       &ans, 1, MpiDataType<T>(),
+		       root, *this)
+		      );
+      return ans;
+    }
+
+    template <typename T>
+    std::vector<T> MpiCommunicator::Scatter(const std::vector<T>& vals, const size_t n, const int root) const {
+      std::vector<T> ans(n);
+      const T* ptr = (Rank() == root) ? vals.data() : nullptr;
+      HEMELB_MPI_CALL(
+		      MPI_Scatter,
+		      (MpiConstCast(ptr), n, MpiDataType<T>(),
+		       ans.data(), n, MpiDataType<T>(),
+		       root, *this)
+		      );
+      return ans;
+    }
+
     template<typename T>
     std::vector<T> MpiCommunicator::AllGather(const T& val) const
     {
