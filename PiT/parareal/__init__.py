@@ -5,14 +5,59 @@ from abc import abstractmethod
 import logging
 
 import yaml
-import numpy as np
 import luigi
 
 from .interval import Interval
 from .iohelp import *
-from .interfaces import hm
 
-import pdb
+import sys
+import subprocess
+from contextlib import contextmanager
+import os
+import coarsen
+import refine
+import difference
+import sum
+
+numFineProcs = 4
+numCoarseProcs = 3
+
+coarseRankFileName = 'initialisation/coarseMpirank.xtr'
+fineRankFileName = 'initialisation/fineMpirank.xtr'
+
+@contextmanager
+def cd(newdir):
+    prevdir = os.getcwd()
+    os.chdir(os.path.expanduser(newdir))
+    try:
+        yield
+    finally:
+        os.chdir(prevdir)
+
+def run_hemelb(mpiTasks):
+    sys.stdout.write('Running hemelb on ' + str(mpiTasks) + ' procs\n')
+    runcommand = []
+    runcommand.append("aprun")
+    runcommand.append("-n")
+    runcommand.append("{0}".format(mpiTasks))
+    execName = "../hemelb"
+    runcommand.append(execName)
+    runcommand.append("-in")
+    runcommand.append("config.xml")
+    runcommand.append("-i")
+    runcommand.append("1")
+    runcommand.append("-ss")
+    runcommand.append("1111")
+    sys.stdout.write('Run command:')
+    for item in runcommand:
+        sys.stdout.write(' ' + item)
+    sys.stdout.write('\n')
+    p = subprocess.Popen(runcommand, stdin=subprocess.PIPE,
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdoutdata, stderrdata = p.communicate()
+    sys.stdout.write(stdoutdata)
+    sys.stderr.write(stderrdata)
+    pass
 
 class Resolution(enum.Enum):
     '''Flag which resolution we're at'''
@@ -81,6 +126,8 @@ class PararealParameters(LoadableMixin, DumpableMixin):
 
         self.sim_params = sim_params
         self.initial_conditions = initial_conditions
+        print('initial_conditions:')
+        print(initial_conditions)
         self.time = time
         self.num_parareal_iters = num_parareal_iters
         self.num_time_slices = num_time_slices
@@ -103,7 +150,10 @@ class PararealParameters(LoadableMixin, DumpableMixin):
             'num_parareal_iters': self.num_parareal_iters,
             'num_time_slices': self.num_time_slices
             }
-    
+
+    # In the context of HemeLB this is meaningless but a file
+    # needs to be created to keep Luigi happy. As the constant pressure
+    # initial condition does not need an input file any old file will do.
     def write_icond_input(self, input_target):
         self.write_input(input_target, self.initial_conditions)
         
@@ -159,7 +209,7 @@ class ParaRealTarget(luigi.LocalTarget):
         return
 
     def __str__(self):
-        return '{}[res={res.name}, i={i:d}, k={i:d}]'.format(type(self).__name__,
+        return '{}[res={res.name}, i={i:d}, k={k:d}]'.format(type(self).__name__,
                                                                  **vars(self))
     
     @classmethod
@@ -208,7 +258,7 @@ def logrun(run_func):
 class Input(ParaRealTarget):
     '''Represent an input file, ready to be run.
     '''
-    _pattern ='{resolution}_{i:04d}_{k:02d}/problem.yml'
+    _pattern ='{resolution}_{i:04d}_{k:02d}/checkpoint.xtr'
 
     @classmethod
     @check_producer
@@ -222,7 +272,7 @@ class Input(ParaRealTarget):
 class Trajectory(ParaRealTarget):
     '''Represent the results of running a solver.
     '''
-    _pattern = '{resolution}_{i:04d}_{k:02d}/results.txt'
+    _pattern = '{resolution}_{i:04d}_{k:02d}/results/Extracted/checkpoint.xtr'
     
     @classmethod
     @check_producer
@@ -230,8 +280,7 @@ class Trajectory(ParaRealTarget):
         return Solver(res=res, i=i, k=k)
 
     def get_last(self):
-        data = np.loadtxt(self.open())
-        return data[-1].tolist()
+        pass
     
     pass
 
@@ -256,7 +305,7 @@ class y(State):
     parareal iteration.
     '''
     
-    _pattern = 'state/y_{resolution}_{i:04d}_{k:02d}'
+    _pattern = 'state/y_{resolution}_{i:04d}_{k:02d}_checkpoint.xtr'
             
     @classmethod
     @check_producer
@@ -277,7 +326,7 @@ class Gy(State):
     evolution operator to y_i^k.
     '''
     
-    _pattern = 'state/Gy_{resolution}_{i:04d}_{k:02d}'
+    _pattern = 'state/Gy_{resolution}_{i:04d}_{k:02d}_checkpoint.xtr'
 
     @classmethod
     @check_producer
@@ -295,7 +344,7 @@ class DeltaGy(State):
     G(y_i^k) - G(y_i^{k-1})
     '''
     
-    _pattern = 'state/DGy_{resolution}_{i:04d}_{k:02d}'
+    _pattern = 'state/DGy_{resolution}_{i:04d}_{k:02d}_checkpoint.xtr'
     
     @classmethod
     @check_producer
@@ -312,7 +361,7 @@ class Fy(State):
     evolution operator to y_i^k.
     '''
     
-    _pattern = 'state/Fy_{resolution}_{i:04d}_{k:02d}'
+    _pattern = 'state/Fy_{resolution}_{i:04d}_{k:02d}_checkpoint.xtr'
     
     @classmethod
     @check_producer
@@ -339,7 +388,16 @@ class InitialConditionMaker(luigi.ExternalTask):
         return Input(self.res, 0, 0)
     @logrun
     def run(self):
+        print('InitialConditionMaker:')
+        print('output:')
+        print(self.output().path)
         parareal().write_icond_input(self.output())
+        if self.res == Resolution.Fine:
+            print('Trying to link fine_initial_config.xml to fine_0000_00/config.xml')
+            os.link('fine_initial_config.xml', 'fine_0000_00/config.xml')
+        else:
+            print('Trying to link coarse_initial_config.xml to coarse_0000_00/config.xml')
+            os.link('coarse_initial_config.xml', 'coarse_0000_00/config.xml')
         return
     pass
 
@@ -371,9 +429,29 @@ class InputMaker(Op):
         return y.producer(self.res, self.i, self.k)
     @logrun
     def run(self):
-        state = self.input().load()
-        ic = {'x': state['x'], 'v': state['v']}
-        parareal().write_input(self.output(), ic)
+        print(self)
+        print('input:')
+        print(self.input().path)
+        print('output:')
+        print(self.output().path)
+        if (self.res == Resolution.Coarse):
+            dirStr = '{}_{:04d}_{:02d}'.format('coarse', self.i, self.k)
+            os.makedirs(dirStr)
+            print('Trying to link coarse_restart_config.xml to ' + dirStr + '/config.xml')
+            os.link('coarse_restart_config.xml', dirStr + '/config.xml')
+        else:
+            dirStr = '{}_{:04d}_{:02d}'.format('fine', self.i, self.k)
+            os.makedirs(dirStr)
+            print('Trying to link fine_restart_config.xml to ' + dirStr + '/config.xml')
+            os.link('fine_restart_config.xml', dirStr + '/config.xml')
+        print('dirStr = ' + dirStr)
+        inStr = self.input().path
+        inStr1 = self.input().path[:-3] + 'off'
+        outStr = self.output().path
+        outStr1 = self.output().path[:-3] + 'off'
+        print('InputMaker:Trying to link ' + inStr + ' to ' + outStr)
+        os.link(inStr, outStr)
+        os.link(inStr1, outStr1)
         return
     pass
 
@@ -390,8 +468,19 @@ class Solver(Op):
         return Input.producer(self.res, self.i, self.k)
     @logrun
     def run(self):
-        prob = hm.Problem.from_file(self.input().path)
-        prob.run(self.output().path)
+        sys.stdout.write('Run:Solver: ')
+        print(self)
+        sys.stdout.write('Run:Input path: ' + self.input().path + '\n')
+        sys.stdout.write('Run:Output path: ' + self.output().path + '\n')
+        if (self.res == Resolution.Coarse):
+            dirStr = '{}_{:04d}_{:02d}'.format('coarse', self.i, self.k)
+            numProcs = numCoarseProcs
+        else:
+            dirStr = '{}_{:04d}_{:02d}'.format('fine', self.i, self.k)
+            numProcs = numFineProcs
+        with cd(dirStr):
+            run_hemelb(numProcs)
+            print('HemeLB output: ' + dirStr + '/results/Extracted/checkpoint.xtr')
         return
     
     pass
@@ -408,8 +497,21 @@ class SolutionExtractor(Op):
         return Trajectory.producer(self.res, self.i, self.k)
     @logrun
     def run(self):
-        t, x, v = self.input().get_last()
-        self.output().save({'t': t, 'x': x, 'v': v})
+        # In general the output from a simulation will have data for a number of time steps.
+        # The solution extractor extracts the state at the last time step.
+        # In the current HemeLB implementation there must be only one state in the trajectory
+        # so no extraction is required but in general 'get_last' in the class Trajectory
+        # should have a non-trivial implementation and should be called here.
+        print('SolutionExtractor:')
+        print(self.input().path)
+        print(self.output().path)
+        inStr = self.input().path
+        inStr1 = self.input().path[:-3] + 'off'
+        outStr = self.output().path
+        outStr1 = self.output().path[:-3] + 'off'
+        print('SolnEx:Trying to link ' + inStr + ' to ' + outStr)
+        os.link(inStr, outStr)
+        os.link(inStr1, outStr1)
         return
     pass
 
@@ -440,7 +542,18 @@ class Assignment(Op):
         return y(self.res, self.i, self.k)
     @logrun
     def run(self):
-        os.link(self.input().path, self.output().path)
+        print('Assignment:')
+        print('input:')
+        print(self.input().path)
+        print('output:')
+        print(self.output().path)
+        inStr = self.input().path
+        inStr1 = self.input().path[:-3] + 'off'
+        outStr = self.output().path
+        outStr1 = self.output().path[:-3] + 'off'
+        print('SolnEx:Trying to link ' + inStr + ' to ' + outStr)
+        os.link(inStr, outStr)
+        os.link(inStr1, outStr1)
         return
 
 class Coarsening(luigi.Task):
@@ -461,7 +574,20 @@ class Coarsening(luigi.Task):
         return self.state_cls(Resolution.Coarse, self.i, self.k)
     @logrun
     def run(self):
-        self.output().save(self.input().load())
+        print('Coarsening:')
+        print(self)
+        print('input:')
+        print(self.input().path)
+        print('output:')
+        print(self.output().path)
+        fineCheckpointFileName = self.input().path
+        coarseCheckpointFileName = self.output().path
+        if os.path.isfile(fineCheckpointFileName):
+            coarsen.createCoarseCheckpointFile(fineCheckpointFileName,
+                                               coarseRankFileName,
+                                               coarseCheckpointFileName)
+        else:
+            sys.stderr.write('ERROR: '+ fineCheckpointFileName + ' not found.\n')
         return
     pass
 
@@ -487,7 +613,20 @@ class Refinement(luigi.Task):
         return self.state_cls(Resolution.Fine, self.i, self.k)
     @logrun
     def run(self):
-        self.output().save(self.input().load())
+        print('Refinement:')
+        print(self)
+        print('input:')
+        print(self.input().path)
+        print('output:')
+        print(self.output().path)
+        coarseCheckpointFileName = self.input().path
+        fineCheckpointFileName = self.output().path
+        if os.path.isfile(coarseCheckpointFileName):
+            refine.createFineCheckpointFile(coarseCheckpointFileName,
+                                            fineRankFileName,
+                                            fineCheckpointFileName)
+        else:
+            sys.stderr.write('ERROR: '+ coarseCheckpointFileName + ' not found.\n')
         return
     
 class SolutionRefinement(Refinement):
@@ -519,16 +658,15 @@ class CoarseDiffer(luigi.Task):
         return DeltaGy(Resolution.Coarse, self.i, self.k)
     @logrun
     def run(self):
-        gk, gk_1 = [i.load() for i in self.input()]
-        # TODO: check time is equal to times[self.i + 1]
-        assert gk['t'] == gk_1['t']
-
-        state = {
-            't': gk['t'],
-            'x': gk['x'] - gk_1['x'],
-            'v': gk['v'] - gk_1['v'],
-            }
-        self.output().save(state)
+        print('CoarseDiffer:')
+        print('inputs:')
+        for i in self.input():
+            print(i.path)
+        print('output:')
+        print(self.output().path)
+        difference.createDifferenceDistributionFile(self.input()[0].path,
+                                                self.input()[1].path,
+                                                self.output().path)
         return
     pass
 
@@ -537,7 +675,7 @@ class ParaUpdate(Op):
 
     y_i^k = G(y_{i-1}^k) + (F(y_{i-1}^{k-1}) - G(y_{i-1}^{k-1}))
 
-    But noting that the subtraction of the G(y)'s can be more effiently
+    But noting that the subtraction of the G(y)'s can be more efficiently
     done at the coarse resolution before refinement.
     '''
     def output(self):
@@ -550,22 +688,23 @@ class ParaUpdate(Op):
             ]
     @logrun
     def run(self):
-        DGy, Fy = [i.load() for i in self.input()]
-        # TODO: check time is equal to times[self.i + 1]
-        assert DGy['t'] == Fy['t']
-
-        state = {
-            't': Fy['t'],
-            'x': Fy['x'] + DGy['x'],
-            'v': Fy['v'] + DGy['v'],
-            }
-        self.output().save(state)
+        print('ParaUpdate:')
+        print('inputs:')
+        for i in self.input():
+            print(i.path)
+        print('output:')
+        print(self.output().path)
+        sum.createSummedDistributionFile(self.input()[0].path,
+                                            self.input()[1].path,
+                                            self.output().path)
         return
     pass
 
 
 
 if __name__ == '__main__':
+    num_workers = int(sys.argv[1])
+    os.makedirs('state')
     tsk = y.producer(Resolution.Fine, 4, 2)
     # #tsk = Solver(res=Resolution.Coarse, i=3, k=0)
-    luigi.build([tsk], local_scheduler=True)
+    luigi.build([tsk], workers=num_workers, local_scheduler=True)
