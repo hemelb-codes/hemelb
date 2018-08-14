@@ -32,8 +32,6 @@ def createFineCheckpointFile(coarseCheckpointFileName,
     sys.stderr.write("coarseCheckpointFileName: " + coarseCheckpointFileName + "\n")
     sys.stderr.write("fineRankFileName: " + fineRankFileName + "\n")
     sys.stderr.write("fineCheckpointFileName: " + fineCheckpointFileName + "\n")
-    cwd = os.getcwd()
-    sys.stderr.write("refine, cwd: " + cwd + "\n")
 
 # ******************************************************************************
 # Define some constants for later use.
@@ -284,11 +282,6 @@ def createFineCheckpointFile(coarseCheckpointFileName,
 
     # Open a fine checkpoint file for writing.
     print "Fine checkpoint file", fineCheckpointFileName
-    dirName = os.path.dirname(fineCheckpointFileName)
-    if os.path.exists(dirName):
-        sys.stderr.write('WARNING: ' + dirName + ' already exists but should not.\n')
-    else:
-        os.makedirs(dirName)
     fineCheckpointFile = open(fineCheckpointFileName, 'w')
 
     # Open a fine (checkpoint) offset file for writing.
