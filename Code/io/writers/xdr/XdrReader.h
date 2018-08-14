@@ -14,6 +14,8 @@
 #endif
 #include <rpc/types.h>
 #include <rpc/xdr.h>
+#include <string>
+#include "Exception.h"
 
 namespace hemelb
 {
@@ -31,11 +33,17 @@ namespace hemelb
             virtual ~XdrReader();
 
             // Functions for reading the next bit of the stream.
-            bool readDouble(double& outDouble);
-            bool readFloat(float& outDouble);
-            bool readInt(int& outInt);
-            bool readUnsignedInt(unsigned int& outUInt);
-            bool readUnsignedLong(uint64_t& outULong);
+	    template<class T>
+	    bool read(T& val);
+
+	    template <class T>
+	    T read() {
+	      T ans;
+	      if (!read<T>(ans)) {
+		throw Exception() << "Error reading type from XDR";
+	      }
+	      return ans;
+	    }
 
             // Get the position in the stream.
             unsigned int GetPosition();
@@ -44,7 +52,6 @@ namespace hemelb
           protected:
             XdrReader();
             XDR mXdr;
-
         };
 
       } // namespace xdr

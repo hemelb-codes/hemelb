@@ -8,11 +8,14 @@
 #define HEMELB_CONFIGURATION_SIMCONFIG_H
 
 #include <vector>
+#include <boost/variant.hpp>
+#include <boost/optional.hpp>
+
 #include "util/Vector3D.h"
 #include "lb/LbmParameters.h"
 #include "lb/iolets/InOutLets.h"
-#include "extraction/PropertyOutputFile.h"
 #include "extraction/GeometrySelectors.h"
+#include "extraction/PropertyOutputFile.h"
 #include "io/xml/XmlAbstractionLayer.h"
 
 namespace hemelb
@@ -31,6 +34,31 @@ namespace hemelb
 
       elem.GetAttributeOrThrow("value", value);
     }
+
+    // Base for initial conditions configuration
+    struct ICConfigBase {
+      ICConfigBase(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t);
+
+      const util::UnitConverter* unitConverter;
+      boost::optional<LatticeTimeStep> t0;
+    };
+
+    // Uniform equilibrium IC
+    struct EquilibriumIC : ICConfigBase {
+      EquilibriumIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, PhysicalPressure p);
+      EquilibriumIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, PhysicalPressure p, const PhysicalVelocity& v);
+      PhysicalPressure p_mmHg;
+      PhysicalVelocity v_ms;
+    };
+
+    // Read from checkpoint IC
+    struct CheckpointIC : ICConfigBase {
+      CheckpointIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, const std::string& cp);
+      std::string cpFile;
+    };
+
+    // Variant including null state
+    using ICConfig = boost::variant<std::nullptr_t, EquilibriumIC, CheckpointIC>;
 
     class SimConfig
     {
@@ -53,10 +81,10 @@ namespace hemelb
             bool doIncompressibilityCheck; ///< Whether to turn on the IncompressibilityChecker or not
         };
 
-        static SimConfig* New(const std::string& path);
+	static SimConfig* New(const std::string& path);
 
       protected:
-        SimConfig(const std::string& path);
+	SimConfig(const std::string& path);
         void Init();
 
       public:
@@ -105,7 +133,7 @@ namespace hemelb
         {
           return maxStress;
         }
-        const std::string & GetDataFilePath() const
+        const std::string& GetDataFilePath() const
         {
           return dataFilePath;
         }
@@ -151,11 +179,10 @@ namespace hemelb
          */
         bool HasColloidSection() const;
 
-        /**
-         * Returns the pressure to be used to initialise all the fluid sites in the domain
-         * @return initial pressure
-         */
-        LatticeDensity GetInitialPressure() const;
+        // Get the initial condtion config
+        inline const ICConfig& GetInitialCondition() const {
+	  return icConfig;
+	}
 
         const util::UnitConverter& GetUnitConverter() const;
 
@@ -244,6 +271,7 @@ namespace hemelb
         extraction::SurfacePointSelector* DoIOForSurfacePoint(const io::xml::Element&);
 
         void DoIOForInitialConditions(io::xml::Element parent);
+	void DoIOForCheckpointFile(const io::xml::Element& checkpointEl);
         void DoIOForVisualisation(const io::xml::Element& visEl);
 
         /**
@@ -285,7 +313,7 @@ namespace hemelb
          * True if the file has a colloids section.
          */
         bool hasColloidSection;
-        PhysicalPressure initialPressure_mmHg; ///< Pressure used to initialise the domain
+
         MonitoringConfig monitoringConfig; ///< Configuration of various checks/tests
 
       protected:
@@ -299,6 +327,8 @@ namespace hemelb
         PhysicalDistance voxelSizeMetres;
         PhysicalPosition geometryOriginMetres;
         util::UnitConverter* unitConverter;
+        ICConfig icConfig;
+      private:
     };
   }
 }

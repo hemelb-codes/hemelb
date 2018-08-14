@@ -101,7 +101,7 @@ namespace hemelb
             hv.u = LatticeVelocity::Zero();
             hv.posIolet = extra.WorldToIolet(location);
 
-            lattices::LatticeInfo& lattice = LatticeType::GetLatticeInfo();
+            auto& lattice = LatticeType::GetLatticeInfo();
 
             distribn_t velocityMatrix[3][3] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
 

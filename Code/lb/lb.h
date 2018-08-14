@@ -90,6 +90,7 @@ namespace hemelb
                         const util::UnitConverter* iUnits);
 
         void ReadVisParameters();
+        void SetInitialConditions(const net::IOCommunicator& ioComms);
 
         void CalculateMouseFlowField(const ScreenDensity densityIn,
                                      const ScreenStress stressIn,
@@ -103,7 +104,6 @@ namespace hemelb
         lb::MacroscopicPropertyCache& GetPropertyCache();
 
       private:
-        void SetInitialConditions();
 
         void InitCollisions();
         // The following function pair simplify initialising the site ranges for each collider object.

@@ -11,8 +11,7 @@ namespace hemelb
   {
     namespace lattices
     {
-      template<>
-      lb::lattices::LatticeInfo* lb::lattices::Lattice<D3Q15i>::singletonInfo = NULL;
+      const Direction D3Q15i::NUMVECTORS;
 
       const int D3Q15i::CX[] = { 0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1 };
       const int D3Q15i::CY[] = { 0, 0, 0, 1, -1, 0, 0, 1, -1, 1, -1, -1, 1, -1, 1 };

@@ -268,6 +268,7 @@ void SimulationMaster::Initialise()
                                                         *unitConverter);
 
   latticeBoltzmannModel->Initialise(visualisationControl, inletValues, outletValues, unitConverter);
+  latticeBoltzmannModel->SetInitialConditions(ioComms);
   neighbouringDataManager->ShareNeeds();
   neighbouringDataManager->TransferNonFieldDependentInformation();
 

@@ -12,8 +12,7 @@ namespace hemelb
   {
     namespace lattices
     {
-      template<>
-      LatticeInfo* Lattice<D3Q27>::singletonInfo = NULL;
+      const Direction D3Q27::NUMVECTORS;
 
       const int D3Q27::CX[] =
           { 0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1 };

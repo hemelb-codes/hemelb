@@ -69,6 +69,9 @@ namespace hemelb
               case OutputField::TangentialProjectionTraction:
                 propertyCache.tangentialProjectionTractionCache.SetRefreshFlag();
                 break;
+              case OutputField::Distributions:
+                // We don't actually have to cache anything to get the distribution.
+                break;
               case OutputField::MpiRank:
                 // We don't actually have to cache anything to get the rank.
                 break;

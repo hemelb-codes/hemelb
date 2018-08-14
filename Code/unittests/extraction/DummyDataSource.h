@@ -126,6 +126,18 @@ namespace hemelb
             return retValue;
           }
 
+          distribn_t* GetDistribution() const
+          {
+            double fval = 1.0;
+            double *p_fval = &fval;
+            return p_fval;
+          }
+
+	  unsigned GetNumVectors() const
+	  {
+	    return 15;
+	  }
+
           bool IsValidLatticeSite(const hemelb::util::Vector3D<site_t>&) const
           {
             return true;

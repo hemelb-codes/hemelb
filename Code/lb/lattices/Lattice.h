@@ -634,11 +634,10 @@ namespace hemelb
             }
           }
 
-          inline static LatticeInfo& GetLatticeInfo()
+	inline static const LatticeInfo& GetLatticeInfo()
           {
-            if (singletonInfo == NULL)
-            {
-              util::Vector3D<int> vectors[DmQn::NUMVECTORS];
+	    static const LatticeInfo singletonInfo = []() {
+	      util::Vector3D<int> vectors[DmQn::NUMVECTORS];
               Direction inverseVectorIndices[DmQn::NUMVECTORS];
 
               for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
@@ -646,11 +645,10 @@ namespace hemelb
                 vectors[direction] = util::Vector3D<int>(DmQn::CX[direction], DmQn::CY[direction], DmQn::CZ[direction]);
                 inverseVectorIndices[direction] = DmQn::INVERSEDIRECTIONS[direction];
               }
+	      return LatticeInfo(DmQn::NUMVECTORS, vectors, inverseVectorIndices);
+	    } ();
 
-              singletonInfo = new LatticeInfo(DmQn::NUMVECTORS, vectors, inverseVectorIndices);
-            }
-
-            return *singletonInfo;
+            return singletonInfo;
           }
 
           inline static bool IsLatticeCompressible()
@@ -716,8 +714,6 @@ namespace hemelb
 
             return zetaHighOrders;
           }
-
-          static LatticeInfo* singletonInfo;
       };
     }
   }

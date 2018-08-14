@@ -4,15 +4,20 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "lb/lattices/LatticeInfo.h"
+#ifndef HEMELB_EXTRACTION_INPUTFIELD_H
+#define HEMELB_EXTRACTION_INPUTFIELD_H
 
 namespace hemelb
 {
-  namespace lb
+  namespace extraction
   {
-    namespace lattices
+    struct InputField
     {
-
-    }
+      std::string name;
+      uint32_t numberOfFloats;
+      double offset;
+    };
   }
 }
+
+#endif /* HEMELB_EXTRACTION_INPUTFIELD_H */

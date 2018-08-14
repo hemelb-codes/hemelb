@@ -13,11 +13,28 @@
 #include "configuration/SimConfig.h"
 #include "log/Logger.h"
 #include "util/fileutils.h"
+#include "lb/InitialCondition.h"
 
 namespace hemelb
 {
   namespace configuration
   {
+    // Base IC
+    ICConfigBase::ICConfigBase(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t) : unitConverter(units), t0(t) {
+    }
+
+    // Uniform equilibrium IC
+    EquilibriumIC::EquilibriumIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, PhysicalPressure p) : ICConfigBase(units, t), p_mmHg(p), v_ms(0.0) {
+    }
+
+    EquilibriumIC::EquilibriumIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, PhysicalPressure p, const PhysicalVelocity& v) : ICConfigBase(units, t), p_mmHg(p), v_ms(v) {
+    }
+
+    // checkpoint IC
+    CheckpointIC::CheckpointIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, const std::string& cp) : ICConfigBase(units, t), cpFile(cp) {
+    }
+
+
     SimConfig* SimConfig::New(const std::string& path)
     {
       SimConfig* ans = new SimConfig(path);
@@ -25,11 +42,12 @@ namespace hemelb
       return ans;
     }
 
+
     SimConfig::SimConfig(const std::string& path) :
-        xmlFilePath(path), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0),
-            unitConverter(NULL)
+      xmlFilePath(path), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0), unitConverter(NULL)
     {
     }
+
     void SimConfig::Init()
     {
       if (!util::file_exists(xmlFilePath.c_str()))
@@ -461,6 +479,10 @@ namespace hemelb
       {
         field.type = extraction::OutputField::TangentialProjectionTraction;
       }
+      else if (type == "distributions")
+      {
+        field.type = extraction::OutputField::Distributions;
+      }
       else if (type == "mpirank")
       {
         field.type = extraction::OutputField::MpiRank;
@@ -489,11 +511,40 @@ namespace hemelb
 
     void SimConfig::DoIOForInitialConditions(io::xml::Element initialconditionsEl)
     {
-      //, isLoading, initialPressure
-      io::xml::Element pressureEl = initialconditionsEl.GetChildOrThrow("pressure");
-      io::xml::Element uniformEl = pressureEl.GetChildOrThrow("uniform");
+      // The <time> element may be present - if so, it will set the
+      // initial timestep value
+      boost::optional<LatticeTimeStep> t0;
+      if (auto timeEl = initialconditionsEl.GetChildOrNull("time")) {
+	LatticeTimeStep tmp;
+	GetDimensionalValue(timeEl, "lattice", tmp);
+	t0 = tmp;
+      }
 
-      GetDimensionalValue(uniformEl, "mmHg", initialPressure_mmHg);
+      // Exactly one of {<pressure>, <checkpoint>} must be present
+      // TODO: use something other than an if-tree
+      auto pressureEl = initialconditionsEl.GetChildOrNull("pressure");
+      auto checkpointEl = initialconditionsEl.GetChildOrNull("checkpoint");
+      if (pressureEl) {
+	if (checkpointEl) {
+	  // Both are present - this is an error
+	  throw Exception()
+	    << "XML contains both <pressure> and <checkpoint> sub elements of <initialconditions>";
+	} else {
+	  // Only pressure
+	  io::xml::Element uniformEl = pressureEl.GetChildOrThrow("uniform");
+	  PhysicalPressure p0_mmHg;
+	  GetDimensionalValue(uniformEl, "mmHg", p0_mmHg);
+	  icConfig = EquilibriumIC(unitConverter, t0, p0_mmHg);
+	}
+      } else {
+	if (checkpointEl) {
+	  // Only checkpoint
+	  icConfig = CheckpointIC(unitConverter, t0, checkpointEl.GetAttributeOrThrow("file"));
+	} else {
+	  // No IC!
+	  throw Exception() << "XML <initialconditions> element contains no known initial condition type";
+	}
+      }
     }
 
     lb::iolets::InOutLetCosine* SimConfig::DoIOForCosinePressureInOutlet(
@@ -627,11 +678,6 @@ namespace hemelb
     bool SimConfig::HasColloidSection() const
     {
       return hasColloidSection;
-    }
-
-    PhysicalPressure SimConfig::GetInitialPressure() const
-    {
-      return initialPressure_mmHg;
     }
 
     const util::UnitConverter& SimConfig::GetUnitConverter() const

@@ -44,7 +44,7 @@ namespace hemelb
         PhysicalTime GetTime() const {return GetTimeStepLength()*Get0IndexedTimeStep();}
         PhysicalTime GetTimeStepLength() const {return timeStepLength;}
 
-        void Report(ctemplate::TemplateDictionary& dictionary);
+        void Report(reporting::Dict& dictionary);
 
       private:
         PhysicalTime timeStepLength;
@@ -53,6 +53,7 @@ namespace hemelb
         bool isTerminating;
         bool isRendering;
         Stability stability;
+        friend struct InitialConditionBase;
     };
   }
 }

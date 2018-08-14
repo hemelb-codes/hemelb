@@ -8,9 +8,10 @@
 #define HEMELB_GEOMETRY_DECOMPOSITION_OPTIMISEDDECOMPOSITION_H
 
 #include <vector>
+#include <map>
 #include "geometry/Geometry.h"
 #include "lb/lattices/LatticeInfo.h"
-#include "geometry/ParmetisHeader.h"
+#include "geometry/ParmetisForward.h"
 #include "reporting/Timers.h"
 #include "net/MpiCommunicator.h"
 #include "geometry/SiteData.h"

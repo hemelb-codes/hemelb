@@ -7,7 +7,6 @@
 #include <map>
 #include <limits>
 
-#include "debug/Debugger.h"
 #include "log/Logger.h"
 #include "net/IOCommunicator.h"
 #include "geometry/BlockTraverser.h"
@@ -681,16 +680,16 @@ namespace hemelb
       }
     }
 
-    void LatticeData::Report(ctemplate::TemplateDictionary& dictionary)
+    void LatticeData::Report(reporting::Dict& dictionary)
     {
       dictionary.SetIntValue("SITES", GetTotalFluidSites());
       dictionary.SetIntValue("BLOCKS", blockCount);
       dictionary.SetIntValue("SITESPERBLOCK", sitesPerBlockVolumeUnit);
       for (size_t n = 0; n < fluidSitesOnEachProcessor.size(); n++)
       {
-        ctemplate::TemplateDictionary *proc = dictionary.AddSectionDictionary("PROCESSOR");
-        proc->SetIntValue("RANK", n);
-        proc->SetIntValue("SITES", fluidSitesOnEachProcessor[n]);
+        reporting::Dict proc = dictionary.AddSectionDictionary("PROCESSOR");
+        proc.SetIntValue("RANK", n);
+        proc.SetIntValue("SITES", fluidSitesOnEachProcessor[n]);
       }
     }
     neighbouring::NeighbouringLatticeData &LatticeData::GetNeighbouringData()

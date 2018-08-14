@@ -215,7 +215,7 @@ namespace hemelb
 
             // The timestep should be correct
             uint64_t readTimestep;
-            reader.readUnsignedLong(readTimestep);
+            reader.read(readTimestep);
 
             CPPUNIT_ASSERT_EQUAL(timestep, readTimestep);
 
@@ -226,9 +226,9 @@ namespace hemelb
               // Read the grid, which should be the same
               LatticeVector grid = datasource->GetPosition();
               unsigned x, y, z;
-              reader.readUnsignedInt(x);
-              reader.readUnsignedInt(y);
-              reader.readUnsignedInt(z);
+              reader.read(x);
+              reader.read(y);
+              reader.read(z);
 
               CPPUNIT_ASSERT_EQUAL((unsigned) grid.x, x);
               CPPUNIT_ASSERT_EQUAL((unsigned) grid.y, y);
@@ -237,16 +237,16 @@ namespace hemelb
               // Read the pressure, which should be an offset of the
               // reference pressure away.
               float pressure;
-              reader.readFloat(pressure);
+              reader.read(pressure);
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL(datasource->GetPressure(), (REFERENCE_PRESSURE_mmHg + (double) pressure), epsilon);
 
               // Read the velocity and compare
               PhysicalVelocity velocity = datasource->GetVelocity();
               float vx, vy, vz;
-              reader.readFloat(vx);
-              reader.readFloat(vy);
-              reader.readFloat(vz);
+              reader.read(vx);
+              reader.read(vy);
+              reader.read(vz);
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL(velocity.x, (double) vx, epsilon);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(velocity.y, (double) vy, epsilon);

@@ -16,8 +16,6 @@
 #include "util/FlatMap.h"
 #include <map>
 
-#include "debug/Debugger.h"
-
 namespace hemelb
 {
   namespace lb
@@ -73,7 +71,7 @@ namespace hemelb
                 iolet.SetExtraData(new VSExtra<LatticeType> (iolet));
             }
 
-            lattices::LatticeInfo& lattice = LatticeType::GetLatticeInfo();
+            auto& lattice = LatticeType::GetLatticeInfo();
             // Want to loop over each site this streamer is responsible for,
             // as specified in the siteRanges.
             for (std::vector<std::pair<site_t, site_t> >::iterator rangeIt =

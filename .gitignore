@@ -47,5 +47,6 @@ Tools/hemeTools/parsers/geometry/BaseSite.h
 Tools/hemeTools/parsers/geometry/BaseSite.so
 Tools/hemeTools/utils/xdr.c
 Tools/hemeTools/utils/xdr.so
+revision_info.txt
 hemelb-prefix/src/hemelb-stamp/hemelb-urlinfo.txt
 *-slack-token

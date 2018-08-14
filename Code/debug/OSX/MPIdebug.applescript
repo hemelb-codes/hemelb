@@ -54,11 +54,10 @@ on CreateTabs(pIds)
 		repeat with pId in pIds
 			if rank is equal to 0 then
 				set newTab to do script
-				set wId to (id of first window whose first tab is newTab)
 			else
-				delay 1
 				tell application "System Events" to tell process "Terminal" to keystroke "t" using command down
-				set newTab to do script in window id wId
+				delay 1
+				set newTab to do script in front tab of front window
 			end if
 			copy newTab to the end of tabList
 			set custom title of newTab to "Rank " & rank
@@ -70,15 +69,15 @@ end CreateTabs
 
 on lldbRun(binary, pIds)
 	set debugger to "lldb"
-		
 	set tabList to CreateTabs(pIds)
 	tell application "Terminal"
 		-- run commands in tabs
 		repeat with i from 1 to count pIds
 			set pId to item i of pIds
 			set curTab to item i of tabList
-			set cmd to debugger & " -f " & binary & " -p " & pId
-			set newTab to do script cmd in curTab
+			set cmd to debugger & " -p " & pId
+			do script cmd in curTab
+
 			delay 1
 			do script ("frame select -r 3") in curTab
 			do script ("expr amWaiting = 0") in curTab

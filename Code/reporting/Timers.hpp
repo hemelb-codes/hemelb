@@ -47,18 +47,18 @@ namespace hemelb
     }
 
     template<class ClockPolicy, class CommsPolicy>
-    void TimersBase<ClockPolicy, CommsPolicy>::Report(ctemplate::TemplateDictionary& dictionary)
+    void TimersBase<ClockPolicy, CommsPolicy>::Report(Dict& dictionary)
     {
       dictionary.SetIntValue("THREADS", CommsPolicy::GetProcessorCount());
 
       for (unsigned int ii = 0; ii < numberOfTimers; ii++)
       {
-        ctemplate::TemplateDictionary *timer = dictionary.AddSectionDictionary("TIMER");
-        timer->SetValue("NAME", timerNames[ii]);
-        timer->SetFormattedValue("LOCAL", "%.3g", timers[ii].Get());
-        timer->SetFormattedValue("MIN", "%.3g", Mins()[ii]);
-        timer->SetFormattedValue("MEAN", "%.3g", Means()[ii]);
-        timer->SetFormattedValue("MAX", "%.3g", Maxes()[ii]);
+        Dict timer = dictionary.AddSectionDictionary("TIMER");
+        timer.SetValue("NAME", timerNames[ii]);
+        timer.SetFormattedValue("LOCAL", "%.3g", timers[ii].Get());
+        timer.SetFormattedValue("MIN", "%.3g", Mins()[ii]);
+        timer.SetFormattedValue("MEAN", "%.3g", Means()[ii]);
+        timer.SetFormattedValue("MAX", "%.3g", Maxes()[ii]);
       }
     }
 
