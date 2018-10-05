@@ -14,7 +14,7 @@
 #include "lb/lattices/LatticeInfo.h"
 #include "lb/LbmParameters.h"
 #include "net/mpi.h"
-#include "geometry/ParmetisHeader.h"
+#include "geometry/ParmetisForward.h"
 #include "reporting/Timers.h"
 #include "util/Vector3D.h"
 #include "units.h"
