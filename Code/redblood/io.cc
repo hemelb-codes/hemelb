@@ -113,6 +113,38 @@ namespace hemelb
         }
       }
 
+      // Recongnise "fake" inlets where no cells are inserted
+      void readFlowExtensionsWithoutInsertElement(io::xml::Element const& ioletsNode,
+                              util::UnitConverter const& converter,
+                              std::vector<FlowExtension> &results, bool mustHaveFlowExtension =
+                                  false)
+      {
+        if (ioletsNode == ioletsNode.Missing())
+        {
+          return;
+        }
+        auto const name = ioletsNode.GetName().substr(0, ioletsNode.GetName().size() - 1);
+        auto ioletNode = ioletsNode.GetChildOrNull(name);
+        for (; ioletNode != ioletNode.Missing(); ioletNode = ioletNode.NextSiblingOrNull(name))
+        {
+          if (ioletNode.GetChildOrNull("flowextension") != ioletNode.Missing())
+          {
+            if (ioletNode.GetChildOrNull("insertcell") != ioletNode.Missing())
+            {
+              continue;
+            }
+            else
+            {
+              results.emplace_back(readFlowExtension(ioletNode, converter));
+            }
+          }
+          else if (mustHaveFlowExtension)
+          {
+            throw Exception() << "Could not find flow extension in iolet";
+          }
+        }
+      }
+
       //! Rotates a cell to be aligned with the flow and translates it to the start of the flow extension fade length
       void rotateTranslateCellToFlow(std::unique_ptr<CellBase> & cell, const Angle theta,
                                      const Angle phi, const FlowExtension & flowExtension,
@@ -524,8 +556,13 @@ namespace hemelb
     {
       // First read outlets from XML
       auto const result = std::make_shared<std::vector<FlowExtension>>();
+
       auto outletsNode = topNode.GetChildOrThrow("outlets");
       readFlowExtensions(outletsNode, converter, *result);
+
+      auto inletsNode = topNode.GetChildOrThrow("inlets");
+      readFlowExtensionsWithoutInsertElement(inletsNode, converter, *result);
+
       // Then transforms them to cell outlets: should start somewhere near the end of fadelength
       for (auto &flowExt : *result)
       {
