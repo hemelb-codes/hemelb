@@ -113,7 +113,7 @@ namespace hemelb
         }
       }
 
-      // Recongnise "fake" inlets where no cells are inserted
+      // Read physical outlets that are somehow configured as numerical inlets in the XML parameter file
       void readFlowExtensionsWithoutInsertElement(io::xml::Element const& ioletsNode,
                               util::UnitConverter const& converter,
                               std::vector<FlowExtension> &results, bool mustHaveFlowExtension =
