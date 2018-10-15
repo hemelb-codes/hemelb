@@ -10,8 +10,11 @@ Project(HemeLBMaster)
 include(ExternalProject)
 
 set(HEMELB_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-set(HEMELB_DEPENDENCIES_PATH "${HEMELB_ROOT_DIR}/dependencies")
-set(HEMELB_SUBPROJECT_MAKE_JOBS 1 CACHE INTEGER "Number of jobs to use for subproject build steps")
+
+# Include the options for the main code
+include("Code/cmake/options.cmake")
+# and create a list of them to pass to the main configure step
+hemelb_pass_cmake_defines(HEMELB_CODE_CMAKE_DEFINES)
 
 #------- Dependencies -----------
 
@@ -19,11 +22,6 @@ add_subdirectory(dependencies)
 
 # ------ HemeLB ------------------
 message("${PROJECT_SOURCE_DIR}/Code")
-
-# Include the options for the main code
-include("Code/cmake/options.cmake")
-# and create a list of them to pass to the main configure step
-hemelb_pass_cmake_defines(HEMELB_CODE_CMAKE_DEFINES)
 
 ExternalProject_Add(
   hemelb

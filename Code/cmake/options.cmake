@@ -101,6 +101,9 @@ hemelb_cachevar(HEMELB_DEPENDENCIES_PATH "${HEMELB_ROOT_DIR}/dependencies"
   FILEPATH "Path to find dependency find modules")
 hemelb_cachevar(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH}
   FILEPATH "Path to find dependency includes and libraries")
+hemelb_cachevar(HEMELB_SUBPROJECT_MAKE_JOBS 1
+  INTEGER "Number of jobs to use for subproject build steps")
+
 hemelb_cachevar(HEMELB_OPTIMISATION "-O3"
   STRING "Optimisation level (can be blank or -O1 to -O4)")
 hemelb_cachevar(HEMELB_LATTICE "D3Q15"
