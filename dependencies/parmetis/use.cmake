@@ -9,7 +9,8 @@ function(METIS_TYPE category widths types output)
   endif()
 
   list(APPEND CMAKE_REQUIRED_INCLUDES ${PARMETIS_INCLUDE_DIRS})
-  foreach(i RANGE nw)
+  math(EXPR loop_max "${nw} - 1")
+  foreach(i RANGE ${loop_max})
     list(GET widths ${i} WIDTH)
     CHECK_CXX_SOURCE_COMPILES("#include <metis.h>
 int main() {

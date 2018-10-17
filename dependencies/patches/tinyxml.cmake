@@ -3,9 +3,13 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.2)
 
 project(TinyXml)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 OPTION(TIXML_USE_STL "Use STL with TIXML" ON)
 if(TIXML_USE_STL)
   add_definitions(-DTIXML_USE_STL)
