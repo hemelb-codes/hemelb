@@ -229,6 +229,12 @@ namespace hemelb
           return blockCoords * blockSize + localSiteCoords;
         }
 
+
+        const std::vector<site_t>& GetNeighbourIndices() const
+        {
+            return neighbourIndices;
+        }
+
         inline site_t GetGlobalNoncontiguousSiteIdFromGlobalCoords(const util::Vector3D<site_t>&globalCoords) const
         {
           return (globalCoords.x * sites.y + globalCoords.y) * sites.z + globalCoords.z;
