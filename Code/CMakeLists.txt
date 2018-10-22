@@ -11,6 +11,12 @@ set(HEMELB_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# CUDA
+find_package(CUDA REQUIRED)
+include(FindCUDA)
+set(CUDA_NVCC_FLAGS "-Wno-deprecated-gpu-targets")
+
+
 #---- OPTION switches accepted by the build -------
 include("cmake/options.cmake")
 
@@ -23,7 +29,6 @@ if(HEMELB_OPTIMISATION)
   set( CMAKE_CXX_FLAGS_RELEASE ${HEMELB_OPTIMISATION})
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HEMELB_OPTIMISATION}")
 endif()
-
 
 add_definitions(-DHEMELB_CODE)
 add_definitions(-DHEMELB_READING_GROUP_SIZE=${HEMELB_READING_GROUP_SIZE})
@@ -127,7 +132,7 @@ if (HEMELB_USE_DEBUGGER)
 endif()
 
 set(root_sources SimulationMaster.cc)
-add_executable(${HEMELB_EXECUTABLE} main.cc ${root_sources})
+cuda_add_executable(${HEMELB_EXECUTABLE}_gpu main.cc ${root_sources})
 
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
@@ -151,12 +156,13 @@ foreach(subdir ${package_subdirs})
   add_subdirectory(${subdir})
 endforeach()
 add_subdirectory(resources)
-target_link_libraries(${HEMELB_EXECUTABLE} 
+target_link_libraries(${HEMELB_EXECUTABLE}_gpu
   ${heme_libraries}
   ${MPI_LIBRARIES}
   ${Boost_LIBRARIES}
+  -L$ENV{CUDA_ROOT}/lib64 cudart
   )
-INSTALL(TARGETS ${HEMELB_EXECUTABLE} RUNTIME DESTINATION bin)
+INSTALL(TARGETS ${HEMELB_EXECUTABLE}_gpu RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
 
 # ----------- HemeLB Multiscale ------------------
@@ -199,6 +205,7 @@ if (HEMELB_BUILD_MULTISCALE)
     ${heme_libraries}
     ${MPI_LIBRARIES}
     ${Boost_LIBRARIES}
+    -L$ENV{CUDA_ROOT}/lib64 cudart
     )
   INSTALL(TARGETS multiscale_hemelb RUNTIME DESTINATION bin)
   list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
@@ -214,7 +221,10 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
     hemelb_unittests 
     ${heme_libraries}
     ${MPI_LIBRARIES}
-    ${Boost_LIBRARIES})
+    ${Boost_LIBRARIES}
+    -L$ENV{CUDA_ROOT}/lib64 cudart
+    )
+
   INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
   list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/four_cube_multiscale.xml
     unittests/resources/config.xml unittests/resources/config0_2_0.xml
@@ -246,3 +256,6 @@ foreach(resource ${RESOURCES})
   get_filename_component(resource_leaf ${resource} NAME)
   INSTALL(FILES ${BUILD_RESOURCE_PATH}/${resource_leaf} DESTINATION share/hemelb/resources)
 endforeach()
+
+file(GLOB_RECURSE HEMELB_CU_FILES ${CMAKE_SOURCE_DIR}/*.cu)
+set_source_files_properties( ${HEMELB_CU_FILES} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ )
