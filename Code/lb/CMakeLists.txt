@@ -16,4 +16,5 @@ cuda_add_library(hemelb_lb
   kernels/rheologyModels/CassonRheologyModel.cc kernels/rheologyModels/TruncatedPowerLawRheologyModel.cc
   lattices/LatticeInfo.cc lattices/D3Q15.cc lattices/D3Q19.cc lattices/D3Q27.cc lattices/D3Q15i.cc
   MacroscopicPropertyCache.cc SimulationState.cc StabilityTester.cc
+  streamers/StreamerTypeFactory.cu
   )
