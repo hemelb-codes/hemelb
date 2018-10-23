@@ -3,7 +3,9 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-add_library(hemelb_unittests main.cc)
+file(GLOB_RECURSE HEMELB_CU_FILES ${CMAKE_SOURCE_DIR}/*.cc)
+set_source_files_properties( ${HEMELB_CU_FILES} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ )
+cuda_add_library(hemelb_unittests main.cc)
 hemelb_add_target_dependency_cppunit(hemelb_unittests)
 # ReporterTests directly use ctemplate
 hemelb_add_target_dependency_ctemplate(hemelb_unittests)

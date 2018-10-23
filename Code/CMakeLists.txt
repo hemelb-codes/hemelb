@@ -6,17 +6,15 @@ cmake_minimum_required (VERSION 3.2)
 
 project(HemeLB)
 
+find_package(CUDA REQUIRED)
+include(FindCUDA)
+set(CUDA_NVCC_FLAGS "-Wno-deprecated-gpu-targets")
+
 set(HEMELB_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-
-# CUDA
-find_package(CUDA REQUIRED)
-include(FindCUDA)
-set(CUDA_NVCC_FLAGS "-Wno-deprecated-gpu-targets")
-
 
 #---- OPTION switches accepted by the build -------
 include("cmake/options.cmake")
@@ -75,8 +73,10 @@ if (HEMELB_USE_VELOCITY_WEIGHTS_FILE)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${HEMELB_DEPENDENCIES_PATH}/Modules/")
-list(APPEND CMAKE_INCLUDE_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/include)
+list(APPEND CMAKE_INCLUDE_PATH "${HEMELB_DEPENDENCIES_INSTALL_PATH}/include" "${CMAKE_CURRENT_SOURCE_DIR}")
 list(APPEND CMAKE_LIBRARY_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/lib)
+
+list(APPEND CUDA_NVCC_FLAGS "-I ${HEMELB_DEPENDENCIES_INSTALL_PATH}/include")
 
 #--- Set up runtime search path for DLLs -----
 if(HEMELB_DEPENDENCIES_SET_RPATH)
@@ -107,6 +107,11 @@ endif()
 
 include(mpi)
 include(dependencies)
+
+# CUDA
+
+file(GLOB_RECURSE HEMELB_CU_FILES ${CMAKE_SOURCE_DIR}/*.cc)
+set_source_files_properties( ${HEMELB_CU_FILES} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ )
 
 #-------------Resources -----------------------
 
@@ -157,7 +162,7 @@ foreach(subdir ${package_subdirs})
   add_subdirectory(${subdir})
 endforeach()
 add_subdirectory(resources)
-target_link_libraries(${HEMELB_EXECUTABLE}_gpu
+target_link_libraries(${HEMELB_EXECUTABLE}_gpu PUBLIC
   ${heme_libraries}
   ${MPI_LIBRARIES}
   ${Boost_LIBRARIES}
@@ -165,90 +170,6 @@ target_link_libraries(${HEMELB_EXECUTABLE}_gpu
   )
 INSTALL(TARGETS ${HEMELB_EXECUTABLE}_gpu RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
-
-# ----------- HemeLB Multiscale ------------------
-if (HEMELB_BUILD_MULTISCALE)
-  if (APPLE)
-    add_definitions(-DHEMELB_CFG_ON_BSD -DHEMELB_CFG_ON_OSX)
-  endif()
-  if (HEMELB_USE_DEBUGGER)
-    # Force a debug build, because the debugger makes no sense without debug symbols
-    set(CMAKE_BUILD_TYPE DEBUG)
-  endif()
-  
-  set(root_sources SimulationMaster.cc multiscale/MultiscaleSimulationMaster.h)
-  add_executable(multiscale_hemelb mainMultiscale.cc ${root_sources})
-  hemelb_add_target_dependency_mpwide(multiscale_hemelb)
-  
-  include_directories(${PROJECT_SOURCE_DIR})
-  set(package_subdirs
-    configuration
-    extraction
-    reporting
-    steering
-    vis
-    lb
-    geometry
-    net
-    debug
-    util
-    io
-    log
-    colloids
-    multiscale
-    )
-  foreach(subdir ${package_subdirs})
-    set(lib "hemelb_${subdir}")
-    list(APPEND heme_libraries ${lib})
-  endforeach()
-  add_subdirectory(multiscale)
-  target_link_libraries(multiscale_hemelb
-    ${heme_libraries}
-    ${MPI_LIBRARIES}
-    ${Boost_LIBRARIES}
-    -L$ENV{CUDA_ROOT}/lib64 cudart
-    )
-  INSTALL(TARGETS multiscale_hemelb RUNTIME DESTINATION bin)
-  list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
-endif()
-
-# ----------- HEMELB unittests ---------------
-if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
-  #------CPPUnit ---------------
-  hemelb_dependency(cppunit use)
-  add_executable(unittests_hemelb ${root_sources})
-  add_subdirectory(unittests)
-  target_link_libraries(unittests_hemelb 
-    hemelb_unittests 
-    ${heme_libraries}
-    ${MPI_LIBRARIES}
-    ${Boost_LIBRARIES}
-    -L$ENV{CUDA_ROOT}/lib64 cudart
-    )
-
-  INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
-  list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/four_cube_multiscale.xml
-    unittests/resources/config.xml unittests/resources/config0_2_0.xml
-    unittests/resources/config_file_inlet.xml unittests/resources/iolet.txt 
-    unittests/resources/config-velocity-iolet.xml unittests/resources/config_new_velocity_inlets.xml
-    unittests/resources/velocity_inlet.txt.weights.txt
-    unittests/resources/xmltest.xml unittests/resources/config_file_velocity_inlet.xml unittests/resources/velocity_inlet.txt 
-    )
-endif()
-
-# ----------- HEMELB functionaltests ---------------
-if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
-  #------CPPUnit ---------------
-  hemelb_dependency(cppunit use)
-  add_executable(functionaltests_hemelb ${root_sources})
-  add_subdirectory(functionaltests/cpptests)
-  target_link_libraries(functionaltests_hemelb 
-    hemelb_functionaltests 
-    ${heme_libraries}
-    ${MPI_LIBRARIES}
-    ${Boost_LIBRARIES})
-  INSTALL(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
-endif()
 
 #-------- Copy and install resources --------------
 
@@ -258,5 +179,3 @@ foreach(resource ${RESOURCES})
   INSTALL(FILES ${BUILD_RESOURCE_PATH}/${resource_leaf} DESTINATION share/hemelb/resources)
 endforeach()
 
-file(GLOB_RECURSE HEMELB_CU_FILES ${CMAKE_SOURCE_DIR}/*.cu)
-set_source_files_properties( ${HEMELB_CU_FILES} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ )
