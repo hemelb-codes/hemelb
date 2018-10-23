@@ -70,30 +70,30 @@ namespace hemelb
             static distribn_t* fOld_dev;
             static distribn_t* fNew_dev;
 
+            unsigned numSites = latDat->GetLocalFluidSiteCount();
+
             if ( init )
             {
-              unsigned numVectors = latDat->GetLatticeInfo().GetNumVectors();
+              cudaMalloc(&neighbourIndices_dev, numSites * LatticeType::NUMVECTORS * sizeof(site_t));
+              cudaMalloc(&wallIntersections_dev, numSites * sizeof(unsigned));
+              cudaMalloc(&fOld_dev, (numSites * LatticeType::NUMVECTORS + 1) * sizeof(distribn_t));
+              cudaMalloc(&fNew_dev, (numSites * LatticeType::NUMVECTORS + 1) * sizeof(distribn_t));
 
-              cudaMalloc(&neighbourIndices_dev, numVectors * LatticeType::NUMVECTORS * sizeof(site_t));
-              cudaMalloc(&wallIntersections_dev, numVectors * sizeof(unsigned));
-              cudaMalloc(&fOld_dev, numVectors * LatticeType::NUMVECTORS * sizeof(distribn_t));
-              cudaMalloc(&fNew_dev, numVectors * LatticeType::NUMVECTORS * sizeof(distribn_t));
+              std::vector<unsigned> wallIntersections(numSites);
 
-              std::vector<unsigned> wallIntersections(numVectors);
-
-              for ( site_t siteIndex = 0; siteIndex < numVectors; ++siteIndex )
+              for ( site_t siteIndex = 0; siteIndex < numSites; ++siteIndex )
               {
                 wallIntersections[siteIndex] = latDat->GetSite(siteIndex).GetSiteData().GetWallIntersectionData();
               }
 
-              cudaMemcpy(neighbourIndices_dev, latDat->GetNeighbourIndices().data(), numVectors * LatticeType::NUMVECTORS * sizeof(site_t), cudaMemcpyHostToDevice);
-              cudaMemcpy(wallIntersections_dev, wallIntersections.data(), numVectors * sizeof(unsigned), cudaMemcpyHostToDevice);
+              cudaMemcpy(neighbourIndices_dev, latDat->GetNeighbourIndices().data(), numSites * LatticeType::NUMVECTORS * sizeof(site_t), cudaMemcpyHostToDevice);
+              cudaMemcpy(wallIntersections_dev, wallIntersections.data(), numSites * sizeof(unsigned), cudaMemcpyHostToDevice);
 
               init = false;
             }
 
             // copy fOld from host to device
-            cudaMemcpy(fOld_dev, latDat->GetSite(firstIndex).GetFOld<LatticeType>(), siteCount * LatticeType::NUMVECTORS * sizeof(distribn_t), cudaMemcpyHostToDevice);
+            cudaMemcpy(fOld_dev, latDat->GetSite(0).GetFOld<LatticeType>(), numSites * LatticeType::NUMVECTORS * sizeof(distribn_t), cudaMemcpyHostToDevice);
 
             // launch WallStreamer_DoStreamAndCollide kernel
             const int BLOCK_SIZE = 256;
@@ -111,7 +111,7 @@ namespace hemelb
             );
 
             // copy fNew from device to host
-            cudaMemcpy(latDat->GetFNew(firstIndex), fNew_dev, siteCount * LatticeType::NUMVECTORS * sizeof(distribn_t), cudaMemcpyDeviceToHost);
+            cudaMemcpy(latDat->GetFNew(0), fNew_dev, numSites * LatticeType::NUMVECTORS * sizeof(distribn_t), cudaMemcpyDeviceToHost);
           }
 
           template<bool tDoRayTracing>

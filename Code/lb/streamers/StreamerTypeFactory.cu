@@ -140,12 +140,12 @@ __global__ void WallStreamerTypeFactory_DoStreamAndCollideKernel(
     if ( Site_HasWall(wallIntersections[siteIndex], j) )
     {
       int outIndex = siteIndex * D3Q15_NUMVECTORS + D3Q15_INVERSEDIRECTIONS[j];
-      fNew[outIndex * D3Q15_NUMVECTORS] = f_post[j];
+      fNew[outIndex] = f_post[j];
     }
     else
     {
       int outIndex = neighbourIndices[siteIndex * D3Q15_NUMVECTORS + j];
-      fNew[outIndex * D3Q15_NUMVECTORS] = f_post[j];
+      fNew[outIndex] = f_post[j];
     }
   }
 }
