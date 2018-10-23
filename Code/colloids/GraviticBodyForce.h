@@ -45,7 +45,7 @@ namespace hemelb
         GraviticBodyForce(const LatticeForceVector constantForce) :
           graviticForce(constantForce) {};
 
-        const LatticeForceVector graviticForce;
+        LatticeForceVector graviticForce;
     };
 
     class GraviticBodyForceFactory : public BodyForceFactory<GraviticBodyForce> { };

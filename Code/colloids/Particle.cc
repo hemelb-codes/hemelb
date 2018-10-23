@@ -35,7 +35,7 @@ namespace hemelb
           globalPosition.x, globalPosition.y, globalPosition.z);
     }
 
-//    const bool Particle::operator<(const Particle& other) const
+//    bool Particle::operator<(const Particle& other) const
 //    {
 //      // ORDER BY isLocal, ownerRank, particleId
 //      if (ownerRank == other.ownerRank)
@@ -48,12 +48,12 @@ namespace hemelb
 //        return (ownerRank < other.ownerRank);
 //    }
 
-    const bool Particle::IsOwnerRankKnown(std::map<proc_t, std::pair<unsigned int, unsigned int> > map) const
+    bool Particle::IsOwnerRankKnown(std::map<proc_t, std::pair<unsigned int, unsigned int> > map) const
     {
       return map.count(ownerRank)>0;
     }
 
-    const bool Particle::IsReadyToBeDeleted() const
+    bool Particle::IsReadyToBeDeleted() const
     {
       return markedForDeletionTimestep < lastCheckpointTimestep;
     }

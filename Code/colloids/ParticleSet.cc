@@ -107,7 +107,7 @@ namespace hemelb
     void ParticleSet::OutputInformation(const LatticeTimeStep timestep)
     {
       // Ensure the buffer is large enough.
-      const unsigned int maxSize = io::formats::colloids::RecordLength * particles.size()
+      unsigned int maxSize = io::formats::colloids::RecordLength * particles.size()
           + io::formats::colloids::HeaderLength;
       if (buffer.size() < maxSize)
       {
@@ -128,7 +128,7 @@ namespace hemelb
       }
 
       // And get the number of bytes written.
-      const unsigned int count = writer.getCurrentStreamPosition();
+      unsigned int count = writer.getCurrentStreamPosition();
 
       // Find how far we currently are into the file.
       MPI_Offset positionBeforeWriting;
@@ -166,8 +166,8 @@ namespace hemelb
       for (scanMapConstIterType iterMap = scanMap.begin(); iterMap != scanMap.end(); iterMap++)
       {
         const proc_t& neighbourRank = iterMap->first;
-        const unsigned int& numberOfParticles = iterMap->second.first;
-        const unsigned int& numberOfVelocities = iterMap->second.second;
+        unsigned int& numberOfParticles = iterMap->second.first;
+        unsigned int& numberOfVelocities = iterMap->second.second;
         log::Logger::Log<log::Debug, log::OnePerCore>("ScanMap[%i] = {%i, %i}\n",
                                                       neighbourRank,
                                                       numberOfParticles,
@@ -310,7 +310,7 @@ namespace hemelb
         const proc_t& neighbourRank = iterMap->first;
         if (neighbourRank != localRank)
         {
-          const unsigned int& numberOfParticlesToRecv = iterMap->second.first;
+          unsigned int& numberOfParticlesToRecv = iterMap->second.first;
           net.RequestSend(& ((PersistedParticle&) *iterSendBegin), numberOfParticlesToSend, neighbourRank);
           net.RequestReceive(& ((PersistedParticle&) * (iterRecvBegin)), numberOfParticlesToRecv, neighbourRank);
           iterRecvBegin += numberOfParticlesToRecv;
@@ -380,8 +380,8 @@ namespace hemelb
         const proc_t& neighbourRank = iterMap->first;
         if (neighbourRank != localRank)
         {
-          const unsigned int& numberOfVelocitiesToSend = iterMap->second.first;
-          const unsigned int& numberOfVelocitiesToRecv = iterMap->second.second;
+          unsigned int& numberOfVelocitiesToSend = iterMap->second.first;
+          unsigned int& numberOfVelocitiesToRecv = iterMap->second.second;
           net.RequestSend(& ((Particle&) *iterSendBegin), numberOfVelocitiesToSend, neighbourRank);
           net.RequestReceive(& (* (iterRecvBegin)), numberOfVelocitiesToRecv, neighbourRank);
           iterRecvBegin += numberOfVelocitiesToRecv;
@@ -394,7 +394,7 @@ namespace hemelb
       for (std::vector<std::pair<unsigned long, util::Vector3D<double> > >::const_iterator iterVelocityBuffer =
           velocityBuffer.begin(); iterVelocityBuffer != velocityBuffer.end(); iterVelocityBuffer++)
       {
-        const unsigned long& particleId = iterVelocityBuffer->first;
+        unsigned long& particleId = iterVelocityBuffer->first;
         const util::Vector3D<double>& partialVelocity = iterVelocityBuffer->second;
         velocityMap[particleId] += partialVelocity;
       }
