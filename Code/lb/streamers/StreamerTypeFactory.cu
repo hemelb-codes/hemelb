@@ -1,4 +1,8 @@
 
+namespace hemelb {
+namespace lb {
+namespace streamers {
+
 // type definitions taken from host code
 typedef int64_t site_t;
 typedef double distribn_t;
@@ -12,7 +16,7 @@ __device__ const int D3Q15_CZ[] = { 0, 0, 0, 0, 0, 1, -1, 1, -1, -1, 1, 1, -1, -
 
 __device__ const distribn_t D3Q15_CXD[] = { 0.0, 1.0, -1.0, 0.0,  0.0, 0.0,  0.0, 1.0, -1.0,  1.0, -1.0,  1.0, -1.0,  1.0, -1.0};
 __device__ const distribn_t D3Q15_CYD[] = { 0.0, 0.0,  0.0, 1.0, -1.0, 0.0,  0.0, 1.0, -1.0,  1.0, -1.0, -1.0,  1.0, -1.0,  1.0};
-__device__ const distribn_t D3Q15_CZD[] = { 0.0, 0.0,  0.0, 0.0,  0.0, 1.0, -1.0, 1.0, -1.0, -1.0,  1.0,  1.0, -1.0, -1.0,  1.0};            
+__device__ const distribn_t D3Q15_CZD[] = { 0.0, 0.0,  0.0, 0.0,  0.0, 1.0, -1.0, 1.0, -1.0, -1.0,  1.0,  1.0, -1.0, -1.0,  1.0};
 
 __device__ const distribn_t D3Q15_EQMWEIGHTS[] = {
   2.0 / 9.0,
@@ -144,4 +148,8 @@ __global__ void WallStreamerTypeFactory_DoStreamAndCollideKernel(
       fNew[outIndex * D3Q15_NUMVECTORS] = f_post[j];
     }
   }
+}
+
+}
+}
 }
