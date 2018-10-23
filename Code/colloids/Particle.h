@@ -82,7 +82,7 @@ namespace hemelb
         }
 
         /** unsets the deletion marker - the particle will not be deleted */
-        const void SetDeletionMarker()
+        void SetDeletionMarker()
         {
           markedForDeletionTimestep = SITE_OR_BLOCK_SOLID;
         }
@@ -90,7 +90,7 @@ namespace hemelb
         /** sets the deletion marker to the current timestep
          *  the particle will be deleted after the next checkpoint
          */
-        const void SetDeletionMarker(LatticeTimeStep timestep)
+        void SetDeletionMarker(LatticeTimeStep timestep)
         {
           if (timestep < markedForDeletionTimestep)
             markedForDeletionTimestep = timestep;
@@ -119,10 +119,10 @@ namespace hemelb
         const bool IsReadyToBeDeleted() const;
 
         /** for debug purposes only - outputs all properties to info log */
-        const void OutputInformation() const;
+        void OutputInformation() const;
 
         /** for serialisation into output file */
-        const void WriteToStream(
+        void WriteToStream(
                      const LatticeTimeStep currentTimestep,
                      io::writers::Writer& writer);
 
@@ -134,27 +134,27 @@ namespace hemelb
         const Dimensionless CalculateDragCoefficient() const;
 
         /** updates the position of this particle using body forces and fluid velocity */
-        const void UpdatePosition(const geometry::LatticeData& latDatLBM);
+        void UpdatePosition(const geometry::LatticeData& latDatLBM);
 
         /** calculates the effects of all body forces on this particle */
-        const void CalculateBodyForces();
+        void CalculateBodyForces();
 
         /** calculates the effects of this particle on each lattice site */
-        const void CalculateFeedbackForces(const geometry::LatticeData& latDatLBM) const;
+        void CalculateFeedbackForces(const geometry::LatticeData& latDatLBM) const;
 
         /** interpolates the fluid velocity to the location of each particle */
-        const void InterpolateFluidVelocity(
+        void InterpolateFluidVelocity(
                      const geometry::LatticeData& latDatLBM,
                      const lb::MacroscopicPropertyCache& propertyCache);
 
         /** accumulate contributions to velocity from remote processes */
-        const void AccumulateVelocity(util::Vector3D<double>& contribution)
+        void AccumulateVelocity(util::Vector3D<double>& contribution)
         {
           velocity += contribution;
         };
 
         /** sets the value for the velocity adjustment due to the lubrication BC */
-        const void SetLubricationVelocityAdjustment(const LatticeVelocity adjustment)
+        void SetLubricationVelocityAdjustment(const LatticeVelocity adjustment)
         {
           lubricationVelocityAdjustment = adjustment;
         }

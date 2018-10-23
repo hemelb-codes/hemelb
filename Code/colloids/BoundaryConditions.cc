@@ -20,7 +20,7 @@ namespace hemelb
 
     const geometry::LatticeData* BoundaryConditions::latticeData;
 
-    const void BoundaryConditions::InitBoundaryConditions(
+    void BoundaryConditions::InitBoundaryConditions(
                                      const geometry::LatticeData* const latticeData,
                                      io::xml::Document& xml)
     {

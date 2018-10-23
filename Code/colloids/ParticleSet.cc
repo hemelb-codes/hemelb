@@ -104,7 +104,7 @@ namespace hemelb
       particles.clear();
     }
 
-    const void ParticleSet::OutputInformation(const LatticeTimeStep timestep)
+    void ParticleSet::OutputInformation(const LatticeTimeStep timestep)
     {
       // Ensure the buffer is large enough.
       const unsigned int maxSize = io::formats::colloids::RecordLength * particles.size()
@@ -175,7 +175,7 @@ namespace hemelb
       }
     }
 
-    const void ParticleSet::UpdatePositions()
+    void ParticleSet::UpdatePositions()
     {
       if (log::Logger::ShouldDisplay<log::Debug>())
         log::Logger::Log<log::Debug, log::OnePerCore>("In colloids::ParticleSet::UpdatePositions #particles == %i ...\n",
@@ -192,7 +192,7 @@ namespace hemelb
       }
     }
 
-    const void ParticleSet::CalculateBodyForces()
+    void ParticleSet::CalculateBodyForces()
     {
       for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end(); iter++)
       {
@@ -202,7 +202,7 @@ namespace hemelb
       }
     }
 
-    const void ParticleSet::ApplyBoundaryConditions(const LatticeTimeStep currentTimestep)
+    void ParticleSet::ApplyBoundaryConditions(const LatticeTimeStep currentTimestep)
     {
       for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end(); iter++)
       {
@@ -243,7 +243,7 @@ namespace hemelb
       scanMap[localRank].first = bound - particles.begin();
     }
 
-    const void ParticleSet::CalculateFeedbackForces()
+    void ParticleSet::CalculateFeedbackForces()
     {
       BodyForces::ClearBodyForcesForAllSiteIds();
       for (std::vector<Particle>::const_iterator iter = particles.begin(); iter != particles.end(); iter++)
@@ -254,7 +254,7 @@ namespace hemelb
       }
     }
 
-    const void ParticleSet::InterpolateFluidVelocity()
+    void ParticleSet::InterpolateFluidVelocity()
     {
       for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end(); iter++)
       {
@@ -264,7 +264,7 @@ namespace hemelb
       propertyCache.velocityCache.SetRefreshFlag();
     }
 
-    const void ParticleSet::CommunicateParticlePositions()
+    void ParticleSet::CommunicateParticlePositions()
     {
       /** CommunicateParticlePositions
        *    For each neighbour rank p
@@ -336,7 +336,7 @@ namespace hemelb
         scanMap[iterParticles->GetOwnerRank()].first++;
     }
 
-    const void ParticleSet::CommunicateFluidVelocities()
+    void ParticleSet::CommunicateFluidVelocities()
     {
       /** CommunicateFluidVelocities
        *    For each neighbour rank p

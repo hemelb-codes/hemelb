@@ -58,7 +58,7 @@ namespace hemelb
       return markedForDeletionTimestep < lastCheckpointTimestep;
     }
 
-    const void Particle::OutputInformation() const
+    void Particle::OutputInformation() const
     {
         log::Logger::Log<log::Trace, log::OnePerCore>(
           "In colloids::Particle::OutputInformation, id: %i, owner: %i, drag %g, mass %g, position: {%g,%g,%g}, velocity: {%g,%g,%g}, bodyForces: {%g,%g,%g}\n",
@@ -71,7 +71,7 @@ namespace hemelb
     // 10 fields * 8 bytes-per-field = 80 bytes, if velocity is included in the output
     // 7 fields * 8 bytes-per-field = 56 bytes, when transient fields are not included
 
-    const void Particle::WriteToStream(
+    void Particle::WriteToStream(
                  const LatticeTimeStep currentTimestep,
                  io::writers::Writer& writer)
     {
@@ -87,7 +87,7 @@ namespace hemelb
       //writer << velocity.x << velocity.y << velocity.z;
     }
 
-    const void Particle::UpdatePosition(const geometry::LatticeData& latDatLBM)
+    void Particle::UpdatePosition(const geometry::LatticeData& latDatLBM)
     {
       // first, update the position: newPosition = oldPosition + velocity + bodyForces * drag
       // then,  update the owner rank for the particle based on its new position
@@ -137,7 +137,7 @@ namespace hemelb
            / (6.0 * PI * GetViscosity() * smallRadius_a0 * largeRadius_ah);
     }
 
-    const void Particle::CalculateBodyForces()
+    void Particle::CalculateBodyForces()
     {
       log::Logger::Log<log::Trace, log::OnePerCore>(
         "In colloids::Particle::CalculateBodyForces, id: %i, position: {%g,%g,%g}\n",
@@ -171,7 +171,7 @@ namespace hemelb
       return delta;
     }
 
-    const void Particle::CalculateFeedbackForces(
+    void Particle::CalculateFeedbackForces(
                            const geometry::LatticeData& latDatLBM) const
                            //lb::MacroscopicPropertyCache& propertyCache) const
     {
@@ -248,7 +248,7 @@ namespace hemelb
         particleId, bodyForces.x, bodyForces.y, bodyForces.z);
     }
 
-    const void Particle::InterpolateFluidVelocity(
+    void Particle::InterpolateFluidVelocity(
                            const geometry::LatticeData& latDatLBM,
                            const lb::MacroscopicPropertyCache& propertyCache)
     {

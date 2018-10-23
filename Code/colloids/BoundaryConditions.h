@@ -48,11 +48,11 @@ namespace hemelb
     {
       public:
         /** factory method - gets initial values from xml configuration file */
-        static const void InitBoundaryConditions(
+        static void InitBoundaryConditions(
                             const geometry::LatticeData* const latticeData,
                             io::xml::Document& xml);
 
-        static const void AddBoundaryCondition(
+        static void AddBoundaryCondition(
                             const std::string name,
                             const BoundaryCondition* const);
 
