@@ -92,6 +92,9 @@ namespace hemelb
               init = false;
             }
 
+            // check to see if property cache needs to be updated
+            if ( !propertyCache.RequiresRefresh() )
+            {
             // copy fOld from host to device
             cudaMemcpy(fOld_dev, latDat->GetSite(0).GetFOld<LatticeType>(), numSites * LatticeType::NUMVECTORS * sizeof(distribn_t), cudaMemcpyHostToDevice);
 
@@ -112,6 +115,43 @@ namespace hemelb
 
             // copy fNew from device to host
             cudaMemcpy(latDat->GetFNew(0), fNew_dev, numSites * LatticeType::NUMVECTORS * sizeof(distribn_t), cudaMemcpyDeviceToHost);
+            }
+            else
+            {
+            for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
+            {
+              geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
+
+              const distribn_t* fOld = site.GetFOld<LatticeType> ();
+
+              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(fOld);
+
+              ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
+              hydroVars.tau = lbmParams->GetTau();
+
+              collider.CalculatePreCollision(hydroVars, site);
+
+              collider.Collide(lbmParams, hydroVars);
+
+              for (Direction ii = 0; ii < LatticeType::NUMVECTORS; ii++)
+              {
+                if (site.HasWall(ii))
+                {
+                  wallLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
+                }
+                else
+                {
+                  bulkLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
+                }
+              }
+
+              //TODO: Necessary to specify sub-class?
+              BaseStreamer<WallStreamerTypeFactory>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+                                                                                                hydroVars,
+                                                                                                lbmParams,
+                                                                                                propertyCache);
+            }
+            }
           }
 
           template<bool tDoRayTracing>

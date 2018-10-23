@@ -25,6 +25,18 @@ namespace hemelb
       ResetRequirements();
     }
 
+    bool MacroscopicPropertyCache::RequiresRefresh() const
+    {
+      return densityCache.RequiresRefresh()
+        || velocityCache.RequiresRefresh()
+        || wallShearStressMagnitudeCache.RequiresRefresh()
+        || vonMisesStressCache.RequiresRefresh()
+        || shearRateCache.RequiresRefresh()
+        || stressTensorCache.RequiresRefresh()
+        || tractionCache.RequiresRefresh()
+        || tangentialProjectionTractionCache.RequiresRefresh();
+    }
+
     void MacroscopicPropertyCache::ResetRequirements()
     {
       densityCache.UnsetRefreshFlag();

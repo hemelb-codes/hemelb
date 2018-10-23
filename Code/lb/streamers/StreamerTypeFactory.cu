@@ -42,7 +42,7 @@ __device__ const int D3Q15_INVERSEDIRECTIONS[] = { 0, 2, 1, 4, 3, 6, 5, 8, 7, 10
 
 __device__ bool Site_HasWall(unsigned wallIntersection, int direction)
 {
-  unsigned mask = 1U << (direction - 1);
+  unsigned mask = 1U << max(0, direction - 1);
   return (wallIntersection & mask) != 0;
 }
 
@@ -96,9 +96,9 @@ __global__ void WallStreamerTypeFactory_DoStreamAndCollideKernel(
     momentum.z += D3Q15_CZD[j] * f[j];
   }
 
-  // velocity.x /= density;
-  // velocity.y /= density;
-  // velocity.z /= density;
+  velocity.x = momentum.x / density;
+  velocity.y = momentum.y / density;
+  velocity.z = momentum.z / density;
 
   const distribn_t density_1 = 1. / density;
   const distribn_t momentumMagnitudeSquared =
