@@ -35,7 +35,7 @@ namespace hemelb
                           reporting::Timers &atimings,
                           geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager) :
       mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), 
-          mParams(iSimulationConfig->GetTimeStepLength(), iSimulationConfig->GetVoxelSize()), timings(atimings),
+          mParams(iSimulationConfig->GetTimeStepLength(), iSimulationConfig->GetVoxelSize(), iSimulationConfig->UseGPU()), timings(atimings),
           propertyCache(*simState, *latDat), neighbouringDataManager(neighbouringDataManager)
     {
       ReadParameters();

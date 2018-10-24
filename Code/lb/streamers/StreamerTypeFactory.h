@@ -92,8 +92,7 @@ namespace hemelb
               init = false;
             }
 
-            // check to see if property cache needs to be updated
-            if ( !propertyCache.RequiresRefresh() )
+            if (lbmParams->UseGPU() && !propertyCache.RequiresRefresh())
             {
             // copy fOld from host to device
             cudaMemcpy(fOld_dev, latDat->GetSite(0).GetFOld<LatticeType>(), numSites * LatticeType::NUMVECTORS * sizeof(distribn_t), cudaMemcpyHostToDevice);
@@ -116,6 +115,7 @@ namespace hemelb
             // copy fNew from device to host
             cudaMemcpy(latDat->GetFNew(0), fNew_dev, numSites * LatticeType::NUMVECTORS * sizeof(distribn_t), cudaMemcpyDeviceToHost);
             }
+
             else
             {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
