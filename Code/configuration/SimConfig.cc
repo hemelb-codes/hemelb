@@ -150,7 +150,7 @@ namespace hemelb
       const io::xml::Element gpuEl = simEl.GetChildOrNull("use_gpu");
       if (gpuEl != io::xml::Element::Missing())
       {
-        useGPU = true;
+          gpuEl.GetAttributeOrThrow("value", useGPU);
       }
     }
 
