@@ -166,8 +166,8 @@ namespace hemelb
       for (scanMapConstIterType iterMap = scanMap.begin(); iterMap != scanMap.end(); iterMap++)
       {
         const proc_t& neighbourRank = iterMap->first;
-        unsigned int& numberOfParticles = iterMap->second.first;
-        unsigned int& numberOfVelocities = iterMap->second.second;
+        const unsigned int& numberOfParticles = iterMap->second.first;
+        const unsigned int& numberOfVelocities = iterMap->second.second;
         log::Logger::Log<log::Debug, log::OnePerCore>("ScanMap[%i] = {%i, %i}\n",
                                                       neighbourRank,
                                                       numberOfParticles,
@@ -310,7 +310,7 @@ namespace hemelb
         const proc_t& neighbourRank = iterMap->first;
         if (neighbourRank != localRank)
         {
-          unsigned int& numberOfParticlesToRecv = iterMap->second.first;
+          const unsigned int& numberOfParticlesToRecv = iterMap->second.first;
           net.RequestSend(& ((PersistedParticle&) *iterSendBegin), numberOfParticlesToSend, neighbourRank);
           net.RequestReceive(& ((PersistedParticle&) * (iterRecvBegin)), numberOfParticlesToRecv, neighbourRank);
           iterRecvBegin += numberOfParticlesToRecv;
@@ -380,8 +380,8 @@ namespace hemelb
         const proc_t& neighbourRank = iterMap->first;
         if (neighbourRank != localRank)
         {
-          unsigned int& numberOfVelocitiesToSend = iterMap->second.first;
-          unsigned int& numberOfVelocitiesToRecv = iterMap->second.second;
+          const unsigned int& numberOfVelocitiesToSend = iterMap->second.first;
+          const unsigned int& numberOfVelocitiesToRecv = iterMap->second.second;
           net.RequestSend(& ((Particle&) *iterSendBegin), numberOfVelocitiesToSend, neighbourRank);
           net.RequestReceive(& (* (iterRecvBegin)), numberOfVelocitiesToRecv, neighbourRank);
           iterRecvBegin += numberOfVelocitiesToRecv;
@@ -394,7 +394,7 @@ namespace hemelb
       for (std::vector<std::pair<unsigned long, util::Vector3D<double> > >::const_iterator iterVelocityBuffer =
           velocityBuffer.begin(); iterVelocityBuffer != velocityBuffer.end(); iterVelocityBuffer++)
       {
-        unsigned long& particleId = iterVelocityBuffer->first;
+        const unsigned long& particleId = iterVelocityBuffer->first;
         const util::Vector3D<double>& partialVelocity = iterVelocityBuffer->second;
         velocityMap[particleId] += partialVelocity;
       }
