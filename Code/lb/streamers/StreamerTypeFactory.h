@@ -10,20 +10,6 @@
 #include "lb/kernels/BaseKernel.h"
 #include "lb/streamers/BaseStreamer.h"
 #include "lb/streamers/SimpleCollideAndStreamDelegate.h"
-#include <cuda_runtime.h>
-
-#define CUDA_SAFE_CALL(x)                           \
-{                                                   \
-    cudaError_t error = x;                          \
-    if ( error != cudaSuccess ) {                   \
-      const char *name = cudaGetErrorName(error);   \
-      const char *str = cudaGetErrorString(error);  \
-      std::cerr << "\n"                             \
-                << "CUDA Error at " #x "\n"         \
-                << name << ": " << str << "\n";     \
-      exit(1);                                      \
-    }                                               \
-}
 
 namespace hemelb
 {
@@ -77,34 +63,8 @@ namespace hemelb
                                          geometry::LatticeData* latDat,
                                          lb::MacroscopicPropertyCache& propertyCache)
           {
-            static bool init = true;
-            static site_t* neighbourIndices_dev;
-            static unsigned* wallIntersections_dev;
-            static distribn_t* fOld_dev;
-            static distribn_t* fNew_dev;
-
-            unsigned numSites = latDat->GetLocalFluidSiteCount();
+            unsigned localFluidSites = latDat->GetLocalFluidSiteCount();
             site_t sharedFs = latDat->GetNumSharedFs();
-
-            if ( init )
-            {
-              CUDA_SAFE_CALL(cudaMalloc(&neighbourIndices_dev, numSites * LatticeType::NUMVECTORS * sizeof(site_t)));
-              CUDA_SAFE_CALL(cudaMalloc(&wallIntersections_dev, numSites * sizeof(unsigned)));
-              CUDA_SAFE_CALL(cudaMalloc(&fOld_dev, (numSites * LatticeType::NUMVECTORS + 1 + sharedFs) * sizeof(distribn_t)));
-              CUDA_SAFE_CALL(cudaMalloc(&fNew_dev, (numSites * LatticeType::NUMVECTORS + 1 + sharedFs) * sizeof(distribn_t)));
-
-              std::vector<unsigned> wallIntersections(numSites);
-
-              for ( site_t siteIndex = 0; siteIndex < numSites; ++siteIndex )
-              {
-                wallIntersections[siteIndex] = latDat->GetSite(siteIndex).GetSiteData().GetWallIntersectionData();
-              }
-
-              CUDA_SAFE_CALL(cudaMemcpy(neighbourIndices_dev, latDat->GetNeighbourIndices().data(), numSites * LatticeType::NUMVECTORS * sizeof(site_t), cudaMemcpyHostToDevice));
-              CUDA_SAFE_CALL(cudaMemcpy(wallIntersections_dev, wallIntersections.data(), numSites * sizeof(unsigned), cudaMemcpyHostToDevice));
-
-              init = false;
-            }
 
             if ( siteCount == 0 )
             {
@@ -114,10 +74,10 @@ namespace hemelb
             if (lbmParams->UseGPU() && !propertyCache.RequiresRefresh())
             {
             // copy fOld from host to device
-            CUDA_SAFE_CALL(cudaMemcpy(fOld_dev, latDat->GetSite(0).GetFOld<LatticeType>(),
-                                      (numSites * LatticeType::NUMVECTORS + 1 + sharedFs) * sizeof(distribn_t), cudaMemcpyHostToDevice));
-            CUDA_SAFE_CALL(cudaMemcpy(fNew_dev, latDat->GetFNew(0),
-                                      (numSites * LatticeType::NUMVECTORS + 1 + sharedFs) * sizeof(distribn_t), cudaMemcpyHostToDevice));
+            CUDA_SAFE_CALL(cudaMemcpy(latDat->GetFOldGPU(), latDat->GetSite(0).GetFOld<LatticeType>(),
+                                      (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t), cudaMemcpyHostToDevice));
+            CUDA_SAFE_CALL(cudaMemcpy(latDat->GetFNewGPU(), latDat->GetFNew(0),
+                                      (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t), cudaMemcpyHostToDevice));
 
             // launch WallStreamer_DoStreamAndCollide kernel
             DoStreamAndCollideGPU(
@@ -125,18 +85,18 @@ namespace hemelb
               siteCount,
               lbmParams->GetTau(),
               lbmParams->GetOmega(),
-              neighbourIndices_dev,
-              wallIntersections_dev,
-              fOld_dev,
-              fNew_dev
+              latDat->GetNeighbourIndicesGPU(),
+              latDat->GetWallIntersectionsGPU(),
+              latDat->GetFOldGPU(),
+              latDat->GetFNewGPU()
             );
             CUDA_SAFE_CALL(cudaGetLastError());
 
             CUDA_SAFE_CALL(cudaDeviceSynchronize());
 
             // copy fNew from device to host
-            CUDA_SAFE_CALL(cudaMemcpy(latDat->GetFNew(0), fNew_dev,
-                           (numSites * LatticeType::NUMVECTORS + 1 + sharedFs) * sizeof(distribn_t), cudaMemcpyDeviceToHost));
+            CUDA_SAFE_CALL(cudaMemcpy(latDat->GetFNew(0), latDat->GetFNewGPU(),
+                           (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t), cudaMemcpyDeviceToHost));
             }
 
             else

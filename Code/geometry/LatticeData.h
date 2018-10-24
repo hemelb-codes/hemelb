@@ -22,6 +22,20 @@
 #include "reporting/Reportable.h"
 #include "reporting/Timers.h"
 #include "util/Vector3D.h"
+#include <cuda_runtime.h>
+
+#define CUDA_SAFE_CALL(x)                           \
+{                                                   \
+    cudaError_t error = x;                          \
+    if ( error != cudaSuccess ) {                   \
+      const char *name = cudaGetErrorName(error);   \
+      const char *str = cudaGetErrorString(error);  \
+      std::cerr << "\n"                             \
+                << "CUDA Error at " #x "\n"         \
+                << name << ": " << str << "\n";     \
+      exit(1);                                      \
+    }                                               \
+}
 
 namespace hemelb
 {
@@ -161,6 +175,26 @@ namespace hemelb
         inline const distribn_t* GetFNew(site_t siteNumber) const
         {
           return &newDistributions[siteNumber];
+        }
+
+        inline site_t* GetNeighbourIndicesGPU()
+        {
+          return neighbourIndices_dev;
+        }
+
+        inline unsigned* GetWallIntersectionsGPU()
+        {
+          return wallIntersections_dev;
+        }
+
+        inline distribn_t* GetFOldGPU()
+        {
+          return oldDistributions_dev;
+        }
+
+        inline distribn_t* GetFNewGPU()
+        {
+          return newDistributions_dev;
         }
 
         proc_t GetProcIdFromGlobalCoords(const util::Vector3D<site_t>& globalSiteCoords) const;
@@ -417,7 +451,24 @@ namespace hemelb
 
           oldDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
           newDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
+
+          // initialize GPU buffers for distributions
+          CUDA_SAFE_CALL(cudaMalloc(&oldDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + totalSharedFs + 1) * sizeof(distribn_t)));
+          CUDA_SAFE_CALL(cudaMalloc(&newDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + totalSharedFs + 1) * sizeof(distribn_t)));
+
+          // initialize GPU buffers for site data
+          CUDA_SAFE_CALL(cudaMalloc(&wallIntersections_dev, localFluidSites * sizeof(unsigned)));
+
+          std::vector<unsigned> wallIntersections(localFluidSites);
+
+          for ( site_t siteIndex = 0; siteIndex < localFluidSites; ++siteIndex )
+          {
+            wallIntersections[siteIndex] = siteData[siteIndex].GetWallIntersectionData();
+          }
+
+          CUDA_SAFE_CALL(cudaMemcpy(wallIntersections_dev, wallIntersections.data(), localFluidSites * sizeof(unsigned), cudaMemcpyHostToDevice));
         }
+
         void CollectFluidSiteDistribution();
         void CollectGlobalSiteExtrema();
 
@@ -586,6 +637,12 @@ namespace hemelb
         std::vector<site_t> streamingIndicesForReceivedDistributions; //! The indices to stream to for distributions received from other processors.
         neighbouring::NeighbouringLatticeData *neighbouringData;
         const net::IOCommunicator& comms;
+
+        // GPU buffers
+        site_t* neighbourIndices_dev;
+        unsigned* wallIntersections_dev;
+        distribn_t* oldDistributions_dev;
+        distribn_t* newDistributions_dev;
     };
   }
 }
