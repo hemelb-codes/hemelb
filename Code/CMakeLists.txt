@@ -162,8 +162,7 @@ target_link_libraries(${HEMELB_EXECUTABLE}_gpu PUBLIC
   ${heme_libraries}
   ${MPI_LIBRARIES}
   ${Boost_LIBRARIES}
-  -L$ENV{CUDA_ROOT}/lib64 cudart
-  )
+  ${CUDA_LIBRARIES})
 INSTALL(TARGETS ${HEMELB_EXECUTABLE}_gpu RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
 
