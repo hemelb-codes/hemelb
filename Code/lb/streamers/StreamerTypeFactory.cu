@@ -48,7 +48,7 @@ __device__ bool Site_HasWall(unsigned wallIntersection, int direction)
 
 
 
-__global__ void WallStreamerTypeFactory_DoStreamAndCollideKernel(
+__global__ void DoStreamAndCollideKernel(
   site_t firstIndex,
   site_t siteCount,
   distribn_t lbmParams_tau,
@@ -149,6 +149,36 @@ __global__ void WallStreamerTypeFactory_DoStreamAndCollideKernel(
     }
   }
 }
+
+
+
+void DoStreamAndCollideGPU(
+  site_t firstIndex,
+  site_t siteCount,
+  distribn_t lbmParams_tau,
+  distribn_t lbmParams_omega,
+  const site_t* neighbourIndices,
+  const unsigned* wallIntersections,
+  const distribn_t* fOld,
+  distribn_t* fNew
+)
+{
+  const int BLOCK_SIZE = 256;
+  const int GRID_SIZE = (siteCount + BLOCK_SIZE - 1) / BLOCK_SIZE;
+
+  DoStreamAndCollideKernel<<<GRID_SIZE, BLOCK_SIZE>>>(
+    firstIndex,
+    siteCount,
+    lbmParams_tau,
+    lbmParams_omega,
+    neighbourIndices,
+    wallIntersections,
+    fOld,
+    fNew
+  );
+}
+
+
 
 }
 }

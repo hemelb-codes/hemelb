@@ -31,7 +31,7 @@ namespace hemelb
   {
     namespace streamers
     {
-      __global__ void WallStreamerTypeFactory_DoStreamAndCollideKernel(
+      void DoStreamAndCollideGPU(
         site_t firstIndex,
         site_t siteCount,
         distribn_t lbmParams_tau,
@@ -117,10 +117,7 @@ namespace hemelb
             CUDA_SAFE_CALL(cudaMemcpy(fNew_dev, latDat->GetFNew(0), numSites * LatticeType::NUMVECTORS * sizeof(distribn_t), cudaMemcpyHostToDevice));
 
             // launch WallStreamer_DoStreamAndCollide kernel
-            const int BLOCK_SIZE = 256;
-            const int GRID_SIZE = (siteCount + BLOCK_SIZE - 1) / BLOCK_SIZE;
-
-            WallStreamerTypeFactory_DoStreamAndCollideKernel<<<GRID_SIZE, BLOCK_SIZE>>>(
+            DoStreamAndCollideGPU(
               firstIndex,
               siteCount,
               lbmParams->GetTau(),
