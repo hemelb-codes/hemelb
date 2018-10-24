@@ -432,7 +432,6 @@ namespace hemelb
         }
 
       }
-
     }
 
     void LatticeData::InitialisePointToPointComms(std::vector<std::vector<site_t> >& sharedFLocationForEachProc)

@@ -74,10 +74,18 @@ namespace hemelb
             if (lbmParams->UseGPU() && !propertyCache.RequiresRefresh())
             {
             // copy fOld from host to device
-            CUDA_SAFE_CALL(cudaMemcpy(latDat->GetFOldGPU(), latDat->GetSite(0).GetFOld<LatticeType>(),
-                                      (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t), cudaMemcpyHostToDevice));
-            CUDA_SAFE_CALL(cudaMemcpy(latDat->GetFNewGPU(), latDat->GetFNew(0),
-                                      (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t), cudaMemcpyHostToDevice));
+            CUDA_SAFE_CALL(cudaMemcpyAsync(
+              latDat->GetFOldGPU(),
+              latDat->GetSite(0).GetFOld<LatticeType>(),
+              (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
+              cudaMemcpyHostToDevice
+            ));
+            CUDA_SAFE_CALL(cudaMemcpyAsync(
+              latDat->GetFNewGPU(),
+              latDat->GetFNew(0),
+              (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
+              cudaMemcpyHostToDevice
+            ));
 
             // launch WallStreamer_DoStreamAndCollide kernel
             DoStreamAndCollideGPU(
@@ -92,11 +100,13 @@ namespace hemelb
             );
             CUDA_SAFE_CALL(cudaGetLastError());
 
-            CUDA_SAFE_CALL(cudaDeviceSynchronize());
-
             // copy fNew from device to host
-            CUDA_SAFE_CALL(cudaMemcpy(latDat->GetFNew(0), latDat->GetFNewGPU(),
-                           (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t), cudaMemcpyDeviceToHost));
+            CUDA_SAFE_CALL(cudaMemcpy(
+              latDat->GetFNew(0),
+              latDat->GetFNewGPU(),
+              (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
+              cudaMemcpyDeviceToHost
+            ));
             }
 
             else

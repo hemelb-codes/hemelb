@@ -466,7 +466,7 @@ namespace hemelb
             wallIntersections[siteIndex] = siteData[siteIndex].GetWallIntersectionData();
           }
 
-          CUDA_SAFE_CALL(cudaMemcpy(wallIntersections_dev, wallIntersections.data(), localFluidSites * sizeof(unsigned), cudaMemcpyHostToDevice));
+          CUDA_SAFE_CALL(cudaMemcpyAsync(wallIntersections_dev, wallIntersections.data(), localFluidSites * sizeof(unsigned), cudaMemcpyHostToDevice));
         }
 
         void CollectFluidSiteDistribution();
