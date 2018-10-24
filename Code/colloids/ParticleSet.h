@@ -63,7 +63,7 @@ namespace hemelb
       private:
         const net::IOCommunicator& ioComms;
         /** cached copy of local rank (obtained from topology) */
-        const proc_t localRank;
+        proc_t localRank;
 
         /**
          * conatins all particles known to this process

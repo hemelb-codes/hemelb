@@ -59,7 +59,7 @@ namespace hemelb
       }
     }
 
-    const bool BoundaryConditions::DoSomeThingsToParticle(
+    bool BoundaryConditions::DoSomeThingsToParticle(
                  const LatticeTimeStep currentTimestep,
                  Particle& particle)
     {
@@ -74,7 +74,7 @@ namespace hemelb
         (site_t)(0.5+particle.GetGlobalPosition().z));
       proc_t procId;
       site_t localContiguousId;
-      const bool isLocalFluid = latticeData->GetContiguousSiteId(
+      bool isLocalFluid = latticeData->GetContiguousSiteId(
         siteGlobalPosition, procId, localContiguousId);
       if (particle.GetGlobalPosition().y < 1.5 && particle.GetGlobalPosition().y >= 0.5)
         log::Logger::Log<log::Trace, log::OnePerCore>(
@@ -101,9 +101,9 @@ namespace hemelb
       const geometry::SiteType siteType = siteData.GetSiteType();
       const distribn_t* siteWallDistances = site.GetWallDistances();
 
-      const bool isNearWall = siteData.IsWall();
-      const bool isNearInlet = (siteType == geometry::INLET_TYPE);
-      const bool isNearOutlet = (siteType == geometry::OUTLET_TYPE);
+      bool isNearWall = siteData.IsWall();
+      bool isNearInlet = (siteType == geometry::INLET_TYPE);
+      bool isNearOutlet = (siteType == geometry::OUTLET_TYPE);
 
       // if the particle is not near a boundary then simply keep it
       if (!isNearWall && !isNearInlet && !isNearOutlet)

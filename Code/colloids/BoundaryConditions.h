@@ -25,7 +25,7 @@ namespace hemelb
         /** applies the boundary condition by directly modifying the particle
          *  returns false if the particle must now be deleted, true otherwise
          */
-        virtual const bool DoSomethingToParticle(Particle&, const std::vector<LatticePosition>) =0;
+        virtual bool DoSomethingToParticle(Particle&, const std::vector<LatticePosition>) =0;
         virtual const std::vector<Particle> CreateNewParticles() =0;
       protected:
         virtual ~BoundaryCondition() {};
@@ -59,7 +59,7 @@ namespace hemelb
         /** allows all registered boundary conditions to do something to this particle
             returns false if the particle should be deleted, true otherwise
          */
-        static const bool DoSomeThingsToParticle(
+        static bool DoSomeThingsToParticle(
                             const LatticeTimeStep currentTimestep,
                             Particle& particle);
 

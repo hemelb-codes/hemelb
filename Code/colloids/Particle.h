@@ -39,7 +39,7 @@ namespace hemelb
         Particle() {};
 
         /** property getter for particleId */
-        const unsigned long GetParticleId() const { return particleId; }
+        unsigned long GetParticleId() const { return particleId; }
         const LatticePosition& GetGlobalPosition() const { return globalPosition; }
 
         const LatticeVelocity GetVelocity() const
@@ -100,7 +100,7 @@ namespace hemelb
         const proc_t GetOwnerRank() const { return ownerRank; }
 
         /** property getter for isValid */
-        const bool IsValid() const { return isValid; }
+        bool IsValid() const { return isValid; }
 
         /**
          * less than operator for comparing particle objects
@@ -111,12 +111,12 @@ namespace hemelb
          * - grouped by owner rank
          * - with local rank first
          */
-        //const bool operator<(const Particle& other) const;
+        //bool operator<(const Particle& other) const;
 
         /** determines if the owner rank of this particle is an existing key in map */
-        const bool IsOwnerRankKnown(std::map<proc_t, std::pair<unsigned int, unsigned int> > map) const;
+        bool IsOwnerRankKnown(std::map<proc_t, std::pair<unsigned int, unsigned int> > map) const;
 
-        const bool IsReadyToBeDeleted() const;
+        bool IsReadyToBeDeleted() const;
 
         /** for debug purposes only - outputs all properties to info log */
         void OutputInformation() const;

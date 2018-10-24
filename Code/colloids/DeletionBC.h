@@ -28,7 +28,7 @@ namespace hemelb
           return new DeletionBC(activationDistance);
         }
 
-        virtual const bool DoSomethingToParticle(
+        virtual bool DoSomethingToParticle(
                              Particle& particle,
                              const std::vector<LatticePosition> particleToWallVectors)
         {
