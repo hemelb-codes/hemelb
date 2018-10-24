@@ -349,6 +349,10 @@ namespace hemelb
       InitialiseNeighbourLookup(sharedDistributionLocationForEachProc);
       InitialisePointToPointComms(sharedDistributionLocationForEachProc);
       InitialiseReceiveLookup(sharedDistributionLocationForEachProc);
+
+      // initialize GPU buffer
+      CUDA_SAFE_CALL(cudaMalloc(&neighbourIndices_dev, localFluidSites * latticeInfo.GetNumVectors() * sizeof(site_t)));
+      CUDA_SAFE_CALL(cudaMemcpy(neighbourIndices_dev, neighbourIndices.data(), localFluidSites * latticeInfo.GetNumVectors() * sizeof(site_t), cudaMemcpyHostToDevice));
     }
 
     void LatticeData::InitialiseNeighbourLookup(std::vector<std::vector<site_t> >& sharedFLocationForEachProc)
@@ -429,9 +433,6 @@ namespace hemelb
 
       }
 
-      // initialize GPU buffer
-      CUDA_SAFE_CALL(cudaMalloc(&neighbourIndices_dev, localFluidSites * latticeInfo.GetNumVectors() * sizeof(site_t)));
-      CUDA_SAFE_CALL(cudaMemcpy(neighbourIndices_dev, neighbourIndices.data(), localFluidSites * latticeInfo.GetNumVectors() * sizeof(site_t), cudaMemcpyHostToDevice));
     }
 
     void LatticeData::InitialisePointToPointComms(std::vector<std::vector<site_t> >& sharedFLocationForEachProc)
