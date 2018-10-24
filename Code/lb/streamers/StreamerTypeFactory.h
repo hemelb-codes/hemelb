@@ -114,6 +114,7 @@ namespace hemelb
             {
             // copy fOld from host to device
             CUDA_SAFE_CALL(cudaMemcpy(fOld_dev, latDat->GetSite(0).GetFOld<LatticeType>(), numSites * LatticeType::NUMVECTORS * sizeof(distribn_t), cudaMemcpyHostToDevice));
+            CUDA_SAFE_CALL(cudaMemcpy(fNew_dev, latDat->GetFNew(0), numSites * LatticeType::NUMVECTORS * sizeof(distribn_t), cudaMemcpyHostToDevice));
 
             // launch WallStreamer_DoStreamAndCollide kernel
             const int BLOCK_SIZE = 256;
