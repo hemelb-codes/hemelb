@@ -17,6 +17,7 @@
 #include "lb/HFunction.h"
 #include "io/xml/XmlAbstractionLayer.h"
 #include "colloids/ColloidController.h"
+#include "net/mpi.h"
 #include "net/BuildInfo.h"
 #include "net/IOCommunicator.h"
 #include "colloids/BodyForces.h"
@@ -25,6 +26,8 @@
 #include <map>
 #include <limits>
 #include <cstdlib>
+#include <cuda_runtime.h>
+
 
 /**
  * Constructor for the SimulationMaster class
@@ -152,6 +155,12 @@ void SimulationMaster::Initialise()
                                           timings, ioComms);
   hemelb::geometry::Geometry readGeometryData =
       reader.LoadAndDecompose(simConfig->GetDataFilePath());
+
+  if (simConfig->UseGPU()) {
+    int deviceCount;
+    cudaGetDeviceCount(&deviceCount);
+    cudaSetDevice(hemelb::net::MpiCommunicator::World().Rank() % deviceCount);
+  }
 
   // Create a new lattice based on that info and return it.
   latticeData = new hemelb::geometry::LatticeData(latticeType::GetLatticeInfo(), readGeometryData, ioComms);
@@ -340,6 +349,7 @@ void SimulationMaster::Initialise()
     stepManager->RegisterIteratedActorSteps(*network, 1);
   }
   stepManager->RegisterCommsForAllPhases(*netConcern);
+
 }
 
 unsigned int SimulationMaster::OutputPeriod(unsigned int frequency)
