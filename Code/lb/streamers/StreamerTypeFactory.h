@@ -20,7 +20,7 @@
       const char *str = cudaGetErrorString(error);  \
       std::cerr << "\n"                             \
                 << "CUDA Error at " #x "\n"         \
-                << name << ": " << error << "\n";   \
+                << name << ": " << str << "\n";     \
       exit(1);                                      \
     }                                               \
 }
@@ -103,6 +103,11 @@ namespace hemelb
               CUDA_SAFE_CALL(cudaMemcpy(wallIntersections_dev, wallIntersections.data(), numSites * sizeof(unsigned), cudaMemcpyHostToDevice));
 
               init = false;
+            }
+
+            if ( siteCount == 0 )
+            {
+              return;
             }
 
             if (lbmParams->UseGPU() && !propertyCache.RequiresRefresh())
