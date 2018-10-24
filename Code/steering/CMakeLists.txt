@@ -3,9 +3,6 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-file(GLOB_RECURSE HEMELB_CU_FILES ${CMAKE_SOURCE_DIR}/*.cc)
-set_source_files_properties( ${HEMELB_CU_FILES} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ )
-
 set(HEMELB_STEERING_HOST "CCS" CACHE STRING "Use a default host suffix for steering? (CCS, NGS2Leeds, NGS2Manchester, LONI, NCSA or blank)")
 if(HEMELB_STEERING_HOST)
   add_definitions("-D${HEMELB_STEERING_HOST}")
@@ -43,11 +40,11 @@ else()
   add_definitions(-DHEMELB_STEERING_LIB=basic)
 endif()
 
-cuda_add_library(hemelb_steering
+add_library(hemelb_steering
   #common/Steerer.cc # Not used in old nrmake build either -- TODO find out why
   common/SteeringComponentC.cc
   #common/Tags.cc
   ${steerers}
   )
 
-target_link_libraries(hemelb_steering PUBLIC ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(hemelb_steering ${CMAKE_THREAD_LIBS_INIT})

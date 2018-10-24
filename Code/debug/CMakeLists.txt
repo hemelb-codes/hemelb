@@ -3,9 +3,6 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-file(GLOB_RECURSE HEMELB_CU_FILES ${CMAKE_SOURCE_DIR}/*.cc)
-set_source_files_properties( ${HEMELB_CU_FILES} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ )
-
 if(HEMELB_BUILD_DEBUGGER)
   if(APPLE)
     set(debugger_implementation OSX/OsxDebugger.cc common/ActiveDebugger.cc)
@@ -28,5 +25,5 @@ configure_file (
   "${PROJECT_BINARY_DIR}/debug/PlatformDebugger.h"
   )
 
-cuda_add_library(hemelb_debug Debugger.cc none/NullDebugger.cc ${debugger_implementation})
+add_library(hemelb_debug Debugger.cc none/NullDebugger.cc ${debugger_implementation})
 #No debugging for now - pending platform dependence

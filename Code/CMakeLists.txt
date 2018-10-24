@@ -109,11 +109,6 @@ endif()
 include(mpi)
 include(dependencies)
 
-# CUDA
-
-file(GLOB_RECURSE HEMELB_CU_FILES ${CMAKE_SOURCE_DIR}/*.cc)
-set_source_files_properties( ${HEMELB_CU_FILES} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ )
-
 #-------------Resources -----------------------
 
 set(BUILD_RESOURCE_PATH ${PROJECT_BINARY_DIR}/resources)

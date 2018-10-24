@@ -3,10 +3,7 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-
-file(GLOB_RECURSE HEMELB_CU_FILES ${CMAKE_SOURCE_DIR}/*.cc)
-set_source_files_properties( ${HEMELB_CU_FILES} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ )
-cuda_add_library(hemelb_net
+add_library(hemelb_net
   MpiDataType.cc MpiEnvironment.cc MpiError.cc
   MpiCommunicator.cc MpiGroup.cc MpiFile.cc
   IteratedAction.cc BaseNet.cc 
