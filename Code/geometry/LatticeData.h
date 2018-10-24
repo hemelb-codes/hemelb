@@ -313,6 +313,11 @@ namespace hemelb
           return totalFluidSites;
         }
 
+        inline site_t GetNumSharedFs() const
+        {
+          return totalSharedFs;
+        }
+
         /**
          * Get the minimal x,y,z coordinates for any fluid site.
          * @return

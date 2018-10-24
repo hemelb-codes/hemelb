@@ -84,13 +84,14 @@ namespace hemelb
             static distribn_t* fNew_dev;
 
             unsigned numSites = latDat->GetLocalFluidSiteCount();
+            site_t sharedFs = latDat->GetNumSharedFs();
 
             if ( init )
             {
               CUDA_SAFE_CALL(cudaMalloc(&neighbourIndices_dev, numSites * LatticeType::NUMVECTORS * sizeof(site_t)));
               CUDA_SAFE_CALL(cudaMalloc(&wallIntersections_dev, numSites * sizeof(unsigned)));
-              CUDA_SAFE_CALL(cudaMalloc(&fOld_dev, (numSites * LatticeType::NUMVECTORS + 1) * sizeof(distribn_t)));
-              CUDA_SAFE_CALL(cudaMalloc(&fNew_dev, (numSites * LatticeType::NUMVECTORS + 1) * sizeof(distribn_t)));
+              CUDA_SAFE_CALL(cudaMalloc(&fOld_dev, (numSites * LatticeType::NUMVECTORS + 1 + sharedFs) * sizeof(distribn_t)));
+              CUDA_SAFE_CALL(cudaMalloc(&fNew_dev, (numSites * LatticeType::NUMVECTORS + 1 + sharedFs) * sizeof(distribn_t)));
 
               std::vector<unsigned> wallIntersections(numSites);
 
@@ -113,8 +114,10 @@ namespace hemelb
             if (lbmParams->UseGPU() && !propertyCache.RequiresRefresh())
             {
             // copy fOld from host to device
-            CUDA_SAFE_CALL(cudaMemcpy(fOld_dev, latDat->GetSite(0).GetFOld<LatticeType>(), numSites * LatticeType::NUMVECTORS * sizeof(distribn_t), cudaMemcpyHostToDevice));
-            CUDA_SAFE_CALL(cudaMemcpy(fNew_dev, latDat->GetFNew(0), numSites * LatticeType::NUMVECTORS * sizeof(distribn_t), cudaMemcpyHostToDevice));
+            CUDA_SAFE_CALL(cudaMemcpy(fOld_dev, latDat->GetSite(0).GetFOld<LatticeType>(),
+                                      (numSites * LatticeType::NUMVECTORS + 1 + sharedFs) * sizeof(distribn_t), cudaMemcpyHostToDevice));
+            CUDA_SAFE_CALL(cudaMemcpy(fNew_dev, latDat->GetFNew(0),
+                                      (numSites * LatticeType::NUMVECTORS + 1 + sharedFs) * sizeof(distribn_t), cudaMemcpyHostToDevice));
 
             // launch WallStreamer_DoStreamAndCollide kernel
             DoStreamAndCollideGPU(
@@ -132,7 +135,8 @@ namespace hemelb
             CUDA_SAFE_CALL(cudaDeviceSynchronize());
 
             // copy fNew from device to host
-            CUDA_SAFE_CALL(cudaMemcpy(latDat->GetFNew(0), fNew_dev, numSites * LatticeType::NUMVECTORS * sizeof(distribn_t), cudaMemcpyDeviceToHost));
+            CUDA_SAFE_CALL(cudaMemcpy(latDat->GetFNew(0), fNew_dev,
+                           (numSites * LatticeType::NUMVECTORS + 1 + sharedFs) * sizeof(distribn_t), cudaMemcpyDeviceToHost));
             }
 
             else
