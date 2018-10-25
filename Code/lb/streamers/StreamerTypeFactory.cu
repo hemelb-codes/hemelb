@@ -1,12 +1,27 @@
 #include "lb/lattices/Lattices.h"
 #include "lb/streamers/StreamerTypeFactory.cuh"
+#include "iostream"
+
+#define CUDA_SAFE_CALL(x)                           \
+{                                                   \
+    cudaError_t error = x;                          \
+    if ( error != cudaSuccess ) {                   \
+      const char *name = cudaGetErrorName(error);   \
+      const char *str = cudaGetErrorString(error);  \
+      std::cerr << "\n"                             \
+                << "CUDA Error at " #x "\n"         \
+                << name << ": " << str << "\n";     \
+      exit(1);                                      \
+    }                                               \
+}
+
 
 namespace hemelb {
 namespace lb {
 namespace streamers {
 
 const int MAX_LATTICE_NUMVECTORS=27;
- __constant__ Direction d_NUMVECTORS=15;
+__constant__ Direction d_NUMVECTORS = MAX_LATTICE_NUMVECTORS;
 __constant__ int d_CX[MAX_LATTICE_NUMVECTORS];
 __constant__ int d_CY[MAX_LATTICE_NUMVECTORS];
 __constant__ int d_CZ[MAX_LATTICE_NUMVECTORS];
@@ -19,26 +34,17 @@ __constant__ Direction d_INVERSEDIRECTIONS[MAX_LATTICE_NUMVECTORS];
 
 template <typename LatticeType>
 void FillGPUConstantMemory() {
-int num_vectors = LatticeType::NUMVECTORS;
-cudaMemcpyToSymbol(d_NUMVECTORS, &num_vectors, sizeof(int), cudaMemcpyHostToDevice);
-cudaMemcpyToSymbol(d_CX, LatticeType::CX, LatticeType::NUMVECTORS * sizeof(int),
-    cudaMemcpyHostToDevice);
-cudaMemcpyToSymbol(d_CY, LatticeType::CY, LatticeType::NUMVECTORS * sizeof(int),
-    cudaMemcpyHostToDevice);
-cudaMemcpyToSymbol(d_CZ, LatticeType::CZ, LatticeType::NUMVECTORS * sizeof(int),
-    cudaMemcpyHostToDevice);
-cudaMemcpyToSymbol(d_CXD, LatticeType::CXD, LatticeType::NUMVECTORS * sizeof(int),
-    cudaMemcpyHostToDevice);
-cudaMemcpyToSymbol(d_CYD, LatticeType::CYD, LatticeType::NUMVECTORS * sizeof(int),
-    cudaMemcpyHostToDevice);
-cudaMemcpyToSymbol(d_CZD, LatticeType::CZD, LatticeType::NUMVECTORS * sizeof(int),
-        cudaMemcpyHostToDevice);
-cudaMemcpyToSymbol(d_discreteVelocityVectors, LatticeType::discreteVelocityVectors, LatticeType::NUMVECTORS * 3 *sizeof(int),
-        cudaMemcpyHostToDevice);
-cudaMemcpyToSymbol(d_EQMWEIGHTS, LatticeType::EQMWEIGHTS, LatticeType::NUMVECTORS * sizeof(int),
-    cudaMemcpyHostToDevice);
-cudaMemcpyToSymbol(d_EQMWEIGHTS, LatticeType::EQMWEIGHTS, LatticeType::NUMVECTORS * sizeof(int),
-    cudaMemcpyHostToDevice);
+Direction num_vectors = LatticeType::NUMVECTORS;
+CUDA_SAFE_CALL(cudaMemcpyToSymbol(d_NUMVECTORS, &num_vectors, sizeof(Direction)));
+CUDA_SAFE_CALL(cudaMemcpyToSymbol(d_CX, LatticeType::CX, LatticeType::NUMVECTORS * sizeof(int)));
+CUDA_SAFE_CALL(cudaMemcpyToSymbol(d_CY, LatticeType::CY, LatticeType::NUMVECTORS * sizeof(int)));
+CUDA_SAFE_CALL(cudaMemcpyToSymbol(d_CZ, LatticeType::CZ, LatticeType::NUMVECTORS * sizeof(int)));
+CUDA_SAFE_CALL(cudaMemcpyToSymbol(d_discreteVelocityVectors, LatticeType::discreteVelocityVectors, LatticeType::NUMVECTORS * 3 *sizeof(int)));
+CUDA_SAFE_CALL(cudaMemcpyToSymbol(d_CXD, LatticeType::CXD, LatticeType::NUMVECTORS * sizeof(distribn_t)));
+CUDA_SAFE_CALL(cudaMemcpyToSymbol(d_CYD, LatticeType::CYD, LatticeType::NUMVECTORS * sizeof(distribn_t)));
+CUDA_SAFE_CALL(cudaMemcpyToSymbol(d_CZD, LatticeType::CZD, LatticeType::NUMVECTORS * sizeof(distribn_t)));
+CUDA_SAFE_CALL(cudaMemcpyToSymbol(d_EQMWEIGHTS, LatticeType::EQMWEIGHTS, LatticeType::NUMVECTORS * sizeof(distribn_t)));
+CUDA_SAFE_CALL(cudaMemcpyToSymbol(d_INVERSEDIRECTIONS, LatticeType::INVERSEDIRECTIONS, LatticeType::NUMVECTORS * sizeof(Direction)));
 }
 
 template void FillGPUConstantMemory<hemelb::lb::lattices::D3Q15>();
