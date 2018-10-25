@@ -18,15 +18,16 @@ namespace hemelb
     namespace streamers
     {
       void DoStreamAndCollideGPU(
-        site_t firstIndex,
-        site_t siteCount,
-        distribn_t lbmParams_tau,
-        distribn_t lbmParams_omega,
-        const site_t* neighbourIndices,
-        const unsigned* wallIntersections,
-        const distribn_t* fOld,
-        distribn_t* fNew
-      );
+                site_t firstIndex,
+                site_t siteCount,
+                distribn_t lbmParams_tau,
+                distribn_t lbmParams_omega,
+                const site_t* neighbourIndices,
+                const unsigned* wallIntersections,
+                const distribn_t* fOld,
+                distribn_t* fNew
+              );
+
 
       /**
        * Template to produce Streamers that can cope with fluid-fluid and
@@ -63,6 +64,7 @@ namespace hemelb
                                          geometry::LatticeData* latDat,
                                          lb::MacroscopicPropertyCache& propertyCache)
           {
+
             unsigned localFluidSites = latDat->GetLocalFluidSiteCount();
             site_t sharedFs = latDat->GetNumSharedFs();
 
@@ -88,7 +90,7 @@ namespace hemelb
             ));
 
             // launch WallStreamer_DoStreamAndCollide kernel
-            DoStreamAndCollideGPU(
+            DoStreamAndCollideGPU (
               firstIndex,
               siteCount,
               lbmParams->GetTau(),
