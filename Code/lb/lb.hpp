@@ -9,7 +9,6 @@
 
 #include "io/writers/xdr/XdrMemWriter.h"
 #include "lb/lb.h"
-#include "lb/streamers/StreamerTypeFactory.cuh"
 
 namespace hemelb
 {
@@ -35,14 +34,11 @@ namespace hemelb
                           SimulationState* simState,
                           reporting::Timers &atimings,
                           geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager) :
-          mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState),
+      mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), 
           mParams(iSimulationConfig->GetTimeStepLength(), iSimulationConfig->GetVoxelSize(), iSimulationConfig->UseGPU()), timings(atimings),
           propertyCache(*simState, *latDat), neighbouringDataManager(neighbouringDataManager)
     {
       ReadParameters();
-      if (iSimulationConfig->UseGPU()) {
-          lb::streamers::FillGPUConstantMemory<LatticeType>();
-      }
     }
 
     template<class LatticeType>
