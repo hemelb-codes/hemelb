@@ -20,29 +20,23 @@ namespace hemelb
     {
 
       template<class CollisionType>
-      struct NashZerothOrderPressureIolet
-      {
-          typedef IoletStreamerTypeFactory<CollisionType, NashZerothOrderPressureDelegate<CollisionType> > Type;
-      };
-
-      template<class CollisionType>
       struct NashZerothOrderPressureIoletSBB
       {
-          typedef WallIoletStreamerTypeFactory<CollisionType, SimpleBounceBackDelegate<CollisionType> ,
+          typedef StreamerTypeFactory<CollisionType, SimpleBounceBackDelegate<CollisionType> ,
               NashZerothOrderPressureDelegate<CollisionType> > Type;
       };
 
       template<class CollisionType>
       struct NashZerothOrderPressureIoletBFL
       {
-          typedef WallIoletStreamerTypeFactory<CollisionType, BouzidiFirdaousLallemandDelegate<CollisionType> ,
+          typedef StreamerTypeFactory<CollisionType, BouzidiFirdaousLallemandDelegate<CollisionType> ,
               NashZerothOrderPressureDelegate<CollisionType> > Type;
       };
 
       template<class CollisionType>
       struct NashZerothOrderPressureIoletGZS
       {
-          typedef WallIoletStreamerTypeFactory<CollisionType, GuoZhengShiDelegate<CollisionType> ,
+          typedef StreamerTypeFactory<CollisionType, GuoZhengShiDelegate<CollisionType> ,
               NashZerothOrderPressureDelegate<CollisionType> > Type;
       };
 

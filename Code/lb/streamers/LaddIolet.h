@@ -22,29 +22,23 @@ namespace hemelb
     {
 
       template<class CollisionType>
-      struct LaddIolet
-      {
-          typedef IoletStreamerTypeFactory<CollisionType, LaddIoletDelegate<CollisionType> > Type;
-      };
-
-      template<class CollisionType>
       struct LaddIoletSBB
       {
-          typedef WallIoletStreamerTypeFactory<CollisionType,
+          typedef StreamerTypeFactory<CollisionType,
               SimpleBounceBackDelegate<CollisionType>, LaddIoletDelegate<CollisionType> > Type;
       };
 
       template<class CollisionType>
       struct LaddIoletBFL
       {
-          typedef WallIoletStreamerTypeFactory<CollisionType,
+          typedef StreamerTypeFactory<CollisionType,
               BouzidiFirdaousLallemandDelegate<CollisionType>, LaddIoletDelegate<CollisionType> > Type;
       };
 
       template<class CollisionType>
       struct LaddIoletGZS
       {
-          typedef WallIoletStreamerTypeFactory<CollisionType, GuoZhengShiDelegate<CollisionType>,
+          typedef StreamerTypeFactory<CollisionType, GuoZhengShiDelegate<CollisionType>,
               LaddIoletDelegate<CollisionType> > Type;
       };
 

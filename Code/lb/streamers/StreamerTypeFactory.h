@@ -22,242 +22,14 @@ namespace hemelb
         site_t siteCount,
         distribn_t lbmParams_tau,
         distribn_t lbmParams_omega,
+        const iolet_cosine_t* inlets,
+        const iolet_cosine_t* outlets,
         const site_t* neighbourIndices,
-        const unsigned* wallIntersections,
+        const void* siteData,
         const distribn_t* fOld,
-        distribn_t* fNew
+        distribn_t* fNew,
+        unsigned long timeStep
       );
-
-      /**
-       * Template to produce Streamers that can cope with fluid-fluid and
-       * fluid-wall links. Requires two classes as arguments: 1) the Collision
-       * class and 2) a StreamerDelegate class that will handle the wall links.
-       *
-       * It is intended that a simpler metafunction partially specialise this
-       * template on WallLinkImpl.
-       */
-      template<typename CollisionImpl, typename WallLinkImpl>
-      class WallStreamerTypeFactory : public BaseStreamer<WallStreamerTypeFactory<CollisionImpl, WallLinkImpl> >
-      {
-        public:
-          typedef CollisionImpl CollisionType;
-
-        private:
-          CollisionType collider;
-          SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
-          WallLinkImpl wallLinkDelegate;
-
-          typedef typename CollisionType::CKernel::LatticeType LatticeType;
-
-        public:
-          WallStreamerTypeFactory(kernels::InitParams& initParams) :
-            collider(initParams), bulkLinkDelegate(collider, initParams), wallLinkDelegate(collider, initParams)
-          {
-
-          }
-
-          template<bool tDoRayTracing>
-          inline void DoStreamAndCollide(const site_t firstIndex,
-                                         const site_t siteCount,
-                                         const LbmParameters* lbmParams,
-                                         geometry::LatticeData* latDat,
-                                         lb::MacroscopicPropertyCache& propertyCache)
-          {
-            unsigned localFluidSites = latDat->GetLocalFluidSiteCount();
-            site_t sharedFs = latDat->GetNumSharedFs();
-
-            if ( siteCount == 0 )
-            {
-              return;
-            }
-
-            if (lbmParams->UseGPU() && !propertyCache.RequiresRefresh())
-            {
-            // copy fOld from host to device
-            CUDA_SAFE_CALL(cudaMemcpyAsync(
-              latDat->GetFOldGPU(),
-              latDat->GetSite(0).GetFOld<LatticeType>(),
-              (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
-              cudaMemcpyHostToDevice
-            ));
-            CUDA_SAFE_CALL(cudaMemcpyAsync(
-              latDat->GetFNewGPU(),
-              latDat->GetFNew(0),
-              (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
-              cudaMemcpyHostToDevice
-            ));
-
-            // launch WallStreamer_DoStreamAndCollide kernel
-            DoStreamAndCollideGPU(
-              firstIndex,
-              siteCount,
-              lbmParams->GetTau(),
-              lbmParams->GetOmega(),
-              latDat->GetNeighbourIndicesGPU(),
-              latDat->GetWallIntersectionsGPU(),
-              latDat->GetFOldGPU(),
-              latDat->GetFNewGPU()
-            );
-            CUDA_SAFE_CALL(cudaGetLastError());
-
-            // copy fNew from device to host
-            CUDA_SAFE_CALL(cudaMemcpy(
-              latDat->GetFNew(0),
-              latDat->GetFNewGPU(),
-              (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
-              cudaMemcpyDeviceToHost
-            ));
-            }
-
-            else
-            {
-            for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
-            {
-              geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
-
-              const distribn_t* fOld = site.GetFOld<LatticeType> ();
-
-              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(fOld);
-
-              ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
-              hydroVars.tau = lbmParams->GetTau();
-
-              collider.CalculatePreCollision(hydroVars, site);
-
-              collider.Collide(lbmParams, hydroVars);
-
-              for (Direction ii = 0; ii < LatticeType::NUMVECTORS; ii++)
-              {
-                if (site.HasWall(ii))
-                {
-                  wallLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
-                }
-                else
-                {
-                  bulkLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
-                }
-              }
-
-              //TODO: Necessary to specify sub-class?
-              BaseStreamer<WallStreamerTypeFactory>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
-                                                                                                hydroVars,
-                                                                                                lbmParams,
-                                                                                                propertyCache);
-            }
-            }
-          }
-
-          template<bool tDoRayTracing>
-          inline void DoPostStep(const site_t firstIndex,
-                                 const site_t siteCount,
-                                 const LbmParameters* lbmParameters,
-                                 geometry::LatticeData* latticeData,
-                                 lb::MacroscopicPropertyCache& propertyCache)
-          {
-            for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
-            {
-              geometry::Site<geometry::LatticeData> site = latticeData->GetSite(siteIndex);
-              for (unsigned int direction = 0; direction < LatticeType::NUMVECTORS; direction++)
-              {
-                if (site.HasWall(direction))
-                {
-                  wallLinkDelegate.PostStepLink(latticeData, site, direction);
-                }
-              }
-            }
-          }
-
-      };
-
-      /**
-       * Template to produce Streamers that can cope with fluid-fluid and
-       * fluid-iolet links. Requires two classes as arguments: 1) the Collision
-       * class and 2) a StreamerDelegate class that will handle the iolet links.
-       *
-       * It is intended that a simpler metafunction partially specialise this
-       * template on IoletLinkImpl.
-       */
-      template<typename CollisionImpl, typename IoletLinkImpl>
-      class IoletStreamerTypeFactory : public BaseStreamer<IoletStreamerTypeFactory<CollisionImpl, IoletLinkImpl> >
-      {
-        public:
-          typedef CollisionImpl CollisionType;
-
-        private:
-          CollisionType collider;
-          SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
-          IoletLinkImpl ioletLinkDelegate;
-
-          typedef typename CollisionType::CKernel::LatticeType LatticeType;
-
-        public:
-          IoletStreamerTypeFactory(kernels::InitParams& initParams) :
-            collider(initParams), bulkLinkDelegate(collider, initParams), ioletLinkDelegate(collider, initParams)
-          {
-
-          }
-
-          template<bool tDoRayTracing>
-          inline void DoStreamAndCollide(const site_t firstIndex,
-                                         const site_t siteCount,
-                                         const LbmParameters* lbmParams,
-                                         geometry::LatticeData* latDat,
-                                         lb::MacroscopicPropertyCache& propertyCache)
-          {
-            for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
-            {
-              geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
-
-              const distribn_t* fOld = site.GetFOld<LatticeType> ();
-
-              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(fOld);
-
-              ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
-              hydroVars.tau = lbmParams->GetTau();
-
-              collider.CalculatePreCollision(hydroVars, site);
-
-              collider.Collide(lbmParams, hydroVars);
-
-              for (Direction ii = 0; ii < LatticeType::NUMVECTORS; ii++)
-              {
-                if (site.HasIolet(ii))
-                {
-                  ioletLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
-                }
-                else
-                {
-                  bulkLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
-                }
-              }
-
-              //TODO: Necessary to specify sub-class?
-              BaseStreamer<IoletStreamerTypeFactory>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
-                                                                                                 hydroVars,
-                                                                                                 lbmParams,
-                                                                                                 propertyCache);
-            }
-          }
-          template<bool tDoRayTracing>
-          inline void DoPostStep(const site_t firstIndex,
-                                 const site_t siteCount,
-                                 const LbmParameters* lbmParameters,
-                                 geometry::LatticeData* latticeData,
-                                 lb::MacroscopicPropertyCache& propertyCache)
-          {
-            for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
-            {
-              geometry::Site<geometry::LatticeData> site = latticeData->GetSite(siteIndex);
-              for (unsigned int direction = 0; direction < LatticeType::NUMVECTORS; direction++)
-              {
-                if (site.HasIolet(direction))
-                {
-                  ioletLinkDelegate.PostStepLink(latticeData, site, direction);
-                }
-              }
-            }
-          }
-      };
 
       /**
        * Template to produce Streamers that can cope with fluid-fluid,
@@ -270,7 +42,7 @@ namespace hemelb
        * template on WallLinkImpl and IoletLinkImpl.
        */
       template<typename CollisionImpl, typename WallLinkImpl, typename IoletLinkImpl>
-      class WallIoletStreamerTypeFactory : public BaseStreamer<WallIoletStreamerTypeFactory<CollisionImpl,
+      class StreamerTypeFactory : public BaseStreamer<StreamerTypeFactory<CollisionImpl,
           WallLinkImpl, IoletLinkImpl> >
       {
         public:
@@ -284,7 +56,7 @@ namespace hemelb
           IoletLinkImpl ioletLinkDelegate;
 
         public:
-          WallIoletStreamerTypeFactory(kernels::InitParams& initParams) :
+          StreamerTypeFactory(kernels::InitParams& initParams) :
             collider(initParams), bulkLinkDelegate(collider, initParams), wallLinkDelegate(collider, initParams),
                 ioletLinkDelegate(collider, initParams)
           {
@@ -296,8 +68,60 @@ namespace hemelb
                                          const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::LatticeData* latDat,
-                                         lb::MacroscopicPropertyCache& propertyCache)
+                                         lb::MacroscopicPropertyCache& propertyCache,
+                                         lb::SimulationState* simState)
           {
+            if (lbmParams->UseGPU() && !propertyCache.RequiresRefresh())
+            {
+              unsigned localFluidSites = latDat->GetLocalFluidSiteCount();
+              site_t sharedFs = latDat->GetNumSharedFs();
+
+              if ( siteCount == 0 )
+              {
+                return;
+              }
+
+              // copy fOld from host to device
+              CUDA_SAFE_CALL(cudaMemcpyAsync(
+                latDat->GetFOldGPU(),
+                latDat->GetSite(0).GetFOld<LatticeType>(),
+                (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
+                cudaMemcpyHostToDevice
+              ));
+              CUDA_SAFE_CALL(cudaMemcpyAsync(
+                latDat->GetFNewGPU(),
+                latDat->GetFNew(0),
+                (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
+                cudaMemcpyHostToDevice
+              ));
+
+              // launch DoStreamAndCollide kernel
+               DoStreamAndCollideGPU(
+                firstIndex,
+                siteCount,
+                lbmParams->GetTau(),
+                lbmParams->GetOmega(),
+                inlets_dev,
+                outlets_dev,
+                latDat->GetNeighbourIndicesGPU(),
+                latDat->GetSiteDataGPU(),
+                latDat->GetFOldGPU(),
+                latDat->GetFNewGPU(),
+                simState->Get0IndexedTimeStep()
+              );
+              CUDA_SAFE_CALL(cudaGetLastError());
+
+              // copy fNew from device to host
+              CUDA_SAFE_CALL(cudaMemcpy(
+                latDat->GetFNew(0),
+                latDat->GetFNewGPU(),
+                (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
+                cudaMemcpyDeviceToHost
+              ));
+            }
+
+            else
+            {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
               geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
@@ -330,10 +154,11 @@ namespace hemelb
               }
 
               //TODO: Necessary to specify sub-class?
-              BaseStreamer<WallIoletStreamerTypeFactory>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
-                                                                                                     hydroVars,
-                                                                                                     lbmParams,
-                                                                                                     propertyCache);
+              BaseStreamer<StreamerTypeFactory>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+                                                                                            hydroVars,
+                                                                                            lbmParams,
+                                                                                            propertyCache);
+            }
             }
           }
 

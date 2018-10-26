@@ -16,13 +16,6 @@ namespace hemelb
   {
     namespace streamers
     {
-
-      template<typename CollisionImpl>
-      struct BouzidiFirdaousLallemand
-      {
-          typedef WallStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl> > Type;
-      };
-
     }
   }
 }

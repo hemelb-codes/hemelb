@@ -22,12 +22,17 @@
 #include "net/IOCommunicator.h"
 #include "colloids/BodyForces.h"
 #include "colloids/BoundaryConditions.h"
+#include "lb/cuda_helper.h"
 
 #include <map>
 #include <limits>
 #include <cstdlib>
-#include <cuda_runtime.h>
 
+/**
+ * Global GPU buffers declared in cuda_helper.h
+ */
+iolet_cosine_t* inlets_dev;
+iolet_cosine_t* outlets_dev;
 
 /**
  * Constructor for the SimulationMaster class
