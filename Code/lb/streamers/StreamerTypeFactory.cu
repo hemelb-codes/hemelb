@@ -29,16 +29,16 @@ typedef struct
 
 __device__ bool Site_HasIolet(unsigned ioletIntersection, int direction)
 {
-  unsigned mask = 1U << max(0, direction - 1);
-  return (ioletIntersection & mask) != 0;
+  unsigned mask = 1U << (direction - 1);
+  return ((ioletIntersection & mask) != 0) && (direction > 0);
 }
 
 
 
 __device__ bool Site_HasWall(unsigned wallIntersection, int direction)
 {
-  unsigned mask = 1U << max(0, direction - 1);
-  return (wallIntersection & mask) != 0;
+  unsigned mask = 1U << (direction - 1);
+  return ((wallIntersection & mask) != 0) && (direction > 0);
 }
 
 
