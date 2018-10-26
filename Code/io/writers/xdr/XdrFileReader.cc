@@ -10,7 +10,7 @@
  *  Created on: Oct 25, 2010
  *      Author: rupert
  */
-
+#include <cassert>
 #include "io/writers/xdr/XdrFileReader.h"
 
 namespace hemelb
