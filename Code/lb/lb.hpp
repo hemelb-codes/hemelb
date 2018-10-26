@@ -262,6 +262,13 @@ namespace hemelb
        */
       site_t offset = mLatDat->GetMidDomainSiteCount();
 
+      if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
+      {
+        StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetDomainEdgeSiteCount());
+      }
+
+      else
+      {
       StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetDomainEdgeCollisionCount(0));
       offset += mLatDat->GetDomainEdgeCollisionCount(0);
 
@@ -280,6 +287,7 @@ namespace hemelb
       offset += mLatDat->GetDomainEdgeCollisionCount(4);
 
       StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(5));
+      }
 
       timings[hemelb::reporting::Timers::lb_calc].Stop();
       timings[hemelb::reporting::Timers::lb].Stop();
@@ -301,6 +309,13 @@ namespace hemelb
        */
       site_t offset = 0;
 
+      if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
+      {
+        StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetMidDomainSiteCount());
+      }
+
+      else
+      {
       StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetMidDomainCollisionCount(0));
       offset += mLatDat->GetMidDomainCollisionCount(0);
 
@@ -317,6 +332,7 @@ namespace hemelb
       offset += mLatDat->GetMidDomainCollisionCount(4);
 
       StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(5));
+      }
 
       timings[hemelb::reporting::Timers::lb_calc].Stop();
       timings[hemelb::reporting::Timers::lb].Stop();

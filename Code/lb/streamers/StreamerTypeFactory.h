@@ -71,32 +71,18 @@ namespace hemelb
                                          lb::MacroscopicPropertyCache& propertyCache,
                                          lb::SimulationState* simState)
           {
+            if ( siteCount == 0 )
+            {
+              return;
+            }
+
+            unsigned localFluidSites = latDat->GetLocalFluidSiteCount();
+            site_t sharedFs = latDat->GetNumSharedFs();
+
             if (lbmParams->UseGPU() && !propertyCache.RequiresRefresh())
             {
-              unsigned localFluidSites = latDat->GetLocalFluidSiteCount();
-              site_t sharedFs = latDat->GetNumSharedFs();
-
-              if ( siteCount == 0 )
-              {
-                return;
-              }
-
-              // copy fOld from host to device
-              CUDA_SAFE_CALL(cudaMemcpyAsync(
-                latDat->GetFOldGPU(),
-                latDat->GetSite(0).GetFOld<LatticeType>(),
-                (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
-                cudaMemcpyHostToDevice
-              ));
-              CUDA_SAFE_CALL(cudaMemcpyAsync(
-                latDat->GetFNewGPU(),
-                latDat->GetFNew(0),
-                (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
-                cudaMemcpyHostToDevice
-              ));
-
               // launch DoStreamAndCollide kernel
-               DoStreamAndCollideGPU(
+              DoStreamAndCollideGPU(
                 firstIndex,
                 siteCount,
                 lbmParams->GetTau(),
@@ -110,18 +96,21 @@ namespace hemelb
                 simState->Get0IndexedTimeStep()
               );
               CUDA_SAFE_CALL(cudaGetLastError());
+            }
 
-              // copy fNew from device to host
+            else
+            {
+            // copy fOld from host to device
+            if ( lbmParams->UseGPU() )
+            {
               CUDA_SAFE_CALL(cudaMemcpy(
-                latDat->GetFNew(0),
-                latDat->GetFNewGPU(),
+                latDat->GetFOld(0),
+                latDat->GetFOldGPU(),
                 (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
                 cudaMemcpyDeviceToHost
               ));
             }
 
-            else
-            {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
               geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
@@ -158,6 +147,17 @@ namespace hemelb
                                                                                             hydroVars,
                                                                                             lbmParams,
                                                                                             propertyCache);
+            }
+
+            // copy fNew from device to host
+            if ( lbmParams->UseGPU() )
+            {
+              CUDA_SAFE_CALL(cudaMemcpyAsync(
+                latDat->GetFNewGPU(),
+                latDat->GetFNew(0),
+                (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
+                cudaMemcpyHostToDevice
+              ));
             }
             }
           }
