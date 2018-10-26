@@ -81,6 +81,14 @@ namespace hemelb
 
             if (lbmParams->UseGPU() && !propertyCache.RequiresRefresh())
             {
+              // copy fOld from host to device
+              CUDA_SAFE_CALL(cudaMemcpyAsync(
+                latDat->GetFOldGPU(),
+                latDat->GetFOld(0),
+                (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
+                cudaMemcpyHostToDevice
+              ));
+
               // launch DoStreamAndCollide kernel
               DoStreamAndCollideGPU(
                 firstIndex,
@@ -96,21 +104,18 @@ namespace hemelb
                 simState->Get0IndexedTimeStep()
               );
               CUDA_SAFE_CALL(cudaGetLastError());
-            }
 
-            else
-            {
-            // copy fOld from host to device
-            if ( lbmParams->UseGPU() )
-            {
+              // copy fNew from device to host
               CUDA_SAFE_CALL(cudaMemcpy(
-                latDat->GetFOld(0),
-                latDat->GetFOldGPU(),
+                latDat->GetFNew(0),
+                latDat->GetFNewGPU(),
                 (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
                 cudaMemcpyDeviceToHost
               ));
             }
 
+            else
+            {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
               geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
@@ -147,17 +152,6 @@ namespace hemelb
                                                                                             hydroVars,
                                                                                             lbmParams,
                                                                                             propertyCache);
-            }
-
-            // copy fNew from device to host
-            if ( lbmParams->UseGPU() )
-            {
-              CUDA_SAFE_CALL(cudaMemcpyAsync(
-                latDat->GetFNewGPU(),
-                latDat->GetFNew(0),
-                (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
-                cudaMemcpyHostToDevice
-              ));
             }
             }
           }
