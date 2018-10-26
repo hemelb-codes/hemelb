@@ -30,6 +30,7 @@ namespace hemelb
 	  const VectorT& GetBuf() const;
 
 	private:
+	  template<typename, typename>
 	  friend struct XdrVectorWriterHelper;
 	  VectorT buffer;
 	  FILE* file;
