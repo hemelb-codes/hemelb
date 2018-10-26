@@ -97,6 +97,10 @@ namespace hemelb
             period = aPeriod;
           }
 
+          unsigned int GetWarmup() const
+          {
+            return warmUpLength;
+          }
           void SetWarmup(unsigned int warmup)
           {
             warmUpLength = warmup;

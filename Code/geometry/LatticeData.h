@@ -19,23 +19,10 @@
 #include "geometry/Site.h"
 #include "geometry/neighbouring/NeighbouringSite.h"
 #include "geometry/SiteData.h"
+#include "lb/cuda_helper.h"
 #include "reporting/Reportable.h"
 #include "reporting/Timers.h"
 #include "util/Vector3D.h"
-#include <cuda_runtime.h>
-
-#define CUDA_SAFE_CALL(x)                           \
-{                                                   \
-    cudaError_t error = x;                          \
-    if ( error != cudaSuccess ) {                   \
-      const char *name = cudaGetErrorName(error);   \
-      const char *str = cudaGetErrorString(error);  \
-      std::cerr << "\n"                             \
-                << "CUDA Error at " #x "\n"         \
-                << name << ": " << str << "\n";     \
-      exit(1);                                      \
-    }                                               \
-}
 
 namespace hemelb
 {
@@ -63,6 +50,7 @@ namespace hemelb
         inline void SwapOldAndNew()
         {
           oldDistributions.swap(newDistributions);
+          std::swap(oldDistributions_dev, newDistributions_dev);
         }
 
         void SendAndReceive(net::Net* net);
@@ -157,6 +145,30 @@ namespace hemelb
         bool IsValidLatticeSite(const util::Vector3D<site_t>& siteCoords) const;
 
         /**
+         * Get a pointer to the fOld array starting at the requested index
+         * @param distributionIndex
+         * @return
+         */
+        // Method should remain protected, intent is to access this information via Site
+        distribn_t* GetFOld(site_t distributionIndex)
+        {
+          return &oldDistributions[distributionIndex];
+        }
+
+        /**
+         * Get a pointer to the fOld array starting at the requested index. This version
+         * of the function allows us to access the fOld array in a const way from a const
+         * LatticeData
+         * @param distributionIndex
+         * @return
+         */
+        // Method should remain protected, intent is to access this information via Site
+        const distribn_t* GetFOld(site_t distributionIndex) const
+        {
+          return &oldDistributions[distributionIndex];
+        }
+
+        /**
          * Get a pointer into the fNew array at the given index
          * @param distributionIndex
          * @return
@@ -182,9 +194,9 @@ namespace hemelb
           return neighbourIndices_dev;
         }
 
-        inline unsigned* GetWallIntersectionsGPU()
+        inline void* GetSiteDataGPU()
         {
-          return wallIntersections_dev;
+          return siteData_dev;
         }
 
         inline distribn_t* GetFOldGPU()
@@ -305,6 +317,7 @@ namespace hemelb
                                         util::Vector3D<site_t>& siteCoords) const;
 
         site_t GetMidDomainSiteCount() const;
+        site_t GetDomainEdgeSiteCount() const;
 
         /**
          * Number of sites with all fluid neighbours residing on this rank, for the given
@@ -456,17 +469,17 @@ namespace hemelb
           CUDA_SAFE_CALL(cudaMalloc(&oldDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + totalSharedFs + 1) * sizeof(distribn_t)));
           CUDA_SAFE_CALL(cudaMalloc(&newDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + totalSharedFs + 1) * sizeof(distribn_t)));
 
+          CUDA_SAFE_CALL(cudaMemcpyAsync(
+            oldDistributions_dev,
+            oldDistributions.data(),
+            (localFluidSites * latticeInfo.GetNumVectors() + totalSharedFs + 1) * sizeof(distribn_t),
+            cudaMemcpyHostToDevice
+          ));
+
           // initialize GPU buffers for site data
-          CUDA_SAFE_CALL(cudaMalloc(&wallIntersections_dev, localFluidSites * sizeof(unsigned)));
+          CUDA_SAFE_CALL(cudaMalloc(&siteData_dev, localFluidSites * sizeof(SiteData)));
 
-          std::vector<unsigned> wallIntersections(localFluidSites);
-
-          for ( site_t siteIndex = 0; siteIndex < localFluidSites; ++siteIndex )
-          {
-            wallIntersections[siteIndex] = siteData[siteIndex].GetWallIntersectionData();
-          }
-
-          CUDA_SAFE_CALL(cudaMemcpyAsync(wallIntersections_dev, wallIntersections.data(), localFluidSites * sizeof(unsigned), cudaMemcpyHostToDevice));
+          CUDA_SAFE_CALL(cudaMemcpyAsync(siteData_dev, siteData.data(), localFluidSites * sizeof(SiteData), cudaMemcpyHostToDevice));
         }
 
         void CollectFluidSiteDistribution();
@@ -512,30 +525,6 @@ namespace hemelb
         inline const util::Vector3D<distribn_t>& GetNormalToWall(site_t iSiteIndex) const
         {
           return wallNormalAtSite[iSiteIndex];
-        }
-
-        /**
-         * Get a pointer to the fOld array starting at the requested index
-         * @param distributionIndex
-         * @return
-         */
-        // Method should remain protected, intent is to access this information via Site
-        distribn_t* GetFOld(site_t distributionIndex)
-        {
-          return &oldDistributions[distributionIndex];
-        }
-
-        /**
-         * Get a pointer to the fOld array starting at the requested index. This version
-         * of the function allows us to access the fOld array in a const way from a const
-         * LatticeData
-         * @param distributionIndex
-         * @return
-         */
-        // Method should remain protected, intent is to access this information via Site
-        const distribn_t* GetFOld(site_t distributionIndex) const
-        {
-          return &oldDistributions[distributionIndex];
         }
 
         /*
@@ -640,7 +629,7 @@ namespace hemelb
 
         // GPU buffers
         site_t* neighbourIndices_dev;
-        unsigned* wallIntersections_dev;
+        void* siteData_dev;
         distribn_t* oldDistributions_dev;
         distribn_t* newDistributions_dev;
     };

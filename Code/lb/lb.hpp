@@ -9,12 +9,12 @@
 
 #include "io/writers/xdr/XdrMemWriter.h"
 #include "lb/lb.h"
+#include "lb/cuda_helper.h"
 
 namespace hemelb
 {
   namespace lb
   {
-
     template<class LatticeType>
     hemelb::lb::LbmParameters* LBM<LatticeType>::GetLbmParams()
     {
@@ -103,26 +103,26 @@ namespace hemelb
 
       unsigned collId;
       InitInitParamsSiteRanges(initParams, collId);
-      mMidFluidCollision = new tMidFluidCollision(initParams);
+      mMidFluidCollision = new CollisionType(initParams);
 
       AdvanceInitParamsSiteRanges(initParams, collId);
-      mWallCollision = new tWallCollision(initParams);
-
-      AdvanceInitParamsSiteRanges(initParams, collId);
-      initParams.boundaryObject = mInletValues;
-      mInletCollision = new tInletCollision(initParams);
-
-      AdvanceInitParamsSiteRanges(initParams, collId);
-      initParams.boundaryObject = mOutletValues;
-      mOutletCollision = new tOutletCollision(initParams);
+      mWallCollision = new CollisionType(initParams);
 
       AdvanceInitParamsSiteRanges(initParams, collId);
       initParams.boundaryObject = mInletValues;
-      mInletWallCollision = new tInletWallCollision(initParams);
+      mInletCollision = new CollisionType(initParams);
 
       AdvanceInitParamsSiteRanges(initParams, collId);
       initParams.boundaryObject = mOutletValues;
-      mOutletWallCollision = new tOutletWallCollision(initParams);
+      mOutletCollision = new CollisionType(initParams);
+
+      AdvanceInitParamsSiteRanges(initParams, collId);
+      initParams.boundaryObject = mInletValues;
+      mInletWallCollision = new CollisionType(initParams);
+
+      AdvanceInitParamsSiteRanges(initParams, collId);
+      initParams.boundaryObject = mOutletValues;
+      mOutletWallCollision = new CollisionType(initParams);
     }
 
     template<class LatticeType>
@@ -140,6 +140,49 @@ namespace hemelb
       SetInitialConditions();
 
       mVisControl = iControl;
+
+      // initialize GPU buffers for iolets
+      std::vector<iolet_cosine_t> inlets;
+
+      for ( unsigned i = 0; i < mInletValues->GetLocalIoletCount(); i++ )
+      {
+        iolets::InOutLetCosine* iolet = dynamic_cast<iolets::InOutLetCosine*>(mInletValues->GetLocalIolet(i));
+        auto& normal = iolet->GetNormal();
+
+        inlets.push_back(iolet_cosine_t {
+          iolet->GetMinimumSimulationDensity(),
+          make_double3(normal[0], normal[1], normal[2]),
+          iolet->GetDensityMean(),
+          iolet->GetDensityAmp(),
+          iolet->GetPhase(),
+          iolet->GetPeriod(),
+          iolet->GetWarmup()
+        });
+      }
+
+      std::vector<iolet_cosine_t> outlets;
+
+      for ( unsigned i = 0; i < mOutletValues->GetLocalIoletCount(); i++ )
+      {
+        iolets::InOutLetCosine* iolet = dynamic_cast<iolets::InOutLetCosine*>(mOutletValues->GetLocalIolet(i));
+        auto& normal = iolet->GetNormal();
+
+        outlets.push_back(iolet_cosine_t {
+          iolet->GetMinimumSimulationDensity(),
+          make_double3(normal[0], normal[1], normal[2]),
+          iolet->GetDensityMean(),
+          iolet->GetDensityAmp(),
+          iolet->GetPhase(),
+          iolet->GetPeriod(),
+          iolet->GetWarmup()
+        });
+      }
+
+      CUDA_SAFE_CALL(cudaMalloc(&inlets_dev, inlets.size() * sizeof(iolet_cosine_t)));
+      CUDA_SAFE_CALL(cudaMalloc(&outlets_dev, outlets.size() * sizeof(iolet_cosine_t)));
+
+      CUDA_SAFE_CALL(cudaMemcpyAsync(inlets_dev, inlets.data(), inlets.size() * sizeof(iolet_cosine_t), cudaMemcpyHostToDevice));
+      CUDA_SAFE_CALL(cudaMemcpyAsync(outlets_dev, outlets.data(), outlets.size() * sizeof(iolet_cosine_t), cudaMemcpyHostToDevice));
     }
 
     template<class LatticeType>
@@ -219,6 +262,13 @@ namespace hemelb
        */
       site_t offset = mLatDat->GetMidDomainSiteCount();
 
+      if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
+      {
+        StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetDomainEdgeSiteCount());
+      }
+
+      else
+      {
       StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetDomainEdgeCollisionCount(0));
       offset += mLatDat->GetDomainEdgeCollisionCount(0);
 
@@ -237,6 +287,7 @@ namespace hemelb
       offset += mLatDat->GetDomainEdgeCollisionCount(4);
 
       StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(5));
+      }
 
       timings[hemelb::reporting::Timers::lb_calc].Stop();
       timings[hemelb::reporting::Timers::lb].Stop();
@@ -258,6 +309,13 @@ namespace hemelb
        */
       site_t offset = 0;
 
+      if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
+      {
+        StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetMidDomainSiteCount());
+      }
+
+      else
+      {
       StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetMidDomainCollisionCount(0));
       offset += mLatDat->GetMidDomainCollisionCount(0);
 
@@ -274,6 +332,7 @@ namespace hemelb
       offset += mLatDat->GetMidDomainCollisionCount(4);
 
       StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(5));
+      }
 
       timings[hemelb::reporting::Timers::lb_calc].Stop();
       timings[hemelb::reporting::Timers::lb].Stop();

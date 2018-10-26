@@ -180,6 +180,11 @@ namespace hemelb
             minimumSimulationDensity = minSimDensity;
           }
 
+          LatticeDensity GetMinimumSimulationDensity()
+          {
+            return minimumSimulationDensity;
+          }
+
           IoletExtraData* GetExtraData()
           {
             return extraData;

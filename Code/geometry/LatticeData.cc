@@ -648,6 +648,16 @@ namespace hemelb
       return midDomainSiteCount;
     }
 
+    site_t LatticeData::GetDomainEdgeSiteCount() const
+    {
+      site_t domainEdgeSiteCount = 0;
+      for (unsigned collisionType = 0; collisionType < COLLISION_TYPES; collisionType++)
+      {
+        domainEdgeSiteCount += domainEdgeProcCollisions[collisionType];
+      }
+      return domainEdgeSiteCount;
+    }
+
     void LatticeData::GetBlockIJK(site_t block, util::Vector3D<site_t>& blockCoords) const
     {
       blockCoords.z = block % blockCounts.z;

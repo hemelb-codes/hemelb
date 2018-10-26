@@ -16,13 +16,6 @@ namespace hemelb
   {
     namespace streamers
     {
-
-      template<typename CollisionImpl>
-      struct SimpleBounceBack
-      {
-          typedef WallStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl> > Type;
-      };
-
     }
   }
 }
