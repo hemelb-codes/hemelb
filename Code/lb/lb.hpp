@@ -141,6 +141,12 @@ namespace hemelb
 
       mVisControl = iControl;
 
+      // skip GPU initialization if not needed
+      if ( !mParams.UseGPU() )
+      {
+        return;
+      }
+
       // initialize GPU buffers for iolets
       std::vector<iolet_cosine_t> inlets;
 
@@ -181,8 +187,35 @@ namespace hemelb
       CUDA_SAFE_CALL(cudaMalloc(&inlets_dev, inlets.size() * sizeof(iolet_cosine_t)));
       CUDA_SAFE_CALL(cudaMalloc(&outlets_dev, outlets.size() * sizeof(iolet_cosine_t)));
 
-      CUDA_SAFE_CALL(cudaMemcpyAsync(inlets_dev, inlets.data(), inlets.size() * sizeof(iolet_cosine_t), cudaMemcpyHostToDevice));
-      CUDA_SAFE_CALL(cudaMemcpyAsync(outlets_dev, outlets.data(), outlets.size() * sizeof(iolet_cosine_t), cudaMemcpyHostToDevice));
+      CUDA_SAFE_CALL(cudaMemcpyAsync(
+        inlets_dev,
+        inlets.data(),
+        inlets.size() * sizeof(iolet_cosine_t),
+        cudaMemcpyHostToDevice
+      ));
+      CUDA_SAFE_CALL(cudaMemcpyAsync(
+        outlets_dev,
+        outlets.data(),
+        outlets.size() * sizeof(iolet_cosine_t),
+        cudaMemcpyHostToDevice
+      ));
+
+      // transfer fOld and fNew to GPU
+      unsigned localFluidSites = mLatDat->GetLocalFluidSiteCount();
+      site_t sharedFs = mLatDat->GetNumSharedFs();
+
+      CUDA_SAFE_CALL(cudaMemcpyAsync(
+        mLatDat->GetFOldGPU(),
+        mLatDat->GetFOld(0),
+        (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
+        cudaMemcpyHostToDevice
+      ));
+      CUDA_SAFE_CALL(cudaMemcpyAsync(
+        mLatDat->GetFNewGPU(),
+        mLatDat->GetFNew(0),
+        (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
+        cudaMemcpyHostToDevice
+      ));
     }
 
     template<class LatticeType>
@@ -316,6 +349,20 @@ namespace hemelb
 
       else
       {
+        unsigned localFluidSites = mLatDat->GetLocalFluidSiteCount();
+        site_t sharedFs = mLatDat->GetNumSharedFs();
+
+        if ( mParams.UseGPU() )
+        {
+          // copy fOld from device to host
+          CUDA_SAFE_CALL(cudaMemcpy(
+            mLatDat->GetFOld(0),
+            mLatDat->GetFOldGPU(),
+            (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
+            cudaMemcpyDeviceToHost
+          ));
+        }
+
       StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetMidDomainCollisionCount(0));
       offset += mLatDat->GetMidDomainCollisionCount(0);
 
@@ -332,6 +379,17 @@ namespace hemelb
       offset += mLatDat->GetMidDomainCollisionCount(4);
 
       StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(5));
+
+        if ( mParams.UseGPU() )
+        {
+          // copy fNew from host to device
+          CUDA_SAFE_CALL(cudaMemcpyAsync(
+            mLatDat->GetFNewGPU(),
+            mLatDat->GetFNew(0),
+            (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
+            cudaMemcpyHostToDevice
+          ));
+        }
       }
 
       timings[hemelb::reporting::Timers::lb_calc].Stop();

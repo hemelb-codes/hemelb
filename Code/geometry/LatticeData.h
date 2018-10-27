@@ -469,13 +469,6 @@ namespace hemelb
           CUDA_SAFE_CALL(cudaMalloc(&oldDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + totalSharedFs + 1) * sizeof(distribn_t)));
           CUDA_SAFE_CALL(cudaMalloc(&newDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + totalSharedFs + 1) * sizeof(distribn_t)));
 
-          CUDA_SAFE_CALL(cudaMemcpyAsync(
-            oldDistributions_dev,
-            oldDistributions.data(),
-            (localFluidSites * latticeInfo.GetNumVectors() + totalSharedFs + 1) * sizeof(distribn_t),
-            cudaMemcpyHostToDevice
-          ));
-
           // initialize GPU buffers for site data
           CUDA_SAFE_CALL(cudaMalloc(&siteData_dev, localFluidSites * sizeof(SiteData)));
 

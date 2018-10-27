@@ -76,19 +76,8 @@ namespace hemelb
               return;
             }
 
-            unsigned localFluidSites = latDat->GetLocalFluidSiteCount();
-            site_t sharedFs = latDat->GetNumSharedFs();
-
             if (lbmParams->UseGPU() && !propertyCache.RequiresRefresh())
             {
-              // copy fOld from host to device
-              CUDA_SAFE_CALL(cudaMemcpyAsync(
-                latDat->GetFOldGPU(),
-                latDat->GetFOld(0),
-                (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
-                cudaMemcpyHostToDevice
-              ));
-
               // launch DoStreamAndCollide kernel
               DoStreamAndCollideGPU(
                 firstIndex,
@@ -104,14 +93,6 @@ namespace hemelb
                 simState->Get0IndexedTimeStep()
               );
               CUDA_SAFE_CALL(cudaGetLastError());
-
-              // copy fNew from device to host
-              CUDA_SAFE_CALL(cudaMemcpy(
-                latDat->GetFNew(0),
-                latDat->GetFNewGPU(),
-                (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
-                cudaMemcpyDeviceToHost
-              ));
             }
 
             else
