@@ -76,36 +76,38 @@ __device__ distribn_t InOutLetCosine_GetDensity(const iolet_cosine_t& iolet, uns
 
 
 // lb/lattices/D3Q15.h
-__device__ const int D3Q15_NUMVECTORS = 15;
+namespace D3Q15
+{
+  __constant__ const int NUMVECTORS = 15;
 
-__device__ const int D3Q15_CX[] = { 0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1 };
-__device__ const int D3Q15_CY[] = { 0, 0, 0, 1, -1, 0, 0, 1, -1, 1, -1, -1, 1, -1, 1 };
-__device__ const int D3Q15_CZ[] = { 0, 0, 0, 0, 0, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1 };
+  __constant__ const int CX[] = { 0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1 };
+  __constant__ const int CY[] = { 0, 0, 0, 1, -1, 0, 0, 1, -1, 1, -1, -1, 1, -1, 1 };
+  __constant__ const int CZ[] = { 0, 0, 0, 0, 0, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1 };
 
-__device__ const distribn_t D3Q15_CXD[] = { 0.0, 1.0, -1.0, 0.0,  0.0, 0.0,  0.0, 1.0, -1.0,  1.0, -1.0,  1.0, -1.0,  1.0, -1.0};
-__device__ const distribn_t D3Q15_CYD[] = { 0.0, 0.0,  0.0, 1.0, -1.0, 0.0,  0.0, 1.0, -1.0,  1.0, -1.0, -1.0,  1.0, -1.0,  1.0};
-__device__ const distribn_t D3Q15_CZD[] = { 0.0, 0.0,  0.0, 0.0,  0.0, 1.0, -1.0, 1.0, -1.0, -1.0,  1.0,  1.0, -1.0, -1.0,  1.0};
+  __constant__ const distribn_t CXD[] = { 0.0, 1.0, -1.0, 0.0,  0.0, 0.0,  0.0, 1.0, -1.0,  1.0, -1.0,  1.0, -1.0,  1.0, -1.0};
+  __constant__ const distribn_t CYD[] = { 0.0, 0.0,  0.0, 1.0, -1.0, 0.0,  0.0, 1.0, -1.0,  1.0, -1.0, -1.0,  1.0, -1.0,  1.0};
+  __constant__ const distribn_t CZD[] = { 0.0, 0.0,  0.0, 0.0,  0.0, 1.0, -1.0, 1.0, -1.0, -1.0,  1.0,  1.0, -1.0, -1.0,  1.0};
 
-__device__ const distribn_t D3Q15_EQMWEIGHTS[] = {
-  2.0 / 9.0,
-  1.0 / 9.0,
-  1.0 / 9.0,
-  1.0 / 9.0,
-  1.0 / 9.0,
-  1.0 / 9.0,
-  1.0 / 9.0,
-  1.0 / 72.0,
-  1.0 / 72.0,
-  1.0 / 72.0,
-  1.0 / 72.0,
-  1.0 / 72.0,
-  1.0 / 72.0,
-  1.0 / 72.0,
-  1.0 / 72.0
-};
+  __constant__ const distribn_t EQMWEIGHTS[] = {
+    2.0 / 9.0,
+    1.0 / 9.0,
+    1.0 / 9.0,
+    1.0 / 9.0,
+    1.0 / 9.0,
+    1.0 / 9.0,
+    1.0 / 9.0,
+    1.0 / 72.0,
+    1.0 / 72.0,
+    1.0 / 72.0,
+    1.0 / 72.0,
+    1.0 / 72.0,
+    1.0 / 72.0,
+    1.0 / 72.0,
+    1.0 / 72.0
+  };
 
-__device__ const int D3Q15_INVERSEDIRECTIONS[] = { 0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13 };
-
+  __constant__ const int INVERSEDIRECTIONS[] = { 0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13 };
+}
 
 
 // lb/lattices/Lattice.h
@@ -117,14 +119,14 @@ __device__ void Lattice_CalculateFeq(const distribn_t& density, const double3& m
       + momentum.y * momentum.y
       + momentum.z * momentum.z;
 
-  for ( int j = 0; j < D3Q15_NUMVECTORS; ++j )
+  for ( int j = 0; j < D3Q15::NUMVECTORS; ++j )
   {
     const distribn_t mom_dot_ei =
-        D3Q15_CXD[j] * momentum.x
-        + D3Q15_CYD[j] * momentum.y
-        + D3Q15_CZD[j] * momentum.z;
+        D3Q15::CXD[j] * momentum.x
+        + D3Q15::CYD[j] * momentum.y
+        + D3Q15::CZD[j] * momentum.z;
 
-    f_eq[j] = D3Q15_EQMWEIGHTS[j]
+    f_eq[j] = D3Q15::EQMWEIGHTS[j]
         * (density
             - (3. / 2.) * momentumMagnitudeSquared * density_1
             + (9. / 2.) * density_1 * mom_dot_ei * mom_dot_ei
@@ -158,16 +160,16 @@ __global__ void DoStreamAndCollideKernel(
   site_t siteIndex = firstIndex + i;
 
   // initialize hydroVars
-  distribn_t f[D3Q15_NUMVECTORS];
+  distribn_t f[D3Q15::NUMVECTORS];
   distribn_t density;
   double3 momentum;
   double3 velocity;
-  distribn_t f_eq[D3Q15_NUMVECTORS];
+  distribn_t f_eq[D3Q15::NUMVECTORS];
   distribn_t* f_neq = f_eq;
   distribn_t* f_post = f_eq;
 
   // copy fOld to local memory
-  memcpy(&f[0], &fOld[siteIndex * D3Q15_NUMVECTORS], D3Q15_NUMVECTORS * sizeof(distribn_t));
+  memcpy(&f[0], &fOld[siteIndex * D3Q15::NUMVECTORS], D3Q15::NUMVECTORS * sizeof(distribn_t));
 
   // collider.CalculatePreCollision() (collider = Normal, kernel = LBGK)
 
@@ -177,12 +179,12 @@ __global__ void DoStreamAndCollideKernel(
   momentum.y = 0.0;
   momentum.z = 0.0;
 
-  for ( int j = 0; j < D3Q15_NUMVECTORS; ++j )
+  for ( int j = 0; j < D3Q15::NUMVECTORS; ++j )
   {
     density += f[j];
-    momentum.x += D3Q15_CXD[j] * f[j];
-    momentum.y += D3Q15_CYD[j] * f[j];
-    momentum.z += D3Q15_CZD[j] * f[j];
+    momentum.x += D3Q15::CXD[j] * f[j];
+    momentum.y += D3Q15::CYD[j] * f[j];
+    momentum.z += D3Q15::CZD[j] * f[j];
   }
 
   velocity.x = momentum.x / density;
@@ -192,7 +194,7 @@ __global__ void DoStreamAndCollideKernel(
   Lattice_CalculateFeq(density, momentum, f_eq);
 
   // LBGK::DoCalculateDensityMomentumFeq()
-  for ( int j = 0; j < D3Q15_NUMVECTORS; ++j )
+  for ( int j = 0; j < D3Q15::NUMVECTORS; ++j )
   {
     f_neq[j] = f[j] - f_eq[j];
   }
@@ -200,7 +202,7 @@ __global__ void DoStreamAndCollideKernel(
   // collider.Collide()
 
   // LBGK::DoCollide()
-  for ( int j = 0; j < D3Q15_NUMVECTORS; ++j )
+  for ( int j = 0; j < D3Q15::NUMVECTORS; ++j )
   {
     f_post[j] = f[j] + f_neq[j] * lbmParams_omega;
   }
@@ -208,7 +210,7 @@ __global__ void DoStreamAndCollideKernel(
   // perform streaming
   site_data_t site = siteData[siteIndex];
 
-  for ( int j = 0; j < D3Q15_NUMVECTORS; ++j )
+  for ( int j = 0; j < D3Q15::NUMVECTORS; ++j )
   {
     if ( Site_HasIolet(site.ioletIntersection, j) )
     {
@@ -232,21 +234,21 @@ __global__ void DoStreamAndCollideKernel(
       ghost_momentum.z = iolet.normal.z * component * ghost_density;
 
       // compute f_eq at the iolet
-      distribn_t ghost_f_eq[D3Q15_NUMVECTORS];
+      distribn_t ghost_f_eq[D3Q15::NUMVECTORS];
 
       Lattice_CalculateFeq(ghost_density, ghost_momentum, ghost_f_eq);
 
-      int outIndex = siteIndex * D3Q15_NUMVECTORS + D3Q15_INVERSEDIRECTIONS[j];
-      fNew[outIndex] = ghost_f_eq[D3Q15_INVERSEDIRECTIONS[j]];
+      int outIndex = siteIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[j];
+      fNew[outIndex] = ghost_f_eq[D3Q15::INVERSEDIRECTIONS[j]];
     }
     else if ( Site_HasWall(site.wallIntersection, j) )
     {
-      int outIndex = siteIndex * D3Q15_NUMVECTORS + D3Q15_INVERSEDIRECTIONS[j];
+      int outIndex = siteIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[j];
       fNew[outIndex] = f_post[j];
     }
     else
     {
-      int outIndex = neighbourIndices[siteIndex * D3Q15_NUMVECTORS + j];
+      int outIndex = neighbourIndices[siteIndex * D3Q15::NUMVECTORS + j];
       fNew[outIndex] = f_post[j];
     }
   }
