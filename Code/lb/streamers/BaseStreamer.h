@@ -84,7 +84,6 @@ namespace hemelb
                                                                                    lbmParams,
                                                                                    latDat,
                                                                                    propertyCache);
-
           }
 
         protected:

@@ -8,7 +8,6 @@ project(HemeLB)
 
 find_package(CUDA REQUIRED)
 include(FindCUDA)
-set(CUDA_NVCC_FLAGS "-Wno-deprecated-gpu-targets")
 
 set(HEMELB_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
@@ -28,6 +27,7 @@ if(HEMELB_OPTIMISATION)
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HEMELB_OPTIMISATION}")
 endif()
 
+
 add_definitions(-DHEMELB_CODE)
 add_definitions(-DHEMELB_READING_GROUP_SIZE=${HEMELB_READING_GROUP_SIZE})
 add_definitions(-DHEMELB_LATTICE=${HEMELB_LATTICE})
@@ -39,8 +39,6 @@ add_definitions(-DHEMELB_WALL_INLET_BOUNDARY=${HEMELB_WALL_INLET_BOUNDARY})
 add_definitions(-DHEMELB_WALL_OUTLET_BOUNDARY=${HEMELB_WALL_OUTLET_BOUNDARY})
 add_definitions(-DHEMELB_COMPUTE_ARCHITECTURE=${HEMELB_COMPUTE_ARCHITECTURE})
 add_definitions(-DHEMELB_LOG_LEVEL=${HEMELB_LOG_LEVEL})
-
-add_definitions(-DTIXML_USE_STL)
 
 if(HEMELB_VALIDATE_GEOMETRY)
   add_definitions(-DHEMELB_VALIDATE_GEOMETRY)
@@ -74,7 +72,7 @@ if (HEMELB_USE_VELOCITY_WEIGHTS_FILE)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${HEMELB_DEPENDENCIES_PATH}/Modules/")
-list(APPEND CMAKE_INCLUDE_PATH "${HEMELB_DEPENDENCIES_INSTALL_PATH}/include" "${CMAKE_CURRENT_SOURCE_DIR}")
+list(APPEND CMAKE_INCLUDE_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/include)
 list(APPEND CMAKE_LIBRARY_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/lib)
 
 cuda_include_directories(${CMAKE_INCLUDE_PATH})
@@ -134,7 +132,7 @@ if (HEMELB_USE_DEBUGGER)
 endif()
 
 set(root_sources SimulationMaster.cc)
-cuda_add_executable(${HEMELB_EXECUTABLE}_gpu main.cc ${root_sources})
+cuda_add_executable(${HEMELB_EXECUTABLE} main.cc ${root_sources})
 
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
@@ -158,12 +156,12 @@ foreach(subdir ${package_subdirs})
   add_subdirectory(${subdir})
 endforeach()
 add_subdirectory(resources)
-target_link_libraries(${HEMELB_EXECUTABLE}_gpu PUBLIC
+target_link_libraries(${HEMELB_EXECUTABLE} PUBLIC
   ${heme_libraries}
   ${MPI_LIBRARIES}
   ${Boost_LIBRARIES}
   ${CUDA_LIBRARIES})
-INSTALL(TARGETS ${HEMELB_EXECUTABLE}_gpu RUNTIME DESTINATION bin)
+INSTALL(TARGETS ${HEMELB_EXECUTABLE} RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
 
 #-------- Copy and install resources --------------
@@ -173,4 +171,3 @@ foreach(resource ${RESOURCES})
   get_filename_component(resource_leaf ${resource} NAME)
   INSTALL(FILES ${BUILD_RESOURCE_PATH}/${resource_leaf} DESTINATION share/hemelb/resources)
 endforeach()
-
