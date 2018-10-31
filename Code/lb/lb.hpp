@@ -207,19 +207,18 @@ namespace hemelb
       mLatDat->InitialiseGPU();
 
       // transfer fOld and fNew to GPU
-      unsigned localFluidSites = mLatDat->GetLocalFluidSiteCount();
-      site_t sharedFs = mLatDat->GetNumSharedFs();
+      site_t localFluidSites = mLatDat->GetLocalFluidSiteCount();
 
       CUDA_SAFE_CALL(cudaMemcpyAsync(
         mLatDat->GetFOldGPU(0),
         mLatDat->GetFOld(0),
-        (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
+        (localFluidSites * LatticeType::NUMVECTORS) * sizeof(distribn_t),
         cudaMemcpyHostToDevice
       ));
       CUDA_SAFE_CALL(cudaMemcpyAsync(
         mLatDat->GetFNewGPU(0),
         mLatDat->GetFNew(0),
-        (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
+        (localFluidSites * LatticeType::NUMVECTORS) * sizeof(distribn_t),
         cudaMemcpyHostToDevice
       ));
     }
@@ -300,14 +299,35 @@ namespace hemelb
        * through the sites of each type in turn.
        */
       site_t offset = mLatDat->GetMidDomainSiteCount();
+      site_t localFluidSites = mLatDat->GetLocalFluidSiteCount();
+      site_t sharedFs = mLatDat->GetNumSharedFs();
 
       if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
       {
         StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetDomainEdgeSiteCount());
+
+        // copy fNew (sharedFs) from device to host
+        CUDA_SAFE_CALL(cudaMemcpy(
+          mLatDat->GetFNew(localFluidSites * LatticeType::NUMVECTORS),
+          mLatDat->GetFNewGPU(localFluidSites * LatticeType::NUMVECTORS),
+          (sharedFs) * sizeof(distribn_t),
+          cudaMemcpyDeviceToHost
+        ));
       }
 
       else
       {
+        if ( mParams.UseGPU() )
+        {
+          // copy fOld (all sites) from device to host
+          CUDA_SAFE_CALL(cudaMemcpy(
+            mLatDat->GetFOld(0),
+            mLatDat->GetFOldGPU(0),
+            (localFluidSites * LatticeType::NUMVECTORS) * sizeof(distribn_t),
+            cudaMemcpyDeviceToHost
+          ));
+        }
+
       StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetDomainEdgeCollisionCount(0));
       offset += mLatDat->GetDomainEdgeCollisionCount(0);
 
@@ -347,28 +367,15 @@ namespace hemelb
        * midDomain sites, one type at a time.
        */
       site_t offset = 0;
+      site_t midDomainSites = mLatDat->GetMidDomainSiteCount();
 
       if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
       {
-        StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetMidDomainSiteCount());
+        StreamAndCollide(mMidFluidCollision, offset, midDomainSites);
       }
 
       else
       {
-        unsigned localFluidSites = mLatDat->GetLocalFluidSiteCount();
-        site_t sharedFs = mLatDat->GetNumSharedFs();
-
-        if ( mParams.UseGPU() )
-        {
-          // copy fOld from device to host
-          CUDA_SAFE_CALL(cudaMemcpy(
-            mLatDat->GetFOld(0),
-            mLatDat->GetFOldGPU(0),
-            (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
-            cudaMemcpyDeviceToHost
-          ));
-        }
-
       StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetMidDomainCollisionCount(0));
       offset += mLatDat->GetMidDomainCollisionCount(0);
 
@@ -388,11 +395,11 @@ namespace hemelb
 
         if ( mParams.UseGPU() )
         {
-          // copy fNew from host to device
+          // copy fNew (mid domain) from host to device
           CUDA_SAFE_CALL(cudaMemcpyAsync(
             mLatDat->GetFNewGPU(0),
             mLatDat->GetFNew(0),
-            (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
+            (midDomainSites * LatticeType::NUMVECTORS) * sizeof(distribn_t),
             cudaMemcpyHostToDevice
           ));
         }
@@ -410,7 +417,32 @@ namespace hemelb
       // Copy the distribution functions received from the neighbouring
       // processors into the destination buffer "f_new".
       // This is done here, after receiving the sent distributions from neighbours.
+      site_t midDomainSites = mLatDat->GetMidDomainSiteCount();
+      site_t domainEdgeSites = mLatDat->GetDomainEdgeSiteCount();
+
+      if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
+      {
+        // copy fNew (domain edge) from device to host
+        CUDA_SAFE_CALL(cudaMemcpy(
+          mLatDat->GetFNew(midDomainSites * LatticeType::NUMVECTORS),
+          mLatDat->GetFNewGPU(midDomainSites * LatticeType::NUMVECTORS),
+          (domainEdgeSites * LatticeType::NUMVECTORS) * sizeof(distribn_t),
+          cudaMemcpyDeviceToHost
+        ));
+      }
+
       mLatDat->CopyReceived();
+
+      if ( mParams.UseGPU() )
+      {
+        // copy fNew (domain edge) from host to device
+        CUDA_SAFE_CALL(cudaMemcpyAsync(
+          mLatDat->GetFNewGPU(midDomainSites * LatticeType::NUMVECTORS),
+          mLatDat->GetFNew(midDomainSites * LatticeType::NUMVECTORS),
+          (domainEdgeSites * LatticeType::NUMVECTORS) * sizeof(distribn_t),
+          cudaMemcpyHostToDevice
+        ));
+      }
 
       // Do any cleanup steps necessary on boundary nodes
       site_t offset = mLatDat->GetMidDomainSiteCount();
