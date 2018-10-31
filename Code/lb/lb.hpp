@@ -141,12 +141,15 @@ namespace hemelb
 
       mVisControl = iControl;
 
-      // skip GPU initialization if not needed
-      if ( !mParams.UseGPU() )
+      if ( mParams.UseGPU() )
       {
-        return;
+        InitialiseGPU();
       }
+    }
 
+    template<class LatticeType>
+    void LBM<LatticeType>::InitialiseGPU()
+    {
       // initialize GPU buffers for iolets
       std::vector<iolet_cosine_t> inlets;
 
@@ -200,18 +203,21 @@ namespace hemelb
         cudaMemcpyHostToDevice
       ));
 
+      // initialize GPU buffers in lattice data
+      mLatDat->InitialiseGPU();
+
       // transfer fOld and fNew to GPU
       unsigned localFluidSites = mLatDat->GetLocalFluidSiteCount();
       site_t sharedFs = mLatDat->GetNumSharedFs();
 
       CUDA_SAFE_CALL(cudaMemcpyAsync(
-        mLatDat->GetFOldGPU(),
+        mLatDat->GetFOldGPU(0),
         mLatDat->GetFOld(0),
         (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
         cudaMemcpyHostToDevice
       ));
       CUDA_SAFE_CALL(cudaMemcpyAsync(
-        mLatDat->GetFNewGPU(),
+        mLatDat->GetFNewGPU(0),
         mLatDat->GetFNew(0),
         (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
         cudaMemcpyHostToDevice
@@ -357,7 +363,7 @@ namespace hemelb
           // copy fOld from device to host
           CUDA_SAFE_CALL(cudaMemcpy(
             mLatDat->GetFOld(0),
-            mLatDat->GetFOldGPU(),
+            mLatDat->GetFOldGPU(0),
             (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
             cudaMemcpyDeviceToHost
           ));
@@ -384,7 +390,7 @@ namespace hemelb
         {
           // copy fNew from host to device
           CUDA_SAFE_CALL(cudaMemcpyAsync(
-            mLatDat->GetFNewGPU(),
+            mLatDat->GetFNewGPU(0),
             mLatDat->GetFNew(0),
             (localFluidSites * LatticeType::NUMVECTORS + sharedFs + 1) * sizeof(distribn_t),
             cudaMemcpyHostToDevice

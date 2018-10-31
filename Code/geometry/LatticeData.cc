@@ -55,6 +55,21 @@ namespace hemelb
       InitialiseNeighbourLookups();
     }
 
+    void LatticeData::InitialiseGPU()
+    {
+      // initialize GPU buffer for site data
+      CUDA_SAFE_CALL(cudaMalloc(&siteData_dev, localFluidSites * sizeof(SiteData)));
+      CUDA_SAFE_CALL(cudaMemcpyAsync(siteData_dev, siteData.data(), localFluidSites * sizeof(SiteData), cudaMemcpyHostToDevice));
+
+      // initialize GPU buffer for neighbour indices
+      CUDA_SAFE_CALL(cudaMalloc(&neighbourIndices_dev, localFluidSites * latticeInfo.GetNumVectors() * sizeof(site_t)));
+      CUDA_SAFE_CALL(cudaMemcpyAsync(neighbourIndices_dev, neighbourIndices.data(), localFluidSites * latticeInfo.GetNumVectors() * sizeof(site_t), cudaMemcpyHostToDevice));
+
+      // initialize GPU buffers for distributions
+      CUDA_SAFE_CALL(cudaMalloc(&oldDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + totalSharedFs + 1) * sizeof(distribn_t)));
+      CUDA_SAFE_CALL(cudaMalloc(&newDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + totalSharedFs + 1) * sizeof(distribn_t)));
+    }
+
     void LatticeData::SetBasicDetails(util::Vector3D<site_t> blocksIn,
                                       site_t blockSizeIn)
     {
@@ -349,10 +364,6 @@ namespace hemelb
       InitialiseNeighbourLookup(sharedDistributionLocationForEachProc);
       InitialisePointToPointComms(sharedDistributionLocationForEachProc);
       InitialiseReceiveLookup(sharedDistributionLocationForEachProc);
-
-      // initialize GPU buffer
-      CUDA_SAFE_CALL(cudaMalloc(&neighbourIndices_dev, localFluidSites * latticeInfo.GetNumVectors() * sizeof(site_t)));
-      CUDA_SAFE_CALL(cudaMemcpy(neighbourIndices_dev, neighbourIndices.data(), localFluidSites * latticeInfo.GetNumVectors() * sizeof(site_t), cudaMemcpyHostToDevice));
     }
 
     void LatticeData::InitialiseNeighbourLookup(std::vector<std::vector<site_t> >& sharedFLocationForEachProc)

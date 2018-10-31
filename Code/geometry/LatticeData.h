@@ -44,6 +44,8 @@ namespace hemelb
 
         virtual ~LatticeData();
 
+        void InitialiseGPU();
+
         /**
          * Swap the fOld and fNew arrays around.
          */
@@ -184,9 +186,9 @@ namespace hemelb
          * @param distributionIndex
          * @return
          */
-        inline const distribn_t* GetFNew(site_t siteNumber) const
+        inline const distribn_t* GetFNew(site_t distributionIndex) const
         {
-          return &newDistributions[siteNumber];
+          return &newDistributions[distributionIndex];
         }
 
         inline site_t* GetNeighbourIndicesGPU()
@@ -199,14 +201,14 @@ namespace hemelb
           return siteData_dev;
         }
 
-        inline distribn_t* GetFOldGPU()
+        inline distribn_t* GetFOldGPU(site_t distributionIndex)
         {
-          return oldDistributions_dev;
+          return oldDistributions_dev + distributionIndex;
         }
 
-        inline distribn_t* GetFNewGPU()
+        inline distribn_t* GetFNewGPU(site_t distributionIndex)
         {
-          return newDistributions_dev;
+          return newDistributions_dev + distributionIndex;
         }
 
         proc_t GetProcIdFromGlobalCoords(const util::Vector3D<site_t>& globalSiteCoords) const;
@@ -464,15 +466,6 @@ namespace hemelb
 
           oldDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
           newDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
-
-          // initialize GPU buffers for distributions
-          CUDA_SAFE_CALL(cudaMalloc(&oldDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + totalSharedFs + 1) * sizeof(distribn_t)));
-          CUDA_SAFE_CALL(cudaMalloc(&newDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + totalSharedFs + 1) * sizeof(distribn_t)));
-
-          // initialize GPU buffers for site data
-          CUDA_SAFE_CALL(cudaMalloc(&siteData_dev, localFluidSites * sizeof(SiteData)));
-
-          CUDA_SAFE_CALL(cudaMemcpyAsync(siteData_dev, siteData.data(), localFluidSites * sizeof(SiteData), cudaMemcpyHostToDevice));
         }
 
         void CollectFluidSiteDistribution();

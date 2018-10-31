@@ -88,8 +88,8 @@ namespace hemelb
                 outlets_dev,
                 latDat->GetNeighbourIndicesGPU(),
                 latDat->GetSiteDataGPU(),
-                latDat->GetFOldGPU(),
-                latDat->GetFNewGPU(),
+                latDat->GetFOldGPU(0),
+                latDat->GetFNewGPU(0),
                 simState->Get0IndexedTimeStep()
               );
               CUDA_SAFE_CALL(cudaGetLastError());
