@@ -71,8 +71,8 @@ hemelb_option(HEMELB_BUILD_DEBUGGER "Build the built in debugger" ON)
 # hemelb_option(HEMELB_DEBUGGER_IMPLEMENTATION "Which implementation to use for the debugger" none)
 # mark_as_advanced(HEMELB_DEBUGGER_IMPLEMENTATION)
 hemelb_option(HEMELB_VALIDATE_GEOMETRY "Validate geometry" OFF)
-hemelb_option(HEMELB_BUILD_TESTS_ALL "Build all the tests" ON)
-hemelb_option(HEMELB_BUILD_TESTS_UNIT "Build the unit-tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
+hemelb_option(HEMELB_BUILD_TESTS_ALL "Build all the tests" OFF)
+hemelb_option(HEMELB_BUILD_TESTS_UNIT "Build the unit-tests (HEMELB_BUILD_TESTS_ALL takes precedence)" OFF)
 hemelb_option(HEMELB_BUILD_TESTS_FUNCTIONAL "Build the functional tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
 hemelb_option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 hemelb_option(HEMELB_USE_STREAKLINES "Calculate streakline images" OFF)
@@ -95,7 +95,7 @@ hemelb_cachevar(HEMELB_READING_GROUP_SIZE 5
   INTEGER "Number of cores to use to read geometry file.")
 hemelb_cachevar(HEMELB_LOG_LEVEL Info
   STRING "Log level, choose 'Critical', 'Error', 'Warning', 'Info', 'Debug' or 'Trace'" )
-hemelb_cachevar(HEMELB_STEERING_LIB basic
+hemelb_cachevar(HEMELB_STEERING_LIB none
   STRING "Steering library, choose 'basic' or 'none'" )
 hemelb_cachevar(HEMELB_DEPENDENCIES_PATH "${HEMELB_ROOT_DIR}/dependencies"
   FILEPATH "Path to find dependency find modules")

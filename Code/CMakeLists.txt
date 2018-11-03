@@ -160,9 +160,90 @@ target_link_libraries(${HEMELB_EXECUTABLE} PUBLIC
   ${heme_libraries}
   ${MPI_LIBRARIES}
   ${Boost_LIBRARIES}
-  ${CUDA_LIBRARIES})
+  ${CUDA_LIBRARIES}
+  )
 INSTALL(TARGETS ${HEMELB_EXECUTABLE} RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
+
+# ----------- HemeLB Multiscale ------------------
+if (HEMELB_BUILD_MULTISCALE)
+  if (APPLE)
+    add_definitions(-DHEMELB_CFG_ON_BSD -DHEMELB_CFG_ON_OSX)
+  endif()
+  if (HEMELB_USE_DEBUGGER)
+    # Force a debug build, because the debugger makes no sense without debug symbols
+    set(CMAKE_BUILD_TYPE DEBUG)
+  endif()
+  
+  set(root_sources SimulationMaster.cc multiscale/MultiscaleSimulationMaster.h)
+  add_executable(multiscale_hemelb mainMultiscale.cc ${root_sources})
+  hemelb_add_target_dependency_mpwide(multiscale_hemelb)
+  
+  include_directories(${PROJECT_SOURCE_DIR})
+  set(package_subdirs
+    configuration
+    extraction
+    reporting
+    steering
+    vis
+    lb
+    geometry
+    net
+    debug
+    util
+    io
+    log
+    colloids
+    multiscale
+    )
+  foreach(subdir ${package_subdirs})
+    set(lib "hemelb_${subdir}")
+    list(APPEND heme_libraries ${lib})
+  endforeach()
+  add_subdirectory(multiscale)
+  target_link_libraries(multiscale_hemelb
+    ${heme_libraries}
+    ${MPI_LIBRARIES}
+    ${Boost_LIBRARIES}
+    )
+  INSTALL(TARGETS multiscale_hemelb RUNTIME DESTINATION bin)
+  list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
+endif()
+
+# ----------- HEMELB unittests ---------------
+if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
+  #------CPPUnit ---------------
+  hemelb_dependency(cppunit use)
+  add_executable(unittests_hemelb ${root_sources})
+  add_subdirectory(unittests)
+  target_link_libraries(unittests_hemelb 
+    hemelb_unittests 
+    ${heme_libraries}
+    ${MPI_LIBRARIES}
+    ${Boost_LIBRARIES})
+  INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
+  list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/four_cube_multiscale.xml
+    unittests/resources/config.xml unittests/resources/config0_2_0.xml
+    unittests/resources/config_file_inlet.xml unittests/resources/iolet.txt 
+    unittests/resources/config-velocity-iolet.xml unittests/resources/config_new_velocity_inlets.xml
+    unittests/resources/velocity_inlet.txt.weights.txt
+    unittests/resources/xmltest.xml unittests/resources/config_file_velocity_inlet.xml unittests/resources/velocity_inlet.txt 
+    )
+endif()
+
+# ----------- HEMELB functionaltests ---------------
+if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
+  #------CPPUnit ---------------
+  hemelb_dependency(cppunit use)
+  add_executable(functionaltests_hemelb ${root_sources})
+  add_subdirectory(functionaltests/cpptests)
+  target_link_libraries(functionaltests_hemelb 
+    hemelb_functionaltests 
+    ${heme_libraries}
+    ${MPI_LIBRARIES}
+    ${Boost_LIBRARIES})
+  INSTALL(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
+endif()
 
 #-------- Copy and install resources --------------
 
