@@ -83,7 +83,6 @@ hemelb_option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OF
 hemelb_option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
 hemelb_option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" ON)
 hemelb_option(HEMELB_USE_VELOCITY_WEIGHTS_FILE "Use Velocity weights file" OFF)
-hemelb_option(UBUNTU_BUG_WORKAROUND "Work around the faulty HAVE_ISNAN value in Ubuntu 16.04." OFF)
 hemelb_option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
 
 #

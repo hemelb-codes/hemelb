@@ -86,10 +86,8 @@ endif()
 include(build_environment)
 include(platform_checks)
 
-if(NOT UBUNTU_BUG_WORKAROUND)
-  if(HAVE_ISNAN)
-    add_definitions(-DHAVE_ISNAN)
-  endif()
+if(HAVE_ISNAN)
+  add_definitions(-DHAVE_ISNAN)
 endif()
 
 if(HAVE_STD_ISNAN)
