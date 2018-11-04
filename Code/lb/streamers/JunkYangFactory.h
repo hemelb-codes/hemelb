@@ -79,7 +79,8 @@ namespace hemelb
           inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::LatticeData* latticeData,
-                                         lb::MacroscopicPropertyCache& propertyCache)
+                                         lb::MacroscopicPropertyCache& propertyCache,
+                                         lb::SimulationState* simState)
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
