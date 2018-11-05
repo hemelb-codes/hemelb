@@ -308,8 +308,8 @@ namespace hemelb
 
         // copy fNew (sharedFs) from device to host
         CUDA_SAFE_CALL(cudaMemcpy(
-          mLatDat->GetFNew(localFluidSites * LatticeType::NUMVECTORS),
-          mLatDat->GetFNewGPU(localFluidSites * LatticeType::NUMVECTORS),
+          mLatDat->GetFNew(localFluidSites * LatticeType::NUMVECTORS + 1),
+          mLatDat->GetFNewGPU(localFluidSites * LatticeType::NUMVECTORS + 1),
           (sharedFs) * sizeof(distribn_t),
           cudaMemcpyDeviceToHost
         ));

@@ -66,8 +66,8 @@ namespace hemelb
       CUDA_SAFE_CALL(cudaMemcpyAsync(neighbourIndices_dev, neighbourIndices.data(), localFluidSites * latticeInfo.GetNumVectors() * sizeof(site_t), cudaMemcpyHostToDevice));
 
       // initialize GPU buffers for distributions
-      CUDA_SAFE_CALL(cudaMalloc(&oldDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + totalSharedFs + 1) * sizeof(distribn_t)));
-      CUDA_SAFE_CALL(cudaMalloc(&newDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + totalSharedFs + 1) * sizeof(distribn_t)));
+      CUDA_SAFE_CALL(cudaMalloc(&oldDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs) * sizeof(distribn_t)));
+      CUDA_SAFE_CALL(cudaMalloc(&newDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs) * sizeof(distribn_t)));
     }
 
     void LatticeData::SetBasicDetails(util::Vector3D<site_t> blocksIn,
