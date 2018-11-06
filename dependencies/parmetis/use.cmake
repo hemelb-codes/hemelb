@@ -12,6 +12,7 @@ function(METIS_TYPE category widths types output)
   math(EXPR loop_max "${nw} - 1")
   foreach(i RANGE ${loop_max})
     list(GET widths ${i} WIDTH)
+    set(CMAKE_REQUIRED_FLAGS "-std=c++11")
     CHECK_CXX_SOURCE_COMPILES("#include <metis.h>
 int main() {
   static_assert(${category}TYPEWIDTH==${WIDTH}, \"Not ${WIDTH} bit\");
