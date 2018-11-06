@@ -45,7 +45,12 @@ namespace hemelb
                              std::vector<proc_t>& neighbourProcessors,
                              const net::IOCommunicator& ioComms_,
                              const std::string& outputPath) :
-        ioComms(ioComms_), localRank(ioComms.Rank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath), net(ioComms)
+        ioComms(ioComms_),
+        localRank(ioComms.Rank()),
+        latDatLBM(latDatLBM),
+        propertyCache(propertyCache),
+        net(ioComms),
+        path(outputPath)
     {
       /**
        * Open the file, unless it already exists, for writing only, creating it if it doesn't exist.
@@ -277,7 +282,7 @@ namespace hemelb
        *  The global position of each particle is updated by the ownerRank process.
        *  The ownerRank for each particle is verified when its position is updated.
        *  Some (previously locally owned) particles may no longer be locally owned.
-       *  
+       *
        */
 
       unsigned int& numberOfParticlesToSend = scanMap[localRank].first;

@@ -7,6 +7,7 @@
 #ifndef HEMELB_LB_STREAMERS_JUNKYANG_H
 #define HEMELB_LB_STREAMERS_JUNKYANG_H
 
+#include "lb/streamers/BaseStreamerDelegate.h"
 #include "lb/streamers/JunkYangFactory.h"
 
 namespace hemelb

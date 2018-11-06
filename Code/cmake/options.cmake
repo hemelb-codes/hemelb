@@ -68,8 +68,6 @@ endfunction()
 # Specify the options
 #
 hemelb_option(HEMELB_BUILD_DEBUGGER "Build the built in debugger" ON)
-# hemelb_option(HEMELB_DEBUGGER_IMPLEMENTATION "Which implementation to use for the debugger" none)
-# mark_as_advanced(HEMELB_DEBUGGER_IMPLEMENTATION)
 hemelb_option(HEMELB_VALIDATE_GEOMETRY "Validate geometry" OFF)
 hemelb_option(HEMELB_BUILD_TESTS_ALL "Build all the tests" ON)
 hemelb_option(HEMELB_BUILD_TESTS_UNIT "Build the unit-tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)

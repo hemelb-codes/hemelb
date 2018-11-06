@@ -97,43 +97,43 @@ namespace hemelb
 
             else
             {
-            for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
-            {
-              geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
-
-              const distribn_t* fOld = site.GetFOld<LatticeType> ();
-
-              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(fOld);
-
-              ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
-              hydroVars.tau = lbmParams->GetTau();
-
-              collider.CalculatePreCollision(hydroVars, site);
-
-              collider.Collide(lbmParams, hydroVars);
-
-              for (Direction ii = 0; ii < LatticeType::NUMVECTORS; ii++)
+              for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
               {
-                if (site.HasIolet(ii))
-                {
-                  ioletLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
-                }
-                else if (site.HasWall(ii))
-                {
-                  wallLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
-                }
-                else
-                {
-                  bulkLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
-                }
-              }
+                geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
 
-              //TODO: Necessary to specify sub-class?
-              BaseStreamer<StreamerTypeFactory>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
-                                                                                            hydroVars,
-                                                                                            lbmParams,
-                                                                                            propertyCache);
-            }
+                const distribn_t* fOld = site.GetFOld<LatticeType> ();
+
+                kernels::HydroVars<typename CollisionType::CKernel> hydroVars(fOld);
+
+                ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
+                hydroVars.tau = lbmParams->GetTau();
+
+                collider.CalculatePreCollision(hydroVars, site);
+
+                collider.Collide(lbmParams, hydroVars);
+
+                for (Direction ii = 0; ii < LatticeType::NUMVECTORS; ii++)
+                {
+                  if (site.HasIolet(ii))
+                  {
+                    ioletLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
+                  }
+                  else if (site.HasWall(ii))
+                  {
+                    wallLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
+                  }
+                  else
+                  {
+                    bulkLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
+                  }
+                }
+
+                //TODO: Necessary to specify sub-class?
+                BaseStreamer<StreamerTypeFactory>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+                                                                                              hydroVars,
+                                                                                              lbmParams,
+                                                                                              propertyCache);
+              }
             }
           }
 

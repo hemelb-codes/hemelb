@@ -26,10 +26,15 @@ namespace hemelb
     }
 
     SimConfig::SimConfig(const std::string& path) :
-        xmlFilePath(path), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0),
-            unitConverter(NULL)
+        xmlFilePath(path),
+        rawXmlDoc(NULL),
+        hasColloidSection(false),
+        useGPU(false),
+        warmUpSteps(0),
+        unitConverter(NULL)
     {
     }
+
     void SimConfig::Init()
     {
       if (!util::file_exists(xmlFilePath.c_str()))
@@ -700,7 +705,7 @@ namespace hemelb
 
     bool SimConfig::UseGPU() const
     {
-        return useGPU;
+      return useGPU;
     }
   }
 }

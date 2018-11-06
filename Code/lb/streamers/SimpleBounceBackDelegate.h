@@ -8,7 +8,6 @@
 #define HEMELB_LB_STREAMERS_SIMPLEBOUNCEBACKDELEGATE_H
 
 #include "lb/streamers/BaseStreamerDelegate.h"
-#include "lb/streamers/SimpleCollideAndStream.h"
 
 namespace hemelb
 {

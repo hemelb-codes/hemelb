@@ -13,6 +13,7 @@ set(HEMELB_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Include the options for the main code
 include("Code/cmake/options.cmake")
+
 # and create a list of them to pass to the main configure step
 hemelb_pass_cmake_defines(HEMELB_CODE_CMAKE_DEFINES)
 
@@ -21,15 +22,15 @@ hemelb_pass_cmake_defines(HEMELB_CODE_CMAKE_DEFINES)
 add_subdirectory(dependencies)
 
 # ------ HemeLB ------------------
+
 message("${PROJECT_SOURCE_DIR}/Code")
 
 ExternalProject_Add(
   hemelb
-  URL ${PROJECT_SOURCE_DIR}/Code	
-  CONFIGURE_COMMAND ${CMAKE_COMMAND} <SOURCE_DIR>
-  ${HEMELB_CODE_CMAKE_DEFINES}
+  URL ${PROJECT_SOURCE_DIR}/Code
+  CONFIGURE_COMMAND ${CMAKE_COMMAND} <SOURCE_DIR> ${HEMELB_CODE_CMAKE_DEFINES}
   BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
-  )
+)
 
 # These are handled in dependencies/CMakeLists.txt and needed here
 # to ensure they are build in correct order.

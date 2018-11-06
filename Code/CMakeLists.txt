@@ -20,10 +20,9 @@ include("cmake/options.cmake")
 # Add warnings flags to development build types
 if (HEMELB_USE_ALL_WARNINGS_GNU)
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-  set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
 endif()
+
 if(HEMELB_OPTIMISATION)
-  set( CMAKE_CXX_FLAGS_RELEASE ${HEMELB_OPTIMISATION})
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HEMELB_OPTIMISATION}")
 endif()
 
@@ -172,11 +171,11 @@ if (HEMELB_BUILD_MULTISCALE)
     # Force a debug build, because the debugger makes no sense without debug symbols
     set(CMAKE_BUILD_TYPE DEBUG)
   endif()
-  
+
   set(root_sources SimulationMaster.cc multiscale/MultiscaleSimulationMaster.h)
   add_executable(multiscale_hemelb mainMultiscale.cc ${root_sources})
   hemelb_add_target_dependency_mpwide(multiscale_hemelb)
-  
+
   include_directories(${PROJECT_SOURCE_DIR})
   set(package_subdirs
     configuration
@@ -214,18 +213,18 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
   hemelb_dependency(cppunit use)
   add_executable(unittests_hemelb ${root_sources})
   add_subdirectory(unittests)
-  target_link_libraries(unittests_hemelb 
-    hemelb_unittests 
+  target_link_libraries(unittests_hemelb
+    hemelb_unittests
     ${heme_libraries}
     ${MPI_LIBRARIES}
     ${Boost_LIBRARIES})
   INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
   list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/four_cube_multiscale.xml
     unittests/resources/config.xml unittests/resources/config0_2_0.xml
-    unittests/resources/config_file_inlet.xml unittests/resources/iolet.txt 
+    unittests/resources/config_file_inlet.xml unittests/resources/iolet.txt
     unittests/resources/config-velocity-iolet.xml unittests/resources/config_new_velocity_inlets.xml
     unittests/resources/velocity_inlet.txt.weights.txt
-    unittests/resources/xmltest.xml unittests/resources/config_file_velocity_inlet.xml unittests/resources/velocity_inlet.txt 
+    unittests/resources/xmltest.xml unittests/resources/config_file_velocity_inlet.xml unittests/resources/velocity_inlet.txt
     )
 endif()
 
@@ -235,8 +234,8 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
   hemelb_dependency(cppunit use)
   add_executable(functionaltests_hemelb ${root_sources})
   add_subdirectory(functionaltests/cpptests)
-  target_link_libraries(functionaltests_hemelb 
-    hemelb_functionaltests 
+  target_link_libraries(functionaltests_hemelb
+    hemelb_functionaltests
     ${heme_libraries}
     ${MPI_LIBRARIES}
     ${Boost_LIBRARIES})

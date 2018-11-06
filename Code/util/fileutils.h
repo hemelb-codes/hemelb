@@ -49,9 +49,8 @@ namespace hemelb
 
     std::string GetTemporaryDir();
 
-    void ChangeDirectory(const char * target);
-    void ChangeDirectory(const std::string &target);
-    void GetCurrentDir(char * result, int bufflength);
+    int ChangeDirectory(const std::string& target);
+    char * GetCurrentDir(char * result, int bufflength);
     std::string GetCurrentDir();
   }
 }

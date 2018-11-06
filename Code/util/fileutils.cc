@@ -67,19 +67,14 @@ namespace hemelb
 
     }
 
-    void ChangeDirectory(const char * target)
+    int ChangeDirectory(const std::string& target)
     {
-      chdir(target);
+      return chdir(target.c_str());
     }
 
-    void ChangeDirectory(const std::string & target)
+    char * GetCurrentDir(char * result, int bufflength)
     {
-      chdir(target.c_str());
-    }
-
-    void GetCurrentDir(char * result, int bufflength)
-    {
-      getcwd(result, bufflength);
+      return getcwd(result, bufflength);
     }
 
     std::string GetCurrentDir()

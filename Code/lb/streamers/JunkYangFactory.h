@@ -9,6 +9,7 @@
 
 #include "lb/kernels/BaseKernel.h"
 #include "lb/streamers/BaseStreamer.h"
+#include "lb/streamers/SimpleCollideAndStreamDelegate.h"
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/lu.hpp>
 #include <boost/numeric/ublas/io.hpp>

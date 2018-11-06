@@ -289,8 +289,7 @@ namespace hemelb
         bool hasColloidSection;
         PhysicalPressure initialPressure_mmHg; ///< Pressure used to initialise the domain
         MonitoringConfig monitoringConfig; ///< Configuration of various checks/tests
-
-        bool useGPU = false;
+        bool useGPU;
 
       protected:
         // These have to contain pointers because there are multiple derived types that might be

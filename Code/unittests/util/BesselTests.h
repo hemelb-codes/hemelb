@@ -242,7 +242,7 @@ namespace hemelb
             const Complex iPowThreeHalves = pow(i, 1.5);
             const double epsilon = 1e-6;
 
-            for (unsigned i = 0; i < n; ++i)
+            for (int i = 0; i < n; ++i)
             {
               Complex z = iPowThreeHalves * (i / 10.);
               Complex cAns = BesselJ0ComplexArgument(z);

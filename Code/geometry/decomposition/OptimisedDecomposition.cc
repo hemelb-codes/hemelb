@@ -59,27 +59,17 @@ namespace hemelb
         timers[hemelb::reporting::Timers::parmetis].Start();
         log::Logger::Log<log::Debug, log::OnePerCore>("Making the call to Parmetis");
 
-        bool do_decomposition = true;
-#ifdef HEMELB_NO_DECOMPOSITION
-        do_decomposition = false;
-#endif
+#ifndef HEMELB_NO_DECOMPOSITION
+        CallParmetis(localVertexCount);
+        timers[hemelb::reporting::Timers::parmetis].Stop();
+        log::Logger::Log<log::Debug, log::OnePerCore>("Parmetis has finished.");
 
-        if (do_decomposition)
-        {
-          CallParmetis(localVertexCount);
-          timers[hemelb::reporting::Timers::parmetis].Stop();
-          log::Logger::Log<log::Debug, log::OnePerCore>("Parmetis has finished.");
-
-          // Convert the ParMetis results into a nice format.
-          timers[hemelb::reporting::Timers::PopulateOptimisationMovesList].Start();
-          log::Logger::Log<log::Debug, log::OnePerCore>("Getting moves lists for this core.");
-          PopulateMovesList();
-        }
-#ifdef HEMELB_NO_DECOMPOSITION
-        else
-        {
-          LoadDecomposition(); //this is a modified version of PopulateMovesList();
-        }
+        // Convert the ParMetis results into a nice format.
+        timers[hemelb::reporting::Timers::PopulateOptimisationMovesList].Start();
+        log::Logger::Log<log::Debug, log::OnePerCore>("Getting moves lists for this core.");
+        PopulateMovesList();
+#else
+        LoadDecomposition(); //this is a modified version of PopulateMovesList();
 #endif
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Done getting moves lists for this core");
@@ -129,7 +119,6 @@ namespace hemelb
         idx_t weightFlag = 2;
         idx_t numberingFlag = 0;
         idx_t edgesCut = 0;
-        idx_t nDims = 3;
         idx_t options[4] = { 0, 0, 0, 0 };
         if (ShouldValidate())
         {
