@@ -42,9 +42,9 @@ namespace hemelb
     {
       public:
         /** factory method - gets initial values from xml configuration file */
-        static const void InitBodyForces(io::xml::Document& xml);
+        static void InitBodyForces(io::xml::Document& xml);
 
-        static const void AddBodyForce(const std::string name, const BodyForce* const);
+        static void AddBodyForce(const std::string name, const BodyForce* const);
 
         /** accumulates the effects of all known body forces on the particle */
         static const LatticeForceVector GetBodyForcesForParticle(const Particle& particle);

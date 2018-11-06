@@ -35,7 +35,7 @@ namespace hemelb
         ConstantBodyForce(const LatticeForceVector constantForce) :
           BodyForce(), constantForce(constantForce) {};
 
-        const LatticeForceVector constantForce;
+        LatticeForceVector constantForce;
     };
 
     class ConstantBodyForceFactory : public BodyForceFactory<ConstantBodyForce> { };
@@ -82,8 +82,8 @@ namespace hemelb
         RadialBodyForce(const LatticePosition centrePoint, const LatticeForce magnitude) :
           BodyForce(), centrePoint(centrePoint), magnitude(magnitude) {};
 
-        const LatticePosition centrePoint;
-        const LatticeForce magnitude;
+        LatticePosition centrePoint;
+        LatticeForce magnitude;
     };
 
     class RadialBodyForceFactory : public BodyForceFactory<RadialBodyForce> { };

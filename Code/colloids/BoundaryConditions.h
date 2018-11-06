@@ -25,7 +25,7 @@ namespace hemelb
         /** applies the boundary condition by directly modifying the particle
          *  returns false if the particle must now be deleted, true otherwise
          */
-        virtual const bool DoSomethingToParticle(Particle&, const std::vector<LatticePosition>) =0;
+        virtual bool DoSomethingToParticle(Particle&, const std::vector<LatticePosition>) =0;
         virtual const std::vector<Particle> CreateNewParticles() =0;
       protected:
         virtual ~BoundaryCondition() {};
@@ -48,18 +48,18 @@ namespace hemelb
     {
       public:
         /** factory method - gets initial values from xml configuration file */
-        static const void InitBoundaryConditions(
+        static void InitBoundaryConditions(
                             const geometry::LatticeData* const latticeData,
                             io::xml::Document& xml);
 
-        static const void AddBoundaryCondition(
+        static void AddBoundaryCondition(
                             const std::string name,
                             const BoundaryCondition* const);
 
         /** allows all registered boundary conditions to do something to this particle
             returns false if the particle should be deleted, true otherwise
          */
-        static const bool DoSomeThingsToParticle(
+        static bool DoSomeThingsToParticle(
                             const LatticeTimeStep currentTimestep,
                             Particle& particle);
 

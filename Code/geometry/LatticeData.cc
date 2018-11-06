@@ -55,6 +55,21 @@ namespace hemelb
       InitialiseNeighbourLookups();
     }
 
+    void LatticeData::InitialiseGPU()
+    {
+      // initialize GPU buffer for site data
+      CUDA_SAFE_CALL(cudaMalloc(&siteData_dev, localFluidSites * sizeof(SiteData)));
+      CUDA_SAFE_CALL(cudaMemcpyAsync(siteData_dev, siteData.data(), localFluidSites * sizeof(SiteData), cudaMemcpyHostToDevice));
+
+      // initialize GPU buffer for neighbour indices
+      CUDA_SAFE_CALL(cudaMalloc(&neighbourIndices_dev, localFluidSites * latticeInfo.GetNumVectors() * sizeof(site_t)));
+      CUDA_SAFE_CALL(cudaMemcpyAsync(neighbourIndices_dev, neighbourIndices.data(), localFluidSites * latticeInfo.GetNumVectors() * sizeof(site_t), cudaMemcpyHostToDevice));
+
+      // initialize GPU buffers for distributions
+      CUDA_SAFE_CALL(cudaMalloc(&oldDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs) * sizeof(distribn_t)));
+      CUDA_SAFE_CALL(cudaMalloc(&newDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs) * sizeof(distribn_t)));
+    }
+
     void LatticeData::SetBasicDetails(util::Vector3D<site_t> blocksIn,
                                       site_t blockSizeIn)
     {
@@ -428,7 +443,6 @@ namespace hemelb
         }
 
       }
-
     }
 
     void LatticeData::InitialisePointToPointComms(std::vector<std::vector<site_t> >& sharedFLocationForEachProc)
@@ -643,6 +657,16 @@ namespace hemelb
         midDomainSiteCount += midDomainProcCollisions[collisionType];
       }
       return midDomainSiteCount;
+    }
+
+    site_t LatticeData::GetDomainEdgeSiteCount() const
+    {
+      site_t domainEdgeSiteCount = 0;
+      for (unsigned collisionType = 0; collisionType < COLLISION_TYPES; collisionType++)
+      {
+        domainEdgeSiteCount += domainEdgeProcCollisions[collisionType];
+      }
+      return domainEdgeSiteCount;
     }
 
     void LatticeData::GetBlockIJK(site_t block, util::Vector3D<site_t>& blockCoords) const

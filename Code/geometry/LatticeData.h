@@ -19,6 +19,7 @@
 #include "geometry/Site.h"
 #include "geometry/neighbouring/NeighbouringSite.h"
 #include "geometry/SiteData.h"
+#include "lb/cuda_helper.h"
 #include "reporting/Reportable.h"
 #include "reporting/Timers.h"
 #include "util/Vector3D.h"
@@ -43,12 +44,15 @@ namespace hemelb
 
         virtual ~LatticeData();
 
+        void InitialiseGPU();
+
         /**
          * Swap the fOld and fNew arrays around.
          */
         inline void SwapOldAndNew()
         {
           oldDistributions.swap(newDistributions);
+          std::swap(oldDistributions_dev, newDistributions_dev);
         }
 
         void SendAndReceive(net::Net* net);
@@ -143,6 +147,30 @@ namespace hemelb
         bool IsValidLatticeSite(const util::Vector3D<site_t>& siteCoords) const;
 
         /**
+         * Get a pointer to the fOld array starting at the requested index
+         * @param distributionIndex
+         * @return
+         */
+        // Method should remain protected, intent is to access this information via Site
+        distribn_t* GetFOld(site_t distributionIndex)
+        {
+          return &oldDistributions[distributionIndex];
+        }
+
+        /**
+         * Get a pointer to the fOld array starting at the requested index. This version
+         * of the function allows us to access the fOld array in a const way from a const
+         * LatticeData
+         * @param distributionIndex
+         * @return
+         */
+        // Method should remain protected, intent is to access this information via Site
+        const distribn_t* GetFOld(site_t distributionIndex) const
+        {
+          return &oldDistributions[distributionIndex];
+        }
+
+        /**
          * Get a pointer into the fNew array at the given index
          * @param distributionIndex
          * @return
@@ -158,9 +186,29 @@ namespace hemelb
          * @param distributionIndex
          * @return
          */
-        inline const distribn_t* GetFNew(site_t siteNumber) const
+        inline const distribn_t* GetFNew(site_t distributionIndex) const
         {
-          return &newDistributions[siteNumber];
+          return &newDistributions[distributionIndex];
+        }
+
+        inline site_t* GetNeighbourIndicesGPU()
+        {
+          return neighbourIndices_dev;
+        }
+
+        inline void* GetSiteDataGPU()
+        {
+          return siteData_dev;
+        }
+
+        inline distribn_t* GetFOldGPU(site_t distributionIndex)
+        {
+          return oldDistributions_dev + distributionIndex;
+        }
+
+        inline distribn_t* GetFNewGPU(site_t distributionIndex)
+        {
+          return newDistributions_dev + distributionIndex;
         }
 
         proc_t GetProcIdFromGlobalCoords(const util::Vector3D<site_t>& globalSiteCoords) const;
@@ -229,6 +277,12 @@ namespace hemelb
           return blockCoords * blockSize + localSiteCoords;
         }
 
+
+        const std::vector<site_t>& GetNeighbourIndices() const
+        {
+            return neighbourIndices;
+        }
+
         inline site_t GetGlobalNoncontiguousSiteIdFromGlobalCoords(const util::Vector3D<site_t>&globalCoords) const
         {
           return (globalCoords.x * sites.y + globalCoords.y) * sites.z + globalCoords.z;
@@ -265,6 +319,7 @@ namespace hemelb
                                         util::Vector3D<site_t>& siteCoords) const;
 
         site_t GetMidDomainSiteCount() const;
+        site_t GetDomainEdgeSiteCount() const;
 
         /**
          * Number of sites with all fluid neighbours residing on this rank, for the given
@@ -305,6 +360,11 @@ namespace hemelb
         inline site_t GetTotalFluidSites() const
         {
           return totalFluidSites;
+        }
+
+        inline site_t GetNumSharedFs() const
+        {
+          return totalSharedFs;
         }
 
         /**
@@ -407,6 +467,7 @@ namespace hemelb
           oldDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
           newDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
         }
+
         void CollectFluidSiteDistribution();
         void CollectGlobalSiteExtrema();
 
@@ -450,30 +511,6 @@ namespace hemelb
         inline const util::Vector3D<distribn_t>& GetNormalToWall(site_t iSiteIndex) const
         {
           return wallNormalAtSite[iSiteIndex];
-        }
-
-        /**
-         * Get a pointer to the fOld array starting at the requested index
-         * @param distributionIndex
-         * @return
-         */
-        // Method should remain protected, intent is to access this information via Site
-        distribn_t* GetFOld(site_t distributionIndex)
-        {
-          return &oldDistributions[distributionIndex];
-        }
-
-        /**
-         * Get a pointer to the fOld array starting at the requested index. This version
-         * of the function allows us to access the fOld array in a const way from a const
-         * LatticeData
-         * @param distributionIndex
-         * @return
-         */
-        // Method should remain protected, intent is to access this information via Site
-        const distribn_t* GetFOld(site_t distributionIndex) const
-        {
-          return &oldDistributions[distributionIndex];
         }
 
         /*
@@ -575,6 +612,12 @@ namespace hemelb
         std::vector<site_t> streamingIndicesForReceivedDistributions; //! The indices to stream to for distributions received from other processors.
         neighbouring::NeighbouringLatticeData *neighbouringData;
         const net::IOCommunicator& comms;
+
+        // GPU buffers
+        site_t* neighbourIndices_dev;
+        void* siteData_dev;
+        distribn_t* oldDistributions_dev;
+        distribn_t* newDistributions_dev;
     };
   }
 }

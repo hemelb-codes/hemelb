@@ -37,33 +37,33 @@ namespace hemelb
         ~ParticleSet();
 
         /** updates the position of each particle using body forces and fluid velocity */
-        const void UpdatePositions();
+        void UpdatePositions();
 
         /** calculates the effect of all body forces on each particle */
-        const void CalculateBodyForces();
+        void CalculateBodyForces();
 
         /** calculates the effects of all particles on each lattice site */
-        const void CalculateFeedbackForces();
+        void CalculateFeedbackForces();
 
         /** applies boundary conditions to all particles **/
-        const void ApplyBoundaryConditions(
+        void ApplyBoundaryConditions(
                      const LatticeTimeStep currentTimestep);
 
         /** interpolates the fluid velocity to the location of each particle */
-        const void InterpolateFluidVelocity();
+        void InterpolateFluidVelocity();
 
         /** communicates the positions of all particles to&from all neighbours */
-        const void CommunicateParticlePositions();
+        void CommunicateParticlePositions();
 
         /** communicates the partial fluid interpolations to&from all neighbours */
-        const void CommunicateFluidVelocities();
+        void CommunicateFluidVelocities();
 
-        const void OutputInformation(const LatticeTimeStep timestep);
+        void OutputInformation(const LatticeTimeStep timestep);
 
       private:
         const net::IOCommunicator& ioComms;
         /** cached copy of local rank (obtained from topology) */
-        const proc_t localRank;
+        proc_t localRank;
 
         /**
          * conatins all particles known to this process

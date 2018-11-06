@@ -17,14 +17,22 @@
 #include "lb/HFunction.h"
 #include "io/xml/XmlAbstractionLayer.h"
 #include "colloids/ColloidController.h"
+#include "net/mpi.h"
 #include "net/BuildInfo.h"
 #include "net/IOCommunicator.h"
 #include "colloids/BodyForces.h"
 #include "colloids/BoundaryConditions.h"
+#include "lb/cuda_helper.h"
 
 #include <map>
 #include <limits>
 #include <cstdlib>
+
+/**
+ * Global GPU buffers declared in cuda_helper.h
+ */
+iolet_cosine_t* inlets_dev;
+iolet_cosine_t* outlets_dev;
 
 /**
  * Constructor for the SimulationMaster class
@@ -152,6 +160,12 @@ void SimulationMaster::Initialise()
                                           timings, ioComms);
   hemelb::geometry::Geometry readGeometryData =
       reader.LoadAndDecompose(simConfig->GetDataFilePath());
+
+  if (simConfig->UseGPU()) {
+    int deviceCount;
+    cudaGetDeviceCount(&deviceCount);
+    cudaSetDevice(hemelb::net::MpiCommunicator::World().Rank() % deviceCount);
+  }
 
   // Create a new lattice based on that info and return it.
   latticeData = new hemelb::geometry::LatticeData(latticeType::GetLatticeInfo(), readGeometryData, ioComms);

@@ -15,7 +15,7 @@ namespace hemelb
     std::map<std::string, const BodyForce* const > BodyForces::bodyForces;
     std::map<site_t, LatticeForceVector> BodyForces::forceForEachSite;
 
-    const void BodyForces::InitBodyForces(io::xml::Document& xml)
+    void BodyForces::InitBodyForces(io::xml::Document& xml)
     {
       std::map<std::string, BodyForceFactory_Create> mapForceGenerators;
       mapForceGenerators["gravitic"] = & (GraviticBodyForceFactory::Create);

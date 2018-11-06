@@ -24,11 +24,11 @@ namespace hemelb
           return new LubricationBC(effectiveRange);
         }
 
-        virtual const bool DoSomethingToParticle(
+        virtual bool DoSomethingToParticle(
                              Particle& particle,
                              const std::vector<LatticePosition> particleToWallVectors)
         {
-          const bool keep = true;
+          bool keep = true;
 
           log::Logger::Log<log::Trace, log::OnePerCore>(
             "*** In LubricationBC::DoSomethingToParticle for particleId: %lu ***\n",

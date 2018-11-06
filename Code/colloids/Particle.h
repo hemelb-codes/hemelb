@@ -39,7 +39,7 @@ namespace hemelb
         Particle() {};
 
         /** property getter for particleId */
-        const unsigned long GetParticleId() const { return particleId; }
+        unsigned long GetParticleId() const { return particleId; }
         const LatticePosition& GetGlobalPosition() const { return globalPosition; }
 
         const LatticeVelocity GetVelocity() const
@@ -82,7 +82,7 @@ namespace hemelb
         }
 
         /** unsets the deletion marker - the particle will not be deleted */
-        const void SetDeletionMarker()
+        void SetDeletionMarker()
         {
           markedForDeletionTimestep = SITE_OR_BLOCK_SOLID;
         }
@@ -90,7 +90,7 @@ namespace hemelb
         /** sets the deletion marker to the current timestep
          *  the particle will be deleted after the next checkpoint
          */
-        const void SetDeletionMarker(LatticeTimeStep timestep)
+        void SetDeletionMarker(LatticeTimeStep timestep)
         {
           if (timestep < markedForDeletionTimestep)
             markedForDeletionTimestep = timestep;
@@ -100,7 +100,7 @@ namespace hemelb
         const proc_t GetOwnerRank() const { return ownerRank; }
 
         /** property getter for isValid */
-        const bool IsValid() const { return isValid; }
+        bool IsValid() const { return isValid; }
 
         /**
          * less than operator for comparing particle objects
@@ -111,18 +111,18 @@ namespace hemelb
          * - grouped by owner rank
          * - with local rank first
          */
-        //const bool operator<(const Particle& other) const;
+        //bool operator<(const Particle& other) const;
 
         /** determines if the owner rank of this particle is an existing key in map */
-        const bool IsOwnerRankKnown(std::map<proc_t, std::pair<unsigned int, unsigned int> > map) const;
+        bool IsOwnerRankKnown(std::map<proc_t, std::pair<unsigned int, unsigned int> > map) const;
 
-        const bool IsReadyToBeDeleted() const;
+        bool IsReadyToBeDeleted() const;
 
         /** for debug purposes only - outputs all properties to info log */
-        const void OutputInformation() const;
+        void OutputInformation() const;
 
         /** for serialisation into output file */
-        const void WriteToStream(
+        void WriteToStream(
                      const LatticeTimeStep currentTimestep,
                      io::writers::Writer& writer);
 
@@ -134,27 +134,27 @@ namespace hemelb
         const Dimensionless CalculateDragCoefficient() const;
 
         /** updates the position of this particle using body forces and fluid velocity */
-        const void UpdatePosition(const geometry::LatticeData& latDatLBM);
+        void UpdatePosition(const geometry::LatticeData& latDatLBM);
 
         /** calculates the effects of all body forces on this particle */
-        const void CalculateBodyForces();
+        void CalculateBodyForces();
 
         /** calculates the effects of this particle on each lattice site */
-        const void CalculateFeedbackForces(const geometry::LatticeData& latDatLBM) const;
+        void CalculateFeedbackForces(const geometry::LatticeData& latDatLBM) const;
 
         /** interpolates the fluid velocity to the location of each particle */
-        const void InterpolateFluidVelocity(
+        void InterpolateFluidVelocity(
                      const geometry::LatticeData& latDatLBM,
                      const lb::MacroscopicPropertyCache& propertyCache);
 
         /** accumulate contributions to velocity from remote processes */
-        const void AccumulateVelocity(util::Vector3D<double>& contribution)
+        void AccumulateVelocity(util::Vector3D<double>& contribution)
         {
           velocity += contribution;
         };
 
         /** sets the value for the velocity adjustment due to the lubrication BC */
-        const void SetLubricationVelocityAdjustment(const LatticeVelocity adjustment)
+        void SetLubricationVelocityAdjustment(const LatticeVelocity adjustment)
         {
           lubricationVelocityAdjustment = adjustment;
         }

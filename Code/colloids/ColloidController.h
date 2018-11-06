@@ -46,7 +46,7 @@ namespace hemelb
         /** overloaded from IteratedAction */
         void EndIteration();
 
-        const void OutputInformation(const LatticeTimeStep timestep) const;
+        void OutputInformation(const LatticeTimeStep timestep) const;
 
       private:
         /** Main code communicator */

@@ -146,6 +146,12 @@ namespace hemelb
       // <origin value="(x,y,z)" units="m" />
       const io::xml::Element originEl = simEl.GetChildOrThrow("origin");
       GetDimensionalValue(originEl, "m", geometryOriginMetres);
+
+      const io::xml::Element gpuEl = simEl.GetChildOrNull("use_gpu");
+      if (gpuEl != io::xml::Element::Missing())
+      {
+          gpuEl.GetAttributeOrThrow("value", useGPU);
+      }
     }
 
     void SimConfig::DoIOForGeometry(const io::xml::Element geometryEl)
@@ -690,6 +696,11 @@ namespace hemelb
     const SimConfig::MonitoringConfig* SimConfig::GetMonitoringConfiguration() const
     {
       return &monitoringConfig;
+    }
+
+    bool SimConfig::UseGPU() const
+    {
+        return useGPU;
     }
   }
 }

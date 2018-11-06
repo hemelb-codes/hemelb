@@ -33,6 +33,11 @@ namespace hemelb
         MacroscopicPropertyCache(const SimulationState& simState, const geometry::LatticeData& latticeData);
 
         /**
+         * Determine if any of the caches needs to be refreshed.
+         */
+        bool RequiresRefresh() const;
+
+        /**
          * Reset the list of cache types required to be none of them.
          */
         void ResetRequirements();

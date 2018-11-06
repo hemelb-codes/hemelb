@@ -6,6 +6,9 @@ cmake_minimum_required (VERSION 3.2)
 
 project(HemeLB)
 
+find_package(CUDA REQUIRED)
+include(FindCUDA)
+
 set(HEMELB_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -72,6 +75,8 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${HEMELB_DEPENDENCI
 list(APPEND CMAKE_INCLUDE_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/include)
 list(APPEND CMAKE_LIBRARY_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/lib)
 
+cuda_include_directories(${CMAKE_INCLUDE_PATH})
+
 #--- Set up runtime search path for DLLs -----
 if(HEMELB_DEPENDENCIES_SET_RPATH)
   SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
@@ -81,10 +86,8 @@ endif()
 include(build_environment)
 include(platform_checks)
 
-if(NOT UBUNTU_BUG_WORKAROUND)
-  if(HAVE_ISNAN)
-    add_definitions(-DHAVE_ISNAN)
-  endif()
+if(HAVE_ISNAN)
+  add_definitions(-DHAVE_ISNAN)
 endif()
 
 if(HAVE_STD_ISNAN)
@@ -127,7 +130,7 @@ if (HEMELB_USE_DEBUGGER)
 endif()
 
 set(root_sources SimulationMaster.cc)
-add_executable(${HEMELB_EXECUTABLE} main.cc ${root_sources})
+cuda_add_executable(${HEMELB_EXECUTABLE} main.cc ${root_sources})
 
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
@@ -151,10 +154,11 @@ foreach(subdir ${package_subdirs})
   add_subdirectory(${subdir})
 endforeach()
 add_subdirectory(resources)
-target_link_libraries(${HEMELB_EXECUTABLE} 
+target_link_libraries(${HEMELB_EXECUTABLE} PUBLIC
   ${heme_libraries}
   ${MPI_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${CUDA_LIBRARIES}
   )
 INSTALL(TARGETS ${HEMELB_EXECUTABLE} RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)

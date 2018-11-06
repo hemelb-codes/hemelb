@@ -37,16 +37,8 @@ namespace hemelb
         // Use the kernel specified through the build system. This will select one of the above classes.
         typedef typename HEMELB_KERNEL<LatticeType>::Type LB_KERNEL;
 
-        typedef streamers::SimpleCollideAndStream<collisions::Normal<LB_KERNEL> > tMidFluidCollision;
-        // Use the wall boundary condition specified through the build system.
-        typedef typename HEMELB_WALL_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tWallCollision;
-        // Use the inlet BC specified by the build system
-        typedef typename HEMELB_INLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tInletCollision;
-        // Use the outlet BC specified by the build system
-        typedef typename HEMELB_OUTLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tOutletCollision;
-        // And again but for sites that are both in-/outlet and wall
-        typedef typename HEMELB_WALL_INLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tInletWallCollision;
-        typedef typename HEMELB_WALL_OUTLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tOutletWallCollision;
+        // Use the boundary conditions specified through the build system.
+        typedef typename HEMELB_WALL_INLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type CollisionType;
 
       public:
         /**
@@ -71,6 +63,7 @@ namespace hemelb
 
         site_t TotalFluidSiteCount() const;
         void SetTotalFluidSiteCount(site_t);
+
         int InletCount() const
         {
           return inletCount;
@@ -106,9 +99,13 @@ namespace hemelb
         void SetInitialConditions();
 
         void InitCollisions();
+
+        void InitialiseGPU();
+
         // The following function pair simplify initialising the site ranges for each collider object.
         void InitInitParamsSiteRanges(kernels::InitParams& initParams, unsigned& state);
         void AdvanceInitParamsSiteRanges(kernels::InitParams& initParams, unsigned& state);
+
         /**
          * Ensure that the BoundaryValues objects have all necessary fields populated.
          */
@@ -119,28 +116,26 @@ namespace hemelb
         void handleIOError(int iError);
 
         // Collision objects
-        tMidFluidCollision* mMidFluidCollision;
-        tWallCollision* mWallCollision;
-        tInletCollision* mInletCollision;
-        tOutletCollision* mOutletCollision;
-        tInletWallCollision* mInletWallCollision;
-        tOutletWallCollision* mOutletWallCollision;
+        CollisionType* mMidFluidCollision;
+        CollisionType* mWallCollision;
+        CollisionType* mInletCollision;
+        CollisionType* mOutletCollision;
+        CollisionType* mInletWallCollision;
+        CollisionType* mOutletWallCollision;
 
-        template<typename Collision>
-        void StreamAndCollide(Collision* collision, const site_t iFirstIndex, const site_t iSiteCount)
+        void StreamAndCollide(CollisionType* collision, const site_t iFirstIndex, const site_t iSiteCount)
         {
           if (mVisControl->IsRendering())
           {
-            collision->template StreamAndCollide<true> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+            collision->template StreamAndCollide<true> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache, mState);
           }
           else
           {
-            collision->template StreamAndCollide<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+            collision->template StreamAndCollide<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache, mState);
           }
         }
 
-        template<typename Collision>
-        void PostStep(Collision* collision, const site_t iFirstIndex, const site_t iSiteCount)
+        void PostStep(CollisionType* collision, const site_t iFirstIndex, const site_t iSiteCount)
         {
           if (mVisControl->IsRendering())
           {

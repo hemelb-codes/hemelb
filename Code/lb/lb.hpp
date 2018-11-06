@@ -9,12 +9,12 @@
 
 #include "io/writers/xdr/XdrMemWriter.h"
 #include "lb/lb.h"
+#include "lb/cuda_helper.h"
 
 namespace hemelb
 {
   namespace lb
   {
-
     template<class LatticeType>
     hemelb::lb::LbmParameters* LBM<LatticeType>::GetLbmParams()
     {
@@ -35,7 +35,7 @@ namespace hemelb
                           reporting::Timers &atimings,
                           geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager) :
       mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), 
-          mParams(iSimulationConfig->GetTimeStepLength(), iSimulationConfig->GetVoxelSize()), timings(atimings),
+          mParams(iSimulationConfig->GetTimeStepLength(), iSimulationConfig->GetVoxelSize(), iSimulationConfig->UseGPU()), timings(atimings),
           propertyCache(*simState, *latDat), neighbouringDataManager(neighbouringDataManager)
     {
       ReadParameters();
@@ -103,26 +103,26 @@ namespace hemelb
 
       unsigned collId;
       InitInitParamsSiteRanges(initParams, collId);
-      mMidFluidCollision = new tMidFluidCollision(initParams);
+      mMidFluidCollision = new CollisionType(initParams);
 
       AdvanceInitParamsSiteRanges(initParams, collId);
-      mWallCollision = new tWallCollision(initParams);
-
-      AdvanceInitParamsSiteRanges(initParams, collId);
-      initParams.boundaryObject = mInletValues;
-      mInletCollision = new tInletCollision(initParams);
-
-      AdvanceInitParamsSiteRanges(initParams, collId);
-      initParams.boundaryObject = mOutletValues;
-      mOutletCollision = new tOutletCollision(initParams);
+      mWallCollision = new CollisionType(initParams);
 
       AdvanceInitParamsSiteRanges(initParams, collId);
       initParams.boundaryObject = mInletValues;
-      mInletWallCollision = new tInletWallCollision(initParams);
+      mInletCollision = new CollisionType(initParams);
 
       AdvanceInitParamsSiteRanges(initParams, collId);
       initParams.boundaryObject = mOutletValues;
-      mOutletWallCollision = new tOutletWallCollision(initParams);
+      mOutletCollision = new CollisionType(initParams);
+
+      AdvanceInitParamsSiteRanges(initParams, collId);
+      initParams.boundaryObject = mInletValues;
+      mInletWallCollision = new CollisionType(initParams);
+
+      AdvanceInitParamsSiteRanges(initParams, collId);
+      initParams.boundaryObject = mOutletValues;
+      mOutletWallCollision = new CollisionType(initParams);
     }
 
     template<class LatticeType>
@@ -140,6 +140,87 @@ namespace hemelb
       SetInitialConditions();
 
       mVisControl = iControl;
+
+      if ( mParams.UseGPU() )
+      {
+        InitialiseGPU();
+      }
+    }
+
+    template<class LatticeType>
+    void LBM<LatticeType>::InitialiseGPU()
+    {
+      // initialize GPU buffers for iolets
+      std::vector<iolet_cosine_t> inlets;
+
+      for ( unsigned i = 0; i < mInletValues->GetLocalIoletCount(); i++ )
+      {
+        iolets::InOutLetCosine* iolet = dynamic_cast<iolets::InOutLetCosine*>(mInletValues->GetLocalIolet(i));
+        auto& normal = iolet->GetNormal();
+
+        inlets.push_back(iolet_cosine_t {
+          iolet->GetMinimumSimulationDensity(),
+          make_double3(normal[0], normal[1], normal[2]),
+          iolet->GetDensityMean(),
+          iolet->GetDensityAmp(),
+          iolet->GetPhase(),
+          iolet->GetPeriod(),
+          iolet->GetWarmup()
+        });
+      }
+
+      std::vector<iolet_cosine_t> outlets;
+
+      for ( unsigned i = 0; i < mOutletValues->GetLocalIoletCount(); i++ )
+      {
+        iolets::InOutLetCosine* iolet = dynamic_cast<iolets::InOutLetCosine*>(mOutletValues->GetLocalIolet(i));
+        auto& normal = iolet->GetNormal();
+
+        outlets.push_back(iolet_cosine_t {
+          iolet->GetMinimumSimulationDensity(),
+          make_double3(normal[0], normal[1], normal[2]),
+          iolet->GetDensityMean(),
+          iolet->GetDensityAmp(),
+          iolet->GetPhase(),
+          iolet->GetPeriod(),
+          iolet->GetWarmup()
+        });
+      }
+
+      CUDA_SAFE_CALL(cudaMalloc(&inlets_dev, inlets.size() * sizeof(iolet_cosine_t)));
+      CUDA_SAFE_CALL(cudaMalloc(&outlets_dev, outlets.size() * sizeof(iolet_cosine_t)));
+
+      CUDA_SAFE_CALL(cudaMemcpyAsync(
+        inlets_dev,
+        inlets.data(),
+        inlets.size() * sizeof(iolet_cosine_t),
+        cudaMemcpyHostToDevice
+      ));
+      CUDA_SAFE_CALL(cudaMemcpyAsync(
+        outlets_dev,
+        outlets.data(),
+        outlets.size() * sizeof(iolet_cosine_t),
+        cudaMemcpyHostToDevice
+      ));
+
+      // initialize GPU buffers in lattice data
+      mLatDat->InitialiseGPU();
+
+      // transfer fOld and fNew to GPU
+      site_t localFluidSites = mLatDat->GetLocalFluidSiteCount();
+
+      CUDA_SAFE_CALL(cudaMemcpyAsync(
+        mLatDat->GetFOldGPU(0),
+        mLatDat->GetFOld(0),
+        (localFluidSites * LatticeType::NUMVECTORS) * sizeof(distribn_t),
+        cudaMemcpyHostToDevice
+      ));
+      CUDA_SAFE_CALL(cudaMemcpyAsync(
+        mLatDat->GetFNewGPU(0),
+        mLatDat->GetFNew(0),
+        (localFluidSites * LatticeType::NUMVECTORS) * sizeof(distribn_t),
+        cudaMemcpyHostToDevice
+      ));
     }
 
     template<class LatticeType>
@@ -218,6 +299,34 @@ namespace hemelb
        * through the sites of each type in turn.
        */
       site_t offset = mLatDat->GetMidDomainSiteCount();
+      site_t localFluidSites = mLatDat->GetLocalFluidSiteCount();
+      site_t sharedFs = mLatDat->GetNumSharedFs();
+
+      if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
+      {
+        StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetDomainEdgeSiteCount());
+
+        // copy fNew (sharedFs) from device to host
+        CUDA_SAFE_CALL(cudaMemcpy(
+          mLatDat->GetFNew(localFluidSites * LatticeType::NUMVECTORS + 1),
+          mLatDat->GetFNewGPU(localFluidSites * LatticeType::NUMVECTORS + 1),
+          (sharedFs) * sizeof(distribn_t),
+          cudaMemcpyDeviceToHost
+        ));
+      }
+
+      else
+      {
+        if ( mParams.UseGPU() )
+        {
+          // copy fOld (all sites) from device to host
+          CUDA_SAFE_CALL(cudaMemcpy(
+            mLatDat->GetFOld(0),
+            mLatDat->GetFOldGPU(0),
+            (localFluidSites * LatticeType::NUMVECTORS) * sizeof(distribn_t),
+            cudaMemcpyDeviceToHost
+          ));
+        }
 
       StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetDomainEdgeCollisionCount(0));
       offset += mLatDat->GetDomainEdgeCollisionCount(0);
@@ -237,6 +346,7 @@ namespace hemelb
       offset += mLatDat->GetDomainEdgeCollisionCount(4);
 
       StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(5));
+      }
 
       timings[hemelb::reporting::Timers::lb_calc].Stop();
       timings[hemelb::reporting::Timers::lb].Stop();
@@ -257,7 +367,15 @@ namespace hemelb
        * midDomain sites, one type at a time.
        */
       site_t offset = 0;
+      site_t midDomainSites = mLatDat->GetMidDomainSiteCount();
 
+      if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
+      {
+        StreamAndCollide(mMidFluidCollision, offset, midDomainSites);
+      }
+
+      else
+      {
       StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetMidDomainCollisionCount(0));
       offset += mLatDat->GetMidDomainCollisionCount(0);
 
@@ -275,6 +393,18 @@ namespace hemelb
 
       StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(5));
 
+        if ( mParams.UseGPU() )
+        {
+          // copy fNew (mid domain) from host to device
+          CUDA_SAFE_CALL(cudaMemcpyAsync(
+            mLatDat->GetFNewGPU(0),
+            mLatDat->GetFNew(0),
+            (midDomainSites * LatticeType::NUMVECTORS) * sizeof(distribn_t),
+            cudaMemcpyHostToDevice
+          ));
+        }
+      }
+
       timings[hemelb::reporting::Timers::lb_calc].Stop();
       timings[hemelb::reporting::Timers::lb].Stop();
     }
@@ -287,7 +417,32 @@ namespace hemelb
       // Copy the distribution functions received from the neighbouring
       // processors into the destination buffer "f_new".
       // This is done here, after receiving the sent distributions from neighbours.
+      site_t midDomainSites = mLatDat->GetMidDomainSiteCount();
+      site_t domainEdgeSites = mLatDat->GetDomainEdgeSiteCount();
+
+      if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
+      {
+        // copy fNew (domain edge) from device to host
+        CUDA_SAFE_CALL(cudaMemcpy(
+          mLatDat->GetFNew(midDomainSites * LatticeType::NUMVECTORS),
+          mLatDat->GetFNewGPU(midDomainSites * LatticeType::NUMVECTORS),
+          (domainEdgeSites * LatticeType::NUMVECTORS) * sizeof(distribn_t),
+          cudaMemcpyDeviceToHost
+        ));
+      }
+
       mLatDat->CopyReceived();
+
+      if ( mParams.UseGPU() )
+      {
+        // copy fNew (domain edge) from host to device
+        CUDA_SAFE_CALL(cudaMemcpyAsync(
+          mLatDat->GetFNewGPU(midDomainSites * LatticeType::NUMVECTORS),
+          mLatDat->GetFNew(midDomainSites * LatticeType::NUMVECTORS),
+          (domainEdgeSites * LatticeType::NUMVECTORS) * sizeof(distribn_t),
+          cudaMemcpyHostToDevice
+        ));
+      }
 
       // Do any cleanup steps necessary on boundary nodes
       site_t offset = mLatDat->GetMidDomainSiteCount();

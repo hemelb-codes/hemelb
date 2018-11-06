@@ -331,28 +331,32 @@ namespace hemelb
                                                      latDat->GetMidDomainCollisionCount(2),
                                                      lbmParams,
                                                      static_cast<geometry::LatticeData*> (latDat),
-                                                     *propertyCache);
+                                                     *propertyCache,
+                                                     simState);
             offset += latDat->GetMidDomainCollisionCount(2);
 
             outletStreamer.StreamAndCollide<false> (offset,
                                                     latDat->GetMidDomainCollisionCount(3),
                                                     lbmParams,
                                                     latDat,
-                                                    *propertyCache);
+                                                    *propertyCache,
+                                                    simState);
             offset += latDat->GetMidDomainCollisionCount(3);
 
             inletStreamer.StreamAndCollide<false> (offset,
                                                    latDat->GetMidDomainCollisionCount(4),
                                                    lbmParams,
                                                    latDat,
-                                                   *propertyCache);
+                                                   *propertyCache,
+                                                   simState);
             offset += latDat->GetMidDomainCollisionCount(4);
 
             outletStreamer.StreamAndCollide<false> (offset,
                                                     latDat->GetMidDomainCollisionCount(5),
                                                     lbmParams,
                                                     latDat,
-                                                    *propertyCache);
+                                                    *propertyCache,
+                                                    simState);
 
             // Now every entry in the RSHV cache should have been updated
             CheckAllHVUpdated(inletBoundary, 1);
