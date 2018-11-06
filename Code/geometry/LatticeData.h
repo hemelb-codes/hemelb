@@ -56,6 +56,7 @@ namespace hemelb
         }
 
         void SendAndReceive(net::Net* net);
+        void CopyReceivedGPU();
         void CopyReceived();
 
         /**
@@ -615,6 +616,7 @@ namespace hemelb
 
         // GPU buffers
         site_t* neighbourIndices_dev;
+        site_t* streamingIndicesForReceivedDistributions_dev;
         void* siteData_dev;
         distribn_t* oldDistributions_dev;
         distribn_t* newDistributions_dev;

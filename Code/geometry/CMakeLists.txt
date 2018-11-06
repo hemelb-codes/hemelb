@@ -3,14 +3,24 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-add_library(
-  hemelb_geometry BlockTraverser.cc BlockTraverserWithVisitedBlockTracker.cc 
-  GeometryReader.cc needs/Needs.cc LatticeData.cc SiteDataBare.cc SiteData.cc
-  SiteTraverser.cc VolumeTraverser.cc Block.cc 
-  decomposition/BasicDecomposition.cc decomposition/OptimisedDecomposition.cc
-  neighbouring/NeighbouringLatticeData.cc	neighbouring/NeighbouringDataManager.cc
+cuda_add_library(hemelb_geometry
+  BlockTraverser.cc
+  BlockTraverserWithVisitedBlockTracker.cc
+  GeometryReader.cc
+  needs/Needs.cc
+  LatticeData.cc
+  LatticeData.cu
+  SiteDataBare.cc
+  SiteData.cc
+  SiteTraverser.cc
+  VolumeTraverser.cc
+  Block.cc
+  decomposition/BasicDecomposition.cc
+  decomposition/OptimisedDecomposition.cc
+  neighbouring/NeighbouringLatticeData.cc
+  neighbouring/NeighbouringDataManager.cc
   neighbouring/RequiredSiteInformation.cc
-  )
+)
 
 hemelb_add_target_dependency_parmetis(hemelb_geometry)
 hemelb_add_target_dependency_zlib(hemelb_geometry)
@@ -18,9 +28,9 @@ hemelb_add_target_dependency_zlib(hemelb_geometry)
 configure_file (
   "${PROJECT_SOURCE_DIR}/geometry/decomposition/DecompositionWeights.h.in"
   "${PROJECT_BINARY_DIR}/geometry/decomposition/DecompositionWeights.h"
-  )
+)
 
 configure_file (
   "${PROJECT_SOURCE_DIR}/geometry/ParmetisForward.h.in"
   "${PROJECT_BINARY_DIR}/geometry/ParmetisForward.h"
-  )
+)

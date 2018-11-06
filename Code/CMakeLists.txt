@@ -157,7 +157,6 @@ target_link_libraries(${HEMELB_EXECUTABLE} PUBLIC
   ${heme_libraries}
   ${MPI_LIBRARIES}
   ${Boost_LIBRARIES}
-  ${CUDA_LIBRARIES}
   )
 INSTALL(TARGETS ${HEMELB_EXECUTABLE} RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)

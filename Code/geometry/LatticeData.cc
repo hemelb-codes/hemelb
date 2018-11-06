@@ -65,6 +65,10 @@ namespace hemelb
       CUDA_SAFE_CALL(cudaMalloc(&neighbourIndices_dev, localFluidSites * latticeInfo.GetNumVectors() * sizeof(site_t)));
       CUDA_SAFE_CALL(cudaMemcpyAsync(neighbourIndices_dev, neighbourIndices.data(), localFluidSites * latticeInfo.GetNumVectors() * sizeof(site_t), cudaMemcpyHostToDevice));
 
+      // initialize GPU buffer for shared neighbour indices
+      CUDA_SAFE_CALL(cudaMalloc(&streamingIndicesForReceivedDistributions_dev, totalSharedFs * sizeof(site_t)));
+      CUDA_SAFE_CALL(cudaMemcpyAsync(streamingIndicesForReceivedDistributions_dev, streamingIndicesForReceivedDistributions.data(), totalSharedFs * sizeof(site_t), cudaMemcpyHostToDevice));
+
       // initialize GPU buffers for distributions
       CUDA_SAFE_CALL(cudaMalloc(&oldDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs) * sizeof(distribn_t)));
       CUDA_SAFE_CALL(cudaMalloc(&newDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs) * sizeof(distribn_t)));
@@ -692,6 +696,29 @@ namespace hemelb
                                      (*it).Rank);
 
       }
+    }
+
+    void LatticeData_CopyReceivedGPU(
+      const site_t* streamingIndicesForReceivedDistributions,
+      const distribn_t* fOldShared,
+      distribn_t* fNew,
+      site_t totalSharedFs
+    );
+
+    void LatticeData::CopyReceivedGPU()
+    {
+      if ( totalSharedFs == 0 )
+      {
+        return;
+      }
+
+      LatticeData_CopyReceivedGPU(
+        streamingIndicesForReceivedDistributions_dev,
+        GetFOldGPU(neighbouringProcs[0].FirstSharedDistribution),
+        GetFNewGPU(0),
+        totalSharedFs
+      );
+      CUDA_SAFE_CALL(cudaGetLastError());
     }
 
     void LatticeData::CopyReceived()

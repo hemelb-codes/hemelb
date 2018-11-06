@@ -368,11 +368,11 @@ namespace hemelb
        * midDomain sites, one type at a time.
        */
       site_t offset = 0;
-      site_t midDomainSites = mLatDat->GetMidDomainSiteCount();
+      site_t localFluidSites = mLatDat->GetLocalFluidSiteCount();
 
       if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
       {
-        StreamAndCollide(mMidFluidCollision, offset, midDomainSites);
+        StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetMidDomainSiteCount());
       }
 
       else
@@ -396,11 +396,11 @@ namespace hemelb
 
         if ( mParams.UseGPU() )
         {
-          // copy fNew (mid domain) from host to device
+          // copy fNew (all sites) from host to device
           CUDA_SAFE_CALL(cudaMemcpyAsync(
             mLatDat->GetFNewGPU(0),
             mLatDat->GetFNew(0),
-            (midDomainSites * LatticeType::NUMVECTORS) * sizeof(distribn_t),
+            (localFluidSites * LatticeType::NUMVECTORS) * sizeof(distribn_t),
             cudaMemcpyHostToDevice
           ));
         }
@@ -418,31 +418,27 @@ namespace hemelb
       // Copy the distribution functions received from the neighbouring
       // processors into the destination buffer "f_new".
       // This is done here, after receiving the sent distributions from neighbours.
-      site_t midDomainSites = mLatDat->GetMidDomainSiteCount();
-      site_t domainEdgeSites = mLatDat->GetDomainEdgeSiteCount();
-
-      if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
-      {
-        // copy fNew (domain edge) from device to host
-        CUDA_SAFE_CALL(cudaMemcpy(
-          mLatDat->GetFNew(midDomainSites * LatticeType::NUMVECTORS),
-          mLatDat->GetFNewGPU(midDomainSites * LatticeType::NUMVECTORS),
-          (domainEdgeSites * LatticeType::NUMVECTORS) * sizeof(distribn_t),
-          cudaMemcpyDeviceToHost
-        ));
-      }
-
-      mLatDat->CopyReceived();
+      site_t localFluidSites = mLatDat->GetLocalFluidSiteCount();
+      site_t sharedFs = mLatDat->GetNumSharedFs();
 
       if ( mParams.UseGPU() )
       {
-        // copy fNew (domain edge) from host to device
+        // copy fOld (sharedFs) from host to device
         CUDA_SAFE_CALL(cudaMemcpyAsync(
-          mLatDat->GetFNewGPU(midDomainSites * LatticeType::NUMVECTORS),
-          mLatDat->GetFNew(midDomainSites * LatticeType::NUMVECTORS),
-          (domainEdgeSites * LatticeType::NUMVECTORS) * sizeof(distribn_t),
+          mLatDat->GetFOldGPU(localFluidSites * LatticeType::NUMVECTORS + 1),
+          mLatDat->GetFOld(localFluidSites * LatticeType::NUMVECTORS + 1),
+          (sharedFs) * sizeof(distribn_t),
           cudaMemcpyHostToDevice
         ));
+      }
+
+      if ( mParams.UseGPU() )
+      {
+        mLatDat->CopyReceivedGPU();
+      }
+      else
+      {
+        mLatDat->CopyReceived();
       }
 
       // Do any cleanup steps necessary on boundary nodes
