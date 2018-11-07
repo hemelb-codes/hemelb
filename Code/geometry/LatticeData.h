@@ -51,7 +51,7 @@ namespace hemelb
          */
         inline void SwapOldAndNew()
         {
-          oldDistributions.swap(newDistributions);
+          std::swap(oldDistributions, newDistributions);
           std::swap(oldDistributions_dev, newDistributions_dev);
         }
 
@@ -205,12 +205,12 @@ namespace hemelb
 
         inline distribn_t* GetFOldGPU(site_t distributionIndex)
         {
-          return oldDistributions_dev + distributionIndex;
+          return &oldDistributions_dev[distributionIndex];
         }
 
         inline distribn_t* GetFNewGPU(site_t distributionIndex)
         {
-          return newDistributions_dev + distributionIndex;
+          return &newDistributions_dev[distributionIndex];
         }
 
         proc_t GetProcIdFromGlobalCoords(const util::Vector3D<site_t>& globalSiteCoords) const;
@@ -466,8 +466,8 @@ namespace hemelb
 
           }
 
-          oldDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
-          newDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
+          oldDistributions = new distribn_t[localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs];
+          newDistributions = new distribn_t[localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs];
         }
 
         void CollectFluidSiteDistribution();
@@ -599,8 +599,8 @@ namespace hemelb
         site_t midDomainProcCollisions[COLLISION_TYPES]; //! Number of fluid sites with all fluid neighbours on this rank, for each collision type.
         site_t domainEdgeProcCollisions[COLLISION_TYPES]; //! Number of fluid sites with at least one fluid neighbour on another rank, for each collision type.
         site_t localFluidSites; //! The number of local fluid sites.
-        std::vector<distribn_t> oldDistributions; //! The distribution values for the previous time step.
-        std::vector<distribn_t> newDistributions; //! The distribution values for the next time step.
+        distribn_t* oldDistributions; //! The distribution values for the previous time step.
+        distribn_t* newDistributions; //! The distribution values for the next time step.
         std::vector<Block> blocks; //! Data where local fluid sites are stored contiguously.
 
         std::vector<distribn_t> distanceToWall; //! Hold the distance to the wall for each fluid site.

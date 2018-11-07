@@ -70,6 +70,9 @@ namespace hemelb
       CUDA_SAFE_CALL(cudaMemcpyAsync(streamingIndicesForReceivedDistributions_dev, streamingIndicesForReceivedDistributions.data(), totalSharedFs * sizeof(site_t), cudaMemcpyHostToDevice));
 
       // initialize GPU buffers for distributions
+      CUDA_SAFE_CALL(cudaMallocHost(&oldDistributions, (localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs) * sizeof(distribn_t)));
+      CUDA_SAFE_CALL(cudaMallocHost(&newDistributions, (localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs) * sizeof(distribn_t)));
+
       CUDA_SAFE_CALL(cudaMalloc(&oldDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs) * sizeof(distribn_t)));
       CUDA_SAFE_CALL(cudaMalloc(&newDistributions_dev, (localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs) * sizeof(distribn_t)));
     }

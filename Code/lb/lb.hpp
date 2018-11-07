@@ -135,12 +135,14 @@ namespace hemelb
       mInletValues = iInletValues;
       mOutletValues = iOutletValues;
       mUnits = iUnits;
+      mVisControl = iControl;
+
+      // initialize GPU buffers in lattice data
+      mLatDat->InitialiseGPU();
 
       InitCollisions();
 
       SetInitialConditions();
-
-      mVisControl = iControl;
 
       if ( mParams.UseGPU() )
       {
@@ -203,9 +205,6 @@ namespace hemelb
         outlets.size() * sizeof(iolet_cosine_t),
         cudaMemcpyHostToDevice
       ));
-
-      // initialize GPU buffers in lattice data
-      mLatDat->InitialiseGPU();
 
       // transfer fOld and fNew to GPU
       site_t localFluidSites = mLatDat->GetLocalFluidSiteCount();
