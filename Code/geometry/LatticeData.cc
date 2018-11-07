@@ -681,19 +681,34 @@ namespace hemelb
       blockCoords.x = blockIJData / blockCounts.y;
     }
 
-    void LatticeData::SendAndReceive(hemelb::net::Net* net)
+    void LatticeData::SendAndReceiveGPU(hemelb::net::Net* net)
     {
-      for (std::vector<NeighbouringProcessor>::const_iterator it = neighbouringProcs.begin();
-          it != neighbouringProcs.end(); ++it)
+      for (auto& proc : neighbouringProcs)
       {
         // Request the receive into the appropriate bit of FOld.
-        net->RequestReceive<distribn_t>(GetFOld( (*it).FirstSharedDistribution),
-                                        (int) ( ( (*it).SharedDistributionCount)),
-                                        (*it).Rank);
+        net->RequestReceive<distribn_t>(GetFOldGPU(proc.FirstSharedDistribution),
+                                        (int) (proc.SharedDistributionCount),
+                                        proc.Rank);
         // Request the send from the right bit of FNew.
-        net->RequestSend<distribn_t>(GetFNew( (*it).FirstSharedDistribution),
-                                     (int) ( ( (*it).SharedDistributionCount)),
-                                     (*it).Rank);
+        net->RequestSend<distribn_t>(GetFNewGPU(proc.FirstSharedDistribution),
+                                     (int) (proc.SharedDistributionCount),
+                                     proc.Rank);
+
+      }
+    }
+
+    void LatticeData::SendAndReceive(hemelb::net::Net* net)
+    {
+      for (auto& proc : neighbouringProcs)
+      {
+        // Request the receive into the appropriate bit of FOld.
+        net->RequestReceive<distribn_t>(GetFOld(proc.FirstSharedDistribution),
+                                        (int) (proc.SharedDistributionCount),
+                                        proc.Rank);
+        // Request the send from the right bit of FNew.
+        net->RequestSend<distribn_t>(GetFNew(proc.FirstSharedDistribution),
+                                     (int) (proc.SharedDistributionCount),
+                                     proc.Rank);
 
       }
     }

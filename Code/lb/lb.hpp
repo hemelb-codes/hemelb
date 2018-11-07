@@ -282,7 +282,14 @@ namespace hemelb
       // (via the Net object).
       // NOTE that this doesn't actually *perform* the sends and receives, it asks the Net
       // to include them in the ISends and IRecvs that happen later.
-      mLatDat->SendAndReceive(mNet);
+      if ( mParams.UseGPU() )
+      {
+        mLatDat->SendAndReceiveGPU(mNet);
+      }
+      else
+      {
+        mLatDat->SendAndReceive(mNet);
+      }
 
       timings[hemelb::reporting::Timers::lb].Stop();
     }
@@ -306,14 +313,6 @@ namespace hemelb
       if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
       {
         StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetDomainEdgeSiteCount());
-
-        // copy fNew (sharedFs) from device to host
-        CUDA_SAFE_CALL(cudaMemcpy(
-          mLatDat->GetFNew(localFluidSites * LatticeType::NUMVECTORS + 1),
-          mLatDat->GetFNewGPU(localFluidSites * LatticeType::NUMVECTORS + 1),
-          (sharedFs) * sizeof(distribn_t),
-          cudaMemcpyDeviceToHost
-        ));
       }
 
       else
@@ -347,6 +346,17 @@ namespace hemelb
         offset += mLatDat->GetDomainEdgeCollisionCount(4);
 
         StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(5));
+
+        if ( mParams.UseGPU() )
+        {
+          // copy fNew (sharedFs) from host to device
+          CUDA_SAFE_CALL(cudaMemcpyAsync(
+            mLatDat->GetFNewGPU(localFluidSites * LatticeType::NUMVECTORS + 1),
+            mLatDat->GetFNew(localFluidSites * LatticeType::NUMVECTORS + 1),
+            (sharedFs) * sizeof(distribn_t),
+            cudaMemcpyHostToDevice
+          ));
+        }
       }
 
       timings[hemelb::reporting::Timers::lb_calc].Stop();
@@ -418,20 +428,6 @@ namespace hemelb
       // Copy the distribution functions received from the neighbouring
       // processors into the destination buffer "f_new".
       // This is done here, after receiving the sent distributions from neighbours.
-      site_t localFluidSites = mLatDat->GetLocalFluidSiteCount();
-      site_t sharedFs = mLatDat->GetNumSharedFs();
-
-      if ( mParams.UseGPU() )
-      {
-        // copy fOld (sharedFs) from host to device
-        CUDA_SAFE_CALL(cudaMemcpyAsync(
-          mLatDat->GetFOldGPU(localFluidSites * LatticeType::NUMVECTORS + 1),
-          mLatDat->GetFOld(localFluidSites * LatticeType::NUMVECTORS + 1),
-          (sharedFs) * sizeof(distribn_t),
-          cudaMemcpyHostToDevice
-        ));
-      }
-
       if ( mParams.UseGPU() )
       {
         mLatDat->CopyReceivedGPU();

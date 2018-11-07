@@ -55,6 +55,7 @@ namespace hemelb
           std::swap(oldDistributions_dev, newDistributions_dev);
         }
 
+        void SendAndReceiveGPU(net::Net* net);
         void SendAndReceive(net::Net* net);
         void CopyReceivedGPU();
         void CopyReceived();
