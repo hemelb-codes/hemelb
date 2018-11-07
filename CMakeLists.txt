@@ -3,9 +3,9 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-cmake_minimum_required (VERSION 3.2)
+cmake_minimum_required (VERSION 3.10)
 
-Project(HemeLBMaster)
+project(HemeLBMaster)
 
 include(ExternalProject)
 

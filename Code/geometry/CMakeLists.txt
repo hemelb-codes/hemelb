@@ -3,7 +3,7 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-cuda_add_library(hemelb_geometry
+add_library(hemelb_geometry
   BlockTraverser.cc
   BlockTraverserWithVisitedBlockTracker.cc
   GeometryReader.cc

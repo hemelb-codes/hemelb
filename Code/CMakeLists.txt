@@ -2,12 +2,15 @@
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
-cmake_minimum_required (VERSION 3.2)
+cmake_minimum_required (VERSION 3.10)
 
-project(HemeLB)
+project(HemeLB
+  VERSION 0.0.0
+  DESCRIPTION "A high performance parallel lattice-Boltzmann code for large scale fluid flow in complex geometries"
+  LANGUAGES CXX CUDA
+)
 
-find_package(CUDA REQUIRED)
-include(FindCUDA)
+include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
 set(HEMELB_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
@@ -25,7 +28,6 @@ endif()
 if(HEMELB_OPTIMISATION)
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HEMELB_OPTIMISATION}")
 endif()
-
 
 add_definitions(-DHEMELB_CODE)
 add_definitions(-DHEMELB_READING_GROUP_SIZE=${HEMELB_READING_GROUP_SIZE})
@@ -73,8 +75,6 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${HEMELB_DEPENDENCIES_PATH}/Modules/")
 list(APPEND CMAKE_INCLUDE_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/include)
 list(APPEND CMAKE_LIBRARY_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/lib)
-
-cuda_include_directories(${CMAKE_INCLUDE_PATH})
 
 #--- Set up runtime search path for DLLs -----
 if(HEMELB_DEPENDENCIES_SET_RPATH)
@@ -129,7 +129,7 @@ if (HEMELB_USE_DEBUGGER)
 endif()
 
 set(root_sources SimulationMaster.cc)
-cuda_add_executable(${HEMELB_EXECUTABLE} main.cc ${root_sources})
+add_executable(${HEMELB_EXECUTABLE} main.cc ${root_sources})
 
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
@@ -153,7 +153,7 @@ foreach(subdir ${package_subdirs})
   add_subdirectory(${subdir})
 endforeach()
 add_subdirectory(resources)
-target_link_libraries(${HEMELB_EXECUTABLE} PUBLIC
+target_link_libraries(${HEMELB_EXECUTABLE}
   ${heme_libraries}
   ${MPI_LIBRARIES}
   ${Boost_LIBRARIES}
@@ -242,7 +242,6 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
 endif()
 
 #-------- Copy and install resources --------------
-
 foreach(resource ${RESOURCES})
   configure_file(${PROJECT_SOURCE_DIR}/${resource} ${BUILD_RESOURCE_PATH} COPYONLY)
   get_filename_component(resource_leaf ${resource} NAME)
