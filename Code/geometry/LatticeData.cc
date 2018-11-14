@@ -716,29 +716,6 @@ namespace hemelb
       }
     }
 
-    void LatticeData_CopyReceivedGPU(
-      const site_t* streamingIndicesForReceivedDistributions,
-      const distribn_t* fOldShared,
-      distribn_t* fNew,
-      site_t totalSharedFs
-    );
-
-    void LatticeData::CopyReceivedGPU()
-    {
-      if ( totalSharedFs == 0 )
-      {
-        return;
-      }
-
-      LatticeData_CopyReceivedGPU(
-        streamingIndicesForReceivedDistributions_dev,
-        GetFOldGPU(neighbouringProcs[0].FirstSharedDistribution),
-        GetFNewGPU(0),
-        totalSharedFs
-      );
-      CUDA_SAFE_CALL(cudaGetLastError());
-    }
-
     void LatticeData::CopyReceived()
     {
       // Copy the distribution functions received from the neighbouring

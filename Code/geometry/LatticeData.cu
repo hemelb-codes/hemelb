@@ -4,16 +4,16 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "units.h"
+#include "geometry/LatticeData.h"
 
 
 
-namespace hemelb {
-namespace geometry {
+using namespace hemelb;
+using namespace hemelb::geometry;
 
 
 
-__global__ void LatticeData_CopyReceived(
+__global__ void CopyReceivedKernel(
   const site_t* streamingIndicesForReceivedDistributions,
   const distribn_t* fOldShared,
   distribn_t* fNew,
@@ -32,25 +32,21 @@ __global__ void LatticeData_CopyReceived(
 
 
 
-__host__ void LatticeData_CopyReceivedGPU(
-  const site_t* streamingIndicesForReceivedDistributions,
-  const distribn_t* fOldShared,
-  distribn_t* fNew,
-  site_t totalSharedFs
-)
+void LatticeData::CopyReceivedGPU()
 {
+  if ( totalSharedFs == 0 )
+  {
+    return;
+  }
+
   const int BLOCK_SIZE = 256;
   const int GRID_SIZE = (totalSharedFs + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
-  LatticeData_CopyReceived<<<GRID_SIZE, BLOCK_SIZE>>>(
-    streamingIndicesForReceivedDistributions,
-    fOldShared,
-    fNew,
+  CopyReceivedKernel<<<GRID_SIZE, BLOCK_SIZE>>>(
+    streamingIndicesForReceivedDistributions_dev,
+    GetFOldGPU(neighbouringProcs[0].FirstSharedDistribution),
+    GetFNewGPU(0),
     totalSharedFs
   );
-}
-
-
-
-}
+  CUDA_SAFE_CALL(cudaGetLastError());
 }
