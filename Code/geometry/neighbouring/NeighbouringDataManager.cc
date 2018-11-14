@@ -9,7 +9,7 @@
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "geometry/LatticeData.h"
 
-#include "log/Logger.h"
+#include "logging/Logger.h"
 namespace hemelb
 {
   namespace geometry
@@ -100,7 +100,7 @@ namespace hemelb
       {
         /*if (needsHaveBeenShared == false)
         {
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("NDM needs are shared now.");
+          hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("NDM needs are shared now.");
           ShareNeeds();
         }*/ ///TODO: Re-enable!
 
@@ -139,7 +139,7 @@ namespace hemelb
 
       void NeighbouringDataManager::ShareNeeds()
       {
-        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("NDM ShareNeeds().");
+        hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("NDM ShareNeeds().");
         //if (needsHaveBeenShared == true)
         //  return; //TODO: Fix!
         

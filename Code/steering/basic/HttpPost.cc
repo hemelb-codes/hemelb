@@ -23,7 +23,7 @@
 #include <sys/utsname.h>
 
 #include "debug/Debugger.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "steering/basic/HttpPost.h"
 
 using namespace std;
@@ -130,7 +130,7 @@ namespace hemelb
       std::sprintf(rank_0_host_details, "%s:%i (IP %s)", host->h_name, MYPORT, ip_addr);
 #endif
 
-      log::Logger::Log<log::Info, log::Singleton>("MPI public interface details - %s", rank_0_host_details);
+      logging::Logger::Log<logging::Info, logging::Singleton>("MPI public interface details - %s", rank_0_host_details);
     }
 
     ssize_t HttpPost::Send_Request(int iSocket, const char *iMessage)

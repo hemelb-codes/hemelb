@@ -282,11 +282,11 @@ namespace hemelb
       {
         VelocitySiteData *localVelocitySiteData = GetVelocitySiteData(latDat, position);
 
-        if (log::Logger::ShouldDisplay<log::Debug>())
+        if (logging::Logger::ShouldDisplay<logging::Debug>())
         {
           if (localRank != localVelocitySiteData->proc_id)
           {
-            log::Logger::Log<log::Warning, log::OnePerCore>("Got a request for velocity data "
+            logging::Logger::Log<logging::Warning, logging::OnePerCore>("Got a request for velocity data "
                                                           "that actually seems to be on rank %i",
                                                           localVelocitySiteData->proc_id);
           }

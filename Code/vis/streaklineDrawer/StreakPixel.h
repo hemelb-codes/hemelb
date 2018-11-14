@@ -7,7 +7,7 @@
 #ifndef HEMELB_VIS_STREAKLINEDRAWER_STREAKPIXEL_H
 #define HEMELB_VIS_STREAKLINEDRAWER_STREAKPIXEL_H
 
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "vis/BasicPixel.h"
 
 namespace hemelb
@@ -80,7 +80,7 @@ namespace hemelb
 
           void LogDebuggingInformation() const
           {
-            log::Logger::Log<log::Trace, log::OnePerCore>("Streak pixel at (%i,%i) with "
+            logging::Logger::Log<logging::Trace, logging::OnePerCore>("Streak pixel at (%i,%i) with "
               "(source inlet, velocity, z) = (%d, %f, %f)", GetI(), GetJ(), particle_inlet_id, particle_vel, particle_z);
           }
 

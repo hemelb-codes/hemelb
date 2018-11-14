@@ -10,7 +10,7 @@
 #include <string>
 
 #include "Exception.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 
 namespace hemelb
 {

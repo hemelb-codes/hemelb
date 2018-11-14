@@ -8,7 +8,7 @@
 #include <cmath>
 #include <limits>
 
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "util/utilityFunctions.h"
 #include "vis/Control.h"
 #include "vis/rayTracer/RayTracer.h"
@@ -164,7 +164,7 @@ namespace hemelb
 
     void Control::Render(unsigned long startIteration)
     {
-      log::Logger::Log<log::Debug, log::OnePerCore>("Rendering.");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Rendering.");
 
       PixelSet<raytracer::RayDataNormal>* ray = normalRayTracer->Render(propertyCache);
 
@@ -197,7 +197,7 @@ namespace hemelb
 
       Render(startIteration);
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("Render stored for phased imaging.");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Render stored for phased imaging.");
 
       timer.Stop();
     }
@@ -285,7 +285,7 @@ namespace hemelb
           childrenResultsByStartIt.insert(std::pair<unsigned long, Rendering>(startIteration, lRendering));
         }
 
-        log::Logger::Log<log::Debug, log::OnePerCore>("Receiving child image pixel count.");
+        logging::Logger::Log<logging::Debug, logging::OnePerCore>("Receiving child image pixel count.");
       }
       else if (splayNumber == 1)
       {
@@ -296,7 +296,7 @@ namespace hemelb
         {
           Rendering& received = (*renderings).second;
 
-          log::Logger::Log<log::Trace, log::OnePerCore>("Receiving child image pixel data (from it %li).",
+          logging::Logger::Log<logging::Trace, logging::OnePerCore>("Receiving child image pixel data (from it %li).",
                                                         startIteration);
 
           received.ReceivePixelData(mNet, GetChildren()[ii]);
@@ -315,13 +315,13 @@ namespace hemelb
       Rendering& rendering = (*localResultsByStartIt.find(startIteration)).second;
       if (splayNumber == 0)
       {
-        log::Logger::Log<log::Trace, log::OnePerCore>("Sending pixel count (from it %li).", startIteration);
+        logging::Logger::Log<logging::Trace, logging::OnePerCore>("Sending pixel count (from it %li).", startIteration);
 
         rendering.SendPixelCounts(mNet, GetParent());
       }
       else if (splayNumber == 1)
       {
-        log::Logger::Log<log::Trace, log::OnePerCore>("Sending pixel data (from it %li).", startIteration);
+        logging::Logger::Log<logging::Trace, logging::OnePerCore>("Sending pixel data (from it %li).", startIteration);
 
         rendering.SendPixelData(mNet, GetParent());
       }
@@ -362,7 +362,7 @@ namespace hemelb
           childrenResultsByStartIt.erase(its.first, its.second);
         }
 
-        log::Logger::Log<log::Debug, log::OnePerCore>("Combining in child pixel data.");
+        logging::Logger::Log<logging::Debug, logging::OnePerCore>("Combining in child pixel data.");
       }
 
       timer.Stop();
@@ -399,7 +399,7 @@ namespace hemelb
           mapType::iterator it = localResultsByStartIt.begin();
           if (it->first <= startIt)
           {
-            log::Logger::Log<log::Trace, log::OnePerCore>("Clearing out image cache from it %lu", it->first);
+            logging::Logger::Log<logging::Trace, logging::OnePerCore>("Clearing out image cache from it %lu", it->first);
 
             (*it).second.ReleaseAll();
 
@@ -419,7 +419,7 @@ namespace hemelb
           multimapType::iterator it = childrenResultsByStartIt.begin();
           if ( (*it).first <= startIt)
           {
-            log::Logger::Log<log::Trace, log::OnePerCore>("Clearing out image cache from it %lu", (*it).first);
+            logging::Logger::Log<logging::Trace, logging::OnePerCore>("Clearing out image cache from it %lu", (*it).first);
 
             (*it).second.ReleaseAll();
 
@@ -439,7 +439,7 @@ namespace hemelb
           std::multimap<unsigned long, PixelSet<ResultPixel>*>::iterator it = renderingsByStartIt.begin();
           if ( (*it).first <= startIt)
           {
-            log::Logger::Log<log::Trace, log::OnePerCore>("Clearing out image cache from it %lu", (*it).first);
+            logging::Logger::Log<logging::Trace, logging::OnePerCore>("Clearing out image cache from it %lu", (*it).first);
 
             (*it).second->Release();
             renderingsByStartIt.erase(it);
@@ -454,7 +454,7 @@ namespace hemelb
 
     const PixelSet<ResultPixel>* Control::GetResult(unsigned long startIt)
     {
-      log::Logger::Log<log::Trace, log::OnePerCore>("Getting image results from it %lu", startIt);
+      logging::Logger::Log<logging::Trace, logging::OnePerCore>("Getting image results from it %lu", startIt);
 
       if (renderingsByStartIt.count(startIt) != 0)
       {
@@ -481,7 +481,7 @@ namespace hemelb
     {
       timer.Start();
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("Performing instant imaging.");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Performing instant imaging.");
 
       Render(startIteration);
 
@@ -571,7 +571,7 @@ namespace hemelb
         localResultsByStartIt.erase(startIteration);
         localResultsByStartIt.insert(std::pair<unsigned long, Rendering>(startIteration, Rendering(receiveBuffer)));
 
-        log::Logger::Log<log::Trace, log::OnePerCore>("Inserting image at it %lu.", startIteration);
+        logging::Logger::Log<logging::Trace, logging::OnePerCore>("Inserting image at it %lu.", startIteration);
       }
 
       if (netComm.Rank() != 0)

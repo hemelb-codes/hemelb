@@ -8,7 +8,7 @@
 #include <limits>
 
 #include "debug/Debugger.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "net/IOCommunicator.h"
 #include "geometry/BlockTraverser.h"
 #include "geometry/LatticeData.h"
@@ -37,13 +37,13 @@ namespace hemelb
 
       ProcessReadSites(readResult);
       // if debugging then output beliefs regarding geometry and neighbour list
-      if (log::Logger::ShouldDisplay<log::Trace>())
+      if (logging::Logger::ShouldDisplay<logging::Trace>())
       {
         proc_t localRank = comms.Rank();
         for (std::vector<NeighbouringProcessor>::iterator itNeighProc = neighbouringProcs.begin();
             itNeighProc != neighbouringProcs.end(); ++itNeighProc)
         {
-          log::Logger::Log<log::Trace, log::OnePerCore>("LatticeData: Rank %i thinks that rank %i is a neighbour with %i shared edges\n",
+          logging::Logger::Log<logging::Trace, logging::OnePerCore>("LatticeData: Rank %i thinks that rank %i is a neighbour with %i shared edges\n",
                                                         localRank,
                                                         itNeighProc->Rank,
                                                         itNeighProc->SharedDistributionCount);
@@ -212,7 +212,7 @@ namespace hemelb
               neighbouringProcs.push_back(lNewNeighbour);
 
               // if debugging then output decisions with reasoning for all neighbour processors
-              log::Logger::Log<log::Trace, log::OnePerCore>("LatticeData: added %i as neighbour for %i because site %i in block %i is neighbour to site %i in block %i in direction (%i,%i,%i)\n",
+              logging::Logger::Log<logging::Trace, logging::OnePerCore>("LatticeData: added %i as neighbour for %i because site %i in block %i is neighbour to site %i in block %i in direction (%i,%i,%i)\n",
                                                             (int) neighbourProc,
                                                             (int) localRank,
                                                             (int) neighbourSiteId,
@@ -296,7 +296,7 @@ namespace hemelb
 
     void LatticeData::CollectFluidSiteDistribution()
     {
-      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Gathering lattice info.");
+      hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::Singleton>("Gathering lattice info.");
       fluidSitesOnEachProcessor = comms.AllGather(localFluidSites);
       totalFluidSites = 0;
       for (proc_t ii = 0; ii < comms.Size(); ++ii)

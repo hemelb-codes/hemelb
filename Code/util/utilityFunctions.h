@@ -7,7 +7,7 @@
 #ifndef HEMELB_UTIL_UTILITYFUNCTIONS_H
 #define HEMELB_UTIL_UTILITYFUNCTIONS_H
 
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include <cmath>
 #include <iostream>
 #include <cstdlib>
@@ -97,11 +97,11 @@ namespace hemelb
         {
           int lowerIndex = 0;
 
-          if (hemelb::log::Logger::ShouldDisplay<hemelb::log::Debug>())
+          if (hemelb::logging::Logger::ShouldDisplay<hemelb::logging::Debug>())
           {
             if (targetX < xVector[0] || targetX > xVector[xVector.size() - 1])
             {
-              log::Logger::Log<log::Warning, log::OnePerCore>("Linear Interpolation beyond bounds: %f is not between %f and %f",
+              logging::Logger::Log<logging::Warning, logging::OnePerCore>("Linear Interpolation beyond bounds: %f is not between %f and %f",
                                                             targetX,
                                                             xVector[0],
                                                             xVector[xVector.size() - 1]);
@@ -114,12 +114,12 @@ namespace hemelb
           }
 
           // If discontinuities are present in the trace the correct behaviour is ill-defined.
-          if (hemelb::log::Logger::ShouldDisplay<hemelb::log::Debug>())
+          if (hemelb::logging::Logger::ShouldDisplay<hemelb::logging::Debug>())
           {
             if (xVector[lowerIndex] == xVector[lowerIndex + 1])
             {
-              log::Logger::Log<log::Warning, log::OnePerCore>("Multiple points for same x value in LinearInterpolate: ");
-              log::Logger::Log<log::Warning, log::OnePerCore>("(%f, %f) and (%f, %f). Division by zero!",
+              logging::Logger::Log<logging::Warning, logging::OnePerCore>("Multiple points for same x value in LinearInterpolate: ");
+              logging::Logger::Log<logging::Warning, logging::OnePerCore>("(%f, %f) and (%f, %f). Division by zero!",
                                                             xVector[lowerIndex],
                                                             yVector[lowerIndex],
                                                             xVector[lowerIndex + 1],

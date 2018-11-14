@@ -7,7 +7,7 @@
 #include "colloids/ColloidController.h"
 #include "geometry/BlockTraverser.h"
 #include "geometry/SiteTraverser.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 
 namespace hemelb
 {
@@ -51,7 +51,7 @@ namespace hemelb
       InitialiseNeighbourList(latDatLBM, gmyResult, neighbourhood);
 
       bool allGood = ioComms.OnIORank() || (neighbourProcessors.size() > 0);
-      log::Logger::Log<log::Debug, log::OnePerCore>(
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>(
         "[Rank %i]: ColloidController - neighbourhood %i, neighbours %i, allGood %i\n",
         ioComms.Rank(), neighbourhood.size(), neighbourProcessors.size(), allGood);
 
@@ -89,7 +89,7 @@ namespace hemelb
         site_t blockId = blockTraverser.GetCurrentIndex();
         if (gmyResult.Blocks[blockId].Sites.size() == 0)
         {
-          log::Logger::Log<log::Trace, log::OnePerCore>(
+          logging::Logger::Log<logging::Trace, logging::OnePerCore>(
             "ColloidController: block with id %i and coords (%i,%i,%i) is solid.\n",
             blockId,
             blockTraverser.GetCurrentLocation().x,
@@ -110,7 +110,7 @@ namespace hemelb
           site_t siteId = siteTraverser.GetCurrentIndex();
           if (gmyResult.Blocks[blockId].Sites[siteId].targetProcessor != this->ioComms.Rank())
           {
-            log::Logger::Log<log::Trace, log::OnePerCore>(
+            logging::Logger::Log<logging::Trace, logging::OnePerCore>(
               "ColloidController: site with id %i and coords (%i,%i,%i) has proc %i (non-local).\n",
               siteId,
               siteTraverser.GetCurrentLocation().x,
@@ -120,7 +120,7 @@ namespace hemelb
             continue;
           }
 
-          log::Logger::Log<log::Trace, log::OnePerCore>(
+          logging::Logger::Log<logging::Trace, logging::OnePerCore>(
             "ColloidController: site with id %i and coords (%i,%i,%i) is local.\n",
             siteId,
             siteTraverser.GetCurrentLocation().x,
@@ -157,7 +157,7 @@ namespace hemelb
             this->neighbourProcessors.push_back(neighbourRank);
 
             // debug message so this neighbour list can be compared to the LatticeData one
-            log::Logger::Log<log::Trace, log::OnePerCore>(
+            logging::Logger::Log<logging::Trace, logging::OnePerCore>(
                 "ColloidController: added %i as neighbour for %i because site %i in block %i is neighbour to site %i in block %i in direction (%i,%i,%i)\n",
                 (int)neighbourRank, (int)(this->ioComms.Rank()),
                 (int)neighbourSiteId, (int)neighbourBlockId,
@@ -235,17 +235,17 @@ namespace hemelb
     void ColloidController::RequestComms()
     {
       // communication from step 2
-      log::Logger::Log<log::Debug, log::OnePerCore>("Communicating colloid particle positions");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Communicating colloid particle positions");
       timers[reporting::Timers::colloidCommunicatePositions].Start();
       particleSet->CommunicateParticlePositions();
       timers[reporting::Timers::colloidCommunicatePositions].Stop();
 
       timers[reporting::Timers::colloidCalculateForces].Start();
-      log::Logger::Log<log::Debug, log::OnePerCore>("Calculating colloid body forces");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Calculating colloid body forces");
       // step 3
       particleSet->CalculateBodyForces();
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("Calculating feedback forces for colloids");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Calculating feedback forces for colloids");
       // steps 1 & 4 combined
       particleSet->CalculateFeedbackForces();
       timers[reporting::Timers::colloidCalculateForces].Stop();
@@ -258,23 +258,23 @@ namespace hemelb
 
       // step 6
       timers[reporting::Timers::colloidUpdateCalculations].Start();
-      log::Logger::Log<log::Debug, log::OnePerCore>("Interpolating fluid velocities for colloids");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Interpolating fluid velocities for colloids");
       particleSet->InterpolateFluidVelocity();
       timers[reporting::Timers::colloidUpdateCalculations].Stop();
 
       // communication from step 6
-      log::Logger::Log<log::Debug, log::OnePerCore>("Communicating fluid velocities for colloids");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Communicating fluid velocities for colloids");
       timers[reporting::Timers::colloidCommunicateVelocities].Start();
       particleSet->CommunicateFluidVelocities();
       timers[reporting::Timers::colloidCommunicateVelocities].Stop();
 
       // extra step (not in original design)
-      log::Logger::Log<log::Debug, log::OnePerCore>("Apply boundary conditions for colloids");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Apply boundary conditions for colloids");
       timers[reporting::Timers::colloidUpdateCalculations].Start();
       particleSet->ApplyBoundaryConditions(currentTimestep);
 
       // steps 7 & 2 combined
-      log::Logger::Log<log::Debug, log::OnePerCore>("Updating colloid positions");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Updating colloid positions");
       particleSet->UpdatePositions();
 
       timers[reporting::Timers::colloidUpdateCalculations].Stop();

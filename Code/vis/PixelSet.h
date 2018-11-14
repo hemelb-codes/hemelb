@@ -10,7 +10,7 @@
 #include <vector>
 #include <map>
 
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "net/mpi.h"
 #include "net/net.h"
 #include "vis/BasicPixel.h"
@@ -86,7 +86,7 @@ namespace hemelb
         void SendQuantity(net::Net* net, proc_t destination)
         {
           count = (int) pixels.size();
-          log::Logger::Log<log::Trace, log::OnePerCore>("Sending pixel count of %i", count);
+          logging::Logger::Log<logging::Trace, logging::OnePerCore>("Sending pixel count of %i", count);
           net->RequestSendR(count, destination);
         }
 
@@ -99,7 +99,7 @@ namespace hemelb
         {
           if (pixels.size() > 0)
           {
-            log::Logger::Log<log::Trace, log::OnePerCore>("Sending %i pixels to proc %i",
+            logging::Logger::Log<logging::Trace, logging::OnePerCore>("Sending %i pixels to proc %i",
                                                           (int) pixels.size(),
                                                           (int) destination);
             net->RequestSendV(pixels, destination);
@@ -111,7 +111,7 @@ namespace hemelb
           if (count > 0)
           {
             // First make sure the vector will be large enough to hold the incoming pixels.
-            log::Logger::Log<log::Trace, log::OnePerCore>("Receiving %i pixels from proc %i",
+            logging::Logger::Log<logging::Trace, logging::OnePerCore>("Receiving %i pixels from proc %i",
                                                           count,
                                                           (int) source);
             pixels.resize(count);

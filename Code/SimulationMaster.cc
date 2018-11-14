@@ -13,7 +13,7 @@
 #include "geometry/GeometryReader.h"
 #include "geometry/LatticeData.h"
 #include "util/fileutils.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "lb/HFunction.h"
 #include "io/xml/XmlAbstractionLayer.h"
 #include "colloids/ColloidController.h"
@@ -144,16 +144,16 @@ int SimulationMaster::GetProcessorCount()
 void SimulationMaster::Initialise()
 {
 
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Beginning Initialisation.");
+  hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::Singleton>("Beginning Initialisation.");
 
   simulationState = new hemelb::lb::SimulationState(simConfig->GetTimeStepLength(),
                                                     simConfig->GetTotalTimeSteps());
 
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising LatticeData.");
+  hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::Singleton>("Initialising LatticeData.");
 
   timings[hemelb::reporting::Timers::latDatInitialise].Start();
   // Use a reader to read in the file.
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Loading file and decomposing geometry.");
+  hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::Singleton>("Loading file and decomposing geometry.");
 
   hemelb::geometry::GeometryReader reader(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
                                           latticeType::GetLatticeInfo(),
@@ -176,7 +176,7 @@ void SimulationMaster::Initialise()
       new hemelb::geometry::neighbouring::NeighbouringDataManager(*latticeData,
                                                                   latticeData->GetNeighbouringData(),
                                                                   communicationNet);
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising LBM.");
+  hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::Singleton>("Initialising LBM.");
   latticeBoltzmannModel = new hemelb::lb::LBM<latticeType>(simConfig,
                                                            &communicationNet,
                                                            latticeData,
@@ -189,17 +189,17 @@ void SimulationMaster::Initialise()
   if (simConfig->HasColloidSection())
   {
     timings[hemelb::reporting::Timers::colloidInitialisation].Start();
-    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Loading Colloid config.");
+    hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::Singleton>("Loading Colloid config.");
     std::string colloidConfigPath = simConfig->GetColloidConfigPath();
     hemelb::io::xml::Document xml(colloidConfigPath);
 
-    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Body Forces.");
+    hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::Singleton>("Creating Body Forces.");
     hemelb::colloids::BodyForces::InitBodyForces(xml);
 
-    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Boundary Conditions.");
+    hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::Singleton>("Creating Boundary Conditions.");
     hemelb::colloids::BoundaryConditions::InitBoundaryConditions(latticeData, xml);
 
-    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising Colloids.");
+    hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::Singleton>("Initialising Colloids.");
     colloidController =
         new hemelb::colloids::ColloidController(*latticeData,
                                                 *simulationState,
@@ -252,7 +252,7 @@ void SimulationMaster::Initialise()
     incompressibilityChecker = NULL;
   }
 
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising visualisation controller.");
+  hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::Singleton>("Initialising visualisation controller.");
   visualisationControl =
       new hemelb::vis::Control(latticeBoltzmannModel->GetLbmParams()->StressType,
                                &communicationNet,
@@ -392,7 +392,7 @@ void SimulationMaster::HandleActors()
 void SimulationMaster::OnUnstableSimulation()
 {
   LogStabilityReport();
-  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Aborting: time step length: %f\n",
+  hemelb::logging::Logger::Log<hemelb::logging::Warning, hemelb::logging::Singleton>("Aborting: time step length: %f\n",
                                                                          simulationState->GetTimeStepLength());
   Finalise();
   Abort();
@@ -475,7 +475,7 @@ void SimulationMaster::GenerateNetworkImages()
  */
 void SimulationMaster::RunSimulation()
 {
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Beginning to run simulation.");
+  hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::Singleton>("Beginning to run simulation.");
   timings[hemelb::reporting::Timers::simulation].Start();
 
   while (simulationState->GetTimeStep() <= simulationState->GetTotalTimeSteps())
@@ -501,11 +501,11 @@ void SimulationMaster::Finalise()
     reporter->Write();
   }
   // DTMP: Logging output on communication as debug output for now.
-  hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("sync points: %lld, bytes sent: %lld",
+  hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("sync points: %lld, bytes sent: %lld",
                                                                         communicationNet.SyncPointsCounted,
                                                                         communicationNet.BytesSent);
 
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Finish running simulation.");
+  hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::Singleton>("Finish running simulation.");
 }
 
 void SimulationMaster::DoTimeStep()
@@ -531,7 +531,7 @@ void SimulationMaster::DoTimeStep()
     // Here, Start() actually triggers the render.
     networkImagesCompleted.insert(std::pair<unsigned long, unsigned long>(visualisationControl->Start(),
                                                                           simulationState->GetTimeStep()));
-    hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("%d images currently being composited for the steering client",
+    hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::Singleton>("%d images currently being composited for the steering client",
                                                                          networkImagesCompleted.size());
     simulationState->SetIsRendering(false);
   }
@@ -553,7 +553,7 @@ void SimulationMaster::DoTimeStep()
 
   if (simulationState->GetTimeStep() % 100 == 0)
   {
-    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i render_network_stream %i write_image_to_disk %i rendering %i",
+    hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::Singleton>("time step %i render_network_stream %i write_image_to_disk %i rendering %i",
                                                                         simulationState->GetTimeStep(),
                                                                         renderForNetworkStream,
                                                                         writeImage,
@@ -653,7 +653,7 @@ void SimulationMaster::Abort()
 {
   // This gives us something to work from when we have an error - we get the rank
   // that calls abort, and we get a stack-trace from the exception having been thrown.
-  hemelb::log::Logger::Log<hemelb::log::Critical, hemelb::log::OnePerCore>("Aborting");
+  hemelb::logging::Logger::Log<hemelb::logging::Critical, hemelb::logging::OnePerCore>("Aborting");
   hemelb::net::MpiEnvironment::Abort(1);
 
   exit(1);
@@ -664,7 +664,7 @@ void SimulationMaster::LogStabilityReport()
   if (monitoringConfig->doIncompressibilityCheck
       && incompressibilityChecker->AreDensitiesAvailable())
   {
-    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i, tau %.6f, max_relative_press_diff %.3f, Ma %.3f, max_vel_phys %e",
+    hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::Singleton>("time step %i, tau %.6f, max_relative_press_diff %.3f, Ma %.3f, max_vel_phys %e",
                                                                         simulationState->GetTimeStep(),
                                                                         latticeBoltzmannModel->GetLbmParams()->GetTau(),
                                                                         incompressibilityChecker->GetMaxRelativeDensityDifference(),
@@ -676,7 +676,7 @@ void SimulationMaster::LogStabilityReport()
   if (monitoringConfig->doConvergenceCheck
       && simulationState->GetStability() == hemelb::lb::StableAndConverged)
   {
-    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i, steady flow simulation converged.",
+    hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::Singleton>("time step %i, steady flow simulation converged.",
                                                                         simulationState->GetTimeStep());
   }
 }

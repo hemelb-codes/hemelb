@@ -8,7 +8,7 @@
 #include "colloids/BodyForces.h"
 #include "colloids/BoundaryConditions.h"
 #include <algorithm>
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "io/writers/xdr/XdrMemWriter.h"
 #include "io/formats/formats.h"
 #include "io/formats/colloids.h"
@@ -139,7 +139,7 @@ namespace hemelb
       MPI_Offset positionBeforeWriting;
       HEMELB_MPI_CALL(MPI_File_get_position_shared, (file, &positionBeforeWriting));
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("from offsetEOF: %i\n", positionBeforeWriting);
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("from offsetEOF: %i\n", positionBeforeWriting);
 
       // Go past the header (which we'll write at the end)
       unsigned int sizeOfHeader = io::formats::colloids::HeaderLength;
@@ -156,7 +156,7 @@ namespace hemelb
       MPI_Offset positionAferWriting;
       HEMELB_MPI_CALL(MPI_File_get_position_shared, (file, &positionAferWriting));
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("new offsetEOF: %i\n", positionBeforeWriting);
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("new offsetEOF: %i\n", positionBeforeWriting);
 
       // Now write the header section, only on rank 0.
       if (ioComms.OnIORank())
@@ -173,7 +173,7 @@ namespace hemelb
         const proc_t& neighbourRank = iterMap->first;
         const unsigned int& numberOfParticles = iterMap->second.first;
         const unsigned int& numberOfVelocities = iterMap->second.second;
-        log::Logger::Log<log::Debug, log::OnePerCore>("ScanMap[%i] = {%i, %i}\n",
+        logging::Logger::Log<logging::Debug, logging::OnePerCore>("ScanMap[%i] = {%i, %i}\n",
                                                       neighbourRank,
                                                       numberOfParticles,
                                                       numberOfVelocities);
@@ -182,8 +182,8 @@ namespace hemelb
 
     void ParticleSet::UpdatePositions()
     {
-      if (log::Logger::ShouldDisplay<log::Debug>())
-        log::Logger::Log<log::Debug, log::OnePerCore>("In colloids::ParticleSet::UpdatePositions #particles == %i ...\n",
+      if (logging::Logger::ShouldDisplay<logging::Debug>())
+        logging::Logger::Log<logging::Debug, logging::OnePerCore>("In colloids::ParticleSet::UpdatePositions #particles == %i ...\n",
                                                       localRank,
                                                       particles.size());
 
@@ -216,7 +216,7 @@ namespace hemelb
         {
           BoundaryConditions::DoSomeThingsToParticle(currentTimestep, particle);
           if (particle.IsReadyToBeDeleted())
-            log::Logger::Log<log::Trace, log::OnePerCore>("In ParticleSet::ApplyBoundaryConditions - timestep: %lu, particleId: %lu, IsReadyToBeDeleted: %s, markedForDeletion: %lu, lastCheckpoint: %lu\n",
+            logging::Logger::Log<logging::Trace, logging::OnePerCore>("In ParticleSet::ApplyBoundaryConditions - timestep: %lu, particleId: %lu, IsReadyToBeDeleted: %s, markedForDeletion: %lu, lastCheckpoint: %lu\n",
                                                           currentTimestep,
                                                           particle.GetParticleId(),
                                                           particle.IsReadyToBeDeleted() ?
@@ -236,7 +236,7 @@ namespace hemelb
                          std::not1(std::mem_fun_ref(&Particle::IsReadyToBeDeleted)));
 
       if (scanMap[localRank].first > (bound - particles.begin()))
-        log::Logger::Log<log::Debug, log::OnePerCore>("In ParticleSet::ApplyBoundaryConditions - timestep: %lu, scanMap[localRank].first: %lu, bound-particles.begin(): %lu\n",
+        logging::Logger::Log<logging::Debug, logging::OnePerCore>("In ParticleSet::ApplyBoundaryConditions - timestep: %lu, scanMap[localRank].first: %lu, bound-particles.begin(): %lu\n",
                                                       currentTimestep,
                                                       scanMap[localRank].first,
                                                       bound - particles.begin());

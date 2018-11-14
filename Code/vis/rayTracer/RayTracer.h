@@ -18,7 +18,7 @@
 #include "debug/Debugger.h"
 #include "geometry/LatticeData.h"
 #include "lb/LbmParameters.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "net/IOCommunicator.h"
 #include "util/utilityFunctions.h" 
 #include "util/Vector3D.h"

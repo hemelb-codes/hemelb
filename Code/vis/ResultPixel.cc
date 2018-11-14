@@ -212,7 +212,7 @@ namespace hemelb
 
     void ResultPixel::LogDebuggingInformation() const
     {
-      log::Logger::Log<log::Trace, log::OnePerCore>("Pixel at (%i,%i) with (ray,streak,glyph)=(%i,%i,%i)",
+      logging::Logger::Log<logging::Trace, logging::OnePerCore>("Pixel at (%i,%i) with (ray,streak,glyph)=(%i,%i,%i)",
                                                     GetI(),
                                                     GetJ(),
                                                     normalRayPixel != NULL,

@@ -51,7 +51,7 @@ namespace hemelb
                 // Ignore ones that aren't walls;
                 if (!localSite.IsWall())
                 {
-                  hemelb::log::Logger::Log<hemelb::log::Error, hemelb::log::OnePerCore>("GZS streamer initialised with non wall site [%d, %d, %d]",
+                  hemelb::logging::Logger::Log<hemelb::logging::Error, hemelb::logging::OnePerCore>("GZS streamer initialised with non wall site [%d, %d, %d]",
                                                                                         localSiteLocation.x,
                                                                                         localSiteLocation.y,
                                                                                         localSiteLocation.z);
@@ -83,7 +83,7 @@ namespace hemelb
                   // A solid site - this should have been picked up above by HasWall/HasIolet
                   if (neighbourSiteHomeProc == SITE_OR_BLOCK_SOLID)
                   {
-                    hemelb::log::Logger::Log<hemelb::log::Error, hemelb::log::OnePerCore>("Inconsistent cut links/neighbour status for site [%d, %d, %d]",
+                    hemelb::logging::Logger::Log<hemelb::logging::Error, hemelb::logging::OnePerCore>("Inconsistent cut links/neighbour status for site [%d, %d, %d]",
                                                                                           localSiteLocation.x,
                                                                                           localSiteLocation.y,
                                                                                           localSiteLocation.z);

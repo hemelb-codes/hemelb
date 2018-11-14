@@ -14,7 +14,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sstream>
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "util/fileutils.h"
 
 namespace hemelb
@@ -47,7 +47,7 @@ namespace hemelb
     {
       if (!file_exists(filename))
       {
-        log::Logger::Log<log::Critical, log::OnePerCore>("Cannot open file %s\nExiting.", filename);
+        logging::Logger::Log<logging::Critical, logging::OnePerCore>("Cannot open file %s\nExiting.", filename);
         std::exit(0);
       }
     }

@@ -7,7 +7,7 @@
 #ifndef HEMELB_NET_MIXINS_STORINGNET_H
 #define HEMELB_NET_MIXINS_STORINGNET_H
 #include "net/BaseNet.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "net/ProcComms.h"
 namespace hemelb
 {

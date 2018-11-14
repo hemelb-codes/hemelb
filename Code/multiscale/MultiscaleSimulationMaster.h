@@ -31,14 +31,14 @@ namespace hemelb
           // We only have one shared object type so far, an iolet.
           lb::iolets::InOutLetMultiscale::DefineType(multiscaleIoletType);
 
-          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("CONSTRUCTOR: inlet and outlet count: %d and %d",
+          hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::OnePerCore>("CONSTRUCTOR: inlet and outlet count: %d and %d",
                                                                                inletValues->GetLocalIoletCount(),
                                                                                outletValues->GetLocalIoletCount());
-          hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("inlets: %d",
+          hemelb::logging::Logger::Log<hemelb::logging::Warning, hemelb::logging::OnePerCore>("inlets: %d",
                                                                                   inletValues->GetLocalIolet(0)->IsCommsRequired(),
                                                                                   inletValues->GetLocalIolet(0)->GetDensityMax(),
                                                                                   inletValues->GetLocalIolet(0)->GetPressureMax());
-          hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("outlets: %d",
+          hemelb::logging::Logger::Log<hemelb::logging::Warning, hemelb::logging::OnePerCore>("outlets: %d",
                                                                                   outletValues->GetLocalIolet(0)->IsCommsRequired(),
                                                                                   outletValues->GetLocalIolet(0)->GetDensityMax(),
                                                                                   outletValues->GetLocalIolet(0)->GetPressureMax());
@@ -75,10 +75,10 @@ namespace hemelb
           std::vector<std::vector<site_t> > invertedInletBoundaryList(GlobalIoletCount[0]);
           std::vector<std::vector<site_t> > invertedOutletBoundaryList(GlobalIoletCount[1]);
 
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("inlets start %i/%i",
+          hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("inlets start %i/%i",
                                                                                 inletValues->GetLocalIoletCount(),
                                                                                 GlobalIoletCount[0]);
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("outlets start %i/%i",
+          hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("outlets start %i/%i",
                                                                                 outletValues->GetLocalIoletCount(),
                                                                                 GlobalIoletCount[1]);
 
@@ -121,10 +121,10 @@ namespace hemelb
                                                                       offset,
                                                                       ioletsSiteCount);
 
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Populated inlets (numinlets/sizeinlet0): %i/%i",
+            hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("Populated inlets (numinlets/sizeinlet0): %i/%i",
                                                                                   invertedInletBoundaryList.size(),
                                                                                   invertedInletBoundaryList[0].size());
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Populated outlets (numoutlets/sizeoutlet0): %i/%i",
+            hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("Populated outlets (numoutlets/sizeoutlet0): %i/%i",
                                                                                   invertedOutletBoundaryList.size(),
                                                                                   invertedOutletBoundaryList[0].size());
           }
@@ -147,19 +147,19 @@ namespace hemelb
           // Fortunately, the BoundaryValues instance has worked this out for us.
           for (unsigned int i = 0; i < inletValues->GetLocalIoletCount(); i++)
           {
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("1) %i %i",
+            hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("1) %i %i",
                                                                                   i,
                                                                                   GlobalIoletCount[0]);
             // could be a if dynamic_cast<> rather than using a castable? virtual method pattern, if we prefer.
             if (inletValues->GetLocalIolet(i)->IsRegistrationRequired())
             {
-              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("2) inlets: %i %i %i",
+              hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("2) inlets: %i %i %i",
                                                                                     invertedInletBoundaryList.size(),
                                                                                     invertedInletBoundaryList[0].size(),
                                                                                     i);
               static_cast<lb::iolets::InOutLetMultiscale*>(inletValues->GetLocalIolet(i))->Register(intercomms,
                                                                                                     multiscaleIoletType);
-              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("3) inlets: %i %i",
+              hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("3) inlets: %i %i",
                                                                                     invertedInletBoundaryList.size(),
                                                                                     invertedInletBoundaryList[i].size());
               /*static_cast<lb::iolets::InOutLetVelocityAware*>(inletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
@@ -171,18 +171,18 @@ namespace hemelb
 
           for (unsigned int i = 0; i < outletValues->GetLocalIoletCount(); i++)
           {
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("1) %i %i",
+            hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("1) %i %i",
                                                                                   i,
                                                                                   GlobalIoletCount[1]);
             if (outletValues->GetLocalIolet(i)->IsRegistrationRequired())
             {
-              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("2) outlets: %i %i %i",
+              hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("2) outlets: %i %i %i",
                                                                                     invertedOutletBoundaryList.size(),
                                                                                     invertedOutletBoundaryList[0].size(),
                                                                                     i);
               static_cast<lb::iolets::InOutLetMultiscale*>(outletValues->GetLocalIolet(i))->Register(intercomms,
                                                                                                      multiscaleIoletType);
-              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("3) outlets: %i %i",
+              hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("3) outlets: %i %i",
                                                                                     invertedOutletBoundaryList.size(),
                                                                                     invertedOutletBoundaryList[i].size());
               /*static_cast<lb::iolets::InOutLetVelocityAware*>(outletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
@@ -192,19 +192,19 @@ namespace hemelb
             }
           }
 
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("MSMaster ShareICs started...");
+          hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("MSMaster ShareICs started...");
           intercomms.ShareInitialConditions();
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("MSMaster Init finished!");
+          hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("MSMaster Init finished!");
         }
 
         void PrintVectorList(std::vector<std::vector<site_t> > v)
         {
-          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Printing Vector List:");
+          hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::OnePerCore>("Printing Vector List:");
           for (unsigned int i = 0; i < v.size(); i++)
           {
             for (unsigned int j = 0; j < v[i].size(); j++)
             {
-              hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Boundary: %i % i %i",
+              hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::OnePerCore>("Boundary: %i % i %i",
                                                                                    i,
                                                                                    j,
                                                                                    v[i][j]);
@@ -215,7 +215,7 @@ namespace hemelb
         void DoTimeStep()
         {
           bool advance = intercomms.DoMultiscale(GetState()->GetTime());
-          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("At time step %i, should advance %i, time %f",
+          hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::Singleton>("At time step %i, should advance %i, time %f",
                                                                               GetState()->GetTimeStep(),
                                                                               static_cast<int>(advance),
                                                                               GetState()->GetTime());
@@ -229,14 +229,14 @@ namespace hemelb
              * (it's hard enough to get the physics right with a consistent
              * state ;)). */
 
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("inlet and outlet count: %d and %d",
+            hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("inlet and outlet count: %d and %d",
                                                                                   inletValues->GetLocalIoletCount(),
                                                                                   outletValues->GetLocalIoletCount());
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("inlets: %d",
+            hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("inlets: %d",
                                                                                   inletValues->GetLocalIolet(0)->IsCommsRequired(),
                                                                                   inletValues->GetLocalIolet(0)->GetDensityMax(),
                                                                                   inletValues->GetLocalIolet(0)->GetPressureMax());
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("outlets: %d",
+            hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("outlets: %d",
                                                                                   outletValues->GetLocalIolet(0)->IsCommsRequired(),
                                                                                   outletValues->GetLocalIolet(0)->GetDensityMax(),
                                                                                   outletValues->GetLocalIolet(0)->GetPressureMax());
@@ -251,14 +251,14 @@ namespace hemelb
 
             for (unsigned int i = 0; i < inletValues->GetLocalIoletCount(); i++)
             {
-              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Inlet[%i]: Measured Density is %f. Pressure is %f.",
+              hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("Inlet[%i]: Measured Density is %f. Pressure is %f.",
                                                                                     i,
                                                                                     inletValues->GetLocalIolet(i)->GetDensity(GetState()->GetTimeStep()),
                                                                                     inletValues->GetLocalIolet(i)->GetPressureMax());
             }
             for (unsigned int i = 0; i < outletValues->GetLocalIoletCount(); i++)
             {
-              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Outlet[%i]: Measured Density is %f. Pressure is %f.",
+              hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("Outlet[%i]: Measured Density is %f. Pressure is %f.",
                                                                                     i,
                                                                                     outletValues->GetLocalIolet(i)->GetDensity(GetState()->GetTimeStep()),
                                                                                     outletValues->GetLocalIolet(i)->GetPressureMax());
@@ -268,14 +268,14 @@ namespace hemelb
              * TODO: Make an orchestration system for the multiscale coupling. */
             //for (int i = 0; i < 100; i++)
             //{
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Step: HemeLB advanced to time %f.",
+            hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::Singleton>("Step: HemeLB advanced to time %f.",
                                                                                  GetState()->GetTime());
             SimulationMaster::DoTimeStep();
             //}
           }
           else
           {
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("HemeLB waiting pending multiscale siblings.");
+            hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::Singleton>("HemeLB waiting pending multiscale siblings.");
             return;
           };
         }
@@ -287,22 +287,22 @@ namespace hemelb
         /* Loops over iolets to set the need for communications. */
         void SetCommsRequired(hemelb::lb::iolets::BoundaryValues* ioletValues, bool b)
         {
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Starting SetCommsRequired.");
+          hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("Starting SetCommsRequired.");
           for (unsigned int i = 0; i < ioletValues->GetLocalIoletCount(); i++)
           {
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("In loop: %d",
+            hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("In loop: %d",
                                                                                   ioletValues->GetLocalIoletCount());
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("A: iolet %d %d",
+            hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("A: iolet %d %d",
                                                                                   i,
                                                                                   (ioletValues->GetLocalIolet(i))->IsCommsRequired());
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("B: iolet %d %d",
+            hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("B: iolet %d %d",
                                                                                   i,
                                                                                   static_cast<lb::iolets::InOutLetMultiscale*>(ioletValues->GetLocalIolet(i))->IsCommsRequired());
             dynamic_cast<lb::iolets::InOutLetMultiscale*>(ioletValues->GetLocalIolet(i))->SetCommsRequired(b);
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("done with SetCommsRequired iteration.");
+            hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("done with SetCommsRequired iteration.");
 
           }
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Finishing SetCommsRequired.");
+          hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("Finishing SetCommsRequired.");
         }
 
         //Populate an invertedBoundaryList
@@ -322,12 +322,12 @@ namespace hemelb
             /* 2. Grow the list to an appropriate size if needed. */
             while ( ((int) invertedBoundaryList.size()) <= boundaryID)
             {
-              hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("WARNING: Growing the invertedBoundaryList, because we created in wrongly in MultiscaleSimulation Master.");
+              hemelb::logging::Logger::Log<hemelb::logging::Warning, hemelb::logging::OnePerCore>("WARNING: Growing the invertedBoundaryList, because we created in wrongly in MultiscaleSimulation Master.");
               std::vector<site_t> a(0);
               invertedBoundaryList.push_back(a);
               if (invertedBoundaryList.size() > 100000)
               {
-                hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("ERROR: invertedBoundaryList is growing to ridiculous proportions due to a faulty boundaryID.");
+                hemelb::logging::Logger::Log<hemelb::logging::Warning, hemelb::logging::OnePerCore>("ERROR: invertedBoundaryList is growing to ridiculous proportions due to a faulty boundaryID.");
                 exit(-1);
               }
             }

@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
 
   // Bring up MPI
   hemelb::net::MpiEnvironment mpi(argc, argv);
-  hemelb::log::Logger::Init();
+  hemelb::logging::Logger::Init();
 
   try
   {
@@ -42,13 +42,13 @@ int main(int argc, char *argv[])
     // Interpose this catch to print usage before propagating the error.
     catch (hemelb::configuration::CommandLine::OptionError& e)
     {
-      hemelb::log::Logger::Log<hemelb::log::Critical, hemelb::log::Singleton>(hemelb::configuration::CommandLine::GetUsage());
+      hemelb::logging::Logger::Log<hemelb::logging::Critical, hemelb::logging::Singleton>(hemelb::configuration::CommandLine::GetUsage());
       throw;
     }
   }
   catch (std::exception& e)
   {
-    hemelb::log::Logger::Log<hemelb::log::Critical, hemelb::log::OnePerCore>(e.what());
+    hemelb::logging::Logger::Log<hemelb::logging::Critical, hemelb::logging::OnePerCore>(e.what());
     mpi.Abort(-1);
   }
 

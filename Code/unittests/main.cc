@@ -34,7 +34,7 @@ int main(int argc, char **argv)
 {
   // Start MPI and the logger.
   hemelb::net::MpiEnvironment mpi(argc, argv);
-  hemelb::log::Logger::Init();
+  hemelb::logging::Logger::Init();
 
   hemelb::net::MpiCommunicator commWorld = hemelb::net::MpiCommunicator::World();
 

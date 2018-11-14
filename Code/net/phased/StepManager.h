@@ -15,7 +15,7 @@
 #include "net/phased/Concern.h"
 #include "net/phased/steps.h"
 
-#include "log/Logger.h"
+#include "logging/Logger.h"
 namespace hemelb
 {
   namespace net

@@ -11,7 +11,7 @@
 #include <cstdlib>
 
 #include "configuration/SimConfig.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "util/fileutils.h"
 
 namespace hemelb

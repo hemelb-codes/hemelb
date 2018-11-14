@@ -165,7 +165,7 @@ namespace hemelb
 
           void LogDebuggingInformation() const
           {
-            log::Logger::Log<log::Trace, log::OnePerCore>("Ray data at (%i,%i) with "
+            logging::Logger::Log<logging::Trace, logging::OnePerCore>("Ray data at (%i,%i) with "
                                                             "(lengthToFirstCluster, lengthInFluid, nearestDensity, nearest stress) = (%f, %f, %f, %f)",
                                                           GetI(),
                                                           GetJ(),

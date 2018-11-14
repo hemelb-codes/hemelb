@@ -8,7 +8,7 @@
 #include <fstream>
 
 #include "lb/iolets/InOutLetFile.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "util/fileutils.h"
 #include "util/utilityFunctions.h"
 #include "util/utilityStructs.h"
@@ -55,11 +55,11 @@ namespace hemelb
 
         util::check_file(pressureFilePath.c_str());
         std::ifstream datafile(pressureFilePath.c_str());
-        log::Logger::Log<log::Debug, log::OnePerCore>("Reading iolet values from file:");
+        logging::Logger::Log<logging::Debug, logging::OnePerCore>("Reading iolet values from file:");
         while (datafile.good())
         {
           datafile >> timeTemp >> valueTemp;
-          log::Logger::Log<log::Trace, log::OnePerCore>("Time: %f Value: %f", timeTemp, valueTemp);
+          logging::Logger::Log<logging::Trace, logging::OnePerCore>("Time: %f Value: %f", timeTemp, valueTemp);
           timeValuePairs[timeTemp] = valueTemp;
         }
 

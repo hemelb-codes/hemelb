@@ -48,7 +48,7 @@ namespace hemelb
 
       void BasicDecomposition::Validate(std::vector<proc_t>& procAssignedToEachBlock)
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Validating procForEachBlock");
+        logging::Logger::Log<logging::Debug, logging::OnePerCore>("Validating procForEachBlock");
 
         std::vector<proc_t> procForEachBlockRecv = communicator.AllReduce(procAssignedToEachBlock, MPI_MAX);
 
@@ -56,7 +56,7 @@ namespace hemelb
         {
           if (procAssignedToEachBlock[block] != procForEachBlockRecv[block])
           {
-            log::Logger::Log<log::Critical, log::OnePerCore>("At least one other proc thought block %li should be on proc %li but we locally had it as %li",
+            logging::Logger::Log<logging::Critical, logging::OnePerCore>("At least one other proc thought block %li should be on proc %li but we locally had it as %li",
                                                           block,
                                                           procAssignedToEachBlock[block],
                                                           procForEachBlockRecv[block]);

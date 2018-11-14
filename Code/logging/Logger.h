@@ -12,7 +12,7 @@
 
 namespace hemelb
 {
-  namespace log
+  namespace logging
   {
     enum LogLevel
     {

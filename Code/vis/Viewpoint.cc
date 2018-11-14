@@ -6,7 +6,7 @@
 
 #include <cmath>
 
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "util/Vector3D.h"
 #include "vis/Viewpoint.h"
 #include "vis/XYCoordinates.h"

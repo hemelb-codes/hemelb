@@ -5,7 +5,7 @@
 // license in the file LICENSE.
 
 #include "geometry/needs/Needs.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "util/utilityFunctions.h"
 
 namespace hemelb
@@ -105,13 +105,13 @@ namespace hemelb
             }
             if (found && (!procsWantingThisBlockBuffer[needingProcOld]))
             {
-              log::Logger::Log<log::Critical, log::OnePerCore>("Was not expecting block %i to be needed on proc %i, but was",
+              logging::Logger::Log<logging::Critical, logging::OnePerCore>("Was not expecting block %i to be needed on proc %i, but was",
                                                             block,
                                                             needingProcOld);
             }
             if ( (!found) && procsWantingThisBlockBuffer[needingProcOld] && (needingProcOld != readingCore))
             {
-              log::Logger::Log<log::Critical, log::OnePerCore>("Was expecting block %i to be needed on proc %i, but was not",
+              logging::Logger::Log<logging::Critical, logging::OnePerCore>("Was expecting block %i to be needed on proc %i, but was not",
                                                             block,
                                                             needingProcOld);
             } //if problem

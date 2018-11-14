@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
 {
   // Bring up MPI
   hemelb::net::MpiEnvironment mpi(argc, argv);
-  hemelb::log::Logger::Init();
+  hemelb::logging::Logger::Init();
 
   try
   {
@@ -57,23 +57,23 @@ int main(int argc, char *argv[])
                                                              mpwideConfigDir.append("MPWSettings.cfg"));
 
       //TODO: Add an IntercommunicatorImplementation?
-      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Constructing MultiscaleSimulationMaster()");
+      hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::OnePerCore>("Constructing MultiscaleSimulationMaster()");
       hemelb::multiscale::MultiscaleSimulationMaster<hemelb::multiscale::MPWideIntercommunicator> lMaster(options,
                                                                                                           intercomms);
 
-      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Runing simulation()");
+      hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::OnePerCore>("Runing simulation()");
       lMaster.RunSimulation();
     }
     // Interpose this catch to print usage before propagating the error.
     catch (hemelb::configuration::CommandLine::OptionError& e)
     {
-      hemelb::log::Logger::Log<hemelb::log::Critical, hemelb::log::Singleton>(hemelb::configuration::CommandLine::GetUsage());
+      hemelb::logging::Logger::Log<hemelb::logging::Critical, hemelb::logging::Singleton>(hemelb::configuration::CommandLine::GetUsage());
       throw;
     }
   }
   catch (std::exception& e)
   {
-    hemelb::log::Logger::Log<hemelb::log::Critical, hemelb::log::OnePerCore>(e.what());
+    hemelb::logging::Logger::Log<hemelb::logging::Critical, hemelb::logging::OnePerCore>(e.what());
     mpi.Abort(-1);
   }
   // MPI gets finalised by MpiEnv's d'tor.

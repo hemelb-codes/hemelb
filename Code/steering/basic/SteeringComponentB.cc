@@ -9,7 +9,7 @@
 #include "steering/SteeringComponent.h"
 #include "steering/Network.h"
 #include "io/writers/xdr/XdrMemReader.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 
 namespace hemelb
 {

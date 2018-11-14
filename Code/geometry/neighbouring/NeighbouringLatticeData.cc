@@ -6,7 +6,7 @@
 
 #include "geometry/neighbouring/NeighbouringLatticeData.h"
 #include "geometry/neighbouring/NeighbouringSite.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 namespace hemelb
 {
   namespace geometry

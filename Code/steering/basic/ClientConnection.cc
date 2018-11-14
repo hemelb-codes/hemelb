@@ -13,7 +13,7 @@
 #include <netinet/in.h>
 
 #include "debug/Debugger.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "steering/ClientConnection.h"
 #include "steering/basic/HttpPost.h"
 
@@ -111,7 +111,7 @@ namespace hemelb
             perror("flags");
           }
 #else
-          log::Logger::Log<log::Info, log::Singleton>("Waiting for steering client connection");
+          logging::Logger::Log<logging::Info, logging::Singleton>("Waiting for steering client connection");
           timers[reporting::Timers::steeringWait].Start();
 
 #endif
@@ -120,12 +120,12 @@ namespace hemelb
               = accept(mListeningSocket, (struct sockaddr *) &clientAddress, &socketSize);
 #ifdef HEMELB_WAIT_ON_CONNECT
           timers[reporting::Timers::steeringWait].Stop();
-          log::Logger::Log<log::Debug, log::Singleton>("Continuing after receiving steering connection.");
+          logging::Logger::Log<logging::Debug, logging::Singleton>("Continuing after receiving steering connection.");
 #endif
           // We've got a socket - make that socket non-blocking too.
           if (mCurrentSocket > 0)
           {
-            log::Logger::Log<log::Info, log::Singleton>("Steering client connected");
+            logging::Logger::Log<logging::Info, logging::Singleton>("Steering client connected");
             flags = fcntl(mCurrentSocket, F_GETFL, 0);
             if (flags == -1)
             {

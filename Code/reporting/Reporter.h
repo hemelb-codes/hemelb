@@ -11,7 +11,7 @@
 #include <vector>
 #include "configuration/SimConfig.h"
 #include "configuration/CommandLine.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "util/fileutils.h"
 #include "reporting/Policies.h"
 #include "reporting/Reportable.h"

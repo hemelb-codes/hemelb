@@ -5,7 +5,7 @@
 // license in the file LICENSE.
 
 #include "net/mixins/pointpoint/SeparatedPointPoint.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 
 namespace hemelb
 {

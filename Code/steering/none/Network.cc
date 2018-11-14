@@ -16,7 +16,7 @@
 #include <cstdio>
 
 #include "debug/Debugger.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "steering/Network.h"
 #include "util/utilityFunctions.h"
 

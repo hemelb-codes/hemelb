@@ -12,7 +12,7 @@
 #include "lb/lattices/LatticeInfo.h"
 #include "lb/streamers/BaseStreamerDelegate.h"
 #include "lb/streamers/VirtualSite.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "util/FlatMap.h"
 #include <map>
 
@@ -308,7 +308,7 @@ namespace hemelb
             if (ans == NULL)
             {
               // panic
-              log::Logger::Log<log::Critical, log::OnePerCore>("Extra data not available for in/outlet. Aborting.\n");
+              logging::Logger::Log<logging::Critical, logging::OnePerCore>("Extra data not available for in/outlet. Aborting.\n");
               std::exit(1);
             }
             return ans;

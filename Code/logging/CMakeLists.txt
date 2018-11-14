@@ -3,4 +3,4 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-add_library(hemelb_log Logger.cc ${logger})
+add_library(hemelb_logging Logger.cc ${logger})

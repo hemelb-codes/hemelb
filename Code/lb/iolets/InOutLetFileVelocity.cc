@@ -6,7 +6,7 @@
 #include "lb/iolets/InOutLetFileVelocity.h"
 #include <algorithm>
 #include <fstream>
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "util/fileutils.h"
 #include "util/utilityFunctions.h"
 #include "util/utilityStructs.h"
@@ -41,11 +41,11 @@ namespace hemelb
 
         util::check_file(velocityFilePath.c_str());
         std::ifstream datafile(velocityFilePath.c_str());
-        log::Logger::Log<log::Debug, log::OnePerCore>("Reading iolet values from file:");
+        logging::Logger::Log<logging::Debug, logging::OnePerCore>("Reading iolet values from file:");
         while (datafile.good())
         {
           datafile >> timeTemp >> valueTemp;
-          log::Logger::Log<log::Trace, log::OnePerCore>("Time: %f Value: %f", timeTemp, valueTemp);
+          logging::Logger::Log<logging::Trace, logging::OnePerCore>("Time: %f Value: %f", timeTemp, valueTemp);
           timeValuePairs[timeTemp] = valueTemp;
         }
 
@@ -148,7 +148,7 @@ namespace hemelb
 
           if (logging)
           {
-            log::Logger::Log<log::Warning, log::OnePerCore>("%f %f %f", x.x, x.y, x.z);
+            logging::Logger::Log<logging::Warning, logging::OnePerCore>("%f %f %f", x.x, x.y, x.z);
           }*/
 
           int xyz_directions[3] = { 1, 1, 1 };
@@ -205,7 +205,7 @@ namespace hemelb
             if (weights_table.count(xyz) > 0)
             {
               v_tot = normal * weights_table.at(xyz) * velocityTable[t];
-              //log::Logger::Log<log::Warning, log::OnePerCore>("%f %f %f %f",
+              //logging::Logger::Log<logging::Warning, logging::OnePerCore>("%f %f %f %f",
               //                                                              x.x,
               //                                                              x.y,
               //                                                              x.z, v_tot);
@@ -214,7 +214,7 @@ namespace hemelb
 
             /*if (logging)
             {
-              log::Logger::Log<log::Warning, log::OnePerCore>("%f %f %f %d %d %d",
+              logging::Logger::Log<logging::Warning, logging::OnePerCore>("%f %f %f %d %d %d",
                                                               x.x,
                                                               x.y,
                                                               x.z,
@@ -228,7 +228,7 @@ namespace hemelb
             double ystep = (1.0 - xyz_residual[1]) / abs_normal[1];
             double zstep = (1.0 - xyz_residual[2]) / abs_normal[2];
 
-            //log::Logger::Log<log::Warning, log::OnePerCore>("%f %f %f", xstep, ystep, zstep);
+            //logging::Logger::Log<logging::Warning, logging::OnePerCore>("%f %f %f", xstep, ystep, zstep);
 
             double all_step = 0.0;
             int xyz_change = 0;
@@ -264,7 +264,7 @@ namespace hemelb
             xyz[xyz_change] += xyz_directions[xyz_change];
 
             //if(xyz_residual[xyz_change] < 1.0) {
-            //  log::Logger::Log<log::Error, log::Singleton>("ERROR: Residual bug in vInlet: %f %f %f %f", x.x, x.y, x.z, xyz_residual[xyz_change]);
+            //  logging::Logger::Log<logging::Error, logging::Singleton>("ERROR: Residual bug in vInlet: %f %f %f %f", x.x, x.y, x.z, xyz_residual[xyz_change]);
             //}
 
             xyz_residual[xyz_change] -= 1.0;
@@ -275,7 +275,7 @@ namespace hemelb
           /* Lists the sites which should be in the wall, outside of the main inlet.
            * If you are unsure, you can increase the log level of this, run HemeLb
            * for 1 time step, and plot these points out. */
-          log::Logger::Log<log::Trace, log::OnePerCore>("%f %f %f", x.x, x.y, x.z);
+          logging::Logger::Log<logging::Trace, logging::OnePerCore>("%f %f %f", x.x, x.y, x.z);
           return normal * 0.0;
         }
 
@@ -283,7 +283,7 @@ namespace hemelb
 
       void InOutLetFileVelocity::Initialise(const util::UnitConverter* unitConverter)
       {
-        log::Logger::Log<log::Warning, log::OnePerCore>("Initializing vInlet.");
+        logging::Logger::Log<logging::Warning, logging::OnePerCore>("Initializing vInlet.");
         units = unitConverter;
 
         useWeightsFromFile = false;
@@ -299,7 +299,7 @@ namespace hemelb
           /* Load and read file. */
           std::fstream myfile;
           myfile.open(in_name.c_str(), std::ios_base::in);
-          log::Logger::Log<log::Warning, log::OnePerCore>("Loading weights file: %s",
+          logging::Logger::Log<logging::Warning, logging::OnePerCore>("Loading weights file: %s",
                                                         in_name.c_str());
 
           std::string input_line;
@@ -320,7 +320,7 @@ namespace hemelb
             xyz.push_back(z);
             weights_table[xyz] = v;
 
-            log::Logger::Log<log::Trace, log::OnePerCore>("%lld %lld %lld %f",
+            logging::Logger::Log<logging::Trace, logging::OnePerCore>("%lld %lld %lld %f",
             x,
             y,
             z,

@@ -7,7 +7,7 @@
 #ifndef HEMELB_UTIL_CHECKINGCACHE_HPP
 #define HEMELB_UTIL_CHECKINGCACHE_HPP
 
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "util/CheckingCache.h"
 #include "util/Cache.hpp"
 
@@ -25,11 +25,11 @@ namespace hemelb
     template<typename CacheType>
     const CacheType& CheckingCache<CacheType>::Get(unsigned long index) const
     {
-      if (log::Logger::ShouldDisplay<log::Debug>())
+      if (logging::Logger::ShouldDisplay<logging::Debug>())
       {
         if (lastUpdate[index] != simulationState.GetTimeStep())
         {
-          log::Logger::Log<log::Warning, log::OnePerCore>("The cache was out of date at index %i", index);
+          logging::Logger::Log<logging::Warning, logging::OnePerCore>("The cache was out of date at index %i", index);
         }
       }
 

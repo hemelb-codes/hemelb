@@ -19,7 +19,7 @@
 #include "lb/lattices/D3Q27.h"
 #include "net/net.h"
 #include "net/IOCommunicator.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "util/utilityFunctions.h"
 #include "constants.h"
 namespace hemelb
@@ -63,7 +63,7 @@ namespace hemelb
 
     Geometry GeometryReader::LoadAndDecompose(const std::string& dataFilePath)
     {
-      log::Logger::Log<log::Debug, log::OnePerCore>("Starting file read timer");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Starting file read timer");
       timings[hemelb::reporting::Timers::fileRead].Start();
 
       // Create hints about how we'll read the file. See Chapter 13, page 400 of the MPI 2.2 spec.
@@ -85,24 +85,24 @@ namespace hemelb
 
       // Open the file.
       file = net::MpiFile::Open(hemeLbComms, dataFilePath, MPI_MODE_RDONLY, fileInfo);
-      log::Logger::Log<log::Info, log::OnePerCore>("Opened config file %s", dataFilePath.c_str());
+      logging::Logger::Log<logging::Info, logging::OnePerCore>("Opened config file %s", dataFilePath.c_str());
       // TODO: Why is there this fflush?
       fflush( NULL);
 
       // Set the view to the file.
       file.SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Reading file preamble");
       Geometry geometry = ReadPreamble();
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("Reading file header");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Reading file header");
       ReadHeader(geometry.GetBlockCount());
 
       // Close the file - only the ranks participating in the topology need to read it again.
       file.Close();
 
       timings[hemelb::reporting::Timers::initialDecomposition].Start();
-      log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Beginning initial decomposition");
       principalProcForEachBlock.resize(geometry.GetBlockCount());
 
       if (!participateInTopology)
@@ -130,7 +130,7 @@ namespace hemelb
       }
       timings[hemelb::reporting::Timers::initialDecomposition].Stop();
       // Perform the initial read-in.
-      log::Logger::Log<log::Debug, log::OnePerCore>("Reading in my blocks");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Reading in my blocks");
 
       if (participateInTopology)
       {
@@ -148,16 +148,16 @@ namespace hemelb
 
       timings[hemelb::reporting::Timers::fileRead].Stop();
 
-      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Begin optimising the domain decomposition.");
+      hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::Singleton>("Begin optimising the domain decomposition.");
       timings[hemelb::reporting::Timers::domainDecomposition].Start();
 
       // Having done an initial decomposition of the geometry, and read in the data, we optimise the
       // domain decomposition.
       if (participateInTopology)
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Beginning domain decomposition optimisation");
+        logging::Logger::Log<logging::Debug, logging::OnePerCore>("Beginning domain decomposition optimisation");
         OptimiseDomainDecomposition(geometry, principalProcForEachBlock);
-        log::Logger::Log<log::Debug, log::OnePerCore>("Ending domain decomposition optimisation");
+        logging::Logger::Log<logging::Debug, logging::OnePerCore>("Ending domain decomposition optimisation");
 
         if (ShouldValidate())
         {
@@ -294,14 +294,14 @@ namespace hemelb
 
       // Populate the list of blocks to read (including a halo one block wide around all
       // local blocks).
-      log::Logger::Log<log::Debug, log::OnePerCore>("Determining blocks to read");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Determining blocks to read");
       std::vector<bool> readBlock = DecideWhichBlocksToReadIncludingHalo(geometry,
                                                                          unitForEachBlock,
                                                                          localRank);
 
       if (ShouldValidate())
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Validating block sizes");
+        logging::Logger::Log<logging::Debug, logging::OnePerCore>("Validating block sizes");
 
         // Validate the uncompressed length of the block on disk fits out expectations.
         for (site_t block = 0; block < geometry.GetBlockCount(); ++block)
@@ -310,7 +310,7 @@ namespace hemelb
               > io::formats::geometry::GetMaxBlockRecordLength(geometry.GetBlockSize(),
                                                                fluidSitesOnEachBlock[block]))
           {
-            log::Logger::Log<log::Critical, log::OnePerCore>("Block %i is %i bytes when the longest possible block should be %i bytes",
+            logging::Logger::Log<logging::Critical, logging::OnePerCore>("Block %i is %i bytes when the longest possible block should be %i bytes",
                                                              block,
                                                              bytesPerUncompressedBlock[block],
                                                              io::formats::geometry::GetMaxBlockRecordLength(geometry.GetBlockSize(),
@@ -320,7 +320,7 @@ namespace hemelb
       }
 
       // Next we spread round the lists of which blocks each core needs access to.
-      log::Logger::Log<log::Debug, log::OnePerCore>("Informing reading cores of block needs");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Informing reading cores of block needs");
       net::Net net = net::Net(computeComms);
       Needs needs(geometry.GetBlockCount(),
                   readBlock,
@@ -329,7 +329,7 @@ namespace hemelb
                   ShouldValidate());
 
       timings[hemelb::reporting::Timers::readBlocksPrelim].Stop();
-      log::Logger::Log<log::Debug, log::OnePerCore>("Reading blocks");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Reading blocks");
       timings[hemelb::reporting::Timers::readBlocksAll].Start();
 
       // Set the initial offset to the first block, which will be updated as we progress
@@ -426,7 +426,7 @@ namespace hemelb
           // Compare with the sites we expected to read.
           if (numSitesRead != fluidSitesOnEachBlock[blockNumber])
           {
-            log::Logger::Log<log::Error, log::OnePerCore>("Was expecting %i fluid sites on block %i but actually read %i",
+            logging::Logger::Log<logging::Error, logging::OnePerCore>("Was expecting %i fluid sites on block %i but actually read %i",
                                                           fluidSitesOnEachBlock[blockNumber],
                                                           blockNumber,
                                                           numSitesRead);
@@ -499,7 +499,7 @@ namespace hemelb
 
       if (!success)
       {
-        log::Logger::Log<log::Error, log::OnePerCore>("Error reading site type");
+        logging::Logger::Log<logging::Error, logging::OnePerCore>("Error reading site type");
       }
 
       /// @todo #598 use constant in hemelb::io::formats::geometry
@@ -599,7 +599,7 @@ namespace hemelb
      */
     void GeometryReader::ValidateGeometry(const Geometry& geometry)
     {
-      log::Logger::Log<log::Debug, log::OnePerCore>("Validating the GlobalLatticeData");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Validating the GlobalLatticeData");
 
       // We check the isFluid property and the link type for each direction
 
@@ -657,14 +657,14 @@ namespace hemelb
           if (procForSiteRecv[site] == ConvertTopologyRankToGlobalRank(computeComms.Rank())
               && (myProcForSite[site] != ConvertTopologyRankToGlobalRank(computeComms.Rank())))
           {
-            log::Logger::Log<log::Critical, log::OnePerCore>("Other cores think this core has site %li on block %li but it disagrees.",
+            logging::Logger::Log<logging::Critical, logging::OnePerCore>("Other cores think this core has site %li on block %li but it disagrees.",
                                                              site,
                                                              block);
           }
           else if (myProcForSite[site] != SITE_OR_BLOCK_SOLID && procForSiteRecv[site]
               != myProcForSite[site])
           {
-            log::Logger::Log<log::Critical, log::OnePerCore>("This core thought that core %li has site %li on block %li but others think it's on core %li.",
+            logging::Logger::Log<logging::Critical, logging::OnePerCore>("This core thought that core %li has site %li on block %li but others think it's on core %li.",
                                                              myProcForSite[site],
                                                              site,
                                                              block,
@@ -676,7 +676,7 @@ namespace hemelb
             if (dummySiteData[site * latticeInfo.GetNumVectors()] != siteDataRecv[site
                 * latticeInfo.GetNumVectors()])
             {
-              log::Logger::Log<log::Critical, log::OnePerCore>("Different fluid state was found for site %li on block %li. One: %li, Two: %li .",
+              logging::Logger::Log<logging::Critical, logging::OnePerCore>("Different fluid state was found for site %li on block %li. One: %li, Two: %li .",
                                                                site,
                                                                block,
                                                                dummySiteData[site
@@ -690,7 +690,7 @@ namespace hemelb
               if (dummySiteData[site * latticeInfo.GetNumVectors() + direction]
                   != siteDataRecv[site * latticeInfo.GetNumVectors() + direction])
               {
-                log::Logger::Log<log::Critical, log::OnePerCore>("Different link type was found for site %li, link %i on block %li. One: %li, Two: %li .",
+                logging::Logger::Log<logging::Critical, logging::OnePerCore>("Different link type was found for site %li, link %i on block %li. One: %li, Two: %li .",
                                                                  site,
                                                                  direction,
                                                                  block,
@@ -764,7 +764,7 @@ namespace hemelb
                                                       fluidSitesOnEachBlock);
 
       timings[hemelb::reporting::Timers::reRead].Start();
-      log::Logger::Log<log::Debug, log::OnePerCore>("Rereading blocks");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Rereading blocks");
       // Reread the blocks based on the ParMetis decomposition.
       RereadBlocks(geometry,
                    optimiser.GetMovesCountPerCore(),
@@ -774,7 +774,7 @@ namespace hemelb
 
       timings[hemelb::reporting::Timers::moves].Start();
       // Implement the decomposition now that we have read the necessary data.
-      log::Logger::Log<log::Debug, log::OnePerCore>("Implementing moves");
+      logging::Logger::Log<logging::Debug, logging::OnePerCore>("Implementing moves");
       ImplementMoves(geometry,
                      procForEachBlock,
                      optimiser.GetMovesCountPerCore(),
@@ -876,7 +876,7 @@ namespace hemelb
               if (geometry.Blocks[block].Sites[site].targetProcessor
                   != ConvertTopologyRankToGlobalRank((proc_t) fromProc))
               {
-                log::Logger::Log<log::Error, log::OnePerCore>("Block %ld, site %ld from move %u was originally on proc %i, not proc %u.",
+                logging::Logger::Log<logging::Error, logging::OnePerCore>("Block %ld, site %ld from move %u was originally on proc %i, not proc %u.",
                                                               block,
                                                               site,
                                                               moveIndex,

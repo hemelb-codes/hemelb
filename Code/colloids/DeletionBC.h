@@ -34,7 +34,7 @@ namespace hemelb
         {
           // TODO: does not do *beyond* just *within* activation distance of boundary
           //LatticeDistance distance = wallNormal.GetMagnitudeSquared();
-          log::Logger::Log<log::Trace, log::OnePerCore>(
+          logging::Logger::Log<logging::Trace, logging::OnePerCore>(
             "*** In DeletionBC::DoSomethingToParticle for particleId: %lu ***\n",
             particle.GetParticleId());
           return false;//distance < (activationDistance * activationDistance);

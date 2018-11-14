@@ -8,7 +8,7 @@
 #define HEMELB_VIS_PIXELSETSTORE_H
 
 #include <queue>
-#include "log/Logger.h"
+#include "logging/Logger.h"
 
 namespace hemelb
 {
@@ -52,7 +52,7 @@ namespace hemelb
           {
             if (store.front()->IsInUse())
             {
-              log::Logger::Log<log::Debug, log::OnePerCore>("This could be a problem: we've just "
+              logging::Logger::Log<logging::Debug, logging::OnePerCore>("This could be a problem: we've just "
                 "cleared out a pixel set which appears to still be in use. If pixel sets are being "
                 "managed properly there shouldn't be more than a few of these messages per core.");
             }

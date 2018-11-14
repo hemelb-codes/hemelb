@@ -14,11 +14,11 @@
 
 #include "util/utilityFunctions.h"
 #include "net/mpi.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 
 namespace hemelb
 {
-  namespace log
+  namespace logging
   {
     const LogLevel Logger::currentLogLevel = HEMELB_LOG_LEVEL;
     // Use negative value to indicate uninitialised.

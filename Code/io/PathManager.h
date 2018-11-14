@@ -10,7 +10,7 @@
 #include <string>
 #include "configuration/CommandLine.h"
 #include "util/fileutils.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "configuration/SimConfig.h"
 #include "io/writers/xdr/XdrFileWriter.h"
 #include "io/writers/null/NullWriter.h"

@@ -37,7 +37,7 @@ namespace hemelb
     {
       if (isCommsProc)
       {
-        log::Logger::Log<log::Info, log::Singleton>("Initializing MPWide.");
+        logging::Logger::Log<logging::Info, logging::Singleton>("Initializing MPWide.");
 
         // 1. Read the file with MPWide settings.
         std::vector < std::string > hosts;
@@ -45,7 +45,7 @@ namespace hemelb
 
         ReadInputFile(configFilePath.c_str(), hosts, server_side_ports);
 
-        log::Logger::Log<log::Debug, log::Singleton>("MPWide input file read: base port is %i",
+        logging::Logger::Log<logging::Debug, logging::Singleton>("MPWide input file read: base port is %i",
                                                      server_side_ports[0]);
 
         // 2. Initialize MPWide.
@@ -68,7 +68,7 @@ namespace hemelb
         send_icand_data_size = GetRegisteredObjectsSize(registeredObjects);
         recv_icand_data_size = ExchangeICandDataSize(send_icand_data_size);
 
-        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("PRE-MALLOC, icand sizes are: %i (send) %i (recv)",
+        hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("PRE-MALLOC, icand sizes are: %i (send) %i (recv)",
                                                                               send_icand_data_size,
                                                                               recv_icand_data_size);
 
@@ -102,18 +102,18 @@ namespace hemelb
     void MPWideIntercommunicator::ExchangeWithMultiscale()
     {
       // 1. Pack/Serialize local shared data.
-      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Beginning exchange with multiscale");
+      hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("Beginning exchange with multiscale");
       SerializeRegisteredObjects(&ICandSendDataPacked.front(), registeredObjects);
 
       // 2. Exchange serialized shared data.
-      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Exchanging packaged data");
+      hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("Exchanging packaged data");
       ExchangePackages(&ICandSendDataPacked.front(), &ICandRecvDataPacked.front());
 
       // 3. Unpack and merged the two serialized shared data copies.
-      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Unpacking and merging received data");
+      hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("Unpacking and merging received data");
       UnpackReceivedData(registeredObjects, &ICandRecvDataPacked.front());
 
-      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Exchange with multiscale completed");
+      hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("Exchange with multiscale completed");
     }
 
     /* TODO: Only public for unit-testing. */
@@ -155,7 +155,7 @@ namespace hemelb
         return sizeof(int64_t);
       }
 
-      hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("Error in GetTypeSize(): The RuntimeType is not recognized.");
+      hemelb::logging::Logger::Log<hemelb::logging::Warning, hemelb::logging::OnePerCore>("Error in GetTypeSize(): The RuntimeType is not recognized.");
       exit(-1);
       return -1;
     }
@@ -191,7 +191,7 @@ namespace hemelb
 
       if (d > -1000)
       {
-        log::Logger::Log<log::Warning, log::OnePerCore>("number of hosts: %i, number of channels: %i",
+        logging::Logger::Log<logging::Warning, logging::OnePerCore>("number of hosts: %i, number of channels: %i",
                                                         numberOfHosts,
                                                         channelCount);
       }
@@ -215,7 +215,7 @@ namespace hemelb
         int numberOfStreamsOnHost;
 
         fscanf(socketsFile, "%s%d%d", host, &basePort, &numberOfStreamsOnHost);
-        log::Logger::Log<log::Warning, log::OnePerCore>("host: %i, base channel: %i, num_streams: %i",
+        logging::Logger::Log<logging::Warning, logging::OnePerCore>("host: %i, base channel: %i, num_streams: %i",
                                                         j,
                                                         streamsSeenSoFar,
                                                         numberOfStreamsOnHost);
@@ -256,7 +256,7 @@ namespace hemelb
         IntercommunicandTypeT &icandType = *icandProperties->second.first;
         std::string &icandLabel = icandProperties->second.second;
 
-        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Name of Icand = %s",
+        hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("Name of Icand = %s",
                                                                               icandLabel.c_str());
 
         // For every field on the current intercommunicand...
@@ -272,29 +272,29 @@ namespace hemelb
           void* localBufferOfDataToSend =
               (void *) & (*icandContained.SharedValues()[sharedFieldIndex]);
 
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("memcpy in PackObj: size = %d",
+          hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("memcpy in PackObj: size = %d",
                                                                                 SharedValueSize);
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("sendingDataBuffer %f",
+          hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("sendingDataBuffer %f",
                                                                                 * (static_cast<double*>(sendingDataBuffer)));
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("localBufferOfDataToSend %f",
+          hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("localBufferOfDataToSend %f",
                                                                                 localBufferOfDataToSend);
 
           // Copy the local data into the buffer to be sent, and advance the pointer into the send buffer.
           memcpy(sendingDataBuffer, localBufferOfDataToSend, SharedValueSize);
           sendDataPointer += SharedValueSize;
 
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Shared value: %s %i %f",
+          hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("Shared value: %s %i %f",
                                                                                 sharedValueLabel.c_str(),
                                                                                 sharedFieldIndex,
                                                                                 * (static_cast<double*>(localBufferOfDataToSend)));
 
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("done.");
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Shared value:");
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("%s",
+          hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("done.");
+          hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("Shared value:");
+          hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("%s",
                                                                                 sharedValueLabel.c_str());
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("%i",
+          hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("%i",
                                                                                 sharedFieldIndex);
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("%f",
+          hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("%f",
                                                                                 * (static_cast<double*>(localBufferOfDataToSend)));
         }
       }
@@ -345,7 +345,7 @@ namespace hemelb
             memcpy(sharedValueBuffer, receivedBuffer, SharedValueSize);
             receivedDataPointer += SharedValueSize;
 
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Shared value [%d] = %f",
+            hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("Shared value [%d] = %f",
                                                                                   sharedFieldIndex,
                                                                                   static_cast<double*>(sharedValueBuffer)[sharedFieldIndex]);
           }

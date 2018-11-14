@@ -5,7 +5,7 @@
 // license in the file LICENSE.
 
 #include "net/mixins/pointpoint/CoalescePointPoint.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 
 namespace hemelb
 {
@@ -44,7 +44,7 @@ namespace hemelb
 
 
       //if(m>1) {
-      //  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("RecvPointToPoint() Neighbouring proc count: %i", m);
+      //  hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::OnePerCore>("RecvPointToPoint() Neighbouring proc count: %i", m);
       //}
 
     }

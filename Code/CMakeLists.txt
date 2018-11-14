@@ -139,7 +139,7 @@ set(package_subdirs
   debug
   util
   io
-  log
+  logging
   colloids
   )
 foreach(subdir ${package_subdirs})
@@ -175,7 +175,7 @@ if (HEMELB_BUILD_MULTISCALE)
     debug
     util
     io
-    log
+    logging
     colloids
     multiscale
     )

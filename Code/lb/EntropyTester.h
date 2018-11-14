@@ -10,7 +10,7 @@
 #include "net/PhasedBroadcastRegular.h"
 #include "geometry/LatticeData.h"
 #include "lb/HFunction.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 
 namespace hemelb
 {
@@ -171,7 +171,7 @@ namespace hemelb
         {
           if (mUpwardsValue == DISOBEYED)
           {
-            log::Logger::Log<log::Error, log::Singleton>("H Theorem violated.");
+            logging::Logger::Log<logging::Error, logging::Singleton>("H Theorem violated.");
           }
         }
 

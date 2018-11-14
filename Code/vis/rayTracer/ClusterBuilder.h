@@ -20,7 +20,7 @@
 #include "vis/rayTracer/ClusterTraverser.h"
 #include "vis/rayTracer/RayTracer.h"
 #include "vis/rayTracer/SiteData.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 
 namespace hemelb
 {

@@ -7,7 +7,7 @@
 #include <cerrno>
 #include <csignal>
 
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "steering/ImageSendComponent.h"
 #include "steering/Network.h"
 #include "io/writers/xdr/XdrMemWriter.h"
@@ -81,7 +81,7 @@ namespace hemelb
       }
 
       // Send to the client.
-      log::Logger::Log<log::Debug, log::Singleton>("Sending network image at timestep %d",mSimState->GetTimeStep());
+      logging::Logger::Log<logging::Debug, logging::Singleton>("Sending network image at timestep %d",mSimState->GetTimeStep());
       mNetwork->send_all(xdrSendBuffer, imageWriter.getCurrentStreamPosition() - initialPosition);
     }
 
@@ -106,7 +106,7 @@ namespace hemelb
         }
         else
         {
-          log::Logger::Log<log::Trace, log::Singleton>("Image-send component requesting new render, %f seconds since last one at step %d max rate is %f.",
+          logging::Logger::Log<logging::Trace, logging::Singleton>("Image-send component requesting new render, %f seconds since last one at step %d max rate is %f.",
                                                         deltaTime, mSimState->GetTimeStep(), MaxFramerate);
           lastRender = frameTimeStart;
           return true;

@@ -121,7 +121,7 @@ namespace hemelb
       void InOutLetMultiscale::DoComms(const BoundaryCommunicator& bcComms, LatticeTimeStep time_step)
       {
         bool isIoProc = bcComms.IsCurrentProcTheBCProc();
-        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("DoComms in IoletMultiscale triggered: %s",
+        hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("DoComms in IoletMultiscale triggered: %s",
                                                                               isIoProc
                                                                                 ? "true"
                                                                                 : "false");
@@ -157,7 +157,7 @@ namespace hemelb
           pressure.SetPayload(static_cast<PhysicalPressure> (pressure_array[0]));
           minPressure.SetPayload(static_cast<PhysicalPressure> (pressure_array[1]));
           maxPressure.SetPayload(static_cast<PhysicalPressure> (pressure_array[2]));
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Received: %f %f %f",
+          hemelb::logging::Logger::Log<hemelb::logging::Debug, hemelb::logging::OnePerCore>("Received: %f %f %f",
                                                                                 pressure.GetPayload(),
                                                                                 minPressure.GetPayload(),
                                                                                 maxPressure.GetPayload());

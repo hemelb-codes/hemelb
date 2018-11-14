@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "log/Logger.h"
+#include "logging/Logger.h"
 
 namespace hemelb
 {
@@ -34,7 +34,7 @@ namespace hemelb
         IntercommunicandType(const std::string & alabel) :
             fields(), label(alabel)
         {
-          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Icand created with label %s",
+          hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::OnePerCore>("Icand created with label %s",
                                                                                alabel.c_str());
         }
 
@@ -50,7 +50,7 @@ namespace hemelb
         void RegisterSharedValue(const std::string &label, typename RuntimeTypeImplementation::RuntimeType type)
         {
           fields.push_back(std::make_pair(label, type));
-          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("shared value created with label %s",
+          hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::OnePerCore>("shared value created with label %s",
                                                                                label.c_str());
         }
         template<class T> void RegisterSharedValue(const std::string &label)

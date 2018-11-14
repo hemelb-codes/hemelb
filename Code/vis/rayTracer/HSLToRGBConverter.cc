@@ -14,7 +14,7 @@
 #endif
 
 #include "vis/rayTracer/HSLToRGBConverter.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 
 namespace hemelb
 {
@@ -108,7 +108,7 @@ namespace hemelb
             break;
 
           default:
-            log::Logger::Log<log::Warning, log::OnePerCore>("Failed while using hue in HslToRgbConvertor.");
+            logging::Logger::Log<logging::Warning, logging::OnePerCore>("Failed while using hue in HslToRgbConvertor.");
         }
 
         // A value to divide the results by to map them 

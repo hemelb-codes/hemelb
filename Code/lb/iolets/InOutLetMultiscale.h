@@ -10,7 +10,7 @@
 #include "lb/iolets/InOutLet.h"
 #include "multiscale/Intercommunicand.h"
 #include "multiscale/SharedValue.h"
-#include "log/Logger.h"
+#include "logging/Logger.h"
 #include "lb/iolets/BoundaryCommunicator.h"
 
 namespace hemelb
