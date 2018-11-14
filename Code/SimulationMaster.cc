@@ -223,11 +223,19 @@ void SimulationMaster::Initialise()
     network = NULL;
   }
 
-  stabilityTester = new hemelb::lb::StabilityTester<latticeType>(latticeData,
-                                                                 &communicationNet,
-                                                                 simulationState,
-                                                                 timings,
-                                                                 monitoringConfig);
+  if (monitoringConfig->doConvergenceCheck)
+  {
+    stabilityTester = new hemelb::lb::StabilityTester<latticeType>(latticeData,
+                                                                   &communicationNet,
+                                                                   simulationState,
+                                                                   timings,
+                                                                   monitoringConfig);
+  }
+  else
+  {
+    stabilityTester = NULL;
+  }
+
   entropyTester = NULL;
 
   if (monitoringConfig->doIncompressibilityCheck)
@@ -323,27 +331,36 @@ void SimulationMaster::Initialise()
                                                      &timings,
                                                      hemelb::net::separate_communications);
   netConcern = new hemelb::net::phased::NetConcern(communicationNet);
+
   stepManager->RegisterIteratedActorSteps(*neighbouringDataManager, 0);
+
   if (colloidController != NULL)
   {
     stepManager->RegisterIteratedActorSteps(*colloidController, 1);
   }
-  stepManager->RegisterIteratedActorSteps(*latticeBoltzmannModel, 1);
 
+  stepManager->RegisterIteratedActorSteps(*latticeBoltzmannModel, 1);
   stepManager->RegisterIteratedActorSteps(*inletValues, 1);
   stepManager->RegisterIteratedActorSteps(*outletValues, 1);
   stepManager->RegisterIteratedActorSteps(*steeringCpt, 1);
-  stepManager->RegisterIteratedActorSteps(*stabilityTester, 1);
+
+  if (stabilityTester != NULL)
+  {
+    stepManager->RegisterIteratedActorSteps(*stabilityTester, 1);
+  }
+
   if (entropyTester != NULL)
   {
     stepManager->RegisterIteratedActorSteps(*entropyTester, 1);
   }
 
-  if (monitoringConfig->doIncompressibilityCheck)
+  if (incompressibilityChecker != NULL)
   {
     stepManager->RegisterIteratedActorSteps(*incompressibilityChecker, 1);
   }
+
   stepManager->RegisterIteratedActorSteps(*visualisationControl, 1);
+
   if (propertyExtractor != NULL)
   {
     stepManager->RegisterIteratedActorSteps(*propertyExtractor, 1);
@@ -353,6 +370,7 @@ void SimulationMaster::Initialise()
   {
     stepManager->RegisterIteratedActorSteps(*network, 1);
   }
+
   stepManager->RegisterCommsForAllPhases(*netConcern);
 }
 
@@ -655,10 +673,10 @@ void SimulationMaster::LogStabilityReport()
                                                                         unitConverter->ConvertVelocityToPhysicalUnits(incompressibilityChecker->GetGlobalLargestVelocityMagnitude()));
   }
 
-  if (simulationState->GetStability() == hemelb::lb::StableAndConverged)
+  if (monitoringConfig->doConvergenceCheck
+      && simulationState->GetStability() == hemelb::lb::StableAndConverged)
   {
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i, steady flow simulation converged.",
                                                                         simulationState->GetTimeStep());
   }
 }
-

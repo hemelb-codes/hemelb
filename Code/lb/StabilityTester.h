@@ -110,23 +110,22 @@ namespace hemelb
                   break;
                 }
               }
+
               ///@todo: If we refactor the previous loop out, we can get away with a single break statement
               if (mUpwardsStability == Unstable)
               {
                 break;
               }
 
-              if (testerConfig->doConvergenceCheck)
-              {
-                distribn_t relativeDifference =
-                    ComputeRelativeDifference(mLatDat->GetFNew(i * LatticeType::NUMVECTORS),
-                                              mLatDat->GetSite(i).GetFOld<LatticeType>());
+              // check for convergence
+              distribn_t relativeDifference =
+                  ComputeRelativeDifference(mLatDat->GetFNew(i * LatticeType::NUMVECTORS),
+                                            mLatDat->GetSite(i).GetFOld<LatticeType>());
 
-                if (relativeDifference > testerConfig->convergenceRelativeTolerance)
-                {
-                  // The simulation is stable but hasn't converged in the whole domain yet.
-                  unconvergedSitePresent = true;
-                }
+              if (relativeDifference > testerConfig->convergenceRelativeTolerance)
+              {
+                // The simulation is stable but hasn't converged in the whole domain yet.
+                unconvergedSitePresent = true;
               }
             }
 
@@ -135,7 +134,7 @@ namespace hemelb
               case UndefinedStability:
               case Stable:
               case StableAndConverged:
-                mUpwardsStability = (testerConfig->doConvergenceCheck && !unconvergedSitePresent) ?
+                mUpwardsStability = (!unconvergedSitePresent) ?
                   StableAndConverged :
                   Stable;
                 break;
@@ -231,8 +230,8 @@ namespace hemelb
               }
             }
 
-            // If the simulation wasn't found to be unstable and we need to check for convergence, do it now.
-            if ( (mUpwardsStability != Unstable) && testerConfig->doConvergenceCheck)
+            // check for convergence if simulation is still stable
+            if ( mUpwardsStability != Unstable )
             {
               bool anyStableNotConverged = false;
               bool anyConverged = false;

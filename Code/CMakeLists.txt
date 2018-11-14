@@ -7,7 +7,7 @@ cmake_minimum_required (VERSION 3.10)
 project(HemeLB
   VERSION 0.0.0
   DESCRIPTION "A high performance parallel lattice-Boltzmann code for large scale fluid flow in complex geometries"
-  LANGUAGES CXX CUDA
+  LANGUAGES C CXX CUDA
 )
 
 include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
