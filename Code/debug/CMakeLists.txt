@@ -16,8 +16,9 @@ if(HEMELB_BUILD_DEBUGGER)
     set(HEMELB_DEBUGGER_IMPLEMENTATION none)
   endif()
 else()
-  set(HEMELB_DEBUGGER_IMPLEMENTATION none)	
+  set(HEMELB_DEBUGGER_IMPLEMENTATION none)
 endif()
+
 set(HEMELB_DEBUGGER_IMPLEMENTATION_${HEMELB_DEBUGGER_IMPLEMENTATION} ON)
 
 configure_file (
@@ -25,5 +26,8 @@ configure_file (
   "${PROJECT_BINARY_DIR}/debug/PlatformDebugger.h"
   )
 
-add_library(hemelb_debug Debugger.cc none/NullDebugger.cc ${debugger_implementation})
-#No debugging for now - pending platform dependence
+add_library(hemelb_debug STATIC
+  Debugger.cc
+  none/NullDebugger.cc
+  ${debugger_implementation}
+)

@@ -3,7 +3,10 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-add_library(hemelb_unittests main.cc)
+add_library(hemelb_unittests STATIC
+  main.cc
+)
+
 hemelb_add_target_dependency_cppunit(hemelb_unittests)
 # ReporterTests directly use ctemplate
 hemelb_add_target_dependency_ctemplate(hemelb_unittests)

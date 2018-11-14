@@ -10,18 +10,20 @@ if(NOT HAVE_XDRUINTXX_T)
   add_definitions(-Dxdr_uint64_t=xdr_u_int64_t)
 endif()
 
-add_library(hemelb_io
-  PathManager.cc 
-  writers/ascii/AsciiFileWriter.cc writers/ascii/AsciiStreamWriter.cc
-  writers/xdr/XdrFileReader.cc writers/xdr/XdrFileWriter.cc
-  writers/xdr/XdrMemReader.cc writers/xdr/XdrMemWriter.cc
-  writers/xdr/XdrReader.cc writers/xdr/XdrWriter.cc
+add_library(hemelb_io STATIC
+  PathManager.cc
+  writers/ascii/AsciiFileWriter.cc
+  writers/ascii/AsciiStreamWriter.cc
+  writers/xdr/XdrFileReader.cc
+  writers/xdr/XdrFileWriter.cc
+  writers/xdr/XdrMemReader.cc
+  writers/xdr/XdrMemWriter.cc
+  writers/xdr/XdrReader.cc
+  writers/xdr/XdrWriter.cc
   writers/null/NullWriter.cc
   writers/Writer.cc
   formats/geometry.cc
   xml/XmlAbstractionLayer.cc
-  )
+)
 
 hemelb_add_target_dependency_tinyxml(hemelb_io)
-target_link_libraries(hemelb_io PUBLIC
-  hemelb_util)

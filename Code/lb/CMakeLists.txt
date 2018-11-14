@@ -3,7 +3,7 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-add_library(hemelb_lb
+add_library(hemelb_lb STATIC
   iolets/BoundaryCommunicator.cc
   iolets/BoundaryComms.cc
   iolets/BoundaryValues.cc
@@ -15,7 +15,6 @@ add_library(hemelb_lb
   iolets/InOutLetParabolicVelocity.cc
   iolets/InOutLetWomersleyVelocity.cc
   iolets/InOutLetFileVelocity.cc
-  IncompressibilityChecker.cc
   kernels/momentBasis/DHumieresD3Q15MRTBasis.cc
   kernels/momentBasis/DHumieresD3Q19MRTBasis.cc
   kernels/rheologyModels/AbstractRheologyModel.cc
@@ -27,8 +26,10 @@ add_library(hemelb_lb
   lattices/D3Q19.cc
   lattices/D3Q27.cc
   lattices/D3Q15i.cc
+  streamers/StreamerTypeFactory.cu
+  IncompressibilityChecker.cc
   MacroscopicPropertyCache.cc
   SimulationState.cc
   StabilityTester.cc
-  streamers/StreamerTypeFactory.cu
 )
+set_property(TARGET hemelb_lb PROPERTY CUDA_SEPARABLE_COMPILATION ON)

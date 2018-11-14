@@ -3,7 +3,7 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-add_library(hemelb_geometry
+add_library(hemelb_geometry STATIC
   BlockTraverser.cc
   BlockTraverserWithVisitedBlockTracker.cc
   GeometryReader.cc
@@ -21,6 +21,7 @@ add_library(hemelb_geometry
   neighbouring/NeighbouringDataManager.cc
   neighbouring/RequiredSiteInformation.cc
 )
+set_property(TARGET hemelb_geometry PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
 hemelb_add_target_dependency_parmetis(hemelb_geometry)
 hemelb_add_target_dependency_zlib(hemelb_geometry)

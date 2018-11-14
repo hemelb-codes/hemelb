@@ -3,7 +3,12 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-add_library(hemelb_reporting Reporter.cc Timers.cc Dict.cc)
+add_library(hemelb_reporting STATIC
+  Reporter.cc
+  Timers.cc
+  Dict.cc
+)
+
 hemelb_add_target_dependency_ctemplate(hemelb_reporting)
 
 configure_file (

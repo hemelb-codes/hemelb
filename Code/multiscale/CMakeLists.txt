@@ -3,8 +3,8 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-add_library(hemelb_multiscale
+add_library(hemelb_multiscale STATIC
   mpwide/MPWideIntercommunicator.cc
-  )
+)
 
 hemelb_add_target_dependency_mpwide(hemelb_multiscale)

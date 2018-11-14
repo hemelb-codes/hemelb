@@ -3,8 +3,16 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-add_library(hemelb_extraction GeometrySelector.cc
-  StraightLineGeometrySelector.cc LocalPropertyOutput.cc
-  IterableDataSource.cc PlaneGeometrySelector.cc PropertyActor.cc
-  PropertyWriter.cc WholeGeometrySelector.cc LbDataSourceIterator.cc
-  GeometrySurfaceSelector.cc SurfacePointSelector.cc)
+add_library(hemelb_extraction STATIC
+  GeometrySelector.cc
+  StraightLineGeometrySelector.cc
+  LocalPropertyOutput.cc
+  IterableDataSource.cc
+  PlaneGeometrySelector.cc
+  PropertyActor.cc
+  PropertyWriter.cc
+  WholeGeometrySelector.cc
+  LbDataSourceIterator.cc
+  GeometrySurfaceSelector.cc
+  SurfacePointSelector.cc
+)
