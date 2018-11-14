@@ -56,7 +56,8 @@ int main(int argc, char **argv)
         break;
     }
   }
-  // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
+
+  // Start the debugger (no-op if HEMELB_BUILD_DEBUGGER is OFF)
   hemelb::debug::Debugger::Init(debug, argv[0], commWorld);
 
   // Initialise the global IOCommunicator.
@@ -66,6 +67,7 @@ int main(int argc, char **argv)
   std::string testPath = (optind < argc)
     ? std::string(argv[optind])
     : "";
+
   // Create the event manager and test controller
   CppUnit::TestResult controller;
 
@@ -87,6 +89,7 @@ int main(int argc, char **argv)
   {
     std::cout << "Running " << testPath;
     runner.run(controller, testPath);
+
     // Print test XML output to stderr
     CppUnit::XmlOutputter outputter(&result, *reportto);
     outputter.write();
@@ -103,4 +106,3 @@ int main(int argc, char **argv)
     ? 0
     : 1;
 }
-

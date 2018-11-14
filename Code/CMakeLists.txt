@@ -14,18 +14,21 @@ include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
 set(HEMELB_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-
 #---- OPTION switches accepted by the build -------
 include("cmake/options.cmake")
 
-# Add warnings flags to development build types
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
 if (HEMELB_USE_ALL_WARNINGS_GNU)
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 endif()
 
 if(HEMELB_OPTIMISATION)
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HEMELB_OPTIMISATION}")
+endif()
+
+if(HEMELB_PROFILING)
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HEMELB_PROFILING}")
 endif()
 
 add_definitions(-DHEMELB_CODE)
@@ -102,7 +105,6 @@ include(mpi)
 include(dependencies)
 
 #-------------Resources -----------------------
-
 set(BUILD_RESOURCE_PATH ${PROJECT_BINARY_DIR}/resources)
 file(MAKE_DIRECTORY ${BUILD_RESOURCE_PATH})
 set(INSTALL_RESOURCE_PATH ${CMAKE_INSTALL_PREFIX}/share/hemelb/resources)
@@ -119,10 +121,6 @@ include_directories("${PROJECT_BINARY_DIR}")
 # ----------- HemeLB ------------------
 if (APPLE)
   add_definitions(-DHEMELB_CFG_ON_BSD -DHEMELB_CFG_ON_OSX)
-endif()
-if (HEMELB_USE_DEBUGGER)
-  # Force a debug build, because the debugger makes no sense without debug symbols
-  set(CMAKE_BUILD_TYPE DEBUG)
 endif()
 
 set(root_sources SimulationMaster.cc)
@@ -160,14 +158,6 @@ list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
 
 # ----------- HemeLB Multiscale ------------------
 if (HEMELB_BUILD_MULTISCALE)
-  if (APPLE)
-    add_definitions(-DHEMELB_CFG_ON_BSD -DHEMELB_CFG_ON_OSX)
-  endif()
-  if (HEMELB_USE_DEBUGGER)
-    # Force a debug build, because the debugger makes no sense without debug symbols
-    set(CMAKE_BUILD_TYPE DEBUG)
-  endif()
-
   set(root_sources SimulationMaster.cc multiscale/MultiscaleSimulationMaster.h)
   add_executable(multiscale_hemelb mainMultiscale.cc ${root_sources})
   hemelb_add_target_dependency_mpwide(multiscale_hemelb)

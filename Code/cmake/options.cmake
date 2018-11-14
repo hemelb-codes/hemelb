@@ -100,9 +100,11 @@ hemelb_cachevar(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH}
   FILEPATH "Path to find dependency includes and libraries")
 hemelb_cachevar(HEMELB_SUBPROJECT_MAKE_JOBS 1
   INTEGER "Number of jobs to use for subproject build steps")
-
 hemelb_cachevar(HEMELB_OPTIMISATION "-O3"
   STRING "Optimisation level (can be blank or -O1 to -O4)")
+hemelb_cachevar(HEMELB_PROFILING ""
+ STRING "Profiling options (can be blank or something like -g -pg)")
+
 hemelb_cachevar(HEMELB_LATTICE "D3Q15"
   STRING "Select the lattice type to use (D3Q15,D3Q19,D3Q27,D3Q15i)")
 hemelb_cachevar(HEMELB_KERNEL "LBGK"

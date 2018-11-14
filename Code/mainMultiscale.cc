@@ -16,10 +16,12 @@ int main(int argc, char *argv[])
   // Bring up MPI
   hemelb::net::MpiEnvironment mpi(argc, argv);
   hemelb::log::Logger::Init();
+
   try
   {
     hemelb::net::MpiCommunicator commWorld = hemelb::net::MpiCommunicator::World();
-    // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
+
+    // Start the debugger (no-op if HEMELB_BUILD_DEBUGGER is OFF)
     hemelb::debug::Debugger::Init(argv[0], commWorld);
 
     hemelb::net::IOCommunicator hemelbCommunicator(commWorld);

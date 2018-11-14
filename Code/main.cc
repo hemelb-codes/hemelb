@@ -18,11 +18,12 @@ int main(int argc, char *argv[])
   // Bring up MPI
   hemelb::net::MpiEnvironment mpi(argc, argv);
   hemelb::log::Logger::Init();
+
   try
   {
     hemelb::net::MpiCommunicator commWorld = hemelb::net::MpiCommunicator::World();
-
     hemelb::net::IOCommunicator hemelbCommunicator(commWorld);
+
     try
     {
       // Parse command line
@@ -50,5 +51,6 @@ int main(int argc, char *argv[])
     hemelb::log::Logger::Log<hemelb::log::Critical, hemelb::log::OnePerCore>(e.what());
     mpi.Abort(-1);
   }
+
   // MPI gets finalised by MpiEnv's d'tor.
 }
