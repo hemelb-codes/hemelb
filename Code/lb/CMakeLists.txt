@@ -9,6 +9,7 @@ add_library(hemelb_lb STATIC
   iolets/BoundaryValues.cc
   iolets/InOutLet.cc
   iolets/InOutLetCosine.cc
+  iolets/InOutLetCosine.cu
   iolets/InOutLetFile.cc
   iolets/InOutLetMultiscale.cc
   iolets/InOutLetVelocity.cc

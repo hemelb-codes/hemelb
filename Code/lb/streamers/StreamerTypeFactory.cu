@@ -1,7 +1,21 @@
 
-// units.h
-typedef int64_t site_t;
-typedef double distribn_t;
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
+
+#include "lb/iolets/InOutLetCosine.cuh"
+#include "lb/lattices/D3Q15.cuh"
+
+
+
+namespace hemelb {
+namespace lb {
+namespace streamers {
+
+
+
+#define D3Q15 lattices::D3Q15
 
 
 
@@ -43,69 +57,6 @@ __device__ bool Site_HasWall(unsigned wallIntersection, int direction)
 
 
 
-// lb/iolets/InOutLetCosine.h
-typedef struct
-{
-  distribn_t minimumSimulationDensity;
-  double3 normal;
-  double densityMean;
-  double densityAmp;
-  double phase;
-  double period;
-  unsigned int warmUpLength;
-} iolet_cosine_t;
-
-
-
-__device__ distribn_t InOutLetCosine_GetDensity(const iolet_cosine_t& iolet, unsigned long timeStep)
-{
-  distribn_t w = 2.0 * M_PI / iolet.period;
-
-  distribn_t target = iolet.densityMean + iolet.densityAmp * cos(w * timeStep + iolet.phase);
-
-  if (timeStep >= iolet.warmUpLength)
-  {
-    return target;
-  }
-
-  double interpolationFactor = ((double) timeStep) / ((double) iolet.warmUpLength);
-
-  return interpolationFactor * target + (1. - interpolationFactor) * iolet.minimumSimulationDensity;
-}
-
-
-
-// lb/lattices/D3Q15.h
-namespace D3Q15
-{
-  __constant__ const int NUMVECTORS = 15;
-
-  __constant__ const distribn_t CXD[] = { 0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1 };
-  __constant__ const distribn_t CYD[] = { 0, 0, 0, 1, -1, 0, 0, 1, -1, 1, -1, -1, 1, -1, 1 };
-  __constant__ const distribn_t CZD[] = { 0, 0, 0, 0, 0, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1 };
-
-  __constant__ const distribn_t EQMWEIGHTS[] = {
-    2.0 / 9.0,
-    1.0 / 9.0,
-    1.0 / 9.0,
-    1.0 / 9.0,
-    1.0 / 9.0,
-    1.0 / 9.0,
-    1.0 / 9.0,
-    1.0 / 72.0,
-    1.0 / 72.0,
-    1.0 / 72.0,
-    1.0 / 72.0,
-    1.0 / 72.0,
-    1.0 / 72.0,
-    1.0 / 72.0,
-    1.0 / 72.0
-  };
-
-  __constant__ const int INVERSEDIRECTIONS[] = { 0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13 };
-}
-
-
 // lb/lattices/Lattice.h
 __device__ void Lattice_CalculateFeq(const distribn_t& density, const double3& momentum, distribn_t* f_eq)
 {
@@ -137,8 +88,8 @@ __global__ void DoStreamAndCollideKernel(
   site_t siteCount,
   distribn_t lbmParams_tau,
   distribn_t lbmParams_omega,
-  const iolet_cosine_t* inlets,
-  const iolet_cosine_t* outlets,
+  const iolets::InOutLetCosineGPU* inlets,
+  const iolets::InOutLetCosineGPU* outlets,
   const site_t* neighbourIndices,
   const site_data_t* siteData,
   const distribn_t* fOld,
@@ -211,12 +162,12 @@ __global__ void DoStreamAndCollideKernel(
     if ( Site_HasIolet(site.ioletIntersection, j) )
     {
       // get iolet
-      iolet_cosine_t iolet = (site.type == INLET_TYPE)
+      iolets::InOutLetCosineGPU iolet = (site.type == INLET_TYPE)
         ? inlets[site.ioletId]
         : outlets[site.ioletId];
 
       // get density at the iolet
-      distribn_t ghost_density = InOutLetCosine_GetDensity(iolet, timeStep);
+      distribn_t ghost_density = iolet.GetDensity(timeStep);
 
       // compute momentum at the iolet
       distribn_t component =
@@ -252,19 +203,13 @@ __global__ void DoStreamAndCollideKernel(
 
 
 
-namespace hemelb {
-namespace lb {
-namespace streamers {
-
-
-
 __host__ void DoStreamAndCollideGPU(
   site_t firstIndex,
   site_t siteCount,
   distribn_t lbmParams_tau,
   distribn_t lbmParams_omega,
-  const iolet_cosine_t* inlets,
-  const iolet_cosine_t* outlets,
+  const iolets::InOutLetCosineGPU* inlets,
+  const iolets::InOutLetCosineGPU* outlets,
   const site_t* neighbourIndices,
   const void* siteData,
   const distribn_t* fOld,

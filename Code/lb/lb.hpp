@@ -154,14 +154,14 @@ namespace hemelb
     void LBM<LatticeType>::InitialiseGPU()
     {
       // initialize GPU buffers for iolets
-      std::vector<iolet_cosine_t> inlets;
+      std::vector<iolets::InOutLetCosineGPU> inlets;
 
       for ( unsigned i = 0; i < mInletValues->GetLocalIoletCount(); i++ )
       {
         iolets::InOutLetCosine* iolet = dynamic_cast<iolets::InOutLetCosine*>(mInletValues->GetLocalIolet(i));
         auto& normal = iolet->GetNormal();
 
-        inlets.push_back(iolet_cosine_t {
+        inlets.push_back(iolets::InOutLetCosineGPU {
           iolet->GetMinimumSimulationDensity(),
           make_double3(normal[0], normal[1], normal[2]),
           iolet->GetDensityMean(),
@@ -172,14 +172,14 @@ namespace hemelb
         });
       }
 
-      std::vector<iolet_cosine_t> outlets;
+      std::vector<iolets::InOutLetCosineGPU> outlets;
 
       for ( unsigned i = 0; i < mOutletValues->GetLocalIoletCount(); i++ )
       {
         iolets::InOutLetCosine* iolet = dynamic_cast<iolets::InOutLetCosine*>(mOutletValues->GetLocalIolet(i));
         auto& normal = iolet->GetNormal();
 
-        outlets.push_back(iolet_cosine_t {
+        outlets.push_back(iolets::InOutLetCosineGPU {
           iolet->GetMinimumSimulationDensity(),
           make_double3(normal[0], normal[1], normal[2]),
           iolet->GetDensityMean(),
@@ -190,19 +190,19 @@ namespace hemelb
         });
       }
 
-      CUDA_SAFE_CALL(cudaMalloc(&inlets_dev, inlets.size() * sizeof(iolet_cosine_t)));
-      CUDA_SAFE_CALL(cudaMalloc(&outlets_dev, outlets.size() * sizeof(iolet_cosine_t)));
+      CUDA_SAFE_CALL(cudaMalloc(&inlets_dev, inlets.size() * sizeof(iolets::InOutLetCosineGPU)));
+      CUDA_SAFE_CALL(cudaMalloc(&outlets_dev, outlets.size() * sizeof(iolets::InOutLetCosineGPU)));
 
       CUDA_SAFE_CALL(cudaMemcpyAsync(
         inlets_dev,
         inlets.data(),
-        inlets.size() * sizeof(iolet_cosine_t),
+        inlets.size() * sizeof(iolets::InOutLetCosineGPU),
         cudaMemcpyHostToDevice
       ));
       CUDA_SAFE_CALL(cudaMemcpyAsync(
         outlets_dev,
         outlets.data(),
-        outlets.size() * sizeof(iolet_cosine_t),
+        outlets.size() * sizeof(iolets::InOutLetCosineGPU),
         cudaMemcpyHostToDevice
       ));
 

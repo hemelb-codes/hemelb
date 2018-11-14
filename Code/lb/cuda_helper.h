@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cuda_runtime.h>
+#include "lb/iolets/InOutLetCosine.cuh"
 #include "units.h"
 
 
@@ -24,21 +25,14 @@
 
 
 
-typedef struct
-{
-  double minimumSimulationDensity;
-  double3 normal;
-  double densityMean;
-  double densityAmp;
-  double phase;
-  double period;
-  unsigned int warmUpLength;
-} iolet_cosine_t;
+namespace hemelb {
+namespace lb {
 
+extern iolets::InOutLetCosineGPU* inlets_dev;
+extern iolets::InOutLetCosineGPU* outlets_dev;
 
-
-extern iolet_cosine_t* inlets_dev;
-extern iolet_cosine_t* outlets_dev;
+}
+}
 
 
 

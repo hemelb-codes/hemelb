@@ -28,11 +28,15 @@
 #include <limits>
 #include <cstdlib>
 
+
+
 /**
  * Global GPU buffers declared in cuda_helper.h
  */
-iolet_cosine_t* inlets_dev;
-iolet_cosine_t* outlets_dev;
+hemelb::lb::iolets::InOutLetCosineGPU* hemelb::lb::inlets_dev;
+hemelb::lb::iolets::InOutLetCosineGPU* hemelb::lb::outlets_dev;
+
+
 
 /**
  * Constructor for the SimulationMaster class
