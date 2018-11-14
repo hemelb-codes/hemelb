@@ -1,12 +1,20 @@
 
-#ifndef HEMELB_LB_CUDA_HELPER
-#define HEMELB_LB_CUDA_HELPER
+#ifndef HEMELB_LB_CUDA_HELPER_H
+#define HEMELB_LB_CUDA_HELPER_H
 
 #include <cstdio>
 #include <cstdlib>
 #include <cuda_runtime.h>
 #include "lb/iolets/InOutLetCosine.cuh"
 #include "units.h"
+
+
+
+#if defined(__NVCC__)
+#define CUDA_HOST_DEVICE __host__ __device__
+#else
+#define CUDA_HOST_DEVICE
+#endif
 
 
 

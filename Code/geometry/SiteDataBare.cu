@@ -10,7 +10,6 @@
 
 namespace hemelb
 {
-
   namespace geometry
   {
     /**
@@ -145,32 +144,9 @@ namespace hemelb
       }
 
       throw Exception() << "Requesting collision type for solid site!";
+
       // The end of this function should never be reached. Adding return statement to please CRAY compiler
       return 0u;
     }
-
-    bool SiteData::HasWall(Direction direction) const
-    {
-      unsigned mask = 1U << (direction - 1);
-      return (wallIntersection & mask) != 0;
-    }
-
-    bool SiteData::HasIolet(Direction direction) const
-    {
-      unsigned mask = 1U << (direction - 1);
-      return (ioletIntersection & mask) != 0;
-    }
-
-    uint32_t SiteData::GetIoletIntersectionData() const
-    {
-      return ioletIntersection;
-    }
-
-    uint32_t SiteData::GetWallIntersectionData() const
-    {
-      return wallIntersection;
-    }
-
   }
-
 }

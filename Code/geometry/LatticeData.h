@@ -198,7 +198,7 @@ namespace hemelb
           return neighbourIndices_dev;
         }
 
-        inline void* GetSiteDataGPU()
+        inline SiteData* GetSiteDataGPU()
         {
           return siteData_dev;
         }
@@ -618,7 +618,7 @@ namespace hemelb
         // GPU buffers
         site_t* neighbourIndices_dev;
         site_t* streamingIndicesForReceivedDistributions_dev;
-        void* siteData_dev;
+        SiteData* siteData_dev;
         distribn_t* oldDistributions_dev;
         distribn_t* newDistributions_dev;
     };

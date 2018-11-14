@@ -10,7 +10,7 @@ add_library(hemelb_geometry STATIC
   needs/Needs.cc
   LatticeData.cc
   LatticeData.cu
-  SiteDataBare.cc
+  SiteDataBare.cu
   SiteData.cc
   SiteTraverser.cc
   VolumeTraverser.cc

@@ -25,7 +25,7 @@ namespace hemelb
         const iolets::InOutLetCosineGPU* inlets,
         const iolets::InOutLetCosineGPU* outlets,
         const site_t* neighbourIndices,
-        const void* siteData,
+        const geometry::SiteData* siteData,
         const distribn_t* fOld,
         distribn_t* fNew,
         unsigned long timeStep

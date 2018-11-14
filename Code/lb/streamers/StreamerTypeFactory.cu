@@ -4,6 +4,7 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
+#include "geometry/SiteData.h"
 #include "lb/iolets/InOutLetCosine.cuh"
 #include "lb/lattices/D3Q15.cuh"
 
@@ -16,44 +17,6 @@ namespace streamers {
 
 
 #define D3Q15 lattices::D3Q15
-
-
-
-// geometry/SiteType.h
-enum site_type_t
-{
-  SOLID_TYPE = 0U,
-  FLUID_TYPE = 1U,
-  INLET_TYPE = 2U,
-  OUTLET_TYPE = 3U
-};
-
-
-
-// geometry/SiteDataBare.h
-typedef struct
-{
-  unsigned wallIntersection;
-  unsigned ioletIntersection;
-  site_type_t type;
-  int ioletId;
-} site_data_t;
-
-
-
-__device__ bool Site_HasIolet(unsigned ioletIntersection, int direction)
-{
-  unsigned mask = 1U << (direction - 1);
-  return ((ioletIntersection & mask) != 0) && (direction > 0);
-}
-
-
-
-__device__ bool Site_HasWall(unsigned wallIntersection, int direction)
-{
-  unsigned mask = 1U << (direction - 1);
-  return ((wallIntersection & mask) != 0) && (direction > 0);
-}
 
 
 
@@ -91,7 +54,7 @@ __global__ void DoStreamAndCollideKernel(
   const iolets::InOutLetCosineGPU* inlets,
   const iolets::InOutLetCosineGPU* outlets,
   const site_t* neighbourIndices,
-  const site_data_t* siteData,
+  const geometry::SiteData* siteData,
   const distribn_t* fOld,
   distribn_t* fNew,
   unsigned long timeStep
@@ -155,16 +118,16 @@ __global__ void DoStreamAndCollideKernel(
   }
 
   // perform streaming
-  site_data_t site = siteData[siteIndex];
+  auto& site = siteData[siteIndex];
 
   for ( int j = 0; j < D3Q15::NUMVECTORS; ++j )
   {
-    if ( Site_HasIolet(site.ioletIntersection, j) )
+    if ( site.HasIolet(j) )
     {
       // get iolet
-      iolets::InOutLetCosineGPU iolet = (site.type == INLET_TYPE)
-        ? inlets[site.ioletId]
-        : outlets[site.ioletId];
+      iolets::InOutLetCosineGPU iolet = (site.GetSiteType() == geometry::INLET_TYPE)
+        ? inlets[site.GetIoletId()]
+        : outlets[site.GetIoletId()];
 
       // get density at the iolet
       distribn_t ghost_density = iolet.GetDensity(timeStep);
@@ -188,7 +151,7 @@ __global__ void DoStreamAndCollideKernel(
       int outIndex = siteIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[j];
       fNew[outIndex] = ghost_f_eq[D3Q15::INVERSEDIRECTIONS[j]];
     }
-    else if ( Site_HasWall(site.wallIntersection, j) )
+    else if ( site.HasWall(j) )
     {
       int outIndex = siteIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[j];
       fNew[outIndex] = f_post[j];
@@ -211,7 +174,7 @@ __host__ void DoStreamAndCollideGPU(
   const iolets::InOutLetCosineGPU* inlets,
   const iolets::InOutLetCosineGPU* outlets,
   const site_t* neighbourIndices,
-  const void* siteData,
+  const geometry::SiteData* siteData,
   const distribn_t* fOld,
   distribn_t* fNew,
   unsigned long timeStep
@@ -228,7 +191,7 @@ __host__ void DoStreamAndCollideGPU(
     inlets,
     outlets,
     neighbourIndices,
-    (site_data_t*) siteData,
+    siteData,
     fOld,
     fNew,
     timeStep

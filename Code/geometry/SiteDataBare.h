@@ -7,13 +7,13 @@
 #ifndef HEMELB_GEOMETRY_SITEDATABARE_H
 #define HEMELB_GEOMETRY_SITEDATABARE_H
 
-#include "units.h"
 #include "geometry/GeometrySite.h"
 #include "geometry/SiteType.h"
+#include "lb/cuda_helper.h"
+#include "units.h"
 
 namespace hemelb
 {
-
   namespace geometry
   {
     class SiteData
@@ -28,36 +28,56 @@ namespace hemelb
         bool IsSolid() const;
         unsigned GetCollisionType() const;
 
-        SiteType GetSiteType() const
-        {
-          return type;
-        }
-        SiteType& GetSiteType()
+        CUDA_HOST_DEVICE SiteType GetSiteType() const
         {
           return type;
         }
 
-        int GetIoletId() const
+        CUDA_HOST_DEVICE SiteType& GetSiteType()
         {
-          return ioletId;
+          return type;
         }
-        int& GetIoletId()
+
+        CUDA_HOST_DEVICE int GetIoletId() const
         {
           return ioletId;
         }
 
-        bool HasWall(Direction direction) const;
-        bool HasIolet(Direction direction) const;
+        CUDA_HOST_DEVICE int& GetIoletId()
+        {
+          return ioletId;
+        }
+
+        CUDA_HOST_DEVICE bool HasWall(Direction direction) const
+        {
+          unsigned mask = 1U << (direction - 1);
+          return ((wallIntersection & mask) != 0) && (direction > 0);
+        }
+
+        CUDA_HOST_DEVICE bool HasIolet(Direction direction) const
+        {
+          unsigned mask = 1U << (direction - 1);
+          return ((ioletIntersection & mask) != 0) && (direction > 0);
+        }
 
         /**
          * These functions return internal representations and should only be used for debugging.
          */
-        uint32_t GetIoletIntersectionData() const;
+        uint32_t GetIoletIntersectionData() const
+        {
+          return ioletIntersection;
+        }
+
         uint32_t &GetIoletIntersectionData()
         {
           return ioletIntersection;
         }
-        uint32_t GetWallIntersectionData() const;
+
+        uint32_t GetWallIntersectionData() const
+        {
+          return wallIntersection;
+        }
+
         uint32_t &GetWallIntersectionData()
         {
           return wallIntersection;
