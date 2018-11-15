@@ -7,7 +7,6 @@
 #ifndef HEMELB_LB_STREAMERS_STREAMERTYPEFACTORY_H
 #define HEMELB_LB_STREAMERS_STREAMERTYPEFACTORY_H
 
-#include "lb/kernels/BaseKernel.h"
 #include "lb/streamers/BaseStreamer.h"
 #include "lb/streamers/SimpleCollideAndStreamDelegate.h"
 

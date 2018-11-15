@@ -37,16 +37,14 @@ namespace hemelb
           }
 
           inline void DoCollide(const LbmParameters* lbmParams,
-                                kernels::HydroVars<KernelType>& iHydroVars)
+                                kernels::HydroVars<KernelType>& hydroVars)
           {
-            kernel.Collide(lbmParams, iHydroVars);
+            kernel.Collide(lbmParams, hydroVars);
           }
 
-
+        public:
           KernelType kernel;
-
       };
-
     }
   }
 }

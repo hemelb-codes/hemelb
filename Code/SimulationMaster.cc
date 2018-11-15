@@ -160,7 +160,7 @@ void SimulationMaster::Initialise()
   hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::Singleton>("Loading file and decomposing geometry.");
 
   hemelb::geometry::GeometryReader reader(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
-                                          latticeType::GetLatticeInfo(),
+                                          LatticeType::GetLatticeInfo(),
                                           timings, ioComms);
   hemelb::geometry::Geometry readGeometryData =
       reader.LoadAndDecompose(simConfig->GetDataFilePath());
@@ -172,7 +172,7 @@ void SimulationMaster::Initialise()
   }
 
   // Create a new lattice based on that info and return it.
-  latticeData = new hemelb::geometry::LatticeData(latticeType::GetLatticeInfo(), readGeometryData, ioComms);
+  latticeData = new hemelb::geometry::LatticeData(LatticeType::GetLatticeInfo(), readGeometryData, ioComms);
 
   timings[hemelb::reporting::Timers::latDatInitialise].Stop();
 
@@ -181,7 +181,7 @@ void SimulationMaster::Initialise()
                                                                   latticeData->GetNeighbouringData(),
                                                                   communicationNet);
   hemelb::logging::Logger::Log<hemelb::logging::Info, hemelb::logging::Singleton>("Initialising LBM.");
-  latticeBoltzmannModel = new hemelb::lb::LBM<latticeType>(simConfig,
+  latticeBoltzmannModel = new hemelb::lb::LBM<LatticeType>(simConfig,
                                                            &communicationNet,
                                                            latticeData,
                                                            simulationState,
@@ -229,7 +229,7 @@ void SimulationMaster::Initialise()
 
   if (monitoringConfig->doConvergenceCheck)
   {
-    stabilityTester = new hemelb::lb::StabilityTester<latticeType>(latticeData,
+    stabilityTester = new hemelb::lb::StabilityTester<LatticeType>(latticeData,
                                                                    &communicationNet,
                                                                    simulationState,
                                                                    timings,

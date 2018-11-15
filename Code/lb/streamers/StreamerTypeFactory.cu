@@ -48,7 +48,7 @@ __device__ void Lattice_CalculateFeq(const distribn_t& density, const double3& m
 
 
 
-__global__ void StreamAndCollideKernel(
+__global__ void Normal_LBGK_SBB_Nash_StreamAndCollide(
   site_t firstIndex,
   site_t siteCount,
   distribn_t lbmParams_tau,
@@ -83,8 +83,8 @@ __global__ void StreamAndCollideKernel(
   // copy fOld to local memory
   memcpy(&f[0], &fOld[siteIndex * DmQn::NUMVECTORS], DmQn::NUMVECTORS * sizeof(distribn_t));
 
-  // collider.CalculatePreCollision() (collider = Normal, kernel = LBGK)
-
+  // Normal::DoCalculatePreCollision()
+  // LBGK::DoCalculateDensityMomentumFeq()
   // Lattice::CalculateDensityMomentumFEq()
   density = 0.0;
   momentum.x = 0.0;
@@ -105,14 +105,12 @@ __global__ void StreamAndCollideKernel(
 
   Lattice_CalculateFeq(density, momentum, f_eq);
 
-  // LBGK::DoCalculateDensityMomentumFeq()
   for ( int j = 0; j < DmQn::NUMVECTORS; ++j )
   {
     f_neq[j] = f[j] - f_eq[j];
   }
 
-  // collider.Collide()
-
+  // Normal::DoCollide()
   // LBGK::DoCollide()
   for ( int j = 0; j < DmQn::NUMVECTORS; ++j )
   {
@@ -132,7 +130,7 @@ __global__ void StreamAndCollideKernel(
         : outlets[site.GetIoletId()];
 
       // get density at the iolet
-      distribn_t ghost_density = iolet.GetDensity(timeStep);
+      distribn_t ioletDensity = iolet.GetDensity(timeStep);
 
       // compute momentum at the iolet
       distribn_t component =
@@ -140,18 +138,18 @@ __global__ void StreamAndCollideKernel(
           + velocity.y * iolet.normal.y
           + velocity.z * iolet.normal.z;
 
-      double3 ghost_momentum;
-      ghost_momentum.x = iolet.normal.x * component * ghost_density;
-      ghost_momentum.y = iolet.normal.y * component * ghost_density;
-      ghost_momentum.z = iolet.normal.z * component * ghost_density;
+      double3 ioletMomentum;
+      ioletMomentum.x = iolet.normal.x * component * ioletDensity;
+      ioletMomentum.y = iolet.normal.y * component * ioletDensity;
+      ioletMomentum.z = iolet.normal.z * component * ioletDensity;
 
       // compute f_eq at the iolet
-      distribn_t ghost_f_eq[DmQn::NUMVECTORS];
+      distribn_t ioletFeq[DmQn::NUMVECTORS];
 
-      Lattice_CalculateFeq(ghost_density, ghost_momentum, ghost_f_eq);
+      Lattice_CalculateFeq(ioletDensity, ioletMomentum, ioletFeq);
 
       int outIndex = siteIndex * DmQn::NUMVECTORS + DmQn::INVERSEDIRECTIONS[j];
-      fNew[outIndex] = ghost_f_eq[DmQn::INVERSEDIRECTIONS[j]];
+      fNew[outIndex] = ioletFeq[DmQn::INVERSEDIRECTIONS[j]];
     }
     else if ( site.HasWall(j) )
     {
@@ -168,14 +166,24 @@ __global__ void StreamAndCollideKernel(
 
 
 
-typedef typename collisions::Normal<kernels::LBGK<lattices::D3Q15>> CollisionType;
-typedef typename streamers::SimpleBounceBackDelegate<CollisionType> WallLinkType;
-typedef typename streamers::NashZerothOrderPressureDelegate<CollisionType> IoletLinkType;
+class Normal_LBGK_SBB_Nash
+{
+public:
+  typedef typename collisions::Normal<kernels::LBGK<lattices::D3Q15>> CollisionType;
+  typedef typename streamers::SimpleBounceBackDelegate<CollisionType> WallLinkType;
+  typedef typename streamers::NashZerothOrderPressureDelegate<CollisionType> IoletLinkType;
+
+  typedef typename streamers::StreamerTypeFactory<
+    CollisionType,
+    WallLinkType,
+    IoletLinkType
+  > Type;
+};
 
 
 
 template<>
-void streamers::StreamerTypeFactory<CollisionType, WallLinkType, IoletLinkType>::StreamAndCollideGPU(
+void Normal_LBGK_SBB_Nash::Type::StreamAndCollideGPU(
   const site_t firstIndex,
   const site_t siteCount,
   const lb::LbmParameters* lbmParams,
@@ -191,7 +199,7 @@ void streamers::StreamerTypeFactory<CollisionType, WallLinkType, IoletLinkType>:
   const int BLOCK_SIZE = 256;
   const int GRID_SIZE = (siteCount + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
-  StreamAndCollideKernel<<<GRID_SIZE, BLOCK_SIZE>>>(
+  Normal_LBGK_SBB_Nash_StreamAndCollide<<<GRID_SIZE, BLOCK_SIZE>>>(
     firstIndex,
     siteCount,
     lbmParams->GetTau(),

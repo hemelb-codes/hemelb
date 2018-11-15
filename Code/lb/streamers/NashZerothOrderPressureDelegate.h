@@ -36,7 +36,7 @@ namespace hemelb
             int boundaryId = site.GetIoletId();
 
             // Set the density at the "ghost" site to be the density of the iolet.
-            distribn_t ghostDensity = iolet.GetBoundaryDensity(boundaryId);
+            distribn_t ioletDensity = iolet.GetBoundaryDensity(boundaryId);
 
             // Calculate the velocity at the ghost site, as the component normal to the iolet.
             util::Vector3D<Dimensionless> ioletNormal = iolet.GetLocalIolet(boundaryId)->GetNormal();
@@ -49,17 +49,17 @@ namespace hemelb
             // TODO having to give 0 as an argument is also ugly.
             // TODO it's ugly that we have to give hydroVars a nonsense distribution vector
             // that doesn't get used.
-            kernels::HydroVars<typename CollisionType::CKernel> ghostHydrovars(site.GetFOld<LatticeType> ());
+            kernels::HydroVars<typename CollisionType::CKernel> hydroVarsIolet(site.GetFOld<LatticeType> ());
 
-            ghostHydrovars.density = ghostDensity;
-            ghostHydrovars.momentum = ioletNormal * component * ghostDensity;
+            hydroVarsIolet.density = ioletDensity;
+            hydroVarsIolet.momentum = ioletNormal * component * ioletDensity;
 
-            collider.kernel.CalculateFeq(ghostHydrovars, 0);
+            collider.kernel.CalculateFeq(hydroVarsIolet, 0);
 
             Direction unstreamed = LatticeType::INVERSEDIRECTIONS[direction];
 
             *latticeData->GetFNew(site.GetIndex() * LatticeType::NUMVECTORS + unstreamed)
-                = ghostHydrovars.GetFEq()[unstreamed];
+                = hydroVarsIolet.GetFEq()[unstreamed];
           }
         protected:
           CollisionType& collider;

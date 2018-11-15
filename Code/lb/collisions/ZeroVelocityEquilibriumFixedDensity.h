@@ -42,20 +42,18 @@ namespace hemelb
             kernel.CalculateFeq(hydroVars, site.GetIndex());
           }
 
-          inline void DoCollide(const LbmParameters* lbmParams, kernels::HydroVars<KernelType>& iHydroVars)
+          inline void DoCollide(const LbmParameters* lbmParams, kernels::HydroVars<KernelType>& hydroVars)
           {
             for (Direction direction = 0; direction < CKernel::LatticeType::NUMVECTORS; ++direction)
             {
-              iHydroVars.SetFPostCollision(direction, iHydroVars.GetFEq()[direction]);
+              hydroVars.SetFPostCollision(direction, hydroVars.GetFEq()[direction]);
             }
           }
 
         private:
           KernelType kernel;
           iolets::BoundaryValues* boundaryObject;
-
       };
-
     }
   }
 }

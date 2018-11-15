@@ -49,12 +49,13 @@ class SimulationMaster
     hemelb::lb::iolets::BoundaryValues* inletValues;
     hemelb::lb::iolets::BoundaryValues* outletValues;
     virtual void DoTimeStep();
-    
+
     /* The next quantities are protected because they are used by MultiscaleSimulationMaster */
     // Set the lattice type via a build parameter
-    typedef hemelb::lb::lattices:: HEMELB_LATTICE latticeType;
+    typedef hemelb::lb::lattices:: HEMELB_LATTICE LatticeType;
+
     hemelb::geometry::LatticeData* latticeData;
-    hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
+    hemelb::lb::LBM<LatticeType>* latticeBoltzmannModel;
     hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
     const hemelb::net::IOCommunicator& ioComms;
 
@@ -95,8 +96,8 @@ class SimulationMaster
 
     /** Struct containing the configuration of various checkers/testers */
     const hemelb::configuration::SimConfig::MonitoringConfig* monitoringConfig;
-    hemelb::lb::StabilityTester<latticeType>* stabilityTester;
-    hemelb::lb::EntropyTester<latticeType>* entropyTester;
+    hemelb::lb::StabilityTester<LatticeType>* stabilityTester;
+    hemelb::lb::EntropyTester<LatticeType>* entropyTester;
     /** Actor in charge of checking the maximum density difference across the domain */
     hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<> >* incompressibilityChecker;
 
