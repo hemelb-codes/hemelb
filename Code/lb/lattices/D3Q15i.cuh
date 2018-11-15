@@ -4,8 +4,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_LB_LATTICES_D3Q15_CUH
-#define HEMELB_LB_LATTICES_D3Q15_CUH
+#ifndef HEMELB_LB_LATTICES_D3Q15I_CUH
+#define HEMELB_LB_LATTICES_D3Q15I_CUH
 
 #include "units.h"
 
@@ -17,7 +17,7 @@ namespace hemelb
     {
       namespace GPU
       {
-        namespace D3Q15
+        namespace D3Q15i
         {
           __constant__ const Direction NUMVECTORS = 15;
 

@@ -7,9 +7,13 @@
 #include "lb/collisions/Collisions.h"
 #include "lb/iolets/InOutLetCosine.cuh"
 #include "lb/kernels/Kernels.h"
-#include "lb/lattices/D3Q15.cuh"
 #include "lb/lattices/Lattices.h"
 #include "lb/streamers/Streamers.h"
+
+#include "lb/lattices/D3Q15.cuh"
+#include "lb/lattices/D3Q19.cuh"
+#include "lb/lattices/D3Q27.cuh"
+#include "lb/lattices/D3Q15i.cuh"
 
 
 
@@ -18,7 +22,7 @@ using namespace hemelb::lb;
 
 
 
-#define DmQn lattices::D3Q15_GPU
+#define DmQn lattices::GPU:: HEMELB_LATTICE
 
 
 
@@ -169,7 +173,8 @@ __global__ void Normal_LBGK_SBB_Nash_StreamAndCollide(
 class Normal_LBGK_SBB_Nash
 {
 public:
-  typedef typename collisions::Normal<kernels::LBGK<lattices::D3Q15>> CollisionType;
+  typedef lattices:: HEMELB_LATTICE LatticeType;
+  typedef typename collisions::Normal<kernels::LBGK<LatticeType>> CollisionType;
   typedef typename streamers::SimpleBounceBackDelegate<CollisionType> WallLinkType;
   typedef typename streamers::NashZerothOrderPressureDelegate<CollisionType> IoletLinkType;
 
