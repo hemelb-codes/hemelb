@@ -138,7 +138,10 @@ namespace hemelb
       mVisControl = iControl;
 
       // initialize GPU buffers in lattice data
-      mLatDat->InitialiseGPU();
+      if ( mParams.UseGPU() )
+      {
+        mLatDat->InitialiseGPU();
+      }
 
       InitCollisions();
 
@@ -193,6 +196,7 @@ namespace hemelb
       CUDA_SAFE_CALL(cudaMalloc(&inlets_dev, inlets.size() * sizeof(iolets::InOutLetCosineGPU)));
       CUDA_SAFE_CALL(cudaMalloc(&outlets_dev, outlets.size() * sizeof(iolets::InOutLetCosineGPU)));
 
+      // transfer iolets to GPU
       CUDA_SAFE_CALL(cudaMemcpyAsync(
         inlets_dev,
         inlets.data(),
