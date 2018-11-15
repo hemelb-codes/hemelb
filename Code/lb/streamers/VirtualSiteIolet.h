@@ -142,10 +142,9 @@ namespace hemelb
            */
           template<bool tDoRayTracing>
           inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
-                                         const LbmParameters* lbmParams,
+                                         const lb::LbmParameters* lbmParams,
                                          geometry::LatticeData* latDat,
-                                         lb::MacroscopicPropertyCache& propertyCache,
-                                         lb::SimulationState* simState)
+                                         lb::MacroscopicPropertyCache& propertyCache)
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {

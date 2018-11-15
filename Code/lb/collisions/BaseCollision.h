@@ -8,8 +8,9 @@
 #define HEMELB_LB_COLLISIONS_BASECOLLISION_H
 
 #include "constants.h"
-#include "lb/LbmParameters.h"
 #include "geometry/LatticeData.h"
+#include "lb/kernels/BaseKernel.h"
+#include "lb/LbmParameters.h"
 
 namespace hemelb
 {

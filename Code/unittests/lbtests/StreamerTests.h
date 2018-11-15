@@ -79,8 +79,7 @@ namespace hemelb
                                          latDat->GetLocalFluidSiteCount(),
                                          lbmParams,
                                          latDat,
-                                         *propertyCache,
-                                         simState);
+                                         *propertyCache);
             bfl.PostStep<false> (0,
                                  latDat->GetLocalFluidSiteCount(),
                                  lbmParams,
@@ -288,7 +287,7 @@ namespace hemelb
                                           assignedWallDistance);
 
               // Perform the collision and streaming.
-              guoZhengShi.StreamAndCollide<false> (chosenSite, 1, lbmParams, latDat, *propertyCache, simState);
+              guoZhengShi.StreamAndCollide<false> (chosenSite, 1, lbmParams, latDat, *propertyCache);
 
               // Calculate the distributions at the chosen site up to post-collision.
               distribn_t streamerFOld[lb::lattices::D3Q15::NUMVECTORS];
@@ -483,8 +482,7 @@ namespace hemelb
                                                             latDat->GetMidDomainCollisionCount(0),
                                                             lbmParams,
                                                             latDat,
-                                                            *propertyCache,
-                                                            simState);
+                                                            *propertyCache);
             offset += latDat->GetMidDomainCollisionCount(0);
 
             // Wall sites use junk and yang
@@ -497,8 +495,7 @@ namespace hemelb
                                               latDat->GetMidDomainCollisionCount(1),
                                               lbmParams,
                                               latDat,
-                                              *propertyCache,
-                                              simState);
+                                              *propertyCache);
 
             junkYang.PostStep<false> (offset,
                                       latDat->GetMidDomainCollisionCount(1),
@@ -514,8 +511,7 @@ namespace hemelb
                                                                 - offset,
                                                             lbmParams,
                                                             latDat,
-                                                            *propertyCache,
-                                                            simState);
+                                                            *propertyCache);
             offset += latDat->GetLocalFluidSiteCount() - offset;
 
             // Sanity check
@@ -646,8 +642,7 @@ namespace hemelb
                                                      1,
                                                      lbmParams,
                                                      latDat,
-                                                     *propertyCache,
-                                                     simState);
+                                                     *propertyCache);
 
               // Check each streamed direction.
               for (Direction streamedDirection = 0; streamedDirection

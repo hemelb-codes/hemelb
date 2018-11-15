@@ -4,19 +4,21 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "geometry/SiteData.h"
+#include "lb/collisions/Collisions.h"
 #include "lb/iolets/InOutLetCosine.cuh"
+#include "lb/kernels/Kernels.h"
 #include "lb/lattices/D3Q15.cuh"
+#include "lb/lattices/Lattices.h"
+#include "lb/streamers/Streamers.h"
 
 
 
-namespace hemelb {
-namespace lb {
-namespace streamers {
+using namespace hemelb;
+using namespace hemelb::lb;
 
 
 
-#define D3Q15 lattices::D3Q15
+#define DmQn lattices::D3Q15_GPU
 
 
 
@@ -29,14 +31,14 @@ __device__ void Lattice_CalculateFeq(const distribn_t& density, const double3& m
       + momentum.y * momentum.y
       + momentum.z * momentum.z;
 
-  for ( int j = 0; j < D3Q15::NUMVECTORS; ++j )
+  for ( int j = 0; j < DmQn::NUMVECTORS; ++j )
   {
     const distribn_t mom_dot_ei =
-        D3Q15::CXD[j] * momentum.x
-        + D3Q15::CYD[j] * momentum.y
-        + D3Q15::CZD[j] * momentum.z;
+        DmQn::CXD[j] * momentum.x
+        + DmQn::CYD[j] * momentum.y
+        + DmQn::CZD[j] * momentum.z;
 
-    f_eq[j] = D3Q15::EQMWEIGHTS[j]
+    f_eq[j] = DmQn::EQMWEIGHTS[j]
         * (density
             - (3. / 2.) * momentumMagnitudeSquared * density_1
             + (9. / 2.) * density_1 * mom_dot_ei * mom_dot_ei
@@ -46,7 +48,7 @@ __device__ void Lattice_CalculateFeq(const distribn_t& density, const double3& m
 
 
 
-__global__ void DoStreamAndCollideKernel(
+__global__ void StreamAndCollideKernel(
   site_t firstIndex,
   site_t siteCount,
   distribn_t lbmParams_tau,
@@ -70,16 +72,16 @@ __global__ void DoStreamAndCollideKernel(
   site_t siteIndex = firstIndex + i;
 
   // initialize hydroVars
-  distribn_t f[D3Q15::NUMVECTORS];
+  distribn_t f[DmQn::NUMVECTORS];
   distribn_t density;
   double3 momentum;
   double3 velocity;
-  distribn_t f_eq[D3Q15::NUMVECTORS];
+  distribn_t f_eq[DmQn::NUMVECTORS];
   distribn_t* f_neq = f_eq;
   distribn_t* f_post = f_eq;
 
   // copy fOld to local memory
-  memcpy(&f[0], &fOld[siteIndex * D3Q15::NUMVECTORS], D3Q15::NUMVECTORS * sizeof(distribn_t));
+  memcpy(&f[0], &fOld[siteIndex * DmQn::NUMVECTORS], DmQn::NUMVECTORS * sizeof(distribn_t));
 
   // collider.CalculatePreCollision() (collider = Normal, kernel = LBGK)
 
@@ -89,12 +91,12 @@ __global__ void DoStreamAndCollideKernel(
   momentum.y = 0.0;
   momentum.z = 0.0;
 
-  for ( int j = 0; j < D3Q15::NUMVECTORS; ++j )
+  for ( int j = 0; j < DmQn::NUMVECTORS; ++j )
   {
     density += f[j];
-    momentum.x += D3Q15::CXD[j] * f[j];
-    momentum.y += D3Q15::CYD[j] * f[j];
-    momentum.z += D3Q15::CZD[j] * f[j];
+    momentum.x += DmQn::CXD[j] * f[j];
+    momentum.y += DmQn::CYD[j] * f[j];
+    momentum.z += DmQn::CZD[j] * f[j];
   }
 
   velocity.x = momentum.x / density;
@@ -104,7 +106,7 @@ __global__ void DoStreamAndCollideKernel(
   Lattice_CalculateFeq(density, momentum, f_eq);
 
   // LBGK::DoCalculateDensityMomentumFeq()
-  for ( int j = 0; j < D3Q15::NUMVECTORS; ++j )
+  for ( int j = 0; j < DmQn::NUMVECTORS; ++j )
   {
     f_neq[j] = f[j] - f_eq[j];
   }
@@ -112,7 +114,7 @@ __global__ void DoStreamAndCollideKernel(
   // collider.Collide()
 
   // LBGK::DoCollide()
-  for ( int j = 0; j < D3Q15::NUMVECTORS; ++j )
+  for ( int j = 0; j < DmQn::NUMVECTORS; ++j )
   {
     f_post[j] = f[j] + f_neq[j] * lbmParams_omega;
   }
@@ -120,12 +122,12 @@ __global__ void DoStreamAndCollideKernel(
   // perform streaming
   auto& site = siteData[siteIndex];
 
-  for ( int j = 0; j < D3Q15::NUMVECTORS; ++j )
+  for ( int j = 0; j < DmQn::NUMVECTORS; ++j )
   {
     if ( site.HasIolet(j) )
     {
       // get iolet
-      iolets::InOutLetCosineGPU iolet = (site.GetSiteType() == geometry::INLET_TYPE)
+      auto& iolet = (site.GetSiteType() == geometry::INLET_TYPE)
         ? inlets[site.GetIoletId()]
         : outlets[site.GetIoletId()];
 
@@ -144,21 +146,21 @@ __global__ void DoStreamAndCollideKernel(
       ghost_momentum.z = iolet.normal.z * component * ghost_density;
 
       // compute f_eq at the iolet
-      distribn_t ghost_f_eq[D3Q15::NUMVECTORS];
+      distribn_t ghost_f_eq[DmQn::NUMVECTORS];
 
       Lattice_CalculateFeq(ghost_density, ghost_momentum, ghost_f_eq);
 
-      int outIndex = siteIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[j];
-      fNew[outIndex] = ghost_f_eq[D3Q15::INVERSEDIRECTIONS[j]];
+      int outIndex = siteIndex * DmQn::NUMVECTORS + DmQn::INVERSEDIRECTIONS[j];
+      fNew[outIndex] = ghost_f_eq[DmQn::INVERSEDIRECTIONS[j]];
     }
     else if ( site.HasWall(j) )
     {
-      int outIndex = siteIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[j];
+      int outIndex = siteIndex * DmQn::NUMVECTORS + DmQn::INVERSEDIRECTIONS[j];
       fNew[outIndex] = f_post[j];
     }
     else
     {
-      int outIndex = neighbourIndices[siteIndex * D3Q15::NUMVECTORS + j];
+      int outIndex = neighbourIndices[siteIndex * DmQn::NUMVECTORS + j];
       fNew[outIndex] = f_post[j];
     }
   }
@@ -166,40 +168,41 @@ __global__ void DoStreamAndCollideKernel(
 
 
 
-__host__ void DoStreamAndCollideGPU(
-  site_t firstIndex,
-  site_t siteCount,
-  distribn_t lbmParams_tau,
-  distribn_t lbmParams_omega,
-  const iolets::InOutLetCosineGPU* inlets,
-  const iolets::InOutLetCosineGPU* outlets,
-  const site_t* neighbourIndices,
-  const geometry::SiteData* siteData,
-  const distribn_t* fOld,
-  distribn_t* fNew,
-  unsigned long timeStep
+typedef typename collisions::Normal<kernels::LBGK<lattices::D3Q15>> CollisionType;
+typedef typename streamers::SimpleBounceBackDelegate<CollisionType> WallLinkType;
+typedef typename streamers::NashZerothOrderPressureDelegate<CollisionType> IoletLinkType;
+
+
+
+template<>
+void streamers::StreamerTypeFactory<CollisionType, WallLinkType, IoletLinkType>::StreamAndCollideGPU(
+  const site_t firstIndex,
+  const site_t siteCount,
+  const lb::LbmParameters* lbmParams,
+  geometry::LatticeData* latDat,
+  lb::SimulationState* simState
 )
 {
+  if ( siteCount == 0 )
+  {
+    return;
+  }
+
   const int BLOCK_SIZE = 256;
   const int GRID_SIZE = (siteCount + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
-  DoStreamAndCollideKernel<<<GRID_SIZE, BLOCK_SIZE>>>(
+  StreamAndCollideKernel<<<GRID_SIZE, BLOCK_SIZE>>>(
     firstIndex,
     siteCount,
-    lbmParams_tau,
-    lbmParams_omega,
-    inlets,
-    outlets,
-    neighbourIndices,
-    siteData,
-    fOld,
-    fNew,
-    timeStep
+    lbmParams->GetTau(),
+    lbmParams->GetOmega(),
+    inlets_dev,
+    outlets_dev,
+    latDat->GetNeighbourIndicesGPU(),
+    latDat->GetSiteDataGPU(),
+    latDat->GetFOldGPU(0),
+    latDat->GetFNewGPU(0),
+    simState->Get0IndexedTimeStep()
   );
-}
-
-
-
-}
-}
+  CUDA_SAFE_CALL(cudaGetLastError());
 }

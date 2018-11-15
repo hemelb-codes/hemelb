@@ -15,7 +15,7 @@ namespace hemelb
   {
     namespace lattices
     {
-      namespace D3Q15
+      namespace D3Q15_GPU
       {
         __constant__ const int NUMVECTORS = 15;
 

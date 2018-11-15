@@ -17,20 +17,6 @@ namespace hemelb
   {
     namespace streamers
     {
-      void DoStreamAndCollideGPU(
-        site_t firstIndex,
-        site_t siteCount,
-        distribn_t lbmParams_tau,
-        distribn_t lbmParams_omega,
-        const iolets::InOutLetCosineGPU* inlets,
-        const iolets::InOutLetCosineGPU* outlets,
-        const site_t* neighbourIndices,
-        const geometry::SiteData* siteData,
-        const distribn_t* fOld,
-        distribn_t* fNew,
-        unsigned long timeStep
-      );
-
       /**
        * Template to produce Streamers that can cope with fluid-fluid,
        * fluid-wall and fluid-iolet links. Requires three classes as arguments:
@@ -57,83 +43,62 @@ namespace hemelb
 
         public:
           StreamerTypeFactory(kernels::InitParams& initParams) :
-            collider(initParams), bulkLinkDelegate(collider, initParams), wallLinkDelegate(collider, initParams),
-                ioletLinkDelegate(collider, initParams)
+            collider(initParams),
+            bulkLinkDelegate(collider, initParams),
+            wallLinkDelegate(collider, initParams),
+            ioletLinkDelegate(collider, initParams)
           {
-
           }
+
+          void StreamAndCollideGPU(const site_t firstIndex,
+                                   const site_t siteCount,
+                                   const lb::LbmParameters* lbmParams,
+                                   geometry::LatticeData* latDat,
+                                   lb::SimulationState* simState);
 
           template<bool tDoRayTracing>
           inline void DoStreamAndCollide(const site_t firstIndex,
                                          const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::LatticeData* latDat,
-                                         lb::MacroscopicPropertyCache& propertyCache,
-                                         lb::SimulationState* simState)
+                                         lb::MacroscopicPropertyCache& propertyCache)
           {
-            if ( siteCount == 0 )
+            for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              return;
-            }
+              geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
 
-            if (lbmParams->UseGPU() && !propertyCache.RequiresRefresh())
-            {
-              // launch DoStreamAndCollide kernel
-              DoStreamAndCollideGPU(
-                firstIndex,
-                siteCount,
-                lbmParams->GetTau(),
-                lbmParams->GetOmega(),
-                inlets_dev,
-                outlets_dev,
-                latDat->GetNeighbourIndicesGPU(),
-                latDat->GetSiteDataGPU(),
-                latDat->GetFOldGPU(0),
-                latDat->GetFNewGPU(0),
-                simState->Get0IndexedTimeStep()
-              );
-              CUDA_SAFE_CALL(cudaGetLastError());
-            }
+              const distribn_t* fOld = site.GetFOld<LatticeType> ();
 
-            else
-            {
-              for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
+              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(fOld);
+
+              ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
+              hydroVars.tau = lbmParams->GetTau();
+
+              collider.CalculatePreCollision(hydroVars, site);
+
+              collider.Collide(lbmParams, hydroVars);
+
+              for (Direction ii = 0; ii < LatticeType::NUMVECTORS; ii++)
               {
-                geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
-
-                const distribn_t* fOld = site.GetFOld<LatticeType> ();
-
-                kernels::HydroVars<typename CollisionType::CKernel> hydroVars(fOld);
-
-                ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
-                hydroVars.tau = lbmParams->GetTau();
-
-                collider.CalculatePreCollision(hydroVars, site);
-
-                collider.Collide(lbmParams, hydroVars);
-
-                for (Direction ii = 0; ii < LatticeType::NUMVECTORS; ii++)
+                if (site.HasIolet(ii))
                 {
-                  if (site.HasIolet(ii))
-                  {
-                    ioletLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
-                  }
-                  else if (site.HasWall(ii))
-                  {
-                    wallLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
-                  }
-                  else
-                  {
-                    bulkLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
-                  }
+                  ioletLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
                 }
-
-                //TODO: Necessary to specify sub-class?
-                BaseStreamer<StreamerTypeFactory>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
-                                                                                              hydroVars,
-                                                                                              lbmParams,
-                                                                                              propertyCache);
+                else if (site.HasWall(ii))
+                {
+                  wallLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
+                }
+                else
+                {
+                  bulkLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
+                }
               }
+
+              //TODO: Necessary to specify sub-class?
+              BaseStreamer<StreamerTypeFactory>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+                                                                                            hydroVars,
+                                                                                            lbmParams,
+                                                                                            propertyCache);
             }
           }
 

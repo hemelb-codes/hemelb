@@ -18,34 +18,44 @@ namespace hemelb
   {
     namespace streamers
     {
-
       template<class CollisionType>
       struct NashZerothOrderPressureIoletSBB
       {
-          typedef StreamerTypeFactory<CollisionType, SimpleBounceBackDelegate<CollisionType> ,
-              NashZerothOrderPressureDelegate<CollisionType> > Type;
+          typedef StreamerTypeFactory<
+            CollisionType,
+            SimpleBounceBackDelegate<CollisionType>,
+            NashZerothOrderPressureDelegate<CollisionType>
+          > Type;
       };
 
       template<class CollisionType>
       struct NashZerothOrderPressureIoletBFL
       {
-          typedef StreamerTypeFactory<CollisionType, BouzidiFirdaousLallemandDelegate<CollisionType> ,
-              NashZerothOrderPressureDelegate<CollisionType> > Type;
+          typedef StreamerTypeFactory<
+            CollisionType,
+            BouzidiFirdaousLallemandDelegate<CollisionType>,
+            NashZerothOrderPressureDelegate<CollisionType>
+          > Type;
       };
 
       template<class CollisionType>
       struct NashZerothOrderPressureIoletGZS
       {
-          typedef StreamerTypeFactory<CollisionType, GuoZhengShiDelegate<CollisionType> ,
-              NashZerothOrderPressureDelegate<CollisionType> > Type;
+          typedef StreamerTypeFactory<
+            CollisionType,
+            GuoZhengShiDelegate<CollisionType>,
+            NashZerothOrderPressureDelegate<CollisionType>
+          > Type;
       };
 
       template<class CollisionType>
       struct NashZerothOrderPressureIoletJY
       {
-          typedef JunkYangFactory<CollisionType, NashZerothOrderPressureDelegate<CollisionType> > Type;
+          typedef JunkYangFactory<
+            CollisionType,
+            NashZerothOrderPressureDelegate<CollisionType>
+          > Type;
       };
-
     }
   }
 }

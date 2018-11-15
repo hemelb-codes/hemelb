@@ -34,11 +34,10 @@ namespace hemelb
     class LBM : public net::IteratedAction
     {
       private:
-        // Use the kernel specified through the build system. This will select one of the above classes.
-        typedef typename HEMELB_KERNEL<LatticeType>::Type LB_KERNEL;
-
-        // Use the boundary conditions specified through the build system.
-        typedef typename HEMELB_WALL_INLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type CollisionType;
+        // Use the kernel, collider, and boundary conditions specified by the build system
+        typedef typename HEMELB_KERNEL<LatticeType>::Type KernelType;
+        typedef typename collisions::Normal<KernelType> CollisionType;
+        typedef typename HEMELB_WALL_INLET_BOUNDARY<CollisionType>::Type StreamerType;
 
       public:
         /**
@@ -116,34 +115,34 @@ namespace hemelb
         void handleIOError(int iError);
 
         // Collision objects
-        CollisionType* mMidFluidCollision;
-        CollisionType* mWallCollision;
-        CollisionType* mInletCollision;
-        CollisionType* mOutletCollision;
-        CollisionType* mInletWallCollision;
-        CollisionType* mOutletWallCollision;
+        StreamerType* mMidFluidStreamer;
+        StreamerType* mWallStreamer;
+        StreamerType* mInletStreamer;
+        StreamerType* mOutletStreamer;
+        StreamerType* mInletWallStreamer;
+        StreamerType* mOutletWallStreamer;
 
-        void StreamAndCollide(CollisionType* collision, const site_t iFirstIndex, const site_t iSiteCount)
+        void StreamAndCollide(StreamerType* streamer, const site_t iFirstIndex, const site_t iSiteCount)
         {
           if (mVisControl->IsRendering())
           {
-            collision->template StreamAndCollide<true> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache, mState);
+            streamer->template StreamAndCollide<true> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
           else
           {
-            collision->template StreamAndCollide<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache, mState);
+            streamer->template StreamAndCollide<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
         }
 
-        void PostStep(CollisionType* collision, const site_t iFirstIndex, const site_t iSiteCount)
+        void PostStep(StreamerType* streamer, const site_t iFirstIndex, const site_t iSiteCount)
         {
           if (mVisControl->IsRendering())
           {
-            collision->template DoPostStep<true> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+            streamer->template DoPostStep<true> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
           else
           {
-            collision->template DoPostStep<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+            streamer->template DoPostStep<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
         }
 

@@ -104,26 +104,26 @@ namespace hemelb
 
       unsigned collId;
       InitInitParamsSiteRanges(initParams, collId);
-      mMidFluidCollision = new CollisionType(initParams);
+      mMidFluidStreamer = new StreamerType(initParams);
 
       AdvanceInitParamsSiteRanges(initParams, collId);
-      mWallCollision = new CollisionType(initParams);
-
-      AdvanceInitParamsSiteRanges(initParams, collId);
-      initParams.boundaryObject = mInletValues;
-      mInletCollision = new CollisionType(initParams);
-
-      AdvanceInitParamsSiteRanges(initParams, collId);
-      initParams.boundaryObject = mOutletValues;
-      mOutletCollision = new CollisionType(initParams);
+      mWallStreamer = new StreamerType(initParams);
 
       AdvanceInitParamsSiteRanges(initParams, collId);
       initParams.boundaryObject = mInletValues;
-      mInletWallCollision = new CollisionType(initParams);
+      mInletStreamer = new StreamerType(initParams);
 
       AdvanceInitParamsSiteRanges(initParams, collId);
       initParams.boundaryObject = mOutletValues;
-      mOutletWallCollision = new CollisionType(initParams);
+      mOutletStreamer = new StreamerType(initParams);
+
+      AdvanceInitParamsSiteRanges(initParams, collId);
+      initParams.boundaryObject = mInletValues;
+      mInletWallStreamer = new StreamerType(initParams);
+
+      AdvanceInitParamsSiteRanges(initParams, collId);
+      initParams.boundaryObject = mOutletValues;
+      mOutletWallStreamer = new StreamerType(initParams);
     }
 
     template<class LatticeType>
@@ -311,7 +311,7 @@ namespace hemelb
 
       if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
       {
-        StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetDomainEdgeSiteCount());
+        mMidFluidStreamer->StreamAndCollideGPU(offset, mLatDat->GetDomainEdgeSiteCount(), &mParams, mLatDat, mState);
       }
 
       else
@@ -327,24 +327,24 @@ namespace hemelb
           ));
         }
 
-        StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetDomainEdgeCollisionCount(0));
+        StreamAndCollide(mMidFluidStreamer, offset, mLatDat->GetDomainEdgeCollisionCount(0));
         offset += mLatDat->GetDomainEdgeCollisionCount(0);
 
-        StreamAndCollide(mWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(1));
+        StreamAndCollide(mWallStreamer, offset, mLatDat->GetDomainEdgeCollisionCount(1));
         offset += mLatDat->GetDomainEdgeCollisionCount(1);
 
         mInletValues->FinishReceive();
-        StreamAndCollide(mInletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(2));
+        StreamAndCollide(mInletStreamer, offset, mLatDat->GetDomainEdgeCollisionCount(2));
         offset += mLatDat->GetDomainEdgeCollisionCount(2);
 
         mOutletValues->FinishReceive();
-        StreamAndCollide(mOutletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(3));
+        StreamAndCollide(mOutletStreamer, offset, mLatDat->GetDomainEdgeCollisionCount(3));
         offset += mLatDat->GetDomainEdgeCollisionCount(3);
 
-        StreamAndCollide(mInletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(4));
+        StreamAndCollide(mInletWallStreamer, offset, mLatDat->GetDomainEdgeCollisionCount(4));
         offset += mLatDat->GetDomainEdgeCollisionCount(4);
 
-        StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(5));
+        StreamAndCollide(mOutletWallStreamer, offset, mLatDat->GetDomainEdgeCollisionCount(5));
 
         if ( mParams.UseGPU() )
         {
@@ -381,27 +381,27 @@ namespace hemelb
 
       if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
       {
-        StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetMidDomainSiteCount());
+        mMidFluidStreamer->StreamAndCollideGPU(offset, mLatDat->GetMidDomainSiteCount(), &mParams, mLatDat, mState);
       }
 
       else
       {
-        StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetMidDomainCollisionCount(0));
+        StreamAndCollide(mMidFluidStreamer, offset, mLatDat->GetMidDomainCollisionCount(0));
         offset += mLatDat->GetMidDomainCollisionCount(0);
 
-        StreamAndCollide(mWallCollision, offset, mLatDat->GetMidDomainCollisionCount(1));
+        StreamAndCollide(mWallStreamer, offset, mLatDat->GetMidDomainCollisionCount(1));
         offset += mLatDat->GetMidDomainCollisionCount(1);
 
-        StreamAndCollide(mInletCollision, offset, mLatDat->GetMidDomainCollisionCount(2));
+        StreamAndCollide(mInletStreamer, offset, mLatDat->GetMidDomainCollisionCount(2));
         offset += mLatDat->GetMidDomainCollisionCount(2);
 
-        StreamAndCollide(mOutletCollision, offset, mLatDat->GetMidDomainCollisionCount(3));
+        StreamAndCollide(mOutletStreamer, offset, mLatDat->GetMidDomainCollisionCount(3));
         offset += mLatDat->GetMidDomainCollisionCount(3);
 
-        StreamAndCollide(mInletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(4));
+        StreamAndCollide(mInletWallStreamer, offset, mLatDat->GetMidDomainCollisionCount(4));
         offset += mLatDat->GetMidDomainCollisionCount(4);
 
-        StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(5));
+        StreamAndCollide(mOutletWallStreamer, offset, mLatDat->GetMidDomainCollisionCount(5));
 
         if ( mParams.UseGPU() )
         {
@@ -442,41 +442,41 @@ namespace hemelb
       timings[hemelb::reporting::Timers::lb_calc].Start();
 
       //TODO yup, this is horrible. If you read this, please improve the following code.
-      PostStep(mMidFluidCollision, offset, mLatDat->GetDomainEdgeCollisionCount(0));
+      PostStep(mMidFluidStreamer, offset, mLatDat->GetDomainEdgeCollisionCount(0));
       offset += mLatDat->GetDomainEdgeCollisionCount(0);
 
-      PostStep(mWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(1));
+      PostStep(mWallStreamer, offset, mLatDat->GetDomainEdgeCollisionCount(1));
       offset += mLatDat->GetDomainEdgeCollisionCount(1);
 
-      PostStep(mInletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(2));
+      PostStep(mInletStreamer, offset, mLatDat->GetDomainEdgeCollisionCount(2));
       offset += mLatDat->GetDomainEdgeCollisionCount(2);
 
-      PostStep(mOutletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(3));
+      PostStep(mOutletStreamer, offset, mLatDat->GetDomainEdgeCollisionCount(3));
       offset += mLatDat->GetDomainEdgeCollisionCount(3);
 
-      PostStep(mInletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(4));
+      PostStep(mInletWallStreamer, offset, mLatDat->GetDomainEdgeCollisionCount(4));
       offset += mLatDat->GetDomainEdgeCollisionCount(4);
 
-      PostStep(mOutletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(5));
+      PostStep(mOutletWallStreamer, offset, mLatDat->GetDomainEdgeCollisionCount(5));
 
       offset = 0;
 
-      PostStep(mMidFluidCollision, offset, mLatDat->GetMidDomainCollisionCount(0));
+      PostStep(mMidFluidStreamer, offset, mLatDat->GetMidDomainCollisionCount(0));
       offset += mLatDat->GetMidDomainCollisionCount(0);
 
-      PostStep(mWallCollision, offset, mLatDat->GetMidDomainCollisionCount(1));
+      PostStep(mWallStreamer, offset, mLatDat->GetMidDomainCollisionCount(1));
       offset += mLatDat->GetMidDomainCollisionCount(1);
 
-      PostStep(mInletCollision, offset, mLatDat->GetMidDomainCollisionCount(2));
+      PostStep(mInletStreamer, offset, mLatDat->GetMidDomainCollisionCount(2));
       offset += mLatDat->GetMidDomainCollisionCount(2);
 
-      PostStep(mOutletCollision, offset, mLatDat->GetMidDomainCollisionCount(3));
+      PostStep(mOutletStreamer, offset, mLatDat->GetMidDomainCollisionCount(3));
       offset += mLatDat->GetMidDomainCollisionCount(3);
 
-      PostStep(mInletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(4));
+      PostStep(mInletWallStreamer, offset, mLatDat->GetMidDomainCollisionCount(4));
       offset += mLatDat->GetMidDomainCollisionCount(4);
 
-      PostStep(mOutletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(5));
+      PostStep(mOutletWallStreamer, offset, mLatDat->GetMidDomainCollisionCount(5));
 
       timings[hemelb::reporting::Timers::lb_calc].Stop();
       timings[hemelb::reporting::Timers::lb].Stop();
@@ -499,12 +499,12 @@ namespace hemelb
     LBM<LatticeType>::~LBM()
     {
       // Delete the collision and stream objects we've been using
-      delete mMidFluidCollision;
-      delete mWallCollision;
-      delete mInletCollision;
-      delete mOutletCollision;
-      delete mInletWallCollision;
-      delete mOutletWallCollision;
+      delete mMidFluidStreamer;
+      delete mWallStreamer;
+      delete mInletStreamer;
+      delete mOutletStreamer;
+      delete mInletWallStreamer;
+      delete mOutletWallStreamer;
     }
 
     template<class LatticeType>
