@@ -20,7 +20,7 @@
 #include "lb/LbmParameters.h"
 #include "logging/Logger.h"
 #include "net/IOCommunicator.h"
-#include "util/utilityFunctions.h" 
+#include "util/UtilityFunctions.h" 
 #include "util/Vector3D.h"
 #include "vis/DomainStats.h"
 #include "vis/PixelSet.h"

@@ -15,7 +15,7 @@ namespace hemelb
   {
     namespace lattices
     {
-      class D3Q15 : public lb::lattices::Lattice<D3Q15>
+      class D3Q15 : public Lattice<D3Q15>
       {
         public:
           // The number of discrete velocity vectors

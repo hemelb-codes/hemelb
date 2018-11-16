@@ -4,8 +4,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_VISTESTS_HSLTORGBCONVERTORTESTS_H
-#define HEMELB_UNITTESTS_VISTESTS_HSLTORGBCONVERTORTESTS_H
+#ifndef HEMELB_UNITTESTS_VIS_HSLTORGBCONVERTORTESTS_H
+#define HEMELB_UNITTESTS_VIS_HSLTORGBCONVERTORTESTS_H
 
 #include <cppunit/TestFixture.h>
 
@@ -13,7 +13,7 @@ namespace hemelb
 {
   namespace unittests
   {
-    namespace vistests
+    namespace vis
     {
       class HslToRgbConvertorTests : public CppUnit::TestFixture
       {

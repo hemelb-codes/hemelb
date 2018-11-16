@@ -11,7 +11,7 @@
 #include "steering/ImageSendComponent.h"
 #include "steering/Network.h"
 #include "io/writers/xdr/XdrMemWriter.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 
 namespace hemelb
 {

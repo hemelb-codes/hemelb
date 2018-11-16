@@ -17,7 +17,7 @@
 #include <fstream>
 #include "net/mpi.h"
 #include "net/IOCommunicator.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 
 namespace hemelb
 {

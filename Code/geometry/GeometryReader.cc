@@ -20,7 +20,7 @@
 #include "net/net.h"
 #include "net/IOCommunicator.h"
 #include "logging/Logger.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 #include "constants.h"
 namespace hemelb
 {

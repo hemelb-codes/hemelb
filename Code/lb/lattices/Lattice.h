@@ -14,7 +14,7 @@
 
 #include "constants.h"
 #include "lb/lattices/LatticeInfo.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 #include "util/Vector3D.h"
 #include "util/Matrix3D.h"
 
@@ -28,16 +28,16 @@ namespace hemelb
       class Lattice
       {
         public:
-          
+
          #ifdef HEMELB_USE_SSE3
           /**
            * Calculates density and momentum using SSE3 intrinsics.
-           * If the lattice has an odd number of vectors (directions), 
-           * the last element is processed first 
-           * 
-           * The reductions are calculated in two streams (the loop is virtually 
+           * If the lattice has an odd number of vectors (directions),
+           * the last element is processed first
+           *
+           * The reductions are calculated in two streams (the loop is virtually
            * twice unrolled), followed by horizontal adds to sum two partial results together
-           * 
+           *
            * @param f
            * @param density
            * @param momentum_x
@@ -49,7 +49,7 @@ namespace hemelb
                                                        distribn_t &momentum_x,
                                                        distribn_t &momentum_y,
                                                        distribn_t &momentum_z)
-          {                        
+          {
             // SSE2 accumulator registers containing a pair of double values
             __m128d density_SSE2;
             __m128d momentum_x_SSE2;
@@ -57,10 +57,10 @@ namespace hemelb
             __m128d momentum_z_SSE2;
 
             // set the loop boundary to the highest even number  =< DmQn::NUMVECTORS
-            Direction numVect2 = ((DmQn::NUMVECTORS >> 1) << 1); 
+            Direction numVect2 = ((DmQn::NUMVECTORS >> 1) << 1);
 
             // process the 15/19/27th element first
-            if (DmQn::NUMVECTORS != numVect2) 
+            if (DmQn::NUMVECTORS != numVect2)
             {
               // the first double is set to the result of the last element, the second double to zero
               density_SSE2 = _mm_set_pd(f[DmQn::NUMVECTORS - 1], 0.0);
@@ -104,7 +104,7 @@ namespace hemelb
             _mm_store_sd(&momentum_z, _mm_hadd_pd(momentum_z_SSE2, momentum_z_SSE2));
 
           }
-          
+
          #else
 
           /**
@@ -131,17 +131,17 @@ namespace hemelb
               momentum_z += DmQn::CZ[direction] * f[direction];
             }
           }
-          #endif                   
+          #endif
 
           #ifdef HEMELB_USE_SSE3
-          /**           
+          /**
            * Calculates Feq using SSE3 intrinsics.
-           * If the lattice has an odd number of vectors (directions), 
+           * If the lattice has an odd number of vectors (directions),
            * the last element is processed using scalar arithmetics
-           * 
-           * The reductions are calculated in two streams (the loop is virtually 
+           *
+           * The reductions are calculated in two streams (the loop is virtually
            * twice unrolled). Some invariants are merged together
-           * 
+           *
            * @param density
            * @param momentum_x
            * @param momentum_y
@@ -154,48 +154,48 @@ namespace hemelb
                                           const distribn_t &momentum_z,
                                           distribn_t f_eq[])
           {
-                       
-            // merge some constants and invariants and populate SSE registers by them                        
+
+            // merge some constants and invariants and populate SSE registers by them
             const distribn_t threeHalvesOfMomentumMagnitudeSquared = (3./2.) * (momentum_x * momentum_x + momentum_y * momentum_y
-                  + momentum_z * momentum_z);            
-            const __m128d threeHalvesOfMomentumMagnitudeSquared_SSE2 = _mm_set1_pd(threeHalvesOfMomentumMagnitudeSquared);            
-            
-            
-            const distribn_t density_1 = 1. / density;            
+                  + momentum_z * momentum_z);
+            const __m128d threeHalvesOfMomentumMagnitudeSquared_SSE2 = _mm_set1_pd(threeHalvesOfMomentumMagnitudeSquared);
+
+
+            const distribn_t density_1 = 1. / density;
             const __m128d density_1_SSE2 = _mm_set1_pd(density_1);
             const __m128d density_SSE2   = _mm_set1_pd(density);
-            
+
             const __m128d momentum_x_SSE2 = _mm_set1_pd(momentum_x);
             const __m128d momentum_y_SSE2 = _mm_set1_pd(momentum_y);
             const __m128d momentum_z_SSE2 = _mm_set1_pd(momentum_z);
-            
+
             const distribn_t nineHalvesOfDensity_1 =  (9. / 2.) * density_1;
             const __m128d nineOnTwoDensity_1_SSE2  = _mm_set1_pd(nineHalvesOfDensity_1) ;
             const __m128d three_SSE2      = _mm_set1_pd(3.) ;
-            
-            
+
+
             // sse loop (the loop is virtually twice unrolled)
-            Direction numVect2 = ((DmQn::NUMVECTORS >> 1) << 1); 
-            for (Direction i = 0; i < numVect2 ; i+=2)            
+            Direction numVect2 = ((DmQn::NUMVECTORS >> 1) << 1);
+            for (Direction i = 0; i < numVect2 ; i+=2)
             {
               // mom_dot_ei = DmQn::CX[i] * momentum_x + DmQn::CY[i] * momentum_y + DmQn::CZ[i] * momentum_z;
-              const __m128d CXD_momentum_x_SSE2 = _mm_mul_pd(_mm_load_pd(&DmQn::CXD[i]),momentum_x_SSE2);            
-              const __m128d CYD_momentum_y_SSE2 = _mm_mul_pd(_mm_load_pd(&DmQn::CYD[i]),momentum_y_SSE2);            
-              const __m128d CZD_momentum_z_SSE2 = _mm_mul_pd(_mm_load_pd(&DmQn::CZD[i]),momentum_z_SSE2);            
-              
+              const __m128d CXD_momentum_x_SSE2 = _mm_mul_pd(_mm_load_pd(&DmQn::CXD[i]),momentum_x_SSE2);
+              const __m128d CYD_momentum_y_SSE2 = _mm_mul_pd(_mm_load_pd(&DmQn::CYD[i]),momentum_y_SSE2);
+              const __m128d CZD_momentum_z_SSE2 = _mm_mul_pd(_mm_load_pd(&DmQn::CZD[i]),momentum_z_SSE2);
+
               const __m128d EQMWEIGHTS_SSE2 = _mm_load_pd(&DmQn::EQMWEIGHTS[i]);
-              
+
               const __m128d mom_dot_ei_SSE2 =  _mm_add_pd(
-                                                    _mm_add_pd(CXD_momentum_x_SSE2, CYD_momentum_y_SSE2), 
+                                                    _mm_add_pd(CXD_momentum_x_SSE2, CYD_momentum_y_SSE2),
                                                     CZD_momentum_z_SSE2
                                                );
-                                                
-              
+
+
               //  (density - (3. / 2.) * momentumMagnitudeSquared * density_1
               const __m128d tmp1 = _mm_sub_pd(density_SSE2,
                                               _mm_mul_pd(threeHalvesOfMomentumMagnitudeSquared_SSE2, density_1_SSE2 )
                                              );
-              
+
               // (9. / 2.) * density_1 * mom_dot_ei * mom_dot_ei
               const __m128d tmp2 = (_mm_mul_pd(
                                               nineOnTwoDensity_1_SSE2,
@@ -204,21 +204,21 @@ namespace hemelb
                                    );
               // 3. * mom_dot_ei);
               const __m128d tmp3 = _mm_mul_pd(three_SSE2, mom_dot_ei_SSE2);
-              
-              
-              
+
+
+
               __m128d tmp4 = _mm_add_pd(tmp1, tmp2);
                       tmp4 = _mm_add_pd(tmp4, tmp3);
-                                          
+
               // f_eq is not 16B aligned
               _mm_storeu_pd(&f_eq[i],_mm_mul_pd(EQMWEIGHTS_SSE2,tmp4));
             }
-              
-            
-            // do the odd element (15/19/27) 
+
+
+            // do the odd element (15/19/27)
             if (DmQn::NUMVECTORS != numVect2) // constants are reduced
             {
-                          
+
               const distribn_t mom_dot_ei = DmQn::CX[DmQn::NUMVECTORS-1] * momentum_x
                   + DmQn::CY[DmQn::NUMVECTORS-1] * momentum_y + DmQn::CZ[DmQn::NUMVECTORS-1] * momentum_z;
 
@@ -226,11 +226,11 @@ namespace hemelb
                   * (density -  threeHalvesOfMomentumMagnitudeSquared  * density_1
                       + nineHalvesOfDensity_1 * (mom_dot_ei * mom_dot_ei)
                       + 3. * mom_dot_ei);
-             
+
             }
           }
-         #else                    
-          
+         #else
+
           /**
            * Calculate Feq, the orginal version
            * @param density
@@ -261,8 +261,8 @@ namespace hemelb
             }
           }
           #endif
-          
-                                        
+
+
           // Calculate density, momentum and the equilibrium distribution
           // functions according to the D3Q15 model.  The calculated momentum_x, momentum_y
           // and momentum_z are actually density * velocity, because we are using the
@@ -276,13 +276,13 @@ namespace hemelb
                                                          distribn_t &velocity_y,
                                                          distribn_t &velocity_z,
                                                          distribn_t f_eq[])
-          {                       
-            CalculateDensityAndMomentum(f, density, momentum_x, momentum_y, momentum_z);            
-                       
+          {
+            CalculateDensityAndMomentum(f, density, momentum_x, momentum_y, momentum_z);
+
             velocity_x = momentum_x / density;
             velocity_y = momentum_y / density;
             velocity_z = momentum_z / density;
-            
+
             CalculateFeq(density, momentum_x, momentum_y, momentum_z, f_eq);
           }
 

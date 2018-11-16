@@ -6,8 +6,8 @@
 
 #include "lb/iolets/BoundaryValues.h"
 #include "lb/iolets/BoundaryComms.h"
-#include "util/utilityFunctions.h"
-#include "util/fileutils.h"
+#include "util/UtilityFunctions.h"
+#include "util/FileUtils.h"
 #include <algorithm>
 #include <fstream>
 

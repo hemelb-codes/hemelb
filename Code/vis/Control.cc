@@ -9,7 +9,7 @@
 #include <limits>
 
 #include "logging/Logger.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 #include "vis/Control.h"
 #include "vis/rayTracer/RayTracer.h"
 #include "vis/GlyphDrawer.h"

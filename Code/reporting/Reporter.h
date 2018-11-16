@@ -12,7 +12,7 @@
 #include "configuration/SimConfig.h"
 #include "configuration/CommandLine.h"
 #include "logging/Logger.h"
-#include "util/fileutils.h"
+#include "util/FileUtils.h"
 #include "reporting/Policies.h"
 #include "reporting/Reportable.h"
 #include "resources/Resource.h"

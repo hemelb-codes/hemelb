@@ -12,7 +12,7 @@
 
 #include "configuration/SimConfig.h"
 #include "logging/Logger.h"
-#include "util/fileutils.h"
+#include "util/FileUtils.h"
 
 namespace hemelb
 {

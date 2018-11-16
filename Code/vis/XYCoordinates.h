@@ -8,7 +8,7 @@
 #define HEMELB_VIS_XYCOORDINATES_H
 
 #include "constants.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 
 namespace hemelb
 {

@@ -13,7 +13,7 @@
 #include <stdexcept>
 #include "unittests/helpers/helpers.h"
 #include "unittests/lbtests/lbtests.h"
-#include "unittests/vistests/vistests.h"
+#include "unittests/vis/vis.h"
 #include "unittests/io/io.h"
 #include "unittests/reporting/reporting.h"
 #include "unittests/configuration/configuration.h"

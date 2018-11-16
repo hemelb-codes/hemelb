@@ -13,7 +13,7 @@
 #include "geometry/BlockTraverser.h"
 #include "geometry/LatticeData.h"
 #include "geometry/neighbouring/NeighbouringLatticeData.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 
 namespace hemelb
 {

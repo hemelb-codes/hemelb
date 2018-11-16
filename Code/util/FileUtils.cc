@@ -15,7 +15,7 @@
 #include <sys/stat.h>
 #include <sstream>
 #include "logging/Logger.h"
-#include "util/fileutils.h"
+#include "util/FileUtils.h"
 
 namespace hemelb
 {

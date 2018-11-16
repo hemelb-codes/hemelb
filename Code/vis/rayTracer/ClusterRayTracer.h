@@ -13,7 +13,7 @@
 
 #include "geometry/SiteTraverser.h"
 #include "lb/MacroscopicPropertyCache.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 #include "util/Vector3D.h"
 #include "vis/DomainStats.h"
 #include "vis/PixelSet.h"

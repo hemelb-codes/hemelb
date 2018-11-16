@@ -9,7 +9,7 @@
 
 #include <vector>
 #include "reporting/Reportable.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 #include "reporting/Policies.h"
 namespace hemelb
 {

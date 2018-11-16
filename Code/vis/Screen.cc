@@ -5,7 +5,7 @@
 // license in the file LICENSE.
 
 #include "net/IOCommunicator.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 #include "vis/Screen.h"
 
 namespace hemelb

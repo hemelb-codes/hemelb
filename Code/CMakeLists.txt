@@ -184,15 +184,15 @@ endif()
 if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
   #------CPPUnit ---------------
   hemelb_dependency(cppunit use)
-  add_executable(unittests_hemelb ${root_sources})
+  add_executable(hemelb-unittests ${root_sources})
   add_subdirectory(unittests)
 
-  target_link_libraries(unittests_hemelb
+  target_link_libraries(hemelb-unittests
     hemelb_unittests
     ${heme_libraries}
     ${MPI_LIBRARIES}
     ${Boost_LIBRARIES})
-  install(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
+  install(TARGETS hemelb-unittests RUNTIME DESTINATION bin)
 
   list(APPEND RESOURCES
     unittests/resources/four_cube.gmy
@@ -215,15 +215,15 @@ endif()
 if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
   #------CPPUnit ---------------
   hemelb_dependency(cppunit use)
-  add_executable(functionaltests_hemelb ${root_sources})
+  add_executable(hemelb-functionaltests ${root_sources})
   add_subdirectory(functionaltests/cpptests)
 
-  target_link_libraries(functionaltests_hemelb
+  target_link_libraries(hemelb-functionaltests
     hemelb_functionaltests
     ${heme_libraries}
     ${MPI_LIBRARIES}
     ${Boost_LIBRARIES})
-  install(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
+  install(TARGETS hemelb-functionaltests RUNTIME DESTINATION bin)
 endif()
 
 #-------- Copy and install resources --------------

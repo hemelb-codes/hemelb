@@ -5,7 +5,7 @@
 // license in the file LICENSE.
 #include <stdexcept>
 #include "io/xml/XmlAbstractionLayer.h"
-#include "util/fileutils.h"
+#include "util/FileUtils.h"
 
 #include "tinyxml.h"
 

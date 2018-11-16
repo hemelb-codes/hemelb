@@ -9,9 +9,8 @@
 
 #include "lb/iolets/InOutLetFile.h"
 #include "logging/Logger.h"
-#include "util/fileutils.h"
-#include "util/utilityFunctions.h"
-#include "util/utilityStructs.h"
+#include "util/FileUtils.h"
+#include "util/UtilityFunctions.h"
 #include "configuration/SimConfig.h"
 
 namespace hemelb

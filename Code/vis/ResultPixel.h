@@ -9,7 +9,7 @@
 
 #include <cmath>
 
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 #include "vis/BasicPixel.h"
 #include "vis/rayTracer/RayDataNormal.h"
 #include "vis/streaklineDrawer/StreakPixel.h"

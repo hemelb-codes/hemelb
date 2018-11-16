@@ -6,7 +6,7 @@
 #ifndef HEMELB_LB_STREAMERS_NASHZEROTHORDERPRESSUREDELEGATE_H
 #define HEMELB_LB_STREAMERS_NASHZEROTHORDERPRESSUREDELEGATE_H
 
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 #include "lb/streamers/BaseStreamerDelegate.h"
 
 namespace hemelb

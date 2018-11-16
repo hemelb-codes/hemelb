@@ -7,9 +7,8 @@
 #include <algorithm>
 #include <fstream>
 #include "logging/Logger.h"
-#include "util/fileutils.h"
-#include "util/utilityFunctions.h"
-#include "util/utilityStructs.h"
+#include "util/FileUtils.h"
+#include "util/UtilityFunctions.h"
 #include "configuration/SimConfig.h"
 #include <cmath>
 #include <algorithm>
@@ -65,7 +64,7 @@ namespace hemelb
 
           /* If the time value in the input file stretches BEYOND the end of the simulation, then insert an interpolated end value and exit the loop. */
           if(entry->first > totalTimeSteps*timeStepLength) {
-  
+
             PhysicalTime time_diff = totalTimeSteps*timeStepLength - times.back();
 
             PhysicalTime time_diff_ratio = time_diff / (entry->first - times.back());

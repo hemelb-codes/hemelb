@@ -13,7 +13,7 @@
 
 #include "lb/streamers/Streamers.h"
 #include "geometry/SiteData.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 #include "unittests/helpers/FourCubeBasedTestFixture.h"
 
 namespace hemelb

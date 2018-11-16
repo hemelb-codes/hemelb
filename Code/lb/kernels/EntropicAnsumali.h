@@ -12,7 +12,7 @@
 #include "lb/kernels/Entropic.h"
 #include "lb/kernels/BaseKernel.h"
 #include "lb/HFunction.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 
 namespace hemelb
 {

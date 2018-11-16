@@ -9,7 +9,7 @@
 
 #include <string>
 #include "configuration/CommandLine.h"
-#include "util/fileutils.h"
+#include "util/FileUtils.h"
 #include "logging/Logger.h"
 #include "configuration/SimConfig.h"
 #include "io/writers/xdr/XdrFileWriter.h"

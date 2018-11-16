@@ -11,7 +11,7 @@
 #include "units.h"
 #include "constants.h"
 #include "geometry/GeometryBlock.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 #include "util/Vector3D.h"
 
 namespace hemelb

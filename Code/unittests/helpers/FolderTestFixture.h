@@ -10,7 +10,7 @@
 #include <cmath>
 #include <iomanip>
 #include "resources/Resource.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 #include "unittests/helpers/HasCommsTestFixture.h"
 
 namespace hemelb

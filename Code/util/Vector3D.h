@@ -13,7 +13,7 @@
 #include <algorithm>
 #include <limits>
 #include "util/static_assert.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 #include "util/Vector3DArithmeticTraits.h"
 
 namespace hemelb

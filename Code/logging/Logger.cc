@@ -12,7 +12,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 #include "net/mpi.h"
 #include "logging/Logger.h"
 

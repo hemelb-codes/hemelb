@@ -14,7 +14,7 @@
 #include "geometry/LatticeData.h"
 #include "geometry/SiteTraverser.h"
 #include "lb/LbmParameters.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 #include "util/Vector3D.h"
 #include "vis/rayTracer/ClusterBuilder.h"
 #include "vis/rayTracer/ClusterTraverser.h"

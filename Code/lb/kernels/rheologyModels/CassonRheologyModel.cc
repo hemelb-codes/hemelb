@@ -5,7 +5,7 @@
 // license in the file LICENSE.
 
 #include "lb/kernels/rheologyModels/CassonRheologyModel.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 #include <cmath>
 
 namespace hemelb

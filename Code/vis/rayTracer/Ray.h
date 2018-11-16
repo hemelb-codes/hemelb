@@ -10,7 +10,7 @@
 #include <iostream>
 #include <limits>
 
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 #include "util/Vector3D.h"
 #include "vis/rayTracer/SiteData.h"
 #include "vis/rayTracer/RayDataNormal.h"

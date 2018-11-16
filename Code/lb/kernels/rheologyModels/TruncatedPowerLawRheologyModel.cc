@@ -5,7 +5,7 @@
 // license in the file LICENSE.
 
 #include "lb/kernels/rheologyModels/TruncatedPowerLawRheologyModel.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 
 namespace hemelb
 {

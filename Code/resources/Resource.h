@@ -7,7 +7,7 @@
 #ifndef HEMELB_RESOURCES_RESOURCE_H
 #define HEMELB_RESOURCES_RESOURCE_H
 
-#include "util/fileutils.h"
+#include "util/FileUtils.h"
 #include "resources/path_parameters.h"
 
 namespace hemelb

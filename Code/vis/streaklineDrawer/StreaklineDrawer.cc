@@ -10,7 +10,7 @@
 
 #include "geometry/BlockTraverser.h"
 #include "geometry/SiteTraverser.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 #include "vis/Control.h"
 #include "vis/streaklineDrawer/StreaklineDrawer.h"
 #include "vis/streaklineDrawer/StreakPixel.h"

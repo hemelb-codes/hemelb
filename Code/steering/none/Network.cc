@@ -18,7 +18,7 @@
 #include "debug/Debugger.h"
 #include "logging/Logger.h"
 #include "steering/Network.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 
 namespace hemelb
 {

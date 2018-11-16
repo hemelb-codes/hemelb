@@ -9,7 +9,7 @@
 
 #include <cstdlib>
 #include "lb/HFunction.h"
-#include "util/utilityFunctions.h"
+#include "util/UtilityFunctions.h"
 #include "lb/kernels/BaseKernel.h"
 
 namespace hemelb

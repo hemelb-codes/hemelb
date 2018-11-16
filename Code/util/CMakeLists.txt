@@ -4,9 +4,9 @@
 # license in the file LICENSE.
 
 add_library(hemelb_util STATIC
-  fileutils.cc
+  FileUtils.cc
   UnitConverter.cc
-  utilityFunctions.cc
+  UtilityFunctions.cc
   Vector3D.cc
   Vector3DHemeLb.cc
   Matrix3D.cc
