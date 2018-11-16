@@ -33,12 +33,12 @@ commentchars={
 oldcopyblob = """
 Copyright (C) University College London, 2007-2012, all rights reserved.
 
-This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+This file is part of HemeLB and is CONFIDENTIAL. You may not work
 with, install, use, duplicate, modify, redistribute or share this
 file, or any part thereof, other than as allowed by any agreement
 specifically made by you with University College London.
 """
- 
+
 newcopyblob = """This file is part of HemeLB and is Copyright (C)
 the HemeLB team and/or their institutions, as detailed in the
 file AUTHORS. This software is provided under the terms of the
@@ -66,7 +66,7 @@ def Walk(codeDir):
         if 'build' in dirnames:
             dirnames.remove('build')
             pass
-        
+
         for name in filenames:
             base, ext = os.path.splitext(name)
             if ext == '.in':
@@ -82,7 +82,7 @@ def SplitAll(path):
         ans = []
     else:
         ans = SplitAll(head)
-        
+
     ans.append(tail)
     return ans
 
@@ -115,9 +115,6 @@ Code/lb/iolets/InOutLetFileVelocity.h
 Code/lb/iolets/InOutLetParabolicVelocity.cc
 Code/lb/iolets/InOutLetVelocity.cc
 Code/lb/iolets/InOutLetWomersleyVelocity.cc
-Code/lb/lattices/D3Q15i.cc
-Code/lb/lattices/D3Q15i.h
-Code/lb/lattices/IncompressibleLattice.h
 Code/lb/lattices/Lattices.h
 Code/lb/streamers/NashZerothOrderPressureDelegate.h
 Code/lb/streamers/NashZerothOrderPressureIolet.h
@@ -200,15 +197,15 @@ if __name__ == '__main__':
         for sourceFile, ext in Walk('.'):
             if sourceFile in not_ours:
                 continue
-            
+
             print sourceFile
-            
+
             oldtext = open(sourceFile).read()
-                
+
             if oldtext[0:2] == '#!':
                 envline, oldtext = oldtext.split('\n', 1)
             else:
-                envline = '' 
+                envline = ''
                 pass
 
             if ext == '.py':
@@ -222,7 +219,7 @@ if __name__ == '__main__':
                         pass
                     pass
                 pass
-            
+
             new_cr = new_commented_cr[ext]
             if sourceFile in no_cr:
                 main = oldtext
@@ -233,9 +230,8 @@ if __name__ == '__main__':
                     sys.stderr.write(sourceFile + '\n')
                     continue
                 pass
-            
+
             with open(sourceFile, 'w') as replacement:
                 replacement.write(envline + '\n')
                 replacement.write(new_cr + '\n')
                 replacement.write(main)
-                

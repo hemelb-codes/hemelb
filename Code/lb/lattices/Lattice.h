@@ -29,7 +29,7 @@ namespace hemelb
       {
         public:
 
-         #ifdef HEMELB_USE_SSE3
+#ifdef HEMELB_USE_SSE3
           /**
            * Calculates density and momentum using SSE3 intrinsics.
            * If the lattice has an odd number of vectors (directions),
@@ -104,9 +104,7 @@ namespace hemelb
             _mm_store_sd(&momentum_z, _mm_hadd_pd(momentum_z_SSE2, momentum_z_SSE2));
 
           }
-
-         #else
-
+#else
           /**
            * Calculates density and momentum, the original non-SSE version
            * @param f
@@ -131,9 +129,34 @@ namespace hemelb
               momentum_z += DmQn::CZ[direction] * f[direction];
             }
           }
-          #endif
+#endif
 
-          #ifdef HEMELB_USE_SSE3
+#if HEMELB_LATTICE_INCOMPRESSIBLE
+          inline static void CalculateFeq(const distribn_t &density,
+                                          const distribn_t &momentum_x,
+                                          const distribn_t &momentum_y,
+                                          const distribn_t &momentum_z,
+                                          distribn_t f_eq[])
+          {
+            const distribn_t momentumMagnitudeSquared =
+                momentum_x * momentum_x
+                + momentum_y * momentum_y
+                + momentum_z * momentum_z;
+
+            for (Direction i = 0; i < DmQn::NUMVECTORS; ++i)
+            {
+              const distribn_t mom_dot_ei =
+                  DmQn::CX[i] * momentum_x
+                  + DmQn::CY[i] * momentum_y
+                  + DmQn::CZ[i] * momentum_z;
+
+              f_eq[i] = DmQn::EQMWEIGHTS[i]
+                  * (density - (3. / 2.) * momentumMagnitudeSquared
+                      + (9. / 2.) * mom_dot_ei * mom_dot_ei
+                      + 3. * mom_dot_ei);
+            }
+          }
+#elif defined(HEMELB_USE_SSE3)
           /**
            * Calculates Feq using SSE3 intrinsics.
            * If the lattice has an odd number of vectors (directions),
@@ -229,8 +252,7 @@ namespace hemelb
 
             }
           }
-         #else
-
+#else
           /**
            * Calculate Feq, the orginal version
            * @param density
@@ -246,13 +268,17 @@ namespace hemelb
                                           distribn_t f_eq[])
           {
             const distribn_t density_1 = 1. / density;
-            const distribn_t momentumMagnitudeSquared = momentum_x * momentum_x + momentum_y * momentum_y
+            const distribn_t momentumMagnitudeSquared =
+                momentum_x * momentum_x
+                + momentum_y * momentum_y
                 + momentum_z * momentum_z;
 
             for (Direction i = 0; i < DmQn::NUMVECTORS; ++i)
             {
-              const distribn_t mom_dot_ei = DmQn::CX[i] * momentum_x
-                  + DmQn::CY[i] * momentum_y + DmQn::CZ[i] * momentum_z;
+              const distribn_t mom_dot_ei =
+                  DmQn::CX[i] * momentum_x
+                  + DmQn::CY[i] * momentum_y
+                  + DmQn::CZ[i] * momentum_z;
 
               f_eq[i] = DmQn::EQMWEIGHTS[i]
                   * (density - (3. / 2.) * momentumMagnitudeSquared * density_1
@@ -260,8 +286,7 @@ namespace hemelb
                       + 3. * mom_dot_ei);
             }
           }
-          #endif
-
+#endif
 
           // Calculate density, momentum and the equilibrium distribution
           // functions according to the D3Q15 model.  The calculated momentum_x, momentum_y
@@ -279,9 +304,15 @@ namespace hemelb
           {
             CalculateDensityAndMomentum(f, density, momentum_x, momentum_y, momentum_z);
 
+#if HEMELB_LATTICE_INCOMPRESSIBLE
+            velocity_x = momentum_x;
+            velocity_y = momentum_y;
+            velocity_z = momentum_z;
+#else
             velocity_x = momentum_x / density;
             velocity_y = momentum_y / density;
             velocity_z = momentum_z / density;
+#endif
 
             CalculateFeq(density, momentum_x, momentum_y, momentum_z, f_eq);
           }
@@ -655,7 +686,11 @@ namespace hemelb
 
           inline static bool IsLatticeCompressible()
           {
+#if HEMELB_LATTICE_INCOMPRESSIBLE
+            return false;
+#else
             return true;
+#endif
           }
 
         private:

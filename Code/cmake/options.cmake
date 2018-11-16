@@ -83,6 +83,7 @@ hemelb_option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
 hemelb_option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" ON)
 hemelb_option(HEMELB_USE_VELOCITY_WEIGHTS_FILE "Use Velocity weights file" OFF)
 hemelb_option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
+hemelb_option(HEMELB_LATTICE_INCOMPRESSIBLE "Use an incompressible lattice" OFF)
 
 #
 # Specify the variables
@@ -107,7 +108,7 @@ hemelb_cachevar(HEMELB_PROFILING ""
  STRING "Profiling options (can be blank or something like -g -pg)")
 
 hemelb_cachevar(HEMELB_LATTICE "D3Q15"
-  STRING "Select the lattice type to use (D3Q15,D3Q19,D3Q27,D3Q15i)")
+  STRING "Select the lattice type to use (D3Q15,D3Q19,D3Q27)")
 hemelb_cachevar(HEMELB_KERNEL "LBGK"
   STRING "Select the kernel to use (LBGK,EntropicAnsumali,EntropicChik,MRT,TRT,NNCY,NNCYMOUSE,NNC,NNTPL)")
 hemelb_cachevar(HEMELB_WALL_BOUNDARY "SIMPLEBOUNCEBACK"

@@ -13,7 +13,6 @@
 #include "lb/lattices/D3Q15.cuh"
 #include "lb/lattices/D3Q19.cuh"
 #include "lb/lattices/D3Q27.cuh"
-#include "lb/lattices/D3Q15i.cuh"
 
 
 
@@ -27,15 +26,39 @@ using namespace hemelb::lb;
 
 
 // lb/lattices/Lattice.h
-__device__ void Lattice_CalculateFeq(const distribn_t& density, const double3& momentum, distribn_t* f_eq)
+__device__ void Lattice_CalculateFeq(
+  const distribn_t& density,
+  const double3& momentum,
+  distribn_t* f_eq)
 {
+#if HEMELB_LATTICE_INCOMPRESSIBLE
+  const distribn_t momentumMagnitudeSquared =
+      momentum.x * momentum.x
+      + momentum.y * momentum.y
+      + momentum.z * momentum.z;
+
+  for ( Direction j = 0; j < DmQn::NUMVECTORS; ++j )
+  {
+    const distribn_t mom_dot_ei =
+        DmQn::CXD[j] * momentum.x
+        + DmQn::CYD[j] * momentum.y
+        + DmQn::CZD[j] * momentum.z;
+
+    f_eq[j] = DmQn::EQMWEIGHTS[j]
+        * (density
+          - (3. / 2.) * momentumMagnitudeSquared
+          + (9. / 2.) * mom_dot_ei * mom_dot_ei
+          + 3. * mom_dot_ei);
+  }
+
+#else
   const distribn_t density_1 = 1. / density;
   const distribn_t momentumMagnitudeSquared =
       momentum.x * momentum.x
       + momentum.y * momentum.y
       + momentum.z * momentum.z;
 
-  for ( int j = 0; j < DmQn::NUMVECTORS; ++j )
+  for ( Direction j = 0; j < DmQn::NUMVECTORS; ++j )
   {
     const distribn_t mom_dot_ei =
         DmQn::CXD[j] * momentum.x
@@ -48,6 +71,7 @@ __device__ void Lattice_CalculateFeq(const distribn_t& density, const double3& m
             + (9. / 2.) * density_1 * mom_dot_ei * mom_dot_ei
             + 3. * mom_dot_ei);
   }
+#endif
 }
 
 
@@ -77,8 +101,8 @@ __global__ void Normal_LBGK_SBB_Nash_StreamAndCollide(
 
   // initialize hydroVars
   distribn_t f[DmQn::NUMVECTORS];
-  distribn_t density;
-  double3 momentum;
+  distribn_t density = 0.0;
+  double3 momentum = make_double3(0.0, 0.0, 0.0);
   double3 velocity;
   distribn_t f_eq[DmQn::NUMVECTORS];
   distribn_t* f_neq = f_eq;
@@ -90,12 +114,9 @@ __global__ void Normal_LBGK_SBB_Nash_StreamAndCollide(
   // Normal::DoCalculatePreCollision()
   // LBGK::DoCalculateDensityMomentumFeq()
   // Lattice::CalculateDensityMomentumFEq()
-  density = 0.0;
-  momentum.x = 0.0;
-  momentum.y = 0.0;
-  momentum.z = 0.0;
 
-  for ( int j = 0; j < DmQn::NUMVECTORS; ++j )
+  // Lattice::CalculateDensityAndMomentum
+  for ( Direction j = 0; j < DmQn::NUMVECTORS; ++j )
   {
     density += f[j];
     momentum.x += DmQn::CXD[j] * f[j];
@@ -103,20 +124,26 @@ __global__ void Normal_LBGK_SBB_Nash_StreamAndCollide(
     momentum.z += DmQn::CZD[j] * f[j];
   }
 
+#if HEMELB_LATTICE_INCOMPRESSIBLE
+  velocity.x = momentum.x;
+  velocity.y = momentum.y;
+  velocity.z = momentum.z;
+#else
   velocity.x = momentum.x / density;
   velocity.y = momentum.y / density;
   velocity.z = momentum.z / density;
+#endif
 
   Lattice_CalculateFeq(density, momentum, f_eq);
 
-  for ( int j = 0; j < DmQn::NUMVECTORS; ++j )
+  for ( Direction j = 0; j < DmQn::NUMVECTORS; ++j )
   {
     f_neq[j] = f[j] - f_eq[j];
   }
 
   // Normal::DoCollide()
   // LBGK::DoCollide()
-  for ( int j = 0; j < DmQn::NUMVECTORS; ++j )
+  for ( Direction j = 0; j < DmQn::NUMVECTORS; ++j )
   {
     f_post[j] = f[j] + f_neq[j] * lbmParams_omega;
   }
@@ -124,10 +151,11 @@ __global__ void Normal_LBGK_SBB_Nash_StreamAndCollide(
   // perform streaming
   auto& site = siteData[siteIndex];
 
-  for ( int j = 0; j < DmQn::NUMVECTORS; ++j )
+  for ( Direction j = 0; j < DmQn::NUMVECTORS; ++j )
   {
     if ( site.HasIolet(j) )
     {
+      // NashZerothOrderPressureDelegate::StreamLink()
       // get iolet
       auto& iolet = (site.GetSiteType() == geometry::INLET_TYPE)
         ? inlets[site.GetIoletId()]
@@ -138,9 +166,9 @@ __global__ void Normal_LBGK_SBB_Nash_StreamAndCollide(
 
       // compute momentum at the iolet
       distribn_t component =
-          velocity.x * iolet.normal.x
-          + velocity.y * iolet.normal.y
-          + velocity.z * iolet.normal.z;
+          (momentum.x / density) * iolet.normal.x
+          + (momentum.y / density) * iolet.normal.y
+          + (momentum.z / density) * iolet.normal.z;
 
       double3 ioletMomentum;
       ioletMomentum.x = iolet.normal.x * component * ioletDensity;
@@ -157,11 +185,13 @@ __global__ void Normal_LBGK_SBB_Nash_StreamAndCollide(
     }
     else if ( site.HasWall(j) )
     {
+      // SimpleBounceBackDelegate::StreamLink()
       int outIndex = siteIndex * DmQn::NUMVECTORS + DmQn::INVERSEDIRECTIONS[j];
       fNew[outIndex] = f_post[j];
     }
     else
     {
+      // SimpleCollideAndStreamDelegate::StreamLink()
       int outIndex = neighbourIndices[siteIndex * DmQn::NUMVECTORS + j];
       fNew[outIndex] = f_post[j];
     }
