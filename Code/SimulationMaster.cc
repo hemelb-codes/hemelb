@@ -22,19 +22,11 @@
 #include "net/IOCommunicator.h"
 #include "colloids/BodyForces.h"
 #include "colloids/BoundaryConditions.h"
-#include "lb/cuda_helper.h"
+#include "cuda_helper.h"
 
 #include <map>
 #include <limits>
 #include <cstdlib>
-
-
-
-/**
- * Global GPU buffers declared in cuda_helper.h
- */
-hemelb::lb::iolets::InOutLetCosineGPU* hemelb::lb::inlets_dev;
-hemelb::lb::iolets::InOutLetCosineGPU* hemelb::lb::outlets_dev;
 
 
 

@@ -223,7 +223,9 @@ void Normal_LBGK_SBB_Nash::Type::StreamAndCollideGPU(
   const site_t siteCount,
   const lb::LbmParameters* lbmParams,
   geometry::LatticeData* latDat,
-  lb::SimulationState* simState
+  lb::SimulationState* simState,
+  const iolets::InOutLetCosineGPU* inlets,
+  const iolets::InOutLetCosineGPU* outlets
 )
 {
   if ( siteCount == 0 )
@@ -239,8 +241,8 @@ void Normal_LBGK_SBB_Nash::Type::StreamAndCollideGPU(
     siteCount,
     lbmParams->GetTau(),
     lbmParams->GetOmega(),
-    inlets_dev,
-    outlets_dev,
+    inlets,
+    outlets,
     latDat->GetNeighbourIndicesGPU(),
     latDat->GetSiteDataGPU(),
     latDat->GetFOldGPU(0),

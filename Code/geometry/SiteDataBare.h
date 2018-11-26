@@ -9,7 +9,7 @@
 
 #include "geometry/GeometrySite.h"
 #include "geometry/SiteType.h"
-#include "lb/cuda_helper.h"
+#include "cuda_helper.h"
 #include "units.h"
 
 namespace hemelb

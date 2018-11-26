@@ -19,7 +19,7 @@
 #include "geometry/Site.h"
 #include "geometry/neighbouring/NeighbouringSite.h"
 #include "geometry/SiteData.h"
-#include "lb/cuda_helper.h"
+#include "cuda_helper.h"
 #include "reporting/Reportable.h"
 #include "reporting/Timers.h"
 #include "util/Vector3D.h"

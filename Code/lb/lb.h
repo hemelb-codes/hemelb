@@ -7,16 +7,17 @@
 #ifndef HEMELB_LB_LB_H
 #define HEMELB_LB_LB_H
 
-#include "net/net.h"
-#include "net/IteratedAction.h"
-#include "net/IOCommunicator.h"
+#include "configuration/SimConfig.h"
 #include "lb/SimulationState.h"
 #include "lb/iolets/BoundaryValues.h"
-#include "lb/MacroscopicPropertyCache.h"
-#include "util/UnitConverter.h"
-#include "configuration/SimConfig.h"
-#include "reporting/Timers.h"
+#include "lb/iolets/InOutLetCosine.cuh"
 #include "lb/BuildSystemInterface.h"
+#include "lb/MacroscopicPropertyCache.h"
+#include "net/IOCommunicator.h"
+#include "net/IteratedAction.h"
+#include "net/net.h"
+#include "reporting/Timers.h"
+#include "util/UnitConverter.h"
 #include <typeinfo>
 
 namespace hemelb
@@ -154,6 +155,9 @@ namespace hemelb
         geometry::LatticeData* mLatDat;
         SimulationState* mState;
         iolets::BoundaryValues *mInletValues, *mOutletValues;
+
+        iolets::InOutLetCosineGPU* inlets_dev;
+        iolets::InOutLetCosineGPU* outlets_dev;
 
         LbmParameters mParams;
         vis::Control* mVisControl;

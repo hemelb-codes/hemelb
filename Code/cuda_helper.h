@@ -1,11 +1,10 @@
 
-#ifndef HEMELB_LB_CUDA_HELPER_H
-#define HEMELB_LB_CUDA_HELPER_H
+#ifndef HEMELB_CUDA_HELPER_H
+#define HEMELB_CUDA_HELPER_H
 
 #include <cstdio>
 #include <cstdlib>
 #include <cuda_runtime.h>
-#include "lb/iolets/InOutLetCosine.cuh"
 #include "units.h"
 
 
@@ -29,17 +28,6 @@
               << name << ": " << str << "\n";     \
     exit(1);                                      \
   }                                               \
-}
-
-
-
-namespace hemelb {
-namespace lb {
-
-extern iolets::InOutLetCosineGPU* inlets_dev;
-extern iolets::InOutLetCosineGPU* outlets_dev;
-
-}
 }
 
 

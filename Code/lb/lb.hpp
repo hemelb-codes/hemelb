@@ -9,7 +9,7 @@
 
 #include "io/writers/xdr/XdrMemWriter.h"
 #include "lb/lb.h"
-#include "lb/cuda_helper.h"
+#include "cuda_helper.h"
 
 namespace hemelb
 {
@@ -315,7 +315,7 @@ namespace hemelb
 
       if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
       {
-        mMidFluidStreamer->StreamAndCollideGPU(offset, mLatDat->GetDomainEdgeSiteCount(), &mParams, mLatDat, mState);
+        mMidFluidStreamer->StreamAndCollideGPU(offset, mLatDat->GetDomainEdgeSiteCount(), &mParams, mLatDat, mState, inlets_dev, outlets_dev);
       }
 
       else
@@ -385,7 +385,7 @@ namespace hemelb
 
       if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
       {
-        mMidFluidStreamer->StreamAndCollideGPU(offset, mLatDat->GetMidDomainSiteCount(), &mParams, mLatDat, mState);
+        mMidFluidStreamer->StreamAndCollideGPU(offset, mLatDat->GetMidDomainSiteCount(), &mParams, mLatDat, mState, inlets_dev, outlets_dev);
       }
 
       else

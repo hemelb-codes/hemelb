@@ -7,6 +7,7 @@
 #ifndef HEMELB_LB_STREAMERS_STREAMERTYPEFACTORY_H
 #define HEMELB_LB_STREAMERS_STREAMERTYPEFACTORY_H
 
+#include "lb/iolets/InOutLetCosine.cuh"
 #include "lb/streamers/BaseStreamer.h"
 #include "lb/streamers/SimpleCollideAndStreamDelegate.h"
 
@@ -53,7 +54,9 @@ namespace hemelb
                                    const site_t siteCount,
                                    const lb::LbmParameters* lbmParams,
                                    geometry::LatticeData* latDat,
-                                   lb::SimulationState* simState);
+                                   lb::SimulationState* simState,
+                                   const iolets::InOutLetCosineGPU* inlets,
+                                   const iolets::InOutLetCosineGPU* outlets);
 
           template<bool tDoRayTracing>
           inline void DoStreamAndCollide(const site_t firstIndex,
