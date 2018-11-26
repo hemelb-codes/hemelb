@@ -76,6 +76,7 @@ __global__ void Normal_LBGK_SBB_Nash_StreamAndCollide(
   }
 
   site_t siteIndex = firstIndex + i;
+  auto& site = siteData[siteIndex];
 
   // initialize hydroVars
   distribn_t f[DmQn::NUMVECTORS];
@@ -106,27 +107,6 @@ __global__ void Normal_LBGK_SBB_Nash_StreamAndCollide(
 
   for ( Direction j = 0; j < DmQn::NUMVECTORS; ++j )
   {
-    const distribn_t mom_dot_ei =
-        DmQn::CXD[j] * momentum.x
-        + DmQn::CYD[j] * momentum.y
-        + DmQn::CZD[j] * momentum.z;
-
-    f_post[j] = DmQn::EQMWEIGHTS[j]
-        * (density
-            - (3. / 2.) * density_1 * momentumMagnitudeSquared
-            + (9. / 2.) * density_1 * mom_dot_ei * mom_dot_ei
-            + 3. * mom_dot_ei);
-
-    // Normal::DoCollide()
-    // LBGK::DoCollide()
-    f_post[j] = f[j] + lbmParams_omega * (f[j] - f_post[j]);
-  }
-
-  // perform streaming
-  auto& site = siteData[siteIndex];
-
-  for ( Direction j = 0; j < DmQn::NUMVECTORS; ++j )
-  {
     if ( site.HasIolet(j) )
     {
       // NashZerothOrderPressureDelegate::StreamLink()
@@ -150,25 +130,52 @@ __global__ void Normal_LBGK_SBB_Nash_StreamAndCollide(
       ioletMomentum.z = iolet.normal.z * component * ioletDensity;
 
       // compute f_eq at the iolet
-      distribn_t ioletFeq[DmQn::NUMVECTORS];
+      // Lattice::CalculateFeq()
+      const distribn_t ioletDensity_1 = 1. / ioletDensity;
+      const distribn_t momentumMagnitudeSquared =
+          ioletMomentum.x * ioletMomentum.x
+          + ioletMomentum.y * ioletMomentum.y
+          + ioletMomentum.z * ioletMomentum.z;
 
-      Lattice_CalculateFeq(ioletDensity, ioletMomentum, ioletFeq);
+      Direction jj = DmQn::INVERSEDIRECTIONS[j];
+      const distribn_t mom_dot_ei =
+          DmQn::CXD[jj] * ioletMomentum.x
+          + DmQn::CYD[jj] * ioletMomentum.y
+          + DmQn::CZD[jj] * ioletMomentum.z;
 
-      int outIndex = siteIndex * DmQn::NUMVECTORS + DmQn::INVERSEDIRECTIONS[j];
-      fNew[outIndex] = ioletFeq[DmQn::INVERSEDIRECTIONS[j]];
-    }
-    else if ( site.HasWall(j) )
-    {
-      // SimpleBounceBackDelegate::StreamLink()
-      int outIndex = siteIndex * DmQn::NUMVECTORS + DmQn::INVERSEDIRECTIONS[j];
-      fNew[outIndex] = f_post[j];
+      f_post[j] = DmQn::EQMWEIGHTS[jj]
+          * (ioletDensity
+              - (3. / 2.) * ioletDensity_1 * momentumMagnitudeSquared
+              + (9. / 2.) * ioletDensity_1 * mom_dot_ei * mom_dot_ei
+              + 3. * mom_dot_ei);
     }
     else
     {
-      // SimpleCollideAndStreamDelegate::StreamLink()
-      int outIndex = neighbourIndices[siteIndex * DmQn::NUMVECTORS + j];
-      fNew[outIndex] = f_post[j];
+      // Lattice::CalculateFeq()
+      const distribn_t mom_dot_ei =
+          DmQn::CXD[j] * momentum.x
+          + DmQn::CYD[j] * momentum.y
+          + DmQn::CZD[j] * momentum.z;
+
+      f_post[j] = DmQn::EQMWEIGHTS[j]
+          * (density
+              - (3. / 2.) * density_1 * momentumMagnitudeSquared
+              + (9. / 2.) * density_1 * mom_dot_ei * mom_dot_ei
+              + 3. * mom_dot_ei);
+
+      // Normal::DoCollide()
+      // LBGK::DoCollide()
+      f_post[j] = f[j] + lbmParams_omega * (f[j] - f_post[j]);
     }
+
+    // NashZerothOrderPressureDelegate::StreamLink()
+    // SimpleBounceBackDelegate::StreamLink()
+    // SimpleCollideAndStreamDelegate::StreamLink()
+    int outIndex = (site.HasIolet(j) || site.HasWall(j))
+      ? siteIndex * DmQn::NUMVECTORS + DmQn::INVERSEDIRECTIONS[j]
+      : neighbourIndices[siteIndex * DmQn::NUMVECTORS + j];
+
+    fNew[outIndex] = f_post[j];
   }
 }
 
