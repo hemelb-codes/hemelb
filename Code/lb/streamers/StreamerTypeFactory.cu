@@ -31,27 +31,6 @@ __device__ void Lattice_CalculateFeq(
   const double3& momentum,
   distribn_t* f_eq)
 {
-#if HEMELB_LATTICE_INCOMPRESSIBLE
-  const distribn_t momentumMagnitudeSquared =
-      momentum.x * momentum.x
-      + momentum.y * momentum.y
-      + momentum.z * momentum.z;
-
-  for ( Direction j = 0; j < DmQn::NUMVECTORS; ++j )
-  {
-    const distribn_t mom_dot_ei =
-        DmQn::CXD[j] * momentum.x
-        + DmQn::CYD[j] * momentum.y
-        + DmQn::CZD[j] * momentum.z;
-
-    f_eq[j] = DmQn::EQMWEIGHTS[j]
-        * (density
-          - (3. / 2.) * momentumMagnitudeSquared
-          + (9. / 2.) * mom_dot_ei * mom_dot_ei
-          + 3. * mom_dot_ei);
-  }
-
-#else
   const distribn_t density_1 = 1. / density;
   const distribn_t momentumMagnitudeSquared =
       momentum.x * momentum.x
@@ -67,11 +46,10 @@ __device__ void Lattice_CalculateFeq(
 
     f_eq[j] = DmQn::EQMWEIGHTS[j]
         * (density
-            - (3. / 2.) * momentumMagnitudeSquared * density_1
+            - (3. / 2.) * density_1 * momentumMagnitudeSquared
             + (9. / 2.) * density_1 * mom_dot_ei * mom_dot_ei
             + 3. * mom_dot_ei);
   }
-#endif
 }
 
 
@@ -103,49 +81,45 @@ __global__ void Normal_LBGK_SBB_Nash_StreamAndCollide(
   distribn_t f[DmQn::NUMVECTORS];
   distribn_t density = 0.0;
   double3 momentum = make_double3(0.0, 0.0, 0.0);
-  double3 velocity;
-  distribn_t f_eq[DmQn::NUMVECTORS];
-  distribn_t* f_neq = f_eq;
-  distribn_t* f_post = f_eq;
+  distribn_t f_post[DmQn::NUMVECTORS];
 
-  // copy fOld to local memory
-  memcpy(&f[0], &fOld[siteIndex * DmQn::NUMVECTORS], DmQn::NUMVECTORS * sizeof(distribn_t));
-
-  // Normal::DoCalculatePreCollision()
-  // LBGK::DoCalculateDensityMomentumFeq()
-  // Lattice::CalculateDensityMomentumFEq()
-
-  // Lattice::CalculateDensityAndMomentum
   for ( Direction j = 0; j < DmQn::NUMVECTORS; ++j )
   {
+    // copy fOld to local memory
+    f[j] = fOld[siteIndex * DmQn::NUMVECTORS + j];
+
+    // Normal::DoCalculatePreCollision()
+    // LBGK::DoCalculateDensityMomentumFeq()
+    // Lattice::CalculateDensityAndMomentum()
     density += f[j];
     momentum.x += DmQn::CXD[j] * f[j];
     momentum.y += DmQn::CYD[j] * f[j];
     momentum.z += DmQn::CZD[j] * f[j];
   }
 
-#if HEMELB_LATTICE_INCOMPRESSIBLE
-  velocity.x = momentum.x;
-  velocity.y = momentum.y;
-  velocity.z = momentum.z;
-#else
-  velocity.x = momentum.x / density;
-  velocity.y = momentum.y / density;
-  velocity.z = momentum.z / density;
-#endif
-
-  Lattice_CalculateFeq(density, momentum, f_eq);
+  // Lattice::CalculateFeq()
+  const distribn_t density_1 = 1. / density;
+  const distribn_t momentumMagnitudeSquared =
+      momentum.x * momentum.x
+      + momentum.y * momentum.y
+      + momentum.z * momentum.z;
 
   for ( Direction j = 0; j < DmQn::NUMVECTORS; ++j )
   {
-    f_neq[j] = f[j] - f_eq[j];
-  }
+    const distribn_t mom_dot_ei =
+        DmQn::CXD[j] * momentum.x
+        + DmQn::CYD[j] * momentum.y
+        + DmQn::CZD[j] * momentum.z;
 
-  // Normal::DoCollide()
-  // LBGK::DoCollide()
-  for ( Direction j = 0; j < DmQn::NUMVECTORS; ++j )
-  {
-    f_post[j] = f[j] + f_neq[j] * lbmParams_omega;
+    f_post[j] = DmQn::EQMWEIGHTS[j]
+        * (density
+            - (3. / 2.) * density_1 * momentumMagnitudeSquared
+            + (9. / 2.) * density_1 * mom_dot_ei * mom_dot_ei
+            + 3. * mom_dot_ei);
+
+    // Normal::DoCollide()
+    // LBGK::DoCollide()
+    f_post[j] = f[j] + lbmParams_omega * (f[j] - f_post[j]);
   }
 
   // perform streaming
