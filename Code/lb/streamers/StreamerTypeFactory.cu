@@ -25,36 +25,43 @@ using namespace hemelb::lb;
 
 
 
-// lb/lattices/Lattice.h
-__device__ void Lattice_CalculateFeq(
-  const distribn_t& density,
-  const double3& momentum,
-  distribn_t* f_eq)
+class Normal_LBGK_SBB_Nash
 {
-  const distribn_t density_1 = 1. / density;
-  const distribn_t momentumMagnitudeSquared =
-      momentum.x * momentum.x
-      + momentum.y * momentum.y
-      + momentum.z * momentum.z;
+public:
+  typedef lattices:: HEMELB_LATTICE LatticeType;
+  typedef typename collisions::Normal<kernels::LBGK<LatticeType>> CollisionType;
+  typedef typename streamers::SimpleBounceBackDelegate<CollisionType> WallLinkType;
+  typedef typename streamers::NashZerothOrderPressureDelegate<CollisionType> IoletLinkType;
 
-  for ( Direction j = 0; j < DmQn::NUMVECTORS; ++j )
-  {
-    const distribn_t mom_dot_ei =
-        DmQn::CXD[j] * momentum.x
-        + DmQn::CYD[j] * momentum.y
-        + DmQn::CZD[j] * momentum.z;
+  typedef typename streamers::StreamerTypeFactory<
+    CollisionType,
+    WallLinkType,
+    IoletLinkType
+  > Type;
+};
 
-    f_eq[j] = DmQn::EQMWEIGHTS[j]
-        * (density
-            - (3. / 2.) * density_1 * momentumMagnitudeSquared
-            + (9. / 2.) * density_1 * mom_dot_ei * mom_dot_ei
-            + 3. * mom_dot_ei);
-  }
+
+
+__device__
+int Normal_LBGK_SBB_Nash_GetOutputIndex(
+  site_t siteIndex,
+  Direction direction,
+  const geometry::SiteData& site,
+  const site_t* neighbourIndices
+)
+{
+  // NashZerothOrderPressureDelegate::StreamLink()
+  // SimpleBounceBackDelegate::StreamLink()
+  // SimpleCollideAndStreamDelegate::StreamLink()
+  return (site.HasIolet(direction) || site.HasWall(direction))
+    ? siteIndex * DmQn::NUMVECTORS + DmQn::INVERSEDIRECTIONS[direction]
+    : neighbourIndices[siteIndex * DmQn::NUMVECTORS + direction];
 }
 
 
 
-__global__ void Normal_LBGK_SBB_Nash_StreamAndCollide(
+__global__
+void Normal_LBGK_SBB_Nash_StreamAndCollide(
   site_t firstIndex,
   site_t siteCount,
   distribn_t lbmParams_tau,
@@ -168,33 +175,12 @@ __global__ void Normal_LBGK_SBB_Nash_StreamAndCollide(
       f_post[j] = f[j] + lbmParams_omega * (f[j] - f_post[j]);
     }
 
-    // NashZerothOrderPressureDelegate::StreamLink()
-    // SimpleBounceBackDelegate::StreamLink()
-    // SimpleCollideAndStreamDelegate::StreamLink()
-    int outIndex = (site.HasIolet(j) || site.HasWall(j))
-      ? siteIndex * DmQn::NUMVECTORS + DmQn::INVERSEDIRECTIONS[j]
-      : neighbourIndices[siteIndex * DmQn::NUMVECTORS + j];
+    // perform streaming
+    int outIndex = Normal_LBGK_SBB_Nash_GetOutputIndex(siteIndex, j, site, neighbourIndices);
 
     fNew[outIndex] = f_post[j];
   }
 }
-
-
-
-class Normal_LBGK_SBB_Nash
-{
-public:
-  typedef lattices:: HEMELB_LATTICE LatticeType;
-  typedef typename collisions::Normal<kernels::LBGK<LatticeType>> CollisionType;
-  typedef typename streamers::SimpleBounceBackDelegate<CollisionType> WallLinkType;
-  typedef typename streamers::NashZerothOrderPressureDelegate<CollisionType> IoletLinkType;
-
-  typedef typename streamers::StreamerTypeFactory<
-    CollisionType,
-    WallLinkType,
-    IoletLinkType
-  > Type;
-};
 
 
 

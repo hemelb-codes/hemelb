@@ -13,7 +13,8 @@ using namespace hemelb::geometry;
 
 
 
-__global__ void CopyReceivedKernel(
+__global__
+void CopyReceivedKernel(
   const site_t* streamingIndicesForReceivedDistributions,
   const distribn_t* fOldShared,
   distribn_t* fNew,
