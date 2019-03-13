@@ -686,18 +686,22 @@ namespace hemelb
 
     void LatticeData::SendAndReceiveGPU(hemelb::net::Net* net)
     {
+#ifdef HEMELB_CUDA_AWARE_MPI
       for (auto& proc : neighbouringProcs)
       {
         // Request the receive into the appropriate bit of FOld.
         net->RequestReceive<distribn_t>(GetFOldGPU(proc.FirstSharedDistribution),
                                         (int) (proc.SharedDistributionCount),
                                         proc.Rank);
+
         // Request the send from the right bit of FNew.
         net->RequestSend<distribn_t>(GetFNewGPU(proc.FirstSharedDistribution),
                                      (int) (proc.SharedDistributionCount),
                                      proc.Rank);
-
       }
+#else
+      SendAndReceive(net);
+#endif
     }
 
     void LatticeData::SendAndReceive(hemelb::net::Net* net)
@@ -708,11 +712,11 @@ namespace hemelb
         net->RequestReceive<distribn_t>(GetFOld(proc.FirstSharedDistribution),
                                         (int) (proc.SharedDistributionCount),
                                         proc.Rank);
+
         // Request the send from the right bit of FNew.
         net->RequestSend<distribn_t>(GetFNew(proc.FirstSharedDistribution),
                                      (int) (proc.SharedDistributionCount),
                                      proc.Rank);
-
       }
     }
 

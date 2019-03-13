@@ -84,6 +84,7 @@ hemelb_option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" ON)
 hemelb_option(HEMELB_USE_VELOCITY_WEIGHTS_FILE "Use Velocity weights file" OFF)
 hemelb_option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
 hemelb_option(HEMELB_LATTICE_INCOMPRESSIBLE "Use an incompressible lattice" OFF)
+hemelb_option(HEMELB_CUDA_AWARE_MPI "Use CUDA-aware MPI" ON)
 
 #
 # Specify the variables

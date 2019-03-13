@@ -316,6 +316,16 @@ namespace hemelb
       if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
       {
         mMidFluidStreamer->StreamAndCollideGPU(offset, mLatDat->GetDomainEdgeSiteCount(), &mParams, mLatDat, mState, inlets_dev, outlets_dev);
+
+#ifndef HEMELB_CUDA_AWARE_MPI
+        // copy fNew (sharedFs) from device to host
+        CUDA_SAFE_CALL(cudaMemcpy(
+          mLatDat->GetFNew(localFluidSites * LatticeType::NUMVECTORS + 1),
+          mLatDat->GetFNewGPU(localFluidSites * LatticeType::NUMVECTORS + 1),
+          (sharedFs) * sizeof(distribn_t),
+          cudaMemcpyDeviceToHost
+        ));
+#endif
       }
 
       else
@@ -433,6 +443,19 @@ namespace hemelb
       // This is done here, after receiving the sent distributions from neighbours.
       if ( mParams.UseGPU() )
       {
+#ifndef HEMELB_CUDA_AWARE_MPI
+        site_t localFluidSites = mLatDat->GetLocalFluidSiteCount();
+        site_t sharedFs = mLatDat->GetNumSharedFs();
+
+        // copy fOld (sharedFs) from host to device
+        CUDA_SAFE_CALL(cudaMemcpyAsync(
+          mLatDat->GetFOldGPU(localFluidSites * LatticeType::NUMVECTORS + 1),
+          mLatDat->GetFOld(localFluidSites * LatticeType::NUMVECTORS + 1),
+          (sharedFs) * sizeof(distribn_t),
+          cudaMemcpyHostToDevice
+        ));
+#endif
+
         mLatDat->CopyReceivedGPU();
       }
       else
