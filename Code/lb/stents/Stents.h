@@ -9,6 +9,7 @@
 
 #include "lb/stents/Stent.h"
 #include "lb/stents/StentConstant.h"
+#include "lb/stents/StentCoating.h"
 #include "lb/stents/StentFile.h"
 #include "lb/stents/StentConstantFlux.h"
 #include "lb/stents/StentFileFlux.h"

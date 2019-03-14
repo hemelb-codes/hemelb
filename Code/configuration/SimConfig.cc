@@ -259,6 +259,10 @@ namespace hemelb
         {
           newStent = DoIOForFluxStent(currentStentNode);
         }
+        else if (conditionType == "coating")
+        {
+          newStent = DoIOForCoatingStent(currentStentNode);
+        }
         else
         {
           throw Exception() << "Invalid boundary condition type '" << conditionType << "' in "
@@ -649,6 +653,29 @@ namespace hemelb
       // Amplitude is a pressure DIFFERENCE (no use of REFERENCE_PRESSURE)
       GetDimensionalValue(conditionEl.GetChildOrThrow("mean"), "kg/m3", tempD);
       newStent->SetDensity(unitConverter->ConvertDensityToLatticeUnits(tempD));
+
+      return newStent;
+    }
+
+    lb::stents::StentCoating* SimConfig::DoIOForCoatingStent(
+        const io::xml::Element& stentEl)
+    {
+      lb::stents::StentCoating* newStent = new lb::stents::StentCoating();
+
+      const io::xml::Element conditionEl = stentEl.GetChildOrThrow("condition");
+
+      PhysicalDensity tempD;
+      // Amplitude is a pressure DIFFERENCE (no use of REFERENCE_PRESSURE)
+      GetDimensionalValue(conditionEl.GetChildOrThrow("mean"), "kg/m3", tempD);
+      newStent->SetDensity(unitConverter->ConvertDensityToLatticeUnits(tempD));
+
+      distribn_t tempDc;
+      GetDimensionalValue(conditionEl.GetChildOrThrow("mean"), "m^2/s", tempDc);
+      newStent->SetCoatingDiffusivity(unitConverter->ConvertDiffusivityToLatticeUnits(tempDc));
+
+      PhysicalDistance templc;
+      GetDimensionalValue(conditionEl.GetChildOrThrow("mean"), "m", templc);
+      newStent->SetCoatingThickness(unitConverter->ConvertDistanceToLatticeUnits(templc));
 
       return newStent;
     }

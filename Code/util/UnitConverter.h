@@ -33,6 +33,9 @@ namespace hemelb
         LatticeDistance ConvertDistanceToLatticeUnits(const PhysicalDistance& x) const;
         PhysicalDistance ConvertDistanceToPhysicalUnits(const LatticeDistance& x) const;
 
+        distribn_t ConvertDiffusivityToLatticeUnits(const distribn_t& D) const;
+        distribn_t ConvertDiffusivityToPhysicalUnits(const distribn_t& D) const;
+
         LatticePosition ConvertPositionToLatticeUnits(const PhysicalPosition& x) const;
         PhysicalPosition ConvertPositionToPhysicalUnits(const LatticePosition& x) const;
 

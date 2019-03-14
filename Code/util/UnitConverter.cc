@@ -68,6 +68,14 @@ namespace hemelb
     {
       return x * latticeDistance;
     }
+    distribn_t UnitConverter::ConvertDiffusivityToLatticeUnits(const distribn_t& D) const
+    {
+      return (D*latticeTime) / (latticeDistance*latticeDistance);
+    }
+    distribn_t UnitConverter::ConvertDiffusivityToPhysicalUnits(const distribn_t& D) const
+    {
+      return (D * latticeDistance*latticeDistance) / latticeTime;
+    }
     LatticePosition UnitConverter::ConvertPositionToLatticeUnits(const PhysicalPosition& x) const
     {
       return (x - latticeOrigin) / latticeDistance;

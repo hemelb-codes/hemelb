@@ -165,10 +165,24 @@ namespace hemelb
     };
 
     template<class Collision>
+    class ADVECTIONDIFFUSIONBFLCOATINGCONCENTRATION
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionBFLCoatingConcentration<Collision>::Type Type;
+    };
+
+    template<class Collision>
     class ADVECTIONDIFFUSIONBFLNEUMANN
     {
       public:
         typedef typename streamers::AdvectionDiffusionBFLNeumann<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONBFLCOATINGFLUX
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionBFLCoatingFlux<Collision>::Type Type;
     };
 
     template<class Collision>
@@ -186,10 +200,24 @@ namespace hemelb
     };
 
     template<class Collision>
+    class ADVECTIONDIFFUSIONBFLWALLBFLIOLETCOATINGCONCENTRATION
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionBFLWallBFLIoletCoatingConcentration<Collision>::Type Type;
+    };
+
+    template<class Collision>
     class ADVECTIONDIFFUSIONBFLWALLBFLIOLETNEUMANN
     {
       public:
         typedef typename streamers::AdvectionDiffusionBFLWallBFLIoletNeumann<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONBFLWALLBFLIOLETCOATINGFLUX
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionBFLWallBFLIoletCoatingFlux<Collision>::Type Type;
     };
 
     template<class Collision>
@@ -200,10 +228,24 @@ namespace hemelb
     };
 
     template<class Collision>
+    class ADVECTIONDIFFUSIONBFLWALLSBBIOLETCOATINGCONCENTRATION
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionBFLWallSBBIoletCoatingConcentration<Collision>::Type Type;
+    };
+
+    template<class Collision>
     class ADVECTIONDIFFUSIONBFLWALLSBBIOLETNEUMANN
     {
       public:
         typedef typename streamers::AdvectionDiffusionBFLWallSBBIoletNeumann<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONBFLWALLSBBIOLETCOATINGFLUX
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionBFLWallSBBIoletCoatingFlux<Collision>::Type Type;
     };
     /**
      * The Guo Zheng and Shi mode-extrapolation boundary condition.
@@ -232,10 +274,17 @@ namespace hemelb
     };
 
     template<class Collision>
-    class ADVECTIONDIFFUSIONSBBNEUMANN
+    class ADVECTIONDIFFUSIONSBBCOATINGCONCENTRATION
     {
       public:
-        typedef typename streamers::AdvectionDiffusionSBBNeumann<Collision>::Type Type;
+        typedef typename streamers::AdvectionDiffusionSBBCoatingConcentration<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONSBBCOATINGFLUX
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionSBBCoatingFlux<Collision>::Type Type;
     };
 
     template<class Collision>
@@ -253,10 +302,24 @@ namespace hemelb
     };
 
     template<class Collision>
+    class ADVECTIONDIFFUSIONSBBWALLBFLIOLETCOATINGCONCENTRATION
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionSBBWallBFLIoletCoatingConcentration<Collision>::Type Type;
+    };
+
+    template<class Collision>
     class ADVECTIONDIFFUSIONSBBWALLBFLIOLETNEUMANN
     {
       public:
         typedef typename streamers::AdvectionDiffusionSBBWallBFLIoletNeumann<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONSBBWALLBFLIOLETCOATINGFLUX
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionSBBWallBFLIoletCoatingFlux<Collision>::Type Type;
     };
 
     template<class Collision>
@@ -267,10 +330,24 @@ namespace hemelb
     };
 
     template<class Collision>
+    class ADVECTIONDIFFUSIONSBBWALLSBBIOLETCOATINGCONCENTRATION
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionSBBWallSBBIoletCoatingConcentration<Collision>::Type Type;
+    };
+
+    template<class Collision>
     class ADVECTIONDIFFUSIONSBBWALLSBBIOLETNEUMANN
     {
       public:
         typedef typename streamers::AdvectionDiffusionSBBWallSBBIoletNeumann<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONSBBWALLSBBIOLETCOATINGFLUX
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionSBBWallSBBIoletCoatingFlux<Collision>::Type Type;
     };
     /**
      * The Junk & Yang 2005 boundary condition.
@@ -390,10 +467,24 @@ namespace hemelb
     };
 
     template<class Collision>
+    class ADVECTIONDIFFUSIONSBBWALLOUTFLOWIOLETCOATINGCONCENTRATION
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionSBBWallOutflowIoletCoatingConcentration<Collision>::Type Type;
+    };
+
+    template<class Collision>
     class ADVECTIONDIFFUSIONSBBWALLOUTFLOWIOLETNEUMANN
     {
       public:
         typedef typename streamers::AdvectionDiffusionSBBWallOutflowIoletNeumann<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONSBBWALLOUTFLOWIOLETCOATINGFLUX
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionSBBWallOutflowIoletCoatingFlux<Collision>::Type Type;
     };
 
     template<class Collision>
@@ -404,10 +495,24 @@ namespace hemelb
     };
 
     template<class Collision>
+    class ADVECTIONDIFFUSIONBFLWALLOUTFLOWIOLETCOATINGCONCENTRATION
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionBFLWallOutflowIoletCoatingConcentration<Collision>::Type Type;
+    };
+
+    template<class Collision>
     class ADVECTIONDIFFUSIONBFLWALLOUTFLOWIOLETNEUMANN
     {
       public:
         typedef typename streamers::AdvectionDiffusionBFLWallOutflowIoletNeumann<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONBFLWALLOUTFLOWIOLETCOATINGFLUX
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionBFLWallOutflowIoletCoatingFlux<Collision>::Type Type;
     };
 
     template<class Collision>
@@ -425,10 +530,24 @@ namespace hemelb
     };
 
     template<class Collision>
+    class ADVECTIONDIFFUSIONSBBWALLINLETDIRICHLETCOATINGCONCENTRATION
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionSBBWallInletDirichletCoatingConcentration<Collision>::Type Type;
+    };
+
+    template<class Collision>
     class ADVECTIONDIFFUSIONSBBWALLINLETDIRICHLETNEUMANN
     {
       public:
         typedef typename streamers::AdvectionDiffusionSBBWallInletDirichletNeumann<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONSBBWALLINLETDIRICHLETCOATINGFLUX
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionSBBWallInletDirichletCoatingFlux<Collision>::Type Type;
     };
 
     template<class Collision>
@@ -439,10 +558,24 @@ namespace hemelb
     };
 
     template<class Collision>
+    class ADVECTIONDIFFUSIONBFLWALLINLETDIRICHLETCOATINGCONCENTRATION
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionBFLWallInletDirichletCoatingConcentration<Collision>::Type Type;
+    };
+
+    template<class Collision>
     class ADVECTIONDIFFUSIONBFLWALLINLETDIRICHLETNEUMANN
     {
       public:
         typedef typename streamers::AdvectionDiffusionBFLWallInletDirichletNeumann<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONBFLWALLINLETDIRICHLETCOATINGFLUX
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionBFLWallInletDirichletCoatingFlux<Collision>::Type Type;
     };
 
     template<class Collision>
@@ -460,10 +593,24 @@ namespace hemelb
     };
 
     template<class Collision>
+    class ADVECTIONDIFFUSIONSBBWALLOUTFLOWBOUNCEBACKIOLETCOATINGCONCENTRATION
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionSBBWallOutflowBounceBackIoletCoatingConcentration<Collision>::Type Type;
+    };
+
+    template<class Collision>
     class ADVECTIONDIFFUSIONSBBWALLOUTFLOWBOUNCEBACKIOLETNEUMANN
     {
       public:
         typedef typename streamers::AdvectionDiffusionSBBWallOutflowBounceBackIoletNeumann<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONSBBWALLOUTFLOWBOUNCEBACKIOLETCOATINGFLUX
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionSBBWallOutflowBounceBackIoletCoatingFlux<Collision>::Type Type;
     };
 
     template<class Collision>
@@ -474,10 +621,24 @@ namespace hemelb
     };
 
     template<class Collision>
+    class ADVECTIONDIFFUSIONBFLWALLOUTFLOWBOUNCEBACKIOLETCOATINGCONCENTRATION
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionBFLWallOutflowBounceBackIoletCoatingConcentration<Collision>::Type Type;
+    };
+
+    template<class Collision>
     class ADVECTIONDIFFUSIONBFLWALLOUTFLOWBOUNCEBACKIOLETNEUMANN
     {
       public:
         typedef typename streamers::AdvectionDiffusionBFLWallOutflowBounceBackIoletNeumann<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONBFLWALLOUTFLOWBOUNCEBACKIOLETCOATINGFLUX
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionBFLWallOutflowBounceBackIoletCoatingFlux<Collision>::Type Type;
     };
 
     template<class Collision>
@@ -488,10 +649,24 @@ namespace hemelb
     };
 
     template<class Collision>
+    class ADVECTIONDIFFUSIONVWACOATINGCONCENTRATION
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionVWACoatingConcentration<Collision>::Type Type;
+    };
+
+    template<class Collision>
     class ADVECTIONDIFFUSIONVWANEUMANN
     {
       public:
         typedef typename streamers::AdvectionDiffusionVWANeumann<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONVWACOATINGFLUX
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionVWACoatingFlux<Collision>::Type Type;
     };
 
     template<class Collision>
@@ -502,10 +677,24 @@ namespace hemelb
     };
 
     template<class Collision>
+    class ADVECTIONDIFFUSIONVWAWALLINLETDIRICHLETCOATINGCONCENTRATION
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionVWAWallInletDirichletCoatingConcentration<Collision>::Type Type;
+    };
+
+    template<class Collision>
     class ADVECTIONDIFFUSIONVWAWALLINLETDIRICHLETNEUMANN
     {
       public:
         typedef typename streamers::AdvectionDiffusionVWAWallInletDirichletNeumann<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONVWAWALLINLETDIRICHLETCOATINGFLUX
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionVWAWallInletDirichletCoatingFlux<Collision>::Type Type;
     };
 
     template<class Collision>
@@ -516,10 +705,24 @@ namespace hemelb
     };
 
     template<class Collision>
+    class ADVECTIONDIFFUSIONVWAWALLOUTFLOWBOUNCEBACKIOLETCOATINGCONCENTRATION
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionVWAWallOutflowBounceBackIoletCoatingConcentration<Collision>::Type Type;
+    };
+
+    template<class Collision>
     class ADVECTIONDIFFUSIONVWAWALLOUTFLOWBOUNCEBACKIOLETNEUMANN
     {
       public:
         typedef typename streamers::AdvectionDiffusionVWAWallOutflowBounceBackIoletNeumann<Collision>::Type Type;
+    };
+
+    template<class Collision>
+    class ADVECTIONDIFFUSIONVWAWALLOUTFLOWBOUNCEBACKIOLETCOATINGFLUX
+    {
+      public:
+        typedef typename streamers::AdvectionDiffusionVWAWallOutflowBounceBackIoletCoatingFlux<Collision>::Type Type;
     };
   }
 }

@@ -10,6 +10,8 @@
 #include "lb/streamers/BouzidiFirdaousLallemandDelegate.h"
 #include "lb/streamers/SimpleBounceBackDelegate.h"
 #include "lb/streamers/AdvectionDiffusionDirichletDelegate.h"
+#include "lb/streamers/AdvectionDiffusionCoatingConcentrationDelegate.h"
+#include "lb/streamers/AdvectionDiffusionCoatingFluxDelegate.h"
 #include "lb/streamers/AdvectionDiffusionInletDirichletDelegate.h"
 #include "lb/streamers/AdvectionDiffusionNeumannDelegate.h"
 #include "lb/streamers/AdvectionDiffusionOutflowDelegate.h"
@@ -32,9 +34,21 @@ namespace hemelb
       };
 
       template<typename CollisionImpl>
+      struct AdvectionDiffusionBFLCoatingConcentration
+      {
+          typedef AdvectionDiffusionWallStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionCoatingConcentrationDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
       struct AdvectionDiffusionBFLNeumann
       {
           typedef AdvectionDiffusionWallStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionNeumannDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionBFLCoatingFlux
+      {
+          typedef AdvectionDiffusionWallStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionCoatingFluxDelegate<CollisionImpl> > Type;
       };
 
       template<typename CollisionImpl>
@@ -50,9 +64,21 @@ namespace hemelb
       };
 
       template<typename CollisionImpl>
+      struct AdvectionDiffusionBFLWallBFLIoletCoatingConcentration
+      {
+          typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionCoatingConcentrationDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
       struct AdvectionDiffusionBFLWallBFLIoletNeumann
       {
           typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionNeumannDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionBFLWallBFLIoletCoatingFlux
+      {
+          typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionCoatingFluxDelegate<CollisionImpl> > Type;
       };
 
       template<typename CollisionImpl>
@@ -62,9 +88,21 @@ namespace hemelb
       };
 
       template<typename CollisionImpl>
+      struct AdvectionDiffusionBFLWallSBBIoletCoatingConcentration
+      {
+          typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionCoatingConcentrationDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
       struct AdvectionDiffusionBFLWallSBBIoletNeumann
       {
           typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionNeumannDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionBFLWallSBBIoletCoatingFlux
+      {
+          typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionCoatingFluxDelegate<CollisionImpl> > Type;
       };
 
       template<typename CollisionImpl>
@@ -74,9 +112,21 @@ namespace hemelb
       };
 
       template<typename CollisionImpl>
+      struct AdvectionDiffusionSBBCoatingConcentration
+      {
+          typedef AdvectionDiffusionWallStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionCoatingConcentrationDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
       struct AdvectionDiffusionSBBNeumann
       {
           typedef AdvectionDiffusionWallStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionNeumannDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionSBBCoatingFlux
+      {
+          typedef AdvectionDiffusionWallStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionCoatingFluxDelegate<CollisionImpl> > Type;
       };
 
       template<typename CollisionImpl>
@@ -92,9 +142,21 @@ namespace hemelb
       };
 
       template<typename CollisionImpl>
+      struct AdvectionDiffusionSBBWallBFLIoletCoatingConcentration
+      {
+          typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionCoatingConcentrationDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
       struct AdvectionDiffusionSBBWallBFLIoletNeumann
       {
           typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionNeumannDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionSBBWallBFLIoletCoatingFlux
+      {
+          typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionCoatingFluxDelegate<CollisionImpl> > Type;
       };
 
       template<typename CollisionImpl>
@@ -104,7 +166,19 @@ namespace hemelb
       };
 
       template<typename CollisionImpl>
+      struct AdvectionDiffusionSBBWallSBBIoletCoatingConcentration
+      {
+          typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionCoatingConcentrationDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
       struct AdvectionDiffusionSBBWallSBBIoletNeumann
+      {
+          typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionNeumannDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionSBBWallSBBIoletCoatingFlux
       {
           typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionNeumannDelegate<CollisionImpl> > Type;
       };
@@ -122,9 +196,21 @@ namespace hemelb
       };
 
       template<typename CollisionImpl>
+      struct AdvectionDiffusionSBBWallOutflowIoletCoatingConcentration
+      {
+          typedef AdvectionDiffusionWallOutflowIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionOutflowDelegate<CollisionImpl>, AdvectionDiffusionCoatingConcentrationDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
       struct AdvectionDiffusionSBBWallOutflowIoletNeumann
       {
           typedef AdvectionDiffusionWallOutflowIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionOutflowDelegate<CollisionImpl>, AdvectionDiffusionNeumannDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionSBBWallOutflowIoletCoatingFlux
+      {
+          typedef AdvectionDiffusionWallOutflowIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionOutflowDelegate<CollisionImpl>, AdvectionDiffusionCoatingFluxDelegate<CollisionImpl> > Type;
       };
 
       template<typename CollisionImpl>
@@ -134,9 +220,21 @@ namespace hemelb
       };
 
       template<typename CollisionImpl>
+      struct AdvectionDiffusionBFLWallOutflowIoletCoatingConcentration
+      {
+          typedef AdvectionDiffusionWallOutflowIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionOutflowDelegate<CollisionImpl>, AdvectionDiffusionCoatingConcentrationDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
       struct AdvectionDiffusionBFLWallOutflowIoletNeumann
       {
           typedef AdvectionDiffusionWallOutflowIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionOutflowDelegate<CollisionImpl>, AdvectionDiffusionNeumannDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionBFLWallOutflowIoletCoatingFlux
+      {
+          typedef AdvectionDiffusionWallOutflowIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionOutflowDelegate<CollisionImpl>, AdvectionDiffusionCoatingFluxDelegate<CollisionImpl> > Type;
       };
 
       template<typename CollisionImpl>
@@ -152,9 +250,21 @@ namespace hemelb
       };
 
       template<typename CollisionImpl>
+      struct AdvectionDiffusionSBBWallInletDirichletCoatingConcentration
+      {
+          typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionInletDirichletDelegate<CollisionImpl>, AdvectionDiffusionCoatingConcentrationDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
       struct AdvectionDiffusionSBBWallInletDirichletNeumann
       {
           typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionInletDirichletDelegate<CollisionImpl>, AdvectionDiffusionNeumannDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionSBBWallInletDirichletCoatingFlux
+      {
+          typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionInletDirichletDelegate<CollisionImpl>, AdvectionDiffusionCoatingFluxDelegate<CollisionImpl> > Type;
       };
 
       template<typename CollisionImpl>
@@ -164,9 +274,21 @@ namespace hemelb
       };
 
       template<typename CollisionImpl>
+      struct AdvectionDiffusionBFLWallInletDirichletCoatingConcentration
+      {
+          typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionInletDirichletDelegate<CollisionImpl>, AdvectionDiffusionCoatingConcentrationDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
       struct AdvectionDiffusionBFLWallInletDirichletNeumann
       {
           typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionInletDirichletDelegate<CollisionImpl>, AdvectionDiffusionNeumannDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionBFLWallInletDirichletCoatingFlux
+      {
+          typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionInletDirichletDelegate<CollisionImpl>, AdvectionDiffusionCoatingFluxDelegate<CollisionImpl> > Type;
       };
 
       template<typename CollisionImpl>
@@ -182,9 +304,21 @@ namespace hemelb
       };
 
       template<typename CollisionImpl>
+      struct AdvectionDiffusionSBBWallOutflowBounceBackIoletCoatingConcentration
+      {
+          typedef AdvectionDiffusionWallOutflowIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionOutflowBounceBackDelegate<CollisionImpl>, AdvectionDiffusionCoatingConcentrationDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
       struct AdvectionDiffusionSBBWallOutflowBounceBackIoletNeumann
       {
           typedef AdvectionDiffusionWallOutflowIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionOutflowBounceBackDelegate<CollisionImpl>, AdvectionDiffusionNeumannDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionSBBWallOutflowBounceBackIoletCoatingFlux
+      {
+          typedef AdvectionDiffusionWallOutflowIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl>, AdvectionDiffusionOutflowBounceBackDelegate<CollisionImpl>, AdvectionDiffusionCoatingFluxDelegate<CollisionImpl> > Type;
       };
 
       template<typename CollisionImpl>
@@ -194,9 +328,21 @@ namespace hemelb
       };
 
       template<typename CollisionImpl>
+      struct AdvectionDiffusionBFLWallOutflowBounceBackIoletCoatingConcentration
+      {
+          typedef AdvectionDiffusionWallOutflowIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionOutflowBounceBackDelegate<CollisionImpl>, AdvectionDiffusionCoatingConcentrationDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
       struct AdvectionDiffusionBFLWallOutflowBounceBackIoletNeumann
       {
           typedef AdvectionDiffusionWallOutflowIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionOutflowBounceBackDelegate<CollisionImpl>, AdvectionDiffusionNeumannDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionBFLWallOutflowBounceBackIoletCoatingFlux
+      {
+          typedef AdvectionDiffusionWallOutflowIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl>, AdvectionDiffusionOutflowBounceBackDelegate<CollisionImpl>, AdvectionDiffusionCoatingFluxDelegate<CollisionImpl> > Type;
       };
 
       template<typename CollisionImpl>
@@ -206,9 +352,21 @@ namespace hemelb
       };
 
       template<typename CollisionImpl>
+      struct AdvectionDiffusionVWACoatingConcentration
+      {
+          typedef AdvectionDiffusionWallStreamerTypeFactory<CollisionImpl, AdvectionDiffusionVesselWallAbsorptionDelegate<CollisionImpl>, AdvectionDiffusionCoatingConcentrationDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
       struct AdvectionDiffusionVWANeumann
       {
           typedef AdvectionDiffusionWallStreamerTypeFactory<CollisionImpl, AdvectionDiffusionVesselWallAbsorptionDelegate<CollisionImpl>, AdvectionDiffusionNeumannDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionVWACoatingFlux
+      {
+          typedef AdvectionDiffusionWallStreamerTypeFactory<CollisionImpl, AdvectionDiffusionVesselWallAbsorptionDelegate<CollisionImpl>, AdvectionDiffusionCoatingFluxDelegate<CollisionImpl> > Type;
       };
 
       template<typename CollisionImpl>
@@ -218,9 +376,21 @@ namespace hemelb
       };
 
       template<typename CollisionImpl>
+      struct AdvectionDiffusionVWAWallInletDirichletCoatingConcentration
+      {
+          typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, AdvectionDiffusionVesselWallAbsorptionDelegate<CollisionImpl>, AdvectionDiffusionInletDirichletDelegate<CollisionImpl>, AdvectionDiffusionCoatingConcentrationDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
       struct AdvectionDiffusionVWAWallInletDirichletNeumann
       {
           typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, AdvectionDiffusionVesselWallAbsorptionDelegate<CollisionImpl>, AdvectionDiffusionInletDirichletDelegate<CollisionImpl>, AdvectionDiffusionNeumannDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionVWAWallInletDirichletCoatingFlux
+      {
+          typedef AdvectionDiffusionWallIoletStreamerTypeFactory<CollisionImpl, AdvectionDiffusionVesselWallAbsorptionDelegate<CollisionImpl>, AdvectionDiffusionInletDirichletDelegate<CollisionImpl>, AdvectionDiffusionCoatingFluxDelegate<CollisionImpl> > Type;
       };
 
       template<typename CollisionImpl>
@@ -230,9 +400,21 @@ namespace hemelb
       };
 
       template<typename CollisionImpl>
+      struct AdvectionDiffusionVWAWallOutflowBounceBackIoletCoatingConcentration
+      {
+          typedef AdvectionDiffusionWallOutflowIoletStreamerTypeFactory<CollisionImpl, AdvectionDiffusionVesselWallAbsorptionDelegate<CollisionImpl>, AdvectionDiffusionOutflowBounceBackDelegate<CollisionImpl>, AdvectionDiffusionCoatingConcentrationDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
       struct AdvectionDiffusionVWAWallOutflowBounceBackIoletNeumann
       {
           typedef AdvectionDiffusionWallOutflowIoletStreamerTypeFactory<CollisionImpl, AdvectionDiffusionVesselWallAbsorptionDelegate<CollisionImpl>, AdvectionDiffusionOutflowBounceBackDelegate<CollisionImpl>, AdvectionDiffusionNeumannDelegate<CollisionImpl> > Type;
+      };
+
+      template<typename CollisionImpl>
+      struct AdvectionDiffusionVWAWallOutflowBounceBackIoletCoatingFlux
+      {
+          typedef AdvectionDiffusionWallOutflowIoletStreamerTypeFactory<CollisionImpl, AdvectionDiffusionVesselWallAbsorptionDelegate<CollisionImpl>, AdvectionDiffusionOutflowBounceBackDelegate<CollisionImpl>, AdvectionDiffusionCoatingFluxDelegate<CollisionImpl> > Type;
       };
     }
   }

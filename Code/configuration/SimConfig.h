@@ -254,6 +254,8 @@ namespace hemelb
         lb::stents::StentFileFlux* DoIOForFileFluxStent(
             const io::xml::Element& stentEl);
 
+        lb::stents::StentCoating* DoIOForCoatingStent(const io::xml::Element& stentEl);
+
         void DoIOForProperties(const io::xml::Element& xmlNode);
         void DoIOForProperty(io::xml::Element xmlNode, bool isLoading);
         extraction::OutputField DoIOForPropertyField(const io::xml::Element& xmlNode);
