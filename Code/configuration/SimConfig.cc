@@ -666,15 +666,15 @@ namespace hemelb
 
       PhysicalDensity tempD;
       // Amplitude is a pressure DIFFERENCE (no use of REFERENCE_PRESSURE)
-      GetDimensionalValue(conditionEl.GetChildOrThrow("mean"), "kg/m3", tempD);
+      GetDimensionalValue(conditionEl.GetChildOrThrow("concentration"), "kg/m3", tempD);
       newStent->SetDensity(unitConverter->ConvertDensityToLatticeUnits(tempD));
 
       distribn_t tempDc;
-      GetDimensionalValue(conditionEl.GetChildOrThrow("mean"), "m^2/s", tempDc);
+      GetDimensionalValue(conditionEl.GetChildOrThrow("diffusivity"), "m^2/s", tempDc);
       newStent->SetCoatingDiffusivity(unitConverter->ConvertDiffusivityToLatticeUnits(tempDc));
 
       PhysicalDistance templc;
-      GetDimensionalValue(conditionEl.GetChildOrThrow("mean"), "m", templc);
+      GetDimensionalValue(conditionEl.GetChildOrThrow("thickness"), "m", templc);
       newStent->SetCoatingThickness(unitConverter->ConvertDistanceToLatticeUnits(templc));
 
       return newStent;

@@ -22,10 +22,10 @@ namespace hemelb
 
   const double REFERENCE_PRESSURE_mmHg = 0.0;
   const double mmHg_TO_PASCAL = 133.3223874;
-  const double BLOOD_DENSITY_Kg_per_m3 = 1000.0;
-  const double BLOOD_VISCOSITY_Pa_s = 0.004;
-  const double DIFFUSIVITY_m2_per_s = 1e-7;
-  const double KINETIC_RATE_m_per_s = 5e-7;
+  const double BLOOD_DENSITY_Kg_per_m3 = 1062.7;
+  const double BLOOD_VISCOSITY_Pa_s = 0.001;
+  const double DIFFUSIVITY_m2_per_s = 5.98e-11;
+  const double KINETIC_RATE_m_per_s = 4.425e-9;
 
   /* This is the number of boundary types. It was 4, but the
    * "CHARACTERISTIC_BOUNDARY" type is never used and I don't know what it is
