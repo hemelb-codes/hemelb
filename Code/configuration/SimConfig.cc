@@ -30,6 +30,7 @@ namespace hemelb
         rawXmlDoc(NULL),
         hasColloidSection(false),
         useGPU(false),
+        gpuBlockSize(0),
         warmUpSteps(0),
         unitConverter(NULL)
     {
@@ -156,6 +157,11 @@ namespace hemelb
       if (gpuEl != io::xml::Element::Missing())
       {
           gpuEl.GetAttributeOrThrow("value", useGPU);
+
+          if ( !gpuEl.GetAttributeOrNull("blocksize", gpuBlockSize) )
+          {
+            gpuBlockSize = 256;
+          }
       }
     }
 
@@ -706,6 +712,11 @@ namespace hemelb
     bool SimConfig::UseGPU() const
     {
       return useGPU;
+    }
+
+    int SimConfig::GPUBlockSize() const
+    {
+      return gpuBlockSize;
     }
   }
 }

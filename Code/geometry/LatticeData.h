@@ -57,7 +57,7 @@ namespace hemelb
 
         void SendAndReceiveGPU(net::Net* net);
         void SendAndReceive(net::Net* net);
-        void CopyReceivedGPU();
+        void CopyReceivedGPU(int blockSize);
         void CopyReceived();
 
         /**

@@ -192,7 +192,8 @@ void Normal_LBGK_SBB_Nash::Type::StreamAndCollideGPU(
   geometry::LatticeData* latDat,
   lb::SimulationState* simState,
   const iolets::InOutLetCosineGPU* inlets,
-  const iolets::InOutLetCosineGPU* outlets
+  const iolets::InOutLetCosineGPU* outlets,
+  int blockSize
 )
 {
   if ( siteCount == 0 )
@@ -200,10 +201,9 @@ void Normal_LBGK_SBB_Nash::Type::StreamAndCollideGPU(
     return;
   }
 
-  const int BLOCK_SIZE = 256;
-  const int GRID_SIZE = (siteCount + BLOCK_SIZE - 1) / BLOCK_SIZE;
+  const int GRID_SIZE = (siteCount + blockSize - 1) / blockSize;
 
-  Normal_LBGK_SBB_Nash_StreamAndCollide<<<GRID_SIZE, BLOCK_SIZE>>>(
+  Normal_LBGK_SBB_Nash_StreamAndCollide<<<GRID_SIZE, blockSize>>>(
     firstIndex,
     siteCount,
     lbmParams->GetTau(),

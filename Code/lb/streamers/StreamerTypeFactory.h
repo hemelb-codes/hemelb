@@ -56,7 +56,8 @@ namespace hemelb
                                    geometry::LatticeData* latDat,
                                    lb::SimulationState* simState,
                                    const iolets::InOutLetCosineGPU* inlets,
-                                   const iolets::InOutLetCosineGPU* outlets);
+                                   const iolets::InOutLetCosineGPU* outlets,
+                                   int blockSize);
 
           template<bool tDoRayTracing>
           inline void DoStreamAndCollide(const site_t firstIndex,

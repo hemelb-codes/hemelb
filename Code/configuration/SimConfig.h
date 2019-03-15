@@ -167,6 +167,8 @@ namespace hemelb
 
         bool UseGPU() const;
 
+        int GPUBlockSize() const;
+
       protected:
         /**
          * Create the unit converter - virtual so that mocks can override it.
@@ -290,6 +292,7 @@ namespace hemelb
         PhysicalPressure initialPressure_mmHg; ///< Pressure used to initialise the domain
         MonitoringConfig monitoringConfig; ///< Configuration of various checks/tests
         bool useGPU;
+        int gpuBlockSize;
 
       protected:
         // These have to contain pointers because there are multiple derived types that might be

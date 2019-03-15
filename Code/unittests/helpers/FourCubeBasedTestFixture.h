@@ -41,8 +41,7 @@ namespace hemelb
             simState = new hemelb::lb::SimulationState(simConfig->GetTimeStepLength(),
                                                        simConfig->GetTotalTimeSteps());
             lbmParams = new lb::LbmParameters(simState->GetTimeStepLength(),
-                                              simConfig->GetVoxelSize(),
-                                              simConfig->UseGPU());
+                                              simConfig->GetVoxelSize());
             unitConverter = &simConfig->GetUnitConverter();
 
             initParams.latDat = latDat;

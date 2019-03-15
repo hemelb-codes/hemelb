@@ -35,7 +35,7 @@ namespace hemelb
                           reporting::Timers &atimings,
                           geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager) :
       mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState),
-          mParams(iSimulationConfig->GetTimeStepLength(), iSimulationConfig->GetVoxelSize(), iSimulationConfig->UseGPU()), timings(atimings),
+          mParams(iSimulationConfig->GetTimeStepLength(), iSimulationConfig->GetVoxelSize()), timings(atimings),
           propertyCache(*simState, *latDat), neighbouringDataManager(neighbouringDataManager)
     {
       ReadParameters();
@@ -138,7 +138,7 @@ namespace hemelb
       mVisControl = iControl;
 
       // initialize GPU buffers in lattice data
-      if ( mParams.UseGPU() )
+      if ( mSimConfig->UseGPU() )
       {
         mLatDat->InitialiseGPU();
       }
@@ -147,7 +147,7 @@ namespace hemelb
 
       SetInitialConditions();
 
-      if ( mParams.UseGPU() )
+      if ( mSimConfig->UseGPU() )
       {
         InitialiseGPU();
       }
@@ -285,7 +285,7 @@ namespace hemelb
       // (via the Net object).
       // NOTE that this doesn't actually *perform* the sends and receives, it asks the Net
       // to include them in the ISends and IRecvs that happen later.
-      if ( mParams.UseGPU() )
+      if ( mSimConfig->UseGPU() )
       {
         mLatDat->SendAndReceiveGPU(mNet);
       }
@@ -313,9 +313,9 @@ namespace hemelb
       site_t localFluidSites = mLatDat->GetLocalFluidSiteCount();
       site_t sharedFs = mLatDat->GetNumSharedFs();
 
-      if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
+      if ( mSimConfig->UseGPU() && !propertyCache.RequiresRefresh() )
       {
-        mMidFluidStreamer->StreamAndCollideGPU(offset, mLatDat->GetDomainEdgeSiteCount(), &mParams, mLatDat, mState, inlets_dev, outlets_dev);
+        mMidFluidStreamer->StreamAndCollideGPU(offset, mLatDat->GetDomainEdgeSiteCount(), &mParams, mLatDat, mState, inlets_dev, outlets_dev, mSimConfig->GPUBlockSize());
 
 #ifndef HEMELB_CUDA_AWARE_MPI
         // copy fNew (sharedFs) from device to host
@@ -330,7 +330,7 @@ namespace hemelb
 
       else
       {
-        if ( mParams.UseGPU() )
+        if ( mSimConfig->UseGPU() )
         {
           // copy fOld (all sites) from device to host
           CUDA_SAFE_CALL(cudaMemcpy(
@@ -360,7 +360,7 @@ namespace hemelb
 
         StreamAndCollide(mOutletWallStreamer, offset, mLatDat->GetDomainEdgeCollisionCount(5));
 
-        if ( mParams.UseGPU() )
+        if ( mSimConfig->UseGPU() )
         {
           // copy fNew (sharedFs) from host to device
           CUDA_SAFE_CALL(cudaMemcpyAsync(
@@ -393,9 +393,9 @@ namespace hemelb
       site_t offset = 0;
       site_t localFluidSites = mLatDat->GetLocalFluidSiteCount();
 
-      if ( mParams.UseGPU() && !propertyCache.RequiresRefresh() )
+      if ( mSimConfig->UseGPU() && !propertyCache.RequiresRefresh() )
       {
-        mMidFluidStreamer->StreamAndCollideGPU(offset, mLatDat->GetMidDomainSiteCount(), &mParams, mLatDat, mState, inlets_dev, outlets_dev);
+        mMidFluidStreamer->StreamAndCollideGPU(offset, mLatDat->GetMidDomainSiteCount(), &mParams, mLatDat, mState, inlets_dev, outlets_dev, mSimConfig->GPUBlockSize());
       }
 
       else
@@ -417,7 +417,7 @@ namespace hemelb
 
         StreamAndCollide(mOutletWallStreamer, offset, mLatDat->GetMidDomainCollisionCount(5));
 
-        if ( mParams.UseGPU() )
+        if ( mSimConfig->UseGPU() )
         {
           // copy fNew (all sites) from host to device
           CUDA_SAFE_CALL(cudaMemcpyAsync(
@@ -441,7 +441,7 @@ namespace hemelb
       // Copy the distribution functions received from the neighbouring
       // processors into the destination buffer "f_new".
       // This is done here, after receiving the sent distributions from neighbours.
-      if ( mParams.UseGPU() )
+      if ( mSimConfig->UseGPU() )
       {
 #ifndef HEMELB_CUDA_AWARE_MPI
         site_t localFluidSites = mLatDat->GetLocalFluidSiteCount();
@@ -456,7 +456,7 @@ namespace hemelb
         ));
 #endif
 
-        mLatDat->CopyReceivedGPU();
+        mLatDat->CopyReceivedGPU(mSimConfig->GPUBlockSize());
       }
       else
       {

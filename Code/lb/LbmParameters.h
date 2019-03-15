@@ -26,16 +26,15 @@ namespace hemelb
     struct LbmParameters
     {
       public:
-        LbmParameters(PhysicalTime timeStepLength, PhysicalDistance voxelSize, bool useGPU)
+        LbmParameters(PhysicalTime timeStepLength, PhysicalDistance voxelSize)
         {
-          Update(timeStepLength, voxelSize, useGPU);
+          Update(timeStepLength, voxelSize);
         }
 
-        void Update(PhysicalTime timeStepLength, PhysicalDistance voxelSizeMetres, bool useGPUBool)
+        void Update(PhysicalTime timeStepLength, PhysicalDistance voxelSizeMetres)
         {
           timestep = timeStepLength;
           voxelSize = voxelSizeMetres;
-          useGPU = useGPUBool;
           tau = 0.5
               + (timeStepLength * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3)
                   / (Cs2 * voxelSize * voxelSize);
@@ -75,17 +74,11 @@ namespace hemelb
           return beta;
         }
 
-        bool UseGPU() const
-        {
-            return useGPU;
-        }
-
         StressTypes StressType;
 
       private:
         PhysicalTime timestep;
         PhysicalDistance voxelSize;
-        bool useGPU = false;
         distribn_t omega;
         distribn_t tau;
         distribn_t stressParameter;
