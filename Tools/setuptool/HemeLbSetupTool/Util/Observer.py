@@ -10,7 +10,7 @@ Create a subclass of Observable to use.
 """
 import collections
 from copy import copy
-
+import numpy as np
 from .Enum import Enum
 
 class NoSuch(object):
@@ -314,6 +314,8 @@ class Observable(object):
             # WX deals in unicode not strings so encode these.
             if isinstance(part, unicode):
                 return part.encode()
+            if isinstance(part, np.number):
+                return part.tolist()
             return part
         
     def _Update(self, source, method, getter, checker, type_finder):
