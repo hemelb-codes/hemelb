@@ -187,6 +187,8 @@ void SimulationMaster::Initialise()
                                                            timings,
                                                            neighbouringDataManager);
 
+  if (simConfig->EnableADE())
+  {
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising ADE.");
   advectionDiffusionData = new hemelb::geometry::LatticeData(advectionDiffusionLatticeType::GetLatticeInfo(), readGeometryData, ioComms);
   advectionDiffusionDataManager = new hemelb::geometry::neighbouring::NeighbouringDataManager(*advectionDiffusionData, advectionDiffusionData->GetNeighbouringData(), communicationNet);
@@ -197,6 +199,7 @@ void SimulationMaster::Initialise()
                                                                                   timings,
                                                                                   advectionDiffusionDataManager,
                                                                                   latticeBoltzmannModel->GetPropertyCache());
+  }
 
   if (simConfig->HasColloidSection())
   {
@@ -295,6 +298,8 @@ void SimulationMaster::Initialise()
                                                         ioComms,
                                                         *unitConverter);
 
+  if (simConfig->EnableADE())
+  {
   stentValues = new hemelb::lb::stents::BoundaryValues(advectionDiffusionData,
 						       simConfig->GetStents(),
 						       simulationState,
@@ -314,14 +319,18 @@ void SimulationMaster::Initialise()
                                                                          simulationState,
                                                                          ioComms,
                                                                          *unitConverter);
+  }
 
   latticeBoltzmannModel->Initialise(visualisationControl, inletValues, outletValues, unitConverter);
   neighbouringDataManager->ShareNeeds();
   neighbouringDataManager->TransferNonFieldDependentInformation();
 
+  if (simConfig->EnableADE())
+  {
   advectionDiffusionModel->Initialise(visualisationControl, stentValues, advectionDiffusionOutletValues, advectionDiffusionInletValues, unitConverter);
   advectionDiffusionDataManager->ShareNeeds();
   advectionDiffusionDataManager->TransferNonFieldDependentInformation();
+  }
 
   steeringCpt = new hemelb::steering::SteeringComponent(network,
                                                         visualisationControl,
@@ -340,11 +349,14 @@ void SimulationMaster::Initialise()
 						 ioComms.Rank(),
 						 *unitConverter);
 
+  if (simConfig->EnableADE())
+  {
   advectionDiffusionDataSource =
     new hemelb::extraction::LbDataSourceIterator(advectionDiffusionModel->GetPropertyCache(),
 						 *advectionDiffusionData,
 						 ioComms.Rank(),
 						 *unitConverter);
+  }
 
   if (simConfig->PropertyOutputCount() > 0)
   {
@@ -373,15 +385,21 @@ void SimulationMaster::Initialise()
                                                      hemelb::net::separate_communications);
   netConcern = new hemelb::net::phased::NetConcern(communicationNet);
   stepManager->RegisterIteratedActorSteps(*neighbouringDataManager, 0);
+  if (simConfig->EnableADE())
+  {
   stepManager->RegisterIteratedActorSteps(*advectionDiffusionDataManager, 0);
+  }
   if (colloidController != NULL)
   {
     stepManager->RegisterIteratedActorSteps(*colloidController, 1);
   }
+  if (simConfig->EnableADE())
+  {
   stepManager->RegisterIteratedActorSteps(*advectionDiffusionModel, 1);
   stepManager->RegisterIteratedActorSteps(*stentValues, 1);
   stepManager->RegisterIteratedActorSteps(*advectionDiffusionOutletValues, 1);
   stepManager->RegisterIteratedActorSteps(*advectionDiffusionInletValues, 1);
+  }
   stepManager->RegisterIteratedActorSteps(*latticeBoltzmannModel, 1);
   stepManager->RegisterIteratedActorSteps(*inletValues, 1);
   stepManager->RegisterIteratedActorSteps(*outletValues, 1);
@@ -647,7 +665,10 @@ void SimulationMaster::RecalculatePropertyRequirements()
 
   /* TODO: This should really be an iteration over all property caches */
   propertyCache.ResetRequirements();
+  if (simConfig->EnableADE())
+  {
   advectionDiffusionModel->GetPropertyCache().ResetRequirements();
+  }
 
   // Check whether we're rendering images on this iteration.
   if (visualisationControl->IsRendering())

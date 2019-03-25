@@ -172,6 +172,8 @@ namespace hemelb
          */
         const MonitoringConfig* GetMonitoringConfiguration() const;
 
+        bool EnableADE() const;
+
       protected:
         /**
          * Create the unit converter - virtual so that mocks can override it.
@@ -311,6 +313,7 @@ namespace hemelb
         PhysicalPressure initialPressure_mmHg; ///< Pressure used to initialise the domain
         PhysicalDensity initialDensity_Kg_per_m3;
         MonitoringConfig monitoringConfig; ///< Configuration of various checks/tests
+        bool enableADE;
 
       protected:
         // These have to contain pointers because there are multiple derived types that might be

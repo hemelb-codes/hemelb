@@ -26,7 +26,7 @@ namespace hemelb
     }
 
     SimConfig::SimConfig(const std::string& path) :
-        xmlFilePath(path), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0),
+        xmlFilePath(path), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0), enableADE(false),
             unitConverter(NULL)
     {
     }
@@ -83,7 +83,10 @@ namespace hemelb
       inlets = DoIOForInOutlets(topNode.GetChildOrThrow("inlets"));
       outlets = DoIOForInOutlets(topNode.GetChildOrThrow("outlets"));
 
+      if (enableADE)
+      {
       stents = DoIOForStents(topNode.GetChildOrThrow("stents"));
+      }
 
       DoIOForVisualisation(topNode.GetChildOrThrow("visualisation"));
 
@@ -148,6 +151,12 @@ namespace hemelb
       // <origin value="(x,y,z)" units="m" />
       const io::xml::Element originEl = simEl.GetChildOrThrow("origin");
       GetDimensionalValue(originEl, "m", geometryOriginMetres);
+
+      const io::xml::Element adeEl = simEl.GetChildOrNull("enable_ade");
+      if (adeEl != io::xml::Element::Missing())
+      {
+          adeEl.GetAttributeOrThrow("value", enableADE);
+      }
     }
 
     void SimConfig::DoIOForGeometry(const io::xml::Element geometryEl)
@@ -604,11 +613,14 @@ namespace hemelb
 
       GetDimensionalValue(uniformEl, "mmHg", initialPressure_mmHg);
 
+      if (enableADE)
+      {
       //, isLoading, initialDensity
       io::xml::Element densityEl = initialconditionsEl.GetChildOrThrow("concentration");
       io::xml::Element uniformDensityEl = densityEl.GetChildOrThrow("uniform");
 
       GetDimensionalValue(uniformDensityEl, "kg/m3", initialDensity_Kg_per_m3);
+      }
     }
 
     lb::iolets::InOutLetCosine* SimConfig::DoIOForCosinePressureInOutlet(
@@ -737,8 +749,11 @@ namespace hemelb
       const io::xml::Element maximumEl = conditionEl.GetChildOrThrow("maximum");
       newIolet->SetMaxSpeed(GetDimensionalValueInLatticeUnits<PhysicalSpeed>(maximumEl, "m/s"));
 
+      if (enableADE)
+      {
       const io::xml::Element concentrationEl = conditionEl.GetChildOrThrow("concentration");
       newIolet->SetConcentration(GetDimensionalValueInLatticeUnits<PhysicalDensity>(concentrationEl, "kg/m3"));
+      }
 
       if (warmUpSteps != 0)
       {
@@ -765,8 +780,11 @@ namespace hemelb
       const io::xml::Element maximumEl = conditionEl.GetChildOrThrow("maximum");
       newIolet->SetMaxSpeed(GetDimensionalValueInLatticeUnits<PhysicalSpeed>(maximumEl, "m/s"));
 
+      if (enableADE)
+      {
       const io::xml::Element concentrationEl = conditionEl.GetChildOrThrow("concentration");
       newIolet->SetConcentration(GetDimensionalValueInLatticeUnits<PhysicalDensity>(concentrationEl, "kg/m3"));
+      }
 
       if (warmUpSteps != 0)
       {
@@ -800,8 +818,11 @@ namespace hemelb
       const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
       newIolet->SetRadius(GetDimensionalValueInLatticeUnits<LatticeDistance>(radiusEl, "m"));
 
+      if (enableADE)
+      {
       const io::xml::Element concentrationEl = conditionEl.GetChildOrThrow("concentration");
       newIolet->SetConcentration(GetDimensionalValueInLatticeUnits<PhysicalDensity>(concentrationEl, "kg/m3"));
+      }
 
       const io::xml::Element pgAmpEl = conditionEl.GetChildOrThrow("pressure_gradient_amplitude");
       newIolet->SetPressureGradientAmplitude(GetDimensionalValueInLatticeUnits<
@@ -833,8 +854,11 @@ namespace hemelb
       const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
       newIolet->SetRadius(GetDimensionalValueInLatticeUnits<LatticeDistance>(radiusEl, "m"));
 
+      if (enableADE)
+      {
       const io::xml::Element concentrationEl = conditionEl.GetChildOrThrow("concentration");
       newIolet->SetConcentration(GetDimensionalValueInLatticeUnits<PhysicalDensity>(concentrationEl, "kg/m3"));
+      }
 
       return newIolet;
     }
@@ -858,8 +882,11 @@ namespace hemelb
       const io::xml::Element innerRadiusEl = conditionEl.GetChildOrThrow("innerradius");
       newIolet->SetInnerRadius(GetDimensionalValueInLatticeUnits<LatticeDistance>(innerRadiusEl, "m"));
 
+      if (enableADE)
+      {
       const io::xml::Element concentrationEl = conditionEl.GetChildOrThrow("concentration");
       newIolet->SetConcentration(GetDimensionalValueInLatticeUnits<PhysicalDensity>(concentrationEl, "kg/m3"));
+      }
 
       return newIolet;
     }
@@ -950,6 +977,11 @@ namespace hemelb
     const SimConfig::MonitoringConfig* SimConfig::GetMonitoringConfiguration() const
     {
       return &monitoringConfig;
+    }
+
+    bool SimConfig::EnableADE() const
+    {
+      return enableADE;
     }
   }
 }
