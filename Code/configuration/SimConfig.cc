@@ -160,7 +160,7 @@ namespace hemelb
 
           if ( !gpuEl.GetAttributeOrNull("blocksize", gpuBlockSize) )
           {
-            gpuBlockSize = 256;
+            gpuBlockSize = 16;
           }
       }
     }
