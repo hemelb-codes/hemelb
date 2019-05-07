@@ -25,6 +25,7 @@ namespace hemelb
         ~SiteData();
 
         bool IsWall() const;
+        bool IsIolet(int id, SiteType ioletType) const;
         bool IsVesselWall() const;
         bool IsStentWall() const;
         bool IsSolid() const;

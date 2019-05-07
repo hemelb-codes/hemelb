@@ -40,6 +40,11 @@ namespace hemelb
           return GetSiteData().IsStentWall();
         }
 
+        inline bool IsIolet(int id, SiteType ioletType) const
+        {
+          return GetSiteData().IsIolet(id, ioletType);
+        }
+
         inline bool IsSolid() const
         {
           return GetSiteData().IsSolid();

@@ -147,6 +147,8 @@ namespace hemelb
 
         bool IsStentWallSite(const util::Vector3D<site_t>& location) const;
 
+        bool IsIoletSite(const util::Vector3D<site_t>& location, const int& ioletId, const unsigned int& ioletType) const;
+
       private:
         /**
          * The cache of properties for each site, which we iterate through.

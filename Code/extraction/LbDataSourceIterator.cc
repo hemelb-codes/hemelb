@@ -137,5 +137,12 @@ namespace hemelb
 
       return data.GetSite(localSiteId).IsStentWall();
     }
+
+    bool LbDataSourceIterator::IsIoletSite(const util::Vector3D<site_t>& location, const int& ioletId, const unsigned int& ioletType) const
+    {
+      site_t localSiteId = data.GetContiguousSiteId(location);
+
+      return data.GetSite(localSiteId).IsIolet(ioletId, ioletType);
+    }
   }
 }

@@ -115,6 +115,11 @@ namespace hemelb
       return ((wallIntersection != 0) && (stentId > 1));
     }
 
+    bool SiteData::IsIolet(int id, SiteType ioletType) const
+    {
+      return (ioletIntersection != 0) && (id == ioletId) && (ioletType == type);
+    }
+
     bool SiteData::IsSolid() const
     {
       return GetSiteType() == SOLID_TYPE;

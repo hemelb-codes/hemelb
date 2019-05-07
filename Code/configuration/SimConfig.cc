@@ -459,6 +459,10 @@ namespace hemelb
       {
         file->geometry = DoIOForSurfacePoint(geometryEl);
       }
+      else if (type == "iolet")
+      {
+        file->geometry = DoIOForIoletGeometrySelector(geometryEl);
+      }
       else
       {
         throw Exception() << "Unrecognised property output geometry selector '" << type
@@ -511,6 +515,22 @@ namespace hemelb
         GetDimensionalValue(radiusEl, "m", radius);
         return new extraction::PlaneGeometrySelector(point, normal, radius);
       }
+
+    }
+
+    extraction::IoletGeometrySelector* SimConfig::DoIOForIoletGeometrySelector(
+        const io::xml::Element& geometryEl)
+    {
+      io::xml::Element ioletIdEl = geometryEl.GetChildOrThrow("ioletid");
+      io::xml::Element ioletTypeEl = geometryEl.GetChildOrThrow("iolettype");
+
+      int ioletId;
+      unsigned int ioletType;
+
+      GetDimensionalValue(ioletIdEl, "dimensionless", ioletId);
+      GetDimensionalValue(ioletTypeEl, "dimensionless", ioletType);
+
+      return new extraction::IoletGeometrySelector(ioletId, ioletType);
 
     }
 
