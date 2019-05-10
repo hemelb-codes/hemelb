@@ -5,6 +5,7 @@ their name. The details of authorship can be viewed in the git log.
 UCL = University College London, UK
 UoE = The University of Edinburgh, UK
 BUL = Brunel University London, UK
+CU  = Clemson University, SC, USA
 
 James Hetherington (UCL)
 Hywel Carver (UCL)
@@ -26,3 +27,6 @@ Robin Richardson (UCL)
 Mohamed Itani (UCL)
 Sebastian Schmieschek (UCL)
 David Abou Chacra
+Ulf D. Schiller (CU)
+Benjamin T. Shealy (CU)
+Ashwin T. Srinath (CU)
