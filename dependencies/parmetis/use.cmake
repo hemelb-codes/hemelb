@@ -31,5 +31,5 @@ metis_type(REAL "32;64" "float;double" METIS_REAL_T)
 
 macro(hemelb_add_target_dependency_parmetis tgt)
   target_include_directories(${tgt} PRIVATE ${PARMETIS_INCLUDE_DIRS})
-  target_link_libraries(${tgt} PRIVATE ${ZLIB_LIBRARIES})
+  target_link_libraries(${tgt} PRIVATE ${ZLIB_LIBRARIES} ${PARMETIS_LIBRARIES})
 endmacro()

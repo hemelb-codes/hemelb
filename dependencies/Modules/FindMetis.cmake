@@ -16,11 +16,8 @@
 # METIS_LIBRARY     - List of fully qualified libraries to link against.
 # METIS_FOUND       - Do not attempt to use if "no" or undefined.
 
-FIND_PATH(METIS_INCLUDE_DIR metis.h HITNS ${METIS_ROOT}/include)
-FIND_LIBRARY(METIS_LIBRARY metis HINTS ${METIS_ROOT}/lib)
-
-set(METIS_INCLUDE_DIRS ${METIS_INCLUDE_DIR})
-set(METIS_LIBRARIES ${METIS_LIBRARY})
+FIND_PATH(METIS_INCLUDE_DIR metis.h HINTS ${METIS_ROOT}/include ${METIS_DIR}/include)
+FIND_LIBRARY(METIS_LIBRARY metis HINTS ${METIS_ROOT}/lib ${METIS_DIR}/include)
 
 include("FindPackageHandleStandardArgs")
 FIND_PACKAGE_HANDLE_STANDARD_ARGS("Metis" DEFAULT_MSG METIS_INCLUDE_DIR METIS_LIBRARY)
