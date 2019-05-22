@@ -48,7 +48,7 @@ namespace hemelb {
       using result_type = void;
       template <typename T>
       void operator()(T t) const {
-	t.template SetTime(ss);
+	t.SetTime(ss);
       }
       SimulationState* ss;
     };
