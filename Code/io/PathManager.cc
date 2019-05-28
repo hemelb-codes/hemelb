@@ -6,6 +6,8 @@
 
 #include "io/PathManager.h"
 #include "Exception.h"
+#include "io/writers/null/NullWriter.h"
+#include "io/writers/xdr/XdrFileWriter.h"
 
 namespace hemelb
 {

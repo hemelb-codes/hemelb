@@ -19,10 +19,6 @@ namespace hemelb
 
     }
 
-    ImageSendComponent::~ImageSendComponent()
-    {
-    }
-
     void ImageSendComponent::DoWork(const vis::PixelSet<vis::ResultPixel>* pix)
     {
 

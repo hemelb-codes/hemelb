@@ -7,6 +7,7 @@
 #ifndef HEMELB_UNITTESTS_IO_IO_H
 #define HEMELB_UNITTESTS_IO_IO_H
 
+#include "unittests/io/XdrWriterTests.h"
 #include "unittests/io/PathManagerTests.h"
 #include "unittests/io/xml.h"
 
