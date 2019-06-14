@@ -22,10 +22,17 @@ namespace hemelb
 
         class XdrMemReader : public XdrReader
         {
-          public:
-            XdrMemReader(const char* dataBuffer, unsigned int dataLength);
-            XdrMemReader(const std::vector<char>& dataVec);
-
+	public:
+	  XdrMemReader(const char* dataBuffer, unsigned int dataLength);
+	  XdrMemReader(const std::vector<char>& dataVec);
+	  virtual ~XdrMemReader();
+	  virtual unsigned GetPosition();
+	protected:
+	  virtual const char* get_bytes(size_t n);
+	private:
+	  const char* start;
+	  const char* current;
+	  size_t len;
         };
       } // namespace xdr
     } // namespace writers

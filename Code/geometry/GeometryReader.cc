@@ -194,10 +194,10 @@ namespace hemelb
       std::vector<char> preambleBuffer = ReadOnAllTasks(preambleBytes);
 
       // Create an Xdr translator based on the read-in data.
-      io::writers::xdr::XdrReader preambleReader = io::writers::xdr::XdrMemReader(&preambleBuffer[0],
-                                                                                  preambleBytes);
+      auto preambleReader = io::writers::xdr::XdrMemReader(preambleBuffer.data(),
+							   preambleBytes);
 
-      unsigned hlbMagicNumber, gmyMagicNumber, version;
+      uint32_t hlbMagicNumber, gmyMagicNumber, version;
       // Read in housekeeping values
       preambleReader.read(hlbMagicNumber);
       preambleReader.read(gmyMagicNumber);
@@ -229,20 +229,13 @@ namespace hemelb
       // Variables we'll read.
       // We use temporary vars here, as they must be the same size as the type in the file
       // regardless of the internal type used.
-      unsigned int blocksX, blocksY, blocksZ, blockSize;
-      double voxelSize;
-      util::Vector3D<double> origin;
+      uint32_t blocksX, blocksY, blocksZ, blockSize;
 
       // Read in the values.
       preambleReader.read(blocksX);
       preambleReader.read(blocksY);
       preambleReader.read(blocksZ);
       preambleReader.read(blockSize);
-      preambleReader.read(voxelSize);
-      for (unsigned int i = 0; i < 3; ++i)
-      {
-        preambleReader.read(origin[i]);
-      }
 
       // Read the padding unsigned int.
       unsigned paddingValue;
@@ -264,8 +257,8 @@ namespace hemelb
       std::vector<char> headerBuffer = ReadOnAllTasks(headerByteCount);
 
       // Create a Xdr translation object to translate from binary
-      hemelb::io::writers::xdr::XdrReader preambleReader =
-          hemelb::io::writers::xdr::XdrMemReader(&headerBuffer[0], (unsigned int) headerByteCount);
+      auto preambleReader = hemelb::io::writers::xdr::XdrMemReader(headerBuffer.data(),
+								   headerByteCount);
 
       // Read in all the data.
       for (site_t block = 0; block < blockCount; block++)
