@@ -7,6 +7,7 @@
 #define HEMELB_EXTRACTION_IOLETGEOMETRYSELECTOR_H
 
 #include "extraction/GeometrySelector.h"
+#include "geometry/SiteType.h"
 
 namespace hemelb
 {
@@ -16,11 +17,11 @@ namespace hemelb
     {
       public:
 
-        IoletGeometrySelector(int ioletId, unsigned int ioletType);
+        IoletGeometrySelector(int ioletId, geometry::SiteType ioletType);
 
         int GetIoletId() const;
 
-        unsigned int GetIoletType() const;
+        geometry::SiteType GetIoletType() const;
 
       protected:
 
@@ -29,7 +30,7 @@ namespace hemelb
       private:
 
         const int ioletId;
-        const unsigned ioletType;
+        const geometry::SiteType ioletType;
     };
   }
 }

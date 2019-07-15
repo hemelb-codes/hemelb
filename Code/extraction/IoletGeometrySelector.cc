@@ -9,7 +9,7 @@ namespace hemelb
 {
   namespace extraction
   {
-    IoletGeometrySelector::IoletGeometrySelector(int ioletId, unsigned int ioletType) :
+    IoletGeometrySelector::IoletGeometrySelector(int ioletId, geometry::SiteType ioletType) :
       ioletId(ioletId), ioletType(ioletType)
     {
 
@@ -20,7 +20,7 @@ namespace hemelb
       return ioletId;
     }
 
-    unsigned int IoletGeometrySelector::GetIoletType() const
+    geometry::SiteType IoletGeometrySelector::GetIoletType() const
     {
       return ioletType;
     }

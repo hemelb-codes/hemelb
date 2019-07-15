@@ -10,6 +10,7 @@
 #include "util/Vector3D.h"
 #include "units.h"
 #include "util/Matrix3D.h"
+#include "geometry/SiteType.h"
 
 namespace hemelb
 {
@@ -149,7 +150,7 @@ namespace hemelb
      
         virtual bool IsStentWallSite(const util::Vector3D<site_t>& location) const = 0;
 
-        virtual bool IsIoletSite(const util::Vector3D<site_t>& location, const int& ioletId, const unsigned int& ioletType) const = 0;
+        virtual bool IsIoletSite(const util::Vector3D<site_t>& location, const int& ioletId, const geometry::SiteType& ioletType) const = 0;
     };
   }
 }

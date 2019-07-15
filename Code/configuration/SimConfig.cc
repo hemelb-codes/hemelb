@@ -525,10 +525,12 @@ namespace hemelb
       io::xml::Element ioletTypeEl = geometryEl.GetChildOrThrow("iolettype");
 
       int ioletId;
-      unsigned int ioletType;
+      unsigned int ioletTypeInt;
 
       GetDimensionalValue(ioletIdEl, "dimensionless", ioletId);
-      GetDimensionalValue(ioletTypeEl, "dimensionless", ioletType);
+      GetDimensionalValue(ioletTypeEl, "dimensionless", ioletTypeInt);
+
+      geometry::SiteType ioletType = static_cast<geometry::SiteType>(ioletTypeInt);
 
       return new extraction::IoletGeometrySelector(ioletId, ioletType);
 

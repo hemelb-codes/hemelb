@@ -11,6 +11,7 @@
 #include "geometry/LatticeData.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "util/UnitConverter.h"
+#include "geometry/SiteType.h"
 
 namespace hemelb
 {
@@ -147,7 +148,7 @@ namespace hemelb
 
         bool IsStentWallSite(const util::Vector3D<site_t>& location) const;
 
-        bool IsIoletSite(const util::Vector3D<site_t>& location, const int& ioletId, const unsigned int& ioletType) const;
+        bool IsIoletSite(const util::Vector3D<site_t>& location, const int& ioletId, const geometry::SiteType& ioletType) const;
 
       private:
         /**
