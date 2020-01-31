@@ -34,10 +34,13 @@ class PlacedIoletList(ObservableList):
     def SetInteractor(self, iact):
         self.Interactor = iact
         return
-    
+    def SetSurfaceSource(self, src):
+        self.SurfaceSource = src
+        
     def HandleInsertion(self, change):
         self[change.index].AddObserver('Enabled', self._ItemEnabledChangeHandler)
         self[change.index].widget.SetInteractor(self.Interactor)
+        self[change.index].widget.SetInputConnection(self.SurfaceSource)
         self[change.index].Enabled = True
         return
     
@@ -60,13 +63,13 @@ class PlacedIolet(Observable):
         self.widget = vtkPlaneWidget()
         self.widget.KeyPressActivationOff()
         self.widget.SetRepresentationToOutline()
-        # planeWidget.PlaceWidget(clickPos)
+        # As a fraction of BB diagonal
+        self.widget.SetHandleSize(0.01)
         
         # self.representation = vtkPolyData()
         # This is effectively a copy and is guaranteed to be up to
         # date when InteractionEvent or EndInteraction events are
         # invoked
-        # self.widget.AddObserver("InteractionEvent", self._SyncRepresentation)
         self.representation = self.widget.GetPolyDataAlgorithm()
         
         self.mapper = vtkPolyDataMapper()
@@ -116,16 +119,24 @@ class PlacedIolet(Observable):
             return
         self._Enabled = enabled
         if enabled:
+            self.widget.GetCenter(self._c)
+            self.widget.GetOrigin(self._o)
+            self.widget.GetPoint1(self._p1)
+            self.widget.GetPoint2(self._p2)
+            
+            self.widget.PlaceWidget()
+            
+            self.widget.SetCenter(self._c)
+            self.widget.SetOrigin(self._o)
+            self.widget.SetPoint1(self._p1)
+            self.widget.SetPoint2(self._p2)
+
             self.widget.On()
         else:
             self.widget.Off()
             pass
         return
     Enabled = property(GetEnabled, SetEnabled)
-    
-    def _SyncRepresentation(self, obj, evt):
-        self.widget.GetPolyData(self.representation)
-        return
     
     def SetCentre(self, centre):
         self.widget.SetCenter(centre)
@@ -183,7 +194,7 @@ class PlacedIolet(Observable):
         
         self._p1 -= self._o
         
-        return 0.5 * N.sqrt(N.dot(self._p1, self._p1))
+        return float(0.5 * N.sqrt(N.dot(self._p1, self._p1)))
     
     Radius = property(GetRadius, SetRadius)
     

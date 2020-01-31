@@ -30,6 +30,7 @@ namespace hemelb
         LatticePosition displ = x - position;
         LatticeDistance z = displ.Dot(normal);
         Dimensionless rSq = (displ.GetMagnitudeSquared() - z * z) / (radius * radius);
+        assert(rSq <= 1.0);
 
         // Get the max velocity
         LatticeSpeed max = maxSpeed;

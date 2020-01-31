@@ -301,7 +301,7 @@ if __name__ == "__main__":
     
     libraries = []
     library_dirs = []
-    extra_compile_args = GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags()
+    extra_compile_args = GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags() + ['-std=c++11']
     extra_link_args = ['-lCGAL', '-lgmp']
     
     # Create the list of extension modules
@@ -326,7 +326,7 @@ if __name__ == "__main__":
     # HemeLB classes
     hemelb_cpp = [os.path.join(HemeLbDir, cpp)
                   for cpp in ['util/Vector3D.cc',
-                              'geometry/SiteData.cc',
+                              'geometry/SiteDataBare.cc',
                               'lb/lattices/D3Q27.cc',
                               'io/formats/geometry.cc',
                               'io/writers/xdr/XdrFileWriter.cc',

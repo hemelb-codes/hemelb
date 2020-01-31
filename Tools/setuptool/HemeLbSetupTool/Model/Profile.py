@@ -88,6 +88,8 @@ class Profile(Observable):
         self.AddDependency('StlFileUnit', 'StlFileUnitId')
         self.AddDependency('VoxelSizeMetres', 'VoxelSize')
         self.AddDependency('VoxelSizeMetres', 'StlFileUnit.SizeInMetres')
+        self.BoundingBoxSize = 0.0
+        self.AddDependency('DefaultIoletRadius', 'BoundingBoxSize')
         
         # When the STL changes, we should reset the voxel size and
         # update the vtkSTLReader.
@@ -117,8 +119,17 @@ class Profile(Observable):
     def OnStlFileChanged(self, change):
         self.StlReader.SetFileName(self.StlFile)
         self.VoxelSize = self.SideLengthCalculator.GetOutputValue()
+        self.StlReader.Update()
+        surf = self.StlReader.GetOutput()
+        surf.ComputeBounds()
+        bounds = surf.GetBounds()
+        # VTK standard bounding box
+        # Compute diagonal length
+        self.BoundingBoxSize = np.sqrt((bounds[1]-bounds[0])**2 +
+                                       (bounds[3]-bounds[2])**2 +
+                                       (bounds[5]-bounds[4])**2)
         return
-        
+    
     @property
     def HaveValidStlFile(self):
         """Read only property indicating if our STL file is valid.
@@ -164,6 +175,10 @@ class Profile(Observable):
     def VoxelSizeMetres(self, value):
         self.VoxelSize = value / self.StlFileUnit.SizeInMetres
         return
+    
+    @property
+    def DefaultIoletRadius(self):
+        return self.BoundingBoxSize / 20.0
     
     def LoadFromFile(self, filename):
         root, ext = os.path.splitext(filename)

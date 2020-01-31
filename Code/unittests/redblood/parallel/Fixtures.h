@@ -11,7 +11,6 @@
 #define HEMELB_UNITTESTS_REDBLOOD_PARALLEL_FIXTURES_H
 
 #include "redblood/Cell.h"
-#include "redblood/parallel/CellParallelization.h"
 #include "SimulationMaster.h"
 #include <random>
 
@@ -140,9 +139,8 @@ namespace hemelb
 
       net::MpiCommunicator CreateDumbGraphComm(net::MpiCommunicator const &comm)
       {
-        return comm.Graph(hemelb::redblood::ComputeProcessorNeighbourhood(comm));
+        return comm.Graph(hemelb::redblood::parallel::ComputeProcessorNeighbourhood(comm));
       }
-
     }
   }
 }

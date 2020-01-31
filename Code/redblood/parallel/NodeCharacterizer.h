@@ -19,6 +19,7 @@
 #include "redblood/VelocityInterpolation.h"
 #include "geometry/LatticeData.h"
 #include "Traits.h"
+#include "redblood/parallel/GraphBasedCommunication.h"
 
 namespace hemelb
 {
@@ -33,31 +34,45 @@ namespace hemelb
         //! Functions returning the set of affected procs for a given node
         typedef std::function<std::set<proc_t>(LatticePosition const&)> AssessNodeRange;
         //! Set of procs affected by this position
-        //! \param[in] latDat will tell us which site belongs to which proc
+        //! \param[in] globalCoordsToProcMap will tell us which site belongs to which proc
         //! \param[in] iterator a  stencil iterator going over affected lattice points
         template<class STENCIL>
-        std::set<proc_t> positionAffectsProcs(geometry::LatticeData const &latDat,
+        std::set<proc_t> positionAffectsProcs(GlobalCoordsToProcMap const &globalCoordsToProcMap,
                                               InterpolationIterator<STENCIL> &&iterator);
         //! Set of procs affected by this position
-        //! \param[in] latDat will tell us which site belongs to which proc
+        //! \param[in] globalCoordsToProcMap will tell us which site belongs to which proc
         //! \param[in] position for which to figure out affected processes
         //! \param[in] stencil giving interaction range
         template<class STENCIL>
-        std::set<proc_t> positionAffectsProcs(geometry::LatticeData const &latDat,
+        std::set<proc_t> positionAffectsProcs(GlobalCoordsToProcMap const &globalCoordsToProcMap,
                                               LatticePosition const &position);
 
         //! Simplest MPI range assessor loops over nodes + interpolation stencil
         template<class STENCIL>
-        static AssessNodeRange AssessMPIFunction(geometry::LatticeData const &latDat)
+        static AssessNodeRange AssessMPIFunction(GlobalCoordsToProcMap const &globalCoordsToProcMap)
         {
-          return [&latDat](LatticePosition const &pos)
+          return [&globalCoordsToProcMap](LatticePosition const &pos)
           {
-            return details::positionAffectsProcs<STENCIL>(
-                latDat, InterpolationIterator<STENCIL>(pos));
+            auto const& affectedProcs = details::positionAffectsProcs<STENCIL>(
+                globalCoordsToProcMap, InterpolationIterator<STENCIL>(pos));
+            // #652 No mesh vertex should be under the influence of no rank in a valid simulation.
+            if (affectedProcs.size() == 0)
+            {
+              std::stringstream message;
+              message << "Mesh vertex at " << pos << " is not affected by any flow subdomain.";
+              log::Logger::Log<log::Error, log::OnePerCore>(message.str());
+
+              throw std::exception();
+            }
+            return affectedProcs;
           };
         }
       } /* details */
 
+      //! NodeCharacterizer computes which processes are affected by each node
+      //! in a RBC mesh, keeps a map between process rank and node indices, and
+      //! provides methods to query it. Mesh node and vertex refer to the same
+      //! concept here.
       class NodeCharacterizer
       {
         public:
@@ -91,14 +106,14 @@ namespace hemelb
 
           //! Constructs object using a custom assessor function
           template<class ... ARGS>
-          NodeCharacterizer(geometry::LatticeData const &latDat,
+          NodeCharacterizer(GlobalCoordsToProcMap const &globalCoordsToProcMap,
                             std::shared_ptr<CellBase const> cell, Traits<ARGS...> const&) :
-                  NodeCharacterizer(details::AssessMPIFunction<typename Traits<ARGS...>::Stencil>(latDat),
+                  NodeCharacterizer(details::AssessMPIFunction<typename Traits<ARGS...>::Stencil>(globalCoordsToProcMap),
                                     cell)
           {
           }
 
-          //! Whether the node affects more than one processor
+          //! Whether the node affects only one processor
           bool IsMidDomain(Index index) const;
           //! Whether the node affects more than one processor
           bool IsBoundary(Index index) const
@@ -125,13 +140,23 @@ namespace hemelb
               result->second.size();
           }
 
+          //! Indices of nodes that affect more than one proc
+          Process2NodesMap::value_type::second_type BoundaryIndices() const;
+          //! Indices of the processors affected by any node in the mesh
+          std::set<Process2NodesMap::key_type> AffectedProcs() const;
+
+          //! The process affected by the largest number of nodes
+          //! \return The rank of the process affected by the largest number of
+          //! mesh nodes or -1 if this could not be determined
+          Process2NodesMap::key_type DominantAffectedProc() const;
+
           //! Updates node characterization and return change in ownership
           void Reindex(AssessNodeRange const& assessNodeRange, MeshData::Vertices const &vertices);
           //! Reindex with normal mpi function
           template<class STENCIL>
-          void Reindex(geometry::LatticeData const &latDat, std::shared_ptr<CellBase const> cell)
+          void Reindex(GlobalCoordsToProcMap const &globalCoordsToProcMap, std::shared_ptr<CellBase const> cell)
           {
-            Reindex(details::AssessMPIFunction<STENCIL>(latDat), cell->GetVertices());
+            Reindex(details::AssessMPIFunction<STENCIL>(globalCoordsToProcMap), cell->GetVertices());
           }
 
           //! Consolidates result from another proc into an input array
@@ -159,33 +184,41 @@ namespace hemelb
           }
 
         protected:
-          //! Processes affected by a given processor
+          //! Nodes affected by a given processor
           Process2NodesMap affectedProcs;
       };
 
       namespace details
       {
         template<class STENCIL>
-        std::set<proc_t> positionAffectsProcs(geometry::LatticeData const &latDat,
+        std::set<proc_t> positionAffectsProcs(GlobalCoordsToProcMap const &globalCoordsToProcMap,
                                               InterpolationIterator<STENCIL> &&iterator)
         {
           std::set<proc_t> result;
           for (; iterator.IsValid(); ++iterator)
           {
-            auto const id = latDat.GetProcIdFromGlobalCoords(*iterator);
-            if (id != BIG_NUMBER2)
+            auto const& id = globalCoordsToProcMap.find(*iterator);
+            //! @todo #668 Some unit tests throw the warning below. Requires further investigation.
+            if(id == globalCoordsToProcMap.end())
             {
-              result.insert(id);
+              std::stringstream message;
+              message << "No owner recorded for lattice site " << *iterator << ". Not a problem iff outside flow domain.";
+              log::Logger::Log<log::Debug, log::OnePerCore>(message.str());
+            }
+            else
+            {
+              result.insert(id->second);
             }
           }
+
           return result;
         }
 
         template<class STENCIL>
-        std::set<proc_t> positionAffectsProcs(geometry::LatticeData const &latDat,
+        std::set<proc_t> positionAffectsProcs(GlobalCoordsToProcMap const &globalCoordsToProcMap,
                                               LatticePosition const &position)
         {
-          return positionAffectsProcs(latDat, interpolationIterator<STENCIL>(position));
+          return positionAffectsProcs(globalCoordsToProcMap, interpolationIterator<STENCIL>(position));
         }
       } /* details */
 

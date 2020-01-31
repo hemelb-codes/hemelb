@@ -84,7 +84,15 @@ namespace hemelb
         distribn_t density;
         geometry::Site<geometry::LatticeData const> site(latticeData.GetSite(index));
         LatticeForceVector const &force(site.GetForce());
-        LatticeType::CalculateDensityAndMomentum(site.GetFOld<LatticeType>(),
+#ifdef HEMELB_USE_KRUEGER_ORDERING
+        // Use distribution functions at the beginning of the previous timestep (stored in
+        // FNew after the swap at the end of the timestep) in the IBM velocity interpolation.
+        // Follows approach in Timm's code
+        auto const fDistribution = latticeData.GetFNew(index * LatticeType::NUMVECTORS);
+#else
+        auto const fDistribution = site.GetFOld<LatticeType>();
+#endif
+        LatticeType::CalculateDensityAndMomentum(fDistribution,
                                                  force[0],
                                                  force[1],
                                                  force[2],
@@ -102,8 +110,15 @@ namespace hemelb
         typedef typename KERNEL::LatticeType LatticeType;
         LatticeVelocity result(0, 0, 0);
         distribn_t density;
-        LatticeType::CalculateDensityAndMomentum(latticeData.GetSite(index).template GetFOld<
-                                                     LatticeType>(),
+#ifdef HEMELB_USE_KRUEGER_ORDERING
+        // Use distribution functions at the beginning of the previous timestep (stored in
+        // FNew after the swap at the end of the timestep) in the IBM velocity interpolation.
+        // Follows approach in Timm's code
+        auto const fDistribution = latticeData.GetFNew(index * LatticeType::NUMVECTORS);
+#else
+        auto const fDistribution = latticeData.GetSite(index).template GetFOld<LatticeType>();
+#endif
+        LatticeType::CalculateDensityAndMomentum(fDistribution,
                                                  density,
                                                  result.x,
                                                  result.y,

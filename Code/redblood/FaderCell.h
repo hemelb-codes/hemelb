@@ -103,6 +103,10 @@ namespace hemelb
         {
           return std::unique_ptr<FaderCell>(static_cast<FaderCell*>(cloneImpl().release()));
         }
+        std::shared_ptr<CellBase> GetWrapeeCell()
+        {
+          return wrappee;
+        }
 
       private:
         std::unique_ptr<CellBase> cloneImpl() const override

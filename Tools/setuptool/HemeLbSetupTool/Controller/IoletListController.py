@@ -20,12 +20,12 @@ class IoletListController(ListController):
     
     def AddInlet(self):
         self.nInlets += 1
-        self.append(Inlet(Name='Inlet%d' % (self.nInlets)))
+        self.append(Inlet(Name='Inlet%d' % (self.nInlets), Radius=self.GetValueForKey('DefaultIoletRadius')))
         return
     
     def AddOutlet(self):
         self.nOutlets += 1
-        self.append(Outlet(Name='Outlet%d' % (self.nOutlets)))
+        self.append(Outlet(Name='Outlet%d' % (self.nOutlets), Radius=self.GetValueForKey('DefaultIoletRadius')))
         return
 
     def RemoveIolet(self):

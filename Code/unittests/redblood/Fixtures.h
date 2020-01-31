@@ -157,7 +157,7 @@ namespace hemelb
     }
 
     //! Fake cell that contains a single node
-    class NodeCell : public hemelb::redblood::CellBase
+    class NodeCell : public hemelb::redblood::Cell
     {
       public:
         NodeCell(LatticePosition const&position, std::string const &templateName = "nope") :
@@ -171,7 +171,7 @@ namespace hemelb
         }
         NodeCell(std::vector<LatticePosition> const &positions, std::string const &templateName =
                      "nope") :
-                hemelb::redblood::CellBase(positions,
+                hemelb::redblood::Cell(positions,
                                            hemelb::redblood::Mesh(std::make_shared<
                                                                       hemelb::redblood::MeshData>(hemelb::redblood::MeshData { positions,
                                                                                                                                { } }),

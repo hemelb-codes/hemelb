@@ -80,6 +80,14 @@ namespace hemelb
          * @return
          */
         const std::string& GetDataExtractionPath() const;
+
+        /**
+         * Create a subdirectory inside the RBC output directory and return its path
+         * @param subdirectoryName Name of the subdirectory to be created
+         * @return Path to the newly created subdirectory
+         */
+        const std::string GetRBCOutputPathWithSubdir(std::string subdirectoryName) const;
+
       private:
         void GuessOutputDir(); //! String processing to generate an appropriate outptu folder name.
         std::string outputDir;
@@ -91,6 +99,7 @@ namespace hemelb
         std::string dataPath;
         const configuration::CommandLine &options;
         bool doIo; //! Am I the input/output node?
+        std::string rbcsPath; //! Path for RBC output
     };
   }
 }

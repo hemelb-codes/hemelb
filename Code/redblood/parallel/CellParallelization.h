@@ -24,39 +24,10 @@ namespace hemelb
   {
     namespace parallel
     {
-      class CellParallelization
-      {
-        public:
-          //! Type of the object holding distributions
-          typedef std::map<boost::uuids::uuid, NodeCharacterizer> NodeDistributions;
-          //! Container holding cells lent by other processes
-          typedef std::map<proc_t, CellContainer> LentCells;
-          //! Creates a cell-parallelization object
-          CellParallelization(net::MpiCommunicator const &comm) :
-              comm(comm.Duplicate())
-          {
-          }
-          //! Creates a cell-parallelization object
-          CellParallelization(net::MpiCommunicator &&comm) :
-              comm(std::move(comm))
-          {
-          }
-          //! Adds an owned cell
-          void AddCell(CellContainer::const_reference cell)
-          {
-            owned.insert(cell);
-          }
-
-        protected:
-          //! Graph communicator defining neighberhood over which cells can be owned
-          net::MpiCommunicator comm;
-          //! Cells owned by this process
-          CellContainer owned;
-          //! Distribution of the cells owned by this process
-          NodeDistributions distributions;
-          //! Cells lent by other proces
-          LentCells lent;
-      };
+      //! Type of the object holding distributions
+      typedef std::map<boost::uuids::uuid, NodeCharacterizer> NodeDistributions;
+      //! Container holding cells lent by other processes
+      typedef std::map<proc_t, CellContainer> LentCells;
 
       //! \brief Takes cells and distribute them over the mpi graph
       //! \details Cells can only be distributed from one neighbor to another.
@@ -71,38 +42,28 @@ namespace hemelb
       //! This class owns only data that strictly concerns receiving and sending cells (mpi
       //! communicators, buffers, etc). Anything that could be used outside the class is passed as
       //! an input parameter to the class-methods (primarily, the container of cells, the parallel
-      //! distribution of nodes, and a funtion or vertor describing who owns which cell).
+      //! distribution of nodes, and a funtion or vector describing who owns which cell).
       class ExchangeCells
       {
         public:
-          //! Type of the object holding distributions
-          typedef CellParallelization::NodeDistributions NodeDistributions;
-          //! Container holding cells lent by other processes
-          typedef CellParallelization::LentCells LentCells;
           //! Function that can figure out who should own a cell
           typedef std::function<int(CellContainer::const_reference)> Ownership;
           //! Result of the whole messaging mess
           typedef std::tuple<CellContainer, CellContainer, LentCells> ChangedCells;
 
           //! \brief An object to exchange and distribute cells
-          //! \param[in] graphComm: neighberhood communicator
-          //! \param[in] simCom: world communicator of the simulation
-          ExchangeCells(net::MpiCommunicator const &graphComm, net::MpiCommunicator const &simComm) :
+          //! \param[in] graphComm: neighborhood communicator
+          ExchangeCells(net::MpiCommunicator const &graphComm) :
               cellCount(graphComm), totalNodeCount(graphComm), nameLengths(graphComm),
                   templateNames(graphComm), ownerIDs(graphComm), nodeCount(graphComm),
-                  cellUUIDs(graphComm), cellScales(graphComm), nodePositions(graphComm),
-                  simComm(simComm)
-          {
-          }
-          ExchangeCells(net::MpiCommunicator const &graphComm) :
-              ExchangeCells(graphComm, net::MpiCommunicator::World())
+                  cellUUIDs(graphComm), cellScales(graphComm), nodePositions(graphComm)
           {
           }
           //! \brief Computes and posts length of message when sending cells
           //! \param[in] distributions: Node distributions of the cells owned by this process
           //! \param[in] owned: Cells currently owned by this process
           //! \param[in] ownership a function to ascertain ownership. It should return the rank of
-          //! the owning process in the *world* communicator, according to the position in the cell.
+          //! the owning process in the graph communicator, according to the position of the cell.
           virtual void PostCellMessageLength(NodeDistributions const& distributions,
                                              CellContainer const &owned,
                                              Ownership const & ownership);
@@ -118,7 +79,7 @@ namespace hemelb
           //! \param[in] distributions tells us for each proc the list of nodes it requires
           //! \param[in] cells a container of cells owned and managed by this process
           //! \param[in] ownership a function to ascertain ownership. It should return the rank of
-          //! the owning process in the *world* communicator, according to the position in the cell.
+          //! the owning process in the graph communicator, according to the position of the cell.
           virtual void PostCells(NodeDistributions const &distributions, CellContainer const &cells,
                                  Ownership const & ownership);
           //! \brief Post all owned cells and preps for receiving lent cells
@@ -170,8 +131,6 @@ namespace hemelb
           //! \details These cells are the same as the disowned cells. However, only part of the
           //! nodes kept: those that affect this process.
           LentCells formelyOwned;
-          //! World communicator for the simulation
-          net::MpiCommunicator simComm;
 
           //! Number of nodes to send to each neighboring process
           void SetupLocalSendBuffers(NodeDistributions const &distributions,
@@ -201,10 +160,9 @@ namespace hemelb
 
       //! Creates a map from uuids to node distributions over MPI domains
       template<class ASSESSOR>
-      CellParallelization::NodeDistributions nodeDistributions(ASSESSOR assessor,
-                                                               CellContainer const & ownedCells)
+      NodeDistributions nodeDistributions(ASSESSOR assessor, CellContainer const & ownedCells)
       {
-        CellParallelization::NodeDistributions result;
+        NodeDistributions result;
         for (auto const&cell : ownedCells)
         {
           result.emplace(std::piecewise_construct,
@@ -217,10 +175,10 @@ namespace hemelb
       //! \brief Creates a map from uuids to node distributions over MPI domains
       //! \details This version uses standard assessor that loops over interpolated fluid sites.
       template<class STENCIL = Traits<>::Stencil>
-      CellParallelization::NodeDistributions nodeDistributions(geometry::LatticeData const &latDat,
-                                                               CellContainer const & ownedCells)
+      NodeDistributions nodeDistributions(GlobalCoordsToProcMap const &globalCoordsToProcMap,
+                                          CellContainer const & ownedCells)
       {
-        return nodeDistributions(details::AssessMPIFunction<STENCIL>(latDat), ownedCells);
+        return nodeDistributions(details::AssessMPIFunction<STENCIL>(globalCoordsToProcMap), ownedCells);
       }
 
     } /* parallel */

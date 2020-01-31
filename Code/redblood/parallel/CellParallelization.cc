@@ -56,15 +56,13 @@ namespace hemelb
         }
 
         std::map<boost::uuids::uuid, proc_t> getOwnership(net::MpiCommunicator const &graphComm,
-                                                          net::MpiCommunicator const &world,
                                                           CellContainer const &owned,
                                                           ExchangeCells::Ownership const &ownership)
         {
-          auto const rankMap = world.RankMap(graphComm);
           std::map<boost::uuids::uuid, proc_t> result;
           for (auto const &cell : owned)
           {
-            result[cell->GetTag()] = rankMap.find(ownership(cell))->second;
+            result[cell->GetTag()] = ownership(cell);
           }
           return result;
         }
@@ -76,7 +74,7 @@ namespace hemelb
       {
         PostCellMessageLength(distributions,
                               owned,
-                              getOwnership(nodeCount.GetCommunicator(), simComm, owned, ownership));
+                              getOwnership(nodeCount.GetCommunicator(), owned, ownership));
       }
 
       void ExchangeCells::PostCellMessageLength(
@@ -103,6 +101,8 @@ namespace hemelb
               dist.CountNodes(item.value);
             if (nVertices > 0)
             {
+              log::Logger::Log<log::Debug, log::OnePerCore>("Sending %i vertices to process %i",
+                  nVertices, item.value);
               assert(cellCount.GetSendBuffer().size() > item.index);
               assert(totalNodeCount.GetSendBuffer().size() > item.index);
               assert(nameLengths.GetSendBuffer().size() > item.index);
@@ -125,7 +125,7 @@ namespace hemelb
       {
         PostCells(distributions,
                   owned,
-                  getOwnership(nodeCount.GetCommunicator(), simComm, owned, ownership));
+                  getOwnership(nodeCount.GetCommunicator(), owned, ownership));
       }
 
       void ExchangeCells::PostCells(NodeDistributions const &distributions,
@@ -211,7 +211,9 @@ namespace hemelb
                                             nodeCount.GetReceiveBuffer().cbegin() + index,
                                             0);
         auto i_node = nodePositions.GetReceiveBuffer().cbegin() + offset;
+        assert(nodeCount.GetReceiveBuffer().size() > index);
         auto const Nnodes = nodeCount.GetReceiveBuffer()[index];
+        log::Logger::Log<log::Debug, log::OnePerCore>("Receiving %i vertices", Nnodes);
         for (size_t j(0); j < Nnodes; ++j)
         {
           result->addVertex(* (i_node++));
@@ -354,14 +356,8 @@ namespace hemelb
           {
             lentCell->addVertex(cell->GetVertices()[index]);
           }
-          if (formelyOwned.count(neighbor) == 1)
-          {
-            formelyOwned[neighbor] = CellContainer { lentCell };
-          }
-          else
-          {
-            formelyOwned[neighbor].emplace(std::move(lentCell));
-          }
+          auto const &inserted = formelyOwned[neighbor].emplace(std::move(lentCell));
+          assert(inserted.second);
         }
       }
 

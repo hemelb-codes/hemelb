@@ -156,7 +156,7 @@ namespace hemelb
                            details::CellUUIDComparison()));
     }
 
-    CellContainer DivideConquerCells::LentCellsToSingleContainer(parallel::CellParallelization::LentCells const &lentCells) const
+    CellContainer DivideConquerCells::LentCellsToSingleContainer(parallel::LentCells const &lentCells) const
     {
       CellContainer single_cell_container;
 

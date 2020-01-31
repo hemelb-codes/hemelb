@@ -130,6 +130,53 @@ namespace hemelb
     }
 
     template<typename T>
+    std::vector<T> MpiCommunicator::AllNeighGather(const T& val) const
+    {
+      std::vector<T> ans(GetNeighborsCount());
+      T* recvbuf = ans.data();
+
+      HEMELB_MPI_CALL(MPI_Neighbor_allgather,
+                      (MpiConstCast(&val), 1, MpiDataType<T>(), recvbuf, 1, MpiDataType<T>(), *this));
+
+      return ans;
+    }
+
+    template<typename T>
+    std::vector<std::vector<T>> MpiCommunicator::AllNeighGatherV(const std::vector<T>& val) const
+    {
+      int numProcs = GetNeighborsCount();
+      std::vector<int> valSizes = AllNeighGather((int) val.size());
+      std::vector<int> valDisplacements(numProcs + 1);
+
+      int totalSize = std::accumulate(valSizes.begin(),
+                                      valSizes.end(),
+                                      0);
+
+      valDisplacements[0] = 0;
+      for (int j = 0; j < numProcs; ++j)
+      {
+        valDisplacements[j + 1] = valDisplacements[j] + valSizes[j];
+      }
+
+      std::vector<T> allVal(totalSize);
+      HEMELB_MPI_CALL(MPI_Neighbor_allgatherv,
+                      ( net::MpiConstCast(&val[0]), val.size(), net::MpiDataType<T>(), &allVal[0], net::MpiConstCast(&valSizes[0]), net::MpiConstCast(&valDisplacements[0]), net::MpiDataType<T>(), *this ));
+
+      std::vector<std::vector<T>> ans(numProcs);
+      for (decltype(numProcs) procIndex = 0; procIndex < numProcs; ++procIndex)
+      {
+        ans[procIndex].reserve(valDisplacements[procIndex + 1] - valDisplacements[procIndex]);
+        for (auto indexAllCoords = valDisplacements[procIndex];
+             indexAllCoords < valDisplacements[procIndex + 1]; ++indexAllCoords)
+        {
+          ans[procIndex].push_back(allVal[indexAllCoords]);
+        }
+      }
+
+      return ans;
+    }
+
+    template<typename T>
     std::vector<T> MpiCommunicator::AllToAll(const std::vector<T>& vals) const
     {
       std::vector<T> ans(vals.size());

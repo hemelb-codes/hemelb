@@ -37,10 +37,6 @@ namespace hemelb
         public:
           //! Forces for a single cell
           typedef std::vector<LatticeVelocity> Velocities;
-          //! Type of the object holding distributions
-          typedef CellParallelization::NodeDistributions NodeDistributions;
-          //! Container holding cells lent by other processes
-          typedef CellParallelization::LentCells LentCells;
 
           IntegrateVelocities(net::MpiCommunicator const &graphComm) :
               sendNodeCount(graphComm), sendVelocities(graphComm)

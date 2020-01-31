@@ -147,7 +147,8 @@ namespace hemelb
               CellContainer { cells.begin() + split.Rank() * nCells, cells.begin()
                                   + (1 + split.Rank()) * nCells } :
               CellContainer { cells.begin(), cells.end() };
-        auto const distributions = hemelb::redblood::parallel::nodeDistributions(latDat, owned);
+        auto const& graphComm = CreateDumbGraphComm(split);
+        auto const distributions = hemelb::redblood::parallel::nodeDistributions(hemelb::redblood::parallel::ComputeGlobalCoordsToProcMap(graphComm, latDat), owned);
 
         // Goes through "ExchangeCells" to figure out who owns/lends what.
         // Ownership is pre-determined here: first nCells got to 0, second nCells to 2, etc...
@@ -167,14 +168,14 @@ namespace hemelb
           proc_t result = i / nCells;
           return result;
         };
-        hemelb::redblood::parallel::ExchangeCells xchange(CreateDumbGraphComm(split), split);
+        hemelb::redblood::parallel::ExchangeCells xchange(graphComm);
         xchange.PostCellMessageLength(distributions, owned, ownership);
         xchange.PostCells(distributions, owned, ownership);
         auto const distCells = xchange.ReceiveCells(templates);
         auto const &lentCells = std::get<2>(distCells);
 
         // Actually perform velocity integration
-        hemelb::redblood::parallel::IntegrateVelocities integrator(CreateDumbGraphComm(split));
+        hemelb::redblood::parallel::IntegrateVelocities integrator(graphComm);
         integrator.PostMessageLength(lentCells);
         integrator.ComputeLocalVelocitiesAndUpdatePositions<Traits>(latDat, owned);
         integrator.PostVelocities<Traits>(latDat, lentCells);

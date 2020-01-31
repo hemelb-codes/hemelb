@@ -82,14 +82,14 @@ namespace hemelb
         // Have everything ready to creates simulations
         if (Comms().Rank() == 0)
         {
-          CopyResourceToTempdir("large_cylinder_rbc.xml");
-          CopyResourceToTempdir("large_cylinder.gmy");
-          CopyResourceToTempdir("red_blood_cell.txt");
+          CopyResourceToTempdir("cyl_l100_r5.xml");
+          CopyResourceToTempdir("cyl_l100_r5.gmy");
+          CopyResourceToTempdir("rbc_ico_2880.msh");
 
           // This simulation duration is sufficient to pick up the original force spreading
           // issue that motivated the test. Run the test for longer in order to check other
           // aspects of the parallel implementation against a sequential run.
-          ModifyXMLInput("large_cylinder_rbc.xml", { "simulation", "steps", "value" }, 1000);
+          ModifyXMLInput("cyl_l100_r5.xml", { "simulation", "steps", "value" }, 1000);
         }
         HEMELB_MPI_CALL(MPI_Barrier, (Comms()));
 
@@ -98,7 +98,7 @@ namespace hemelb
           "others";
         options = std::make_shared<configuration::CommandLine>(configuration::CommandLine { "hemelb",
                                                               "-in",
-                                                              "large_cylinder_rbc.xml",
+                                                              "cyl_l100_r5.xml",
                                                               "-i",
                                                               "1",
                                                               "-ss",
@@ -130,9 +130,9 @@ namespace hemelb
           for(std::size_t i(serial.size()); i < uuids.size(); ++i)
           {
             CPPUNIT_ASSERT_EQUAL(std::size_t(1), serial.count(uuids[i]));
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].x, serial[uuids[i]].x, 1e-12);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].y, serial[uuids[i]].y, 1e-12);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].z, serial[uuids[i]].z, 1e-12);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].x, serial[uuids[i]].x, 1e-11);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].y, serial[uuids[i]].y, 1e-11);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenters[i].z, serial[uuids[i]].z, 1e-11);
           }
         }
         world.Barrier();
@@ -169,9 +169,9 @@ namespace hemelb
                 parallel_positions.begin(), parallel_positions.end(), positions[i]);
             CPPUNIT_ASSERT(i_found != parallel_positions.end());
             auto const actual_force = parallel_forces[i_found - parallel_positions.begin()];
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(forces[i].x, actual_force.x, 1e-12);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(forces[i].y, actual_force.y, 1e-12);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(forces[i].z, actual_force.z, 1e-12);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(forces[i].x, actual_force.x, 1e-11);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(forces[i].y, actual_force.y, 1e-11);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(forces[i].z, actual_force.z, 1e-11);
             ++nbtests;
           }
         }
@@ -207,10 +207,11 @@ namespace hemelb
         auto controller = std::static_pointer_cast<hemelb::redblood::CellController<Traits>>(
             master->GetCellController());
         auto const originalCellInserter = controller->GetCellInsertion();
-        auto cellInserter = [&originalCellInserter](CellInserter const &adder) {
-          auto const transformCell = [adder, originalCellInserter](CellContainer::value_type cell) {
+        auto rank = world.Rank();
+        auto cellInserter = [&originalCellInserter, rank](CellInserter const &adder) {
+          auto const transformCell = [adder, originalCellInserter, rank](CellContainer::value_type cell) {
             static boost::uuids::uuid nbCells = {{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-              0x0, 0x0, 0x0, 0x0, 0x0, 0x0}};
+              0x0, 0x0, 0x0, 0x0, 0x0, static_cast<uint8_t>(rank)}};
             cell->SetTag(nbCells);
             ++*static_cast<int64_t*>(static_cast<void*>(&nbCells));
             *cell += LatticePosition(0,0,3.6);

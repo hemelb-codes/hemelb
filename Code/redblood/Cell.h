@@ -118,14 +118,14 @@ namespace hemelb
           return std::unique_ptr<Cell>(static_cast<Cell*>(cloneImpl().release()));
         }
 
-      private:
-        //! Clones: shallow copy reference mesh, deep-copy everything else
-        std::unique_ptr<CellBase> cloneImpl() const override;
-
         // Computes facet bending energy over all facets
         LatticeEnergy facetBending() const;
         // Computes facet bending energy over all facets
         LatticeEnergy facetBending(std::vector<LatticeForceVector> &forces) const;
+
+      private:
+        //! Clones: shallow copy reference mesh, deep-copy everything else
+        std::unique_ptr<CellBase> cloneImpl() const override;
     };
     static_assert(
         (not std::is_default_constructible<Cell>::value)
@@ -149,6 +149,18 @@ namespace hemelb
         and (not std::is_pod<Cell::Moduli>::value),
         "Explicit type characteristics"
     );
+
+    //! Write cell-mesh to file in Timm's format
+    void writeMesh(std::ostream &, std::shared_ptr<CellBase const>, util::UnitConverter const&);
+    //! Write cell-mesh to file in Timm's format
+    void writeMesh(std::string const&, std::shared_ptr<CellBase const>, util::UnitConverter const&);
+    //! Write cell-mesh to file in VTK XML format including individual forces
+    void writeVTKMeshWithForces(std::ostream &, std::shared_ptr<Cell const>,
+                                util::UnitConverter const&);
+    //! Write cell-mesh to file in VTK XML format including individual forces
+    void writeVTKMeshWithForces(std::string const &, std::shared_ptr<Cell const>,
+                                util::UnitConverter const&);
+
   }
 } // namespace hemelb::redblood
 #endif

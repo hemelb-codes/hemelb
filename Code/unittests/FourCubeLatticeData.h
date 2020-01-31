@@ -57,19 +57,26 @@ namespace hemelb
       public:
 
         /**
-         * The create function makes a 4 x 4 x 4 cube of sites from (0,0,0) to (3,3,3).
-         * The plane (x,y,0) is an inlet (boundary 0).
-         * The plane (x,y,3) is an outlet (boundary 1).
-         * The planes (0,y,z), (3,y,z), (x,0,z) and (x,3,z) are all walls.
+         * Make a FourCubeLatticeData object consisting of a single block with
+         * sitesPerBlockUnit-2 fluid lattice sites along each axis plus one
+         * layer of supposedly solid lattice sites around it. Sites with minimum
+         * z coordinate (z=1) have links intersecting an inlet. Similar with
+         * sites with maximum z coordinate (z=sitesPerBlockUnit-1) and outlet.
+         * Any site with x,y = {1, sitesPerBlockUnit-1} has links intersecting
+         * the wall in the appropriate directions.
          *
-         * @return
+         * Note that no domain decomposition is performed based on rankCount,
+         * only some parallel data structures are initialised based on it.
+         *
+         * @param comm MPI communicatior
+         * @param sitesPerBlockUnit Total number of sites along each direction
+         * @param rankCount Number of MPI ranks involved in the simulation
+         * @return LatticeData compatible object
          */
         static FourCubeLatticeData* Create(const net::IOCommunicator& comm,
                                            site_t sitesPerBlockUnit = 6, proc_t rankCount = 1)
         {
           hemelb::geometry::Geometry readResult(util::Vector3D<site_t>::Ones(), sitesPerBlockUnit);
-// VoxelSize                                               0.01,
-// Origin                                               util::Vector3D<PhysicalDistance>::Zero());
           site_t sitesAlongCube = sitesPerBlockUnit - 2;
           site_t minInd = 1, maxInd = sitesAlongCube;
 

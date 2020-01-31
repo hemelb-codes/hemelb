@@ -232,12 +232,18 @@ namespace hemelb
     //! Read mesh from file
     //! Format is from T. Krueger's thesis
     std::shared_ptr<MeshData> readMesh(std::string const &filename);
+    std::shared_ptr<MeshData> readMesh(std::string const &filename, util::UnitConverter const &);
     //! Read mesh from file
     //! Format is from T. Krueger's thesis
     std::shared_ptr<MeshData> readMesh(std::istream &stream);
+    std::shared_ptr<MeshData> readMesh(std::istream &stream, util::UnitConverter const &);
     //! Write mesh from file
     //! Format is from T. Krueger's thesis
     void writeMesh(std::ostream &stream, MeshData const &data, util::UnitConverter const &);
+    //! Write mesh from file
+    //! Format is from T. Krueger's thesis
+    void writeMesh(std::ostream &, MeshData::Vertices const &, MeshData::Facets const &,
+                   util::UnitConverter const&);
     //! Write mesh from file
     //! Format is from T. Krueger's thesis
     void writeMesh(std::string const &filename, MeshData const &data, util::UnitConverter const &);
@@ -246,8 +252,9 @@ namespace hemelb
     //! Write mesh to file in VTK XML format
     void writeVTKMesh(std::string const &, MeshData const &, util::UnitConverter const&);
     //! Write mesh to file in VTK XML format
+    typedef std::vector<std::pair<std::string, std::vector<double>>> PointScalarData;
     void writeVTKMesh(std::ostream &, MeshData::Vertices const &, MeshData::Facets const &,
-                      util::UnitConverter const&);
+                      util::UnitConverter const&, PointScalarData pointScalarData = { });
 
     //! Tetrahedron of a depth
     //! Depth refers to the number of triangular subdivision in each facet

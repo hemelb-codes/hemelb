@@ -24,6 +24,7 @@
 #include "net/IOCommunicator.h"
 #include "colloids/BodyForces.h"
 #include "colloids/BoundaryConditions.h"
+#include "redblood/FaderCell.h"
 
 #include <map>
 #include <limits>
@@ -50,8 +51,8 @@ namespace hemelb
     steeringSessionId = options.GetSteeringSessionId();
 
     fileManager = std::make_shared<hemelb::io::PathManager>(options,
-                                              IsCurrentProcTheIOProc(),
-                                              GetProcessorCount());
+                                                            IsCurrentProcTheIOProc(),
+                                                            GetProcessorCount());
     simConfig.reset(hemelb::configuration::SimConfig::New(fileManager->GetInputFile()));
     unitConverter = &simConfig->GetUnitConverter();
     monitoringConfig = simConfig->GetMonitoringConfiguration();
@@ -61,7 +62,7 @@ namespace hemelb
     if (IsCurrentProcTheIOProc())
     {
       reporter = std::make_shared<hemelb::reporting::Reporter>(fileManager->GetReportPath(),
-                                                 fileManager->GetInputFile());
+                                                               fileManager->GetInputFile());
       reporter->AddReportable(&build_info);
       if (monitoringConfig->doIncompressibilityCheck)
       {
@@ -112,7 +113,7 @@ namespace hemelb
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Beginning Initialisation.");
 
     simulationState = std::make_shared<hemelb::lb::SimulationState>(simConfig->GetTimeStepLength(),
-                                                      simConfig->GetTotalTimeSteps());
+                                                                    simConfig->GetTotalTimeSteps());
 
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising LatticeData.");
 
@@ -129,22 +130,23 @@ namespace hemelb
 
     // Create a new lattice based on that info and return it.
     latticeData = std::make_shared<hemelb::geometry::LatticeData>(latticeType::GetLatticeInfo(),
-                                                    readGeometryData,
-                                                    ioComms);
+                                                                  readGeometryData,
+                                                                  ioComms);
 
     timings[hemelb::reporting::Timers::latDatInitialise].Stop();
 
-    neighbouringDataManager =
-        std::make_shared<hemelb::geometry::neighbouring::NeighbouringDataManager>(*latticeData,
-                                                                    latticeData->GetNeighbouringData(),
-                                                                    communicationNet);
+    neighbouringDataManager = std::make_shared<
+        hemelb::geometry::neighbouring::NeighbouringDataManager>(*latticeData,
+                                                                 latticeData->GetNeighbouringData(),
+                                                                 communicationNet);
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising LBM.");
-    latticeBoltzmannModel = std::make_shared<hemelb::lb::LBM<Traits>>(simConfig.get(),
-                                                        &communicationNet,
-                                                        latticeData.get(),
-                                                        simulationState.get(),
-                                                        timings,
-                                                        neighbouringDataManager.get());
+    latticeBoltzmannModel =
+        std::make_shared<hemelb::lb::LBM<Traits>>(simConfig.get(),
+                                                  &communicationNet,
+                                                  latticeData.get(),
+                                                  simulationState.get(),
+                                                  timings,
+                                                  neighbouringDataManager.get());
 
     hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
 
@@ -164,14 +166,14 @@ namespace hemelb
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising Colloids.");
       colloidController =
           std::make_shared<hemelb::colloids::ColloidController>(*latticeData,
-                                                  *simulationState,
-                                                  readGeometryData,
-                                                  xml,
-                                                  propertyCache,
-                                                  latticeBoltzmannModel->GetLbmParams(),
-                                                  fileManager->GetColloidPath(),
-                                                  ioComms,
-                                                  timings);
+                                                                *simulationState,
+                                                                readGeometryData,
+                                                                xml,
+                                                                propertyCache,
+                                                                latticeBoltzmannModel->GetLbmParams(),
+                                                                fileManager->GetColloidPath(),
+                                                                ioComms,
+                                                                timings);
     }
     timings[hemelb::reporting::Timers::colloidInitialisation].Stop();
 
@@ -179,12 +181,14 @@ namespace hemelb
     {
       hemelb::redblood::CellContainer cells;
       typedef hemelb::redblood::CellController<Traits> Controller;
-      auto const controller = std::make_shared<Controller>(
-         *latticeData, cells, simConfig->GetRBCMeshes(),
-         timings, simConfig->GetBoxSize(),
-         simConfig->GetCell2Cell(), simConfig->GetCell2Wall(),
-         ioComms
-      );
+      auto const controller = std::make_shared<Controller>(*latticeData,
+                                                           cells,
+                                                           simConfig->GetRBCMeshes(),
+                                                           timings,
+                                                           simConfig->GetBoxSize(),
+                                                           simConfig->GetCell2Cell(),
+                                                           simConfig->GetCell2Wall(),
+                                                           ioComms);
       controller->SetCellInsertion(simConfig->GetInserter());
       controller->SetOutlets(*simConfig->GetRBCOutlets());
       cellController = std::static_pointer_cast<hemelb::net::IteratedAction>(controller);
@@ -192,15 +196,47 @@ namespace hemelb
       auto output_callback =
           [this](const hemelb::redblood::CellContainer & cells)
           {
-            auto timestep = simulationState->GetTimeStep();
+            auto timestep = simulationState->Get0IndexedTimeStep();
             if ((timestep % simConfig->GetRBCOutputPeriod()) == 0)
             {
               log::Logger::Log<log::Info, log::OnePerCore>("printstep %d, num cells %d", timestep, cells.size());
-              for (auto cell: cells)
+
+              // Create output directory for current writing step. Requires syncing to
+              // ensure no process goes ahead before directory is created.
+              std::string rbcOutputDir;
+              try
+              {
+                rbcOutputDir = fileManager->GetRBCOutputPathWithSubdir(std::to_string(timestep));
+              }
+              catch(Exception& e)
+              {
+                std::stringstream message;
+                message << e.what() << std::endl
+                        << "Error " << errno << ": " << std::strerror(errno);
+                log::Logger::Log<log::Critical, log::OnePerCore>(message.str());
+                ioComms.Abort(-1);
+                exit(-1);
+              }
+              ioComms.Barrier();
+
+              for (auto cell : cells)
               {
                 std::stringstream filename;
-                filename << cell->GetTag() << "_t_" << timestep << ".vtp";
-                hemelb::redblood::writeVTKMesh(filename.str(), cell, *unitConverter);
+                filename << rbcOutputDir << cell->GetTag() << "_t_" << timestep << ".vtp";
+
+                std::shared_ptr<redblood::CellBase> cell_base;
+                auto fader_cell_cast = std::dynamic_pointer_cast<redblood::FaderCell>(cell);
+                if(fader_cell_cast)
+                {
+                  cell_base = fader_cell_cast->GetWrapeeCell();
+                }
+                else
+                {
+                  cell_base = cell;
+                }
+                auto cell_cast = std::dynamic_pointer_cast<redblood::Cell>(cell_base);
+                assert(cell_cast);
+                hemelb::redblood::writeVTKMeshWithForces(filename.str(), cell_cast, *unitConverter);
               }
             }
           };
@@ -213,53 +249,57 @@ namespace hemelb
       network = std::make_shared<hemelb::steering::Network>(steeringSessionId, timings);
     }
 
-    stabilityTester = std::make_shared<hemelb::lb::StabilityTester<latticeType>>(latticeData.get(),
+    stabilityTester =
+        std::make_shared<hemelb::lb::StabilityTester<latticeType>>(latticeData.get(),
                                                                    &communicationNet,
                                                                    simulationState.get(),
                                                                    timings,
                                                                    monitoringConfig);
     if (monitoringConfig->doIncompressibilityCheck)
     {
-      incompressibilityChecker = std::make_shared<hemelb::lb::IncompressibilityChecker<
-          hemelb::net::PhasedBroadcastRegular<> >>(latticeData.get(),
-                                                  &communicationNet,
-                                                  simulationState.get(),
-                                                  latticeBoltzmannModel->GetPropertyCache(),
-                                                  timings);
+      incompressibilityChecker =
+          std::make_shared<
+              hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<>>>(latticeData.get(),
+                                                                                           &communicationNet,
+                                                                                           simulationState.get(),
+                                                                                           latticeBoltzmannModel->GetPropertyCache(),
+                                                                                           timings);
     }
 
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising visualisation controller.");
     visualisationControl =
         std::make_shared<hemelb::vis::Control>(latticeBoltzmannModel->GetLbmParams()->StressType,
-                                 &communicationNet,
-                                 simulationState.get(),
-                                 latticeBoltzmannModel->GetPropertyCache(),
-                                 latticeData.get(),
-                                 timings[hemelb::reporting::Timers::visualisation]);
+                                               &communicationNet,
+                                               simulationState.get(),
+                                               latticeBoltzmannModel->GetPropertyCache(),
+                                               latticeData.get(),
+                                               timings[hemelb::reporting::Timers::visualisation]);
 
     if (ioComms.OnIORank())
     {
-      imageSendCpt = std::make_shared<hemelb::steering::ImageSendComponent>(simulationState.get(),
-                                                              visualisationControl.get(),
-                                                              latticeBoltzmannModel->GetLbmParams(),
-                                                              network.get(),
-                                                              latticeBoltzmannModel->InletCount());
+      imageSendCpt =
+          std::make_shared<hemelb::steering::ImageSendComponent>(simulationState.get(),
+                                                                 visualisationControl.get(),
+                                                                 latticeBoltzmannModel->GetLbmParams(),
+                                                                 network.get(),
+                                                                 latticeBoltzmannModel->InletCount());
 
     }
 
     inletValues = std::make_shared<hemelb::lb::iolets::BoundaryValues>(hemelb::geometry::INLET_TYPE,
-                                                         latticeData.get(),
-                                                         simConfig->GetInlets(),
-                                                         simulationState.get(),
-                                                         ioComms,
-                                                         *unitConverter);
+                                                                       latticeData.get(),
+                                                                       simConfig->GetInlets(),
+                                                                       simulationState.get(),
+                                                                       ioComms,
+                                                                       *unitConverter);
 
-    outletValues = std::make_shared<hemelb::lb::iolets::BoundaryValues>(hemelb::geometry::OUTLET_TYPE,
-                                                          latticeData.get(),
-                                                          simConfig->GetOutlets(),
-                                                          simulationState.get(),
-                                                          ioComms,
-                                                          *unitConverter);
+    outletValues =
+        std::make_shared<hemelb::lb::iolets::BoundaryValues>(hemelb::geometry::OUTLET_TYPE,
+                                                             latticeData.get(),
+                                                             simConfig->GetOutlets(),
+                                                             simulationState.get(),
+                                                             ioComms,
+                                                             *unitConverter);
 
     latticeBoltzmannModel->Initialise(visualisationControl.get(),
                                       inletValues.get(),
@@ -269,21 +309,21 @@ namespace hemelb
     neighbouringDataManager->TransferNonFieldDependentInformation();
 
     steeringCpt = std::make_shared<hemelb::steering::SteeringComponent>(network.get(),
-                                                          visualisationControl.get(),
-                                                          imageSendCpt.get(),
-                                                          &communicationNet,
-                                                          simulationState.get(),
-                                                          simConfig.get(),
-                                                          unitConverter);
+                                                                        visualisationControl.get(),
+                                                                        imageSendCpt.get(),
+                                                                        &communicationNet,
+                                                                        simulationState.get(),
+                                                                        simConfig.get(),
+                                                                        unitConverter);
 
     // Read in the visualisation parameters.
     latticeBoltzmannModel->ReadVisParameters();
 
     propertyDataSource =
         std::make_shared<hemelb::extraction::LbDataSourceIterator>(latticeBoltzmannModel->GetPropertyCache(),
-                                                     *latticeData,
-                                                     ioComms.Rank(),
-                                                     *unitConverter);
+                                                                   *latticeData,
+                                                                   ioComms.Rank(),
+                                                                   *unitConverter);
 
     if (simConfig->PropertyOutputCount() > 0)
     {
@@ -295,18 +335,20 @@ namespace hemelb
             + simConfig->GetPropertyOutput(outputNumber)->filename;
       }
 
-      propertyExtractor = std::make_shared<hemelb::extraction::PropertyActor>(*simulationState,
-                                                                simConfig->GetPropertyOutputs(),
-                                                                *propertyDataSource,
-                                                                timings,
-                                                                ioComms);
+      propertyExtractor =
+          std::make_shared<hemelb::extraction::PropertyActor>(*simulationState,
+                                                              simConfig->GetPropertyOutputs(),
+                                                              *propertyDataSource,
+                                                              timings,
+                                                              ioComms);
     }
 
     imagesPeriod = OutputPeriod(imagesPerSimulation);
 
-    stepManager = std::make_shared<hemelb::net::phased::StepManager>(2,
-                                                       &timings,
-                                                       hemelb::net::separate_communications);
+    stepManager =
+        std::make_shared<hemelb::net::phased::StepManager>(2,
+                                                           &timings,
+                                                           hemelb::net::separate_communications);
     netConcern = std::make_shared<hemelb::net::phased::NetConcern>(communicationNet);
     stepManager->RegisterIteratedActorSteps(*neighbouringDataManager.get(), 0);
     if (colloidController)
@@ -387,8 +429,8 @@ namespace hemelb
       if (ioComms.OnIORank())
       {
         reporter->Image();
-        std::unique_ptr<hemelb::io::writers::Writer> writer(
-            fileManager->XdrImageWriter(1 + ( (it->second - 1) % simulationState->GetTimeStep())));
+        std::unique_ptr<hemelb::io::writers::Writer> writer(fileManager->XdrImageWriter(1
+            + ( (it->second - 1) % simulationState->GetTimeStep())));
 
         const hemelb::vis::PixelSet<hemelb::vis::ResultPixel>* result =
             visualisationControl->GetResult(it->second);
@@ -488,8 +530,8 @@ namespace hemelb
   template<class TRAITS>
   void SimulationMaster<TRAITS>::DoTimeStep()
   {
-    log::Logger::Log<log::Debug, log::OnePerCore>(
-        "Current LB time: %e", simulationState->GetTime());
+    log::Logger::Log<log::Debug, log::OnePerCore>("Current LB time: %e",
+                                                  simulationState->GetTime());
     bool writeImage = ( (simulationState->GetTimeStep() % imagesPeriod) == 0) ?
       true :
       false;
@@ -665,6 +707,6 @@ namespace hemelb
   template<class TRAITS>
   const hemelb::util::UnitConverter& SimulationMaster<TRAITS>::GetUnitConverter() const
   {
-      return *unitConverter;
+    return *unitConverter;
   }
 }

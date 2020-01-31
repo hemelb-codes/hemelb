@@ -65,15 +65,16 @@ archer: #the ARCHER supercomputer at EPCC
   make_jobs: 4
   verbose: 1
   job_dispatch: "qsub"
-  run_command: "aprun -n $cores"
+  run_command: "aprun -n $cores > stdout.txt 2> stderr.txt"
   batch_header: pbs-archer
   remote: "login.archer.ac.uk"
+  no_git: true # sync from local checkout, easier to deploy local changes for debug, DON'T MERGE IN
   # On ARCHER, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
   install_path_template: "$work_path/install"
   home_path_template: "/home/$project/$project/$username"
   runtime_path_template: "/work/$project/$project/$username"
   fabric_dir: "FabricHemeLb"
-  modules: ["load cmake/3.2.3", "swap PrgEnv-cray PrgEnv-gnu", "swap gcc gcc/4.9.2"]
+  modules: ["load cmake/3.2.3", "swap PrgEnv-cray PrgEnv-gnu", "load boost", "load cray-hdf5-parallel", "load cray-tpsl", "load openssl wget"]
   build_prefix_commands: ["export LDFLAGS=-dynamic"] # Required for HDF5 to compile
   temp_path_template: "$work_path/tmp"
   regression_test_path_template: "$work_path/regression"
@@ -81,9 +82,13 @@ archer: #the ARCHER supercomputer at EPCC
   python_build: "lib/python2.7"
   corespernode: 24
   cmake_options:
-    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_OPTIMISATION: "\"-Ofast -funroll-loops\""
     HEMELB_USE_SSE3: "ON"
     HEMELB_COMPUTE_ARCHITECTURE: "INTELSANDYBRIDGE"
+    METIS_INCLUDE_DIR: "$CRAY_TPSL_PREFIX_DIR/include"
+    METIS_LIBRARY: "$CRAY_TPSL_PREFIX_DIR/lib"
+    PARMETIS_INCLUDE_DIR: "$CRAY_TPSL_PREFIX_DIR/include"
+    PARMETIS_LIBRARY: "$CRAY_TPSL_PREFIX_DIR/lib"
 
 legion: 
   job_dispatch: "qsub"

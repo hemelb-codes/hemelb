@@ -1,4 +1,5 @@
 #include <utility>
+#include <chrono>
 #include "io/xml/XmlAbstractionLayer.h"
 #include "redblood/stencil.h"
 #include "redblood/Cell.h"
@@ -112,6 +113,38 @@ namespace hemelb
         }
       }
 
+      // Read physical outlets that are somehow configured as numerical inlets in the XML parameter file
+      void readFlowExtensionsWithoutInsertElement(io::xml::Element const& ioletsNode,
+                              util::UnitConverter const& converter,
+                              std::vector<FlowExtension> &results, bool mustHaveFlowExtension =
+                                  false)
+      {
+        if (ioletsNode == ioletsNode.Missing())
+        {
+          return;
+        }
+        auto const name = ioletsNode.GetName().substr(0, ioletsNode.GetName().size() - 1);
+        auto ioletNode = ioletsNode.GetChildOrNull(name);
+        for (; ioletNode != ioletNode.Missing(); ioletNode = ioletNode.NextSiblingOrNull(name))
+        {
+          if (ioletNode.GetChildOrNull("flowextension") != ioletNode.Missing())
+          {
+            if (ioletNode.GetChildOrNull("insertcell") != ioletNode.Missing())
+            {
+              continue;
+            }
+            else
+            {
+              results.emplace_back(readFlowExtension(ioletNode, converter));
+            }
+          }
+          else if (mustHaveFlowExtension)
+          {
+            throw Exception() << "Could not find flow extension in iolet";
+          }
+        }
+      }
+
       //! Rotates a cell to be aligned with the flow and translates it to the start of the flow extension fade length
       void rotateTranslateCellToFlow(std::unique_ptr<CellBase> & cell, const Angle theta,
                                      const Angle phi, const FlowExtension & flowExtension,
@@ -164,6 +197,14 @@ namespace hemelb
           io::xml::Element const& node, util::UnitConverter const& converter,
           TemplateCellContainer const &templateCells)
       {
+        // We need to seed each of the RBCInserterWithPerturbation objects consistently across MPI processes
+        auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+        auto comm_world = hemelb::net::MpiCommunicator::World();
+        comm_world.Broadcast(seed, 0);
+        std::stringstream message;
+        message << "RBC insertion random seed: " << std::hex << std::showbase << seed;
+        hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>(message.str());
+
         // Now gets data for cell insertion
 
         // There are potentially multiple cell inserters each with their own
@@ -189,7 +230,7 @@ namespace hemelb
           // Rotate cell to align z axis with given position, and then z axis with flow
           // If phi == 0, then cell symmetry axis is aligned with the flow
           auto const theta = GetNonDimensionalValue<Angle>(insNode, "theta", "rad", converter, 0e0);
-          auto const phi = GetNonDimensionalValue<Angle>(insNode, "theta", "rad", converter, 0e0);
+          auto const phi = GetNonDimensionalValue<Angle>(insNode, "phi", "rad", converter, 0e0);
           auto const x = GetNonDimensionalValue<LatticeDistance>(insNode, "x", "m", converter, 0e0);
           auto const y = GetNonDimensionalValue<LatticeDistance>(insNode, "y", "m", converter, 0e0);
           auto const z = GetNonDimensionalValue<LatticeDistance>(insNode, "z", "m", converter, 0e0);
@@ -218,12 +259,16 @@ namespace hemelb
                                                               0e0);
           auto time = std::make_shared<LatticeTime>(timeStep - 1e0
               + std::numeric_limits<LatticeTime>::epsilon() - offset);
-          auto condition = [time, timeStep, dt, offset]()
+
+          std::default_random_engine randomGenerator(seed);
+          std::uniform_real_distribution<double> uniformDistribution(-1.0, 1.0);
+
+          auto condition = [time, timeStep, dt, uniformDistribution, randomGenerator]() mutable
           {
             *time += 1e0;
             if(*time >= timeStep)
             {
-              *time -= timeStep + dt * (double(rand() % 10000) / 10000.e0);
+              *time -= timeStep + dt * uniformDistribution(randomGenerator);
               return true;
             }
             return false;
@@ -256,7 +301,9 @@ namespace hemelb
                                            dtheta,
                                            dphi,
                                            rotateToFlow * LatticePosition(dx, 0, 0),
-                                           rotateToFlow * LatticePosition(0, dy, 0))));
+                                           rotateToFlow * LatticePosition(0, dy, 0),
+                                           seed)));
+          seed++;
         }
 
         return composite;
@@ -509,8 +556,13 @@ namespace hemelb
     {
       // First read outlets from XML
       auto const result = std::make_shared<std::vector<FlowExtension>>();
+
       auto outletsNode = topNode.GetChildOrThrow("outlets");
       readFlowExtensions(outletsNode, converter, *result);
+
+      auto inletsNode = topNode.GetChildOrThrow("inlets");
+      readFlowExtensionsWithoutInsertElement(inletsNode, converter, *result);
+
       // Then transforms them to cell outlets: should start somewhere near the end of fadelength
       for (auto &flowExt : *result)
       {

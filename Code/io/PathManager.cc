@@ -27,6 +27,7 @@ namespace hemelb
       imageDirectory = outputDir + "/Images/";
       dataPath = outputDir + "/Extracted/";
       colloidFile = outputDir + "/ColloidOutput.xdr";
+      rbcsPath = outputDir + "/Cells/";
 
       if (doIo)
       {
@@ -36,6 +37,7 @@ namespace hemelb
         hemelb::util::MakeDirAllRXW(outputDir);
         hemelb::util::MakeDirAllRXW(imageDirectory);
         hemelb::util::MakeDirAllRXW(dataPath);
+        hemelb::util::MakeDirAllRXW(rbcsPath);
         reportName = outputDir;
       }
     }
@@ -110,6 +112,25 @@ namespace hemelb
           outputDir = inputFile.substr(0, lLastForwardSlash + 1) + "results";
         }
       }
+    }
+
+    const std::string PathManager::GetRBCOutputPathWithSubdir(std::string subdirectoryName) const
+    {
+      std::string rbcSubdir = rbcsPath + subdirectoryName + "/";
+
+      if (doIo)
+      {
+        if (hemelb::util::DoesDirectoryExist(rbcSubdir.c_str()))
+          throw Exception() << "Output directory '" << rbcSubdir << "' already exists.";
+
+        bool created = hemelb::util::MakeDirAllRXW(rbcSubdir);
+        if (!created)
+        {
+          throw Exception() << "Output directory '" << rbcSubdir << "' could not be created.";
+        }
+      }
+
+      return rbcSubdir;
     }
   }
 }

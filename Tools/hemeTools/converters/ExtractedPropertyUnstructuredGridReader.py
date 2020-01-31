@@ -179,17 +179,25 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
             field.SetName(name)
 
             # Insert it into the dictionary
-            field_dict[name] = field
+            field_dict[(name, length)] = field
 
         # Copy the data into the correct position in the output array and add 
         # the array to the output.
-        # TODO: this needs a case for the stress. We should check what 
-        # representation VTK uses for rank 3 tensors. 
-        for field_name, field in field_dict.iteritems():
+        for (field_name, field_length), field in field_dict.iteritems():
+            data = getattr(extracted_data, field_name)
+
+            # fieldArray is a view into the data stored in field
             fieldArray = numpy_support.vtk_to_numpy(field)
-            fieldArray[self.OutputCellIdsByInputIndex] = getattr(extracted_data, field_name)
+            if field_length == 6:
+                # Paraview assumes the order XX, YY, ZZ, XY, YZ, XZ for symmetric
+                # tensors stored in compressed format. However HemeLB outputs
+                # XX XY XZ YY YZ ZZ. Reorder elements.
+                fieldArray[self.OutputCellIdsByInputIndex] = data[:, [0, 3, 5, 1, 4, 2]]
+            else:
+                fieldArray[self.OutputCellIdsByInputIndex] = data
+
             output.GetCellData().AddArray(field)
-                        
+
         return
     pass
 

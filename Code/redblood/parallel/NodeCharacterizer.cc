@@ -25,20 +25,11 @@ namespace hemelb
                                                           MeshData::Vertices const &vertices)
         {
           NodeCharacterizer::Process2NodesMap result;
-          for (auto const vertex : util::enumerate(vertices))
+          for (auto const &vertex : util::enumerate(vertices))
           {
             for (auto const &process : assessNodeRange(vertex.value))
             {
-              auto const i_proc = result.find(process);
-              if (i_proc == result.end())
-              {
-                result[process] =
-                { vertex.index};
-              }
-              else
-              {
-                result[process].insert(vertex.index);
-              }
+              result[process].insert(vertex.index);
             }
           }
           return result;
@@ -60,13 +51,13 @@ namespace hemelb
       void NodeCharacterizer::Reindex(AssessNodeRange const & assessor,
                                       MeshData::Vertices const & vertices)
       {
-        affectedProcs = details::meshMessenger(assessor, vertices);
+        affectedProcs = details::meshMessenger(std::cref(assessor), vertices);
       }
 
       bool NodeCharacterizer::IsMidDomain(Index index) const
       {
         int found(0);
-        for (auto const process : affectedProcs)
+        for (auto const &process : affectedProcs)
         {
           if (process.second.count(index) and ++found > 1)
           {
@@ -76,11 +67,42 @@ namespace hemelb
         return true;
       }
 
+      NodeCharacterizer::Process2NodesMap::value_type::second_type NodeCharacterizer::BoundaryIndices() const {
+        if(affectedProcs.size() == 1)
+        {
+          return decltype(BoundaryIndices())();
+        }
+        auto i_first = affectedProcs.cbegin();
+        auto current = i_first->second;
+        for(++i_first; i_first != affectedProcs.cend(); ++i_first) {
+          std::set<MeshData::Vertices::size_type> next;
+          std::set_intersection(current.begin(), current.end(),
+                                i_first->second.begin(), i_first->second.end(),
+                                std::inserter(next, next.begin()));
+          std::swap(next, current);
+        }
+        return current;
+      }
+
+      std::set<NodeCharacterizer::Process2NodesMap::key_type>
+      NodeCharacterizer::AffectedProcs() const
+      {
+        std::set<Process2NodesMap::key_type> result;
+        for(auto const &process: affectedProcs)
+        {
+          if(process.second.size() > 0)
+          {
+            result.insert(process.first);
+          }
+        }
+        return result;
+      }
+
       std::set<NodeCharacterizer::Process2NodesMap::key_type> NodeCharacterizer::AffectedProcs(
           Index index) const
       {
         std::set<NodeCharacterizer::Process2NodesMap::key_type> result;
-        for (auto const process : affectedProcs)
+        for (auto const &process : affectedProcs)
         {
           if (process.second.count(index))
           {
@@ -88,6 +110,17 @@ namespace hemelb
           }
         }
         return result;
+      }
+
+      NodeCharacterizer::Process2NodesMap::key_type NodeCharacterizer::DominantAffectedProc() const
+      {
+        typedef NodeCharacterizer::Process2NodesMap::const_reference Arg;
+        auto const max = std::max_element(affectedProcs.begin(), affectedProcs.end(), [](Arg a, Arg b) { return a.second.size() < b.second.size(); });
+        if (affectedProcs.empty() or max->second.size() == 0)
+        {
+          return -1;
+        }
+        return max->first;
       }
 
       void NodeCharacterizer::ReduceFrom(MeshData::Vertices &consolidated,

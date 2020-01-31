@@ -18,7 +18,6 @@
 #include <iterator>
 
 #include "redblood/parallel/IntegrateVelocities.h"
-#include "redblood/parallel/CellParallelization.h"
 #include "redblood/parallel/NodeCharacterizer.h"
 #include "configuration/CommandLine.h"
 #include "SimulationMaster.h"
@@ -37,14 +36,14 @@ namespace hemelb
       class ParallelFixtureTests : public helpers::FolderTestFixture
       {
           CPPUNIT_TEST_SUITE (ParallelFixtureTests);
-          CPPUNIT_TEST (testTransititiveOwnership);
+          CPPUNIT_TEST (testTransitiveOwnership);
           CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp();
 
           //! if owner procs thinks position affects proc i, then proc i knows it as well
-          void testTransititiveOwnership();
+          void testTransitiveOwnership();
         protected:
           std::shared_ptr<hemelb::configuration::CommandLine> options;
 
@@ -94,7 +93,7 @@ namespace hemelb
                                                                "" });
       }
 
-      void ParallelFixtureTests::testTransititiveOwnership()
+      void ParallelFixtureTests::testTransitiveOwnership()
       {
         typedef hemelb::redblood::stencil::FourPoint Stencil;
 
@@ -113,10 +112,17 @@ namespace hemelb
         auto const nedges = 20;
         auto const positions = GatherSpecialPositions(latDat, nmid, nedges, world);
 
+        auto graphComm =
+            world.Graph(redblood_parallel::ComputeProcessorNeighbourhood(world,
+                                                                         latDat,
+                                                                         2e-6 / master->GetSimConfig()->GetVoxelSize()));
+
+        auto const& globalCoordsToProcMap = hemelb::redblood::parallel::ComputeGlobalCoordsToProcMap(graphComm, latDat);
+
         for(std::size_t i(0); i < positions.size(); ++i)
         {
           auto const procs = hemelb::redblood::parallel::details::positionAffectsProcs<Stencil>(
-              latDat, positions[i]);
+              globalCoordsToProcMap, positions[i]);
 
           // Send set of affected procs as known by owner proc
           decltype(world.Rank()) positions_are_from_this_proc = i / (nmid + nedges) + 1;

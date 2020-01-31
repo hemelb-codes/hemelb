@@ -299,7 +299,7 @@ namespace hemelb
         CellContainer const empty;
         DivideConquerCells dnc(empty, cutoff, halo);
 
-        parallel::ExchangeCells::LentCells lent;
+        parallel::LentCells lent;
         lent[0].insert(cell);
         dnc.update(parallel::ExchangeCells::ChangedCells(empty, empty, lent));
         CPPUNIT_ASSERT_EQUAL(cell->GetVertices().size(), dnc.size());
