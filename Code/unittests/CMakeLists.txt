@@ -86,4 +86,7 @@ add_to_resources(resources/four_cube.gmy resources/four_cube.xml
   resources/cyl_l100_r5.xml
   resources/cyl_l100_r5.gmy
   resources/rbc_ico_2880.msh
+  resources/rbc_ico_720_correct.msh
+  resources/rbc_ico_720.msh
+  resources/992Particles_rank3_26_t992.msh
 )

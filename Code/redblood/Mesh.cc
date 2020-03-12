@@ -62,7 +62,7 @@ namespace hemelb
       return result;
     }
 
-    std::shared_ptr<MeshData> readMesh(std::istream &stream)
+    std::shared_ptr<MeshData> readMesh(std::istream &stream, bool fixFacetOrientation)
     {
       log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from stream");
 
@@ -132,7 +132,10 @@ namespace hemelb
                                                    num_vertices,
                                                    num_facets);
 
-      orientFacets(*result);
+      if (fixFacetOrientation)
+      {
+        orientFacets(*result);
+      }
       return result;
     }
 
@@ -704,6 +707,7 @@ namespace hemelb
           std::swap(facet[0], facet[2]);
         }
       }
+
     }
   }
 } // hemelb::redblood

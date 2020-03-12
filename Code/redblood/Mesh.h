@@ -235,7 +235,7 @@ namespace hemelb
     std::shared_ptr<MeshData> readMesh(std::string const &filename, util::UnitConverter const &);
     //! Read mesh from file
     //! Format is from T. Krueger's thesis
-    std::shared_ptr<MeshData> readMesh(std::istream &stream);
+    std::shared_ptr<MeshData> readMesh(std::istream &stream, bool fixFacetOrientation=true);
     std::shared_ptr<MeshData> readMesh(std::istream &stream, util::UnitConverter const &);
     //! Write mesh from file
     //! Format is from T. Krueger's thesis
