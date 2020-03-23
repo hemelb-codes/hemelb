@@ -71,5 +71,6 @@ namespace hemelb
 #include "unittests/redblood/NodeIntegrationTests.h"
 #include <unittests/redblood/parallel/NodeParallelizationTests.h>
 #include "unittests/redblood/LoadingTimmMeshTests.h"
+#include "unittests/redblood/RedBloodMeshVTKDataIOTests.h"
 #undef HEMELB_DOING_UNITTESTS
 #endif

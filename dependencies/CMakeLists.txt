@@ -323,3 +323,6 @@ else()
         BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
     )
 endif()
+
+# --------- VTK -----------------------
+find_package(VTK REQUIRED)

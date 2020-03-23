@@ -21,6 +21,7 @@
 #include "util/Matrix3D.h"
 #include "util/UnitConverter.h"
 #include "units.h"
+#include <vtkPolyData.h>
 
 namespace hemelb
 {
@@ -237,6 +238,11 @@ namespace hemelb
     //! Format is from T. Krueger's thesis
     std::shared_ptr<MeshData> readMesh(std::istream &stream, bool fixFacetOrientation=true);
     std::shared_ptr<MeshData> readMesh(std::istream &stream, util::UnitConverter const &);
+
+    //! Read VTK mesh from file
+    std::shared_ptr<MeshData> readVTKMesh(std::string const &filename);
+    std::shared_ptr<MeshData> readVTKMesh(vtkPolyData* polydata, bool fixFacetOrientation=true);
+
     //! Write mesh from file
     //! Format is from T. Krueger's thesis
     void writeMesh(std::ostream &stream, MeshData const &data, util::UnitConverter const &);

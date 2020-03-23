@@ -253,6 +253,7 @@ target_link_libraries(${HEMELB_EXECUTABLE}
 	${CTEMPLATE_LIBRARIES}
 	${ZLIB_LIBRARIES}
     ${MPWide_LIBRARIES}
+    ${VTK_LIBRARIES}
 	)
 INSTALL(TARGETS ${HEMELB_EXECUTABLE} RUNTIME DESTINATION bin)
 add_to_resources(resources/report.txt.ctp resources/report.xml.ctp)
