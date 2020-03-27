@@ -91,4 +91,5 @@ add_to_resources(resources/four_cube.gmy resources/four_cube.xml
   resources/rbc_ico_720.msh
   resources/rbc_ico_720.vtp
   resources/992Particles_rank3_26_t992.msh
+  resources/992Particles_rank3_26_t992.vtp
 )

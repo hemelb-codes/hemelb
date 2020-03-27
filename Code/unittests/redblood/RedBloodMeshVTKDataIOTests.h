@@ -17,6 +17,7 @@
 #include "resources/Resource.h"
 #include "util/UnitConverter.h"
 #include "unittests/redblood/Fixtures.h"
+#include <vtkPolyData.h>
 
 namespace hemelb
 {
@@ -31,14 +32,13 @@ namespace hemelb
       {
           CPPUNIT_TEST_SUITE (RedBloodMeshVTKDataIOTests);
           CPPUNIT_TEST (testVTPReadMesh);
-          //CPPUNIT_TEST (testVTPWriteMesh);
+          CPPUNIT_TEST (testOrientOriginalRBCMesh);
+          CPPUNIT_TEST (testOrientTimmSimRBCMesh);
           CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp()
           {
-            std::string filename = resources::Resource("rbc_ico_720.vtp").Path();
-            mesh = readVTKMesh(filename);
           }
 
           void tearDown()
@@ -47,6 +47,9 @@ namespace hemelb
 
           void testVTPReadMesh()
           {
+            std::string filename = resources::Resource("rbc_ico_720.vtp").Path();
+            std::shared_ptr<MeshData> mesh = readVTKMesh(filename);
+
             CPPUNIT_ASSERT(mesh);
             CPPUNIT_ASSERT_EQUAL(mesh->vertices.size(), 362ul);
             CPPUNIT_ASSERT_EQUAL(mesh->facets.size(), 720ul);
@@ -65,23 +68,33 @@ namespace hemelb
             CPPUNIT_ASSERT(any(mesh->facets.back(), 157));
           }
 
-//          void testWriteMesh()
-//          {
-//            std::ostringstream output;
-//            writeMesh(output, *mesh, util::UnitConverter(1, 1, LatticePosition(0, 0, 0)));
-//            std::istringstream input(output.str());
-//            std::shared_ptr<MeshData> other = readMesh(input);
-//            CPPUNIT_ASSERT(other->vertices.size() == mesh->vertices.size());
-//            CPPUNIT_ASSERT(other->facets.size() == mesh->facets.size());
-//            CPPUNIT_ASSERT(compare(mesh->vertices.front() - other->vertices.front()));
-//            CPPUNIT_ASSERT(compare(mesh->vertices.back() - other->vertices.back()));
-//
-//            for (size_t i(0); i < 3; ++i)
-//            {
-//              CPPUNIT_ASSERT(mesh->facets.front()[i] == other->facets.front()[i]);
-//              CPPUNIT_ASSERT(mesh->facets.back()[i] == other->facets.back()[i]);
-//            }
-//          }
+          void testOrientOriginalRBCMesh()
+          {
+            // This file has 684 out of 720 faces oriented inwards
+            std::string filename = resources::Resource("rbc_ico_720.vtp").Path();
+
+            std::shared_ptr<MeshData> meshData;
+            vtkSmartPointer<vtkPolyData> polyData;
+            std::tie(meshData, polyData) = readMeshDataFromVTKPolyData(filename);
+
+            auto numSwaps = orientFacets(*meshData, *polyData);
+
+            CPPUNIT_ASSERT_EQUAL(numSwaps, 684u);
+          }
+
+          void testOrientTimmSimRBCMesh()
+          {
+            // This file has all 720 faces oriented inwards
+            std::string filename = resources::Resource("992Particles_rank3_26_t992.vtp").Path();
+
+            std::shared_ptr<MeshData> meshData;
+            vtkSmartPointer<vtkPolyData> polyData;
+            std::tie(meshData, polyData) = readMeshDataFromVTKPolyData(filename);
+
+            auto numSwaps = orientFacets(*meshData, *polyData);
+
+            CPPUNIT_ASSERT_EQUAL(numSwaps, 720u);
+          }
 
           static bool compare(util::Vector3D<double> const &in)
           {
@@ -92,8 +105,6 @@ namespace hemelb
             return vec[0] == value or vec[1] == value or vec[2] == value;
           }
 
-        private:
-          std::shared_ptr<MeshData> mesh;
       };
 
 

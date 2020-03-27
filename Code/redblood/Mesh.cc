@@ -19,6 +19,8 @@
 #include "constants.h"
 #include <vtkXMLPolyDataReader.h>
 #include <vtkSmartPointer.h>
+#include <vtkPolyDataNormals.h>
+#include <vtkCellData.h>
 
 namespace hemelb
 {
@@ -141,7 +143,7 @@ namespace hemelb
       return result;
     }
 
-    std::shared_ptr<MeshData> readVTKMesh(std::string const &filename)
+    std::shared_ptr<MeshData> readVTKMesh(std::string const &filename, bool fixFacetOrientation)
     {
       log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from %s",
                                                    filename.c_str());
@@ -149,19 +151,28 @@ namespace hemelb
       if (!util::file_exists(filename.c_str()))
         throw Exception() << "Red-blood-cell mesh file '" << filename.c_str() << "' does not exist";
 
+      std::shared_ptr<MeshData> meshData;
+      vtkSmartPointer<vtkPolyData> polyData;
+      std::tie(meshData, polyData) = readMeshDataFromVTKPolyData(filename);
+
+      if (fixFacetOrientation)
+      {
+        orientFacets(*meshData, *polyData);
+      }
+
+      return meshData;
+    }
+
+    std::tuple<std::shared_ptr<MeshData>, vtkSmartPointer<vtkPolyData> > readMeshDataFromVTKPolyData(std::string const &filename)
+    {
+      log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from VTK polydata file");
+
       // Read in VTK polydata object
       vtkSmartPointer<vtkXMLPolyDataReader> reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
       reader->SetFileName(filename.c_str());
       reader->Update();
       // TODO: check that the file read succeeded, e.g. wrong format
-      vtkPolyData* polydata = reader->GetOutput();
-
-      return readVTKMesh(polydata);
-    }
-
-    std::shared_ptr<MeshData> readVTKMesh(vtkPolyData* polydata, bool fixFacetOrientation)
-    {
-      log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from polydata object");
+      vtkSmartPointer<vtkPolyData> polydata(reader->GetOutput());
 
       // Number of vertices
       unsigned int num_vertices = polydata->GetNumberOfPoints();
@@ -207,12 +218,7 @@ namespace hemelb
                                                    num_vertices,
                                                    num_facets);
 
-      if (fixFacetOrientation)
-      {
-        // TODO: Write new implementation of orientFacets that uses the VTK algorithm to work out what's the outward pointing normal
-        orientFacets(*result);
-      }
-      return result;
+      return std::make_tuple(result, polydata);
     }
 
 
@@ -757,6 +763,8 @@ namespace hemelb
     }
     void orientFacets(MeshData &mesh, bool outward)
     {
+      log::Logger::Log<log::Warning, log::Singleton>("orientFacets method for meshes constructed from a .msh file has been deprecated. Consider using VTK input files instead.");
+
       // create a new mesh at slighly smaller scale
       MeshData smaller(mesh);
       auto const scale = 0.99;
@@ -784,7 +792,44 @@ namespace hemelb
           std::swap(facet[0], facet[2]);
         }
       }
-
     }
+    unsigned orientFacets(MeshData &mesh, vtkPolyData &polydata, bool outward)
+    {
+      vtkSmartPointer<vtkPolyDataNormals> normalCalculator = vtkSmartPointer<vtkPolyDataNormals>::New();
+      normalCalculator->SetInputData(&polydata);
+      normalCalculator->ComputePointNormalsOff();
+      normalCalculator->ComputeCellNormalsOn();
+      normalCalculator->SetAutoOrientNormals(1);
+      normalCalculator->Update();
+      auto normals = normalCalculator->GetOutput()->GetCellData()->GetNormals();
+
+      assert(normals->GetNumberOfComponents() == 3);
+      assert(normals->GetNumberOfTuples() == mesh.facets.size());
+
+      // Loop over each facet, checks orientation and modify as appropriate
+      unsigned normalId = 0;
+      unsigned numSwapped = 0;
+      for (auto &facet : mesh.facets)
+      {
+        auto const &v0 = mesh.vertices[facet[0]];
+        auto const &v1 = mesh.vertices[facet[1]];
+        auto const &v2 = mesh.vertices[facet[2]];
+
+        double vtkNormal[3];
+        normals->GetTuple(normalId, vtkNormal);
+        LatticePosition direction(vtkNormal[0], vtkNormal[1], vtkNormal[2]);
+
+        if ( ( (v0 - v1).Cross(v2 - v1).Dot(direction) > 0e0) xor outward)
+        {
+          std::swap(facet[0], facet[2]);
+          ++numSwapped;
+        }
+
+        ++normalId;
+      }
+
+      return numSwapped;
+    }
+
   }
 } // hemelb::redblood

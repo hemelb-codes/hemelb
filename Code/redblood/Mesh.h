@@ -56,8 +56,10 @@ namespace hemelb
     LatticeVolume volume(MeshData::Vertices const &vertices, MeshData::Facets const &facets);
     LatticeArea area(MeshData const &mesh);
     LatticeArea area(MeshData::Vertices const &vertices, MeshData::Facets const &facets);
-    //! Orients facet inward, or inward
+    //! DEPRECATED. Orients facets outward, or inward. Algorithm cannot handle case of facet being coplanar with mesh barycenter.
     void orientFacets(MeshData &mesh, bool outward = true);
+    //! Orients facets inwards/outwards using VTK algorithm to determining outward facing direction. MeshData object should have been constructed from vtkPolyData object. See readMeshDataFromVTKPolyData.
+    unsigned orientFacets(MeshData &mesh, vtkPolyData &polydata, bool outward = true);
 
     //! Holds raw topology data
     class MeshTopology
@@ -240,8 +242,8 @@ namespace hemelb
     std::shared_ptr<MeshData> readMesh(std::istream &stream, util::UnitConverter const &);
 
     //! Read VTK mesh from file
-    std::shared_ptr<MeshData> readVTKMesh(std::string const &filename);
-    std::shared_ptr<MeshData> readVTKMesh(vtkPolyData* polydata, bool fixFacetOrientation=true);
+    std::shared_ptr<MeshData> readVTKMesh(std::string const &filename, bool fixFacetOrientation=true);
+    std::tuple<std::shared_ptr<MeshData>, vtkSmartPointer<vtkPolyData> >  readMeshDataFromVTKPolyData(std::string const &filename);
 
     //! Write mesh from file
     //! Format is from T. Krueger's thesis
