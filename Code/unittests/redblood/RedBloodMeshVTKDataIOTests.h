@@ -80,6 +80,7 @@ namespace hemelb
             auto numSwaps = orientFacets(*meshData, *polyData);
 
             CPPUNIT_ASSERT_EQUAL(numSwaps, 684u);
+            CPPUNIT_ASSERT(volume(*meshData) > 0.0);
           }
 
           void testOrientTimmSimRBCMesh()
@@ -93,7 +94,8 @@ namespace hemelb
 
             auto numSwaps = orientFacets(*meshData, *polyData);
 
-            CPPUNIT_ASSERT_EQUAL(numSwaps, 720u);
+            CPPUNIT_ASSERT_EQUAL(numSwaps, 0u);
+            CPPUNIT_ASSERT(volume(*meshData) > 0.0);
           }
 
           static bool compare(util::Vector3D<double> const &in)

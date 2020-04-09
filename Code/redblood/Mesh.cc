@@ -157,7 +157,8 @@ namespace hemelb
 
       if (fixFacetOrientation)
       {
-        orientFacets(*meshData, *polyData);
+        unsigned numSwapped = orientFacets(*meshData, *polyData);
+        log::Logger::Log<log::Debug, log::Singleton>("Swapped %d facets", numSwapped);
       }
 
       return meshData;
