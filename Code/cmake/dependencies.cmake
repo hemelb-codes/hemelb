@@ -26,3 +26,7 @@ endif()
 #------zlib ----------------
 find_package(ZLIB REQUIRED)
 include_directories(SYSTEM ${ZLIB_INCLUDE_DIR})
+
+#------VTK ----------------
+find_package(VTK REQUIRED)
+include_directories(SYSTEM ${VTK_INCLUDE_DIRS})

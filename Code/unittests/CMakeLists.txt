@@ -19,6 +19,7 @@ function(create_test_executable target includename)
     ${MPWide_LIBRARIES}
     #Because on some systems CPPUNIT needs to be linked to libdl
     ${CMAKE_DL_LIBS}
+    ${VTK_LIBRARIES}
   )
   set_target_properties(${target} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 endfunction()
@@ -86,4 +87,9 @@ add_to_resources(resources/four_cube.gmy resources/four_cube.xml
   resources/cyl_l100_r5.xml
   resources/cyl_l100_r5.gmy
   resources/rbc_ico_2880.msh
+  resources/rbc_ico_720_correct.msh
+  resources/rbc_ico_720.msh
+  resources/rbc_ico_720.vtp
+  resources/992Particles_rank3_26_t992.msh
+  resources/992Particles_rank3_26_t992.vtp
 )

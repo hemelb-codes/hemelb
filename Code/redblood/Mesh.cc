@@ -17,6 +17,10 @@
 #include "log/Logger.h"
 #include "Exception.h"
 #include "constants.h"
+#include <vtkXMLPolyDataReader.h>
+#include <vtkSmartPointer.h>
+#include <vtkPolyDataNormals.h>
+#include <vtkCellData.h>
 
 namespace hemelb
 {
@@ -62,7 +66,7 @@ namespace hemelb
       return result;
     }
 
-    std::shared_ptr<MeshData> readMesh(std::istream &stream)
+    std::shared_ptr<MeshData> readMesh(std::istream &stream, bool fixFacetOrientation)
     {
       log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from stream");
 
@@ -132,9 +136,92 @@ namespace hemelb
                                                    num_vertices,
                                                    num_facets);
 
-      orientFacets(*result);
+      if (fixFacetOrientation)
+      {
+        orientFacets(*result);
+      }
       return result;
     }
+
+    std::shared_ptr<MeshData> readVTKMesh(std::string const &filename, bool fixFacetOrientation)
+    {
+      log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from %s",
+                                                   filename.c_str());
+
+      if (!util::file_exists(filename.c_str()))
+        throw Exception() << "Red-blood-cell mesh file '" << filename.c_str() << "' does not exist";
+
+      std::shared_ptr<MeshData> meshData;
+      vtkSmartPointer<vtkPolyData> polyData;
+      std::tie(meshData, polyData) = readMeshDataFromVTKPolyData(filename);
+
+      if (fixFacetOrientation)
+      {
+        unsigned numSwapped = orientFacets(*meshData, *polyData);
+        log::Logger::Log<log::Debug, log::Singleton>("Swapped %d facets", numSwapped);
+      }
+
+      return meshData;
+    }
+
+    std::tuple<std::shared_ptr<MeshData>, vtkSmartPointer<vtkPolyData> > readMeshDataFromVTKPolyData(std::string const &filename)
+    {
+      log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from VTK polydata file");
+
+      // Read in VTK polydata object
+      vtkSmartPointer<vtkXMLPolyDataReader> reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
+      reader->SetFileName(filename.c_str());
+      reader->Update();
+      // TODO: check that the file read succeeded, e.g. wrong format
+      vtkSmartPointer<vtkPolyData> polydata(reader->GetOutput());
+
+      // Number of vertices
+      unsigned int num_vertices = polydata->GetNumberOfPoints();
+
+      // Create Mesh data
+      std::shared_ptr<MeshData> result(new MeshData);
+      result->vertices.resize(num_vertices);
+
+      // Then read in first and subsequent lines
+      for (unsigned int i(0); i < num_vertices; ++i)
+      {
+        double* point_coord = polydata->GetPoints()->GetPoint(i);
+        result->vertices[i].x = point_coord[0];
+        result->vertices[i].y = point_coord[1];
+        result->vertices[i].z = point_coord[2];
+
+        log::Logger::Log<log::Trace, log::Singleton>("Vertex %i at %e, %e, %e",
+                                                     i,
+                                                     result->vertices[i].x,
+                                                     result->vertices[i].y,
+                                                     result->vertices[i].z);
+      }
+
+      // Read facet indices
+      unsigned int num_facets = polydata->GetNumberOfCells();;
+      result->facets.resize(num_facets);
+
+      for (unsigned int i(0); i < num_facets; ++i)
+      {
+        vtkCell* triangle = polydata->GetCell(i);
+        assert(triangle->GetCellType() == VTK_TRIANGLE);
+        result->facets[i][0] = triangle->GetPointId(0);
+        result->facets[i][1] = triangle->GetPointId(1);
+        result->facets[i][2] = triangle->GetPointId(2);
+        log::Logger::Log<log::Trace, log::Singleton>("Facet %i with %i, %i, %i",
+                                                     i,
+                                                     result->facets[i][0],
+                                                     result->facets[i][1],
+                                                     result->facets[i][2]);
+      }
+
+      log::Logger::Log<log::Debug, log::Singleton>("Read %i vertices and %i triangular facets",
+                                                   num_vertices,
+                                                   num_facets);
+
+      return std::make_tuple(result, polydata);
+    }
+
 
     void writeMesh(std::string const &filename, MeshData const &data, util::UnitConverter const& c)
     {
@@ -677,6 +764,8 @@ namespace hemelb
     }
     void orientFacets(MeshData &mesh, bool outward)
     {
+      log::Logger::Log<log::Warning, log::Singleton>("orientFacets method for meshes constructed from a .msh file has been deprecated. Consider using VTK input files instead.");
+
       // create a new mesh at slighly smaller scale
       MeshData smaller(mesh);
       auto const scale = 0.99;
@@ -705,5 +794,43 @@ namespace hemelb
         }
       }
     }
+    unsigned orientFacets(MeshData &mesh, vtkPolyData &polydata, bool outward)
+    {
+      vtkSmartPointer<vtkPolyDataNormals> normalCalculator = vtkSmartPointer<vtkPolyDataNormals>::New();
+      normalCalculator->SetInputData(&polydata);
+      normalCalculator->ComputePointNormalsOff();
+      normalCalculator->ComputeCellNormalsOn();
+      normalCalculator->SetAutoOrientNormals(1);
+      normalCalculator->Update();
+      auto normals = normalCalculator->GetOutput()->GetCellData()->GetNormals();
+
+      assert(normals->GetNumberOfComponents() == 3);
+      assert(normals->GetNumberOfTuples() == mesh.facets.size());
+
+      // Loop over each facet, checks orientation and modify as appropriate
+      unsigned normalId = 0;
+      unsigned numSwapped = 0;
+      for (auto &facet : mesh.facets)
+      {
+        auto const &v0 = mesh.vertices[facet[0]];
+        auto const &v1 = mesh.vertices[facet[1]];
+        auto const &v2 = mesh.vertices[facet[2]];
+
+        double vtkNormal[3];
+        normals->GetTuple(normalId, vtkNormal);
+        LatticePosition direction(vtkNormal[0], vtkNormal[1], vtkNormal[2]);
+
+        if ( ( (v0 - v1).Cross(v2 - v1).Dot(direction) > 0e0) xor outward)
+        {
+          std::swap(facet[0], facet[2]);
+          ++numSwapped;
+        }
+
+        ++normalId;
+      }
+
+      return numSwapped;
+    }
+
   }
 } // hemelb::redblood
