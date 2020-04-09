@@ -433,9 +433,22 @@ namespace hemelb
         cellNode.GetAttributeOrThrow("name");
       std::string const mesh_path =
           cellNode.GetChildOrThrow("shape").GetAttributeOrThrow("mesh_path");
-      auto const mesh_data = readMesh(mesh_path);
+      auto const mesh_data = readVTKMesh(mesh_path);
       auto const scale = GetNonDimensionalValue<LatticeDistance>(cellNode, "scale", "m", converter);
-      std::unique_ptr<Cell> cell(new Cell(mesh_data->vertices, Mesh(mesh_data), scale, name));
+      std::string const * reference_mesh_path =
+          cellNode.GetChildOrThrow("shape").GetAttributeOrNull("reference_mesh_path");
+      std::unique_ptr<Cell> cell;
+      if (reference_mesh_path)
+      {
+        auto const reference_mesh_data = readVTKMesh(*reference_mesh_path);
+        assert(mesh_data->facets == reference_mesh_data->facets);
+        assert(volume(mesh_data->vertices, reference_mesh_data->facets) > 0.0);
+        cell = std::unique_ptr<Cell>(new Cell(mesh_data->vertices, reference_mesh_data, scale, name));
+      }
+      else
+      {
+        cell = std::unique_ptr<Cell>(new Cell(mesh_data->vertices, Mesh(mesh_data), scale, name));
+      }
       *cell *= scale;
       cell->moduli = readModuli(cellNode, converter);
 
