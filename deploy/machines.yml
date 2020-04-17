@@ -74,7 +74,7 @@ archer: #the ARCHER supercomputer at EPCC
   home_path_template: "/home/$project/$project/$username"
   runtime_path_template: "/work/$project/$project/$username"
   fabric_dir: "FabricHemeLb"
-  modules: ["load cmake/3.2.3", "swap PrgEnv-cray PrgEnv-gnu", "load boost", "load cray-hdf5-parallel", "load cray-tpsl", "load openssl wget"]
+  modules: ["load cmake", "swap PrgEnv-cray PrgEnv-gnu", "load boost", "load cray-hdf5-parallel", "load cray-tpsl", "load openssl wget"]
   build_prefix_commands: ["export LDFLAGS=-dynamic"] # Required for HDF5 to compile
   temp_path_template: "$work_path/tmp"
   regression_test_path_template: "$work_path/regression"

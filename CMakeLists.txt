@@ -106,7 +106,7 @@ ExternalProject_Add(
 	BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 )
 
-foreach(dep cppunit parmetis tinyxml boost ctemplate zlib mpwide cookoff hdf5)
+foreach(dep cppunit parmetis tinyxml boost ctemplate zlib mpwide cookoff hdf5 vtk)
   if(TARGET ${dep})
     add_dependencies(hemelb ${dep})
   endif()
