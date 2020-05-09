@@ -67,23 +67,14 @@ namespace hemelb
 
           void testIntegration()
           {
-            // Read meshes from disc and correct coordinates
+            // Read meshes from disc
             auto const normal = readVTKMesh(resources::Resource("rbc_ico_720.vtp").Path().c_str());
-
             auto const deformed = readVTKMesh(resources::Resource("992Particles_rank3_26_t992.vtp").Path().c_str());
-            // The file is stored in lattice units from a simulation with delta_x=2/3um and RBC radius 4um. We want to scale to a radius of 1.0 in lattice units
-            double scaleInFile = 2e-6 / 3 * 1. / 4e-6;
 
-            auto const barycent = barycenter(deformed->vertices);
-            for (auto &vertex : deformed->vertices)
-            {
-              vertex = (vertex - barycent) * scaleInFile + barycent;
-            }
-
+            // Check they are compatible
             CPPUNIT_ASSERT(normal->facets == deformed->facets);
             CPPUNIT_ASSERT(volume(*normal) > 0.0);
             CPPUNIT_ASSERT(volume(deformed->vertices, normal->facets) > 0.0);
-            std::cout << "VOLS: " << volume(*normal) << " " << volume(deformed->vertices, normal->facets) << std::endl;
 
             auto const & converter = master->GetUnitConverter();
             auto const scale = converter.ConvertToLatticeUnits("m", 4e-6);
