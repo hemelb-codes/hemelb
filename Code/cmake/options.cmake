@@ -92,7 +92,7 @@ hemelb_option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately"
 hemelb_cachevar(HEMELB_EXECUTABLE "hemelb"
   STRING "File name of executable to produce")
 hemelb_cachevar(HEMELB_READING_GROUP_SIZE 5
-  INTEGER "Number of cores to use to read geometry file.")
+  STRING "Number of cores to use to read geometry file.")
 hemelb_cachevar(HEMELB_LOG_LEVEL Info
   STRING "Log level, choose 'Critical', 'Error', 'Warning', 'Info', 'Debug' or 'Trace'" )
 hemelb_cachevar(HEMELB_STEERING_LIB basic
@@ -102,7 +102,7 @@ hemelb_cachevar(HEMELB_DEPENDENCIES_PATH "${HEMELB_ROOT_DIR}/dependencies"
 hemelb_cachevar(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH}
   FILEPATH "Path to find dependency includes and libraries")
 hemelb_cachevar(HEMELB_SUBPROJECT_MAKE_JOBS 1
-  INTEGER "Number of jobs to use for subproject build steps")
+  STRING "Number of jobs to use for subproject build steps")
 
 hemelb_cachevar(HEMELB_OPTIMISATION "-O3"
   STRING "Optimisation level (can be blank or -O1 to -O4)")
