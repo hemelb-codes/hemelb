@@ -8,6 +8,7 @@
 #define HEMELB_IO_WRITERS_XDR_SERIALISATION_H
 
 #include <boost/optional.hpp>
+#include <arpa/inet.h>
 
 namespace hemelb
 {

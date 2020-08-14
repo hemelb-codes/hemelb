@@ -11,6 +11,10 @@ if(NOT HAVE_XDRUINTXX_T)
 endif()
 
 add_library(hemelb_unittests main.cc)
+
+# TODO: Remove warning removal when #739 is done
+target_compile_options(hemelb_unittests PRIVATE -Wno-deprecated)
+
 hemelb_add_target_dependency_cppunit(hemelb_unittests)
 # ReporterTests directly use ctemplate
 hemelb_add_target_dependency_ctemplate(hemelb_unittests)
