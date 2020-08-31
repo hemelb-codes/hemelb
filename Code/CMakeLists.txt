@@ -221,6 +221,16 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
     unittests/resources/velocity_inlet.txt.weights.txt
     unittests/resources/xmltest.xml unittests/resources/config_file_velocity_inlet.xml unittests/resources/velocity_inlet.txt 
     )
+
+  hemelb_dependency(catch2 use)
+  add_executable(tests_hemelb ${root_sources})
+  add_subdirectory(tests)
+  target_link_libraries(tests_hemelb
+    hemelb_tests
+    ${heme_libraries}
+    ${MPI_LIBRARIES}
+    ${Boost_Libraries})
+  INSTALL(TARGETS tests_hemelb RUNTIME DESTINATION bin)
 endif()
 
 # ----------- HEMELB functionaltests ---------------
