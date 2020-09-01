@@ -8,8 +8,11 @@
 
 #include "net/MpiCommunicator.h"
 #include "net/MpiEnvironment.h"
+#include "net/IOCommunicator.h"
 #include "log/Logger.h"
 #include "debug/Debugger.h"
+
+#include "tests/helpers/HasCommsTestFixture.h"
 
 int main(int argc, char* argv[]) {
   bool debug = false;
@@ -33,8 +36,8 @@ int main(int argc, char* argv[]) {
   hemelb::debug::Debugger::Init(debug, argv[0], commWorld);
 
   // Initialise the global IOCommunicator.
-  // hemelb::net::IOCommunicator testCommunicator(commWorld);
-  // hemelb::unittests::helpers::HasCommsTestFixture::Init(testCommunicator);
+  hemelb::net::IOCommunicator testCommunicator(commWorld);
+  hemelb::tests::helpers::HasCommsTestFixture::Init(testCommunicator);
 
   int returnCode = session.applyCommandLine(argc, argv);
   if (returnCode != 0) // Indicates a command line error

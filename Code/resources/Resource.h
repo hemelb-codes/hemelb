@@ -7,6 +7,8 @@
 #ifndef HEMELB_RESOURCES_RESOURCE_H
 #define HEMELB_RESOURCES_RESOURCE_H
 
+#include <iostream>
+
 #include "util/fileutils.h"
 #include "resources/path_parameters.h"
 

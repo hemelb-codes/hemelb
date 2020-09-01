@@ -223,14 +223,19 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
     )
 
   hemelb_dependency(catch2 use)
-  add_executable(tests_hemelb ${root_sources})
+  add_executable(hemelb-tests)
+  target_sources(hemelb-tests PRIVATE ${root_sources})
+
   add_subdirectory(tests)
-  target_link_libraries(tests_hemelb
-    hemelb_tests
+  hemelb_add_target_dependency_catch2(hemelb-tests)
+  # ReporterTests directly use ctemplate
+  # hemelb_add_target_dependency_ctemplate(hemelb_tests)
+
+  target_link_libraries(hemelb-tests PRIVATE
     ${heme_libraries}
     ${MPI_LIBRARIES}
     ${Boost_Libraries})
-  INSTALL(TARGETS tests_hemelb RUNTIME DESTINATION bin)
+  INSTALL(TARGETS hemelb-tests RUNTIME DESTINATION bin)
 endif()
 
 # ----------- HEMELB functionaltests ---------------
