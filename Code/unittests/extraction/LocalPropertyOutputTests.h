@@ -17,6 +17,7 @@
 #include "extraction/PropertyOutputFile.h"
 #include "extraction/OutputField.h"
 #include "extraction/WholeGeometrySelector.h"
+#include "extraction/LocalPropertyOutput.h"
 
 #include "unittests/helpers/HasCommsTestFixture.h"
 #include "unittests/extraction/DummyDataSource.h"
