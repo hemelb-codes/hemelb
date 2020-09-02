@@ -16,7 +16,6 @@
 #include "unittests/vistests/vistests.h"
 #include "unittests/io/io.h"
 #include "unittests/reporting/reporting.h"
-#include "unittests/configuration/configuration.h"
 #include "unittests/geometry/geometry.h"
 #include "unittests/extraction/extraction.h"
 #include "unittests/net/net.h"

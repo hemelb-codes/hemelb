@@ -11,6 +11,7 @@
 #include "unittests/multiscale/MockIntercommunicator.h"
 #include "multiscale/MultiscaleSimulationMaster.h"
 #include "unittests/helpers/LaddFail.h"
+#include "unittests/helpers/FolderTestFixture.h"
 
 #include <iostream>
 
@@ -144,7 +145,7 @@ namespace hemelb
         return stream;
       }
 
-      class MockIntercommunicatorTests : public FolderTestFixture
+      class MockIntercommunicatorTests : public helpers::FolderTestFixture
       {
           CPPUNIT_TEST_SUITE (MockIntercommunicatorTests);
           CPPUNIT_TEST (TestCRRun);

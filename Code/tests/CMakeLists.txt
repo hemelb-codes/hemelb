@@ -5,5 +5,6 @@
 
 # TODO: when cmake min version increases to 3.13, can drop ${CMAKE_CURRENT_SOURCE_DIR}
 target_sources(hemelb-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/main.cc)
-target_sources(hemelb-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/helpers/HasCommsTestFixture.cc ${CMAKE_CURRENT_SOURCE_DIR}/helpers/FolderTestFixture.cc)
+add_subdirectory(helpers)
 target_sources(hemelb-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/SimulationMasterTests.cc)
+add_subdirectory(configuration)
