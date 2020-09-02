@@ -31,7 +31,7 @@ namespace hemelb
 	  return 80.0 == eqIC.p_mmHg;
 	}
       };
-    }  
+    }
     TEST_CASE_METHOD(helpers::FolderTestFixture, "SimConfig") {
 
       SECTION("0_2_0_Read") {
