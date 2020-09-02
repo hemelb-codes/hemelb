@@ -23,7 +23,7 @@ namespace hemelb
       using namespace hemelb::geometry;
       using namespace resources;
 
-      class GeometryReaderTests : public FolderTestFixture
+      class GeometryReaderTests : public helpers::FolderTestFixture
       {
           CPPUNIT_TEST_SUITE ( GeometryReaderTests);
           CPPUNIT_TEST ( TestRead);

@@ -3,17 +3,20 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
+#include <memory>
 
 #include <catch2/catch.hpp>
+
 #include "SimulationMaster.h"
+
 #include "tests/helpers/FolderTestFixture.h"
 #include "tests/helpers/LaddFail.h"
 
-// namespace hemelb
-// {
-//   namespace tests
-//   {
-using namespace hemelb::tests;
+namespace hemelb
+{
+  namespace tests
+  {
+
     TEST_CASE_METHOD(helpers::FolderTestFixture, "SimulationMaster") {
       const int argc = 7;
       const char* argv[] = {
@@ -29,15 +32,9 @@ using namespace hemelb::tests;
       CopyResourceToTempdir("four_cube.xml");
       CopyResourceToTempdir("four_cube.gmy");
 
-      hemelb::configuration::CommandLine *options;
-      SimulationMaster *master;
-      try {
-	options = new hemelb::configuration::CommandLine(argc, argv);
-	master = new SimulationMaster(*options, Comms());
-      } catch (hemelb::io::xml::ChildError& e) {
-	std::cout << e.what() << std::endl;
-	throw;
-      }
+      auto options = std::make_unique<hemelb::configuration::CommandLine>(argc, argv);
+      auto master = std::make_unique<SimulationMaster>(*options, Comms());
+
       SECTION("Running a simulation creates outputs") {
 	// TODO: This test is fatal if run with LADDIOLET. See ticket #605.
 	LADD_FAIL();
@@ -50,9 +47,7 @@ using namespace hemelb::tests;
 	AssertPresent("results/Extracted/surfaceshearstress.dat");
 	AssertPresent("results/Extracted/surfacetraction.dat");
       }
-      delete master;
-      delete options;
     }
 
-//   }
-// }
+  }
+}
