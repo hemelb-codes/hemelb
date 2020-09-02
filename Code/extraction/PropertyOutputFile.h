@@ -7,8 +7,10 @@
 #ifndef HEMELB_EXTRACTION_PROPERTYOUTPUTFILE_H
 #define HEMELB_EXTRACTION_PROPERTYOUTPUTFILE_H
 
+#include <memory>
 #include <string>
 #include <vector>
+
 #include "extraction/GeometrySelector.h"
 #include "extraction/OutputField.h"
 
@@ -18,22 +20,12 @@ namespace hemelb
   {
     struct PropertyOutputFile
     {
-        PropertyOutputFile()
-        {
-          geometry = NULL;
-        }
-
-        ~PropertyOutputFile()
-        {
-          delete geometry;
-        }
-
         std::string filename;
         unsigned long frequency;
-        GeometrySelector* geometry;
+        std::unique_ptr<GeometrySelector> geometry;
         std::vector<OutputField> fields;
     };
   }
 }
 
-#endif /* HEMELB_EXTRACTION_PROPERTYOUTPUTFILE_H */
+#endif // HEMELB_EXTRACTION_PROPERTYOUTPUTFILE_H
