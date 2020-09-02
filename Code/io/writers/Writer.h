@@ -7,11 +7,7 @@
 #ifndef HEMELB_IO_WRITERS_WRITER_H
 #define HEMELB_IO_WRITERS_WRITER_H
 
-#if HEMELB_HAVE_CSTDINT
-# include <cstdint>
-#else
-# include <stdint.h>
-#endif
+#include <cstdint>
 #include <string>
 
 namespace hemelb

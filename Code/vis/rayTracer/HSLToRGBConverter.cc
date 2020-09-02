@@ -7,11 +7,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <limits>
-#if HEMELB_HAVE_CSTDINT
-# include <cstdint>
-#else
-# include <stdint.h>
-#endif
+#include <cstdint>
 
 #include "vis/rayTracer/HSLToRGBConverter.h"
 #include "log/Logger.h"
