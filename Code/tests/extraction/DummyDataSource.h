@@ -4,8 +4,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_EXTRACTION_DUMMYDATASOURCE_H
-#define HEMELB_UNITTESTS_EXTRACTION_DUMMYDATASOURCE_H
+#ifndef HEMELB_TESTS_EXTRACTION_DUMMYDATASOURCE_H
+#define HEMELB_TESTS_EXTRACTION_DUMMYDATASOURCE_H
 
 #include <vector>
 
@@ -13,16 +13,14 @@
 #include "extraction/IterableDataSource.h"
 #include "util/Matrix3D.h"
 
-#include "unittests/helpers/RandomSource.h"
+#include "tests/helpers/RandomSource.h"
 
 namespace hemelb
 {
-  namespace unittests
+  namespace tests
   {
-    namespace extraction
+    class DummyDataSource : public extraction::IterableDataSource
     {
-      class DummyDataSource : public hemelb::extraction::IterableDataSource
-      {
         public:
           DummyDataSource() :
               randomNumberGenerator(1358), siteCount(64), location(0), gridPositions(siteCount), pressures(siteCount), velocities(siteCount), voxelSize(0.3e-3), origin(0.034,
@@ -164,7 +162,7 @@ namespace hemelb
           distribn_t voxelSize;
           hemelb::util::Vector3D<distribn_t> origin;
       };
-    }
+
   }
 }
-#endif // HEMELB_UNITTESTS_EXTRACTION_DUMMYDATASOURCE_H
+#endif // HEMELB_TESTS_EXTRACTION_DUMMYDATASOURCE_H

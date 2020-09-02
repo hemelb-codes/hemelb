@@ -11,13 +11,11 @@
 #include <cppunit/BriefTestProgressListener.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <stdexcept>
-#include "unittests/helpers/helpers.h"
 #include "unittests/lbtests/lbtests.h"
 #include "unittests/vistests/vistests.h"
 #include "unittests/io/io.h"
 #include "unittests/reporting/reporting.h"
 #include "unittests/geometry/geometry.h"
-#include "unittests/extraction/extraction.h"
 #include "unittests/net/net.h"
 #include "unittests/multiscale/multiscale.h"
 #ifdef HEMELB_BUILD_MULTISCALE
