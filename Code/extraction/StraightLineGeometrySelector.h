@@ -47,17 +47,17 @@ namespace hemelb
          * @param location
          * @return
          */
-        bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location);
+        bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const;
 
       private:
         /**
          * The initial point of the line and the line vector.
          */
-        const util::Vector3D<float> endpoint1, lineVector;
+        util::Vector3D<float> endpoint1, lineVector;
         /**
          * The length of the line from endpoint1 to endpoint2.
          */
-        const float lineLength;
+        float lineLength;
     };
   }
 }

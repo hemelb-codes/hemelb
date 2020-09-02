@@ -42,11 +42,11 @@ namespace hemelb
          * @param location lattice site coordinates to evaluate the selector on
          * @return whether location is within the selection
          */
-        bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location);
+        bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const;
 
       private:
         /** Coordinates of the surface point to be selected. */
-        const util::Vector3D<float> surfacePoint;
+        util::Vector3D<float> surfacePoint;
         /** Maximum distance between two sites in lattice units. */
         static const float maxDistanceBetweenSitesLatticeUnits;
     };
