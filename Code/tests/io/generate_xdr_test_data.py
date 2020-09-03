@@ -1,3 +1,8 @@
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
+
 import string
 import struct
 import xdrlib
@@ -112,41 +117,60 @@ def mk_specialisation_string() -> str:
     buffer_data = ", ".join(f"'\\x{x:02x}'" for x in p.get_buffer())
     return spec_template.substitute(locals())
 
-def mk_header() -> str:
-    template = string.Template("""
-#ifndef HEMELB_UNITTESTS_IO_XDRTESTDATA_H
-#define HEMELB_UNITTESTS_IO_XDRTESTDATA_H
+def mk_header():
+    header = """// -*- mode: c++; -*-
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
+
+#ifndef HEMELB_TESTS_IO_XDRTESTDATA_H
+#define HEMELB_TESTS_IO_XDRTESTDATA_H
 #include <vector>
-#include <cstdint>
 
 namespace hemelb
 {
-  namespace unittests
+  namespace tests
   {
-    namespace io
-    {
-      template <typename T>
-      struct test_data {
-        static const std::vector<T>& unpacked();
-        static const std::vector<char>& packed();
-      };
-
-      namespace {
-        float binflt(uint32_t x) {
-          return *reinterpret_cast<float*>(&x);
-        }
-        double binflt(uint64_t x) {
-          return *reinterpret_cast<double*>(&x);
-        }
-      }
-$specialisations
-
-    }
+    template <typename T>
+    struct test_data {
+      static const std::vector<T>& unpacked();
+      static const std::vector<char>& packed();
+    };
   }
 }
 #endif
-""")
+"""
 
+    impl_template = string.Template("""
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
+
+#include "tests/io/xdr_test_data.h"
+
+#include <cstdint>
+#include <string>
+
+namespace hemelb
+{
+  namespace tests
+  {
+
+    namespace {
+      float binflt(uint32_t x) {
+        return *reinterpret_cast<float*>(&x);
+      }
+      double binflt(uint64_t x) {
+        return *reinterpret_cast<double*>(&x);
+      }
+    }
+    $specialisations
+
+  }
+}
+""")
     specs = [
         mk_specialisation_int(True, 32),
         mk_specialisation_int(True, 64),
@@ -158,8 +182,14 @@ $specialisations
 
         mk_specialisation_string(),
     ]
-    spec_text = "\n".join(indent(8, s) for s in specs)
-    return template.substitute(specialisations=spec_text)
+    spec_text = "\n".join(indent(4, s) for s in specs)
+    impl = impl_template.substitute(specialisations=spec_text)
+
+    with open("xdr_test_data.h", "w") as f:
+        f.write(header)
+    
+    with open("xdr_test_data.cc", "w") as f:
+        f.write(impl)
 
 if __name__ == "__main__":
-    print(mk_header())
+    mk_header()
