@@ -14,6 +14,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sstream>
+
+#include "Exception.h"
 #include "log/Logger.h"
 #include "util/fileutils.h"
 
@@ -120,6 +122,62 @@ namespace hemelb
         unlink(filename.str().c_str());
       }
       return 0;
+    }
+
+    void DeleteDirTree(const std::string& pathname) {
+      return DeleteDirTree(pathname.c_str());
+    }
+
+    namespace {
+      // Helper for DeleteDirTree that wraps opendir/readdir/closedir in
+      // RAII style.
+      // 
+      // Note that it also changes directory into its directory to make
+      // the operations simpler, but changes back in d'tor.
+      struct DirIter {
+	char* startdir = nullptr;
+	DIR* dstream = nullptr;
+
+	DirIter() = default;
+	DirIter(const char* name) {
+	  dstream = opendir(name);
+	  if (dstream == nullptr) {
+	    throw Exception() << std::strerror(errno);
+	  }
+	  startdir = getcwd(NULL, 0); // this must be free()'d
+	  chdir(name);
+	}
+
+	~DirIter() {
+	  chdir(startdir);
+	  std::free(startdir);
+	  if (dstream)
+	    closedir(dstream);
+	}
+
+	struct dirent* next() {
+	  return readdir(dstream);
+	}
+      };
+    }
+
+    void DeleteDirTree(const char* pathname) {
+      struct stat statbuf;
+      if (stat(pathname, &statbuf) != 0)
+	throw Exception() << std::strerror(errno);
+
+      if (S_ISDIR(statbuf.st_mode)) {
+	// is directory
+	DirIter dir(pathname);
+	for (struct dirent* entry = dir.next(); entry != nullptr; entry = dir.next()) {
+	  if (entry->d_name[0] == '.' && (entry->d_name[1] == 0 || (entry->d_name[1] == '.' && entry->d_name[2] == 0)))
+	    continue;
+	  DeleteDirTree(entry->d_name);
+	}
+      }
+      // this works for file or directory
+      if (remove(pathname) != 0)
+	throw Exception() << std::strerror(errno); 
     }
 
     // Detect whether a directory exists.

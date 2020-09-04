@@ -43,7 +43,7 @@ namespace hemelb
 
       FolderTestFixture::~FolderTestFixture() {
 	ReturnToOrigin();
-	// doesn't matter not to clean up in tempdir.
+	util::DeleteDirTree(tempPath);
       }
 
       void FolderTestFixture::ReturnToOrigin()
