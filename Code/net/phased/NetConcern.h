@@ -7,6 +7,7 @@
 #ifndef HEMELB_NET_PHASED_NETCONCERN_H
 #define HEMELB_NET_PHASED_NETCONCERN_H
 
+#include "net/BaseNet.h"
 #include "net/phased/Concern.h"
 #include "net/phased/steps.h"
 

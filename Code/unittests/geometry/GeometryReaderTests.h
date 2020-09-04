@@ -13,6 +13,7 @@
 #include "unittests/FourCubeLatticeData.h"
 #include "unittests/helpers/FolderTestFixture.h"
 #include "unittests/helpers/LaddFail.h"
+#include "unittests/helpers/CppUnitCompareSiteData.h"
 
 namespace hemelb
 {
