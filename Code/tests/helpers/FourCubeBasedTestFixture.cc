@@ -19,8 +19,8 @@ namespace hemelb
       {
 	latDat = FourCubeLatticeData::Create(Comms());
 	simConfig = new OneInOneOutSimConfig(path);
-	simState = new lb::SimulationState(simConfig->GetTimeStepLength(),
-					   simConfig->GetTotalTimeSteps());
+	simState = std::make_unique<lb::SimulationState>(simConfig->GetTimeStepLength(),
+							 simConfig->GetTotalTimeSteps());
 	lbmParams = new lb::LbmParameters(simState->GetTimeStepLength(),
 					  simConfig->GetVoxelSize());
 	unitConverter = &simConfig->GetUnitConverter();
@@ -34,7 +34,6 @@ namespace hemelb
       FourCubeBasedTestFixture::~FourCubeBasedTestFixture() {
 	delete latDat;
 	delete lbmParams;
-	delete simState;
 	delete simConfig;
       }
 

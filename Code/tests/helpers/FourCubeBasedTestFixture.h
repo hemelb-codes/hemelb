@@ -8,6 +8,7 @@
 #define HEMELB_TESTS_HELPERS_FOURCUBEBASEDTESTFIXTURE_H
 
 #include <iostream>
+#include <memory>
 
 #include <catch2/catch.hpp>
 
@@ -38,7 +39,7 @@ namespace hemelb
 	site_t numSites;
 	lb::LbmParameters* lbmParams;
 	configuration::SimConfig* simConfig;
-	lb::SimulationState* simState;
+	std::unique_ptr<lb::SimulationState> simState;
 	const util::UnitConverter* unitConverter;
       private:
 	std::string path;
