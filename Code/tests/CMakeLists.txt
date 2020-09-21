@@ -10,5 +10,7 @@ target_sources(hemelb-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/SimulationMaster
 add_subdirectory(configuration)
 add_subdirectory(extraction)
 add_subdirectory(geometry)
-add_subdirectory(net)
 add_subdirectory(io)
+add_subdirectory(lb)
+add_subdirectory(net)
+
