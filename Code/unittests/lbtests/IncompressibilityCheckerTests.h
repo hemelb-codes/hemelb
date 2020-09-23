@@ -12,6 +12,7 @@
 #include "lb/IncompressibilityChecker.hpp"
 #include "unittests/FourCubeLatticeData.h"
 #include "unittests/lbtests/BroadcastMocks.h"
+#include "unittests/lbtests/LbTestsHelper.h"
 #include "unittests/reporting/Mocks.h"
 
 #include "unittests/helpers/FourCubeBasedTestFixture.h"
