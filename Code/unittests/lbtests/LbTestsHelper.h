@@ -9,6 +9,7 @@
 
 #include <cmath>
 #include "constants.h"
+#include "lb/HFunction.h"
 #include "lb/kernels/BaseKernel.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "unittests/FourCubeLatticeData.h"

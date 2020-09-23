@@ -11,6 +11,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "lb/kernels/Kernels.h"
 #include "lb/streamers/Streamers.h"
 #include "geometry/SiteData.h"
 #include "util/utilityFunctions.h"
@@ -22,7 +23,7 @@ namespace hemelb
   {
     namespace lbtests
     {
-      //static const distribn_t allowedError = 1e-10;
+      constexpr distribn_t allowedError = 1e-10;
       /**
        * Helper class that exposes implementation details to the tests.
        */
