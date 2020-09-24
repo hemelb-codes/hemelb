@@ -9,6 +9,8 @@
 
 #include <cppunit/TestFixture.h>
 
+#include "vis/rayTracer/HSLToRGBConverter.h"
+
 namespace hemelb
 {
   namespace unittests

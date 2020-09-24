@@ -74,6 +74,11 @@ namespace hemelb {
     template <typename T>
     using ApproxVector = decltype(detail::help(std::declval<T>()));
 
+    template <typename T>
+    ApproxVectorImpl<T> ApproxV(const util::Vector3D<T>& v) {
+      return ApproxVectorImpl<T>{v};
+    }
+    
     namespace selftest {
       static_assert(std::is_same<ApproxVector<double>, ApproxVectorImpl<double>>::value);
       static_assert(std::is_same<ApproxVector<util::Vector3D<double>>, ApproxVectorImpl<double>>::value);

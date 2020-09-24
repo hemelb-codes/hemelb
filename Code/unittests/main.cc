@@ -11,7 +11,6 @@
 #include <cppunit/BriefTestProgressListener.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <stdexcept>
-#include "unittests/lbtests/lbtests.h"
 #include "unittests/vistests/vistests.h"
 #include "unittests/reporting/reporting.h"
 #include "unittests/net/net.h"
