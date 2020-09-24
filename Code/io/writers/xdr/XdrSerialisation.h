@@ -107,10 +107,11 @@ namespace hemelb
 	  // End of xdr_serialise overloads
 	  
 	  
-	  // A completely empyt struct to be used as a placeholder
+	  // A completely empty struct to be used as a placeholder
 	  struct Null {
 	    template <typename... Ts>
-	    Null(Ts...) {}
+	    constexpr Null(Ts...) {
+	    }
 	    inline Null& operator+=(size_t) { return *this; }
 	    constexpr bool operator!() const {
 	      return true;
