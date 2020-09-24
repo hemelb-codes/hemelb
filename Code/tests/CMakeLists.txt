@@ -13,4 +13,4 @@ add_subdirectory(geometry)
 add_subdirectory(io)
 add_subdirectory(lb)
 add_subdirectory(net)
-
+add_subdirectory(reporting)

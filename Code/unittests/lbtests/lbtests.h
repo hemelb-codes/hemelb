@@ -7,8 +7,6 @@
 #ifndef HEMELB_UNITTESTS_LBTESTS_LBTESTS_H
 #define HEMELB_UNITTESTS_LBTESTS_LBTESTS_H
 
-#include "unittests/lbtests/RheologyModelTests.h"
-#include "unittests/lbtests/IncompressibilityCheckerTests.h"
 #include "unittests/lbtests/LatticeTests.h"
 #include "unittests/lbtests/VirtualSiteIoletStreamerTests.h"
 
