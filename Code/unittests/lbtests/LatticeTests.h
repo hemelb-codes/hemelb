@@ -13,6 +13,8 @@
 #include "lb/lattices/D3Q19.h"
 #include "lb/lattices/D3Q27.h"
 
+#include "unittests/lbtests/LbTestsHelper.h"
+
 namespace hemelb
 {
   namespace unittests
