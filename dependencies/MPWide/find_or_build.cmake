@@ -4,13 +4,13 @@ if (MPWide_FOUND)
   add_custom_target(MPWide)
 else()
   message("MPWide not installed, will build from source")
-  find_file(MPWIDE_TARBALL MPWide-1.2b.tar.gz 
+  find_file(MPWIDE_TARBALL v1.1.tar.gz 
     DOC "Path to download MPWide (can be url http://)"
     PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
     )
   if(NOT MPWIDE_TARBALL)
     message("No MPWide source found, will download.")
-    set(MPWIDE_TARBALL https://github.com/djgroen/MPWide/archive/master.zip
+    set(MPWIDE_TARBALL https://github.com/djgroen/MPWide/archive/v1.1.tar.gz
       CACHE STRING "Path to download MPWide (can be local file://)" FORCE)
   endif()
   ExternalProject_Add(
