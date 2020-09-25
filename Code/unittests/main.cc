@@ -11,7 +11,6 @@
 #include <cppunit/BriefTestProgressListener.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <stdexcept>
-#include "unittests/net/net.h"
 #include "unittests/multiscale/multiscale.h"
 #ifdef HEMELB_BUILD_MULTISCALE
   #include "unittests/multiscale/mpwide/mpwide.h"
