@@ -30,7 +30,6 @@ include(HemeLbDependency)
 
 hemelb_dependency(tinyxml find_or_build)
 hemelb_dependency(parmetis find_or_build)
-hemelb_dependency(cppunit find_or_build)
 hemelb_dependency(catch2 find_or_build)
 hemelb_dependency(boost find_or_build)
 hemelb_dependency(ctemplate find_or_build)

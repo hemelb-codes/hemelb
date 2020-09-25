@@ -231,20 +231,6 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
   endif()
 endif()
 
-# ----------- HEMELB functionaltests ---------------
-if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
-  #------CPPUnit ---------------
-  hemelb_dependency(cppunit use)
-  add_executable(functionaltests_hemelb ${root_sources})
-  add_subdirectory(functionaltests/cpptests)
-  target_link_libraries(functionaltests_hemelb 
-    hemelb_functionaltests 
-    ${heme_libraries}
-    ${MPI_LIBRARIES}
-    ${Boost_LIBRARIES})
-  INSTALL(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
-endif()
-
 #-------- Copy and install resources --------------
 
 foreach(resource ${RESOURCES})
