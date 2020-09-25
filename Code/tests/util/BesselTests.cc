@@ -4,8 +4,9 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_UTIL_BESSELTESTS_H
-#define HEMELB_UNITTESTS_UTIL_BESSELTESTS_H
+#include <complex>
+
+#include <catch2/catch.hpp>
 
 #include "util/Bessel.h"
 
@@ -13,30 +14,19 @@ namespace hemelb
 {
   namespace unittests
   {
-    namespace util
-    {
-      using namespace hemelb::util;
+    using namespace hemelb::util;
 
-      class BesselTests : public CppUnit::TestFixture
-      {
-          CPPUNIT_TEST_SUITE( BesselTests);
-          CPPUNIT_TEST( TestUsedRange);CPPUNIT_TEST_SUITE_END();
+    TEST_CASE("Bessel functions, in the ranges used by HemeLB, work") {
+      using Complex = std::complex<double>;
 
-        public:
-          typedef std::complex<double> Complex;
-
-          void TestUsedRange()
-          {
-            /*
-             * All the arguments for J0 we will be using for the Womersley flow
-             * are of the form "x * i^(3/2)", with x elem Reals and x >= 0,
-             * x ~< 20.
-             *
-             * The data here is generated with Mathematica using the expression
-             * CForm[Table[BesselJ[0, I^(3/2) x], {x, 0, 20, 0.1}]]
-             */
-            int n = 201;
-            Complex mathematica[] = { Complex(1., 0.),
+      // All the arguments for J0 we will be using for the Womersley flow
+      // are of the form "x * i^(3/2)", with x elem Reals and x >= 0,
+      // x ~< 20.
+      //
+      // The data here is generated with Mathematica using the expression
+      // CForm[Table[BesselJ[0, I^(3/2) x], {x, 0, 20, 0.1}]]
+      constexpr int n = 201;
+      const Complex mathematica[] = { Complex(1., 0.),
                                       Complex(0.9999984375000678, 0.0024999995659722293),
                                       Complex(0.9999750000173611, 0.009999972222229167),
                                       Complex(0.9998734379449461, 0.022499683594150457),
@@ -238,25 +228,18 @@ namespace hemelb
                                       Complex(51825.58270880667, 103807.1659639928),
                                       Complex(47489.37026506239, 114775.19736006652) };
 
-            const Complex i = Complex(0, 1);
-            const Complex iPowThreeHalves = pow(i, 1.5);
-            const double epsilon = 1e-6;
+      const auto i = Complex(0, 1);
+      const auto iPowThreeHalves = pow(i, 1.5);
 
-            for (unsigned i = 0; i < n; ++i)
-            {
-              Complex z = iPowThreeHalves * (i / 10.);
-              Complex cAns = BesselJ0ComplexArgument(z);
-              Complex& mathAns = mathematica[i];
+      for (unsigned i = 0; i < n; ++i) {
+	Complex z = iPowThreeHalves * (i / 10.);
+	Complex cAns = BesselJ0ComplexArgument(z);
+	auto&& mathAns = mathematica[i];
 
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(mathAns.real(), cAns.real(), epsilon);
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(mathAns.imag(), cAns.imag(), epsilon);
-            }
-          }
-      };
-
-      CPPUNIT_TEST_SUITE_REGISTRATION(BesselTests);
-
+	REQUIRE(Approx(mathAns.real()) == cAns.real());
+	REQUIRE(Approx(mathAns.imag()) == cAns.imag());
+      }
     }
+
   }
 }
-#endif // HEMELB_UNITTESTS_UTIL_BESSELTESTS_H
