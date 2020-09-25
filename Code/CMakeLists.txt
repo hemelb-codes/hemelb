@@ -214,13 +214,6 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
     ${MPI_LIBRARIES}
     ${Boost_LIBRARIES})
   INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
-  list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/four_cube_multiscale.xml
-    unittests/resources/config.xml unittests/resources/config0_2_0.xml
-    unittests/resources/config_file_inlet.xml unittests/resources/iolet.txt 
-    unittests/resources/config-velocity-iolet.xml unittests/resources/config_new_velocity_inlets.xml
-    unittests/resources/velocity_inlet.txt.weights.txt
-    unittests/resources/xmltest.xml unittests/resources/config_file_velocity_inlet.xml unittests/resources/velocity_inlet.txt 
-    )
 
   hemelb_dependency(catch2 use)
   add_executable(hemelb-tests)
@@ -236,6 +229,14 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
     ${MPI_LIBRARIES}
     ${Boost_Libraries})
   INSTALL(TARGETS hemelb-tests RUNTIME DESTINATION bin)
+
+  list(APPEND RESOURCES tests/resources/four_cube.gmy tests/resources/four_cube.xml tests/resources/four_cube_multiscale.xml
+    tests/resources/config.xml tests/resources/config0_2_0.xml
+    tests/resources/config_file_inlet.xml tests/resources/iolet.txt 
+    tests/resources/config-velocity-iolet.xml tests/resources/config_new_velocity_inlets.xml
+    tests/resources/velocity_inlet.txt.weights.txt
+    tests/resources/xmltest.xml tests/resources/config_file_velocity_inlet.xml tests/resources/velocity_inlet.txt 
+    )
 endif()
 
 # ----------- HEMELB functionaltests ---------------
