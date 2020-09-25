@@ -196,9 +196,7 @@ if (HEMELB_BUILD_MULTISCALE)
   endforeach()
   add_subdirectory(multiscale)
   target_link_libraries(multiscale_hemelb
-    ${heme_libraries}
-    ${MPI_LIBRARIES}
-    ${Boost_LIBRARIES}
+    PRIVATE ${heme_libraries} ${MPI_LIBRARIES} ${Boost_LIBRARIES}
     )
   INSTALL(TARGETS multiscale_hemelb RUNTIME DESTINATION bin)
   list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)

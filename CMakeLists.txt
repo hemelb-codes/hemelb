@@ -35,5 +35,5 @@ ExternalProject_Add(
 
 add_dependencies(hemelb cppunit parmetis tinyxml boost ctemplate zlib)
 if(HEMELB_BUILD_MULTISCALE)
-  add_dependencies(hemelb mpwide)
+  add_dependencies(hemelb MPWide)
 endif()

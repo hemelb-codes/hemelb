@@ -12,5 +12,5 @@ hemelb_dependency(ctemplate use)
 hemelb_dependency(zlib use)
 
 if(HEMELB_BUILD_MULTISCALE)
-  hemelb_dependency(mpwide use)
+  hemelb_dependency(MPWide use)
 endif()
