@@ -4,117 +4,90 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_MULTISCALE_MPWIDE_MPWIDEINTERCOMMUNICATORTESTS_H
-#define HEMELB_UNITTESTS_MULTISCALE_MPWIDE_MPWIDEINTERCOMMUNICATORTESTS_H
-#include "unittests/multiscale/MockMPWide.h"
-#include "unittests/multiscale/MockIntercommunicand.h"
-#include "unittests/multiscale/mpwide/IntercommunicatingHemeLB.h"
-#include <resources/Resource.h>
+#include <catch2/catch.hpp>
+
+#include "resources/Resource.h"
 #include "multiscale/mpwide/MPWideIntercommunicator.h"
 #include "multiscale/MultiscaleSimulationMaster.h"
 
+#include "tests/helpers/FolderTestFixture.h"
+#include "tests/multiscale/MockIntercommunicand.h"
+#include "tests/multiscale/mpwide/MockMPWide.h"
+#include "tests/multiscale/mpwide/IntercommunicatingHemeLB.h"
+
 namespace hemelb
 {
-  namespace unittests
+  namespace tests
   {
-    namespace multiscale
-    {
-      namespace mpwide
-      {
+    using namespace multiscale;
+    
+    TEST_CASE_METHOD(helpers::FolderTestFixture, "MPWideIntercommunicatorTests") {
+	InterCommunicatingHemeLB<MPWideIntercommunicator> *mockheme;
+	std::map<std::string, double> *pbuffer;
+	std::map<std::string, bool> *LBorchestration;
 
-        class MPWideIntercommunicatorTests : public helpers::FolderTestFixture
-        {
-            CPPUNIT_TEST_SUITE (MPWideIntercommunicatorTests);
-            // TODO The below test is v important and is not currently being run.
-            // CPPUNIT_TEST (testMPWideApplication);
-            // CPPUNIT_TEST(testMPWidePresent);
-            CPPUNIT_TEST_SUITE_END();
+	
+	pbuffer = new std::map<std::string, double>();
 
-          public:
-            void setUp()
-            {
-              helpers::FolderTestFixture::setUp();
+	LBorchestration = new std::map<std::string, bool>();
+	(*LBorchestration)["boundary1_pressure"] = false;
+	(*LBorchestration)["boundary2_pressure"] = false;
+	(*LBorchestration)["boundary1_velocity"] = true;
+	(*LBorchestration)["boundary2_velocity"] = true;
 
-              pbuffer = new std::map<std::string, double>();
+	CopyResourceToTempdir("MPWSettings.cfg");
+	std::string configPath = "MPWSettings.cfg";
+	mockheme = new InterCommunicatingHemeLB<MPWideIntercommunicator>(25.0,
+									 0.2,
+									 *pbuffer,
+									 *LBorchestration,
+									 configPath);
+	SECTION("testMPWidePresent") {
+	  std::string host = "localhost";
+	  std::cout << "IP address for localhost is: " << MPW_DNSResolve(const_cast<char*>(host.c_str()))
+		    << std::endl;
+	  std::cout << "MPWide is present." << std::endl;
+	}
 
-              LBorchestration = new std::map<std::string, bool>();
-              (*LBorchestration)["boundary1_pressure"] = false;
-              (*LBorchestration)["boundary2_pressure"] = false;
-              (*LBorchestration)["boundary1_velocity"] = true;
-              (*LBorchestration)["boundary2_velocity"] = true;
+	SECTION("testMPWideInit") {
+	  // TODO This test needs writing.
+	}
 
-              std::string configPath = "../../../config_files/MPWSettings.cfg";
-              mockheme = new InterCommunicatingHemeLB<MPWideIntercommunicator>(25.0,
-                                                                               0.2,
-                                                                               *pbuffer,
-                                                                               *LBorchestration,
-                                                                               configPath);
-            }
+	SECTION("testMPWideApplication") {
+	  int argc;
+	  const char* argv[7];
+	  argc = 7;
+	  argv[0] = "hemelb";
+	  argv[2] = "four_cube_multiscale.xml";
+	  argv[1] = "-in";
+	  argv[3] = "-i";
+	  argv[4] = "1";
+	  argv[5] = "-ss";
+	  argv[6] = "1111";
 
-            void tearDown()
-            {
-              delete mockheme;
-              delete pbuffer;
-              delete LBorchestration;
-              helpers::FolderTestFixture::tearDown();
-            }
+	  CopyResourceToTempdir("four_cube_multiscale.xml");
+	  CopyResourceToTempdir("four_cube.gmy");
+	  configuration::CommandLine options(argc, argv);
+	  std::string configPath = "../../../config_files/MPWSettings.cfg";
+	  MPWideIntercommunicator intercomms(Comms().OnIORank(), *pbuffer, *LBorchestration, configPath);
 
-          private:
-            InterCommunicatingHemeLB<MPWideIntercommunicator> *mockheme;
-            std::map<std::string, double> *pbuffer;
-            std::map<std::string, bool> *LBorchestration;
+	  MultiscaleSimulationMaster<MPWideIntercommunicator> heme(options, Comms(), intercomms);
+	  // Mock out the behaviour of the simulation master iteration, but with the other model linked in.
+	  //std::cout << "HemeLB about to be run..." << std::endl;
+	  while (heme.GetState()->GetTime() < 20.0) {
+	    heme.DoTimeStep();
+	    //std::cout << "Step taken, going to incrementSharedTime." << std::endl;
+	    intercomms.UnitTestIncrementSharedTime(); //simple hack func that mocks a 1.0 increase in the 'other' simulation.
+	  }
+	  heme.Finalise();
+	  REQUIRE(heme.GetState()->GetTime() == Approx(20.0));
+	  //CPPUNIT_ASSERT_DOUBLES_EQUAL(zerod->currentTime, 20.5, 1e-6); // does one more step, where it sets the shared time.
+	}
 
-            void testMPWidePresent()
-            {
-              std::string host = "localhost";
-              std::cout << "IP address for localhost is: " << MPW_DNSResolve(const_cast<char*>(host.c_str()))
-                  << std::endl;
-              std::cout << "MPWide is present." << std::endl;
-            }
-            void testMPWideInit()
-            {
-              // TODO This test needs writing.
-            }
-            void testMPWideApplication()
-            {
-              int argc;
-              const char* argv[7];
-              argc = 7;
-              argv[0] = "hemelb";
-              argv[2] = "four_cube_multiscale.xml";
-              argv[1] = "-in";
-              argv[3] = "-i";
-              argv[4] = "1";
-              argv[5] = "-ss";
-              argv[6] = "1111";
+	delete mockheme;
+	delete pbuffer;
+	delete LBorchestration;
+      }
 
-              CopyResourceToTempdir("four_cube_multiscale.xml");
-              CopyResourceToTempdir("four_cube.gmy");
-              hemelb::configuration::CommandLine options(argc, argv);
-              std::string configPath = "../../../config_files/MPWSettings.cfg";
-              MPWideIntercommunicator intercomms(Comms().OnIORank(), *pbuffer, *LBorchestration, configPath);
-
-              MultiscaleSimulationMaster<MPWideIntercommunicator> heme(options, Comms(), intercomms);
-              // Mock out the behaviour of the simulation master iteration, but with the other model linked in.
-              //std::cout << "HemeLB about to be run..." << std::endl;
-              while (heme.GetState()->GetTime() < 20.0)
-              {
-                heme.DoTimeStep();
-                //std::cout << "Step taken, going to incrementSharedTime." << std::endl;
-                intercomms.UnitTestIncrementSharedTime(); //simple hack func that mocks a 1.0 increase in the 'other' simulation.
-              }
-              heme.Finalise();
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(heme.GetState()->GetTime(), 20.0, 1e-6);
-              //CPPUNIT_ASSERT_DOUBLES_EQUAL(zerod->currentTime, 20.5, 1e-6); // does one more step, where it sets the shared time.
-              FolderTestFixture::tearDown();
-            }
-
-        };
-        //class
-        CPPUNIT_TEST_SUITE_REGISTRATION (MPWideIntercommunicatorTests);
-
-      } //MPWide
-    } //multiscale
-  } //unittests
+  } //tests
 } //hemelb
-#endif  //HEMELB_UNITTEST_MULTISCALE_MPWIDEINTERCOMMUNICATORTESTS_H

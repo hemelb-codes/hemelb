@@ -204,17 +204,6 @@ endif()
 
 # ----------- HEMELB unittests ---------------
 if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
-  #------CPPUnit ---------------
-  hemelb_dependency(cppunit use)
-  add_executable(unittests_hemelb ${root_sources})
-  add_subdirectory(unittests)
-  target_link_libraries(unittests_hemelb 
-    hemelb_unittests 
-    ${heme_libraries}
-    ${MPI_LIBRARIES}
-    ${Boost_LIBRARIES})
-  INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
-
   hemelb_dependency(catch2 use)
   add_executable(hemelb-tests)
   target_sources(hemelb-tests PRIVATE ${root_sources})
@@ -237,6 +226,9 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
     tests/resources/velocity_inlet.txt.weights.txt
     tests/resources/xmltest.xml tests/resources/config_file_velocity_inlet.xml tests/resources/velocity_inlet.txt 
     )
+  if (HEMELB_BUILD_MULTISCALE)
+    list(APPEND RESOURCES tests/multiscale/mpwide/MPWSettings.cfg)
+  endif()
 endif()
 
 # ----------- HEMELB functionaltests ---------------

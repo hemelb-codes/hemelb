@@ -6,6 +6,7 @@
 
 #ifndef HEMELB_UNITTESTS_MULTISCALE_MOCKMPWIDE_H
 #define HEMELB_UNITTESTS_MULTISCALE_MOCKMPWIDE_H
+
 #include <iostream>
 #include <cassert>
 
