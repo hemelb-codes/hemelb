@@ -182,7 +182,6 @@ dependencies/CMakeLists.txt
 Tools/hemeTools/utils/cxdr.pxd
 Tools/hemeTools/utils/xdr.pxd
 Tools/hemeTools/utils/xdr.pyx
-dependencies/Modules/FindCPPUnit.cmake
 dependencies/Modules/FindCTemplate.cmake
 dependencies/Modules/FindMetis.cmake
 dependencies/Modules/FindMPI.cmake

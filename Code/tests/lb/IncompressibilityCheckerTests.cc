@@ -4,7 +4,7 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include <cppunit/TestFixture.h>
+#include <catch2/catch.hpp>
 
 #include "lb/IncompressibilityChecker.hpp"
 

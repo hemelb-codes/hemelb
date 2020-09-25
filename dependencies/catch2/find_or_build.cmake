@@ -10,7 +10,7 @@ else()
     PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
     )
   if(NOT CATCH2_TARBALL)
-    message("No cppunit source found, will download.")
+    message("No Catch2 source found, will download.")
     set(CATCH2_TARBALL https://github.com/catchorg/Catch2/archive/v2.13.0.tar.gz
       CACHE STRING "Path to download Catch2 (can be local file://)" FORCE)
   endif()
