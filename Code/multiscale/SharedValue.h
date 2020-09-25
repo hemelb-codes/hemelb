@@ -6,6 +6,9 @@
 
 #ifndef HEMELB_MULTISCALE_SHAREDVALUE_H
 #define HEMELB_MULTISCALE_SHAREDVALUE_H
+
+#include <iosfwd>
+
 #include "multiscale/Intercommunicand.h"
 
 /*

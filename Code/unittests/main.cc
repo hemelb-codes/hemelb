@@ -11,14 +11,16 @@
 #include <cppunit/BriefTestProgressListener.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <stdexcept>
-#include "unittests/multiscale/multiscale.h"
 #ifdef HEMELB_BUILD_MULTISCALE
   #include "unittests/multiscale/mpwide/mpwide.h"
 #endif
 #include <unistd.h>
 
 #include "unittests/helpers/HasCommsTestFixture.h"
+
 #include "debug/Debugger.h"
+#include "log/Logger.h"
+#include "net/MpiEnvironment.h"
 
 int main(int argc, char **argv)
 {

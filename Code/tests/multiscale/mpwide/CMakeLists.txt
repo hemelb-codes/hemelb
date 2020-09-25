@@ -1,0 +1,2 @@
+if (HEMELB_BUILD_MULTISCALE)
+endif()
