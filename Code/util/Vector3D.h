@@ -14,7 +14,6 @@
 #include <limits>
 #include "util/static_assert.h"
 #include "util/utilityFunctions.h"
-#include "util/Vector3DArithmeticTraits.h"
 
 namespace hemelb
 {
@@ -87,16 +86,13 @@ namespace hemelb
     template<class T>
     class Vector3D : public Vector3DBase
     {
+      static_assert(std::is_arithmetic<T>::value);
       public:
-        /**
-         * The type of the element
-         */
-        typedef T value_type;
+        // The type of the element
+        using value_type = T;
 
-        /**
-         * An iterator over elements of this Vector3D
-         */
-        typedef Vector3DIterator<T> iterator;
+        // An iterator over elements of this Vector3D
+        using iterator = Vector3DIterator<T>;
 
         /**
          * Iterator pointing to first element of the Vector3D.
@@ -157,7 +153,7 @@ namespace hemelb
          * @param lDirection
          * @return The component
          */
-        T GetByDirection(Direction::Direction lDirection)
+        T& GetByDirection(Direction::Direction lDirection)
         {
           switch (lDirection)
           {
@@ -245,7 +241,7 @@ namespace hemelb
         /**
          * Equality
          */
-        bool operator==(const Vector3D<T> right) const
+        bool operator==(const Vector3D& right) const
         {
           if (x != right.x)
           {
@@ -284,12 +280,27 @@ namespace hemelb
           return normed;
         }
 
+        // Helper traits
+        // Note: standard defines additive (+, -) and multiplicative (*, /, %) categories of arithmetic operators
+        // 
+        // First, result type of doing T OPERATOR decay(scalar)
+        template <typename U>
+	using add_result_t = decltype(std::declval<T>() + std::declval<typename std::decay<U>::type>());
+        template <typename U>
+	using mul_result_t = decltype(std::declval<T>() * std::declval<typename std::decay<U>::type>());
+        // Second, predicate whether that type is the same as T
+        template <typename U>
+	static constexpr bool add_result_same_v = std::is_same<T, add_result_t<U>>::value;
+        template <typename U>
+	static constexpr bool mul_result_same_v = std::is_same<T, mul_result_t<U>>::value;
+
         /**
          * Dot product between this vector and another
          * @param other
          * @return
          */
-        T Dot(const Vector3D& otherVector) const
+        template <typename U, typename RES = mul_result_t<U>>
+        RES Dot(const Vector3D<U>& otherVector) const
         {
           return (x * otherVector.x + y * otherVector.y + z * otherVector.z);
         }
@@ -299,7 +310,8 @@ namespace hemelb
          * @param V2
          * @return
          */
-        static T Dot(const Vector3D &V1, const Vector3D &V2)
+        template <typename U, typename RES = mul_result_t<U>>
+        static RES Dot(const Vector3D &V1, const Vector3D<U> &V2)
         {
           return V1.Dot(V2);
         }
@@ -310,12 +322,12 @@ namespace hemelb
          * @param V2
          * @return
          */
-        static Vector3D Cross(const Vector3D& V1, const Vector3D& V2)
+        template <typename U, typename RES = mul_result_t<U>>
+        static Vector3D<RES> Cross(const Vector3D& V1, const Vector3D<U>& V2)
         {
           return Vector3D(V1.y * V2.z - V1.z * V2.y,
                           V1.z * V2.x - V1.x * V2.z,
                           V1.x * V2.y - V1.y * V2.x);
-
         }
 
         /**
@@ -323,7 +335,8 @@ namespace hemelb
          * @param other
          * @return
          */
-        Vector3D Cross(const Vector3D& other)
+        template <typename U, typename RES = mul_result_t<U>>
+	Vector3D<RES> Cross(const Vector3D<U>& other) const
         {
           return Cross(*this, other);
         }
@@ -343,8 +356,7 @@ namespace hemelb
          */
         T GetMagnitude() const
         {
-          HEMELB_STATIC_ASSERT(std::numeric_limits<T>::is_specialized);
-          HEMELB_STATIC_ASSERT(!std::numeric_limits<T>::is_integer);
+          HEMELB_STATIC_ASSERT(!std::is_integral<T>::value);
           return std::sqrt(GetMagnitudeSquared());
         }
 
@@ -353,7 +365,8 @@ namespace hemelb
          * @param right
          * @return this + right
          */
-        Vector3D operator+(const Vector3D right) const
+        template <typename U, typename RES = add_result_t<U>>
+        Vector3D<RES> operator+(const Vector3D<U>& right) const
         {
           return Vector3D(x + right.x, y + right.y, z + right.z);
         }
@@ -363,7 +376,8 @@ namespace hemelb
          * @param right
          * @return the updated vector
          */
-        Vector3D& operator+=(const Vector3D<T> right)
+        template <typename U, typename = typename std::enable_if<add_result_same_v<U>>::type>
+        Vector3D& operator+=(const Vector3D<U>& right)
         {
           x += right.x;
           y += right.y;
@@ -386,7 +400,8 @@ namespace hemelb
          * @param right
          * @return this - right
          */
-        Vector3D operator-(const Vector3D right) const
+        template <typename U, typename RES = add_result_t<U>>
+        Vector3D operator-(const Vector3D<U>& right) const
         {
           return Vector3D(x - right.x, y - right.y, z - right.z);
         }
@@ -396,7 +411,8 @@ namespace hemelb
          * @param right
          * @return this - right
          */
-        Vector3D& operator-=(const Vector3D right)
+        template <typename U, typename = typename std::enable_if<add_result_same_v<U>>::type>
+        Vector3D& operator-=(const Vector3D<U>& right)
         {
           x -= right.x;
           y -= right.y;
@@ -409,12 +425,25 @@ namespace hemelb
          * @param multiplier
          * @return
          */
-        template<class MultiplierT>
-        Vector3D<typename Vector3DArithmeticTraits<T, MultiplierT>::operatorReturnType> operator*(const MultiplierT multiplier) const
+        template<class U,
+		 typename = typename std::enable_if<std::is_arithmetic<U>::value>::type,
+		 typename RES = mul_result_t<U>>
+        friend Vector3D<RES> operator*(const Vector3D& lhs, const U& rhs)
         {
-          return Vector3D<typename Vector3DArithmeticTraits<T, MultiplierT>::operatorReturnType>(x * multiplier,
-                                                                                                 y * multiplier,
-                                                                                                 z * multiplier);
+          return Vector3D<RES>{
+	    lhs.x * rhs,
+	    lhs.y * rhs,
+	    lhs.z * rhs
+          };
+        }
+
+        // For scalar * vector just swap and call above
+        template<class U,
+		 typename = typename std::enable_if<std::is_arithmetic<U>::value>::type,
+		 typename RES = mul_result_t<U>>
+        friend Vector3D<RES> operator*(const U& lhs, const Vector3D& rhs)
+        {
+          return rhs*lhs;
         }
 
         /**
@@ -422,8 +451,8 @@ namespace hemelb
          * @param multiplier
          * @return
          */
-        template<class MultiplierT>
-        Vector3D& operator*=(const MultiplierT multiplier)
+        template<class U, typename = typename std::enable_if<mul_result_same_v<U>>::type>
+        Vector3D& operator*=(const U& multiplier)
         {
           x *= multiplier;
           y *= multiplier;
@@ -431,26 +460,23 @@ namespace hemelb
           return *this;
         }
 
-        /**
-         * Division by a scalar
-         * @param divisor
-         * @return
-         */
-        template<class DivisorT>
-        Vector3D<typename Vector3DArithmeticTraits<T, DivisorT>::operatorReturnType> operator/(const DivisorT divisor) const
+        // Division by a scalar
+        // Return type is a new Vector3D of the type of (T / U)
+        template<class U,
+		 typename = typename std::enable_if<std::is_arithmetic<U>::value>::type,
+		 typename RES = mul_result_t<U>>
+        Vector3D<RES> operator/(const U& divisor) const
         {
-          return Vector3D<typename Vector3DArithmeticTraits<T, DivisorT>::operatorReturnType>(x / divisor,
-                                                                                              y / divisor,
-                                                                                              z / divisor);
+          return Vector3D<RES>{x / divisor,
+			       y / divisor,
+			       z / divisor};
         }
 
-        /**
-         * In-place divison by a scalar
-         * @param divisor
-         * @return
-         */
-        template<class DivisorT>
-        Vector3D& operator/=(const DivisorT divisor)
+        // In-place divison by a scalar
+        // Only enabled if the type of T/U == T
+        // Returns the updated object
+        template<class U, typename = typename std::enable_if<mul_result_same_v<U>>::type>
+        Vector3D& operator/=(const U& divisor)
         {
           x /= divisor;
           y /= divisor;
@@ -462,18 +488,18 @@ namespace hemelb
          * Scalar modulus
          * @param divisor
          */
-        template<class ModuloT>
-        Vector3D operator%(const ModuloT divisor) const
+        template<class U, typename RES = mul_result_t<U>>
+        Vector3D<RES> operator%(const U& divisor) const
         {
-          return Vector3D(x % divisor, y % divisor, z % divisor);
+          return Vector3D{x % divisor, y % divisor, z % divisor};
         }
 
         /**
          * In-place scalar modulus
          * @param divisor
          */
-        template<class ModuloT>
-        Vector3D& operator%=(const ModuloT divisor)
+        template<class U, typename = typename std::enable_if<mul_result_same_v<U>>::type>
+        Vector3D& operator%=(const U& divisor)
         {
           x %= divisor;
           y %= divisor;
