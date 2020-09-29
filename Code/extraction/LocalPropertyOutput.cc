@@ -208,7 +208,7 @@ namespace hemelb
       }
 
       // Create the buffer.
-      io::writers::xdr::XdrMemWriter xdrWriter(&buffer[0], buffer.size());
+      auto xdrWriter = io::MakeXdrWriter(buffer.begin(), buffer.end());
 
       // Firstly, the IO proc must write the iteration number.
       if (comms.OnIORank())

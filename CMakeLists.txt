@@ -3,7 +3,7 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-cmake_minimum_required (VERSION 3.2)
+cmake_minimum_required (VERSION 3.10)
 
 Project(HemeLBMaster)
 
@@ -25,9 +25,8 @@ message("${PROJECT_SOURCE_DIR}/Code")
 
 ExternalProject_Add(
   hemelb
-  URL ${PROJECT_SOURCE_DIR}/Code	
-  CONFIGURE_COMMAND ${CMAKE_COMMAND} <SOURCE_DIR>
-  ${HEMELB_CODE_CMAKE_DEFINES}
+  SOURCE_DIR ${PROJECT_SOURCE_DIR}/Code
+  CONFIGURE_COMMAND "${CMAKE_COMMAND};${PROJECT_SOURCE_DIR}/Code;${HEMELB_CODE_CMAKE_DEFINES}"
   BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
   )
 
@@ -36,5 +35,5 @@ ExternalProject_Add(
 
 add_dependencies(hemelb cppunit parmetis tinyxml boost ctemplate zlib)
 if(HEMELB_BUILD_MULTISCALE)
-  add_dependencies(hemelb mpwide)
+  add_dependencies(hemelb MPWide)
 endif()

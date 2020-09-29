@@ -1,16 +1,9 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-/*
- * XdrMemReader.cc
- *
- *  Created on: Oct 25, 2010
- *      Author: rupert
- */
-
+#include <cassert>
 #include "io/writers/xdr/XdrMemReader.h"
 
 namespace hemelb
@@ -22,14 +15,28 @@ namespace hemelb
       namespace xdr
       {
         // Constructor to create an Xdr object based on a memory buffer
-        XdrMemReader::XdrMemReader(const char* dataBuffer, unsigned int dataLength)
+        XdrMemReader::XdrMemReader(const char* buf, unsigned int dataLength)
+	  : start(buf), current(buf), len(dataLength)
         {
-          xdrmem_create(&mXdr, const_cast<char*>(dataBuffer), dataLength, XDR_DECODE);
         }
 
 	XdrMemReader::XdrMemReader(const std::vector<char>& dataVec)
+	  : start(dataVec.data()), current(start), len(dataVec.size())
 	{
-	  xdrmem_create(&mXdr, const_cast<char*>(dataVec.data()), dataVec.size(), XDR_DECODE);
+	}
+
+	XdrMemReader::~XdrMemReader() {
+	}
+
+	unsigned XdrMemReader::GetPosition() {
+	  return current - start;
+	}
+
+	const char* XdrMemReader::get_bytes(size_t n) {
+	  assert(GetPosition() + n <= len);
+	  auto ans = current;
+	  current += n;
+	  return ans;
 	}
 
       } // namespace xdr

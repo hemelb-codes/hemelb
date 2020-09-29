@@ -8,6 +8,7 @@
 #include <MPWide.h>
 
 #include "configuration/CommandLine.h"
+#include "debug/Debugger.h"
 #include "multiscale/MultiscaleSimulationMaster.h"
 #include "multiscale/mpwide/MPWideIntercommunicator.h"
 
@@ -19,8 +20,6 @@ int main(int argc, char *argv[])
   try
   {
     hemelb::net::MpiCommunicator commWorld = hemelb::net::MpiCommunicator::World();
-    // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
-    hemelb::debug::Debugger::Init(argv[0], commWorld);
 
     hemelb::net::IOCommunicator hemelbCommunicator(commWorld);
 
@@ -28,6 +27,8 @@ int main(int argc, char *argv[])
     {
       // Parse command line
       hemelb::configuration::CommandLine options = hemelb::configuration::CommandLine(argc, argv);
+      // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
+      hemelb::debug::Debugger::Init(options.GetDebug(), argv[0], commWorld);
 
       // Prepare some multiscale/MPWide stuff
 
@@ -57,6 +58,7 @@ int main(int argc, char *argv[])
       //TODO: Add an IntercommunicatorImplementation?
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Constructing MultiscaleSimulationMaster()");
       hemelb::multiscale::MultiscaleSimulationMaster<hemelb::multiscale::MPWideIntercommunicator> lMaster(options,
+													  hemelbCommunicator,
                                                                                                           intercomms);
 
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Runing simulation()");

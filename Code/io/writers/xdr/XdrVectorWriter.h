@@ -17,23 +17,23 @@ namespace hemelb
     {
       namespace xdr
       {
+	using char_vec = std::vector<char>;
+	using char_vec_appender = std::back_insert_iterator<char_vec>;
 
 	// XDR encoder that will put its buffer in a vector so you
-	// don't have to worry about managing memory.
-	class XdrVectorWriter : public XdrWriter {
+	// don't have to worry about managing memory. The encoder owns
+	// the memory but you can get a reference to the data with
+	// GetBuf()
+	class XdrVectorWriter : public XdrMetaWriter<char_vec_appender, char_vec>
+	{
+	  using base = XdrMetaWriter<char_vec_appender, char_vec>;
 	public:
-	  using VectorT = std::vector<char>;
-
+	  // Start with no memory reserved
 	  XdrVectorWriter();
-	  virtual ~XdrVectorWriter();
+	  // Reserve n bytes of memory for storage
+	  XdrVectorWriter(size_t n);
 
-	  const VectorT& GetBuf() const;
-
-	private:
-	  template<typename, typename>
-	  friend struct XdrVectorWriterHelper;
-	  VectorT buffer;
-	  FILE* file;
+	  const char_vec& GetBuf() const;
 	};
 
       }

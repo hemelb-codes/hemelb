@@ -7,6 +7,7 @@
 #ifndef HEMELB_STEERING_IMAGESENDCOMPONENT_H
 #define HEMELB_STEERING_IMAGESENDCOMPONENT_H
 
+#include <memory>
 #include "constants.h"
 #include "lb/SimulationState.h"
 #include "lb/LbmParameters.h"
@@ -26,7 +27,6 @@ namespace hemelb
                            const lb::LbmParameters* iLbmParams,
                            Network* iNetwork,
                            unsigned inletCount);
-        ~ImageSendComponent();
 
         void DoWork(const vis::PixelSet<vis::ResultPixel>* pix);
         void SetMaxFramerate(float maxFramerate){
@@ -43,7 +43,7 @@ namespace hemelb
         vis::Control* mVisControl;
         const unsigned inletCount;
         float MaxFramerate;
-        char* xdrSendBuffer;
+        std::unique_ptr<char[]> xdrSendBuffer;
         double lastRender;
 
         // data per pixel is

@@ -26,20 +26,6 @@ namespace hemelb
     }
 
     namespace {
-      // Helper class to simplify pulling data out of the file and XDR
-      // decoding it
-      struct MpiFileReader : public xdr::XdrReader {
-
-	MpiFileReader(net::MpiFile& f, size_t len) : file(f), buffer(len) {
-	  file.Read(buffer);
-	  xdrmem_create(&mXdr, buffer.data(), buffer.size(), XDR_DECODE);
-	}
-
-      private:
-	net::MpiFile& file;
-	std::vector<char> buffer;
-      };
-
       // The required xtr field header len
       constexpr uint64_t expectedFieldHeaderLength = 32U;
       constexpr uint64_t totalXtrHeaderLength = fmt::extraction::MainHeaderLength + expectedFieldHeaderLength;
@@ -170,7 +156,9 @@ namespace hemelb
 
     void LocalDistributionInput::ReadExtractionHeaders(net::MpiFile& inputFile) {
       if (comms.OnIORank()) {
-	MpiFileReader preambleReader(inputFile, fmt::extraction::MainHeaderLength);
+	auto preambleBuf = std::vector<char>(fmt::extraction::MainHeaderLength);
+	inputFile.Read(preambleBuf);
+	auto preambleReader = xdr::XdrMemReader(preambleBuf);
 
 	// Read the magic numbers.
 	uint32_t hlbMagicNumber, extMagicNumber, version;
@@ -228,7 +216,10 @@ namespace hemelb
 			    << expectedFieldHeaderLength << " B long, but is "
 			    << lengthOfFieldHeader << " B";
 
-	MpiFileReader fieldHeaderReader(inputFile, lengthOfFieldHeader);
+	auto fieldHeaderBuf = std::vector<char>(lengthOfFieldHeader);
+	inputFile.Read(fieldHeaderBuf);
+	auto fieldHeaderReader = xdr::XdrMemReader(fieldHeaderBuf);
+
 	fieldHeaderReader.read(distField.name);
 	fieldHeaderReader.read(distField.numberOfFloats);
 	fieldHeaderReader.read(distField.offset);

@@ -17,20 +17,14 @@ namespace hemelb
     {
       namespace xdr
       {
-
-        // Class for writing to an Xdr object in memory. Derives from a
-        // base XdrWriter which implements all the writing functions.
-
-        class XdrMemWriter : public XdrWriter
-        {
-          public:
-            // Constructor and destructor for the in-memory Xdr writer.
-            XdrMemWriter(char* dataBuffer, unsigned int dataLength);
-            ~XdrMemWriter();
-        };
-
-      } // namespace xdr
-    } // namespace writers
+	// Simple wrapper to allow construction from pointer-length
+	// arguments.
+	class XdrMemWriter : public XdrMetaWriter<char*> {
+	public:
+	  XdrMemWriter(char* dataBuffer, unsigned int dataLength);
+	};
+      }
+    }
   }
 }
 #endif // HEMELB_IO_WRITERS_XDR_XDRMEMWRITER_H
