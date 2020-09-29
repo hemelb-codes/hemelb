@@ -49,10 +49,6 @@ if (HEMELB_WAIT_ON_CONNECT)
   add_definitions(-DHEMELB_WAIT_ON_CONNECT)
 endif()
 
-if (NOT HEMELB_STATIC_ASSERT)
-  add_definitions(-DHEMELB_NO_STATIC_ASSERT)
-endif()
-
 if (HEMELB_IMAGES_TO_NULL)
   add_definitions(-DHEMELB_IMAGES_TO_NULL)
 endif()

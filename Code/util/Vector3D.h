@@ -12,7 +12,6 @@
 #include <ostream>
 #include <algorithm>
 #include <limits>
-#include "util/static_assert.h"
 #include "util/utilityFunctions.h"
 
 namespace hemelb
@@ -356,7 +355,7 @@ namespace hemelb
          */
         T GetMagnitude() const
         {
-          HEMELB_STATIC_ASSERT(!std::is_integral<T>::value);
+          static_assert(!std::is_integral<T>::value, "Vector3D::GetMagnitude only makes sense for floating types");
           return std::sqrt(GetMagnitudeSquared());
         }
 

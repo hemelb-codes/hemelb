@@ -77,7 +77,6 @@ hemelb_option(HEMELB_BUILD_TESTS_FUNCTIONAL "Build the functional tests (HEMELB_
 hemelb_option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 hemelb_option(HEMELB_USE_STREAKLINES "Calculate streakline images" OFF)
 hemelb_option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
-hemelb_option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
 hemelb_option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 hemelb_option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 hemelb_option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
