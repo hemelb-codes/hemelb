@@ -211,7 +211,7 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
   add_subdirectory(tests)
   hemelb_add_target_dependency_catch2(hemelb-tests)
   # ReporterTests directly use ctemplate
-  # hemelb_add_target_dependency_ctemplate(hemelb_tests)
+  hemelb_add_target_dependency_ctemplate(hemelb-tests)
 
   target_link_libraries(hemelb-tests PRIVATE
     ${heme_libraries}
