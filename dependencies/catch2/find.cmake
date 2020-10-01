@@ -1,1 +1,1 @@
-find_package(Catch2 QUIET)
+find_package(Catch2 QUIET CONFIG)
