@@ -33,7 +33,7 @@ ExternalProject_Add(
 # These are handled in dependencies/CMakeLists.txt and needed here
 # to ensure they are build in correct order.
 
-add_dependencies(hemelb parmetis tinyxml boost ctemplate zlib)
+add_dependencies(hemelb parmetis tinyxml boost catch2 ctemplate zlib)
 if(HEMELB_BUILD_MULTISCALE)
   add_dependencies(hemelb MPWide)
 endif()
