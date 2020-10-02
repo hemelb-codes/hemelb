@@ -86,7 +86,7 @@ namespace hemelb
     template<class T>
     class Vector3D : public Vector3DBase
     {
-      static_assert(std::is_arithmetic<T>::value);
+      static_assert(std::is_arithmetic<T>::value, "Vector3D only allowed with arithmetic types");
       public:
         // The type of the element
         using value_type = T;
