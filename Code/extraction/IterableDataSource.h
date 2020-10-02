@@ -16,7 +16,7 @@ namespace hemelb
   namespace extraction
   {
 
-    typedef double FloatingType;
+    using FloatingType = float;
 
     class IterableDataSource
     {

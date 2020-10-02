@@ -30,7 +30,7 @@ namespace hemelb
         return false;
       }
 
-      util::Vector3D<float> coords = util::Vector3D<float>(location) * data.GetVoxelSize() + data.GetOrigin();
+      const util::Vector3D<float> coords = LatticeToPhysical(data, location);
       float distanceToSurfacePointLatticeUnits = (coords - surfacePoint).GetMagnitude() / data.GetVoxelSize();
 
       // Ideally, we would like to check whether the distance is strictly smaller than sqrt(3.0). Unfortunately

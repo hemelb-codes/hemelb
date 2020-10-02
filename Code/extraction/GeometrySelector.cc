@@ -20,5 +20,9 @@ namespace hemelb
 
       return IsWithinGeometry(data, location);
     }
+
+    util::Vector3D<float> GeometrySelector::LatticeToPhysical(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const {
+      return util::Vector3D<float>{location} * data.GetVoxelSize() + data.GetOrigin();
+    }
   }
 }

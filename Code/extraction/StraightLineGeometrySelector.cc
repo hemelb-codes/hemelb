@@ -30,7 +30,7 @@ namespace hemelb
     bool StraightLineGeometrySelector::IsWithinGeometry(const extraction::IterableDataSource& data,
                                                         const util::Vector3D<site_t>& location) const
     {
-      util::Vector3D<float> coords = util::Vector3D<float>(location) * data.GetVoxelSize() + data.GetOrigin();
+      util::Vector3D<float> coords = LatticeToPhysical(data, location);
 
       const float lengthAlongLine = (lineVector.Dot(coords - endpoint1)) / lineLength;
 
