@@ -36,11 +36,15 @@ namespace hemelb
       }
 
       void Document::LoadFile(const std::string& path) {
-	xmlDoc->LoadFile(path);
+	if (!xmlDoc->LoadFile(path)) {
+	  throw ParseError(xmlDoc.get());
+	}
       }
 
       void Document::LoadString(const std::string& data) {
-	xmlDoc->Parse(data.c_str());
+	if (xmlDoc->Parse(data.c_str()) == nullptr) {
+	  throw ParseError(xmlDoc.get());
+	}
       }
 
       Element::Element(TiXmlElement* el_) :
