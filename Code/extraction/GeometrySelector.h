@@ -40,6 +40,9 @@ namespace hemelb
       protected:
         virtual bool
             IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const = 0;
+
+        // Helper to do the coordinate transform for subclasses
+        util::Vector3D<float> LatticeToPhysical(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const;
     };
   }
 }

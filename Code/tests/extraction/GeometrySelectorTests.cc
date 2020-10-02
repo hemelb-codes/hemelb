@@ -54,26 +54,17 @@ namespace hemelb
 	  // Is the current site in includedSites?
 	  bool expectedIncluded =
 	    std::find(includedSites.begin(), includedSites.end(), dataSourceIterator.GetPosition()) != includedSites.end();
-	  
-	  // std::stringstream msg;
-	  
-	  // msg << "Site at " << dataSourceIterator.GetPosition().x << ","
-	  // 	<< dataSourceIterator.GetPosition().y << ","
-	  // 	<< dataSourceIterator.GetPosition().z << " was ";
-	  
-	  // if (!expectedIncluded) {
-	  //   msg << "not ";
-	  // }
-	  
-	  // msg << "expected to be included but actually was";
-	  
-	  // if (!geometrySelector->Include(dataSourceIterator, dataSourceIterator.GetPosition())) {
-	  //   msg << " not.";
-	  // } else {
-	  //   msg << ".";
-	  // }
-	  REQUIRE(expectedIncluded ==
-		  geometrySelector.Include(dataSourceIterator, dataSourceIterator.GetPosition()));
+	  bool actualIncluded =
+	    geometrySelector.Include(dataSourceIterator, dataSourceIterator.GetPosition());
+
+	  INFO("Site at ("
+	       << dataSourceIterator.GetPosition().x << ", "
+	       << dataSourceIterator.GetPosition().y << ", "
+	       << dataSourceIterator.GetPosition().z << ")"
+	       << (expectedIncluded ? " was" : " was not")
+	       << " expected to be included but actually"
+	       << (actualIncluded ? " was." : " was not."))
+	  REQUIRE(expectedIncluded == actualIncluded);
 	}
       };
       
@@ -201,7 +192,7 @@ namespace hemelb
       }
 
       SECTION("SurfacePointSelector") {
-	const util::Vector3D<float> surfacePoint{(CubeSize + 1) * VoxelSize};
+	const util::Vector3D<float> surfacePoint{(CubeSize + 0.999f) * VoxelSize};
 	auto surfacePointSelector = extraction::SurfacePointSelector(surfacePoint);
 	TestOutOfGeometrySites(surfacePointSelector);
 
@@ -221,7 +212,7 @@ namespace hemelb
 	// direction, the geometry selector will pick three sites in a
 	// sqrt(3) times voxel size radius.
 	const util::Vector3D<float> surfacePointMultipleHits{
-	  (CubeSize + 1) * VoxelSize,
+	  (CubeSize + 0.999f) * VoxelSize,
 	  CubeSize * VoxelSize,
 	  CubeSize * VoxelSize
 	};

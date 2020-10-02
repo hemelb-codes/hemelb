@@ -50,7 +50,7 @@ namespace hemelb
     bool PlaneGeometrySelector::IsWithinGeometry(const extraction::IterableDataSource& data,
                                                  const util::Vector3D<site_t>& location) const
     {
-      util::Vector3D<float> coords = util::Vector3D<float>(location) * data.GetVoxelSize() + data.GetOrigin();
+      const util::Vector3D<float> coords = LatticeToPhysical(data, location);
 
       const float perpendicularDistance = (coords - planePoint).Dot(normal);
 
