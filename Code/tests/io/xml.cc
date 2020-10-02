@@ -65,7 +65,7 @@ namespace hemelb
 	std::string type = datum.GetAttributeOrThrow("type");
 	REQUIRE(TestAttributeTraits<T>::value == type);
 	T value;
-	REQUIRE_THROWS_AS(datum.GetAttributeOrThrow("value", value), io::xml::ParseError);
+	REQUIRE_THROWS_AS(datum.GetAttributeOrThrow("value", value), io::xml::DeserialisationError);
       }
     }
 

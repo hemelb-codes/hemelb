@@ -280,48 +280,51 @@ namespace hemelb
       }
 
       // XML exception base class
-      XmlError::XmlError(const Element& el) :
-        elem(el), elemPath(el.GetPath())
+      XmlError::XmlError()
       {
         *this << "xml::";
       }
 
+      ParseError::ParseError(const TiXmlDocument* node) : XmlError() {
+	*this << "Error parsing XML. TiXml says: " << node->ErrorDesc();
+      }
+
       // Missing attribute
       AttributeError::AttributeError(const Element& n, const std::string& attr_) :
-        XmlError(n), attr(attr_)
+        XmlError()
       {
-        *this << "AttributeError: '" << elemPath << "' has no attribute '" << attr << "'";
+        *this << "AttributeError: '" << n.GetPath() << "' has no attribute '" << attr << "'";
       }
 
       // Attribute parsing error
-      ParseError::ParseError(const Element& el, const std::string& attrName,
+      DeserialisationError::DeserialisationError(const Element& el, const std::string& attrName,
                              const std::string& attrVal) :
-        XmlError(el), name(attrName), val(attrVal)
+        XmlError()
       {
-        *this << "ParseError: '" << elemPath << "' Cannot convert attribute '" << name << "=\""
-            << val << "\"'";
+        *this << "ParseError: '" << el.GetPath() << "' Cannot convert attribute '" << attrName << "=\""
+            << attrVal << "\"'";
       }
 
-      ElementError::ElementError(const Element& el, const std::string& elName) :
-        XmlError(el), elemName(elName)
+      ElementError::ElementError(const Element& el) :
+        XmlError(), elemPath(el.GetPath())
       {
       }
       ChildError::ChildError(const Element& elem, const std::string& subElemName) :
-        ElementError(elem, subElemName)
+        ElementError(elem)
       {
-        *this << "ChildError: '" << elemPath << "' has no child '" << elemName << "'";
+        *this << "ChildError: '" << elemPath << "' has no child '" << subElemName << "'";
       }
 
       ParentError::ParentError(const Element& elem) :
-        ElementError(elem, "")
+        ElementError(elem)
       {
         *this << "ParentError: '" << elemPath << "' is root element";
       }
 
-      SiblingError::SiblingError(const Element& elem, const std::string& subElemName) :
-        ElementError(elem, subElemName)
+      SiblingError::SiblingError(const Element& elem, const std::string& sibElemName) :
+        ElementError(elem)
       {
-        *this << "SiblingError: '" << elemPath << "' has no later sibling '" << elemName << "'";
+        *this << "SiblingError: '" << elemPath << "' has no later sibling '" << sibElemName << "'";
       }
 
     }
