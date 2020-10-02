@@ -15,21 +15,32 @@ namespace hemelb
   {
     namespace xml
     {
-      Document::Document(const std::string path)
+      Document::Document()
+      {
+        xmlDoc = std::make_unique<::TiXmlDocument>();
+      }
+
+      Document::Document(const std::string& path) : Document()
       {
         util::check_file(path.c_str());
-        xmlDoc = new ::TiXmlDocument();
-        xmlDoc->LoadFile(path);
+	LoadFile(path);
       }
+
       Document::~Document()
       {
-        delete xmlDoc;
-        xmlDoc = NULL;
       }
 
       Element Document::GetRoot()
       {
         return Element(xmlDoc->RootElement());
+      }
+
+      void Document::LoadFile(const std::string& path) {
+	xmlDoc->LoadFile(path);
+      }
+
+      void Document::LoadString(const std::string& data) {
+	xmlDoc->Parse(data.c_str());
       }
 
       Element::Element(TiXmlElement* el_) :
