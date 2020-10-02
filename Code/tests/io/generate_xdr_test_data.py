@@ -37,12 +37,10 @@ const std::vector<char>& test_data<$typename>::packed() {
   return packed;
 };""")
 
-def mk_ints(signed: bool, nbits: int) -> List[int]:
+def mk_ints(nbits: int) -> List[int]:
     values = [0]
     for i in range(nbits):
         values.append(1 << i)
-    if signed:
-        values[-1] = -2**(nbits-1)
     return values
 
 def mk_specialisation_int(signed: bool, nbits: int) -> str:
@@ -68,11 +66,16 @@ def mk_specialisation_int(signed: bool, nbits: int) -> str:
     else:
         raise ValueError("only deal with 32/64 bit ints")
     
-    values = mk_ints(signed, nbits)
-    
+    values = mk_ints(nbits)
+    values_code_lines = [f"0x{v:x}" for v in values]
+    if signed:
+        values_code_lines[-1] = "static_cast<{}>({})".format(typename, values_code_lines[-1])
+
+    values_code = ",\n    ".join(values_code_lines)
+    if signed:
+        values[-1] *= -1
     for v in values:
         pack(v)
-    values_code = ",\n    ".join(f"{v}{suffix}" for v in values)
 
     buffer_data = ", ".join(f"'\\x{x:02x}'" for x in p.get_buffer())
     return spec_template.substitute(locals())
@@ -85,19 +88,21 @@ def mk_specialisation_float(nbits: int) -> str:
         suffix = "U"
         flt_type_str = ">f"
         int_type_str = ">I"
+        func_name = "binflt"
     elif nbits == 64:
         typename = "double"
         pack = p.pack_double
         suffix = "UL"
         flt_type_str = ">d"
         int_type_str = ">Q"
+        func_name = "bindbl"
     else:
         raise ValueError("only deal with 32/64 bit floats")
-    intvals =  mk_ints(False, nbits)
+    intvals =  mk_ints(nbits)
     fltvals = [struct.unpack(flt_type_str, struct.pack(int_type_str, v))[0] for v in intvals]
     for v in fltvals:
         pack(v)
-    values_code = ",\n    ".join(f"binflt({v}{suffix})" for v in intvals)
+    values_code = ",\n    ".join(f"{func_name}(0x{v:x})" for v in intvals)
     buffer_data = ", ".join(f"'\\x{x:02x}'" for x in p.get_buffer())
     return spec_template.substitute(locals())
 
@@ -162,7 +167,7 @@ namespace hemelb
       float binflt(uint32_t x) {
         return *reinterpret_cast<float*>(&x);
       }
-      double binflt(uint64_t x) {
+      double bindbl(uint64_t x) {
         return *reinterpret_cast<double*>(&x);
       }
     }
