@@ -28,9 +28,9 @@ namespace hemelb
     TEST_CASE_METHOD(helpers::HasCommsTestFixture, "GeometrySelector")
     {
       
-      const double VoxelSize{0.01};
+      const float VoxelSize{0.01f};
       const int CubeSize{10};
-      const distribn_t CentreCoordinate{ ((distribn_t) CubeSize - 1.0) / 2.0};
+      const float CentreCoordinate{ (CubeSize - 1.0f) / 2.0f};
 
 
       auto latticeData = std::unique_ptr<FourCubeLatticeData>{FourCubeLatticeData::Create(Comms(), CubeSize + 2, 1)};
@@ -87,8 +87,8 @@ namespace hemelb
 
 
       SECTION("StraightLineGeometrySelector") {
-	const util::Vector3D<distribn_t> lineEndPoint1{CentreCoordinate * VoxelSize};
-	const util::Vector3D<distribn_t> lineEndPoint2{ (CubeSize + 1) * VoxelSize};
+	const util::Vector3D<float> lineEndPoint1{CentreCoordinate * VoxelSize};
+	const util::Vector3D<float> lineEndPoint2{ (CubeSize + 1) * VoxelSize};
 
 	auto straightLineGeometrySelector = extraction::StraightLineGeometrySelector{lineEndPoint1, lineEndPoint2};
 
@@ -110,10 +110,10 @@ namespace hemelb
       }
 
       SECTION("PlaneGeometrySelector") {
-	const util::Vector3D<distribn_t> planeNormal{1.0};
-	const util::Vector3D<distribn_t> planePosition{CentreCoordinate * VoxelSize};
-	const util::Vector3D<distribn_t> centrePoint{CentreCoordinate};
-	const distribn_t planeRadius{distribn_t(CubeSize) * VoxelSize / 3.0};
+	const util::Vector3D<float> planeNormal{1.0};
+	const util::Vector3D<float> planePosition{CentreCoordinate * VoxelSize};
+	const util::Vector3D<float> centrePoint{CentreCoordinate};
+	const float planeRadius = {CubeSize * VoxelSize / 3.0f};
 
 	auto planeGeometrySelector = extraction::PlaneGeometrySelector{planePosition, planeNormal};
 	auto planeGeometrySelectorWithRadius = extraction::PlaneGeometrySelector{planePosition,
@@ -132,7 +132,7 @@ namespace hemelb
 	for (site_t xCoord = 1; xCoord <= CubeSize; ++xCoord) {
 	  for (site_t yCoord = 1; yCoord <= CubeSize; ++yCoord) {
 	    for (site_t zCoord = 1; zCoord <= CubeSize; ++zCoord) {
-	      const auto x = util::Vector3D<distribn_t>{xCoord, yCoord, zCoord};
+	      const auto x = util::Vector3D<float>(xCoord, yCoord, zCoord);
 	      // Use that p.n = x.n for x on the same plane.
 	      // I.e. the current point's coordinate dotted with the
 	      // normal must be roughly equal to the centre point's
@@ -145,7 +145,7 @@ namespace hemelb
 	      includedCoordsWithoutRadius.push_back(x);
 
 	      // Compute the distance from the centre point, include the site if it is within the radius.
-	      if ( (x - centrePoint).GetMagnitude() < distribn_t(CubeSize) / 3.0) {
+	      if ( (x - centrePoint).GetMagnitude() < float(CubeSize) / 3.0f) {
 		includedCoordsWithRadius.push_back(x);
 	      }
 	    }
@@ -201,7 +201,7 @@ namespace hemelb
       }
 
       SECTION("SurfacePointSelector") {
-	const util::Vector3D<distribn_t> surfacePoint{(CubeSize + 1) * VoxelSize};
+	const util::Vector3D<float> surfacePoint{(CubeSize + 1) * VoxelSize};
 	auto surfacePointSelector = extraction::SurfacePointSelector(surfacePoint);
 	TestOutOfGeometrySites(surfacePointSelector);
 
@@ -220,7 +220,7 @@ namespace hemelb
 	// corner (CubeSize-1, CubeSize-1, CubeSize-1) in the x
 	// direction, the geometry selector will pick three sites in a
 	// sqrt(3) times voxel size radius.
-	const util::Vector3D<distribn_t> surfacePointMultipleHits{
+	const util::Vector3D<float> surfacePointMultipleHits{
 	  (CubeSize + 1) * VoxelSize,
 	  CubeSize * VoxelSize,
 	  CubeSize * VoxelSize
