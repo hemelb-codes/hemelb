@@ -11,6 +11,8 @@
 #include <iostream>
 #include <sstream>
 #include <limits>
+#include <memory>
+
 #include "Exception.h"
 
 // Forward declare the TinyXML types needed.
@@ -193,7 +195,7 @@ namespace hemelb
            * then this will throw std::stringstream::failure.
            *
            * If the attribute exists, and converts to type T but does not use
-           * the whole attribute string, then this will throw ParseError.
+           * the whole attribute string, then this will throw DeserialisationError.
            *
            * @param $name
            *   Attribute to read and convert
@@ -326,19 +328,28 @@ namespace hemelb
       class Document
       {
         public:
+          // Create an empty document
+	  Document();
           /**
            * constructor
            *
            * @param $path
            *   the path to the XML file to be read by this object
            */
-          Document(const std::string path);
+          Document(const std::string& path);
 
-          /** destructor */
+          /** destructor - needed to avoid polluting all users of this with TinyXML */
           ~Document();
           Element GetRoot();
+
+          // Load some XML from a file
+          void LoadFile(const std::string& path);
+
+          // Load some XML from a string
+          void LoadString(const std::string& path);
+
         private:
-          TiXmlDocument* xmlDoc;
+	  std::unique_ptr<TiXmlDocument> xmlDoc;
       };
 
       /**
@@ -355,39 +366,26 @@ namespace hemelb
            *
            * @param element
            */
-          XmlError(const Element& element);
+          XmlError();
 
         public:
-          /**
-           * Access the Element where the error occurred.
-           * @return
-           */
-          inline const Element& GetNode() const
-          {
-            return elem;
-          }
-          /**
-           * D'tor because the default one does not have the correct exception
-           * specification.
-           */
-          virtual ~XmlError() throw ()
-          {
-          }
           /**
            * Supply an human readable error message.
            * @return
            */
-          //virtual const char* what() const throw ();
           template<typename T>
           XmlError& operator<<(const T& t)
           {
             return static_cast<XmlError&> (Exception::operator<<(t));
           }
 
-        protected:
-          const Element elem;
-          // Full path to the element
-          const std::string elemPath;
+      };
+
+      // Indicate that some XML failed to parse
+      class ParseError : public XmlError
+      {
+      public:
+	ParseError(const TiXmlDocument*);
       };
 
       /**
@@ -398,9 +396,6 @@ namespace hemelb
         public:
           AttributeError(const Element& n, const std::string& attr_);
 
-          virtual ~AttributeError() throw ()
-          {
-          }
           template<typename T>
           AttributeError& operator<<(const T& t)
           {
@@ -411,23 +406,16 @@ namespace hemelb
           const std::string attr;
       };
 
-      class ParseError : public XmlError
+      class DeserialisationError : public XmlError
       {
         public:
-          ParseError(const Element& el, const std::string& attrName, const std::string& attrVal);
-          virtual ~ParseError() throw ()
-          {
-          }
+          DeserialisationError(const Element& el, const std::string& attrName, const std::string& attrVal);
 
           template<typename T>
-          ParseError& operator<<(const T& t)
+          DeserialisationError& operator<<(const T& t)
           {
-            return static_cast<ParseError&> (XmlError::operator<<(t));
+            return static_cast<DeserialisationError&> (XmlError::operator<<(t));
           }
-
-        private:
-          const std::string name;
-          const std::string val;
       };
 
       /**
@@ -437,11 +425,8 @@ namespace hemelb
       class ElementError : public XmlError
       {
         protected:
-          ElementError(const Element& n, const std::string& elemName);
+          ElementError(const Element& el);
         public:
-          virtual ~ElementError() throw ()
-          {
-          }
           template<typename T>
           ElementError& operator<<(const T& t)
           {
@@ -449,7 +434,7 @@ namespace hemelb
           }
 
         protected:
-          const std::string elemName;
+          std::string elemPath;
       };
       /**
        * Indicate that an element lacks the requested child
@@ -522,7 +507,7 @@ namespace hemelb
           {
             if (attrString->at(0) == '-')
             {
-              throw ParseError(*this, name, *attrString)
+              throw DeserialisationError(*this, name, *attrString)
                   << " attempt to convert negative number to unsigned type";
             }
           }
@@ -534,13 +519,13 @@ namespace hemelb
           attrStream >> out;
           if (attrStream.fail())
           {
-            throw ParseError(*this, name, *attrString) << " error in extraction operator";
+            throw DeserialisationError(*this, name, *attrString) << " error in extraction operator";
           }
           bool eof = attrStream.eof();
           std::stringstream::pos_type pos = attrStream.tellg();
           if (!eof && pos != int(attrString->size()))
           {
-            throw ParseError(*this, name, *attrString) << " not all characters consumed";
+            throw DeserialisationError(*this, name, *attrString) << " not all characters consumed";
           }
         }
         return attrString;

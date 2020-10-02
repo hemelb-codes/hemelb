@@ -65,7 +65,7 @@ namespace hemelb
 	std::string type = datum.GetAttributeOrThrow("type");
 	REQUIRE(TestAttributeTraits<T>::value == type);
 	T value;
-	REQUIRE_THROWS_AS(datum.GetAttributeOrThrow("value", value), io::xml::ParseError);
+	REQUIRE_THROWS_AS(datum.GetAttributeOrThrow("value", value), io::xml::DeserialisationError);
       }
     }
 
@@ -161,6 +161,12 @@ namespace hemelb
 	TestAttributeConversionFails<util::Vector3D<double>>(6, xmlDoc->GetRoot());
 	TestAttributeConversionFails<util::Vector3D<int>>(7, xmlDoc->GetRoot());
 	TestAttributeConversionFails<unsigned>(8, xmlDoc->GetRoot());
+      }
+
+      SECTION("Test that mismatched end tag errors on parse") {
+	const std::string testdata = "<sometag>Some text</wrongtag>";
+	xml::Document doc;
+	REQUIRE_THROWS_AS(doc.LoadString(testdata), xml::ParseError);
       }
     }
 

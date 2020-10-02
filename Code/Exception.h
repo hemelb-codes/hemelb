@@ -42,15 +42,12 @@ namespace hemelb
       {
         mWhat += that.mStream.str();
       }
-      virtual ~Exception() throw ()
-      {
-      };
 
       /**
        * Return combined error string.
        * @return
        */
-      virtual const char *what() const throw ()
+      virtual const char *what() const noexcept
       {
         if (mStream.str().size())
         {
