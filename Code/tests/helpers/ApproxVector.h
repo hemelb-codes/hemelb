@@ -80,8 +80,8 @@ namespace hemelb {
     }
     
     namespace selftest {
-      static_assert(std::is_same<ApproxVector<double>, ApproxVectorImpl<double>>::value);
-      static_assert(std::is_same<ApproxVector<util::Vector3D<double>>, ApproxVectorImpl<double>>::value);
+      static_assert(std::is_same<ApproxVector<double>, ApproxVectorImpl<double>>::value, "ApproxVector helpers types all wrong");
+      static_assert(std::is_same<ApproxVector<util::Vector3D<double>>, ApproxVectorImpl<double>>::value, "ApproxVector helpers types all wrong");
     }
   }
 }
