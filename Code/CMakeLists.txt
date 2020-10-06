@@ -95,10 +95,11 @@ if(LINUX_SCANDIR)
   add_definitions(-DLINUX_SCANDIR)
 endif()
 
+macro(DP var)
+  message(STATUS "${var} = '${${var}}'")
+endmacro()
+
 include(mpi)
-if(MPI_STANDARD_VERSION VERSION_LESS 3)
-  message(FATAL_ERROR "Must have MPI 3.0 or greater")
-endif()
 
 include(dependencies)
 

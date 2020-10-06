@@ -12,13 +12,6 @@
 
 namespace hemelb
 {
-  // TODO: remove when net is dead
-  namespace net
-  {
-    class CoalescePointPoint;
-    class SeparatedPointPoint;
-    class ImmediatePointPoint;
-  }
   namespace comm
   {
     class Group;
@@ -80,9 +73,9 @@ namespace hemelb
          * @param info
          * @return
          */
-        virtual std::shared_ptr<MpiFile> OpenFile(const std::string& filename, int mode,
-						  const MPI_Info info = MPI_INFO_NULL) const = 0;
-      
+        virtual MpiFile OpenFile(const std::string& filename, int mode,
+				 const MPI_Info info = MPI_INFO_NULL) const = 0;
+
         virtual std::shared_ptr<RequestList> MakeRequestList() const = 0;
         virtual void Barrier() const = 0;
         virtual std::shared_ptr<Request> Ibarrier() const = 0;
@@ -126,6 +119,11 @@ namespace hemelb
 	      
         template <typename T>
         std::vector<T> AllGather(const T& val) const;
+
+        template <typename T>
+        T Scatter(const std::vector<T>& vals, const int root) const;
+        template <typename T>
+	std::vector<T> Scatter(const std::vector<T>& vals, const size_t n, const int root) const;
 
         template <typename T>
         std::vector<T> AllToAll(const std::vector<T>& vals) const;
@@ -183,6 +181,8 @@ namespace hemelb
 				 void* recv, int recvcount, MPI_Datatype recvtype) const = 0;
       virtual void AllgathervImpl(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 				  void *recvbuf, const int* recvcounts, const int* displs, MPI_Datatype recvtype) const = 0;
+      virtual void ScatterImpl(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+			       void* recvbuf, int recvcount, MPI_Datatype recvtype, int root) const = 0;
       virtual void AlltoallImpl(const void* send, int sendcount, MPI_Datatype sendtype,
 				void* recv, int recvcount, MPI_Datatype recvtype) const = 0;
       virtual void SendImpl(const void *sendbuf, int sendcount, MPI_Datatype sendtype,

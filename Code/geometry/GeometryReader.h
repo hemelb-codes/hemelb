@@ -161,7 +161,7 @@ namespace hemelb
         //! Info about the connectivity of the lattice.
         const lb::lattices::LatticeInfo& latticeInfo;
         //! File accessed to read in the geometry data.
-        comm::MpiFile::Ptr file;
+        comm::MpiFile file;
         //! Information about the file, to give cues and hints to MPI.
 
         comm::Communicator::ConstPtr hemeLbComms; //! HemeLB's main communicator

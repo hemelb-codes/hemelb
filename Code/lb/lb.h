@@ -100,6 +100,8 @@ namespace hemelb
                         iolets::BoundaryValues* iOutletValues,
                         const util::UnitConverter* iUnits);
 
+	void SetInitialConditions(comm::Communicator::ConstPtr ioComms);
+
         hemelb::lb::LbmParameters *GetLbmParams();
         lb::MacroscopicPropertyCache& GetPropertyCache();
 

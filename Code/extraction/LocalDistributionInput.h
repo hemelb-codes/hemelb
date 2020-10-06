@@ -9,19 +9,18 @@
 
 #include <boost/optional.hpp>
 
+#include "comm/Communicator.h"
 #include "extraction/IterableDataSource.h"
 #include "extraction/InputField.h"
 #include "io/writers/xdr/XdrMemReader.h"
 #include "lb/lattices/Lattices.h"
-#include "net/mpi.h"
-#include "net/MpiFile.h"
-#include "net/IOCommunicator.h"
 
 namespace hemelb
 {
-  namespace net
+  namespace comm
   {
-    class IOCommunicator;
+    class Communicator;
+    class MpiFile;
   }
   namespace geometry
   {
@@ -38,7 +37,7 @@ namespace hemelb
         /**
          * Initialises a LocalDistributionInput. Required so we can use const reference types.
          */
-        LocalDistributionInput(const std::string dataFilePath, const net::IOCommunicator& ioComms);
+      LocalDistributionInput(const std::string& dataFilePath, comm::Communicator::ConstPtr ioComms);
 
         /**
          * Tidies up the LocalDistributionInput (close files etc).
@@ -51,15 +50,15 @@ namespace hemelb
       private:
 	typedef hemelb::lb::lattices:: HEMELB_LATTICE LatticeType;
 
-        void ReadExtractionHeaders(net::MpiFile&);
+        void ReadExtractionHeaders(comm::MpiFile&);
         void ReadOffsets(const std::string&);
 
-        const net::IOCommunicator& comms;
+        comm::Communicator::ConstPtr comms;
 
         /**
          * The path to the file to read from.
          */
-        const std::string filePath;
+        std::string filePath;
 
         InputField distField;
         uint64_t localStart;

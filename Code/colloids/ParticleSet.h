@@ -104,7 +104,7 @@ namespace hemelb
         /**
          * MPI File handle to write with
          */
-        comm::MpiFile::Ptr file;
+        comm::MpiFile file;
     };
   }
 }

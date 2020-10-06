@@ -117,6 +117,10 @@ namespace hemelb
         {
           return warmUpSteps;
         }
+        PhysicalPressure GetWarmUpInitialPressure() const
+        {
+          return warmUpSteps;
+        }
         PhysicalTime GetTimeStepLength() const
         {
           return timeStepSeconds;
@@ -288,6 +292,7 @@ namespace hemelb
         PhysicalTime timeStepSeconds;
         unsigned long totalTimeSteps;
         unsigned long warmUpSteps;
+        PhysicalPressure warmUpInitialPressure;
         PhysicalDistance voxelSizeMetres;
         PhysicalPosition geometryOriginMetres;
         util::UnitConverter* unitConverter;

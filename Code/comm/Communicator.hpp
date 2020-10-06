@@ -171,6 +171,26 @@ namespace hemelb
     }
 
     template <typename T>
+    T Communicator::Scatter(const std::vector<T>& vals, const int root) const {
+      T ans;
+      const T* ptr = (Rank() == root) ? vals.data() : nullptr;
+      ScatterImpl(ptr, 1, MpiDataType<T>(),
+		  &ans, 1, MpiDataType<T>(),
+		  root);
+      return ans;
+    }
+
+    template <typename T>
+    std::vector<T> Communicator::Scatter(const std::vector<T>& vals, const size_t n, const int root) const {
+      std::vector<T> ans(n);
+      const T* ptr = (Rank() == root) ? vals.data() : nullptr;
+      ScatterImpl(ptr, n, MpiDataType<T>(),
+		  ans.data(), n, MpiDataType<T>(),
+		  root);
+      return ans;
+    }
+
+    template <typename T>
     std::vector<T> Communicator::AllToAll(const std::vector<T>& vals) const
     {
       std::vector<T> ans(vals.size());

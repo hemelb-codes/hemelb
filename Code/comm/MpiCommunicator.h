@@ -22,13 +22,22 @@ namespace hemelb
 	 * MPI_COMM_NULL
 	 * @param communicator
 	 */
-        MpiCommunicator();
+        MpiCommunicator() = default;
         /**
 	 * Constructor to get data needed from an MPI communicator
 	 * @param communicator
 	 */
         MpiCommunicator(MPI_Comm communicator, bool willOwn);
 
+        // No copy allowed; copy the shared_ptr to the instance instead
+        MpiCommunicator(const MpiCommunicator&) = delete;
+        MpiCommunicator& operator=(const MpiCommunicator&) = delete;
+
+        // Moving is OK, in principle, but just use the shared_ptr to the instance.
+        MpiCommunicator(MpiCommunicator&&) = delete;
+        MpiCommunicator& operator=(MpiCommunicator&&) = delete;
+
+        // Cast to MPI_Comm for use in MPI API
 	operator MPI_Comm() const;
         /**
          * Class has virtual methods so should have virtual d'tor.
@@ -62,8 +71,8 @@ namespace hemelb
         virtual std::shared_ptr<Group> GetGroup() const;
         virtual Communicator::Ptr Create(std::shared_ptr<const Group> grp) const;
 
-        virtual std::shared_ptr<MpiFile> OpenFile(const std::string& filename, int mode,
-						  const MPI_Info info = MPI_INFO_NULL) const;
+        virtual MpiFile OpenFile(const std::string& filename, int mode,
+				 const MPI_Info info = MPI_INFO_NULL) const;
         virtual std::shared_ptr<RequestList> MakeRequestList() const;
       
         virtual void Barrier() const;
@@ -89,6 +98,8 @@ namespace hemelb
 				 void* recv, int recvcount, MPI_Datatype recvtype) const;
       virtual void AllgathervImpl(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 			       void *recvbuf, const int* recvcounts, const int* displs, MPI_Datatype recvtype) const;
+      virtual void ScatterImpl(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+			       void* recvbuf, int recvcount, MPI_Datatype recvtype, int root) const;
       virtual void AlltoallImpl(const void* send, int sendcount, MPI_Datatype sendtype,
 				void* recv, int recvcount, MPI_Datatype recvtype) const;
       virtual void SendImpl(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
@@ -103,10 +114,12 @@ namespace hemelb
 				  int dest, int tag) const;
       virtual std::shared_ptr<Request> IrecvImpl(void* recvbuf, int recvcount, MPI_Datatype recvtype,
 				 int source, int tag) const;
-      
-      std::shared_ptr<MPI_Comm> commPtr;
-      int rank;
-      int size;
+
+      // An instance OWNS the communicator, unless it's MPI_COMM_WORLD
+      MPI_Comm comm = MPI_COMM_NULL;
+      int rank = 0;
+      int size = 0;
+      bool owner = false;
     };
 
     // bool operator==(const Communicator& comm1, const Communicator& comm2);

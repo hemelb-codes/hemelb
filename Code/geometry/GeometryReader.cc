@@ -66,7 +66,7 @@ namespace hemelb
       fflush( NULL);
 
       // Set the view to the file.
-      file->SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);
+      file.SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
       Geometry geometry = ReadPreamble();
@@ -75,7 +75,7 @@ namespace hemelb
       ReadHeader(geometry.GetBlockCount());
 
       // Close the file
-      file->Close();
+      file.Close();
 
       timings[hemelb::reporting::Timers::initialDecomposition].Start();
       log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
@@ -126,7 +126,7 @@ namespace hemelb
       {
 	ValidateGeometry(geometry);
       }
-      file->Close();
+      file.Close();
       
       // Finish up - close the file, set the timings, deallocate memory.
       HEMELB_MPI_CALL(MPI_Info_free, (&fileInfo));
@@ -139,10 +139,10 @@ namespace hemelb
     std::vector<char> GeometryReader::ReadOnAllTasks(unsigned nBytes)
     {
       std::vector<char> buffer(nBytes);
-      auto comm = file->GetCommunicator();
+      auto comm = file.GetCommunicator();
       if (comm->Rank() == HEADER_READING_RANK)
       {
-        file->Read(buffer);
+        file.Read(buffer);
       }
       comm->Broadcast(buffer, HEADER_READING_RANK);
       return buffer;
@@ -329,7 +329,7 @@ namespace hemelb
 	    timings[hemelb::reporting::Timers::readBlock].Start();
 	    // Read the data.
 	    compressedBlockData.resize(bytesPerCompressedBlock[blockNumber]);
-	    file->ReadAt(offsetSoFar, compressedBlockData);
+	    file.ReadAt(offsetSoFar, compressedBlockData);
 
 	    // Spread it.
 	    for (std::vector<proc_t>::const_iterator receiver = procsWantingThisBlock.begin(); receiver

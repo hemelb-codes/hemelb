@@ -142,11 +142,11 @@ namespace hemelb
     template<class LatticeType>
     LatticeDensity LBM<LatticeType>::GetInitialDensity() const
     {
-      return mUnits->ConvertPressureToLatticeUnits(mSimConfig->GetInitialPressure()) / Cs2;
+      return mUnits->ConvertPressureToLatticeUnits(mSimConfig->GetWarmUpInitialPressure()) / Cs2;
     }
 
     template<class LatticeType>
-    void LBM<LatticeType>::SetInitialConditions(const net::IOCommunicator& ioComms)
+    void LBM<LatticeType>::SetInitialConditions(comm::Communicator::ConstPtr ioComms)
     {
       auto icond = InitialCondition::FromConfig(mSimConfig->GetInitialCondition());
       icond.SetFs<LatticeType>(mLatDat, ioComms);

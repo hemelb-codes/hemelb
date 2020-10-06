@@ -129,15 +129,15 @@ namespace hemelb
       return (GetMaxRelativeDensityDifference() < maximumRelativeDensityDifferenceAllowed);
     }
 
-    void IncompressibilityChecker::Report(ctemplate::TemplateDictionary& dictionary)
+    void IncompressibilityChecker::Report(reporting::Dict& dictionary)
     {
       if (!IsDensityDiffWithinRange())
       {
-        ctemplate::TemplateDictionary *incomp = dictionary.AddSectionDictionary("DENSITIES");
-        incomp->SetFormattedValue("ALLOWED",
-                                  "%.1f%%",
-                                  GetMaxRelativeDensityDifferenceAllowed() * 100);
-        incomp->SetFormattedValue("ACTUAL", "%.1f%%", GetMaxRelativeDensityDifference() * 100);
+	auto incomp = dictionary.AddSectionDictionary("DENSITIES");
+        incomp.SetFormattedValue("ALLOWED",
+				 "%.1f%%",
+				 GetMaxRelativeDensityDifferenceAllowed() * 100);
+        incomp.SetFormattedValue("ACTUAL", "%.1f%%", GetMaxRelativeDensityDifference() * 100);
       }
     }
 

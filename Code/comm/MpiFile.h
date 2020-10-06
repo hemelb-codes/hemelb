@@ -18,8 +18,6 @@ namespace hemelb
     class MpiFile
     {
       public:
-        typedef std::shared_ptr<MpiFile> Ptr;
-        typedef std::shared_ptr<const MpiFile> ConstPtr;
         MpiFile();
         MpiFile(Communicator::ConstPtr parentComm, MPI_File fh);
 
@@ -55,7 +53,7 @@ namespace hemelb
 	friend class MpiCommunicator;
 	
 
-        Communicator::ConstPtr comm;
+	Communicator::ConstPtr comm;
         std::shared_ptr<MPI_File> filePtr;
     };
 

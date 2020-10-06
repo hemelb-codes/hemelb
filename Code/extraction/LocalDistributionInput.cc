@@ -15,8 +15,8 @@ namespace hemelb
     namespace fmt = hemelb::io::formats;
     namespace xdr = hemelb::io::writers::xdr;
 
-    LocalDistributionInput::LocalDistributionInput(const std::string dataFilePath,
-						   const net::IOCommunicator& ioComm) :
+    LocalDistributionInput::LocalDistributionInput(const std::string& dataFilePath,
+						   comm::Communicator::ConstPtr ioComm) :
       comms(ioComm), filePath(dataFilePath)
     {
     }
@@ -38,7 +38,7 @@ namespace hemelb
 
       // Open the file as read-only.
       // TODO: raise an exception if the file does not exist.
-      auto inputFile = net::MpiFile::Open(comms, filePath, MPI_MODE_RDONLY);
+      auto inputFile = comms->OpenFile(filePath, MPI_MODE_RDONLY);
       // Set the view to the file.
       inputFile.SetView(0, MPI_CHAR, MPI_CHAR, "native");
       ReadExtractionHeaders(inputFile);
@@ -66,7 +66,7 @@ namespace hemelb
       };
 
       uint64_t iTS;
-      if (comms.OnIORank()) {
+      if (comms->OnIORank()) {
 	if (targetTime) {
 	  // We have a target time - look for it in the file
 	  iTS = 0;
@@ -91,8 +91,8 @@ namespace hemelb
 	  timestep = ReadTimeByIndex(iTS);
 	}
       }
-      comms.Broadcast(timestep, comms.GetIORank());
-      comms.Broadcast(iTS, comms.GetIORank());
+      comms->Broadcast(timestep, comms->GetIORank());
+      comms->Broadcast(iTS, comms->GetIORank());
       log::Logger::Log<log::Info, log::Singleton>("Reading checkpoint from timestep %d with index %d", timestep, iTS);
       // Read the local part of the checkpoint
       const auto readLength = localStop - localStart;
@@ -103,7 +103,7 @@ namespace hemelb
       xdr::XdrMemReader dataReader(dataBuffer);
 
       // Read the timestep
-      if (comms.OnIORank()) {
+      if (comms->OnIORank()) {
 	dataReader.read(timestep);
       }
 
@@ -128,8 +128,8 @@ namespace hemelb
 	    // function returns a 'valid' flag
 	    throw Exception() << "Cannot get valid site from extracted site coordinate";
 	  }
-	  if (rank != comms.Rank())
-	    throw Exception() << "Site read on rank " << comms.Rank()
+	  if (rank != comms->Rank())
+	    throw Exception() << "Site read on rank " << comms->Rank()
 			      << " but should be read on " << rank;
 	  if (index != iSite)
 	    throw Exception() << "Site read at index " << iSite
@@ -154,8 +154,8 @@ namespace hemelb
 			  << " sites but expected " << latDat->GetLocalFluidSiteCount();
     }
 
-    void LocalDistributionInput::ReadExtractionHeaders(net::MpiFile& inputFile) {
-      if (comms.OnIORank()) {
+    void LocalDistributionInput::ReadExtractionHeaders(comm::MpiFile& inputFile) {
+      if (comms->OnIORank()) {
 	auto preambleBuf = std::vector<char>(fmt::extraction::MainHeaderLength);
 	inputFile.Read(preambleBuf);
 	auto preambleReader = xdr::XdrMemReader(preambleBuf);
@@ -232,14 +232,14 @@ namespace hemelb
 			    << " distributions but this build of HemeLB requires " << LatticeType::NUMVECTORS;
 
       }
-      comms.Broadcast(distField.offset, comms.GetIORank());
+      comms->Broadcast(distField.offset, comms->GetIORank());
     }
 
     void LocalDistributionInput::ReadOffsets(const std::string& offsetFileName) {
       std::vector<uint64_t> offsets;
 
       // Only actually read on IO rank
-      if (comms.OnIORank()) {
+      if (comms->OnIORank()) {
 	xdr::XdrFileReader offsetReader(offsetFileName);
 	uint32_t hlbMagicNumber, offMagicNumber, version, nRanks;
 	offsetReader.read(hlbMagicNumber);
@@ -262,9 +262,9 @@ namespace hemelb
 			    << " Supported: " << unsigned(fmt::offset::VersionNumber)
 			    << " Input: " << version;
 
-	if (nRanks != comms.Size())
+	if (nRanks != comms->Size())
 	  throw Exception() << "Offset file has wrong number of MPI ranks."
-			    << " Running with: " << comms.Size()
+			    << " Running with: " << comms->Size()
 			    << " Input: " << nRanks;
 
 	// Now read the encoded nProcs+1 values
@@ -282,8 +282,8 @@ namespace hemelb
 	allCoresWriteLength = offsets[2*nRanks-1] - offsets[0];
       }
       // Now bcast/scatter from IO rank to all
-      comms.Broadcast(allCoresWriteLength, comms.GetIORank());
-      auto start_finish = comms.Scatter(offsets, 2, comms.GetIORank());
+      comms->Broadcast(allCoresWriteLength, comms->GetIORank());
+      auto start_finish = comms->Scatter(offsets, 2, comms->GetIORank());
       localStart = start_finish[0];
       localStop = start_finish[1];
     }

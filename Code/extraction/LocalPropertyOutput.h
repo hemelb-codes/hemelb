@@ -81,7 +81,7 @@ namespace hemelb
         /**
          * The MPI file to write into.
          */
-        comm::MpiFile::Ptr outputFile;
+        comm::MpiFile outputFile;
 
         /**
          * The data source to use for file output.
@@ -116,7 +116,7 @@ namespace hemelb
         /**
          * The MPI file to write the offsets into.
          */
-	net::MpiFile offsetFile;
+	comm::MpiFile offsetFile;
 
         /**
          * Type of written values

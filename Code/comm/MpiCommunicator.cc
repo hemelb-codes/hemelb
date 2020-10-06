@@ -13,49 +13,31 @@ namespace hemelb
 {
   namespace comm
   {
-    
-    namespace
-    {
-      void Deleter(MPI_Comm* comm)
-      {
-        int finalized;
-        HEMELB_MPI_CALL(MPI_Finalized, (&finalized));
-        if (!finalized)
-          HEMELB_MPI_CALL(MPI_Comm_free, (comm));
-        delete comm;
-      }
-    }
 
-    MpiCommunicator::MpiCommunicator() : commPtr(), rank(0), size(0)
-    {
-    }
-
-    MpiCommunicator::MpiCommunicator(MPI_Comm communicator, bool owner) : commPtr(), rank(0), size(0)
+    MpiCommunicator::MpiCommunicator(MPI_Comm communicator, bool owner_)
     {
       if (communicator == MPI_COMM_NULL)
         return;
+
+      comm = communicator;
+      owner = owner_;
       
-      if (owner)
-      {
-        commPtr.reset(new MPI_Comm(communicator), Deleter);
-      }
-      else
-      {
-        commPtr.reset(new MPI_Comm(communicator));
-      }
-      
-      HEMELB_MPI_CALL(MPI_Comm_rank, (*commPtr, &rank));
-      HEMELB_MPI_CALL(MPI_Comm_size, (*commPtr, &size));      
+      HEMELB_MPI_CALL(MPI_Comm_rank, (comm, &rank));
+      HEMELB_MPI_CALL(MPI_Comm_size, (comm, &size));
     }
     
     MpiCommunicator::operator MPI_Comm() const
     {
-      return *commPtr;
+      return comm;
     }
     
     MpiCommunicator::~MpiCommunicator()
     {
+      if (owner) {
+	HEMELB_MPI_CALL(MPI_Comm_free, (&comm));
+      }
     }
+
     int MpiCommunicator::Rank() const
     {
       return rank;
@@ -68,19 +50,19 @@ namespace hemelb
 
     void MpiCommunicator::Abort(int errCode) const
     {
-      HEMELB_MPI_CALL(MPI_Abort, (*commPtr, errCode));
+      HEMELB_MPI_CALL(MPI_Abort, (comm, errCode));
     }
 
     Communicator::Ptr MpiCommunicator::Duplicate() const
     {
       MPI_Comm newComm;
-      HEMELB_MPI_CALL(MPI_Comm_dup, (*commPtr, &newComm));
+      HEMELB_MPI_CALL(MPI_Comm_dup, (comm, &newComm));
       return std::make_shared<MpiCommunicator>(newComm, true);
     }
     Group::Ptr MpiCommunicator::GetGroup() const
     {
       MPI_Group grp;
-      HEMELB_MPI_CALL(MPI_Comm_group, (*commPtr, &grp));
+      HEMELB_MPI_CALL(MPI_Comm_group, (comm, &grp));
       return std::make_shared<MpiGroup>(grp, true);
     }
     
@@ -89,19 +71,19 @@ namespace hemelb
       auto mpiGrp = std::dynamic_pointer_cast<const MpiGroup>(grp);
       
       MPI_Comm newComm;
-      HEMELB_MPI_CALL(MPI_Comm_create, (*commPtr, *mpiGrp, &newComm));
-      return std::make_shared<MpiCommunicator>(newComm, true);
+      HEMELB_MPI_CALL(MPI_Comm_create, (comm, *mpiGrp, &newComm));
+      return std::make_unique<MpiCommunicator>(newComm, true);
     }
     
-    MpiFile::Ptr MpiCommunicator::OpenFile(const std::string& filename, int mode,
-				       const MPI_Info info) const
+    MpiFile MpiCommunicator::OpenFile(const std::string& filename, int mode,
+				      const MPI_Info info) const
     {
       MPI_File ans;
       HEMELB_MPI_CALL(
           MPI_File_open,
           (*this, filename.c_str(), mode, info, &ans)
       );
-      return std::make_shared<MpiFile>(shared_from_this(), ans);
+      return MpiFile(shared_from_this(), ans);
     }
 
     RequestList::Ptr MpiCommunicator::MakeRequestList() const
@@ -111,13 +93,13 @@ namespace hemelb
     
     void MpiCommunicator::Barrier() const
     {
-      HEMELB_MPI_CALL(MPI_Barrier, (*commPtr));
+      HEMELB_MPI_CALL(MPI_Barrier, (comm));
     }
 
     std::shared_ptr<Request> MpiCommunicator::Ibarrier() const
     {
       MPI_Request req;
-      HEMELB_MPI_CALL(MPI_Ibarrier, (*commPtr, &req));
+      HEMELB_MPI_CALL(MPI_Ibarrier, (comm, &req));
       return std::make_shared<MpiRequest>(req);
     }
 
@@ -126,7 +108,7 @@ namespace hemelb
       int flag;
       HEMELB_MPI_CALL(
           MPI_Iprobe,
-          (source, tag, *commPtr, &flag, stat)
+          (source, tag, comm, &flag, stat)
       );
       return flag;
     }
@@ -137,7 +119,7 @@ namespace hemelb
     {
       HEMELB_MPI_CALL(
 		      MPI_Bcast,
-		      (buf, count, dt, root, *commPtr)
+		      (buf, count, dt, root, comm)
       );
     }
     
@@ -147,7 +129,7 @@ namespace hemelb
       MPI_Request req;
       HEMELB_MPI_CALL(
           MPI_Ibcast,
-          (buf, count, dt, root, *commPtr, &req)
+          (buf, count, dt, root, comm, &req)
       );
       return std::make_shared<MpiRequest>(req);
     }
@@ -157,7 +139,7 @@ namespace hemelb
     {
       HEMELB_MPI_CALL(
           MPI_Allreduce,
-          (send, ans, count, dt, op, *commPtr)
+          (send, ans, count, dt, op, comm)
       );
     }
     
@@ -167,7 +149,7 @@ namespace hemelb
       MPI_Request req;
       HEMELB_MPI_CALL(
          MPI_Iallreduce,
-	 (send, ans, count, dt, op, *commPtr, &req)
+	 (send, ans, count, dt, op, comm, &req)
       );
       return std::make_shared<MpiRequest>(req);
     }
@@ -178,7 +160,7 @@ namespace hemelb
       MPI_Request req;
       HEMELB_MPI_CALL(
           MPI_Ireduce,
-          (send, ans, count, dt, op, root, *commPtr, &req)
+          (send, ans, count, dt, op, root, comm, &req)
       );
       return std::make_shared<MpiRequest>(req);
     }
@@ -188,7 +170,7 @@ namespace hemelb
     {
       HEMELB_MPI_CALL(
           MPI_Reduce,
-          (send, ans, count, dt, op, root, *commPtr)
+          (send, ans, count, dt, op, root, comm)
       );
     }
     
@@ -200,7 +182,7 @@ namespace hemelb
           MPI_Gather,
           (send, sendcount, sendtype,
 	   recv, recvcount, recvtype,
-	   root, *commPtr)
+	   root, comm)
       );
     }
     
@@ -212,7 +194,7 @@ namespace hemelb
           MPI_Gatherv,
           (sendbuf, sendcount, sendtype,
 	   recvbuf, recvcounts, displs, recvtype,
-	   root, *commPtr)
+	   root, comm)
       );
     }
     void MpiCommunicator::AllgathervImpl(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
@@ -222,7 +204,7 @@ namespace hemelb
           MPI_Allgatherv,
           (sendbuf, sendcount, sendtype,
 	   recvbuf, recvcounts, displs, recvtype,
-	   *commPtr)
+	   comm)
       );
     }
     void MpiCommunicator::AllgatherImpl(const void* send, int sendcount, MPI_Datatype sendtype,
@@ -232,7 +214,18 @@ namespace hemelb
           MPI_Allgather,
           (send, sendcount, sendtype,
 	   recv, recvcount, recvtype,
-	   *commPtr)
+	   comm)
+      );
+    }
+
+    void MpiCommunicator::ScatterImpl(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+				      void* recvbuf, int recvcount, MPI_Datatype recvtype, int root) const
+    {
+      HEMELB_MPI_CALL(
+	  MPI_Scatter,
+	  (sendbuf, sendcount, sendtype,
+	   recvbuf, recvcount, recvtype,
+	   root, comm)
       );
     }
     
@@ -243,7 +236,7 @@ namespace hemelb
           MPI_Alltoall,
           (send, sendcount, sendtype,
 	   recv, recvcount, recvtype,
-	   *commPtr)
+	   comm)
       );
     }
     
@@ -253,7 +246,7 @@ namespace hemelb
       HEMELB_MPI_CALL(
 		      MPI_Send,
 		      (sendbuf, sendcount, sendtype,
-		       dest, tag, *commPtr)
+		       dest, tag, comm)
 		      );
     }
     
@@ -263,7 +256,7 @@ namespace hemelb
       HEMELB_MPI_CALL(
 		      MPI_Ssend,
 		      (sendbuf, sendcount, sendtype,
-		       dest, tag, *commPtr)
+		       dest, tag, comm)
 		      );
     }
     void MpiCommunicator::RecvImpl(void* recvbuf, int recvcount, MPI_Datatype recvtype,
@@ -272,7 +265,7 @@ namespace hemelb
       HEMELB_MPI_CALL(
 		      MPI_Recv,
 		      (recvbuf, recvcount, recvtype,
-		       src, tag, *commPtr, stat)
+		       src, tag, comm, stat)
 		      );
     }
     
@@ -283,7 +276,7 @@ namespace hemelb
        HEMELB_MPI_CALL(
 		       MPI_Isend,
 		       (sendbuf, sendcount, sendtype,
-			dest, tag, *commPtr, &ans)
+			dest, tag, comm, &ans)
 		      );
        return std::make_shared<MpiRequest>(ans);
      }
@@ -295,7 +288,7 @@ namespace hemelb
        HEMELB_MPI_CALL(
 		       MPI_Issend,
 		       (sendbuf, sendcount, sendtype,
-			dest, tag, *commPtr, &ans)
+			dest, tag, comm, &ans)
 		      );
        return std::make_shared<MpiRequest>(ans);
      }
@@ -307,7 +300,7 @@ namespace hemelb
        HEMELB_MPI_CALL(
 		       MPI_Irecv,
 		       (recvbuf, recvcount, recvtype,
-			source, tag, *commPtr, &ans)
+			source, tag, comm, &ans)
 		       );
        return std::make_shared<MpiRequest>(ans);
      }

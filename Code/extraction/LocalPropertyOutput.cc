@@ -57,8 +57,8 @@ namespace hemelb
       const auto offsetFileName = io::formats::offset::ExtractionToOffset(outputSpec->filename);
 
       // Now create the file.
-      offsetFile = net::MpiFile::Open(comms, offsetFileName,
-				      MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL);
+      offsetFile = comms->OpenFile(offsetFileName,
+				   MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL);
 
       // Count sites on this task
       uint64_t siteCount = 0;
@@ -146,7 +146,7 @@ namespace hemelb
 
 	assert(headerWriter.GetBuf().size() == totalHeaderLength);
         // Write from the buffer
-        outputFile->WriteAt(0, headerWriter.GetBuf());
+        outputFile.WriteAt(0, headerWriter.GetBuf());
       }
 
       // Calculate where each core should start writing
@@ -298,7 +298,7 @@ namespace hemelb
       }
 
       // Actually do the MPI writing.
-      outputFile->WriteAt(localDataOffsetIntoFile, buffer);
+      outputFile.WriteAt(localDataOffsetIntoFile, buffer);
 
       // Set the offset to the right place for writing on the next iteration.
       localDataOffsetIntoFile += allCoresWriteLength;
@@ -309,23 +309,23 @@ namespace hemelb
       namespace fmt = io::formats;
 
       // On process 0 only, write the header
-      if (comms.OnIORank()) {
+      if (comms->OnIORank()) {
 	auto buf = quick_encode(
 				uint32_t(fmt::HemeLbMagicNumber),
 				uint32_t(fmt::offset::MagicNumber),
 				uint32_t(fmt::offset::VersionNumber),
-				uint32_t(comms.Size())
+				uint32_t(comms->Size())
 				);
 	assert(buf.size() == fmt::offset::HeaderLength);
 	offsetFile.WriteAt(0, buf);
       }
       // Every rank writes its offset
-      uint64_t offsetForOffset = comms.Rank() * sizeof(localDataOffsetIntoFile)
+      uint64_t offsetForOffset = comms->Rank() * sizeof(localDataOffsetIntoFile)
 	+ fmt::offset::HeaderLength;
       offsetFile.WriteAt(offsetForOffset, quick_encode(localDataOffsetIntoFile));
 
       // Last process writes total
-      if (comms.Rank() == (comms.Size()-1)) {
+      if (comms->Rank() == (comms->Size()-1)) {
 	offsetFile.WriteAt(offsetForOffset + sizeof(localDataOffsetIntoFile),
 			   quick_encode(localDataOffsetIntoFile + writeLength));
       }

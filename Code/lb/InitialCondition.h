@@ -43,7 +43,7 @@ namespace hemelb {
 				  distribn_t mx = 0.0, distribn_t my = 0.0, distribn_t mz = 0.0);
       
       template<class LatticeType>
-      void SetFs(geometry::LatticeData* latDat, const net::IOCommunicator& ioComms) const;
+      void SetFs(geometry::LatticeData* latDat, comm::Communicator::ConstPtr ioComms) const;
       
     private:
       distribn_t density;
@@ -56,7 +56,7 @@ namespace hemelb {
       CheckpointInitialCondition(boost::optional<LatticeTimeStep> t0, const std::string& cp);
       
       template<class LatticeType>
-      void SetFs(geometry::LatticeData* latDat, const net::IOCommunicator& ioComms) const;
+      void SetFs(geometry::LatticeData* latDat, comm::Communicator::ConstPtr ioComms) const;
 
     private:
       std::string cpFile;
@@ -76,7 +76,7 @@ namespace hemelb {
       
       void SetTime(SimulationState* sim) const;
       template<class LatticeType>
-      void SetFs(geometry::LatticeData* latDat, const net::IOCommunicator& ioComms) const;
+      void SetFs(geometry::LatticeData* latDat, comm::Communicator::ConstPtr ioComms) const;
     private:
       
       //ICVar ic;

@@ -144,13 +144,20 @@ namespace hemelb
       const io::xml::Element tsEl = simEl.GetChildOrThrow("step_length");
       GetDimensionalValue(tsEl, "s", timeStepSeconds);
 
-      // Optional element
-      // <extra_warmup_steps value="unsigned" units="lattice" />
-      const io::xml::Element wuEl = simEl.GetChildOrNull("extra_warmup_steps");
+      // Optional element <warmup>
+      const io::xml::Element wuEl = simEl.GetChildOrNull("warmup");
       if (wuEl != io::xml::Element::Missing())
       {
-        GetDimensionalValue(wuEl, "lattice", warmUpSteps);
+	// Required subelement
+	// <extra_steps value="unsigned" units="lattice" />
+	const auto esEl = wuEl.GetChildOrThrow("extra_steps");
+        GetDimensionalValue(esEl, "lattice", warmUpSteps);
         totalTimeSteps += warmUpSteps;
+
+	// Required subelement
+	// <initial_pressure value="float" units="mmHg" />
+	const auto ipEl = wuEl.GetChildOrThrow("initial_pressure");
+	GetDimensionalValue(ipEl, "mmHg", warmUpInitialPressure);
       }
 
       // Required element

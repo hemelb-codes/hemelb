@@ -9,25 +9,26 @@
 
 namespace hemelb {
   namespace lb {
-    template<class LatticeType>
-    struct FSetter {
-      using result_type = void;
-      template <typename T>
-      void operator()(T t) const {
-	t.template SetFs<LatticeType>(latDat, ioComms);
-      }
-      geometry::LatticeData* latDat;
-      const net::IOCommunicator& ioComms;
-    };
-
-    
-    template<class LatticeType>
-    void InitialCondition::SetFs(geometry::LatticeData* latDat, const net::IOCommunicator& ioComms) const {
-      boost::apply_visitor(FSetter<LatticeType>{latDat, ioComms}, *this);
+    namespace detail {
+      template<class LatticeType>
+      struct FSetter {
+	using result_type = void;
+	template <typename T>
+	void operator()(T t) const {
+	  t.template SetFs<LatticeType>(latDat, ioComms);
+	}
+	geometry::LatticeData* latDat;
+	comm::Communicator::ConstPtr ioComms;
+      };
     }
 
     template<class LatticeType>
-    void EquilibriumInitialCondition::SetFs(geometry::LatticeData* latDat, const net::IOCommunicator& ioComms) const {
+    void InitialCondition::SetFs(geometry::LatticeData* latDat, comm::Communicator::ConstPtr ioComms) const {
+      boost::apply_visitor(detail::FSetter<LatticeType>{latDat, ioComms}, *this);
+    }
+
+    template<class LatticeType>
+    void EquilibriumInitialCondition::SetFs(geometry::LatticeData* latDat, comm::Communicator::ConstPtr ioComms) const {
       distribn_t f_eq[LatticeType::NUMVECTORS];
       LatticeType::CalculateFeq(density, mom_x, mom_y, mom_z, f_eq);
       
@@ -43,7 +44,7 @@ namespace hemelb {
 
 
     template<class LatticeType>
-    void CheckpointInitialCondition::SetFs(geometry::LatticeData* latDat, const net::IOCommunicator& ioComms) const {
+    void CheckpointInitialCondition::SetFs(geometry::LatticeData* latDat, comm::Communicator::ConstPtr ioComms) const {
       auto distributionInputPtr = std::make_unique<extraction::LocalDistributionInput>(cpFile, ioComms);
       distributionInputPtr->LoadDistribution(latDat, initial_time);
     }
