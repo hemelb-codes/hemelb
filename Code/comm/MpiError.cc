@@ -5,6 +5,8 @@
 // license in the file LICENSE.
 
 #include "comm/MpiError.h"
+
+#include <iostream>
 #include <sstream>
 
 namespace hemelb
@@ -26,5 +28,8 @@ namespace hemelb
       *this << buffer;
     }
 
+    void MpiError::LogError() const {
+      std::cerr << what() << std::endl;
+    }
   }
 }

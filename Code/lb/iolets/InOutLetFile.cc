@@ -97,8 +97,6 @@ namespace hemelb
           throw Exception() << "Last point's value does not match the first point's value in " <<pressureFilePath;
 
         /* If the time values in the input file end BEFORE the planned end of the simulation, then loop the profile afterwards (using %TimeStepsInInletPressureProfile). */
-        int TimeStepsInInletPressureProfile = times.back() / timeStepLength;
-        //throw Exception() << "Finding Time steps: " << times.back() << " " << timeStepLength << " " << TimeStepsInInletPressureProfile;
 
         // extend the table to one past the total time steps, so that the table is valid in the end-state, where the zero indexed time step is equal to the limit.
         densityTable.resize(totalTimeSteps + 1);

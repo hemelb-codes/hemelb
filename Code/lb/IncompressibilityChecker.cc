@@ -58,12 +58,11 @@ namespace hemelb
 
     IncompressibilityChecker::IncompressibilityChecker(const geometry::LatticeData * latticeData,
 						       comm::Communicator::ConstPtr comms,
-						       SimulationState* simState,
 						       lb::MacroscopicPropertyCache& propertyCache,
 						       reporting::Timers& timings,
 						       distribn_t maximumRelativeDensityDifferenceAllowed) :
         timestep::CollectiveActor(comms, timings[reporting::Timers::mpiWait]),
-            mLatDat(latticeData), propertyCache(propertyCache), mSimState(simState),
+            mLatDat(latticeData), propertyCache(propertyCache),
             maximumRelativeDensityDifferenceAllowed(maximumRelativeDensityDifferenceAllowed),
             workTimer(timings[reporting::Timers::monitoring])
     {
@@ -74,7 +73,7 @@ namespace hemelb
 
     IncompressibilityChecker::~IncompressibilityChecker()
     {
-      HEMELB_MPI_CALL(MPI_Op_free, (&reduction));
+      HEMELB_MPI_CALL_NOTHROW(MPI_Op_free, (&reduction));
     }
 
     distribn_t IncompressibilityChecker::GetGlobalSmallestDensity() const

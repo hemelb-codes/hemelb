@@ -29,7 +29,7 @@ namespace hemelb
     {
       if (doesOwnMpi)
       {
-        HEMELB_MPI_CALL(MPI_Finalize, ());
+        HEMELB_MPI_CALL_NOTHROW(MPI_Finalize, ());
       }
     }
 

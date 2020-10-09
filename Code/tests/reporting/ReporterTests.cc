@@ -53,7 +53,7 @@ namespace hemelb
       cache = new lb::MacroscopicPropertyCache(*state, *latticeData);
       cache->densityCache.SetRefreshFlag();
       LbTestsHelper::UpdatePropertyCache<lb::lattices::D3Q15>(*latticeData, *cache, *state);
-      incompChecker = new lb::IncompressibilityChecker(latticeData, Comms(), state, *cache, *realTimers, 10.0);
+      incompChecker = new lb::IncompressibilityChecker(latticeData, Comms(), *cache, *realTimers, 10.0);
       reporter = new Reporter("mock_path", "exampleinputfile");
       reporter->AddReportable(incompChecker);
       reporter->AddReportable(mockTimers);

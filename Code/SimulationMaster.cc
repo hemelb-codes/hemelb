@@ -199,7 +199,6 @@ void SimulationMaster::Initialise()
   {
     incompressibilityChecker = new hemelb::lb::IncompressibilityChecker(latticeData,
                                                 ioComms,
-                                                simulationState,
                                                 latticeBoltzmannModel->GetPropertyCache(),
                                                 timings);
   }

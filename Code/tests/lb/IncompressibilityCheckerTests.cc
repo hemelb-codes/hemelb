@@ -58,7 +58,6 @@ namespace hemelb
       SECTION("IncompressibilityCheckerRootNode") {
 	hemelb::lb::IncompressibilityChecker incompChecker(latDat,
 							   Comms(),
-							   simState.get(),
 							   *cache,
 							   *timings,
 							   10.0); // Will accept a max/min of (21.45, 12) but not (100,1)
@@ -99,7 +98,6 @@ namespace hemelb
       SECTION("IncompressibilityCheckerLeafNode") {
 	lb::IncompressibilityChecker incompChecker(latDat,
 						   Comms(),
-						   simState.get(),
 						   *cache,
 						   *timings,
 						   10.0); // Will accept a max/min of (21.45, 12) but not (100,1)

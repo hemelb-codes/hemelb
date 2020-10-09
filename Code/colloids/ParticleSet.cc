@@ -229,7 +229,9 @@ namespace hemelb
       std::vector<Particle>::iterator bound =
           std::partition(particles.begin(),
                          particles.begin() + scanMap[localRank].first,
-                         std::not1(std::mem_fun_ref(&Particle::IsReadyToBeDeleted)));
+			 [](const Particle& p) {
+			   return !p.IsReadyToBeDeleted();
+			 });
 
       if (scanMap[localRank].first > (bound - particles.begin()))
         log::Logger::Log<log::Debug, log::OnePerCore>("In ParticleSet::ApplyBoundaryConditions - timestep: %lu, scanMap[localRank].first: %lu, bound-particles.begin(): %lu\n",
@@ -329,7 +331,10 @@ namespace hemelb
       std::vector<Particle>::iterator newEndOfParticles =
           std::partition(particles.begin(),
                          particles.end(),
-                         std::bind2nd(std::mem_fun_ref(&Particle::IsOwnerRankKnown), scanMap));
+                         [&](const Particle& p) {
+			   return p.IsOwnerRankKnown(scanMap);
+			 });
+      //std::bind2nd(std::mem_fun_ref(&Particle::IsOwnerRankKnown), scanMap)
       particles.erase(newEndOfParticles, particles.end());
 
       // sort the particles - local first, then in order of increasing owner rank

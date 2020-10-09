@@ -34,7 +34,7 @@ namespace hemelb
     MpiCommunicator::~MpiCommunicator()
     {
       if (owner) {
-	HEMELB_MPI_CALL(MPI_Comm_free, (&comm));
+	HEMELB_MPI_CALL_NOTHROW(MPI_Comm_free, (&comm));
       }
     }
 
