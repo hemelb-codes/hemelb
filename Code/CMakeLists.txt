@@ -45,10 +45,6 @@ if (HEMELB_WAIT_ON_CONNECT)
   add_definitions(-DHEMELB_WAIT_ON_CONNECT)
 endif()
 
-if (NOT HEMELB_STATIC_ASSERT)
-  add_definitions(-DHEMELB_NO_STATIC_ASSERT)
-endif()
-
 if (HEMELB_IMAGES_TO_NULL)
   add_definitions(-DHEMELB_IMAGES_TO_NULL)
 endif()
@@ -203,37 +199,31 @@ endif()
 
 # ----------- HEMELB unittests ---------------
 if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
-  #------CPPUnit ---------------
-  hemelb_dependency(cppunit use)
-  add_executable(unittests_hemelb ${root_sources})
-  add_subdirectory(unittests)
-  target_link_libraries(unittests_hemelb 
-    hemelb_unittests 
-    ${heme_libraries}
-    ${MPI_LIBRARIES}
-    ${Boost_LIBRARIES})
-  INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
-  list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/four_cube_multiscale.xml
-    unittests/resources/config.xml unittests/resources/config0_2_0.xml
-    unittests/resources/config_file_inlet.xml unittests/resources/iolet.txt 
-    unittests/resources/config-velocity-iolet.xml unittests/resources/config_new_velocity_inlets.xml
-    unittests/resources/velocity_inlet.txt.weights.txt
-    unittests/resources/xmltest.xml unittests/resources/config_file_velocity_inlet.xml unittests/resources/velocity_inlet.txt 
-    )
-endif()
+  hemelb_dependency(catch2 use)
+  add_executable(hemelb-tests)
+  target_sources(hemelb-tests PRIVATE ${root_sources})
 
-# ----------- HEMELB functionaltests ---------------
-if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
-  #------CPPUnit ---------------
-  hemelb_dependency(cppunit use)
-  add_executable(functionaltests_hemelb ${root_sources})
-  add_subdirectory(functionaltests/cpptests)
-  target_link_libraries(functionaltests_hemelb 
-    hemelb_functionaltests 
+  add_subdirectory(tests)
+  hemelb_add_target_dependency_catch2(hemelb-tests)
+  # ReporterTests directly use ctemplate
+  hemelb_add_target_dependency_ctemplate(hemelb-tests)
+
+  target_link_libraries(hemelb-tests PRIVATE
     ${heme_libraries}
     ${MPI_LIBRARIES}
-    ${Boost_LIBRARIES})
-  INSTALL(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
+    ${Boost_Libraries})
+  INSTALL(TARGETS hemelb-tests RUNTIME DESTINATION bin)
+
+  list(APPEND RESOURCES tests/resources/four_cube.gmy tests/resources/four_cube.xml tests/resources/four_cube_multiscale.xml
+    tests/resources/config.xml tests/resources/config0_2_0.xml
+    tests/resources/config_file_inlet.xml tests/resources/iolet.txt 
+    tests/resources/config-velocity-iolet.xml tests/resources/config_new_velocity_inlets.xml
+    tests/resources/velocity_inlet.txt.weights.txt
+    tests/resources/xmltest.xml tests/resources/config_file_velocity_inlet.xml tests/resources/velocity_inlet.txt 
+    )
+  if (HEMELB_BUILD_MULTISCALE)
+    list(APPEND RESOURCES tests/multiscale/mpwide/MPWSettings.cfg)
+  endif()
 endif()
 
 #-------- Copy and install resources --------------

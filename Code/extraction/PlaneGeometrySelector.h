@@ -62,23 +62,23 @@ namespace hemelb
          * @param location
          * @return
          */
-        bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location);
+        bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const;
 
       private:
         /**
          * A point on the plane.
          */
-        const util::Vector3D<float> planePoint;
+        util::Vector3D<float> planePoint;
 
         /**
          * The plane normal.
          */
-        const util::Vector3D<float> normal;
+        util::Vector3D<float> normal;
 
         /**
          * The radius around the planePoint to select. Radius <= 0 is taken as infinite.
          */
-        const float radius;
+        float radius;
     };
   }
 }

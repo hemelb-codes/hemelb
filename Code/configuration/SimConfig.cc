@@ -334,23 +334,23 @@ namespace hemelb
 
       if (type == "plane")
       {
-        file->geometry = DoIOForPlaneGeometry(geometryEl);
+        file->geometry.reset(DoIOForPlaneGeometry(geometryEl));
       }
       else if (type == "line")
       {
-        file->geometry = DoIOForLineGeometry(geometryEl);
+        file->geometry.reset(DoIOForLineGeometry(geometryEl));
       }
       else if (type == "whole")
       {
-        file->geometry = new extraction::WholeGeometrySelector();
+        file->geometry.reset(new extraction::WholeGeometrySelector());
       }
       else if (type == "surface")
       {
-        file->geometry = new extraction::GeometrySurfaceSelector();
+        file->geometry.reset(new extraction::GeometrySurfaceSelector());
       }
       else if (type == "surfacepoint")
       {
-        file->geometry = DoIOForSurfacePoint(geometryEl);
+        file->geometry.reset(DoIOForSurfacePoint(geometryEl));
       }
       else
       {

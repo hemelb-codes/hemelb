@@ -7,12 +7,9 @@
 #ifndef HEMELB_COMM_MPIDATATYPE_H
 #define HEMELB_COMM_MPIDATATYPE_H
 
+#include <cstdint>
+
 #include <mpi.h>
-#if HEMELB_HAVE_CSTDINT
-# include <cstdint>
-#else
-# include <stdint.h>
-#endif
 
 #define HEMELB_MPI_TYPE_BEGIN(outType, Type, n) \
   MPI_Datatype outType = MPI_DATATYPE_NULL; \

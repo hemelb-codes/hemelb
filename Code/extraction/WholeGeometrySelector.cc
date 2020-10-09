@@ -11,7 +11,7 @@ namespace hemelb
   namespace extraction
   {
     bool WholeGeometrySelector::IsWithinGeometry(const extraction::IterableDataSource& data,
-                                                 const util::Vector3D<site_t>& location)
+                                                 const util::Vector3D<site_t>& location) const
     {
       return true;
     }

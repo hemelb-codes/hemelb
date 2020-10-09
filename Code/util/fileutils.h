@@ -35,6 +35,10 @@ namespace hemelb
     // Delete all files within a directory.
     int DeleteDirContents(std::string pathname);
 
+    // Recursively delete a directory tree
+    void DeleteDirTree(const std::string& pathname);
+    void DeleteDirTree(const char* pathname);
+
     // Check whether a directory exists.
     bool DoesDirectoryExist(const char *pathname);
 

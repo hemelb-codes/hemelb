@@ -164,8 +164,6 @@ planck:
   remote: "planck.chem.ucl.ac.uk"
   python_build: "lib/python2.7"
   home_path_template: "/home/$username/.fabric/Remote"
-  cmake_options:
-    CPPUNIT_PATCH_LDL: ON
 entropy: 
   remote: "entropy.chem.ucl.ac.uk"
   python_build: "lib/python2.6"
@@ -264,7 +262,6 @@ huygens:
       CMAKE_C_COMPILER: "mpcc"
       CMAKE_CXX_FLAGS_RELEASE: ""
       HEMELB_OPTIMISATION: "-O3"
-      CPPUNIT_CONFIGURE_OPTIONS: --host=powerpc64-unknown-linux-gnu
       CTEMPLATE_CONFIGURE_OPTIONS: --host=powerpc64-unknown-linux-gnu
    
 riken:
@@ -299,7 +296,6 @@ marigold:
      CMAKE_CXX_COMPILER: /opt/FJSVtclang/1.2.0/bin/mpiFCCpx
      CMAKE_C_COMPILER: /opt/FJSVtclang/1.2.0/bin/mpifccpx
      CTEMPLATE_CONFIGURE_OPTIONS: --host=sparc64-unknown-linux-gnu
-     CPPUNIT_CONFIGURE_OPTIONS: --host=sparc64-unknown-linux-gnu
      PARMETIS_CXX: /opt/FJSVtclang/1.2.0/bin/mpiFCCpx
      PARMETIS_CC: /opt/FJSVtclang/1.2.0/bin/mpifccpx
      CTEMPLATE_PATCH_VACOPY: ON

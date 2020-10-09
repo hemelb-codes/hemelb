@@ -31,6 +31,7 @@ namespace hemelb
          */
         MpiGroup(MPI_Group grp, bool own);
 
+	virtual ~MpiGroup() = default;
         /**
          * Returns the local rank within the group
          * @return

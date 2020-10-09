@@ -52,6 +52,10 @@ namespace hemelb
       }
     }
 
+    namespace {
+      constexpr DensityEtc INITIAL_DENSITY_ETC = {std::numeric_limits<double>::max(), -std::numeric_limits<double>::max(), 0};
+    }
+
     IncompressibilityChecker::IncompressibilityChecker(const geometry::LatticeData * latticeData,
 						       comm::Communicator::ConstPtr comms,
 						       SimulationState* simState,
@@ -64,10 +68,8 @@ namespace hemelb
             workTimer(timings[reporting::Timers::monitoring])
     {
       HEMELB_MPI_CALL(MPI_Op_create, (&IncompressibilityChecker::MpiOpUpdateFunc, 1, &reduction));
-      localDensity.min = std::numeric_limits<double>::max();
-      localDensity.max = -std::numeric_limits<double>::max();
-      localDensity.maxVel = 0;
-      globalDensity = localDensity;
+      localDensity = INITIAL_DENSITY_ETC;
+      globalDensity = INITIAL_DENSITY_ETC;
     }
 
     IncompressibilityChecker::~IncompressibilityChecker()

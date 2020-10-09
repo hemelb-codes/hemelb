@@ -35,11 +35,14 @@ namespace hemelb
         /**
          * Returns true if the given location is within the selection.
          */
-        bool Include(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location);
+        bool Include(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const;
 
       protected:
         virtual bool
-            IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) = 0;
+            IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const = 0;
+
+        // Helper to do the coordinate transform for subclasses
+        util::Vector3D<float> LatticeToPhysical(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const;
     };
   }
 }

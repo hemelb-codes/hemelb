@@ -31,6 +31,8 @@ namespace hemelb
         Request& operator=(Request&& req) = default;
         Request(const Request&) = delete;
         Request& operator=(const Request&) = delete;
+        virtual ~Request() = default;
+
         operator bool() const;
 
         virtual void Wait() = 0;
@@ -41,7 +43,7 @@ namespace hemelb
     {
     public:
       typedef std::shared_ptr<RequestList> Ptr;
-      
+      virtual ~RequestList() = default;
       virtual size_t size() const = 0;
       virtual void resize(size_t i) = 0;
       virtual void push_back(Request::Ptr) = 0;

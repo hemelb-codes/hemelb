@@ -83,14 +83,6 @@ namespace hemelb
         double GetMaxRelativeDensityDifferenceAllowed() const;
 
         /**
-         * Returns whether the first max/min density reduction operation has finished and
-         * therefore there are density values available.
-         *
-         * @return whether there are density values available
-         */
-        bool AreDensitiesAvailable() const;
-
-        /**
          * Checks whether the maximum density difference is smaller that the maximum allowed.
          *
          * @return whether the maximum density difference is smaller that the maximum allowed

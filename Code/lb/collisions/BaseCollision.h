@@ -15,6 +15,11 @@ namespace hemelb
 {
   namespace lb
   {
+    namespace kernels
+    {
+      template<typename>
+      struct HydroVars;
+    }
     namespace collisions
     {
       /**
