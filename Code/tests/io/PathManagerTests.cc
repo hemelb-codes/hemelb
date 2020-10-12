@@ -37,7 +37,7 @@ namespace hemelb
 
 	SECTION("Create") {
 	  AssertPresent("results");
-	  AssertPresent("results/Images");
+	  AssertPresent("results/Extracted");
 	}
 
 	SECTION("NameInvention") {
@@ -54,7 +54,7 @@ namespace hemelb
 
 	SECTION("Create") {
 	  AssertPresent("results");
-	  AssertPresent("results/Images");
+	  AssertPresent("results/Extracted");
 	}
 
 	SECTION("NameInvention") {

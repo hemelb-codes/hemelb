@@ -24,7 +24,7 @@ namespace hemelb
     }
 
     /**
-     * Manage the input and output file system locations for HemeLB images, reports, and input xml and dat files.
+     * Manage the input and output file system locations for HemeLB reports, and input xml and dat files.
      */
     class PathManager
     {
@@ -46,11 +46,6 @@ namespace hemelb
          */
         const std::string & GetInputFile() const;
         /**
-         * Path to the directory where image files should be written.
-         * @return Reference to path to the directory where image files should be written.
-         */
-        const std::string & GetImageDirectory() const;
-        /**
          * Gets the path to the file where colloid output should be written
          * @return
          */
@@ -65,18 +60,6 @@ namespace hemelb
          * @param simConfig The input configuration instance, constructed from the input xml file.
          */
         void SaveConfiguration(configuration::SimConfig * const simConfig) const;
-        /**
-         * Delete the output data.
-         * This deletes images, config files, and the report.
-         * It is used if the simulation needs to reset.
-         */
-        void EmptyOutputDirectories() const;
-        /**
-         * Generate an xdr file writer to use to save an image file.
-         * @param time The current time, used to generate a unique filename.
-         * @return Pointer to an XDR file writer -- this is allocated on free store, and should be deleted by the client code.
-         */
-        hemelb::io::writers::Writer* XdrImageWriter(const long int time) const;
 
         /**
          * Return the path that property extraction output should go to.
@@ -87,7 +70,6 @@ namespace hemelb
         void GuessOutputDir(); //! String processing to generate an appropriate outptu folder name.
         std::string outputDir;
         std::string inputFile;
-        std::string imageDirectory;
         std::string colloidFile;
         std::string configLeafName;
         std::string reportName;
