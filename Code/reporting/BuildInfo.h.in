@@ -25,8 +25,6 @@ namespace hemelb
     static const std::string outlet_boundary_condition="@HEMELB_OUTLET_BOUNDARY@";
     static const std::string wall_inlet_boundary_condition="@HEMELB_WALL_INLET_BOUNDARY@";
     static const std::string wall_outlet_boundary_condition="@HEMELB_WALL_OUTLET_BOUNDARY@";
-    static const std::string point_point_impl="@HEMELB_POINTPOINT_IMPLEMENTATION@";
-    static const std::string separate_concerns="@HEMELB_SEPARATE_CONCERNS@";
   
     
     class BuildInfo : public Reportable {
@@ -45,8 +43,6 @@ namespace hemelb
         build.SetValue("OUTLET_BOUNDARY_CONDITION", outlet_boundary_condition);
         build.SetValue("WALL_INLET_BOUNDARY_CONDITION", wall_inlet_boundary_condition);
         build.SetValue("WALL_OUTLET_BOUNDARY_CONDITION", wall_outlet_boundary_condition);
-        build.SetValue("SEPARATE_CONCERNS",separate_concerns);
-        build.SetValue("POINTPOINT_IMPLEMENTATION",point_point_impl);
       }
     };
   }

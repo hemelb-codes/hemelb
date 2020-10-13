@@ -81,7 +81,6 @@ hemelb_option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
 hemelb_option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" ON)
 hemelb_option(HEMELB_USE_VELOCITY_WEIGHTS_FILE "Use Velocity weights file" OFF)
 hemelb_option(UBUNTU_BUG_WORKAROUND "Work around the faulty HAVE_ISNAN value in Ubuntu 16.04." OFF)
-hemelb_option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
 
 #
 # Specify the variables
@@ -117,8 +116,6 @@ hemelb_cachevar(HEMELB_WALL_INLET_BOUNDARY "NASHZEROTHORDERPRESSURESBB"
   STRING "Select the boundary conditions to be used at corners between walls and inlets (NASHZEROTHORDERPRESSURESBB,NASHZEROTHORDERPRESSUREBFL,LADDIOLETSBB,LADDIOLETBFL)")
 hemelb_cachevar(HEMELB_WALL_OUTLET_BOUNDARY "NASHZEROTHORDERPRESSURESBB"
   STRING "Select the boundary conditions to be used at corners between walls and outlets (NASHZEROTHORDERPRESSURESBB,NASHZEROTHORDERPRESSUREBFL,LADDIOLETSBB,LADDIOLETBFL)")
-hemelb_cachevar(HEMELB_POINTPOINT_IMPLEMENTATION Coalesce
-  STRING "Point to point comms implementation, choose 'Coalesce', 'Separated', or 'Immediate'" )
 
 #
 # Specify the variables requiring forwarding
