@@ -12,9 +12,8 @@ namespace hemelb
 {
   namespace reporting
   {
-    static const std::string mercurial_revision_number="@HEMELB_REVISION_NUMBER@";
+    static const std::string git_revision_hash="@HEMELB_REVISION_NUMBER@";
     static const std::string build_type="@CMAKE_BUILD_TYPE@";
-    static const std::string optimisation="@HEMELB_OPTIMISATION@";
     static const std::string use_sse3="@HEMELB_USE_SSE3@";
     static const std::string build_time="@HEMELB_BUILD_TIME@";
     static const std::string reading_group_size="@HEMELB_READING_GROUP_SIZE@";
@@ -30,9 +29,8 @@ namespace hemelb
     class BuildInfo : public Reportable {
       void Report(Dict& dictionary){
         Dict build = dictionary.AddSectionDictionary("BUILD");
-        build.SetValue("REVISION", mercurial_revision_number);
+        build.SetValue("REVISION", git_revision_hash);
         build.SetValue("TYPE", build_type);
-        build.SetValue("OPTIMISATION", optimisation);
         build.SetValue("USE_SSE3", use_sse3);
         build.SetValue("TIME", build_time);
         build.SetValue("READING_GROUP_SIZE", reading_group_size);

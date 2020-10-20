@@ -10,20 +10,15 @@ set(HEMELB_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 #---- OPTION switches accepted by the build -------
 include("cmake/options.cmake")
 
 # Add warnings flags to development build types
 if (HEMELB_USE_ALL_WARNINGS_GNU)
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-  set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 endif()
-if(HEMELB_OPTIMISATION)
-  set( CMAKE_CXX_FLAGS_RELEASE ${HEMELB_OPTIMISATION})
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HEMELB_OPTIMISATION}")
-endif()
-
 
 add_definitions(-DHEMELB_CODE)
 add_definitions(-DHEMELB_READING_GROUP_SIZE=${HEMELB_READING_GROUP_SIZE})
@@ -51,9 +46,7 @@ endif()
 
 if (HEMELB_USE_SSE3)
   add_definitions(-DHEMELB_USE_SSE3)
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
-  set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -msse3")
-  set( CMAKE_CXX_FLAGS_RELEASE "${HEMELB_OPTIMISATION} -msse3")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
 endif()
 
 if (HEMELB_USE_VELOCITY_WEIGHTS_FILE)
@@ -118,10 +111,6 @@ include_directories("${PROJECT_BINARY_DIR}")
 if (APPLE)
   add_definitions(-DHEMELB_CFG_ON_BSD -DHEMELB_CFG_ON_OSX)
 endif()
-if (HEMELB_USE_DEBUGGER)
-  # Force a debug build, because the debugger makes no sense without debug symbols
-  set(CMAKE_BUILD_TYPE DEBUG)
-endif()
 
 set(root_sources SimulationMaster.cc)
 add_executable(${HEMELB_EXECUTABLE} main.cc ${root_sources})
@@ -159,10 +148,6 @@ list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
 if (HEMELB_BUILD_MULTISCALE)
   if (APPLE)
     add_definitions(-DHEMELB_CFG_ON_BSD -DHEMELB_CFG_ON_OSX)
-  endif()
-  if (HEMELB_USE_DEBUGGER)
-    # Force a debug build, because the debugger makes no sense without debug symbols
-    set(CMAKE_BUILD_TYPE DEBUG)
   endif()
   
   set(root_sources SimulationMaster.cc multiscale/MultiscaleSimulationMaster.h)

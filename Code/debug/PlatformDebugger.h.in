@@ -4,17 +4,26 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
+// This file gets configured by CMake to include the platform-specific
+// debugger header and alias it to a common name
+//
+// namespace hemelb {
+//   namespace debug {
+//     class PlatformDebugger : public Debugger {
+//       // Stuff
+
 #ifndef HEMELB_DEBUG_PLATFORMDEBUGGER_H_IN
 #define HEMELB_DEBUG_PLATFORMDEBUGGER_H_IN
 
-#cmakedefine HEMELB_BUILD_DEBUGGER
-#ifdef HEMELB_BUILD_DEBUGGER
+#cmakedefine HEMELB_USE_DEBUGGER
+#  ifdef HEMELB_USE_DEBUGGER
+// Debugger required
 
 #cmakedefine HEMELB_DEBUGGER_IMPLEMENTATION_OSX
 #cmakedefine HEMELB_DEBUGGER_IMPLEMENTATION_linux
 
-#ifdef HEMELB_DEBUGGER_IMPLEMENTATION_OSX
-#include "debug/OSX/OsxDebugger.h"
+#    ifdef HEMELB_DEBUGGER_IMPLEMENTATION_OSX
+#      include "debug/OSX/OsxDebugger.h"
 namespace hemelb
 {
   namespace debug
@@ -23,8 +32,8 @@ namespace hemelb
   }
 }
 
-#elif defined HEMELB_DEBUGGER_IMPLEMENTATION_linux
-#include "debug/linux/LinuxDebugger.h"
+#    elif defined HEMELB_DEBUGGER_IMPLEMENTATION_linux
+#      include "debug/linux/LinuxDebugger.h"
 namespace hemelb
 {
   namespace debug
@@ -33,8 +42,14 @@ namespace hemelb
   }
 }
 
-#else
-#include "debug/none/NullDebugger.h"
+#    else
+#      error "Debugger on but unknown platform requested"
+#    endif
+
+#  else
+
+// Debugger not required
+#    include "debug/none/NullDebugger.h"
 namespace hemelb
 {
   namespace debug
@@ -43,18 +58,6 @@ namespace hemelb
   }
 }
 
-#endif
-
-#else
-#include "debug/none/NullDebugger.h"
-namespace hemelb
-{
-  namespace debug
-  {
-    typedef NullDebugger PlatformDebugger;
-  }
-}
-
-#endif
+#  endif
 
 #endif // HEMELB_DEBUG_PLATFORMDEBUGGER_H_IN

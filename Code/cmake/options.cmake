@@ -67,7 +67,12 @@ endfunction()
 #
 # Specify the options
 #
-hemelb_option(HEMELB_BUILD_DEBUGGER "Build the built in debugger" ON)
+if (CMAKE_BUILD_TYPE STREQUAL DEBUG OR CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)
+  set(hemelb_debug_default ON)
+else()
+  set(hemelb_debug_default OFF)
+endif()
+hemelb_option(HEMELB_USE_DEBUGGER "Build the built in debugger" ${hemelb_debug_default})
 # hemelb_option(HEMELB_DEBUGGER_IMPLEMENTATION "Which implementation to use for the debugger" none)
 # mark_as_advanced(HEMELB_DEBUGGER_IMPLEMENTATION)
 hemelb_option(HEMELB_VALIDATE_GEOMETRY "Validate geometry" OFF)
@@ -98,8 +103,6 @@ hemelb_cachevar(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH}
 hemelb_cachevar(HEMELB_SUBPROJECT_MAKE_JOBS 1
   STRING "Number of jobs to use for subproject build steps")
 
-hemelb_cachevar(HEMELB_OPTIMISATION "-O3"
-  STRING "Optimisation level (can be blank or -O1 to -O4)")
 hemelb_cachevar(HEMELB_LATTICE "D3Q15"
   STRING "Select the lattice type to use (D3Q15,D3Q19,D3Q27,D3Q15i)")
 hemelb_cachevar(HEMELB_KERNEL "LBGK"
