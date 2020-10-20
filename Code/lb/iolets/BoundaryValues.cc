@@ -117,6 +117,13 @@ namespace hemelb
         return processorsNeedingIoletList; // return by move
       }
 
+
+      void BoundaryValues::BeginAll() { /* not needed */ }
+      void BoundaryValues::PreSend() { /* not needed */ }
+      void BoundaryValues::PreWait() { /* not needed */ }
+      void BoundaryValues::Wait() { /* not needed */ }
+      void BoundaryValues::EndAll() { /* not needed */ }
+
       void BoundaryValues::Begin()
       {
 	for (int i = 0; i < localIoletCount; i++)

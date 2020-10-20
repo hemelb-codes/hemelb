@@ -24,7 +24,7 @@ namespace hemelb
     {
       // BeginAll
       for (auto& ph: mPhases)
-	for (auto ap: ph.actors)
+	for (auto& ap: ph.actors)
 	  ap->BeginAll();
 
       for (auto& ph: mPhases)

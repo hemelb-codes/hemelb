@@ -39,32 +39,25 @@ namespace hemelb
         /** destructor - releases resources allocated by this class */
         ~ColloidController();
 
-        void RequestComms();
-
-        void EndIteration();
-
         const void OutputInformation(const LatticeTimeStep timestep) const;
-      inline virtual void BeginAll() {
+    private:
+      inline void BeginAll() override {
       }
-      inline virtual void Begin()  {
+      inline void Begin() override;
+      inline void Receive() override {
       }
-      inline virtual void Receive()  {
+      inline void PreSend() override {
       }
-      inline virtual void PreSend()  {
+      inline void Send() override {
       }
-      inline virtual void Send()  {
+      inline void PreWait() override {
       }
-      inline virtual void PreWait()  {
+      inline void Wait() override {
       }
-      
-      inline virtual void Wait() {
+      inline void End() override;
+      inline void EndAll() override {
       }
-      
-      inline virtual void End()  {
-      }
-      virtual void EndAll()  {
-      }
-      private:
+
         /** Main code communicator */
         comm::Communicator::ConstPtr ioComms;
 

@@ -4,4 +4,4 @@
 # license in the file LICENSE.
 
 add_library(hemelb_timestep
-  TimeStepManager.cc Actor.cc CollectiveActor.cc)
+  TimeStepManager.cc CollectiveActor.cc)

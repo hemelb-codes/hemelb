@@ -14,27 +14,32 @@ namespace hemelb
 {
   namespace timestep
   {
+    // This class is still abstract, but implements some common
+    // functionality for collectives.
     class CollectiveActor : public Actor
     {
     public:
+      ~CollectiveActor() = default;
+
       inline void MustFinishThisTimeStep()
       {
-
 	mustWait = true;
       }
 
     protected:
       CollectiveActor(comm::Communicator::ConstPtr comm, reporting::Timer& waitTimer);
-      
+
+    private:
       // This should be a no-op for a collective
-      virtual void Receive();
+      void Receive() override final;
       
       // Subclass must supply the send method with the collective
-      // virtual void Send();
+      // void Send() override;
       
       // Progress the communication
-      virtual void Wait(void) final;
+      void Wait(void) override final;
 
+    protected:
       bool isCollectiveRunning;
       bool mustWait;
 

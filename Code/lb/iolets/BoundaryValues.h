@@ -30,18 +30,6 @@ namespace hemelb
                          const util::UnitConverter& units);
           ~BoundaryValues();
 
-	// timestep::Actor interface
-	virtual void BeginAll() { /* not needed */ }
-	virtual void Begin();
-	virtual void Receive();
-	virtual void PreSend() { /* not needed */ }
-	virtual void Send();
-	virtual void PreWait() { /* not needed */ }
-	virtual void Wait() { /* not needed */ }
-	virtual void End();
-	virtual void EndAll() { /* not needed */ }
-
-
 	void ForceCommunication();
           // void RequestComms();
           // void EndIteration();
@@ -87,6 +75,17 @@ namespace hemelb
 	}
 	
         private:
+	// timestep::Actor interface
+	void BeginAll() override;
+	void Begin() override;
+	void Receive() override;
+	void PreSend() override;
+	void Send() override;
+	void PreWait() override;
+	void Wait() override;
+	void End() override;
+	void EndAll()override;
+
           bool IsIOletOnThisProc(geometry::SiteType ioletType, geometry::LatticeData* latticeData, int boundaryId);
           std::vector<int> GatherProcList(bool hasBoundary);
           // void HandleComms(iolets::InOutLet* iolet);
@@ -102,8 +101,7 @@ namespace hemelb
           SimulationState* state;
           const util::UnitConverter& unitConverter;
           comm::Async::Ptr asyncCommsQ;
-      }
-      ;
+      };
     }
   }
 }

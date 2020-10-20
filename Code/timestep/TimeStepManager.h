@@ -56,12 +56,15 @@ namespace hemelb
     public:
       TimeStepManager(unsigned nPhases);
       // Register the actor for the phase
+      //
+      // NOTE: this is a non-owning pointer. You must manage the
+      // lifetime of the actor. Needs a pointer to enable the
+      // polymorphism.
       void AddToPhase(unsigned phase, Actor* actor);
       // Perform a timestep
       void DoStep();
+
     private:
-    //friend class Actor;
-    
       struct Phase
       {
 	std::vector<Actor*> actors;

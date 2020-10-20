@@ -232,7 +232,7 @@ namespace hemelb
       return vectors;
     }
 
-    void ColloidController::RequestComms()
+    void ColloidController::Begin()
     {
       // communication from step 2
       log::Logger::Log<log::Debug, log::OnePerCore>("Communicating colloid particle positions");
@@ -252,7 +252,7 @@ namespace hemelb
       // steps 5 and 8 performed by LBM actor
     }
 
-    void ColloidController::EndIteration()
+    void ColloidController::End()
     {
       const LatticeTimeStep currentTimestep = simulationState.GetTimeStep();
 

@@ -16,32 +16,34 @@ namespace hemelb
     class AsyncConcern : public timestep::Actor
     {
     public:
-      AsyncConcern(Async::Ptr async) : mAsync(async)
+      inline AsyncConcern(Async::Ptr async) : mAsync(async)
       {
       }
-      inline virtual void BeginAll() {
+      ~AsyncConcern() = default;
+
+    private:
+      inline void BeginAll() override {
       }
-      inline virtual void Begin()  {
+      inline void Begin() override {
       }
-      inline virtual void Receive()  {
+      inline void Receive() override {
       }
-      inline virtual void PreSend()  {
+      inline void PreSend() override {
       }
-      inline virtual void Send()  {
+      inline void Send() override {
       }
-      inline virtual void PreWait()  {
+      inline void PreWait() override {
       }
-      
-      inline virtual void Wait() {
+
+      inline void Wait() override {
 	mAsync->Wait();
       }
-      
-      inline virtual void End()  {
+
+      inline void End() override {
       }
-      inline virtual void EndAll()  {
+      inline void EndAll() override {
       }
-      
-    private:
+
       Async::Ptr mAsync;
     };
     

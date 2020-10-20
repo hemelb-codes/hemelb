@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 
       // Prepare main simulation object...
       SimulationMaster master = SimulationMaster(options, commWorld);
-
+      hemelb::debug::Debugger::Get()->BreakHere();
       // ..and run it.
       master.RunSimulation();
     }

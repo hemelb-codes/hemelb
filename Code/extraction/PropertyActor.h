@@ -41,27 +41,28 @@ namespace hemelb
          */
         void SetRequiredProperties(lb::MacroscopicPropertyCache& propertyCache);
 
-      inline virtual void BeginAll() {
+    private:
+
+      inline void BeginAll() override {
       }
-      inline virtual void Begin()  {
+      inline void Begin() override {
       }
-      inline virtual void Receive()  {
+      inline void Receive() override {
       }
-      inline virtual void PreSend()  {
+      inline void PreSend() override {
       }
-      inline virtual void Send()  {
+      inline void Send() override {
       }
-      inline virtual void PreWait()  {
+      inline void PreWait() override {
       }
-      inline virtual void Wait() {
+      inline void Wait() override {
       }
-      inline virtual void End()  {
+      inline void End() override {
       }
       
       // Override the iterated actor end of iteration method to perform writing.
-      virtual void EndAll();
+      void EndAll() override;
       
-      private:
         const lb::SimulationState& simulationState;
         PropertyWriter* propertyWriter;
         reporting::Timers& timers;

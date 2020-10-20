@@ -10,14 +10,17 @@ namespace hemelb
 {
   namespace timestep
   {
-    
+
+    // An actor is a thing that performs its actions during a phase of
+    // a timestep. See TimeStepManager.h for more details.
     class Actor
     {
-    protected:
+    public:
+      virtual ~Actor() = default;
+
+    private:
       friend class TimeStepManager;
 
-      inline virtual ~Actor() {
-      }
       virtual void BeginAll() = 0;
       virtual void Begin() = 0;
       virtual void Receive() = 0;

@@ -51,27 +51,29 @@ namespace hemelb
           void TransferFieldDependentInformation();
           // NB this is virtual so that the class can be tested.
           virtual proc_t ProcForSite(site_t site);
-        protected:
-	  inline virtual void BeginAll() {
-	  }
-	  inline virtual void Begin() {
-	  }
-	  // Implemented
-	  virtual void Receive();
-	  inline virtual void PreSend() {
-	  }
-	  // Implemented
-	  virtual void Send();
-	  inline virtual void PreWait() {
-	  }
-	  inline virtual void Wait() {
-	  }
-	  inline virtual void End() {
-	  }
-	  inline virtual void EndAll() {
-	  }
+
         private:
-          const LatticeData & localLatticeData;
+	  // Actor interface
+	  inline void BeginAll() override {
+	  }
+	  inline void Begin() override {
+	  }
+	  // Implemented
+	  void Receive() override;
+	  inline void PreSend() override {
+	  }
+	  // Implemented
+	  void Send() override;
+	  inline void PreWait() override {
+	  }
+	  inline void Wait() override {
+	  }
+	  inline void End() override {
+	  }
+	  inline void EndAll() override {
+	  }
+
+	  const LatticeData & localLatticeData;
           NeighbouringLatticeData & neighbouringLatticeData;
 	  comm::Async::Ptr commQ;
           typedef std::vector<site_t> IdVec;

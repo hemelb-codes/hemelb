@@ -50,7 +50,7 @@ namespace hemelb
          */
         virtual ~IncompressibilityChecker();
 
-        void Report(reporting::Dict& dictionary);
+        void Report(reporting::Dict& dictionary) override;
 
         /**
          * Returns smallest density in the domain as agreed by all the processes.
@@ -96,19 +96,21 @@ namespace hemelb
 
         static MPI_Datatype GetDensityMpiDatatype();
 
-      protected:
-      
-      inline virtual void BeginAll() {}
-      inline virtual void Begin() {}
-      // Compute the local state
-      virtual void PreSend();
-      // Initiate the collective
-      virtual void Send();
-      inline virtual void PreWait() {}
-      inline virtual void End() {}
-      inline virtual void EndAll() {}
-
       private:
+
+      // (Collective)Actor interface
+      inline void BeginAll() override {}
+      inline void Begin() override {}
+      // Receive provided by CollectiveActor
+      // Compute the local state
+      void PreSend() override;
+      // Initiate the collective
+      void Send() override;
+      inline void PreWait() override {}
+      // Wait provided by CollectiveActor
+      inline void End() override {}
+      inline void EndAll() override {}
+
         static void UpdateDensityEtc(const DensityEtc& in, DensityEtc& inout);
         static void MpiOpUpdateFunc(void* invec, void* inoutvec,
                                     int *len, MPI_Datatype *datatype);

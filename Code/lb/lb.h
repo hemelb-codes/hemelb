@@ -63,23 +63,25 @@ namespace hemelb
         ~LBM();
 
         // Actor interface
-        inline virtual void BeginAll() {
+        // Template, so inline is implied.
+        void BeginAll() override {
 	  // No-op
 	}
-        virtual void Begin() {
+        void Begin() override {
 	  // No-op
 	}
-        virtual void Receive();
-        virtual void PreSend();
-        virtual void Send();
-        virtual void PreWait();
-        inline virtual void Wait()
+        void Receive() override;
+        void PreSend() override;
+        void Send() override;
+        void PreWait() override;
+        void Wait() override
         {
 	  // This is a no-op as waiting is delegated to the async
 	  // comms actor
 	}
-        virtual void End();
-        virtual void EndAll();
+        void End() override;
+        void EndAll() override;
+        // End of Actor interface
 
         site_t TotalFluidSiteCount() const;
         void SetTotalFluidSiteCount(site_t);
