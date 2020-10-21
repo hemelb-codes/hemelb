@@ -32,13 +32,7 @@ namespace hemelb
       }
 
       // If this assertion trips, it is likely that the zSqOver4_pow / (fact * fact) has become inf / inf
-      /// @todo: #633 refactor
-#ifdef HAVE_STD_ISNAN
       assert(!std::isnan(real(sum)) && !std::isnan(imag(sum)));
-#endif
-#ifdef HAVE_ISNAN
-      assert(!isnan(real(sum)) && !isnan(imag(sum)));
-#endif
 
       return sum;
     }
