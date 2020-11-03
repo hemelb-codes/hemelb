@@ -18,6 +18,8 @@
 #include "reporting/Timers.h"
 #include "lb/BuildSystemInterface.h"
 #include <typeinfo>
+#include <tuple>
+#include <utility>
 
 namespace hemelb
 {
@@ -47,6 +49,40 @@ namespace hemelb
         // And again but for sites that are both in-/outlet and wall
         typedef typename HEMELB_WALL_INLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tInletWallCollision;
         typedef typename HEMELB_WALL_OUTLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tOutletWallCollision;
+
+        void CallDEPostStep(site_t offset, const std::size_t IDX) { return; }
+
+        template <typename Collision>
+        void CallDEPostStep(Collision* collision, site_t offset, const std::size_t IDX)
+        {
+          const site_t decc = mLatDat->GetDomainEdgeCollisionCount(IDX);
+          PostStep(collision, offset, decc);
+          offset += decc;
+          return;
+        }
+
+        template <typename Collision, typename ... Collisions >
+        void CallDEPostStep(site_t offset, const std::size_t IDX, Collision* collision, Collisions* ... collisions)
+        {
+          CallDEPostStep(collision, offset, IDX);
+          CallDEPostStep(offset, IDX+1, collisions ...);
+          return;
+        }
+
+        template <typename Tuple, std::size_t ... Is>
+        void CallDEPostStep(const Tuple& COLLISIONS, site_t& offset,
+        std::integer_sequence<std::size_t, Is...>)
+        {
+          CallDEPostStep(offset, 0, std::get<Is>(COLLISIONS) ...);
+          return;
+        }
+
+        template <typename Tuple>
+        void CallDEPostStep(const Tuple& COLLISIONS, site_t& offset) {
+          constexpr std::size_t N = std::tuple_size<Tuple>::value;
+          CallDEPostStep(COLLISIONS, offset, std::make_index_sequence<N>{});
+          return;
+        }
 
       public:
         /**

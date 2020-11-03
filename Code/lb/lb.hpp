@@ -12,6 +12,7 @@
 #include "util/unique.h"
 #include "lb/InitialCondition.h"
 #include "lb/InitialCondition.hpp"
+#include <tuple>
 
 namespace hemelb
 {
@@ -280,25 +281,16 @@ namespace hemelb
       // Do any cleanup steps necessary on boundary nodes
       site_t offset = mLatDat->GetMidDomainSiteCount();
 
+      const std::tuple<tMidFluidCollision*, tWallCollision*, tInletCollision*,
+      tOutletCollision*, tInletWallCollision*, tOutletWallCollision*> 
+      COLLISIONS {
+        mMidFluidCollision, mWallCollision, mInletCollision,
+        mOutletCollision, mInletWallCollision, mOutletWallCollision
+      };
+
       timings[hemelb::reporting::Timers::lb_calc].Start();
 
-      //TODO yup, this is horrible. If you read this, please improve the following code.
-      PostStep(mMidFluidCollision, offset, mLatDat->GetDomainEdgeCollisionCount(0));
-      offset += mLatDat->GetDomainEdgeCollisionCount(0);
-
-      PostStep(mWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(1));
-      offset += mLatDat->GetDomainEdgeCollisionCount(1);
-
-      PostStep(mInletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(2));
-      offset += mLatDat->GetDomainEdgeCollisionCount(2);
-
-      PostStep(mOutletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(3));
-      offset += mLatDat->GetDomainEdgeCollisionCount(3);
-
-      PostStep(mInletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(4));
-      offset += mLatDat->GetDomainEdgeCollisionCount(4);
-
-      PostStep(mOutletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(5));
+      CallDEPostStep(COLLISIONS, offset);
 
       offset = 0;
 
