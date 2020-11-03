@@ -290,7 +290,7 @@ namespace hemelb
 
       timings[hemelb::reporting::Timers::lb_calc].Start();
 
-      CallDEPostStep(COLLISIONS, offset);
+      CallDEPostStep(&geometry::LatticeData::GetDomainEdgeCollisionCount, COLLISIONS, offset);
 
       offset = 0;
 
