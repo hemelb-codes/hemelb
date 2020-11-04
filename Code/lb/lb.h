@@ -50,37 +50,40 @@ namespace hemelb
         typedef typename HEMELB_WALL_INLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tInletWallCollision;
         typedef typename HEMELB_WALL_OUTLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tOutletWallCollision;
 
-        void CallDEPostStep(site_t (geometry::LatticeData::*fp)(unsigned int) const, site_t offset, const std::size_t IDX) { return; }
+        typedef site_t (geometry::LatticeData::*tCollisionCountFn)(unsigned int) const;
+
+        void CallPostStep(const tCollisionCountFn CCFP, site_t offset, const std::size_t IDX) { return; }
 
         template <typename Collision>
-        void CallDEPostStep(site_t (geometry::LatticeData::*fp)(unsigned int) const, Collision* collision, site_t offset, const std::size_t IDX)
+        void CallPostStep(const tCollisionCountFn CCFP, Collision* collision, site_t offset, const std::size_t IDX)
         {
-          const site_t decc = (mLatDat->*fp)(IDX);
-          PostStep(collision, offset, decc);
-          offset += decc;
+          const site_t CC = (mLatDat->*CCFP)(IDX);
+          PostStep(collision, offset, CC);
+          offset += CC;
           return;
         }
 
         template <typename Collision, typename ... Collisions >
-        void CallDEPostStep(site_t (geometry::LatticeData::*fp)(unsigned int) const, site_t offset, const std::size_t IDX, Collision* collision, Collisions* ... collisions)
+        void CallPostStep(const tCollisionCountFn CCFP, site_t offset, const std::size_t IDX, Collision* collision, 
+        Collisions* ... collisions)
         {
-          CallDEPostStep(fp, collision, offset, IDX);
-          CallDEPostStep(fp, offset, IDX+1, collisions ...);
+          CallPostStep(CCFP, collision, offset, IDX);
+          CallPostStep(CCFP, offset, IDX+1, collisions ...);
           return;
         }
 
         template <typename Tuple, std::size_t ... Is>
-        void CallDEPostStep(site_t (geometry::LatticeData::*fp)(unsigned int) const, const Tuple& COLLISIONS, site_t& offset,
+        void CallPostStep(const tCollisionCountFn CCFP, const Tuple& COLLISIONS, site_t& offset,
         std::integer_sequence<std::size_t, Is...>)
         {
-          CallDEPostStep(fp, offset, 0, std::get<Is>(COLLISIONS) ...);
+          CallPostStep(CCFP, offset, 0, std::get<Is>(COLLISIONS) ...);
           return;
         }
 
         template <typename Tuple>
-        void CallDEPostStep(site_t (geometry::LatticeData::*fp)(unsigned int) const, const Tuple& COLLISIONS, site_t& offset) {
+        void CallPostStep(const tCollisionCountFn CCFP, const Tuple& COLLISIONS, site_t& offset) {
           constexpr std::size_t N = std::tuple_size<Tuple>::value;
-          CallDEPostStep(fp, COLLISIONS, offset, std::make_index_sequence<N>{});
+          CallPostStep(CCFP, COLLISIONS, offset, std::make_index_sequence<N>{});
           return;
         }
 
