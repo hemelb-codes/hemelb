@@ -157,11 +157,11 @@ namespace hemelb
         }
 
         // base case, there are no collisions left!
-        void CallPostStep(const tCollisionCountFn CCFP, site_t offset, const std::size_t IDX) { return; }
+        void CallPostStep(const tCollisionCountFn CCFP, site_t& offset, const std::size_t IDX) { return; }
 
         // where the work takes place -- a single collision type is provided, offset is incremented by collision count
         template <typename Collision>
-        void CallPostStep(const tCollisionCountFn CCFP, Collision* collision, site_t offset, const std::size_t IDX)
+        void CallPostStep(const tCollisionCountFn CCFP, Collision* collision, site_t& offset, const std::size_t IDX)
         {
           const site_t CC = (mLatDat->*CCFP)(IDX);
           PostStep(collision, offset, CC);
@@ -171,7 +171,7 @@ namespace hemelb
 
         // picks off the front collision from the parameter pack and send it on to PostStep, sends the rest recursively
         template <typename Collision, typename ... Collisions >
-        void CallPostStep(const tCollisionCountFn CCFP, site_t offset, const std::size_t IDX, Collision* collision, 
+        void CallPostStep(const tCollisionCountFn CCFP, site_t& offset, const std::size_t IDX, Collision* collision, 
         Collisions* ... collisions)
         {
           CallPostStep(CCFP, collision, offset, IDX);
