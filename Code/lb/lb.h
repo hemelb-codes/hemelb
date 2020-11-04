@@ -52,41 +52,6 @@ namespace hemelb
 
         typedef site_t (geometry::LatticeData::*tCollisionCountFn)(unsigned int) const;
 
-        void CallPostStep(const tCollisionCountFn CCFP, site_t offset, const std::size_t IDX) { return; }
-
-        template <typename Collision>
-        void CallPostStep(const tCollisionCountFn CCFP, Collision* collision, site_t offset, const std::size_t IDX)
-        {
-          const site_t CC = (mLatDat->*CCFP)(IDX);
-          PostStep(collision, offset, CC);
-          offset += CC;
-          return;
-        }
-
-        template <typename Collision, typename ... Collisions >
-        void CallPostStep(const tCollisionCountFn CCFP, site_t offset, const std::size_t IDX, Collision* collision, 
-        Collisions* ... collisions)
-        {
-          CallPostStep(CCFP, collision, offset, IDX);
-          CallPostStep(CCFP, offset, IDX+1, collisions ...);
-          return;
-        }
-
-        template <typename Tuple, std::size_t ... Is>
-        void CallPostStep(const tCollisionCountFn CCFP, const Tuple& COLLISIONS, site_t& offset,
-        std::integer_sequence<std::size_t, Is...>)
-        {
-          CallPostStep(CCFP, offset, 0, std::get<Is>(COLLISIONS) ...);
-          return;
-        }
-
-        template <typename Tuple>
-        void CallPostStep(const tCollisionCountFn CCFP, const Tuple& COLLISIONS, site_t& offset) {
-          constexpr std::size_t N = std::tuple_size<Tuple>::value;
-          CallPostStep(CCFP, COLLISIONS, offset, std::make_index_sequence<N>{});
-          return;
-        }
-
       public:
         /**
          * Constructor, stage 1.
@@ -189,6 +154,41 @@ namespace hemelb
           {
             collision->template DoPostStep<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
+        }
+
+        void CallPostStep(const tCollisionCountFn CCFP, site_t offset, const std::size_t IDX) { return; }
+
+        template <typename Collision>
+        void CallPostStep(const tCollisionCountFn CCFP, Collision* collision, site_t offset, const std::size_t IDX)
+        {
+          const site_t CC = (mLatDat->*CCFP)(IDX);
+          PostStep(collision, offset, CC);
+          offset += CC;
+          return;
+        }
+
+        template <typename Collision, typename ... Collisions >
+        void CallPostStep(const tCollisionCountFn CCFP, site_t offset, const std::size_t IDX, Collision* collision, 
+        Collisions* ... collisions)
+        {
+          CallPostStep(CCFP, collision, offset, IDX);
+          CallPostStep(CCFP, offset, IDX+1, collisions ...);
+          return;
+        }
+
+        template <typename Tuple, std::size_t ... Is>
+        void CallPostStep(const tCollisionCountFn CCFP, const Tuple& COLLISIONS, site_t& offset,
+        std::integer_sequence<std::size_t, Is...>)
+        {
+          CallPostStep(CCFP, offset, 0, std::get<Is>(COLLISIONS) ...);
+          return;
+        }
+
+        template <typename Tuple>
+        void CallPostStep(const tCollisionCountFn CCFP, const Tuple& COLLISIONS, site_t& offset) {
+          constexpr std::size_t N = std::tuple_size<Tuple>::value;
+          CallPostStep(CCFP, COLLISIONS, offset, std::make_index_sequence<N>{});
+          return;
         }
 
         unsigned int inletCount;
