@@ -156,8 +156,10 @@ namespace hemelb
           }
         }
 
+        // base case, there are no collisions left!
         void CallPostStep(const tCollisionCountFn CCFP, site_t offset, const std::size_t IDX) { return; }
 
+        // where the work takes place -- a single collision type is provided, offset is incremented by collision count
         template <typename Collision>
         void CallPostStep(const tCollisionCountFn CCFP, Collision* collision, site_t offset, const std::size_t IDX)
         {
@@ -167,6 +169,7 @@ namespace hemelb
           return;
         }
 
+        // picks off the front collision from the parameter pack and send it on to PostStep, sends the rest recursively
         template <typename Collision, typename ... Collisions >
         void CallPostStep(const tCollisionCountFn CCFP, site_t offset, const std::size_t IDX, Collision* collision, 
         Collisions* ... collisions)
@@ -176,6 +179,7 @@ namespace hemelb
           return;
         }
 
+        // turns the tuple in to a parameter pack which is provided to the variadic form of CallPostStep
         template <typename Tuple, std::size_t ... Is>
         void CallPostStep(const tCollisionCountFn CCFP, const Tuple& COLLISIONS, site_t& offset,
         std::integer_sequence<std::size_t, Is...>)
@@ -184,6 +188,7 @@ namespace hemelb
           return;
         }
 
+        // entry point -- creates a compile-time sequence of indexes which are used to unpack the tuple
         template <typename Tuple>
         void CallPostStep(const tCollisionCountFn CCFP, const Tuple& COLLISIONS, site_t& offset) {
           constexpr std::size_t N = std::tuple_size<Tuple>::value;
