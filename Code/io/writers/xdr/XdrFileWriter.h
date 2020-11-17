@@ -1,18 +1,13 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_IO_WRITERS_XDR_XDRFILEWRITER_H
 #define HEMELB_IO_WRITERS_XDR_XDRFILEWRITER_H
 
-#include <cstdio>
 #include <string>
-
+#include <fstream>
 #include "io/writers/xdr/XdrWriter.h"
 
 namespace hemelb
@@ -24,23 +19,18 @@ namespace hemelb
       namespace xdr
       {
 
-        // Class to write Xdr to a file. The actual write functions are implemented in the base class, XdrWriter.
-        class XdrFileWriter : public XdrWriter
-        {
+	using CharFileIter = std::ostreambuf_iterator<char>;
 
-            // Implement the constructor and destructor to deal with the FILE
-            // and XDR objects.
-          public:
-            XdrFileWriter(const std::string& fileName, const std::string& mode = "w");
-            ~XdrFileWriter();
+	// Wrapper that owns a filehandle and uses that as the sink for data
+        class XdrFileWriter : public XdrMetaWriter<CharFileIter, std::ofstream>
+	{
+	  using base = XdrMetaWriter<CharFileIter, std::ofstream>;
+  	public:
+	  XdrFileWriter(const std::string& fileName);
+	};
 
-          private:
-            std::FILE *myFile;
-
-        };
-
-      } // namespace xdr
-    } // namespace writers
+      }
+    }
   }
 }
 #endif // HEMELB_IO_WRITERS_XDR_XDRFILEWRITER_H

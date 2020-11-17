@@ -1,17 +1,15 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_EXTRACTION_LOCALPROPERTYOUTPUT_H
 #define HEMELB_EXTRACTION_LOCALPROPERTYOUTPUT_H
 
 #include "extraction/IterableDataSource.h"
 #include "extraction/PropertyOutputFile.h"
+#include "lb/lattices/Lattices.h"
 #include "net/mpi.h"
 #include "net/MpiFile.h"
 
@@ -62,21 +60,28 @@ namespace hemelb
          */
         void Write(unsigned long timestepNumber);
 
-      private:
+	/**
+	 * Write the offset file
+	 */
+	void WriteOffsetFile();
+
         /**
          * Returns the number of floats written for the field.
          * @param field
          */
-        unsigned GetFieldLength(OutputField::FieldType field);
+        unsigned GetFieldLength(OutputField::FieldType field) const;
 
         /**
          * Returns the offset to the field, as it should be written to file.
          * @param field
          * @return
          */
-        double GetOffset(OutputField::FieldType field) const;
+        static double GetOffset(OutputField::FieldType field);
 
+      private:
+	//typedef hemelb::lb::lattices:: HEMELB_LATTICE latticeType;
         const net::IOCommunicator& comms;
+
         /**
          * The MPI file to write into.
          */
@@ -111,6 +116,11 @@ namespace hemelb
          * Buffer to write into before writing to disk.
          */
         std::vector<char> buffer;
+
+        /**
+         * The MPI file to write the offsets into.
+         */
+	net::MpiFile offsetFile;
 
         /**
          * Type of written values

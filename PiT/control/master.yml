@@ -1,0 +1,15 @@
+num_time_slices: 4
+num_parareal_iters: 2
+
+sim_params:
+    b: 0.1
+    omega: 1.0
+
+initial_conditions:
+    x: 1.0
+    v: 0.0
+
+time:
+    start: 0.0
+    dt: 2.0 * pi/1000
+    n: 1000

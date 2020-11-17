@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #include <cerrno>
 #include <csignal>
@@ -24,21 +21,14 @@ namespace hemelb
     ImageSendComponent::ImageSendComponent(lb::SimulationState* iSimState, vis::Control* iControl,
                                            const lb::LbmParameters* iLbmParams, Network* iNetwork,
                                            unsigned inletCountIn) :
-        mNetwork(iNetwork), mSimState(iSimState), mVisControl(iControl), inletCount(inletCountIn),
-            MaxFramerate(25.0)
+      isConnected(false),
+      mNetwork(iNetwork), mSimState(iSimState), mVisControl(iControl),
+      inletCount(inletCountIn), MaxFramerate(25.0),
+      xdrSendBuffer(new char[maxSendSize]),
+      lastRender(0.0)
     {
-      xdrSendBuffer = new char[maxSendSize];
-
       // Suppress signals from a broken pipe.
       signal(SIGPIPE, SIG_IGN);
-
-      isConnected = false;
-      lastRender = 0.0;
-    }
-
-    ImageSendComponent::~ImageSendComponent()
-    {
-      delete[] xdrSendBuffer;
     }
 
     // This is original code with minimal tweaks to make it work with
@@ -52,8 +42,7 @@ namespace hemelb
         return;
       }
 
-      io::writers::xdr::XdrMemWriter imageWriter = io::writers::xdr::XdrMemWriter(xdrSendBuffer,
-                                                                                  maxSendSize);
+      auto imageWriter = io::writers::xdr::XdrMemWriter(xdrSendBuffer.get(), maxSendSize);
 
       unsigned int initialPosition = imageWriter.getCurrentStreamPosition();
 
@@ -87,9 +76,8 @@ namespace hemelb
       }
 
       // Send to the client.
-      log::Logger::Log<log::Debug, log::Singleton>("Sending network image at timestep %d",
-                                                   mSimState->GetTimeStep());
-      mNetwork->send_all(xdrSendBuffer, imageWriter.getCurrentStreamPosition() - initialPosition);
+      log::Logger::Log<log::Debug, log::Singleton>("Sending network image at timestep %d",mSimState->GetTimeStep());
+      mNetwork->send_all(xdrSendBuffer.get(), imageWriter.getCurrentStreamPosition() - initialPosition);
     }
 
     bool ImageSendComponent::ShouldRenderNewNetworkImage()

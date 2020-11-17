@@ -1,12 +1,9 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
+#include "geometry/ParmetisHeader.h"
 #include "geometry/decomposition/OptimisedDecomposition.h"
 #include "geometry/decomposition/DecompositionWeights.h"
 #include "lb/lattices/D3Q27.h"
@@ -230,7 +227,7 @@ namespace hemelb
                     ++m;
 
                     // ... only looking at non-solid sites...
-                    if (blockReadResult.Sites[m].targetProcessor == BIG_NUMBER2)
+                    if (blockReadResult.Sites[m].targetProcessor == SITE_OR_BLOCK_SOLID)
                     {
                       continue;
                     }
@@ -381,7 +378,7 @@ namespace hemelb
                   {
                     ++m;
                     // ... only looking at non-solid sites...
-                    if (blockReadResult.Sites[m].targetProcessor == BIG_NUMBER2)
+                    if (blockReadResult.Sites[m].targetProcessor == SITE_OR_BLOCK_SOLID)
                     {
                       continue;
                     }
@@ -422,7 +419,7 @@ namespace hemelb
                                                                 neighbourSiteJ,
                                                                 neighbourSiteK);
                       if (neighbourBlock.Sites.size() == 0
-                          || neighbourBlock.Sites[neighbourSiteId].targetProcessor == BIG_NUMBER2)
+                          || neighbourBlock.Sites[neighbourSiteId].targetProcessor == SITE_OR_BLOCK_SOLID)
                       {
                         continue;
                       }
@@ -528,7 +525,7 @@ namespace hemelb
               // print an error message.
               if (siteIndex >= geometry.GetSitesPerBlock()
                   || geometry.Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor
-                      == BIG_NUMBER2)
+                      == SITE_OR_BLOCK_SOLID)
               {
                 log::Logger::Log<log::Critical, log::OnePerCore>("Partition element %i wrongly assigned to site %u of %i (block %i%s)",
                                                                  ii,
@@ -536,7 +533,7 @@ namespace hemelb
                                                                  fluidSitesPerBlock[fluidSiteBlock],
                                                                  fluidSiteBlock,
                                                                  geometry.Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor
-                                                                     == BIG_NUMBER2 ?
+                                                                     == SITE_OR_BLOCK_SOLID ?
                                                                    " and site is solid" :
                                                                    "");
               }
@@ -874,7 +871,7 @@ namespace hemelb
         std::map<site_t, site_t> blockIdLookupByLastSiteIndex;
         for (site_t blockId = 0; blockId < geometry.GetBlockCount(); ++blockId)
         {
-          if (procForEachBlock[blockId] >= 0 && procForEachBlock[blockId] != BIG_NUMBER2)
+          if (procForEachBlock[blockId] >= 0 && procForEachBlock[blockId] != SITE_OR_BLOCK_SOLID)
           {
             site_t lastFluidSiteId = firstSiteIndexPerBlock[blockId] + fluidSitesPerBlock[blockId]
                 - 1;
@@ -1000,7 +997,7 @@ namespace hemelb
         std::map<site_t, site_t> blockIdLookupByLastSiteIndex;
         for (site_t blockId = 0; blockId < geometry.GetBlockCount(); ++blockId)
         {
-          if (procForEachBlock[blockId] >= 0 && procForEachBlock[blockId] != BIG_NUMBER2)
+          if (procForEachBlock[blockId] >= 0 && procForEachBlock[blockId] != SITE_OR_BLOCK_SOLID)
           {
             site_t lastFluidSiteId = firstSiteIndexPerBlock[blockId] + fluidSitesPerBlock[blockId]
             - 1;

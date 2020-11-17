@@ -12,15 +12,18 @@
 #include <numeric>
 #include <map>
 
+#include <vtkCellData.h>
+#include <vtkCommand.h>
+#include <vtkPolyData.h>
+#include <vtkPolyDataNormals.h>
+#include <vtkSmartPointer.h>
+#include <vtkXMLPolyDataReader.h>
+
 #include "redblood/Mesh.h"
 #include "util/fileutils.h"
 #include "log/Logger.h"
 #include "Exception.h"
 #include "constants.h"
-#include <vtkXMLPolyDataReader.h>
-#include <vtkSmartPointer.h>
-#include <vtkPolyDataNormals.h>
-#include <vtkCellData.h>
 
 namespace hemelb
 {
@@ -164,15 +167,72 @@ namespace hemelb
       return meshData;
     }
 
+    // This class implements VTK's observer interface to be notified
+    // in case of error.
+    // Only holds the last error - can reset with Clear()
+    class ErrLogger : public vtkCommand {
+    public:
+      bool err_occurred = false;
+      std::string err_message;
+
+      static ErrLogger* New() {
+	return new ErrLogger;
+      }
+
+      void Clear() {
+	*this = ErrLogger{};
+      }
+
+      void Execute(vtkObject *vtkNotUsed(caller),
+		   unsigned long event,
+		   void *calldata) override
+      {
+	if (event == vtkCommand::ErrorEvent) {
+	  err_occurred = true;
+	  err_message = static_cast<const char *>(calldata);
+	}
+      }
+    };
+
+    // Wrapper for VTK objects that installs an ErrLogger observer and
+    // checks for errors on use, throwing if one occurred.
+    //
+    // Mostly treat just like a vtkSmartPointer<T> but you can always
+    // get the members with the real pointer (val) and the ErrPointer
+    // (log).
+    template <typename T>
+    struct ErrThrower {
+      using ValType = T;
+      using ValPointer = vtkSmartPointer<T>;
+      using ErrPointer = vtkSmartPointer<ErrLogger>;
+
+      ValPointer val = nullptr;
+      ErrPointer log = nullptr;
+
+      // Factory
+      static ErrThrower New() {
+	ErrThrower ans{ValPointer::New(), ErrPointer::New()};
+	ans.val->AddObserver(vtkCommand::ErrorEvent, ans.log);
+	return ans;
+      }
+
+      // Use the wrapped object
+      ValPointer operator->() {
+	if (log->err_occurred)
+	  throw Exception() << "VTK error occurred: " << log->err_message;
+	return val;
+      }
+    };
+
     std::tuple<std::shared_ptr<MeshData>, vtkSmartPointer<vtkPolyData> > readMeshDataFromVTKPolyData(std::string const &filename)
     {
       log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from VTK polydata file");
 
       // Read in VTK polydata object
-      vtkSmartPointer<vtkXMLPolyDataReader> reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
+      auto reader = ErrThrower<vtkXMLPolyDataReader>::New();
       reader->SetFileName(filename.c_str());
       reader->Update();
-      // TODO: check that the file read succeeded, e.g. wrong format
+
       vtkSmartPointer<vtkPolyData> polydata(reader->GetOutput());
 
       // Number of vertices

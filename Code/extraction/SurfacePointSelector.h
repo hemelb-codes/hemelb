@@ -1,3 +1,8 @@
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 #ifndef HEMELB_EXTRACTION_SURFACEPOINTSELECTOR_H
 #define HEMELB_EXTRACTION_SURFACEPOINTSELECTOR_H
 
@@ -37,12 +42,11 @@ namespace hemelb
          * @param location lattice site coordinates to evaluate the selector on
          * @return whether location is within the selection
          */
-        bool IsWithinGeometry(const extraction::IterableDataSource& data,
-                              const util::Vector3D<site_t>& location);
+        bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const;
 
       private:
         /** Coordinates of the surface point to be selected. */
-        const util::Vector3D<float> surfacePoint;
+        util::Vector3D<float> surfacePoint;
         /** Maximum distance between two sites in lattice units. */
         static const float maxDistanceBetweenSitesLatticeUnits;
     };

@@ -70,7 +70,7 @@ namespace hemelb
         // Rotation is opposite to the one that will be applied to the mesh
         auto const antiRot = rotationMatrix(colAxis, cellAxis);
         auto const extents = maxExtensions(vertices, antiRot * colAxis, antiRot * cylinder->normal)
-            + separation;
+	  + LatticePosition{separation};
 
         max.x = std::numeric_limits<LatticeCoordinate>::max();
         max.y = static_cast<LatticeCoordinate>(std::ceil(cylinder->radius / extents.y));
@@ -83,7 +83,7 @@ namespace hemelb
         major = colAxis.GetNormalised() * extents.z;
         minor = colAxis.GetNormalised().Cross(cylinder->normal.GetNormalised()) * extents.y;
         depth = cylinder->normal.GetNormalised() * extents.x;
-        spacing = (extents + separation) / 2.0;
+        spacing = (extents + LatticePosition{separation}) / 2.0;
 
         if (not IsInside())
           operator++();

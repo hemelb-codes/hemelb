@@ -1,11 +1,8 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #include <string>
 #include <iostream>
@@ -17,14 +14,30 @@
 #include "reporting/BuildInfo.h"
 #include "log/Logger.h"
 #include "util/fileutils.h"
+#include "lb/InitialCondition.h"
 #include "redblood/FlowExtension.h"
-#include "redblood/io.h"
-#include "redblood/Cell.h"
+#include "redblood/RBCConfig.h"
 
 namespace hemelb
 {
   namespace configuration
   {
+    // Base IC
+    ICConfigBase::ICConfigBase(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t) : unitConverter(units), t0(t) {
+    }
+
+    // Uniform equilibrium IC
+    EquilibriumIC::EquilibriumIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, PhysicalPressure p) : ICConfigBase(units, t), p_mmHg(p), v_ms(0.0) {
+    }
+
+    EquilibriumIC::EquilibriumIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, PhysicalPressure p, const PhysicalVelocity& v) : ICConfigBase(units, t), p_mmHg(p), v_ms(v) {
+    }
+
+    // checkpoint IC
+    CheckpointIC::CheckpointIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, const std::string& cp) : ICConfigBase(units, t), cpFile(cp) {
+    }
+
+
     SimConfig* SimConfig::New(const std::string& path)
     {
       SimConfig* ans = new SimConfig(path);
@@ -32,11 +45,13 @@ namespace hemelb
       return ans;
     }
 
+
     SimConfig::SimConfig(const std::string& path) :
         xmlFilePath(path), rawXmlDoc(nullptr), hasColloidSection(false), warmUpSteps(0),
             unitConverter(nullptr)
     {
     }
+
     void SimConfig::Init()
     {
       if (!util::file_exists(xmlFilePath.c_str()))
@@ -61,6 +76,9 @@ namespace hemelb
 
       delete unitConverter;
       unitConverter = nullptr;
+
+      delete rbcConf;
+      rbcConf = nullptr;
     }
 
     void SimConfig::DoIO(io::xml::Element topNode)
@@ -104,7 +122,15 @@ namespace hemelb
 
       // The RBC section must be parsed *after* the inlets and outlets have been
       // defined
-      hasRBCSection = DoIOForRedBloodCells(topNode);
+      auto rbcEl = topNode.GetChildOrNull("redbloodcells");
+      if (rbcEl != io::xml::Element::Missing()) {
+#ifdef HEMELB_BUILD_RBC
+	rbcConf = new redblood::RBCConfig;
+	rbcConf->DoIOForRedBloodCells(topNode, *unitConverter);
+#else
+	throw Exception() << "Input XML has redbloodcells section but HEMELB_BUILD_RBC=OFF";
+#endif
+      }
     }
 
     void SimConfig::DoIOForSimulation(const io::xml::Element simEl)
@@ -242,38 +268,6 @@ namespace hemelb
       return ioletList;
     }
 
-    bool SimConfig::DoIOForRedBloodCells(const io::xml::Element & topNode)
-    {
-      auto const rbcNode = topNode.GetChildOrNull("redbloodcells");
-      if (rbcNode == rbcNode.Missing())
-      {
-        return false;
-      }
-      const io::xml::Element controllerNode = rbcNode.GetChildOrThrow("controller");
-      GetDimensionalValue(controllerNode.GetChildOrThrow("boxsize"), "LB", boxSize);
-
-      rbcMeshes.reset(redblood::readTemplateCells(topNode, GetUnitConverter()).release());
-      rbcinserter = redblood::readRBCInserters(topNode, GetUnitConverter(), *rbcMeshes);
-      rbcOutlets = redblood::readRBCOutlets(topNode, GetUnitConverter());
-      cell2Cell = redblood::readNode2NodeForce(
-          rbcNode.GetChildOrNull("cell2Cell"), GetUnitConverter());
-      cell2Wall = redblood::readNode2NodeForce(
-          rbcNode.GetChildOrNull("cell2Wall"), GetUnitConverter());
-      if(boxSize < cell2Wall.cutoff)
-      {
-        throw Exception() << "Box-size < cell-wall interaction size: "
-          "cell-wall interactions cannot be all accounted for.";
-      }
-      if(boxSize < cell2Cell.cutoff)
-      {
-        throw Exception() << "Box-size < cell-cell interaction size: "
-          "cell-cell interactions cannot be all accounted for.";
-      }
-      const io::xml::Element outputNode = rbcNode.GetChildOrThrow("output");
-      GetDimensionalValue(outputNode.GetChildOrThrow("period"), "LB", rbcOutputPeriod);
-      return true;
-    }
-
     void SimConfig::DoIOForFlowExtension(lb::iolets::InOutLet * iolet,
                                          const io::xml::Element & ioletNode)
     {
@@ -379,23 +373,23 @@ namespace hemelb
 
       if (type == "plane")
       {
-        file->geometry = DoIOForPlaneGeometry(geometryEl);
+        file->geometry.reset(DoIOForPlaneGeometry(geometryEl));
       }
       else if (type == "line")
       {
-        file->geometry = DoIOForLineGeometry(geometryEl);
+        file->geometry.reset(DoIOForLineGeometry(geometryEl));
       }
       else if (type == "whole")
       {
-        file->geometry = new extraction::WholeGeometrySelector();
+        file->geometry.reset(new extraction::WholeGeometrySelector());
       }
       else if (type == "surface")
       {
-        file->geometry = new extraction::GeometrySurfaceSelector();
+        file->geometry.reset(new extraction::GeometrySurfaceSelector());
       }
       else if (type == "surfacepoint")
       {
-        file->geometry = DoIOForSurfacePoint(geometryEl);
+        file->geometry.reset(DoIOForSurfacePoint(geometryEl));
       }
       else
       {
@@ -511,6 +505,10 @@ namespace hemelb
       {
         field.type = extraction::OutputField::TangentialProjectionTraction;
       }
+      else if (type == "distributions")
+      {
+        field.type = extraction::OutputField::Distributions;
+      }
       else if (type == "mpirank")
       {
         field.type = extraction::OutputField::MpiRank;
@@ -539,11 +537,40 @@ namespace hemelb
 
     void SimConfig::DoIOForInitialConditions(io::xml::Element initialconditionsEl)
     {
-      //, isLoading, initialPressure
-      io::xml::Element pressureEl = initialconditionsEl.GetChildOrThrow("pressure");
-      io::xml::Element uniformEl = pressureEl.GetChildOrThrow("uniform");
+      // The <time> element may be present - if so, it will set the
+      // initial timestep value
+      boost::optional<LatticeTimeStep> t0;
+      if (auto timeEl = initialconditionsEl.GetChildOrNull("time")) {
+	LatticeTimeStep tmp;
+	GetDimensionalValue(timeEl, "lattice", tmp);
+	t0 = tmp;
+      }
 
-      GetDimensionalValue(uniformEl, "mmHg", initialPressure_mmHg);
+      // Exactly one of {<pressure>, <checkpoint>} must be present
+      // TODO: use something other than an if-tree
+      auto pressureEl = initialconditionsEl.GetChildOrNull("pressure");
+      auto checkpointEl = initialconditionsEl.GetChildOrNull("checkpoint");
+      if (pressureEl) {
+	if (checkpointEl) {
+	  // Both are present - this is an error
+	  throw Exception()
+	    << "XML contains both <pressure> and <checkpoint> sub elements of <initialconditions>";
+	} else {
+	  // Only pressure
+	  io::xml::Element uniformEl = pressureEl.GetChildOrThrow("uniform");
+	  PhysicalPressure p0_mmHg;
+	  GetDimensionalValue(uniformEl, "mmHg", p0_mmHg);
+	  icConfig = EquilibriumIC(unitConverter, t0, p0_mmHg);
+	}
+      } else {
+	if (checkpointEl) {
+	  // Only checkpoint
+	  icConfig = CheckpointIC(unitConverter, t0, checkpointEl.GetAttributeOrThrow("file"));
+	} else {
+	  // No IC!
+	  throw Exception() << "XML <initialconditions> element contains no known initial condition type";
+	}
+      }
     }
 
     lb::iolets::InOutLetCosine* SimConfig::DoIOForCosinePressureInOutlet(
@@ -677,11 +704,6 @@ namespace hemelb
     bool SimConfig::HasColloidSection() const
     {
       return hasColloidSection;
-    }
-
-    PhysicalPressure SimConfig::GetInitialPressure() const
-    {
-      return initialPressure_mmHg;
     }
 
     const util::UnitConverter& SimConfig::GetUnitConverter() const

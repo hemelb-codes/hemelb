@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_EXTRACTION_GEOMETRYSELECTOR_H
 #define HEMELB_EXTRACTION_GEOMETRYSELECTOR_H
@@ -38,13 +35,14 @@ namespace hemelb
         /**
          * Returns true if the given location is within the selection.
          */
-        bool Include(const extraction::IterableDataSource& data,
-                     const util::Vector3D<site_t>& location);
+        bool Include(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const;
 
       protected:
         virtual bool
-        IsWithinGeometry(const extraction::IterableDataSource& data,
-                         const util::Vector3D<site_t>& location) = 0;
+            IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const = 0;
+
+        // Helper to do the coordinate transform for subclasses
+        util::Vector3D<float> LatticeToPhysical(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const;
     };
   }
 }

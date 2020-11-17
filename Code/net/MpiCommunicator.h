@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_NET_MPICOMMUNICATOR_H
 #define HEMELB_NET_MPICOMMUNICATOR_H
@@ -138,7 +135,12 @@ namespace hemelb
         template<typename T>
         std::vector<T> Gather(const std::vector<T>& val, const int root) const;
 
-        template<typename T>
+        template <typename T>
+        T Scatter(const std::vector<T>& vals, const int root) const;
+        template <typename T>
+        std::vector<T> Scatter(const std::vector<T>& vals, const size_t n, const int root) const;
+
+        template <typename T>
         std::vector<T> AllGather(const T& val) const;
 
         /**

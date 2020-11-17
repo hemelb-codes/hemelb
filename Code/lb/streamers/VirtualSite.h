@@ -1,11 +1,8 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_LB_STREAMERS_VIRTUALSITE_H
 #define HEMELB_LB_STREAMERS_VIRTUALSITE_H
@@ -104,7 +101,7 @@ namespace hemelb
             hv.u = LatticeVelocity::Zero();
             hv.posIolet = extra.WorldToIolet(location);
 
-            lattices::LatticeInfo& lattice = LatticeType::GetLatticeInfo();
+            auto& lattice = LatticeType::GetLatticeInfo();
 
             distribn_t velocityMatrix[3][3] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
 
@@ -122,13 +119,13 @@ namespace hemelb
               if (neighbourLocation.IsInRange(initParams.latDat->GetGlobalSiteMins(),
                                               initParams.latDat->GetGlobalSiteMaxes()))
               {
-                neighGlobalIdx =
-                    initParams.latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(neighbourLocation);
-                // BIG_NUMBER2 means a solid site, we don't store them.
-                neighbourSiteHomeProc =
-                    initParams.latDat->GetProcIdFromGlobalCoords(neighbourLocation);
+                neighGlobalIdx
+                    = initParams.latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(neighbourLocation);
+                neighbourSiteHomeProc
+                    = initParams.latDat->GetProcIdFromGlobalCoords(neighbourLocation);
 
-                if (neighbourSiteHomeProc != BIG_NUMBER2)
+                // solid site isn't stored
+                if (neighbourSiteHomeProc != SITE_OR_BLOCK_SOLID)
                   isNeighbourFluid = true;
               }
 

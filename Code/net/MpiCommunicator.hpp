@@ -1,11 +1,8 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 #ifndef HEMELB_NET_MPICOMMUNICATOR_HPP
 #define HEMELB_NET_MPICOMMUNICATOR_HPP
 
@@ -115,6 +112,32 @@ namespace hemelb
                        Rank() == root ? counts.data(): nullptr,
                        Rank() == root ? offsets.data(): nullptr,
                        MpiDataType<T>(), root, *this));
+      return ans;
+    }
+
+    template <typename T>
+    T MpiCommunicator::Scatter(const std::vector<T>& vals, const int root) const {
+      T ans;
+      const T* ptr = (Rank() == root) ? vals.data() : nullptr;
+      HEMELB_MPI_CALL(
+		      MPI_Scatter,
+		      (MpiConstCast(ptr), 1, MpiDataType<T>(),
+		       &ans, 1, MpiDataType<T>(),
+		       root, *this)
+		      );
+      return ans;
+    }
+
+    template <typename T>
+    std::vector<T> MpiCommunicator::Scatter(const std::vector<T>& vals, const size_t n, const int root) const {
+      std::vector<T> ans(n);
+      const T* ptr = (Rank() == root) ? vals.data() : nullptr;
+      HEMELB_MPI_CALL(
+		      MPI_Scatter,
+		      (MpiConstCast(ptr), n, MpiDataType<T>(),
+		       ans.data(), n, MpiDataType<T>(),
+		       root, *this)
+		      );
       return ans;
     }
 

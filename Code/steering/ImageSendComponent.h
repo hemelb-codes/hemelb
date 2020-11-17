@@ -1,15 +1,13 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_STEERING_IMAGESENDCOMPONENT_H
 #define HEMELB_STEERING_IMAGESENDCOMPONENT_H
 
+#include <memory>
 #include "constants.h"
 #include "lb/SimulationState.h"
 #include "lb/LbmParameters.h"
@@ -27,7 +25,6 @@ namespace hemelb
         ImageSendComponent(lb::SimulationState* iSimState, vis::Control* iControl,
                            const lb::LbmParameters* iLbmParams, Network* iNetwork,
                            unsigned inletCount);
-        ~ImageSendComponent();
 
         void DoWork(const vis::PixelSet<vis::ResultPixel>* pix);
         void SetMaxFramerate(float maxFramerate)
@@ -45,7 +42,7 @@ namespace hemelb
         vis::Control* mVisControl;
         const unsigned inletCount;
         float MaxFramerate;
-        char* xdrSendBuffer;
+        std::unique_ptr<char[]> xdrSendBuffer;
         double lastRender;
 
         // data per pixel is

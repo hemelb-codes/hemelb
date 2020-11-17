@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_GEOMETRY_LATTICEDATA_H
 #define HEMELB_GEOMETRY_LATTICEDATA_H
@@ -16,6 +13,7 @@
 #include "net/net.h"
 #include "constants.h"
 #include "configuration/SimConfig.h"
+#include "extraction/LocalDistributionInput.h"
 #include "geometry/Block.h"
 #include "geometry/GeometryReader.h"
 #include "geometry/NeighbouringProcessor.h"
@@ -41,16 +39,22 @@ namespace hemelb
   {
     // Ugly forward definition is currently necessary.
     template<class TRAITS> class LBM;
+
+    struct InitialConditionBase;
   }
 
   namespace geometry
   {
     class LatticeData : public reporting::Reportable
     {
+        friend class extraction::LocalDistributionInput; //! Give access to the methods GetFOld and GetFNew.
+        friend lb::InitialConditionBase;
       public:
         friend class unittests::helpers::LatticeDataAccess;
-        template<class TRAITS> friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
-        template<class LatticeData> friend class Site; //! Let the inner classes have access to site-related data that's otherwise private.
+        template<class TRAITS>
+	friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
+        template<class LatticeData>
+	friend class Site; //! Let the inner classes have access to site-related data that's otherwise private.
 
         LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult,
                     const net::IOCommunicator& comms);
@@ -379,7 +383,7 @@ namespace hemelb
           return globalSiteMaxes;
         }
 
-        void Report(ctemplate::TemplateDictionary& dictionary);
+        void Report(reporting::Dict& dictionary);
 
         neighbouring::NeighbouringLatticeData &GetNeighbouringData();
         neighbouring::NeighbouringLatticeData const &GetNeighbouringData() const;

@@ -21,7 +21,9 @@
 #include "util/Matrix3D.h"
 #include "util/UnitConverter.h"
 #include "units.h"
-#include <vtkPolyData.h>
+
+class vtkPolyData;
+template <typename T> class vtkSmartPointer;
 
 namespace hemelb
 {

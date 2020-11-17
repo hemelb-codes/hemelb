@@ -1,32 +1,21 @@
-#------Parmetis  ------------
-find_package(Parmetis REQUIRED)
-include_directories(${PARMETIS_INCLUDE_DIRS})
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
 
-#------TinyXML ----------------
-find_package(TinyXML REQUIRED)
-OPTION(TIXML_USE_STL "Use STL with TIXML" ON)
-if(TIXML_USE_STL)
-	add_definitions(-DTIXML_USE_STL)
+include(HemeLbDependency)
+
+hemelb_dependency(tinyxml use)
+hemelb_dependency(parmetis use)
+hemelb_dependency(boost use)
+hemelb_dependency(ctemplate use)
+hemelb_dependency(zlib use)
+
+if(HEMELB_BUILD_RBC)
+  hemelb_dependency(hdf5 use)
+  hemelb_dependency(vtk use)
 endif()
-include_directories(${TINYXML_INCLUDE_DIR})
-#------BOOST ------------------
-find_package(Boost 1.54 REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
-add_definitions(-DHEMELB_USE_BOOST)
-#------CTemplate ----------------
-find_package(CTemplate REQUIRED)
-include_directories(${CTEMPLATE_INCLUDE_DIR})
+
 if(HEMELB_BUILD_MULTISCALE)
-  #------MPWide ----------------
-  find_package(MPWide REQUIRED)
-  include_directories(${MPWide_INCLUDE_DIR})
-  add_definitions(-DHEMELB_BUILD_MULTISCALE)
+  hemelb_dependency(MPWide use)
 endif()
-
-#------zlib ----------------
-find_package(ZLIB REQUIRED)
-include_directories(${ZLIB_INCLUDE_DIR})
-
-#------VTK ----------------
-find_package(VTK REQUIRED NO_MODULE)
-include_directories(${VTK_INCLUDE_DIRS})

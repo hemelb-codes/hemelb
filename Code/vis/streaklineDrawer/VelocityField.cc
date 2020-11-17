@@ -1,17 +1,13 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #include <cmath>
 #include <vector>
 #include <cassert>
 
-#include "debug/Debugger.h"
 #include "geometry/BlockTraverser.h"
 #include "geometry/SiteTraverser.h"
 #include "vis/streaklineDrawer/VelocityField.h"
@@ -104,7 +100,7 @@ namespace hemelb
 
                   // If we have data for it, we should initialise a block in the velocity field
                   // for the neighbour site.
-                  if (neigh_proc_id == BIG_NUMBER2)
+                  if (neigh_proc_id == SITE_OR_BLOCK_SOLID)
                   {
                     continue;
                   }

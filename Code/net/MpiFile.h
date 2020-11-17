@@ -1,11 +1,8 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_NET_MPIFILE_H
 #define HEMELB_NET_MPIFILE_H
@@ -47,7 +44,9 @@ namespace hemelb
         operator MPI_File() const;
 
         void SetView(MPI_Offset disp, MPI_Datatype etype, MPI_Datatype filetype,
-                     const std::string& datarep, MPI_Info info);
+		     const std::string& datarep, const MPI_Info info = MPI_INFO_NULL);
+
+	MPI_Offset GetSize() const;
 
         const MpiCommunicator& GetCommunicator() const;
 

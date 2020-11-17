@@ -74,7 +74,7 @@ namespace hemelb
           {
             auto doc = getDocument(1e0, 0);
             *cells["joe"] *= 0.1e0;
-            auto const inserter = readRBCInserters(doc.FirstChildElement("hemelbsettings"),
+            auto const inserter = readRBCInserters(doc.FirstChildElement("hemelbsettings")->FirstChildElement("inlets"),
                                                    *converter,
                                                    cells);
             CPPUNIT_ASSERT(not inserter);
@@ -83,7 +83,7 @@ namespace hemelb
           void testCellOutsideFlowExtension()
           {
             auto doc = getDocument(1e0, 1);
-            CPPUNIT_ASSERT_THROW(readRBCInserters(doc.FirstChildElement("hemelbsettings"),
+            CPPUNIT_ASSERT_THROW(readRBCInserters(doc.FirstChildElement("hemelbsettings")->FirstChildElement("inlets"),
                                                   *converter,
                                                   cells),
                                  hemelb::Exception);
@@ -93,7 +93,7 @@ namespace hemelb
             // Creates an inserter and checks it exists
             auto doc = getDocument(1, 2);
             *cells["joe"] *= 0.1e0;
-            auto const inserter = readRBCInserters(doc.FirstChildElement("hemelbsettings"),
+            auto const inserter = readRBCInserters(doc.FirstChildElement("hemelbsettings")->FirstChildElement("inlets"),
                                                    *converter,
                                                    cells);
             CPPUNIT_ASSERT(inserter);
@@ -172,7 +172,7 @@ namespace hemelb
             {
               current_cell = cell;
             };
-            auto const inserter = readRBCInserters(doc.FirstChildElement("hemelbsettings"),
+            auto const inserter = readRBCInserters(doc.FirstChildElement("hemelbsettings")->FirstChildElement("inlets"),
                                                    *converter,
                                                    cells);
             CPPUNIT_ASSERT(inserter);
@@ -184,7 +184,7 @@ namespace hemelb
             helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "x", "value" }, 0.1);
             helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "y", "units" }, "m");
             helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "y", "value" }, 0.1);
-            auto const insertTranslated = readRBCInserters(doc.FirstChildElement("hemelbsettings"),
+            auto const insertTranslated = readRBCInserters(doc.FirstChildElement("hemelbsettings")->FirstChildElement("inlets"),
                                                            *converter,
                                                            cells);
             CPPUNIT_ASSERT(insertTranslated);
@@ -198,7 +198,7 @@ namespace hemelb
 
             helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "z", "units" }, "m");
             helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "z", "value" }, 0.1);
-            auto const insertWithZ = readRBCInserters(doc.FirstChildElement("hemelbsettings"),
+            auto const insertWithZ = readRBCInserters(doc.FirstChildElement("hemelbsettings")->FirstChildElement("inlets"),
                                                       *converter,
                                                       cells);
             CPPUNIT_ASSERT(insertWithZ);

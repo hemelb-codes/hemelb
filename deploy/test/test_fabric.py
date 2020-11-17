@@ -1,12 +1,8 @@
 #!/usr/bin/env python
-# 
-# Copyright (C) University College London, 2007-2012, all rights reserved.
-# 
-# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-# with, install, use, duplicate, modify, redistribute or share this
-# file, or any part thereof, other than as allowed by any agreement
-# specifically made by you with University College London.
-# 
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
 
 # encoding: utf-8
 """
@@ -131,7 +127,6 @@ class TestFabric(unittest.TestCase):
             'CMAKE_BUILD_TYPE': "Release",
             'CMAKE_CXX_FLAGS_RELEASE': "-O4",
             'CMAKE_INSTALL_PREFIX': env.install_path,
-            'CPPUNIT_PATCH_LDL' : True,
             "HEMELB_DEPENDENCIES_INSTALL_PATH": env.install_path,
             "HEMELB_SUBPROJECT_MAKE_JOBS": 1
         }
@@ -146,7 +141,6 @@ class TestFabric(unittest.TestCase):
             'CMAKE_BUILD_TYPE': "Debug",
             'HEMELB_OPTIMISATION': "",
             'HEMELB_LOG_LEVEL': "debug",
-            'CPPUNIT_PATCH_LDL' : True,
             'CMAKE_INSTALL_PREFIX': env.install_path,
             "HEMELB_DEPENDENCIES_INSTALL_PATH": env.install_path,
             "HEMELB_SUBPROJECT_MAKE_JOBS": 1

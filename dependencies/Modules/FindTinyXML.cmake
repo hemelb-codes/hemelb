@@ -1,3 +1,8 @@
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
+
 # - Find TinyXML
 # Find the native TinyXML includes and library
 #
@@ -7,16 +12,16 @@
 #
 
 IF( TINYXML_INCLUDE_DIR )
-    # Already in cache, be silent
-    SET( TinyXML_FIND_QUIETLY TRUE )
+  # Already in cache, be silent
+  SET( TinyXML_FIND_QUIETLY TRUE )
 ENDIF( TINYXML_INCLUDE_DIR )
 
 FIND_PATH( TINYXML_INCLUDE_DIR "tinyxml.h"
-           PATH_SUFFIXES "tinyxml" )
+  PATH_SUFFIXES "tinyxml" )
 
 FIND_LIBRARY( TINYXML_LIBRARIES
-              NAMES "tinyxml"
-              PATH_SUFFIXES "tinyxml" )
+  NAMES "tinyxml"
+  PATH_SUFFIXES "tinyxml" )
 
 # handle the QUIETLY and REQUIRED arguments and set TINYXML_FOUND to TRUE if
 # all listed variables are TRUE

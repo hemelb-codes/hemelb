@@ -1,12 +1,8 @@
-//
-// Copyright (C) University College London, 2007-2013, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
 
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 #include "lb/lattices/D3Q15i.h"
 
 namespace hemelb
@@ -15,8 +11,7 @@ namespace hemelb
   {
     namespace lattices
     {
-      template<>
-      lb::lattices::LatticeInfo* lb::lattices::Lattice<D3Q15i>::singletonInfo = nullptr;
+      const Direction D3Q15i::NUMVECTORS;
 
       const int D3Q15i::CX[] = { 0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1 };
       const int D3Q15i::CY[] = { 0, 0, 0, 1, -1, 0, 0, 1, -1, 1, -1, -1, 1, -1, 1 };

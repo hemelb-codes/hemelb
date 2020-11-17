@@ -15,6 +15,8 @@
 #include "redblood/Mesh.h"
 #include "redblood/Cell.h"
 #include "redblood/FlowExtension.h"
+#include "redblood/types.h"
+
 #include "util/Vector3D.h"
 #include "units.h"
 

@@ -8,6 +8,12 @@
 //
 
 #include "SimulationMaster.h"
+
+#include <map>
+#include <limits>
+#include <cstdlib>
+#include <boost/uuid/uuid_io.hpp>
+
 #include "configuration/SimConfig.h"
 #include "extraction/PropertyActor.h"
 #include "extraction/LbDataSourceIterator.h"
@@ -24,12 +30,12 @@
 #include "net/IOCommunicator.h"
 #include "colloids/BodyForces.h"
 #include "colloids/BoundaryConditions.h"
-#include "redblood/FaderCell.h"
 
-#include <map>
-#include <limits>
-#include <cstdlib>
-#include <boost/uuid/uuid_io.hpp>
+#ifdef HEMELB_BUILD_RBC
+#  include "redblood/CellController.h"
+#  include "redblood/FaderCell.h"
+#  include "redblood/RBCConfig.h"
+#endif
 
 namespace hemelb
 {
@@ -179,25 +185,28 @@ namespace hemelb
 
     if (simConfig->HasRBCSection())
     {
+#ifdef HEMELB_BUILD_RBC
+      auto rbcConfig = simConfig->GetRBCConfig();
       hemelb::redblood::CellContainer cells;
       typedef hemelb::redblood::CellController<Traits> Controller;
       auto const controller = std::make_shared<Controller>(*latticeData,
                                                            cells,
-                                                           simConfig->GetRBCMeshes(),
+                                                           rbcConfig->GetRBCMeshes(),
                                                            timings,
-                                                           simConfig->GetBoxSize(),
-                                                           simConfig->GetCell2Cell(),
-                                                           simConfig->GetCell2Wall(),
+                                                           rbcConfig->GetBoxSize(),
+                                                           rbcConfig->GetCell2Cell(),
+                                                           rbcConfig->GetCell2Wall(),
                                                            ioComms);
-      controller->SetCellInsertion(simConfig->GetInserter());
-      controller->SetOutlets(*simConfig->GetRBCOutlets());
+      controller->SetCellInsertion(rbcConfig->GetInserter());
+      controller->SetOutlets(*rbcConfig->GetRBCOutlets());
       cellController = std::static_pointer_cast<hemelb::net::IteratedAction>(controller);
 
       auto output_callback =
           [this](const hemelb::redblood::CellContainer & cells)
           {
+	    auto rbcConfig = simConfig->GetRBCConfig();
             auto timestep = simulationState->Get0IndexedTimeStep();
-            if ((timestep % simConfig->GetRBCOutputPeriod()) == 0)
+            if ((timestep % rbcConfig->GetRBCOutputPeriod()) == 0)
             {
               log::Logger::Log<log::Info, log::OnePerCore>("printstep %d, num cells %d", timestep, cells.size());
 
@@ -241,6 +250,9 @@ namespace hemelb
             }
           };
       controller->AddCellChangeListener(output_callback);
+#else
+      throw hemelb::Exception() << "Trying to create red blood cell controller with HEMELB_BUILD_RBC=OFF";
+#endif
     }
 
     // Initialise and begin the steering.
@@ -305,6 +317,7 @@ namespace hemelb
                                       inletValues.get(),
                                       outletValues.get(),
                                       unitConverter);
+    latticeBoltzmannModel->SetInitialConditions(ioComms);
     neighbouringDataManager->ShareNeeds();
     neighbouringDataManager->TransferNonFieldDependentInformation();
 

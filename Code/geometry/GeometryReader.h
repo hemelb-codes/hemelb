@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_GEOMETRY_GEOMETRYREADER_H
 #define HEMELB_GEOMETRY_GEOMETRYREADER_H
@@ -17,7 +14,7 @@
 #include "lb/lattices/LatticeInfo.h"
 #include "lb/LbmParameters.h"
 #include "net/mpi.h"
-#include "geometry/ParmetisHeader.h"
+#include "geometry/ParmetisForward.h"
 #include "reporting/Timers.h"
 #include "util/Vector3D.h"
 #include "units.h"

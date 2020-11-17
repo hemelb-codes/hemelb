@@ -77,7 +77,7 @@ namespace hemelb
           CPPUNIT_ASSERT_DOUBLES_EQUAL(left.y, -right.y, 1e-8);
           CPPUNIT_ASSERT_DOUBLES_EQUAL(left.z, -right.z, 1e-8);
           // The forces at (14, 15, 15) should be  in direction (-1, 0, 0)
-          CPPUNIT_ASSERT_DOUBLES_EQUAL(right.Dot( { -1, 0, 0 }), std::abs(right.x), 1e-8);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(right.Dot( util::Vector3D<double>{-1, 0, 0}), std::abs(right.x), 1e-8);
         }
         // This node is too far away
         CPPUNIT_ASSERT(latDat->GetSite(15 + delta, 15, 15).GetForce().GetMagnitudeSquared() < 1e-8);

@@ -17,6 +17,7 @@
 #include <memory>
 #include <iterator>
 
+#include "redblood/CellController.h"
 #include "redblood/parallel/IntegrateVelocities.h"
 #include "redblood/parallel/CellParallelization.h"
 #include "configuration/CommandLine.h"

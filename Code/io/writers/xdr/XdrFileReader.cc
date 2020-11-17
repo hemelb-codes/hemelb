@@ -1,19 +1,9 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
 
-/*
- * XdrFileReader.cc
- *
- *  Created on: Oct 25, 2010
- *      Author: rupert
- */
-
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
+#include <cassert>
 #include "io/writers/xdr/XdrFileReader.h"
 
 namespace hemelb
@@ -26,15 +16,27 @@ namespace hemelb
       {
 
         // Constructor to create an Xdr object based on a file.
-        XdrFileReader::XdrFileReader(FILE* xdrFile)
-        {
-          xdrstdio_create(&mXdr, xdrFile, XDR_DECODE);
+        XdrFileReader::XdrFileReader(const std::string& fn) {
+	  fh = std::fopen(fn.c_str(), "r");
+	  assert(fh != nullptr);
         }
 
-      } // namespace name
+	XdrFileReader::~XdrFileReader() {
+	  std::fclose(fh);
+	}
 
-    } // namespace writers
+	unsigned XdrFileReader::GetPosition() {
+	  return std::ftell(fh);
+	}
+	const char* XdrFileReader::get_bytes(size_t n) {
+	  buf.clear();
+	  buf.resize(n);
+	  auto nread = std::fread(buf.data(), 1, n, fh);
+	  assert(nread == n);
+	  return buf.data();
+	}
 
+      }
+    }
   }
-
 }

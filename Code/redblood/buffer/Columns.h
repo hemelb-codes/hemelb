@@ -15,6 +15,7 @@
 #include "redblood/Cell.h"
 #include "redblood/Interpolation.h"
 #include "redblood/FlowExtension.h"
+#include "redblood/types.h"
 #include "Exception.h"
 #include "units.h"
 

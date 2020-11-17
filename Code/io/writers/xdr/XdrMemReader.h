@@ -1,16 +1,13 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_IO_WRITERS_XDR_XDRMEMREADER_H
 #define HEMELB_IO_WRITERS_XDR_XDRMEMREADER_H
 
-#include <cstdio>
+#include <vector>
 
 #include "io/writers/xdr/XdrReader.h"
 
@@ -25,9 +22,17 @@ namespace hemelb
 
         class XdrMemReader : public XdrReader
         {
-          public:
-            XdrMemReader(char* dataBuffer, unsigned int dataLength);
-
+	public:
+	  XdrMemReader(const char* dataBuffer, unsigned int dataLength);
+	  XdrMemReader(const std::vector<char>& dataVec);
+	  virtual ~XdrMemReader();
+	  virtual unsigned GetPosition();
+	protected:
+	  virtual const char* get_bytes(size_t n);
+	private:
+	  const char* start;
+	  const char* current;
+	  size_t len;
         };
       } // namespace xdr
     } // namespace writers

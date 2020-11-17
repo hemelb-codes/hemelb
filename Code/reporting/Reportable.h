@@ -1,16 +1,13 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_REPORTING_REPORTABLE_H
 #define HEMELB_REPORTING_REPORTABLE_H
 
-#include "ctemplate/template.h"
+#include "reporting/Dict.h"
 
 namespace hemelb
 {
@@ -22,10 +19,8 @@ namespace hemelb
     class Reportable
     {
       public:
-        virtual ~Reportable()
-        {
-        }
-        virtual void Report(ctemplate::TemplateDictionary& dictionary) = 0;
+        virtual ~Reportable() = default;
+        virtual void Report(Dict& dictionary) = 0;
     };
   }
 }

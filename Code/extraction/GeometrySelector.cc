@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #include "extraction/GeometrySelector.h"
 
@@ -14,7 +11,7 @@ namespace hemelb
   namespace extraction
   {
     bool GeometrySelector::Include(const extraction::IterableDataSource& data,
-                                   const util::Vector3D<site_t>& location)
+                                   const util::Vector3D<site_t>& location) const
     {
       if (!data.IsValidLatticeSite(location) || !data.IsAvailable(location))
       {
@@ -22,6 +19,10 @@ namespace hemelb
       }
 
       return IsWithinGeometry(data, location);
+    }
+
+    util::Vector3D<float> GeometrySelector::LatticeToPhysical(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const {
+      return util::Vector3D<float>{location} * data.GetVoxelSize() + data.GetOrigin();
     }
   }
 }

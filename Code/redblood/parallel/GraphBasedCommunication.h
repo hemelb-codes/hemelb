@@ -10,6 +10,7 @@
 #define HEMELB_REDBLOOD_PARALLELIZATION_GRAPH_BASED_COMMUNICATION_H
 
 #include "geometry/LatticeData.h"
+#include "redblood/types.h"
 
 namespace hemelb
 {

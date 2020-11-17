@@ -1,11 +1,8 @@
-# 
-# Copyright (C) University College London, 2007-2012, all rights reserved.
-# 
-# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-# with, install, use, duplicate, modify, redistribute or share this
-# file, or any part thereof, other than as allowed by any agreement
-# specifically made by you with University College London.
-# 
+
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
 
 default: 
   # General default values for all machines live in the default dictionary.
@@ -65,8 +62,10 @@ archer: #the ARCHER supercomputer at EPCC
   make_jobs: 4
   verbose: 1
   job_dispatch: "qsub"
-  run_command: "aprun -n $cores > stdout.txt 2> stderr.txt"
+  run_command: "aprun -n $cores -N $corespernode > stdout.txt 2> stderr.txt"
   batch_header: pbs-archer
+  no_ssh: true
+  no_git: true
   remote: "login.archer.ac.uk"
   no_git: true # sync from local checkout, easier to deploy local changes for debug, DON'T MERGE IN
   # On ARCHER, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
@@ -82,13 +81,10 @@ archer: #the ARCHER supercomputer at EPCC
   python_build: "lib/python2.7"
   corespernode: 24
   cmake_options:
-    HEMELB_OPTIMISATION: "\"-Ofast -funroll-loops\""
+    HEMELB_OPTIMISATION: "-O3"
     HEMELB_USE_SSE3: "ON"
     HEMELB_COMPUTE_ARCHITECTURE: "INTELSANDYBRIDGE"
-    METIS_INCLUDE_DIR: "$CRAY_TPSL_PREFIX_DIR/include"
-    METIS_LIBRARY: "$CRAY_TPSL_PREFIX_DIR/lib"
-    PARMETIS_INCLUDE_DIR: "$CRAY_TPSL_PREFIX_DIR/include"
-    PARMETIS_LIBRARY: "$CRAY_TPSL_PREFIX_DIR/lib"
+    METIS_ROOT: "$CRAY_TPSL_PREFIX_DIR"
 
 legion: 
   job_dispatch: "qsub"
@@ -129,8 +125,6 @@ planck:
   remote: "planck.chem.ucl.ac.uk"
   python_build: "lib/python2.7"
   home_path_template: "/home/$username/.fabric/Remote"
-  cmake_options:
-    CPPUNIT_PATCH_LDL: ON
 entropy: 
   remote: "entropy.chem.ucl.ac.uk"
   python_build: "lib/python2.6"
@@ -229,7 +223,6 @@ huygens:
       CMAKE_C_COMPILER: "mpcc"
       CMAKE_CXX_FLAGS_RELEASE: ""
       HEMELB_OPTIMISATION: "-O3"
-      CPPUNIT_CONFIGURE_OPTIONS: --host=powerpc64-unknown-linux-gnu
       CTEMPLATE_CONFIGURE_OPTIONS: --host=powerpc64-unknown-linux-gnu
    
 riken:
@@ -264,7 +257,6 @@ marigold:
      CMAKE_CXX_COMPILER: /opt/FJSVtclang/1.2.0/bin/mpiFCCpx
      CMAKE_C_COMPILER: /opt/FJSVtclang/1.2.0/bin/mpifccpx
      CTEMPLATE_CONFIGURE_OPTIONS: --host=sparc64-unknown-linux-gnu
-     CPPUNIT_CONFIGURE_OPTIONS: --host=sparc64-unknown-linux-gnu
      PARMETIS_CXX: /opt/FJSVtclang/1.2.0/bin/mpiFCCpx
      PARMETIS_CC: /opt/FJSVtclang/1.2.0/bin/mpifccpx
      CTEMPLATE_PATCH_VACOPY: ON

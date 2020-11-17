@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_IO_PATHMANAGER_H
 #define HEMELB_IO_PATHMANAGER_H
@@ -15,12 +12,17 @@
 #include "util/fileutils.h"
 #include "log/Logger.h"
 #include "configuration/SimConfig.h"
-#include "io/writers/xdr/XdrFileWriter.h"
-#include "io/writers/null/NullWriter.h"
+
 namespace hemelb
 {
   namespace io
   {
+    // Forward declare the Writer
+    namespace writers
+    {
+      class Writer;
+    }
+
     /**
      * Manage the input and output file system locations for HemeLB images, reports, and input xml and dat files.
      */
@@ -73,7 +75,7 @@ namespace hemelb
          * @param time The current time, used to generate a unique filename.
          * @return Pointer to an XDR file writer -- this is allocated on free store, and should be deleted by the client code.
          */
-        hemelb::io::writers::Writer * XdrImageWriter(const long int time) const;
+        hemelb::io::writers::Writer* XdrImageWriter(const long int time) const;
 
         /**
          * Return the path that property extraction output should go to.

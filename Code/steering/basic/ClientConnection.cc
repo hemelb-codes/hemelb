@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #include <cstdio>
 #include <cstdlib>
@@ -15,7 +12,6 @@
 #include <fcntl.h>
 #include <netinet/in.h>
 
-#include "debug/Debugger.h"
 #include "log/Logger.h"
 #include "steering/ClientConnection.h"
 #include "steering/basic/HttpPost.h"
@@ -27,8 +23,6 @@ namespace hemelb
     ClientConnection::ClientConnection(int iSteeringSessionId, reporting::Timers & timings) :
         mIsBusy(), timers(timings)
     {
-      sem_init(&mIsBusy, 0, 1);
-
       // Write the name of this machine to a file.
 
       {
@@ -84,15 +78,14 @@ namespace hemelb
 
     ClientConnection::~ClientConnection()
     {
-      sem_destroy(&mIsBusy);
-
       close(mCurrentSocket);
       close(mListeningSocket);
     }
 
     int ClientConnection::GetWorkingSocket()
     {
-      sem_wait(&mIsBusy);
+      // Lock the mutex and release it when this goes out of scope
+      std::lock_guard<std::mutex> lock(mIsBusy);
 
       // If we haven't yet had a socket, or the current one is broken, open a new one.
       if (mCurrentSocket < 0 || mIsBroken)
@@ -157,19 +150,17 @@ namespace hemelb
 
       int lRet = mCurrentSocket;
 
-      sem_post(&mIsBusy);
-
       return lRet;
     }
 
     void ClientConnection::ReportBroken(int iSocketNum)
     {
-      sem_wait(&mIsBusy);
+      // Lock the mutex and release it when this goes out of scope
+      std::lock_guard<std::mutex> lock(mIsBusy);
       if (mCurrentSocket == iSocketNum)
       {
         mIsBroken = true;
       }
-      sem_post(&mIsBusy);
     }
 
   }

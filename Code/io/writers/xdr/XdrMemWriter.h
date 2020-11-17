@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_IO_WRITERS_XDR_XDRMEMWRITER_H
 #define HEMELB_IO_WRITERS_XDR_XDRMEMWRITER_H
@@ -20,20 +17,14 @@ namespace hemelb
     {
       namespace xdr
       {
-
-        // Class for writing to an Xdr object in memory. Derives from a
-        // base XdrWriter which implements all the writing functions.
-
-        class XdrMemWriter : public XdrWriter
-        {
-          public:
-            // Constructor and destructor for the in-memory Xdr writer.
-            XdrMemWriter(char* dataBuffer, unsigned int dataLength);
-            ~XdrMemWriter();
-        };
-
-      } // namespace xdr
-    } // namespace writers
+	// Simple wrapper to allow construction from pointer-length
+	// arguments.
+	class XdrMemWriter : public XdrMetaWriter<char*> {
+	public:
+	  XdrMemWriter(char* dataBuffer, unsigned int dataLength);
+	};
+      }
+    }
   }
 }
 #endif // HEMELB_IO_WRITERS_XDR_XDRMEMWRITER_H

@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_LB_INCOMPRESSIBILITYCHECKER_HPP
 #define HEMELB_LB_INCOMPRESSIBILITYCHECKER_HPP
@@ -258,16 +255,13 @@ namespace hemelb
     }
 
     template<class BroadcastPolicy>
-    void IncompressibilityChecker<BroadcastPolicy>::Report(
-        ctemplate::TemplateDictionary& dictionary)
+    void IncompressibilityChecker<BroadcastPolicy>::Report(reporting::Dict& dictionary)
     {
       if (AreDensitiesAvailable() && !IsDensityDiffWithinRange())
       {
-        ctemplate::TemplateDictionary *incomp = dictionary.AddSectionDictionary("DENSITIES");
-        incomp->SetFormattedValue("ALLOWED",
-                                  "%.1f%%",
-                                  GetMaxRelativeDensityDifferenceAllowed() * 100);
-        incomp->SetFormattedValue("ACTUAL", "%.1f%%", GetMaxRelativeDensityDifference() * 100);
+        reporting::Dict incomp = dictionary.AddSectionDictionary("DENSITIES");
+        incomp.SetFormattedValue("ALLOWED", "%.1f%%", GetMaxRelativeDensityDifferenceAllowed() * 100);
+        incomp.SetFormattedValue("ACTUAL", "%.1f%%", GetMaxRelativeDensityDifference() * 100);
       }
     }
 

@@ -5,6 +5,7 @@
 #include "redblood/Cell.h"
 #include "redblood/FaderCell.h"
 #include "redblood/RBCInserter.h"
+#include "redblood/RBCConfig.h"
 #include "redblood/FlowExtension.h"
 #include "redblood/io.h"
 #include "Traits.h"
@@ -326,25 +327,25 @@ namespace hemelb
       return moduli;
     }
 
-    Node2NodeForce readNode2NodeForce(io::xml::Element const& node,
-                                      util::UnitConverter const & converter)
+    std::shared_ptr<Node2NodeForce> readNode2NodeForce(io::xml::Element const& node,
+						       util::UnitConverter const & converter)
     {
-      Node2NodeForce result(1e0 / converter.ConvertToLatticeUnits("Nm", 1e0), 1, 2);
+      auto result = std::make_shared<Node2NodeForce>(1e0 / converter.ConvertToLatticeUnits("Nm", 1e0), 1, 2);
       if (node == node.Missing())
       {
         return result;
       }
-      result.intensity = GetNonDimensionalValue(node,
+      result->intensity = GetNonDimensionalValue(node,
                                                 "intensity",
                                                 "Nm",
                                                 converter,
-                                                result.intensity);
-      result.cutoff = GetNonDimensionalValue(node,
+                                                result->intensity);
+      result->cutoff = GetNonDimensionalValue(node,
                                              "cutoffdistance",
                                              "LB",
                                              converter,
-                                             result.cutoff);
-      if (2e0 * result.cutoff > Dimensionless(Traits<>::Stencil::GetRange()))
+                                             result->cutoff);
+      if (2e0 * result->cutoff > Dimensionless(Traits<>::Stencil::GetRange()))
       {
         log::Logger::Log<log::Warning, log::Singleton>("Input inconsistency: cell-cell and cell-wall interactions larger then stencil size\n"
                                                        "See issue #586.");
@@ -355,7 +356,7 @@ namespace hemelb
         node.Missing();
       if (exponentNode != node.Missing())
       {
-        exponentNode.GetAttributeOrThrow("value", result.exponent);
+        exponentNode.GetAttributeOrThrow("value", result->exponent);
       }
       return result;
     }
@@ -481,39 +482,6 @@ namespace hemelb
       return std::unique_ptr<decltype(result)>(new decltype(result)(std::move(result)));
     }
 
-    FlowExtension readFlowExtension(io::xml::Element const& node,
-                                    util::UnitConverter const& converter)
-    {
-      if (node == node.Missing())
-      {
-        throw Exception() << "Expected non-empty XML node";
-      }
-
-      auto const flowXML = node.GetChildOrThrow("flowextension");
-      FlowExtension result;
-
-      result.length = GetNonDimensionalValue<LatticeDistance>(flowXML, "length", "m", converter);
-      result.radius = GetNonDimensionalValue<LatticeDistance>(flowXML, "radius", "m", converter);
-      result.fadeLength =
-          GetNonDimensionalValue<LatticeDistance>(flowXML,
-                                                  "fadelength",
-                                                  "m",
-                                                  converter,
-                                                  converter.ConvertDistanceToPhysicalUnits(result.length));
-
-      // Infer normal and position from inlet
-      // However, normals point in *opposite* direction, and, as a result, origin are at opposite
-      // end of the cylinder
-      result.normal = -GetNonDimensionalValue<LatticePosition>(node,
-                                                               "normal",
-                                                               "dimensionless",
-                                                               converter);
-      result.normal.Normalise();
-      result.origin = GetPosition(node, "position", converter) - result.normal * result.length;
-
-      return result;
-    }
-
     //! Finds first inlet with Cell insertion
     io::xml::Element findFirstInletWithCellInsertion(io::xml::Element const &inlet)
     {
@@ -531,12 +499,11 @@ namespace hemelb
     }
 
     std::function<void(CellInserter const&)> readRBCInserters(
-        io::xml::Element const& node, util::UnitConverter const& converter,
+        io::xml::Element const& inletsNode, util::UnitConverter const& converter,
         TemplateCellContainer const& templateCells)
     {
       // Check if we have any cell insertion action going on at all
-      auto const inlets = node.GetChildOrThrow("inlets");
-      auto inlet = findFirstInletWithCellInsertion(inlets.GetChildOrThrow("inlet"));
+      auto inlet = findFirstInletWithCellInsertion(inletsNode.GetChildOrThrow("inlet"));
       std::vector<std::function<void(CellInserter const&)>> results;
       while (inlet != inlet.Missing())
       {

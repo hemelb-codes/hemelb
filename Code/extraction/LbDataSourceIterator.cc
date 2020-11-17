@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #include "extraction/LbDataSourceIterator.h"
 
@@ -80,6 +77,11 @@ namespace hemelb
       return converter.ConvertStressToPhysicalUnits(propertyCache.tangentialProjectionTractionCache.Get(position));
     }
 
+    const distribn_t* LbDataSourceIterator::GetDistribution() const
+    {
+      return data.GetFNew(position * data.GetLatticeInfo().GetNumVectors());
+    }
+
     void LbDataSourceIterator::Reset()
     {
       position = -1;
@@ -110,6 +112,11 @@ namespace hemelb
       site_t localSiteId = data.GetContiguousSiteId(location);
 
       return data.GetSite(localSiteId).IsWall();
+    }
+
+    unsigned LbDataSourceIterator::GetNumVectors() const
+    {
+      return data.GetLatticeInfo().GetNumVectors();
     }
   }
 }

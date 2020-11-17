@@ -1,11 +1,8 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_LB_STREAMERS_VIRTUALSITEIOLET_H
 #define HEMELB_LB_STREAMERS_VIRTUALSITEIOLET_H
@@ -18,8 +15,6 @@
 #include "log/Logger.h"
 #include "util/FlatMap.h"
 #include <map>
-
-#include "debug/Debugger.h"
 
 namespace hemelb
 {
@@ -75,7 +70,7 @@ namespace hemelb
                 iolet.SetExtraData(new VSExtra<LatticeType>(iolet));
             }
 
-            lattices::LatticeInfo& lattice = LatticeType::GetLatticeInfo();
+            auto& lattice = LatticeType::GetLatticeInfo();
             // Want to loop over each site this streamer is responsible for,
             // as specified in the siteRanges.
             for (std::vector<std::pair<site_t, site_t> >::iterator rangeIt =

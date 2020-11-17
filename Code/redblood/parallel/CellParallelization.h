@@ -14,6 +14,7 @@
 
 #include "redblood/parallel/NodeCharacterizer.h"
 #include "redblood/Cell.h"
+#include "redblood/types.h"
 #include "net/MpiCommunicator.h"
 #include "net/INeighborAllToAll.h"
 #include "net/INeighborAllToAllV.h"

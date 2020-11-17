@@ -1,22 +1,17 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_IO_WRITERS_XDR_XDRREADER_H
 #define HEMELB_IO_WRITERS_XDR_XDRREADER_H
 
-#if HEMELB_HAVE_CSTDINT
-# include <cstdint>
-#else
-# include <stdint.h>
-#endif
-#include <rpc/types.h>
-#include <rpc/xdr.h>
+#include <cstdint>
+#include <string>
+
+#include "Exception.h"
+#include "io/writers/xdr/XdrSerialisation.h"
 
 namespace hemelb
 {
@@ -26,29 +21,50 @@ namespace hemelb
     {
       namespace xdr
       {
-        // Class to read an Xdr-style file from disk.
+        // Class to read XDR data
         class XdrReader
         {
-          public:
-            // destructor.
-            virtual ~XdrReader();
+	public:
+	  // destructor.
+	  virtual ~XdrReader() {
+	  }
 
-            // Functions for reading the next bit of the stream.
-            bool readDouble(double& outDouble);
-            bool readFloat(float& outDouble);
-            bool readInt(int& outInt);
-            bool readUnsignedInt(unsigned int& outUInt);
-            bool readUnsignedLong(uint64_t& outULong);
+	  // Functions for reading the next bit of the stream.
+	  template<class T>
+	  bool read(T& val) {
+	    constexpr auto n = detail::xdr_serialised_size<T>();
+	    auto buf = get_bytes(n);
+	    detail::xdr_deserialise(val, buf);
+	    return true;
+	  }
 
-            // Get the position in the stream.
-            unsigned int GetPosition();
-            bool SetPosition(unsigned int iPosition);
+	  template <class T>
+	  T read() {
+	    T ans;
+	    if (!read<T>(ans)) {
+	      throw Exception() << "Error reading type from XDR";
+	    }
+	    return ans;
+	  }
 
-          protected:
-            XdrReader();
-            XDR mXdr;
+	  // Get the position in the stream.
+	  virtual unsigned GetPosition() = 0;
 
+	protected:
+	  // Get some bytes from the underlying storage
+	  virtual const char* get_bytes(size_t n) = 0;
         };
+
+	template<>
+	inline bool XdrReader::read(std::string& val) {
+	  uint32_t len = 0;
+	  read(len);
+	  // p == padded
+	  uint32_t plen = 4 * ((len - 1)/4 + 1);
+	  auto pstr = get_bytes(plen);
+	  val.assign(pstr, len);
+	  return true;
+	}
 
       } // namespace xdr
     } // namespace writers

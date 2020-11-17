@@ -1,16 +1,14 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 /* Specifying the use of 'real' MPWide */
 #include <MPWide.h>
 
 #include "configuration/CommandLine.h"
+#include "debug/Debugger.h"
 #include "multiscale/MultiscaleSimulationMaster.h"
 #include "multiscale/mpwide/MPWideIntercommunicator.h"
 
@@ -22,8 +20,6 @@ int main(int argc, char *argv[])
   try
   {
     hemelb::net::MpiCommunicator commWorld = hemelb::net::MpiCommunicator::World();
-    // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
-    hemelb::debug::Debugger::Init(argv[0], commWorld);
 
     hemelb::net::IOCommunicator hemelbCommunicator(commWorld);
 
@@ -31,6 +27,8 @@ int main(int argc, char *argv[])
     {
       // Parse command line
       hemelb::configuration::CommandLine options = hemelb::configuration::CommandLine(argc, argv);
+      // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
+      hemelb::debug::Debugger::Init(options.GetDebug(), argv[0], commWorld);
 
       // Prepare some multiscale/MPWide stuff
 
@@ -60,6 +58,7 @@ int main(int argc, char *argv[])
       //TODO: Add an IntercommunicatorImplementation?
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Constructing MultiscaleSimulationMaster()");
       hemelb::multiscale::MultiscaleSimulationMaster<hemelb::multiscale::MPWideIntercommunicator> lMaster(options,
+													  hemelbCommunicator,
                                                                                                           intercomms);
 
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Runing simulation()");

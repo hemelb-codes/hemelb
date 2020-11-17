@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_LB_LB_H
 #define HEMELB_LB_LB_H
@@ -93,6 +90,7 @@ namespace hemelb
                         iolets::BoundaryValues* iOutletValues, const util::UnitConverter* iUnits);
 
         void ReadVisParameters();
+        void SetInitialConditions(const net::IOCommunicator& ioComms);
 
         void CalculateMouseFlowField(const ScreenDensity densityIn, const ScreenStress stressIn,
                                      const LatticeDensity density_threshold_min,
@@ -105,7 +103,6 @@ namespace hemelb
         lb::MacroscopicPropertyCache& GetPropertyCache();
 
       private:
-        void SetInitialConditions();
 
         void InitCollisions();
         // The following function pair simplify initialising the site ranges for each collider object.

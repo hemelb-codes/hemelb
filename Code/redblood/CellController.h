@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 //
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_CELL_CONTROLLER_H
-#define HEMELB_UNITTESTS_REDBLOOD_CELL_CONTROLLER_H
+#ifndef HEMELB_REDBLOOD_CELLCONTROLLER_H
+#define HEMELB_REDBLOOD_CELLCONTROLLER_H
 
 #include "net/net.h"
 #include "net/IteratedAction.h"

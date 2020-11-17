@@ -1,30 +1,29 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_CONFIGURATION_SIMCONFIG_H
 #define HEMELB_CONFIGURATION_SIMCONFIG_H
 
 #include <vector>
+#include <boost/variant.hpp>
+#include <boost/optional.hpp>
+
 #include "util/Vector3D.h"
 #include "lb/LbmParameters.h"
 #include "lb/iolets/InOutLets.h"
-#include "extraction/PropertyOutputFile.h"
 #include "extraction/GeometrySelectors.h"
+#include "extraction/PropertyOutputFile.h"
 #include "io/xml/XmlAbstractionLayer.h"
-#include "redblood/Cell.h"
-#include "redblood/Mesh.h"
-#include "redblood/types.h"
-#include "redblood/RBCInserter.h"
-#include "redblood/Node2Node.h"
 
 namespace hemelb
 {
+  namespace redblood {
+    class RBCConfig;
+  }
+
   namespace configuration
   {
     template<typename T>
@@ -39,6 +38,42 @@ namespace hemelb
 
       elem.GetAttributeOrThrow("value", value);
     }
+
+    template<typename T>
+    void GetDimensionalValueInLatticeUnits(const io::xml::Element& elem, const std::string& units, const util::UnitConverter& converter, T& value)
+    {
+      if (units == "lattice" || units == "LB")
+	return GetDimensionalValue(elem, units, value);
+
+      T phys;
+      GetDimensionalValue(elem, units, phys);
+      value = converter.ConvertToLatticeUnits(units, phys);
+    }
+
+    // Base for initial conditions configuration
+    struct ICConfigBase {
+      ICConfigBase(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t);
+
+      const util::UnitConverter* unitConverter;
+      boost::optional<LatticeTimeStep> t0;
+    };
+
+    // Uniform equilibrium IC
+    struct EquilibriumIC : ICConfigBase {
+      EquilibriumIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, PhysicalPressure p);
+      EquilibriumIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, PhysicalPressure p, const PhysicalVelocity& v);
+      PhysicalPressure p_mmHg;
+      PhysicalVelocity v_ms;
+    };
+
+    // Read from checkpoint IC
+    struct CheckpointIC : ICConfigBase {
+      CheckpointIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, const std::string& cp);
+      std::string cpFile;
+    };
+
+    // Variant including null state
+    using ICConfig = boost::variant<std::nullptr_t, EquilibriumIC, CheckpointIC>;
 
     class SimConfig
     {
@@ -61,10 +96,10 @@ namespace hemelb
             bool doIncompressibilityCheck; ///< Whether to turn on the IncompressibilityChecker or not
         };
 
-        static SimConfig* New(const std::string& path);
+	static SimConfig* New(const std::string& path);
 
       protected:
-        SimConfig(const std::string& path);
+	SimConfig(const std::string& path);
         void Init();
 
       public:
@@ -84,26 +119,6 @@ namespace hemelb
         const std::vector<lb::iolets::InOutLet*> & GetOutlets() const
         {
           return outlets;
-        }
-        std::shared_ptr<redblood::TemplateCellContainer> GetRBCMeshes() const
-        {
-          return rbcMeshes;
-        }
-        std::shared_ptr<std::vector<redblood::FlowExtension>> GetRBCOutlets() const
-        {
-          return rbcOutlets;
-        }
-        redblood::Node2NodeForce const & GetCell2Cell() const
-        {
-          return cell2Cell;
-        }
-        redblood::Node2NodeForce const & GetCell2Wall() const
-        {
-          return cell2Wall;
-        }
-        LatticeTimeStep const & GetRBCOutputPeriod() const
-        {
-          return rbcOutputPeriod;
         }
         lb::StressTypes GetStressType() const
         {
@@ -133,7 +148,7 @@ namespace hemelb
         {
           return maxStress;
         }
-        const std::string & GetDataFilePath() const
+        const std::string& GetDataFilePath() const
         {
           return dataFilePath;
         }
@@ -179,11 +194,10 @@ namespace hemelb
          */
         bool HasColloidSection() const;
 
-        /**
-         * Returns the pressure to be used to initialise all the fluid sites in the domain
-         * @return initial pressure
-         */
-        LatticeDensity GetInitialPressure() const;
+        // Get the initial condtion config
+        inline const ICConfig& GetInitialCondition() const {
+	  return icConfig;
+	}
 
         const util::UnitConverter& GetUnitConverter() const;
 
@@ -197,29 +211,14 @@ namespace hemelb
          * True if the XML file has a section specifying red blood cells.
          * @return
          */
-        bool HasRBCSection() const
+        inline bool HasRBCSection() const
         {
-          return hasRBCSection;
+          return rbcConf != nullptr;
         }
 
-        /**
-         * Returns the object used to insert red blood cells into the simulation.
-         * @return
-         */
-        std::function<void(redblood::CellInserter const&)> GetInserter() const
-        {
-          return rbcinserter;
-        }
-
-        /**
-         * Gets the box size for the RBC CellController.
-         * @return
-         */
-        LatticeDistance GetBoxSize() const
-        {
-          return boxSize;
-        }
-
+	inline const redblood::RBCConfig* GetRBCConfig() const {
+	  return rbcConf;
+	}
       protected:
         /**
          * Create the unit converter - virtual so that mocks can override it.
@@ -254,7 +253,6 @@ namespace hemelb
         void DoIO(const io::xml::Element xmlNode);
         void DoIOForSimulation(const io::xml::Element simEl);
         void DoIOForGeometry(const io::xml::Element geometryEl);
-        bool DoIOForRedBloodCells(const io::xml::Element & rbcNode);
 
         std::vector<lb::iolets::InOutLet*> DoIOForInOutlets(const io::xml::Element xmlNode);
         void DoIOForFlowExtension(lb::iolets::InOutLet *, const io::xml::Element &);
@@ -301,6 +299,7 @@ namespace hemelb
         extraction::SurfacePointSelector* DoIOForSurfacePoint(const io::xml::Element&);
 
         void DoIOForInitialConditions(io::xml::Element parent);
+	void DoIOForCheckpointFile(const io::xml::Element& checkpointEl);
         void DoIOForVisualisation(const io::xml::Element& visEl);
 
         /**
@@ -342,19 +341,15 @@ namespace hemelb
          * True if the file has a colloids section.
          */
         bool hasColloidSection;
-        PhysicalPressure initialPressure_mmHg; ///< Pressure used to initialise the domain
+
         MonitoringConfig monitoringConfig; ///< Configuration of various checks/tests
-        /**
-         * True if the file has a redbloodcells section.
-         */
-        bool hasRBCSection;
-        std::function<void(redblood::CellInserter const&)> rbcinserter;
-        LatticeDistance boxSize;
-        std::shared_ptr<redblood::TemplateCellContainer> rbcMeshes;
-        std::shared_ptr<std::vector<redblood::FlowExtension>> rbcOutlets;
-        redblood::Node2NodeForce cell2Cell;
-        redblood::Node2NodeForce cell2Wall;
-        LatticeTimeStep rbcOutputPeriod;
+
+        // We want to keep the RBC types isolated in their own library
+        // so put all the configuration in a type that is opaque to
+        // the rest of the code.
+        //
+        // nullptr => no RBC
+        redblood::RBCConfig* rbcConf = nullptr;
 
       protected:
         // These have to contain pointers because there are multiple derived types that might be
@@ -367,6 +362,8 @@ namespace hemelb
         PhysicalDistance voxelSizeMetres;
         PhysicalPosition geometryOriginMetres;
         util::UnitConverter* unitConverter;
+        ICConfig icConfig;
+      private:
     };
   }
 }

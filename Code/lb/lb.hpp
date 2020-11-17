@@ -1,17 +1,17 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_LB_LB_HPP
 #define HEMELB_LB_LB_HPP
 
 #include "io/writers/xdr/XdrMemWriter.h"
 #include "lb/lb.h"
+#include "util/unique.h"
+#include "lb/InitialCondition.h"
+#include "lb/InitialCondition.hpp"
 
 namespace hemelb
 {
@@ -144,8 +144,6 @@ namespace hemelb
 
       InitCollisions();
 
-      SetInitialConditions();
-
       mVisControl = iControl;
     }
 
@@ -178,25 +176,11 @@ namespace hemelb
     }
 
     template<class TRAITS>
-    void LBM<TRAITS>::SetInitialConditions()
+    void LBM<TRAITS>::SetInitialConditions(const net::IOCommunicator& ioComms)
     {
-      distribn_t density = mUnits->ConvertPressureToLatticeUnits(mSimConfig->GetInitialPressure())
-          / Cs2;
-
-      for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
-      {
-        distribn_t f_eq[LatticeType::NUMVECTORS];
-
-        LatticeType::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
-
-        distribn_t* f_old_p = mLatDat->GetFOld(i * LatticeType::NUMVECTORS);
-        distribn_t* f_new_p = mLatDat->GetFNew(i * LatticeType::NUMVECTORS);
-
-        for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
-        {
-          f_new_p[l] = f_old_p[l] = f_eq[l];
-        }
-      }
+      auto icond = InitialCondition::FromConfig(mSimConfig->GetInitialCondition());
+      icond.SetFs<LatticeType>(mLatDat, ioComms);
+      icond.SetTime(mState);
     }
 
     template<class TRAITS>

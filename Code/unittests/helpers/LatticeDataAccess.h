@@ -168,7 +168,7 @@ namespace hemelb
           distribn_t const * const siteFOld(site.GetFOld<LATTICE>());
           distribn_t const * const firstFOld = &latDat->oldDistributions[0];
           size_t const indexFOld(siteFOld - firstFOld);
-          latDat->oldDistributions[indexFOld + _i] = _function(pos_real);
+          latDat->newDistributions[indexFOld + _i] = latDat->oldDistributions[indexFOld + _i] = _function(pos_real);
         }
       }
 

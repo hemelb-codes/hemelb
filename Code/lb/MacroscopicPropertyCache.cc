@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #include "lb/MacroscopicPropertyCache.h"
 
@@ -15,15 +12,16 @@ namespace hemelb
   {
     MacroscopicPropertyCache::MacroscopicPropertyCache(const SimulationState& simState,
                                                        const geometry::LatticeData& latticeData) :
-        densityCache(simState, latticeData.GetLocalFluidSiteCount()),
-            velocityCache(simState, latticeData.GetLocalFluidSiteCount()),
-            wallShearStressMagnitudeCache(simState, latticeData.GetLocalFluidSiteCount()),
-            vonMisesStressCache(simState, latticeData.GetLocalFluidSiteCount()),
-            shearRateCache(simState, latticeData.GetLocalFluidSiteCount()),
-            stressTensorCache(simState, latticeData.GetLocalFluidSiteCount()),
-            tractionCache(simState, latticeData.GetLocalFluidSiteCount()),
-            tangentialProjectionTractionCache(simState, latticeData.GetLocalFluidSiteCount()),
-            siteCount(latticeData.GetLocalFluidSiteCount())
+      densityCache(simState, latticeData.GetLocalFluidSiteCount()),
+      velocityCache(simState, latticeData.GetLocalFluidSiteCount()),
+      wallShearStressMagnitudeCache(simState, latticeData.GetLocalFluidSiteCount()),
+      vonMisesStressCache(simState, latticeData.GetLocalFluidSiteCount()),
+      shearRateCache(simState, latticeData.GetLocalFluidSiteCount()),
+      stressTensorCache(simState, latticeData.GetLocalFluidSiteCount()),
+      tractionCache(simState, latticeData.GetLocalFluidSiteCount()),
+      tangentialProjectionTractionCache(simState, latticeData.GetLocalFluidSiteCount()),
+      velDistributionsCache(simState, latticeData.GetLocalFluidSiteCount()),
+      siteCount(latticeData.GetLocalFluidSiteCount())
     {
       ResetRequirements();
     }
@@ -38,6 +36,7 @@ namespace hemelb
       stressTensorCache.UnsetRefreshFlag();
       tractionCache.UnsetRefreshFlag();
       tangentialProjectionTractionCache.UnsetRefreshFlag();
+      velDistributionsCache.UnsetRefreshFlag();
     }
 
     site_t MacroscopicPropertyCache::GetSiteCount() const

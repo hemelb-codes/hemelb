@@ -1,3 +1,8 @@
+
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
 """Define a filter to add the data in a HemeLB extracted property file to the geometry
 defined by a HemeLB geometry file.
 
@@ -11,6 +16,7 @@ from vtk.util import numpy_support
 import numpy as np
 from hemeTools.utils import MatchCorresponding
 from hemeTools.parsers.extraction import ExtractedProperty
+from xml.etree import ElementTree as et
 
 # Work around limitations of the VTK bindings support (enum wrapping added in 5.8)
 v = vtk.vtkVersion()
@@ -201,6 +207,19 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
         return
     pass
 
+def WritePVDFile(timestepToFileMap, baseFilename):
+    # Root element defining metadata
+    vtkFile = et.Element('VTKFile', {'type': 'Collection', 'version': '0.1', 'byte_order': 'LittleEndian', 'compressor': 'vtkZLibDataCompressor'})
+    # Collection element containing individual time steps
+    collection = et.SubElement(vtkFile, 'Collection')
+    # Write out each time step and associated file
+    for timestep, filename in timestepToFileMap.iteritems():
+        et.SubElement(collection, 'DataSet', {'timestep': str(timestep), 'group': '', 'part': '0', 'file': filename})
+
+    # Create ElementTree object and write it to disk
+    xmlTree = et.ElementTree(vtkFile)
+    xmlTree.write('{}.pvd'.format(baseFilename))
+
 if __name__ == '__main__':
     import argparse
     
@@ -243,14 +262,23 @@ if __name__ == '__main__':
         writer = vtk.vtkXMLUnstructuredGridWriter()
         writer.SetInputConnection(converter.GetOutputPort())
         
+        base, ext = os.path.splitext(extractedFile)
+
         # For each timestamp in that file
+        timestepToFileMap = {}
         for time in extraction.times:
             # Choose the time
             converter.SetTime(time)
             
             # And give the output a unique filename based on the extracted
             # property file name and the timestamp.
-            base, ext = os.path.splitext(extractedFile)
-            writer.SetFileName('%s_%s.vtu' % (base, str(time)))
+            filename = '%s_%s.vtu' % (base, str(time))
+            writer.SetFileName(filename)
             # trigger the update
             writer.Write()
+
+            # Keep track of the files written for each time step
+            timestepToFileMap[time] = filename
+
+        # Write out file combining all time steps for easier visualisation
+        WritePVDFile(timestepToFileMap, base)

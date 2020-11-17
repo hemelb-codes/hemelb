@@ -1,0 +1,43 @@
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
+
+#include <stdio.h>
+#include "io/writers/xdr/XdrVectorWriter.h"
+
+namespace hemelb
+{
+  namespace io
+  {
+    namespace writers
+    {
+      namespace xdr
+      {
+
+	// Use the magic protected constructor.
+	// First function obj makes a std::vector<char>
+	// Second one creates a std::back_insert_iterator from it
+	XdrVectorWriter::XdrVectorWriter() : base([](){
+						    return char_vec{};
+						  },
+						  [](char_vec& v){
+						    return std::back_inserter(v);
+						  })
+	{
+	}
+	// Delegate to above then do the reserve
+	XdrVectorWriter::XdrVectorWriter(size_t n) : XdrVectorWriter()
+	{
+	  res.reserve(n);
+	}
+
+	const char_vec& XdrVectorWriter::GetBuf() const
+	{
+	  return res;
+	}
+
+      }
+    }
+  }
+}

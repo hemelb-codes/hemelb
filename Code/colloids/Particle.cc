@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #include "colloids/Particle.h"
 #include "colloids/BodyForces.h"
@@ -23,7 +20,7 @@ namespace hemelb
     {
       // updating position with zero velocity and zero body force is necessary
       // because of the side-effect that sets owner rank from the new position
-      ownerRank = BIG_NUMBER2;
+      ownerRank = SITE_OR_BLOCK_SOLID;
       velocity *= 0.0;
       bodyForces *= 0.0;
       UpdatePosition(latDatLBM);
@@ -127,7 +124,7 @@ namespace hemelb
 
       // convert the site coordinates into a local site index and find owner rank
       proc_t procId = latDatLBM.GetProcIdFromGlobalCoords(siteGlobalPosition);
-      isValid = (procId != BIG_NUMBER2);
+      isValid = (procId != SITE_OR_BLOCK_SOLID);
       if (isValid && (ownerRank != procId))
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Changing owner of particle %i from %i to %i - %s\n",
@@ -364,8 +361,7 @@ namespace hemelb
                 siteStatus = 2; // deemed solid because block is empty
               else if (blockStatus == 0)
               {
-                if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords))
-                    == BIG_NUMBER2)
+                if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)) == SITE_OR_BLOCK_SOLID)
                 {
                   siteStatus = 3; // individual site is not simulated, i.e. must be solid
                 }

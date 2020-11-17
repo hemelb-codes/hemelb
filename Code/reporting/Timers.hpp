@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_REPORTING_TIMERS_HPP
 #define HEMELB_REPORTING_TIMERS_HPP
@@ -41,18 +38,18 @@ namespace hemelb
     }
 
     template<class ClockPolicy, class CommsPolicy>
-    void TimersBase<ClockPolicy, CommsPolicy>::Report(ctemplate::TemplateDictionary& dictionary)
+    void TimersBase<ClockPolicy, CommsPolicy>::Report(Dict& dictionary)
     {
       dictionary.SetIntValue("THREADS", CommsPolicy::GetProcessorCount());
 
       for (unsigned int ii = 0; ii < numberOfTimers; ii++)
       {
-        ctemplate::TemplateDictionary *timer = dictionary.AddSectionDictionary("TIMER");
-        timer->SetValue("NAME", timerNames[ii]);
-        timer->SetFormattedValue("LOCAL", "%.3g", timers[ii].Get());
-        timer->SetFormattedValue("MIN", "%.3g", Mins()[ii]);
-        timer->SetFormattedValue("MEAN", "%.3g", Means()[ii]);
-        timer->SetFormattedValue("MAX", "%.3g", Maxes()[ii]);
+        Dict timer = dictionary.AddSectionDictionary("TIMER");
+        timer.SetValue("NAME", timerNames[ii]);
+        timer.SetFormattedValue("LOCAL", "%.3g", timers[ii].Get());
+        timer.SetFormattedValue("MIN", "%.3g", Mins()[ii]);
+        timer.SetFormattedValue("MEAN", "%.3g", Means()[ii]);
+        timer.SetFormattedValue("MAX", "%.3g", Maxes()[ii]);
       }
     }
 

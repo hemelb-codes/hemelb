@@ -1,0 +1,92 @@
+#include "redblood/RBCConfig.h"
+
+#include "configuration/SimConfig.h"
+#include "io/xml/XmlAbstractionLayer.h"
+#include "redblood/FlowExtension.h"
+#include "util/UnitConverter.h"
+
+#ifdef HEMELB_BUILD_RBC
+#include "redblood/io.h"
+#endif
+
+namespace hemelb {
+  namespace redblood {
+    using configuration::GetDimensionalValue;
+    using configuration::GetDimensionalValueInLatticeUnits;
+
+    FlowExtension readFlowExtension(io::xml::Element const& node,
+                                    util::UnitConverter const& converter)
+    {
+      if (node == node.Missing())
+      {
+        throw Exception() << "Expected non-empty XML node";
+      }
+
+      auto const flowXML = node.GetChildOrThrow("flowextension");
+      FlowExtension result;
+      GetDimensionalValueInLatticeUnits(flowXML.GetChildOrThrow("length"), "m", converter, result.length);
+      GetDimensionalValueInLatticeUnits(flowXML.GetChildOrThrow("radius"), "m", converter, result.radius);
+      const auto fadeEl = flowXML.GetChildOrNull("fadelength");
+      if (fadeEl) {
+	GetDimensionalValueInLatticeUnits(fadeEl, "m", converter, result.fadeLength);
+      }	else {
+	result.fadeLength = result.length;
+      }
+
+      // Infer normal and position from inlet
+      // However, normals point in *opposite* direction, and, as a result, origin are at opposite
+      // end of the cylinder
+      GetDimensionalValue(node.GetChildOrThrow("normal"), "dimensionless", result.normal);
+      result.normal *= -1;
+      result.normal.Normalise();
+
+      GetDimensionalValueInLatticeUnits(node.GetChildOrThrow("position"), "m", converter, result.origin);
+      result.origin -= result.normal * result.length;
+
+      return result;
+    }
+
+    const Node2NodeForce& RBCConfig::GetCell2Cell() const
+    {
+      return *cell2Cell;
+    }
+    const Node2NodeForce& RBCConfig::GetCell2Wall() const
+    {
+      return *cell2Wall;
+    }
+
+    void RBCConfig::DoIOForRedBloodCells(const io::xml::Element& topNode,
+					 util::UnitConverter const& units)
+    {
+#ifdef HEMELB_BUILD_RBC
+      auto&& rbcNode = topNode.GetChildOrThrow("redbloodcells");
+      const io::xml::Element controllerNode = rbcNode.GetChildOrThrow("controller");
+      GetDimensionalValue(controllerNode.GetChildOrThrow("boxsize"), "LB", boxSize);
+
+      auto&& inletsNode = topNode.GetChildOrNull("inlets");
+      rbcMeshes.reset(readTemplateCells(rbcNode, units).release());
+      rbcinserter = readRBCInserters(inletsNode, units, *rbcMeshes);
+      rbcOutlets = readRBCOutlets(topNode, units);
+      cell2Cell = readNode2NodeForce(
+          rbcNode.GetChildOrNull("cell2Cell"), units);
+      cell2Wall = readNode2NodeForce(
+          rbcNode.GetChildOrNull("cell2Wall"), units);
+      if(boxSize < cell2Wall->cutoff)
+      {
+        throw Exception() << "Box-size < cell-wall interaction size: "
+          "cell-wall interactions cannot be all accounted for.";
+      }
+      if(boxSize < cell2Cell->cutoff)
+      {
+        throw Exception() << "Box-size < cell-cell interaction size: "
+          "cell-cell interactions cannot be all accounted for.";
+      }
+      const io::xml::Element outputNode = rbcNode.GetChildOrThrow("output");
+      GetDimensionalValue(outputNode.GetChildOrThrow("period"), "LB", rbcOutputPeriod);
+#else
+      throw Exception() << "Trying to use redblood cells when HEMELB_BUILD_RBC=OFF";
+#endif
+    }
+
+  }
+}

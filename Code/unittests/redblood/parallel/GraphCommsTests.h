@@ -10,6 +10,7 @@
 #ifndef HEMELB_UNITTESTS_REDBLOOD_PARALLEL_GRAPHCOMMSTEST_H
 #define HEMELB_UNITTESTS_REDBLOOD_PARALLEL_GRAPHCOMMSTEST_H
 
+#include "redblood/RBCConfig.h"
 #include "unittests/helpers/FolderTestFixture.h"
 #include "unittests/redblood/Fixtures.h"
 #include "unittests/redblood/parallel/Fixtures.h"
@@ -156,10 +157,14 @@ namespace hemelb
         auto master = CreateMasterSim(comms);
         CPPUNIT_ASSERT(master);
 
+	auto simConf = master->GetSimConfig();
+	CPPUNIT_ASSERT(simConf->HasRBCSection());
+	auto rbcConf = simConf->GetRBCConfig();
+	CPPUNIT_ASSERT(rbcConf);
         // Biggest cell radius in lattice units times a tolerance
         CPPUNIT_ASSERT_DOUBLES_EQUAL(hemelb::redblood::parallel::MAXIMUM_SIZE_TO_RADIUS_RATIO
-                                         * (8e-06 / master->GetSimConfig()->GetVoxelSize()),
-                                     ComputeCellsEffectiveSize(master->GetSimConfig()->GetRBCMeshes()),
+                                         * (8e-06 / simConf->GetVoxelSize()),
+                                     ComputeCellsEffectiveSize(rbcConf->GetRBCMeshes()),
                                      1e-9);
       }
 

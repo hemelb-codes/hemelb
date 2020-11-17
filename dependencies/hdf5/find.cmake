@@ -1,0 +1,1 @@
+find_package(HDF5 1.8 QUIET COMPONENTS C HL)

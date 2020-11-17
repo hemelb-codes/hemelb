@@ -1,11 +1,8 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #include "colloids/ColloidController.h"
 #include "geometry/BlockTraverser.h"
@@ -214,8 +211,8 @@ namespace hemelb
       *ownerRankForSite =
           gmyResult.Blocks[*blockIdForSite].Sites[*localSiteIdForSite].targetProcessor;
 
-      // if the rank is BIG_NUMBER2 then the site is solid not fluid so return invalid
-      if (*ownerRankForSite == BIG_NUMBER2)
+      // site is solid not fluid so return invalid
+      if (*ownerRankForSite == SITE_OR_BLOCK_SOLID)
         return false;
 
       // all requested information obtained and validated so return true
