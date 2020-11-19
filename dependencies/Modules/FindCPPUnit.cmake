@@ -1,13 +1,7 @@
-#
-# http://root.cern.ch/viewvc/trunk/cint/reflex/cmake/modules/FindCppUnit.cmake
-#
-# - Find CppUnit
-# This module finds an installed CppUnit package.
-#
-# It sets the following variables:
-#  CPPUNIT_FOUND       - Set to false, or undefined, if CppUnit isn't found.
-#  CPPUNIT_INCLUDE_DIR - The CppUnit include directory.
-#  CPPUNIT_LIBRARY     - The CppUnit library to link against.
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
 
 FIND_PATH(CPPUNIT_INCLUDE_DIR cppunit/Test.h)
 option(CPPUNIT_USE_STATIC "Prefer Static CPPUNIT library" OFF)
