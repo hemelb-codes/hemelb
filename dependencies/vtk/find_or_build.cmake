@@ -14,11 +14,7 @@ else()
     )
   if(NOT VTK_TARBALL)
     message("No VTK source found, will download.")
-    get_tarball(
-      https://www.vtk.org/files/release/8.2/VTK-8.2.0.tar.gz
-      vtktar
-      )
-    set(VTK_TARBALL "${vtktar}"
+    set(VTK_TARBALL https://www.vtk.org/files/release/8.2/VTK-8.2.0.tar.gz
       CACHE STRING "Path to download VTK (can be local file://)" FORCE)
   endif()
 
