@@ -28,7 +28,7 @@ namespace hemelb
       {
         T value;
         const std::string& got = elem.GetAttributeOrThrow("units");
-        if (got != units && got != "LB")
+        if (got != units && got != "lattice")
         {
           throw Exception() << "Invalid units for element " << elem.GetPath() << ". Expected '"
               << units << "', got '" << got << "'";
@@ -67,7 +67,7 @@ namespace hemelb
                                T default_)
       {
         auto const value_unit = GetNonDimensionalValue<T>(parent, elemname, units, default_);
-        return value_unit.second == "LB" ?
+        return value_unit.second == "lattice" ?
           value_unit.first :
           converter.ConvertToLatticeUnits(value_unit.second, value_unit.first);
       }
@@ -78,7 +78,7 @@ namespace hemelb
                                const std::string& units, util::UnitConverter const &converter)
       {
         auto const value_unit = GetNonDimensionalValue<T>(parent.GetChildOrThrow(elemname), units);
-        return value_unit.second == "LB" ?
+        return value_unit.second == "lattice" ?
           value_unit.first :
           converter.ConvertToLatticeUnits(value_unit.second, value_unit.first);
       }
@@ -89,7 +89,7 @@ namespace hemelb
       {
         std::pair<LatticePosition, std::string> const value_unit = GetNonDimensionalValue<
             LatticePosition>(parent.GetChildOrThrow(elemname), "m");
-        return value_unit.second == "LB" ?
+        return value_unit.second == "lattice" ?
           value_unit.first :
           converter.ConvertPositionToLatticeUnits(value_unit.first);
       }
@@ -320,9 +320,9 @@ namespace hemelb
       redblood::Cell::Moduli moduli;
       auto const moduliNode = node.GetChildOrNull("moduli");
       moduli.bending = GetNonDimensionalValue(moduliNode, "bending", "Nm", converter, 2e-19);
-      moduli.surface = GetNonDimensionalValue(moduliNode, "surface", "LB", converter, 1e0);
-      moduli.volume = GetNonDimensionalValue(moduliNode, "volume", "LB", converter, 1e0);
-      moduli.dilation = GetNonDimensionalValue(moduliNode, "dilation", "LB", converter, 0.75);
+      moduli.surface = GetNonDimensionalValue(moduliNode, "surface", "lattice", converter, 1e0);
+      moduli.volume = GetNonDimensionalValue(moduliNode, "volume", "lattice", converter, 1e0);
+      moduli.dilation = GetNonDimensionalValue(moduliNode, "dilation", "lattice", converter, 0.75);
       if (1e0 < moduli.dilation or moduli.dilation < 0.5)
       {
         log::Logger::Log<log::Critical, log::Singleton>("Dilation moduli is outside the recommended range 1e0 >= m >= 0.5");
@@ -346,7 +346,7 @@ namespace hemelb
                                                 result->intensity);
       result->cutoff = GetNonDimensionalValue(node,
                                              "cutoffdistance",
-                                             "LB",
+                                             "lattice",
                                              converter,
                                              result->cutoff);
       if (2e0 * result->cutoff > Dimensionless(Traits<>::Stencil::GetRange()))

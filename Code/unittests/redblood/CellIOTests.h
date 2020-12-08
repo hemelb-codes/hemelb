@@ -55,8 +55,8 @@ namespace hemelb
               elem->SetAttribute("units", units);
               moduli->LinkEndChild(elem);
             };
-            add_stuff("surface", "LB", 2e0);
-            add_stuff("dilation", "LB", 0.58);
+            add_stuff("surface", "lattice", 2e0);
+            add_stuff("dilation", "lattice", 0.58);
             add_stuff("bending", "Nm", 2e-18);
             cell->LinkEndChild(moduli);
 

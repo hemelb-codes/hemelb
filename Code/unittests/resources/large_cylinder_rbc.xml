@@ -76,25 +76,25 @@
   </visualisation>
   <redbloodcells>
     <controller>
-      <boxsize units="LB" value="3" />
+      <boxsize units="lattice" value="3" />
     </controller>
     <cell2Cell>
-      <intensity units="LB" value="0.05" />
-      <cutoffdistance units="LB" value="1.0" />
+      <intensity units="lattice" value="0.05" />
+      <cutoffdistance units="lattice" value="1.0" />
       <exponent value="2"/>
     </cell2Cell>
     <cell2Wall>
-      <intensity units="LB" value="0.05" />
-      <cutoffdistance units="LB" value="1.0" />
+      <intensity units="lattice" value="0.05" />
+      <cutoffdistance units="lattice" value="1.0" />
       <exponent value="2"/>
     </cell2Wall>
     <cells>
       <cell name="default">
         <moduli>
           <bending units="Nm" value="2e-19" />
-          <surface units="LB" value="1e0" />
-          <volume units="LB" value="1e0" />
-          <dilation units="LB" value="0.75" />
+          <surface units="lattice" value="1e0" />
+          <volume units="lattice" value="1e0" />
+          <dilation units="lattice" value="0.75" />
           <strain units="N/m" value="5e-6" />
         </moduli>
         <shape mesh_path="red_blood_cell.txt" />
@@ -103,9 +103,9 @@
       <cell name="biggie">
         <moduli>
           <bending units="Nm" value="2e-19" />
-          <surface units="LB" value="1e0" />
-          <volume units="LB" value="1e0" />
-          <dilation units="LB" value="0.75" />
+          <surface units="lattice" value="1e0" />
+          <volume units="lattice" value="1e0" />
+          <dilation units="lattice" value="0.75" />
           <strain units="N/m" value="5e-6" />
         </moduli>
         <shape mesh_path="red_blood_cell.txt" />
@@ -113,7 +113,7 @@
       </cell>
     </cells>
     <output>
-      <period units="LB" value="100" />
+      <period units="lattice" value="100" />
     </output>
   </redbloodcells>
   <initialconditions>

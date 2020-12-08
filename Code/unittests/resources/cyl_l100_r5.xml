@@ -74,33 +74,33 @@
   </initialconditions>
   <redbloodcells>
     <controller>
-      <boxsize units="LB" value="3" />
+      <boxsize units="lattice" value="3" />
     </controller>
     <cell2Cell>
-      <intensity units="LB" value="0.002087" />
-      <cutoffdistance units="LB" value="1.0" />
+      <intensity units="lattice" value="0.002087" />
+      <cutoffdistance units="lattice" value="1.0" />
       <exponent value="2"/>
     </cell2Cell>
     <cell2Wall>
-      <intensity units="LB" value="0.002087" />
-      <cutoffdistance units="LB" value="1.0" />
+      <intensity units="lattice" value="0.002087" />
+      <cutoffdistance units="lattice" value="1.0" />
       <exponent value="2"/>
     </cell2Wall>
     <cells>
       <cell name="default">
         <moduli>
-          <bending units="LB" value="0.002087" />
-          <surface units="LB" value="1.0" />
-          <volume units="LB" value="1.0" />
-          <dilation units="LB" value="0.5" />
-          <strain units="LB" value="0.005797" />
+          <bending units="lattice" value="0.002087" />
+          <surface units="lattice" value="1.0" />
+          <volume units="lattice" value="1.0" />
+          <dilation units="lattice" value="0.5" />
+          <strain units="lattice" value="0.005797" />
         </moduli>
         <shape mesh_path="rbc_ico_2880.msh" />
         <scale units="m" value="4e-06" />
       </cell>
     </cells>
     <output>
-      <period units="LB" value="500" />
+      <period units="lattice" value="500" />
     </output>
   </redbloodcells>
   <monitoring>

@@ -41,7 +41,7 @@ namespace hemelb
     template<typename T>
     void GetDimensionalValueInLatticeUnits(const io::xml::Element& elem, const std::string& units, const util::UnitConverter& converter, T& value)
     {
-      if (units == "lattice" || units == "LB")
+      if (units == "lattice")
 	return GetDimensionalValue(elem, units, value);
 
       T phys;

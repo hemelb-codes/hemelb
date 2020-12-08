@@ -65,7 +65,7 @@ namespace hemelb {
 #ifdef HEMELB_BUILD_RBC
       auto&& rbcNode = topNode.GetChildOrThrow("redbloodcells");
       const io::xml::Element controllerNode = rbcNode.GetChildOrThrow("controller");
-      GetDimensionalValue(controllerNode.GetChildOrThrow("boxsize"), "LB", boxSize);
+      GetDimensionalValue(controllerNode.GetChildOrThrow("boxsize"), "lattice", boxSize);
 
       auto&& inletsNode = topNode.GetChildOrNull("inlets");
       rbcMeshes.reset(readTemplateCells(rbcNode, units).release());
@@ -86,7 +86,7 @@ namespace hemelb {
           "cell-cell interactions cannot be all accounted for.";
       }
       const io::xml::Element outputNode = rbcNode.GetChildOrThrow("output");
-      GetDimensionalValue(outputNode.GetChildOrThrow("period"), "LB", rbcOutputPeriod);
+      GetDimensionalValue(outputNode.GetChildOrThrow("period"), "lattice", rbcOutputPeriod);
 #else
       throw Exception() << "Trying to use redblood cells when HEMELB_BUILD_RBC=OFF";
 #endif
