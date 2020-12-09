@@ -304,7 +304,7 @@ namespace hemelb
       }
 
       // Missing attribute
-      AttributeError::AttributeError(const Element& n, const std::string& attr_) :
+      AttributeError::AttributeError(const Element& n, const std::string& attr) :
         XmlError()
       {
         *this << "AttributeError: '" << n.GetPath() << "' has no attribute '" << attr << "'";

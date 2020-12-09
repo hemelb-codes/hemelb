@@ -399,9 +399,6 @@ namespace hemelb
           {
             return static_cast<AttributeError&>(XmlError::operator<<(t));
           }
-
-        private:
-          const std::string attr;
       };
 
       class DeserialisationError : public XmlError
