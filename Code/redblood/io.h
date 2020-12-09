@@ -21,13 +21,16 @@ namespace hemelb
     class RBCInserter;
     class FlowExtension;
     //! Reads cell from XML
-    std::unique_ptr<CellBase> readCell(io::xml::Element const&, util::UnitConverter const&);
+    std::unique_ptr<CellBase> readCell(io::xml::Element const&,
+				       const configuration::SimConfig& fullconfig,
+				       util::UnitConverter const&);
 
     //! Reads all flow extensions from XML
     std::unique_ptr<std::vector<FlowExtension>> readFlowExtensions(
         io::xml::Element const& inletsNode, util::UnitConverter const& converter);
     //! Reads template meshes from XML
     std::unique_ptr<TemplateCellContainer> readTemplateCells(io::xml::Element const&,
+							     const configuration::SimConfig& fullconfig,
                                                              util::UnitConverter const&);
     //! Reads all RBC inserters from XML
     std::function<void(CellInserter const&)> readRBCInserters(io::xml::Element const& inletsNode,

@@ -367,6 +367,7 @@ namespace hemelb
 
     //! Reads multiple templates from XML and stores in container
     std::unique_ptr<TemplateCellContainer> readTemplateCells(io::xml::Element const& topNode,
+							     const configuration::SimConfig& fullconfig,
                                                              util::UnitConverter const& converter)
     {
       std::unique_ptr<TemplateCellContainer> result(new TemplateCellContainer);
@@ -395,7 +396,7 @@ namespace hemelb
         {
           throw Exception() << "Multiple template mesh with same name";
         }
-        auto cell = readCell(cellNode, converter);
+        auto cell = readCell(cellNode, fullconfig, converter);
         if (!validateCellEdgeLengths(*cell))
         {
           log::Logger::Log<log::Critical, log::Singleton>("Average edge length in cell mesh not in [0.7, 1.3]");
@@ -423,7 +424,8 @@ namespace hemelb
     }
 
     std::unique_ptr<CellBase> readCell(io::xml::Element const& node,
-                                       util::UnitConverter const& converter)
+				       const configuration::SimConfig& fullconfig,
+				       util::UnitConverter const& converter)
     {
       // auto const node = topNode.GetChildOrThrow("redbloodcells");
       if (node == node.Missing())
@@ -436,8 +438,9 @@ namespace hemelb
       auto const name = cellNode.GetAttributeOrNull("name") == nullptr ?
         "default" :
         cellNode.GetAttributeOrThrow("name");
-      std::string const mesh_path =
-          cellNode.GetChildOrThrow("shape").GetAttributeOrThrow("mesh_path");
+      std::string const mesh_path = fullconfig.RelPathToFullPath(
+          cellNode.GetChildOrThrow("shape").GetAttributeOrThrow("mesh_path")
+	);
       auto const mesh_data = readVTKMesh(mesh_path);
       auto const scale = GetNonDimensionalValue<LatticeDistance>(cellNode, "scale", "m", converter);
       std::string const * reference_mesh_path =

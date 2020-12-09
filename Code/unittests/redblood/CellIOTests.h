@@ -23,6 +23,12 @@ namespace hemelb
   {
     namespace redblood
     {
+      class UninitialisedSimConfig : public configuration::SimConfig {
+      public:
+	UninitialisedSimConfig(const std::string& path) : configuration::SimConfig(path) {
+	}
+      };
+
       class CellIOTests : public helpers::FolderTestFixture
       {
           CPPUNIT_TEST_SUITE (CellIOTests);
@@ -39,7 +45,9 @@ namespace hemelb
             doc.LinkEndChild(parent);
             auto const cell = new TiXmlElement("cell");
             auto const shape = new TiXmlElement("shape");
-            shape->SetAttribute("mesh_path", resources::Resource("red_blood_cell.txt").Path());
+
+	    config = std::make_unique<UninitialisedSimConfig>(resources::Resource("empty_for_relative_paths.xml").Path());
+            shape->SetAttribute("mesh_path", "red_blood_cell.txt");
             cell->LinkEndChild(shape);
             auto const scaleXML = new TiXmlElement("scale");
             scale = 1.5;
@@ -69,9 +77,9 @@ namespace hemelb
             // Remove moduli, so we get default behavior
             doc.FirstChildElement("parent")->FirstChildElement("cell")->RemoveChild(doc.FirstChildElement("parent")->FirstChildElement("cell")->FirstChildElement("moduli"));
 
-            auto cellbase = readCell(doc.FirstChildElement("parent"), *converter);
+            auto cellbase = readCell(doc.FirstChildElement("parent"), *config, *converter);
             std::unique_ptr<Cell const> const cell(static_cast<Cell const*>(cellbase.release()));
-            auto const data = readMesh(resources::Resource("red_blood_cell.txt").Path());
+            auto const data = readMesh("red_blood_cell.txt");
             CPPUNIT_ASSERT_EQUAL(static_cast<site_t>(data->vertices.size()),
                                  cell->GetNumberOfNodes());
             CPPUNIT_ASSERT_DOUBLES_EQUAL(converter->ConvertToLatticeUnits("m", scale),
@@ -105,9 +113,7 @@ namespace hemelb
 
           void testReadMeshTemplates()
           {
-            auto const path = resources::Resource("red_blood_cell.txt").Path();
-            std::ostringstream sstr;
-            sstr << "<parent>"
+            const char* xml_text = "<parent>"
                 "  <inlets>"
                 "   <inlet>"
                 "     <normal units=\"dimensionless\" value=\"(0.0,0.0,1.0)\" />"
@@ -133,19 +139,19 @@ namespace hemelb
                 "  <redbloodcells>"
                 "    <cells>"
                 "      <cell>"
-                "        <shape mesh_path=\"" << path << "\"/>"
+                "        <shape mesh_path=\"red_blood_cell.txt\"/>"
                 "        <scale units=\"m\" value=\"0.6\"/>"
                 "      </cell>"
                 "     <cell name=\"joe\">"
-                "       <shape mesh_path=\"" << path << "\"/>"
+                "       <shape mesh_path=\"red_blood_cell.txt\"/>"
                 "       <scale units=\"m\" value=\"0.5\"/>"
                 "     </cell>"
                 "   </cells>"
                 "  </redbloodcells>"
                 "</parent>";
             TiXmlDocument document;
-            document.Parse(sstr.str().c_str());
-            auto const cells = readTemplateCells(document.FirstChildElement("parent"), *converter);
+            document.Parse(xml_text);
+            auto const cells = readTemplateCells(document.FirstChildElement("parent"), *config, *converter);
             CPPUNIT_ASSERT_EQUAL(size_t(2), cells->size());
             CPPUNIT_ASSERT_EQUAL(size_t(1), cells->count("default"));
             CPPUNIT_ASSERT_EQUAL(size_t(1), cells->count("joe"));
@@ -168,6 +174,7 @@ namespace hemelb
           TiXmlDocument doc;
           std::unique_ptr<util::UnitConverter> converter;
           LatticeDistance scale;
+          std::unique_ptr<UninitialisedSimConfig> config;
       };
 
       CPPUNIT_TEST_SUITE_REGISTRATION (CellIOTests);

@@ -60,7 +60,6 @@ namespace hemelb
       rawXmlDoc = new io::xml::Document(xmlFilePath);
       colloidConfigPath = xmlFilePath;
       DoIO(rawXmlDoc->GetRoot());
-      dataFilePath = util::NormalizePathRelativeToPath(dataFilePath, xmlFilePath);
     }
 
     SimConfig::~SimConfig()
@@ -78,6 +77,11 @@ namespace hemelb
 
       delete rbcConf;
       rbcConf = nullptr;
+    }
+
+    // Turn an input XML-relative path into a full path
+    std::string SimConfig::RelPathToFullPath(const std::string& path) const {
+      return util::NormalizePathRelativeToPath(path, xmlFilePath);
     }
 
     void SimConfig::DoIO(io::xml::Element topNode)
@@ -125,7 +129,7 @@ namespace hemelb
       if (rbcEl != io::xml::Element::Missing()) {
 #ifdef HEMELB_BUILD_RBC
 	rbcConf = new redblood::RBCConfig;
-	rbcConf->DoIOForRedBloodCells(topNode, *unitConverter);
+	rbcConf->DoIOForRedBloodCells(topNode, *this, *unitConverter);
 #else
 	throw Exception() << "Input XML has redbloodcells section but HEMELB_BUILD_RBC=OFF";
 #endif
@@ -189,10 +193,7 @@ namespace hemelb
       // <geometry>
       //  <datafile path="relative path to GMY" />
       // </geometry>
-      dataFilePath = geometryEl.GetChildOrThrow("datafile").GetAttributeOrThrow("path");
-      // Convert to a full path
-      dataFilePath = util::NormalizePathRelativeToPath(dataFilePath, xmlFilePath);
-
+      dataFilePath = RelPathToFullPath(geometryEl.GetChildOrThrow("datafile").GetAttributeOrThrow("path"));
     }
 
     void SimConfig::CreateUnitConverter()
@@ -689,9 +690,7 @@ namespace hemelb
 
       const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
-      std::string velocityFilePath = conditionEl.GetChildOrThrow("path").GetAttributeOrThrow("value");
-
-      velocityFilePath = util::NormalizePathRelativeToPath(velocityFilePath, xmlFilePath);
+      std::string velocityFilePath = RelPathToFullPath(conditionEl.GetChildOrThrow("path").GetAttributeOrThrow("value"));
       newIolet->SetFilePath(velocityFilePath);
 
       const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");

@@ -60,6 +60,7 @@ namespace hemelb {
     }
 
     void RBCConfig::DoIOForRedBloodCells(const io::xml::Element& topNode,
+					 const configuration::SimConfig& fullconfig,
 					 util::UnitConverter const& units)
     {
 #ifdef HEMELB_BUILD_RBC
@@ -68,7 +69,7 @@ namespace hemelb {
       GetDimensionalValue(controllerNode.GetChildOrThrow("boxsize"), "lattice", boxSize);
 
       auto&& inletsNode = topNode.GetChildOrNull("inlets");
-      rbcMeshes.reset(readTemplateCells(rbcNode, units).release());
+      rbcMeshes.reset(readTemplateCells(topNode, fullconfig, units).release());
       rbcinserter = readRBCInserters(inletsNode, units, *rbcMeshes);
       rbcOutlets = readRBCOutlets(topNode, units);
       cell2Cell = readNode2NodeForce(

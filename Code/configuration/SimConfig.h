@@ -104,6 +104,9 @@ namespace hemelb
       public:
         virtual ~SimConfig();
 
+        // Turn an input XML-relative path into a full path
+        std::string RelPathToFullPath(const std::string& path) const;
+
         void Save(std::string path); // TODO this method should be able to be CONST
         // but because it uses DoIo, which uses one function signature for both reading and writing, it cannot be.
 
@@ -322,7 +325,7 @@ namespace hemelb
          */
         void DoIOForConvergenceCriterion(const io::xml::Element& criterionEl);
 
-        const std::string& xmlFilePath;
+        std::string xmlFilePath;
         io::xml::Document* rawXmlDoc;
         std::string dataFilePath;
 

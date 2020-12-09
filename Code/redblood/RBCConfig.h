@@ -14,6 +14,10 @@
 #include "redblood/types_fwd.h"
 
 namespace hemelb {
+  namespace configuration {
+    class SimConfig;
+  }
+
   namespace io {
     namespace xml {
       class Element;
@@ -47,6 +51,7 @@ namespace hemelb {
     public:
       // Called from configuration::SimConfig to handle our part of the XML.
       void DoIOForRedBloodCells(const io::xml::Element& topNode,
+				const configuration::SimConfig& fullconfig,
 				util::UnitConverter const&);
 
       inline std::shared_ptr<TemplateCellContainer> GetRBCMeshes() const
