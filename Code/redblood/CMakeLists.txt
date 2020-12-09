@@ -14,6 +14,7 @@ if (HEMELB_BUILD_RBC)
     CellCell.cc FlowExtension.cc FaderCell.cc io.cc RBCInserter.cc
     VertexBag.cc Borders.cc
     WallCellPairIterator.cc
+    VTKError.cc
     buffer/Buffer.cc buffer/Columns.cc
     parallel/NodeCharacterizer.cc parallel/CellParallelization.cc parallel/SpreadForces.cc
     parallel/IntegrateVelocities.cc parallel/GraphBasedCommunication.cc
