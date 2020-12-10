@@ -91,5 +91,6 @@ add_to_resources(
   resources/rbc_ico_720.vtp
   resources/992Particles_rank3_26_t992.msh
   resources/992Particles_rank3_26_t992.vtp
+  resources/empty_for_relative_paths.xml
 )
 endif()
