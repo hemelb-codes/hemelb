@@ -93,7 +93,7 @@
           <strain units="lattice" value="0.0006" />
           <bending units="lattice" value="0.0000375" />
         </moduli>
-        <shape mesh_path="rbc_ico_1280.msh" />
+        <shape mesh_path="rbc_ico_1280.msh" mesh_format="Krueger" />
         <scale units="m" value="4.1e-06" />
       </cell>
     </cells>

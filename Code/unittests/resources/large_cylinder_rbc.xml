@@ -97,7 +97,7 @@
           <dilation units="lattice" value="0.75" />
           <strain units="N/m" value="5e-6" />
         </moduli>
-        <shape mesh_path="red_blood_cell.txt" />
+        <shape mesh_path="red_blood_cell.txt" mesh_format="Krueger" />
         <scale units="m" value="6e-06" />
       </cell>
       <cell name="biggie">
@@ -108,7 +108,7 @@
           <dilation units="lattice" value="0.75" />
           <strain units="N/m" value="5e-6" />
         </moduli>
-        <shape mesh_path="red_blood_cell.txt" />
+        <shape mesh_path="red_blood_cell.txt" mesh_format="Krueger" />
         <scale units="m" value="8e-06" />
       </cell>
     </cells>

@@ -39,15 +39,20 @@ namespace hemelb
         public:
           void setUp()
           {
+	    helpers::FolderTestFixture::setUp();
             converter.reset(new util::UnitConverter(0.5, 0.6, LatticePosition(1, 2, 3)));
+
+	    CopyResourceToTempdir("red_blood_cell.txt");
+	    CopyResourceToTempdir("empty_for_relative_paths.xml");
+	    config = std::make_unique<UninitialisedSimConfig>("empty_for_relative_paths.xml");
+
             // It seems TiXML might take care of deallocation
             auto const parent = new TiXmlElement("parent");
             doc.LinkEndChild(parent);
             auto const cell = new TiXmlElement("cell");
             auto const shape = new TiXmlElement("shape");
-
-	    config = std::make_unique<UninitialisedSimConfig>(resources::Resource("empty_for_relative_paths.xml").Path());
             shape->SetAttribute("mesh_path", "red_blood_cell.txt");
+	    shape->SetAttribute("mesh_format", "Krueger");
             cell->LinkEndChild(shape);
             auto const scaleXML = new TiXmlElement("scale");
             scale = 1.5;
@@ -140,11 +145,11 @@ namespace hemelb
                 "  <redbloodcells>"
                 "    <cells>"
                 "      <cell>"
-                "        <shape mesh_path=\"red_blood_cell.txt\"/>"
+                "        <shape mesh_path=\"red_blood_cell.txt\" mesh_format=\"Krueger\" />"
                 "        <scale units=\"m\" value=\"0.6\"/>"
                 "      </cell>"
                 "     <cell name=\"joe\">"
-                "       <shape mesh_path=\"red_blood_cell.txt\"/>"
+                "       <shape mesh_path=\"red_blood_cell.txt\" mesh_format=\"Krueger\" />"
                 "       <scale units=\"m\" value=\"0.5\"/>"
                 "     </cell>"
                 "   </cells>"

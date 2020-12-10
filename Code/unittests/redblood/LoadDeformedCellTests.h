@@ -33,6 +33,8 @@ namespace hemelb
           typedef hemelb::redblood::CellController<Traits> CellControl;
           typedef SimulationMaster<Traits> MasterSim;
 
+	  redblood::VTKMeshIO io = {};
+
         public:
           void setUp()
           {
@@ -72,8 +74,8 @@ namespace hemelb
           void testIntegration()
           {
             // Read meshes from disc
-            auto const normal = readVTKMesh(resources::Resource("rbc_ico_720.vtp").Path().c_str());
-            auto const deformed = readVTKMesh(resources::Resource("992Particles_rank3_26_t992.vtp").Path().c_str());
+            auto const normal = io.readFile(resources::Resource("rbc_ico_720.vtp").Path().c_str(), true);
+            auto const deformed = io.readFile(resources::Resource("992Particles_rank3_26_t992.vtp").Path().c_str(), true);
 
             // Check they are compatible
             CPPUNIT_ASSERT(normal->facets == deformed->facets);
@@ -160,6 +162,7 @@ namespace hemelb
 
       };
 
+      // Extra line to keep CPPunit happy
       CPPUNIT_TEST_SUITE_REGISTRATION (LoadDeformedCellTests);
     } // namespace redblood
   } // namespace unittests

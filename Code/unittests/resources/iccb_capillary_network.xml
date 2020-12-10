@@ -251,7 +251,7 @@
           <dilation units="lattice" value="0.5" />
           <strain units="lattice" value="0.0002043" />
         </moduli>
-        <shape mesh_path="rbc_ico_1280.msh" />
+        <shape mesh_path="rbc_ico_1280.msh" mesh_format="Krueger" />
         <scale units="m" value="2.75e-06" /> <!-- The radius of the template cell is 1, therefore the radius of the RBC will be equal to scale (RBC diameter typically 6.2-8.2um) -->
       </cell>
     </cells>

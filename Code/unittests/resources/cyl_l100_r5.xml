@@ -95,7 +95,7 @@
           <dilation units="lattice" value="0.5" />
           <strain units="lattice" value="0.005797" />
         </moduli>
-        <shape mesh_path="rbc_ico_2880.msh" />
+        <shape mesh_path="rbc_ico_2880.msh" mesh_format="Krueger" />
         <scale units="m" value="4e-06" />
       </cell>
     </cells>

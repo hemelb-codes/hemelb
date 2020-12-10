@@ -102,6 +102,7 @@ namespace hemelb
       }
       return result;
     }
+
     auto KruegerMeshIO::readFile(std::string const &filename, bool fixFacetOrientation) const -> MeshPtr {
       if (!util::file_exists(filename.c_str()))
         throw Exception() << "Red-blood-cell mesh file '" << filename.c_str() << "' does not exist";
@@ -118,35 +119,23 @@ namespace hemelb
       return read_krueger_mesh(stream, fixFacetOrientation);
     }
 
-    std::shared_ptr<MeshData> readVTKMesh(std::string const &filename, bool fixFacetOrientation)
+    auto VTKMeshIO::readUnoriented(Mode mode, std::string const &file_or_data) const -> std::tuple<MeshPtr, PolyDataPtr>
     {
-      log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from %s",
-                                                   filename.c_str());
-
-      if (!util::file_exists(filename.c_str()))
-        throw Exception() << "Red-blood-cell mesh file '" << filename.c_str() << "' does not exist";
-
-      std::shared_ptr<MeshData> meshData;
-      vtkSmartPointer<vtkPolyData> polyData;
-      std::tie(meshData, polyData) = readMeshDataFromVTKPolyData(filename);
-
-      if (fixFacetOrientation)
-      {
-        unsigned numSwapped = orientFacets(*meshData, *polyData);
-        log::Logger::Log<log::Debug, log::Singleton>("Swapped %d facets", numSwapped);
-      }
-
-      return meshData;
-    }
-
-
-    std::tuple<std::shared_ptr<MeshData>, vtkSmartPointer<vtkPolyData> > readMeshDataFromVTKPolyData(std::string const &filename)
-    {
-      log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from VTK polydata file");
-
       // Read in VTK polydata object
       auto reader = ErrThrower<vtkXMLPolyDataReader>::New();
-      reader->SetFileName(filename.c_str());
+      switch (mode) {
+      case Mode::file:
+	log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from VTK polydata file");
+	reader->ReadFromInputStringOff();
+	reader->SetFileName(file_or_data.c_str());
+	break;
+      case Mode::string:
+	log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from VTK polydata string");
+	reader->ReadFromInputStringOn();
+	reader->SetInputString(file_or_data);
+	break;
+      }
+
       reader->Update();
 
       vtkSmartPointer<vtkPolyData> polydata(reader->GetOutput());
@@ -198,6 +187,26 @@ namespace hemelb
       return std::make_tuple(result, polydata);
     }
 
+    static MeshIO::MeshPtr VTK_mesh_read_impl(VTKMeshIO const & self, VTKMeshIO::Mode m, std::string const &file_or_data, bool fixFacetOrientation) {
+	MeshIO::MeshPtr meshData;
+	VTKMeshIO::PolyDataPtr polyData;
+	std::tie(meshData, polyData) = self.readUnoriented(m, file_or_data);
+
+	if (fixFacetOrientation) {
+	  unsigned numSwapped = orientFacets(*meshData, *polyData);
+	  log::Logger::Log<log::Debug, log::Singleton>("Swapped %d facets", numSwapped);
+	}
+
+	return meshData;
+      }
+
+      auto VTKMeshIO::readFile(std::string const &filename, bool fixFacetOrientation) const -> MeshPtr {
+	return VTK_mesh_read_impl(*this, Mode::file, filename, fixFacetOrientation);
+      }
+
+      auto VTKMeshIO::readString(std::string const &data, bool fixFacetOrientation) const -> MeshPtr {
+	return VTK_mesh_read_impl(*this, Mode::string, data, fixFacetOrientation);
+      }
 
     void writeMesh(std::string const &filename, MeshData const &data, util::UnitConverter const& c)
     {

@@ -32,6 +32,8 @@ namespace hemelb
           CPPUNIT_TEST (testOrientTimmSimRBCMesh);
           CPPUNIT_TEST_SUITE_END();
 
+	  redblood::VTKMeshIO io = {};
+
         public:
           void setUp()
           {
@@ -44,7 +46,7 @@ namespace hemelb
           void testVTPReadMesh()
           {
             std::string filename = resources::Resource("rbc_ico_720.vtp").Path();
-            std::shared_ptr<MeshData> mesh = readVTKMesh(filename);
+            std::shared_ptr<MeshData> mesh = io.readFile(filename, true);
 
             CPPUNIT_ASSERT(mesh);
             CPPUNIT_ASSERT_EQUAL(mesh->vertices.size(), 362ul);
@@ -71,7 +73,7 @@ namespace hemelb
 
             std::shared_ptr<MeshData> meshData;
             vtkSmartPointer<vtkPolyData> polyData;
-            std::tie(meshData, polyData) = readMeshDataFromVTKPolyData(filename);
+            std::tie(meshData, polyData) = io.readUnoriented(redblood::VTKMeshIO::Mode::file, filename);
 
             auto numSwaps = orientFacets(*meshData, *polyData);
 
@@ -86,7 +88,7 @@ namespace hemelb
 
             std::shared_ptr<MeshData> meshData;
             vtkSmartPointer<vtkPolyData> polyData;
-            std::tie(meshData, polyData) = readMeshDataFromVTKPolyData(filename);
+            std::tie(meshData, polyData) = io.readUnoriented(redblood::VTKMeshIO::Mode::file, filename);
 
             auto numSwaps = orientFacets(*meshData, *polyData);
 

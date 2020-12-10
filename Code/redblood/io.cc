@@ -424,6 +424,17 @@ namespace hemelb
       return (edgeLength >= 0.7 && edgeLength <= 1.3);
     }
 
+    std::unique_ptr<MeshIO> make_meshio(io::xml::Element const& shape, const std::string& format_attr_name) {
+      auto const format = shape.GetAttributeOrThrow(format_attr_name);
+      if (format == "VTK") {
+	return std::make_unique<VTKMeshIO>();
+      } else if (format == "Krueger") {
+	return std::make_unique<KruegerMeshIO>();
+      } else {
+	throw Exception() << "Invalid " << format_attr_name << " '" << format << "' on element " << shape.GetPath();
+      }
+    }
+
     std::unique_ptr<CellBase> readCell(io::xml::Element const& node,
 				       const configuration::SimConfig& fullconfig,
 				       util::UnitConverter const& converter)
@@ -439,17 +450,20 @@ namespace hemelb
       auto const name = cellNode.GetAttributeOrNull("name") == nullptr ?
         "default" :
         cellNode.GetAttributeOrThrow("name");
+      auto const shape = cellNode.GetChildOrThrow("shape");
       std::string const mesh_path = fullconfig.RelPathToFullPath(
-          cellNode.GetChildOrThrow("shape").GetAttributeOrThrow("mesh_path")
+          shape.GetAttributeOrThrow("mesh_path")
 	);
-      auto const mesh_data = readVTKMesh(mesh_path);
+      auto io = make_meshio(shape, "mesh_format");
+      auto const mesh_data = io->readFile(mesh_path, true);
       auto const scale = GetNonDimensionalValue<LatticeDistance>(cellNode, "scale", "m", converter);
       std::string const * reference_mesh_path =
-          cellNode.GetChildOrThrow("shape").GetAttributeOrNull("reference_mesh_path");
+          shape.GetAttributeOrNull("reference_mesh_path");
       std::unique_ptr<Cell> cell;
       if (reference_mesh_path)
       {
-        auto const reference_mesh_data = readVTKMesh(*reference_mesh_path);
+	auto io = make_meshio(shape, "reference_mesh_format");
+        auto const reference_mesh_data = io->readFile(*reference_mesh_path, true);
         assert(mesh_data->facets == reference_mesh_data->facets);
         assert(volume(mesh_data->vertices, reference_mesh_data->facets) > 0.0);
         cell = std::unique_ptr<Cell>(new Cell(mesh_data->vertices, reference_mesh_data, scale, name));

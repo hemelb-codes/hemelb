@@ -253,11 +253,11 @@ namespace hemelb
       MeshPtr readFile(std::string const &filename, bool fixFacetOrientation) const override;
       MeshPtr readString(std::string const &data, bool fixFacetOrientation) const override;
       ~VTKMeshIO() = default;
-    };
 
-    //! Read VTK mesh from file
-    std::shared_ptr<MeshData> readVTKMesh(std::string const &filename, bool fixFacetOrientation=true);
-    std::tuple<std::shared_ptr<MeshData>, vtkSmartPointer<vtkPolyData> >  readMeshDataFromVTKPolyData(std::string const &filename);
+      using PolyDataPtr = vtkSmartPointer<vtkPolyData>;
+      enum class Mode {file, string};
+      std::tuple<MeshPtr, PolyDataPtr> readUnoriented(Mode, std::string const &) const;
+    };
 
     //! Write mesh from file
     //! Format is from T. Krueger's thesis
