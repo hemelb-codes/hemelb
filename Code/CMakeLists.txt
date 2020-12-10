@@ -176,8 +176,17 @@ target_link_libraries(${HEMELB_EXECUTABLE}
   ${MPI_LIBRARIES}
   ${Boost_LIBRARIES}
   )
-INSTALL(TARGETS ${HEMELB_EXECUTABLE} RUNTIME DESTINATION bin)
+
+# Config XML checker (confcheck)
+add_executable(${HEMELB_EXECUTABLE}-confcheck confcheck.cc)
+target_link_libraries(${HEMELB_EXECUTABLE}-confcheck
+  ${heme_libraries}
+  ${MPI_LIBRARIES}
+  )
+
+INSTALL(TARGETS ${HEMELB_EXECUTABLE} ${HEMELB_EXECUTABLE}-confcheck RUNTIME DESTINATION bin)
 add_to_resources(resources/report.txt.ctp resources/report.xml.ctp)
+
 
 # ----------- HemeLB Multiscale ------------------
 if (HEMELB_BUILD_MULTISCALE)
