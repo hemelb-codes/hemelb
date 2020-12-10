@@ -50,11 +50,11 @@ namespace hemelb
           {
             auto fullPath = resources::Resource(filename).Path();
             CPPUNIT_ASSERT(util::file_exists(fullPath.c_str()));
+	    
+            /* std::ifstream file; */
+            /* file.open(fullPath); */
 
-            std::ifstream file;
-            file.open(fullPath);
-
-            return readMesh(file, false);
+            return redblood::KruegerMeshIO{}.readFile(fullPath, true);
           }
 
           void testWrongIcoFile()

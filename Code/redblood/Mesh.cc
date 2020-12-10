@@ -25,47 +25,8 @@ namespace hemelb
 {
   namespace redblood
   {
-    std::shared_ptr<MeshData> readMesh(std::string const &filename)
-    {
-      log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from %s",
-                                                   filename.c_str());
 
-      // Open file if it exists
-      std::ifstream file;
-
-      if (!util::file_exists(filename.c_str()))
-        throw Exception() << "Red-blood-cell mesh file '" << filename.c_str() << "' does not exist";
-
-      file.open(filename.c_str());
-      return readMesh(file);
-    }
-
-    std::shared_ptr<MeshData> readMesh(std::string const &filename, util::UnitConverter const &units)
-    {
-      log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from %s",
-          filename.c_str());
-
-      // Open file if it exists
-      std::ifstream file;
-
-      if (!util::file_exists(filename.c_str()))
-        throw Exception() << "Red-blood-cell mesh file '" << filename.c_str() << "' does not exist";
-
-      file.open(filename.c_str());
-      return readMesh(file, units);
-    }
-
-    std::shared_ptr<MeshData> readMesh(std::istream &stream, util::UnitConverter const &units)
-    {
-      auto result = readMesh(stream);
-      for(auto &vertex: result->vertices)
-      {
-        vertex = units.ConvertPositionToLatticeUnits(vertex);
-      }
-      return result;
-    }
-
-    std::shared_ptr<MeshData> readMesh(std::istream &stream, bool fixFacetOrientation)
+    static std::shared_ptr<MeshData> read_krueger_mesh(std::istream &stream, bool fixFacetOrientation)
     {
       log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from stream");
 
@@ -140,6 +101,21 @@ namespace hemelb
         orientFacets(*result);
       }
       return result;
+    }
+    auto KruegerMeshIO::readFile(std::string const &filename, bool fixFacetOrientation) const -> MeshPtr {
+      if (!util::file_exists(filename.c_str()))
+        throw Exception() << "Red-blood-cell mesh file '" << filename.c_str() << "' does not exist";
+
+      log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from %s",
+                                                   filename.c_str());
+      // Open file if it exists
+      auto stream = std::ifstream{filename};
+      return read_krueger_mesh(stream, fixFacetOrientation);
+    }
+
+    auto KruegerMeshIO::readString(std::string const &data, bool fixFacetOrientation) const -> MeshPtr {
+      auto stream = std::istringstream{data};
+      return read_krueger_mesh(stream, fixFacetOrientation);
     }
 
     std::shared_ptr<MeshData> readVTKMesh(std::string const &filename, bool fixFacetOrientation)

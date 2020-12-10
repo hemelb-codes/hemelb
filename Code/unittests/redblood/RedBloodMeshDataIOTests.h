@@ -28,12 +28,13 @@ namespace hemelb
           CPPUNIT_TEST_SUITE (RedBloodMeshDataIOTests);
           CPPUNIT_TEST (testReadMesh);
           CPPUNIT_TEST (testWriteMesh);CPPUNIT_TEST_SUITE_END();
+	  redblood::KruegerMeshIO io = {};
 
         public:
           void setUp()
           {
             std::string filename = resources::Resource("red_blood_cell.txt").Path();
-            mesh = readMesh(filename);
+            mesh = io.readFile(filename, true);
           }
 
           void tearDown()
@@ -64,8 +65,7 @@ namespace hemelb
           {
             std::ostringstream output;
             writeMesh(output, *mesh, util::UnitConverter(1, 1, LatticePosition(0, 0, 0)));
-            std::istringstream input(output.str());
-            std::shared_ptr<MeshData> other = readMesh(input);
+            std::shared_ptr<MeshData> other = io.readString(output.str(), true);
             CPPUNIT_ASSERT(other->vertices.size() == mesh->vertices.size());
             CPPUNIT_ASSERT(other->facets.size() == mesh->facets.size());
             CPPUNIT_ASSERT(compare(mesh->vertices.front() - other->vertices.front()));

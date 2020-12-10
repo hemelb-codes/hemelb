@@ -230,14 +230,30 @@ namespace hemelb
         "Explicit type characteristics"
     );
 
-    //! Read mesh from file
+    // Base class for reading/writing meshes.
+    class MeshIO {
+    public:
+      using MeshPtr = std::shared_ptr<MeshData>;
+      virtual MeshPtr readFile(std::string const &filename, bool fixFacetOrientation) const = 0;
+      virtual MeshPtr readString(std::string const &data, bool fixFacetOrientation) const = 0;
+      virtual ~MeshIO() = default;
+    };
+
     //! Format is from T. Krueger's thesis
-    std::shared_ptr<MeshData> readMesh(std::string const &filename);
-    std::shared_ptr<MeshData> readMesh(std::string const &filename, util::UnitConverter const &);
-    //! Read mesh from file
-    //! Format is from T. Krueger's thesis
-    std::shared_ptr<MeshData> readMesh(std::istream &stream, bool fixFacetOrientation=true);
-    std::shared_ptr<MeshData> readMesh(std::istream &stream, util::UnitConverter const &);
+    class KruegerMeshIO : public MeshIO {
+    public:
+      MeshPtr readFile(std::string const &filename, bool fixFacetOrientation) const override;
+      MeshPtr readString(std::string const &data, bool fixFacetOrientation) const override;
+      ~KruegerMeshIO() = default;
+    };
+
+    // VTK XML PolyData format
+    class VTKMeshIO : public MeshIO {
+    public:
+      MeshPtr readFile(std::string const &filename, bool fixFacetOrientation) const override;
+      MeshPtr readString(std::string const &data, bool fixFacetOrientation) const override;
+      ~VTKMeshIO() = default;
+    };
 
     //! Read VTK mesh from file
     std::shared_ptr<MeshData> readVTKMesh(std::string const &filename, bool fixFacetOrientation=true);

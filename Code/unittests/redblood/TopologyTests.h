@@ -29,7 +29,7 @@ namespace hemelb
           void setUp()
           {
             std::string filename = resources::Resource("red_blood_cube.txt").Path();
-            mesh = readMesh(filename);
+            mesh = redblood::KruegerMeshIO{}.readFile(filename, true);
             // Checks the mesh input makes sense
             CPPUNIT_ASSERT(mesh->vertices.size() == 8);
             CPPUNIT_ASSERT(mesh->facets.size() == 12);

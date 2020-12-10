@@ -29,7 +29,7 @@ namespace hemelb
           CPPUNIT_TEST (testBarycenter);
           CPPUNIT_TEST (testScaling);
           CPPUNIT_TEST (testTranslation);CPPUNIT_TEST_SUITE_END();
-
+	  redblood::KruegerMeshIO io = {};
         public:
           void setUp()
           {
@@ -66,7 +66,8 @@ namespace hemelb
 
           void testStandardTestMeshOrientation()
           {
-            checkMeshOrientation(*readMesh(resources::Resource("red_blood_cell.txt").Path()));
+	    //const auto io = redblood::KruegerMeshIO{};
+            checkMeshOrientation(*io.readFile(resources::Resource("red_blood_cell.txt").Path(), true));
             checkMeshOrientation(*tetrahedron(2).GetData());
             checkMeshOrientation(*icoSphere(5).GetData());
           }
@@ -144,7 +145,7 @@ namespace hemelb
           void testResourceVolume()
           {
             auto const path = resources::Resource("red_blood_cell.txt").Path();
-            CPPUNIT_ASSERT(volume(*readMesh(path)) > 0e0);
+            CPPUNIT_ASSERT(volume(*io.readFile(path, true)) > 0e0);
           }
       };
 

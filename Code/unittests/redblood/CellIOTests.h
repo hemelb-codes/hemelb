@@ -79,7 +79,8 @@ namespace hemelb
 
             auto cellbase = readCell(doc.FirstChildElement("parent"), *config, *converter);
             std::unique_ptr<Cell const> const cell(static_cast<Cell const*>(cellbase.release()));
-            auto const data = readMesh("red_blood_cell.txt");
+	    auto const kruegerIO = redblood::KruegerMeshIO{};
+            auto const data = kruegerIO.readFile("red_blood_cell.txt", true);
             CPPUNIT_ASSERT_EQUAL(static_cast<site_t>(data->vertices.size()),
                                  cell->GetNumberOfNodes());
             CPPUNIT_ASSERT_DOUBLES_EQUAL(converter->ConvertToLatticeUnits("m", scale),
