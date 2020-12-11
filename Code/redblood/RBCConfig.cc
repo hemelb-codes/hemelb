@@ -10,7 +10,7 @@
 #include "util/UnitConverter.h"
 
 #ifdef HEMELB_BUILD_RBC
-#include "redblood/io.h"
+#include "redblood/xmlIO.h"
 #endif
 
 namespace hemelb {

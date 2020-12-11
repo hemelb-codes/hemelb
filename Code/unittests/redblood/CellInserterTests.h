@@ -9,7 +9,7 @@
 #include <cppunit/TestFixture.h>
 #include "io/xml/XmlAbstractionLayer.h"
 #include "redblood/FlowExtension.h"
-#include "redblood/io.h"
+#include "redblood/xmlIO.h"
 #include "redblood/RBCInserter.h"
 #include "unittests/redblood/Fixtures.h"
 #include "unittests/helpers/FolderTestFixture.h"

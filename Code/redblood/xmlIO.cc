@@ -12,7 +12,7 @@
 #include "redblood/RBCInserter.h"
 #include "redblood/RBCConfig.h"
 #include "redblood/FlowExtension.h"
-#include "redblood/io.h"
+#include "redblood/xmlIO.h"
 #include "Traits.h"
 
 namespace hemelb

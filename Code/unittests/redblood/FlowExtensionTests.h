@@ -8,7 +8,7 @@
 
 #include <cppunit/TestFixture.h>
 #include "redblood/FlowExtension.h"
-#include "redblood/io.h"
+#include "redblood/xmlIO.h"
 #include "redblood/RBCConfig.h"
 #include "unittests/redblood/Fixtures.h"
 #include "util/Vector3D.h"

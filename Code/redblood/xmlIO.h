@@ -2,8 +2,8 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
-#ifndef HEMELB_REDBLOOD_IO_H
-#define HEMELB_REDBLOOD_IO_H
+#ifndef HEMELB_REDBLOOD_XMLIO_H
+#define HEMELB_REDBLOOD_XMLIO_H
 
 #include <iostream>
 #include <memory>
