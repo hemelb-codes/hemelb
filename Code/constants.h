@@ -13,41 +13,40 @@
 namespace hemelb
 {
 
-  const unsigned int COLLISION_TYPES = 6;
-  const double PI = 3.14159265358979323846264338327950288;
-  const double DEG_TO_RAD = (PI / 180.0);
-  // TODO this was used for a convergence test - we could reinstate that at some point.
-  const double EPSILON = 1.0e-30;
+  constexpr unsigned int COLLISION_TYPES = 6;
+  // TODO: when we hit C++20, use std::pi_v
+  constexpr double PI = 3.14159265358979323846264338327950288;
 
-  const double REFERENCE_PRESSURE_mmHg = 0.0;
-  const double mmHg_TO_PASCAL = 133.3223874;
-  const double BLOOD_DENSITY_Kg_per_m3 = 1000.0;
-  const double BLOOD_VISCOSITY_Pa_s = 0.001;
+  constexpr double REFERENCE_PRESSURE_mmHg = 0.0;
+  constexpr double mmHg_TO_PASCAL = 133.3223874;
+  constexpr double BLOOD_DENSITY_Kg_per_m3 = 1000.0;
+  constexpr double BLOOD_VISCOSITY_Pa_s = 0.001;
 
   /* This is the number of boundary types. It was 4, but the
    * "CHARACTERISTIC_BOUNDARY" type is never used and I don't know what it is
    * meant to be. It is also not used in the setup tool, so we will drop it,
    * setting BOUNDARIES to 3
    */
-  const sitedata_t BOUNDARIES = 3U;
-  const sitedata_t INLET_BOUNDARY = 0U;
-  const sitedata_t OUTLET_BOUNDARY = 1U;
-  const sitedata_t WALL_BOUNDARY = 2U;
+  constexpr sitedata_t BOUNDARIES = 3U;
+  constexpr sitedata_t INLET_BOUNDARY = 0U;
+  constexpr sitedata_t OUTLET_BOUNDARY = 1U;
+  constexpr sitedata_t WALL_BOUNDARY = 2U;
   // const unsigned int CHARACTERISTIC_BOUNDARY = 3U;
 
-  const unsigned int FLUID = 1U;
-  const unsigned int INLET = 2U;
-  const unsigned int OUTLET = 4U;
-  const unsigned int WALL = 8U;
+  constexpr unsigned int FLUID = 1U;
+  constexpr unsigned int INLET = 2U;
+  constexpr unsigned int OUTLET = 4U;
+  constexpr unsigned int WALL = 8U;
 
   // square of the speed of sound
-  const double Cs2 = 1.0 / 3.0;
-  // speed of the sound
-  const double Cs = 1.0 / sqrt(3.0);
+  constexpr double Cs2 = 1.0 / 3.0;
+  // speed of the sound (sqrt is not constexpr)
+  // TODO: when we hit C++20, use std::inv_sqrt3_v
+  const double Cs = 1.0 / std::sqrt(3.0);
 
   // TODO almost certainly filth.
-  const distribn_t NO_VALUE = std::numeric_limits<distribn_t>::max();
-  const int SITE_OR_BLOCK_SOLID = std::numeric_limits<int>::max();
+  constexpr distribn_t NO_VALUE = std::numeric_limits<distribn_t>::max();
+  constexpr int SITE_OR_BLOCK_SOLID = std::numeric_limits<int>::max();
 }
 
 #endif //HEMELB_CONSTANTS_H

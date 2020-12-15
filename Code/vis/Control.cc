@@ -115,6 +115,8 @@ namespace hemelb
                                 const float &iLocal_ctr_z, const float &iLongitude,
                                 const float &iLatitude, const float &iZoom)
     {
+      constexpr float DEG_TO_RAD = (PI / 180.0);
+
       float rad = 5.F * vis->system_size;
       float dist = 0.5F * rad;
 
