@@ -604,35 +604,6 @@ namespace hemelb
         {
           return Vector3D(0);
         }
-
-        /**
-         * Lexicographical comparison between this vector and another one
-         * @param anotherVector vector to compare against
-         * @return true if this vector is lexicographically smaller than anotherVector
-         */
-        bool operator<(const Vector3D anotherVector) const
-        {
-          //! @todo #668 It should be possible to reimplement the method as std::lexicographical_compare(begin(), end(), anotherVector.begin(), anotherVector.end()), if I can get the constness of the iterators right.
-          if (x < anotherVector.x)
-          {
-            return true;
-          }
-          if (x == anotherVector.x)
-          {
-            if (y < anotherVector.y)
-            {
-              return true;
-            }
-            if (y == anotherVector.y)
-            {
-              if (z < anotherVector.z)
-              {
-                return true;
-              }
-            }
-          }
-          return false;
-        }
     };
 
     /**

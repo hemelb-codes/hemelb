@@ -46,24 +46,5 @@ namespace hemelb
 	 REQUIRE(uintMax == baz[2] + uintMax % 2);
 	}
     }
-
-    TEST_CASE("Vector3D can be compared with operator<, but WHY?") {
-      util::Vector3D<int> foo{0, 0, 0};
-      util::Vector3D<int> bar{1, 0, 0};
-
-      CHECK(foo < bar);
-
-      bar = {0, 1, 0};
-      CHECK(foo < bar);
-
-      bar = {0, 0, 1};
-      CHECK(foo < bar);
-
-      bar = {0, 0, 0};
-      CHECK(!(foo < bar));
-
-      foo = {0, 0, 1};
-      CHECK(!(foo < bar));
-    }
   }
 }

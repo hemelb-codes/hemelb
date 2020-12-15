@@ -20,6 +20,7 @@ namespace hemelb
       class GraphCommsTests : public helpers::FolderTestFixture
       {
           CPPUNIT_TEST_SUITE (GraphCommsTests);
+          CPPUNIT_TEST (testLexicographicalOrderingOfVectors);
           CPPUNIT_TEST (testDumbGraphCommunicator);
           CPPUNIT_TEST (testGraphCommunicator);
           CPPUNIT_TEST (testComputeCellsEffectiveSize);
@@ -28,6 +29,7 @@ namespace hemelb
 
         public:
           void setUp();
+          void testLexicographicalOrderingOfVectors();
           void testDumbGraphCommunicator();
           void testGraphCommunicator();
           void testComputeCellsEffectiveSize();
@@ -82,6 +84,41 @@ namespace hemelb
                                                                                       "1",
                                                                                       "-ss",
                                                                                       "1111" });
+      }
+
+      void GraphCommsTests::testLexicographicalOrderingOfVectors() {
+	auto cmp = hemelb::redblood::parallel::VectorLexicographicalOrdering<util::Vector3D<int>>{};
+
+	util::Vector3D<int> foo{0, 0, 0};
+	util::Vector3D<int> bar{1, 0, 0};
+
+	// // Catch implementation
+	// CHECK(cmp(foo, bar));
+
+	// bar = {0, 1, 0};
+	// CHECK(cmp(foo, bar));
+
+	// bar = {0, 0, 1};
+	// CHECK(cmp(foo, bar));
+
+	// bar = {0, 0, 0};
+	// CHECK(!cmp(foo, bar));
+
+	// foo = {0, 0, 1};
+	// CHECK(!cmp(foo, bar));
+	CPPUNIT_ASSERT(cmp(foo, bar));
+
+	bar = {0, 1, 0};
+	CPPUNIT_ASSERT(cmp(foo, bar));
+
+	bar = {0, 0, 1};
+	CPPUNIT_ASSERT(cmp(foo, bar));
+
+	bar = {0, 0, 0};
+	CPPUNIT_ASSERT(!cmp(foo, bar));
+
+	foo = {0, 0, 1};
+	CPPUNIT_ASSERT(!cmp(foo, bar));
       }
 
       void GraphCommsTests::testDumbGraphCommunicator()

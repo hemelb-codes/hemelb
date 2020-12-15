@@ -14,8 +14,30 @@ namespace hemelb
   {
     namespace parallel
     {
-      //! @todo #668 Should this be a std::unordered_map instead? The map is to be created once (and never modified again) and look-up heavy later on.
-      typedef std::map<LatticeVector, proc_t> GlobalCoordsToProcMap;
+
+      template <typename VectorT>
+      struct VectorLexicographicalOrdering {
+	// Lexicographical comparison between vectors
+	constexpr bool operator()( const VectorT& lhs, const VectorT& rhs ) const {
+	  if (lhs.x != rhs.x) {
+	    return lhs.x < rhs.x;
+	  } else {
+	    // x-equal
+	    if (lhs.y != rhs.y) {
+	      return lhs.y < rhs.y;
+	    } else {
+	      // x- AND y-equal
+	      return lhs.z < rhs.z;
+	    }
+	  }
+	}
+      };
+
+      //! @todo #668 Should this be a std::unordered_map instead? The
+      //! map is to be created once (and never modified again) and
+      //! look-up heavy later on. Possibly a boost::flatmap/sorted
+      //! vector might be more performant.
+      using GlobalCoordsToProcMap = std::map<LatticeVector, proc_t, VectorLexicographicalOrdering<LatticeVector>>;
 
       /**
        * Computes a map that allows looking up the process owning certain lattice sites (by global lattice coordinate).
