@@ -8,7 +8,6 @@
 
 #include "io/writers/xdr/XdrMemWriter.h"
 #include "lb/lb.h"
-#include "util/unique.h"
 #include "lb/InitialCondition.h"
 #include "lb/InitialCondition.hpp"
 
