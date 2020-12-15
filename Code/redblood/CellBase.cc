@@ -159,22 +159,6 @@ namespace hemelb
       return std::accumulate(edgeLengths.begin(), edgeLengths.end(), 0.0) / edgeLengths.size();
     }
 
-    void writeVTKMesh(std::string const &filename, std::shared_ptr<CellBase const> cell,
-                      util::UnitConverter const &converter)
-    {
-      log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
-                                                   filename.c_str());
-      std::ofstream file(filename.c_str());
-      assert(file.is_open());
-      writeVTKMesh(file, cell, converter);
-    }
-
-    void writeVTKMesh(std::ostream &stream, std::shared_ptr<CellBase const> cell,
-                      util::UnitConverter const &converter)
-    {
-      writeVTKMesh(stream, cell->GetVertices(), cell->GetTemplateMesh().GetFacets(), converter);
-    }
-
 #   ifndef NDEBUG
     void checkCellDataCharacteristics()
     {

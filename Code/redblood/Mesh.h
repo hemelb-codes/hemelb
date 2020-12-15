@@ -13,25 +13,28 @@
 #include <string>
 #include <type_traits>
 #include <map>
+
 #include "util/Vector3D.h"
 #include "util/Matrix3D.h"
 #include "util/UnitConverter.h"
 #include "units.h"
 
 class vtkPolyData;
-template <typename T> class vtkSmartPointer;
 
 namespace hemelb
 {
   namespace redblood
   {
+    // Should get this from VTK but don't want the include
+    // TODO: add to CMake
+    using IdType = int64_t;
+
     //! Holds raw mesh data
     //! Data is separated into vertices and triangular facets
-    class MeshData
+    struct MeshData
     {
-      public:
         //! Type of containers over indices
-        typedef std::array<size_t, 3> Facet;
+        typedef std::array<IdType, 3> Facet;
         //! Facet container type
         typedef std::vector<Facet> Facets;
         //! Vertex container type
@@ -66,7 +69,7 @@ namespace hemelb
         //! Type for map from vertices to facets
         typedef std::vector<std::set<std::size_t> > VertexToFacets;
         //! Type for map from facets to its neighbors
-        typedef std::vector<std::array<std::size_t, 3> > FacetNeighbors;
+        typedef std::vector<std::array<IdType, 3> > FacetNeighbors;
         //! For each vertex, lists the facet indices
         VertexToFacets vertexToFacets;
         //! For each facet, lists the neighboring facets
@@ -229,54 +232,6 @@ namespace hemelb
         and (not std::is_pod<Mesh>::value),
         "Explicit type characteristics"
     );
-
-    // Base class for reading/writing meshes.
-    class MeshIO {
-    public:
-      using MeshPtr = std::shared_ptr<MeshData>;
-      virtual MeshPtr readFile(std::string const &filename, bool fixFacetOrientation) const = 0;
-      virtual MeshPtr readString(std::string const &data, bool fixFacetOrientation) const = 0;
-      virtual ~MeshIO() = default;
-    };
-
-    //! Format is from T. Krueger's thesis
-    class KruegerMeshIO : public MeshIO {
-    public:
-      MeshPtr readFile(std::string const &filename, bool fixFacetOrientation) const override;
-      MeshPtr readString(std::string const &data, bool fixFacetOrientation) const override;
-      ~KruegerMeshIO() = default;
-    };
-
-    // VTK XML PolyData format
-    class VTKMeshIO : public MeshIO {
-    public:
-      MeshPtr readFile(std::string const &filename, bool fixFacetOrientation) const override;
-      MeshPtr readString(std::string const &data, bool fixFacetOrientation) const override;
-      ~VTKMeshIO() = default;
-
-      using PolyDataPtr = vtkSmartPointer<vtkPolyData>;
-      enum class Mode {file, string};
-      std::tuple<MeshPtr, PolyDataPtr> readUnoriented(Mode, std::string const &) const;
-    };
-
-    //! Write mesh from file
-    //! Format is from T. Krueger's thesis
-    void writeMesh(std::ostream &stream, MeshData const &data, util::UnitConverter const &);
-    //! Write mesh from file
-    //! Format is from T. Krueger's thesis
-    void writeMesh(std::ostream &, MeshData::Vertices const &, MeshData::Facets const &,
-                   util::UnitConverter const&);
-    //! Write mesh from file
-    //! Format is from T. Krueger's thesis
-    void writeMesh(std::string const &filename, MeshData const &data, util::UnitConverter const &);
-    //! Write mesh to file in VTK XML format
-    void writeVTKMesh(std::ostream &, MeshData const &, util::UnitConverter const &);
-    //! Write mesh to file in VTK XML format
-    void writeVTKMesh(std::string const &, MeshData const &, util::UnitConverter const&);
-    //! Write mesh to file in VTK XML format
-    typedef std::vector<std::pair<std::string, std::vector<double>>> PointScalarData;
-    void writeVTKMesh(std::ostream &, MeshData::Vertices const &, MeshData::Facets const &,
-                      util::UnitConverter const&, PointScalarData pointScalarData = { });
 
     //! Tetrahedron of a depth
     //! Depth refers to the number of triangular subdivision in each facet

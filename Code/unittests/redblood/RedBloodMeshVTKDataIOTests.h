@@ -100,7 +100,7 @@ namespace hemelb
           {
             return in.GetMagnitudeSquared() < 1e-8;
           }
-          static bool any(std::array<size_t, 3> const &vec, size_t value)
+          static bool any(std::array<redblood::IdType, 3> const &vec, size_t value)
           {
             return vec[0] == value or vec[1] == value or vec[2] == value;
           }

@@ -63,9 +63,8 @@ namespace hemelb
 
           void testWriteMesh()
           {
-            std::ostringstream output;
-            writeMesh(output, *mesh, util::UnitConverter(1, 1, LatticePosition(0, 0, 0)));
-            std::shared_ptr<MeshData> other = io.readString(output.str(), true);
+            auto output = io.writeString(*mesh, util::UnitConverter(1, 1, LatticePosition(0, 0, 0)));
+            std::shared_ptr<MeshData> other = io.readString(output, true);
             CPPUNIT_ASSERT(other->vertices.size() == mesh->vertices.size());
             CPPUNIT_ASSERT(other->facets.size() == mesh->facets.size());
             CPPUNIT_ASSERT(compare(mesh->vertices.front() - other->vertices.front()));
@@ -82,7 +81,7 @@ namespace hemelb
           {
             return in.GetMagnitudeSquared() < 1e-8;
           }
-          static bool any(std::array<size_t, 3> const &vec, size_t value)
+          static bool any(MeshData::Facet const &vec, size_t value)
           {
             return vec[0] == value or vec[1] == value or vec[2] == value;
           }

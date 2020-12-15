@@ -76,7 +76,7 @@ namespace hemelb
             CPPUNIT_ASSERT(topo->facetNeighbors.size() == 12);
 
             // expected[facet] = {neighbor indices}
-            size_t expected[12][3] = { { 1, 3, 9 }, { 0, 6, 10 }, { 3, 5, 8 }, { 0, 2, 10 }, { 5,
+	    redblood::IdType expected[12][3] = { { 1, 3, 9 }, { 0, 6, 10 }, { 3, 5, 8 }, { 0, 2, 10 }, { 5,
                                                                                                7,
                                                                                                8 },
                                        { 4, 2, 11 }, { 1, 7, 9 }, { 6, 4, 11 }, { 9, 4, 2 }, { 0,
@@ -86,7 +86,7 @@ namespace hemelb
 
             for (unsigned facet(0); facet < 12; ++facet)
             {
-              std::array<size_t, 3> const &neighs = topo->facetNeighbors[facet];
+	      auto const& neighs = topo->facetNeighbors[facet];
               CPPUNIT_ASSERT(neighs.size() == 3);
 
               for (size_t neigh(0); neigh < 3; ++neigh)

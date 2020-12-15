@@ -5,26 +5,33 @@
 #ifndef HEMELB_REDBLOOD_XMLIO_H
 #define HEMELB_REDBLOOD_XMLIO_H
 
-#include <iostream>
-#include <memory>
 #include <functional>
-#include "redblood/Cell.h"
-#include "redblood/types.h"
-#include "io/xml/XmlAbstractionLayer.h"
-#include "util/UnitConverter.h"
-#include "redblood/stencil.h"
+#include <memory>
+#include <vector>
+
+#include "redblood/types_fwd.h"
 
 namespace hemelb
 {
-  namespace configuration
-  {
+  namespace configuration {
     class SimConfig;
+  }
+  namespace io {
+    namespace xml {
+      class Element;
+    }
+  }
+  namespace util {
+    class UnitConverter;
   }
 
   namespace redblood
   {
-    class RBCInserter;
+    class CellBase;
     class FlowExtension;
+    class Node2NodeForce;
+    class RBCInserter;
+
     //! Reads cell from XML
     std::unique_ptr<CellBase> readCell(io::xml::Element const&,
 				       const configuration::SimConfig& fullconfig,

@@ -74,8 +74,8 @@ namespace hemelb
           void testIntegration()
           {
             // Read meshes from disc
-            auto const normal = io.readFile(resources::Resource("rbc_ico_720.vtp").Path().c_str(), true);
-            auto const deformed = io.readFile(resources::Resource("992Particles_rank3_26_t992.vtp").Path().c_str(), true);
+            auto const normal = io.readFile("rbc_ico_720.vtp", true);
+            auto const deformed = io.readFile("992Particles_rank3_26_t992.vtp", true);
 
             // Check they are compatible
             CPPUNIT_ASSERT(normal->facets == deformed->facets);
@@ -99,8 +99,8 @@ namespace hemelb
             *sadcell += converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
                 - sadcell->GetBarycenter();
 
-            writeVTKMesh("/tmp/ideal.vtp", cell, converter);
-            writeVTKMesh("/tmp/deformed.vtp", sadcell, converter);
+            io.writeFile("ideal.vtp", *cell, converter);
+            io.writeFile("deformed.vtp", *sadcell, converter);
 
             sadcell->moduli.bending = 0.1;
             sadcell->moduli.strain = 0.1;
@@ -111,7 +111,7 @@ namespace hemelb
             auto controller = std::static_pointer_cast<CellControl>(master->GetCellController());
             controller->AddCell(sadcell);
 
-            controller->AddCellChangeListener([&converter](const hemelb::redblood::CellContainer &cells)
+            controller->AddCellChangeListener([&converter,this](const hemelb::redblood::CellContainer &cells)
             {
               static int iter = 0;
               for (auto cell : cells)
@@ -120,7 +120,7 @@ namespace hemelb
                 {
                   std::stringstream filename;
                   filename << cell->GetTag() << "_t_" << iter << ".vtp";
-                  writeVTKMesh(filename.str(), cell, converter);
+                  io.writeFile(filename.str(), *cell, converter);
                 }
               }
               ++iter;
@@ -134,10 +134,10 @@ namespace hemelb
             AssertPresent("results/report.xml");
 
             // Recentre simulated cell
-            writeVTKMesh("/tmp/reformed.vtp", sadcell, converter);
+            io.writeFile("reformed.vtp", *sadcell, converter);
             *sadcell += converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
                 - sadcell->GetBarycenter();
-            writeVTKMesh("/tmp/reformed_centered.vtp", sadcell, converter);
+            io.writeFile("reformed_centered.vtp", *sadcell, converter);
 
 //            // TODO: Align both cells for comparison
 //            auto cell01 = cell->GetVertices()[350] - cell->GetVertices()[154];

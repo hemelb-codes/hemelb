@@ -7,6 +7,7 @@
 #include "configuration/SimConfig.h"
 #include "io/xml/XmlAbstractionLayer.h"
 #include "redblood/FlowExtension.h"
+#include "redblood/Node2Node.h"
 #include "util/UnitConverter.h"
 
 #ifdef HEMELB_BUILD_RBC

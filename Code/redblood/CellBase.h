@@ -193,12 +193,6 @@ namespace hemelb
         "Explicit type characteristics"
     );
 
-    //! Write cell-mesh to file in VTK XML format
-    void writeVTKMesh(std::ostream &, std::shared_ptr<CellBase const>, util::UnitConverter const&);
-    //! Write cell-mesh to file in VTK XML format
-    void writeVTKMesh(std::string const &, std::shared_ptr<CellBase const>,
-                      util::UnitConverter const&);
-
     // Holds the data of CellBase
     // Although its own data members are public, it can only be accessed by CellBase and derived
     // classes. So encapsulation is not broken. Indeed, the definition of this class should not be

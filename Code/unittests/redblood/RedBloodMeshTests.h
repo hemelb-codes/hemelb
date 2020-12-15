@@ -10,6 +10,7 @@
 #include <cppunit/TestFixture.h>
 #include "resources/Resource.h"
 #include "redblood/Mesh.h"
+#include "redblood/MeshIO.h"
 #include "unittests/redblood/Fixtures.h"
 
 namespace hemelb

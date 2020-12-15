@@ -2,10 +2,11 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
+
 #include <fstream>
 #include <numeric>
 #include "redblood/Cell.h"
-#include "redblood/Cell.impl.cc"
+#include "redblood/CellEnergy.h"
 
 namespace hemelb
 {
@@ -112,104 +113,6 @@ namespace hemelb
                                             GetTemplateName()));
       result->moduli = moduli;
       return std::move(result);
-    }
-
-    void writeMesh(std::string const& filename, std::shared_ptr<CellBase const> cell,
-                   util::UnitConverter const& converter) {
-      log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
-          filename.c_str());
-      std::ofstream file(filename.c_str());
-      assert(file.is_open());
-      writeMesh(file, cell, converter);
-    }
-
-    void writeMesh(std::ostream & stream, std::shared_ptr<CellBase const> cell,
-                   util::UnitConverter const& converter) {
-      writeMesh(stream, cell->GetVertices(), cell->GetFacets(), converter);
-    }
-
-    void writeVTKMeshWithForces(std::string const &filename, std::shared_ptr<Cell const> cell,
-                                util::UnitConverter const &converter)
-    {
-      log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
-                                                   filename.c_str());
-      std::ofstream file(filename.c_str());
-
-      if (!file.is_open())
-      {
-        std::stringstream message;
-        message << "Cannot create file '" << filename.c_str() << "', RBC won't be written to disk." << std::endl
-                << "Error " << errno << ": " << std::strerror(errno) << std::endl
-                << "Bits: " << file.eof() << " " << file.bad() << " " <<  file.fail();
-        log::Logger::Log<log::Error, log::OnePerCore>(message.str());
-        return;
-      }
-
-      writeVTKMeshWithForces(file, cell, converter);
-    }
-
-    void writeVTKMeshWithForces(std::ostream &stream, std::shared_ptr<Cell const> cell,
-                                util::UnitConverter const &converter)
-    {
-      PointScalarData point_scalar_data;
-
-      auto push_back_point_data =
-          [&point_scalar_data, &cell](const std::string& fieldName, const std::vector<LatticeForceVector>& forces)
-          {
-            std::vector<LatticeForce> force_magnitudes;
-            force_magnitudes.reserve(cell->GetNumberOfNodes());
-            for(auto force : forces)
-            {
-              force_magnitudes.push_back(force.GetMagnitude());
-            }
-
-            point_scalar_data.push_back(std::make_pair(fieldName, force_magnitudes));
-          };
-
-      auto moduli = cell->moduli;
-
-      {
-        std::vector<LatticeForceVector> forces(cell->GetNumberOfNodes(), 0.0);
-        cell->facetBending(forces);
-        push_back_point_data("bending", forces);
-      }
-
-      {
-        std::vector<LatticeForceVector> forces(cell->GetNumberOfNodes(), 0.0);
-        volumeEnergy(cell->GetVertices(),
-                     *cell->GetTemplateMesh().GetData(),
-                     moduli.volume,
-                     forces,
-                     cell->GetScale());
-        push_back_point_data("volume", forces);
-      }
-
-      {
-        std::vector<LatticeForceVector> forces(cell->GetNumberOfNodes(), 0.0);
-        surfaceEnergy(cell->GetVertices(),
-                      *cell->GetTemplateMesh().GetData(),
-                      moduli.surface,
-                      forces,
-                      cell->GetScale());
-        push_back_point_data("surface", forces);
-      }
-
-      {
-        std::vector<LatticeForceVector> forces(cell->GetNumberOfNodes(), 0.0);
-        strainEnergy(cell->GetVertices(),
-                     *cell->GetTemplateMesh().GetData(),
-                     moduli.strain,
-                     moduli.dilation,
-                     forces,
-                     cell->GetScale());
-        push_back_point_data("strain", forces);
-      }
-
-      writeVTKMesh(stream,
-                   cell->GetVertices(),
-                   cell->GetTemplateMesh().GetFacets(),
-                   converter,
-                   point_scalar_data);
     }
 
   }

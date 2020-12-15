@@ -32,6 +32,7 @@
 #ifdef HEMELB_BUILD_RBC
 #  include "redblood/CellController.h"
 #  include "redblood/FaderCell.h"
+#  include "redblood/MeshIO.h"
 #  include "redblood/RBCConfig.h"
 #endif
 
@@ -243,7 +244,8 @@ namespace hemelb
                 }
                 auto cell_cast = std::dynamic_pointer_cast<redblood::Cell>(cell_base);
                 assert(cell_cast);
-                hemelb::redblood::writeVTKMeshWithForces(filename.str(), cell_cast, *unitConverter);
+		auto meshio = redblood::VTKMeshIO{};
+		meshio.writeFile(filename.str(), *cell_cast, *unitConverter);
               }
             }
           };
