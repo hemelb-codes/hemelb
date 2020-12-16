@@ -35,7 +35,7 @@ namespace hemelb
 
           void setUp()
           {
-            converter.reset(new util::UnitConverter(0.5, 0.6, 0e0));
+            converter.reset(new util::UnitConverter(0.5, 0.6, 0e0, 1000.0));
             every = 10;
             offset = 5;
             cells.emplace("joe", std::make_shared<Cell>(tetrahedron()));

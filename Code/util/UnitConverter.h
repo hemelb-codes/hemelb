@@ -20,8 +20,9 @@ namespace hemelb
     class UnitConverter
     {
       public:
-        UnitConverter(PhysicalTime timeStep, PhysicalDistance voxelSize,
-                      PhysicalPosition latticeOrigin);
+        UnitConverter(PhysicalTime timeStep,
+		      PhysicalDistance voxelSize, PhysicalPosition latticeOrigin,
+		      PhysicalDensity fluidDensity);
 
         LatticePressure ConvertPressureToLatticeUnits(PhysicalPressure pressure) const;
         LatticeStress ConvertPressureDifferenceToLatticeUnits(PhysicalStress pressure_grad) const;
@@ -42,7 +43,7 @@ namespace hemelb
         template<class InputType>
         InputType ConvertStressToLatticeUnits(InputType stress) const
         {
-          return stress / (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
+          return stress / latticePressure;
         }
 
         /**
@@ -81,8 +82,7 @@ namespace hemelb
         Vector3D<VectorType> ConvertTractionToPhysicalUnits(
             Vector3D<VectorType> traction, const Vector3D<Dimensionless>& wallNormal) const
         {
-          Vector3D<VectorType> ret = traction
-              * (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
+          Vector3D<VectorType> ret = traction * latticePressure;
           ret += wallNormal * REFERENCE_PRESSURE_mmHg * mmHg_TO_PASCAL;
           return ret;
         }
@@ -203,12 +203,12 @@ namespace hemelb
         }
 
       private:
-        const PhysicalDistance latticeDistance; //!< Lattice displacement in physical units.
-        const PhysicalTime latticeTime;
-        const PhysicalMass latticeMass;
-        const PhysicalSpeed latticeSpeed; //!< Lattice displacement length divided by time step.
-        const PhysicalPosition latticeOrigin;
-        const PhysicalPressure latticePressure;
+        PhysicalDistance latticeDistance; //!< Lattice displacement in physical units.
+        PhysicalTime latticeTime;
+        PhysicalMass latticeMass;
+        PhysicalSpeed latticeSpeed; //!< Lattice displacement length divided by time step.
+        PhysicalPosition latticeOrigin;
+        PhysicalPressure latticePressure;
     };
 
   }

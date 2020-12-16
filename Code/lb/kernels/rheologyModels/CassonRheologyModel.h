@@ -35,7 +35,7 @@ namespace hemelb
              *  @param iDensity local density. TODO at the moment this value is not used
              *         in any subclass.
              *
-             *  @return kinematic viscosity (m^2/s).
+             *  @return dynamic viscosity (m^2/s).
              */
             static double CalculateViscosityForShearRate(const double &iShearRate,
                                                          const distribn_t &iDensity);

@@ -67,7 +67,6 @@ namespace hemelb
 	// Bootstrap ourselves a unit converter, which the cosine needs in initialisation
 	lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
 							config.GetTotalTimeSteps());
-	double voxelSize = config.GetVoxelSize();
 	const util::UnitConverter& converter = config.GetUnitConverter();
 	// at this stage, Initialise() has not been called, so the
 	// unit converter will be invalid, so we will not be able to
@@ -95,10 +94,7 @@ namespace hemelb
 	REQUIRE(util::Vector3D<Dimensionless>(0.0, 0.0, 1.0) == cosine->GetNormal());
 
 	// Set an approriate target value for the density, the maximum.
-	double temp = state.GetTimeStepLength() / voxelSize;
-	LatticeDensity targetMeanDensity = 1
-	  + (80.1 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp
-	  / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
+	LatticeDensity targetMeanDensity = converter.ConvertPressureToLatticeUnits(80.1) / Cs2;
 	// Check that the cosine formula correctly produces mean value
 	REQUIRE(Approx(targetMeanDensity) == cosine->GetDensityMean());
 	REQUIRE(Approx(targetMeanDensity) == cosine->GetDensity(0));
@@ -114,7 +110,6 @@ namespace hemelb
 	UncheckedSimConfig config(Resource("config_file_inlet.xml").Path());
 	lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
 							config.GetTotalTimeSteps());
-	double voxelSize = config.GetVoxelSize();
 	const util::UnitConverter& converter = config.GetUnitConverter();
 	auto file = static_cast<InOutLetFile*>(config.GetInlets()[0]);
 	// at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
@@ -131,13 +126,8 @@ namespace hemelb
 	REQUIRE(util::Vector3D<Dimensionless>(0.0, 0.0, 1.0) == file->GetNormal());
 
 	// Set some target values for the density at various times.
-	double temp = state.GetTimeStepLength() / voxelSize;
-	double targetStartDensity = 1
-	  + (78.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp
-	  / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
-	double targetMidDensity = 1
-	  + (82.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp
-	  / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
+	double targetStartDensity = converter.ConvertPressureToLatticeUnits(78.0) / Cs2;
+	double targetMidDensity = converter.ConvertPressureToLatticeUnits(82.0) / Cs2;
 
 	REQUIRE(Approx(targetStartDensity) == file->GetDensityMin());
 	REQUIRE(Approx(targetStartDensity) == file->GetDensity(0));
@@ -291,7 +281,7 @@ namespace hemelb
 
       SECTION("TestIoletCoordinates") {
 	// unit converter - make physical and lattice units the same
-	util::UnitConverter units(1, 1, PhysicalPosition::Zero());
+	util::UnitConverter units(1, 1, PhysicalPosition::Zero(), DEFAULT_FLUID_DENSITY_Kg_per_m3);
 
 	ConcreteIolet iolet;
 	// normal

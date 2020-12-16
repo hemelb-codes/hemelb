@@ -5,6 +5,7 @@
 
 #include "lb/kernels/rheologyModels/AbstractRheologyModel.h"
 #include "lb/kernels/rheologyModels/RheologyModels.h"
+#include "lb/LbmParameters.h"
 
 namespace hemelb
 {
@@ -16,18 +17,21 @@ namespace hemelb
       {
         template<class tRheologyImplementation>
         double AbstractRheologyModel<tRheologyImplementation>::CalculateTauForShearRate(
-            const double &iShearRate, const distribn_t &iDensity, const double &iVoxelSize,
-            const double &iTimeStep)
+            const double &iShearRate, const distribn_t &iDensity, const LbmParameters& lbParams)
         {
-          double nu = tRheologyImplementation::CalculateViscosityForShearRate(iShearRate, iDensity);
-          return 0.5 + (iTimeStep * nu) / (Cs2 * iVoxelSize * iVoxelSize);
+	  auto&& dx = lbParams.GetVoxelSize();
+	  auto&& dt = lbParams.GetTimeStep();
+	  auto eta = tRheologyImplementation::CalculateViscosityForShearRate(iShearRate, iDensity);
+	  // TODO: Investigate whether we should be using lbParams.GetFluidDensity() * iDensity
+	  auto nu = eta / lbParams.GetFluidDensity();
+          return 0.5 + (dt * nu) / (Cs2 * dx * dx);
         }
 
         // Explicit instantiation (a way of splitting templated classes into .h and .cc files)
-        template class AbstractRheologyModel<CassonRheologyModel> ;
-        template class AbstractRheologyModel<TruncatedPowerLawRheologyModel> ;
-        template class AbstractRheologyModel<CarreauYasudaRheologyModel<HumanCYFit> > ;
-        template class AbstractRheologyModel<CarreauYasudaRheologyModel<MouseCYFit> > ;
+        template class AbstractRheologyModel<CassonRheologyModel>;
+        template class AbstractRheologyModel<TruncatedPowerLawRheologyModel>;
+        template class AbstractRheologyModel<CarreauYasudaRheologyModel<HumanCYFit> >;
+        template class AbstractRheologyModel<CarreauYasudaRheologyModel<MouseCYFit> >;
       }
     }
   }

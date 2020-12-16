@@ -45,6 +45,7 @@ namespace hemelb
 
   typedef distribn_t LatticeReciprocalTime; ///< 1/timestep
   typedef double PhysicalReciprocalTime; ///< 1/seconds
+  typedef double PhysicalRate; // inverse seconds / Hz
 
   typedef double PhysicalMass; // kilograms
 

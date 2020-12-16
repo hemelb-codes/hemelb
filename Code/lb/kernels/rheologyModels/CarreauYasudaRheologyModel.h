@@ -12,15 +12,6 @@
 // (with multiple structs containing the same static const variables instead of
 // inheritance or similar) because CalculateViscosityForShearRate is performance
 // critical and we want as much arithmetic done at compile time as possible.
-#define CY_FIT_NEW(NAME) \
-		    struct NAME \
-        { \
-            static const double ETA_INF; \
-            static const double ETA_ZERO; \
-            static const double LAMBDA; \
-            static const double A; \
-            static const double N; \
-        } \
 
 namespace hemelb
 {
@@ -30,8 +21,6 @@ namespace hemelb
     {
       namespace rheologyModels
       {
-        CY_FIT_NEW(HumanCYFit);
-        CY_FIT_NEW(MouseCYFit);
 
         template<class CYFIT>
         class CarreauYasudaRheologyModel : public AbstractRheologyModel<
@@ -48,14 +37,28 @@ namespace hemelb
              *  @param iDensity local density. TODO at the moment this value is not used
              *         in any subclass.
              *
-             *  @return kinematic viscosity (m^2/s).
+             *  @return dynamic viscosity (Pa s).
              */
             static double CalculateViscosityForShearRate(const double &iShearRate,
                                                          const distribn_t &iDensity);
         };
 
-        typedef CarreauYasudaRheologyModel<HumanCYFit> CarreauYasudaRheologyModelHumanFit;
-        typedef CarreauYasudaRheologyModel<MouseCYFit> CarreauYasudaRheologyModelMouseFit;
+#define CY_FIT_NEW(NAME, ETA_INF_PA_S, ETA_ZERO_PA_S, LAMBDA_S, A_DIMLESS, N_DIMLESS) \
+	struct NAME							\
+	{								\
+	  static constexpr double ETA_INF = ETA_INF_PA_S;		\
+	  static constexpr double ETA_ZERO = ETA_ZERO_PA_S;		\
+	  static constexpr double LAMBDA = LAMBDA_S;			\
+	  static constexpr double A = A_DIMLESS;			\
+	  static constexpr double N = N_DIMLESS;			\
+	}
+
+        CY_FIT_NEW(HumanCYFit, 0.0035, 0.16, 8.2, 0.64, 0.2128);
+        CY_FIT_NEW(MouseCYFit, 3.265e-3, 14.49e-3, 0.1829, 2.707, 0.4136);
+#undef CY_FIT_NEW
+
+        using CarreauYasudaRheologyModelHumanFit = CarreauYasudaRheologyModel<HumanCYFit>;
+        using CarreauYasudaRheologyModelMouseFit = CarreauYasudaRheologyModel<MouseCYFit>;
       }
     }
   }

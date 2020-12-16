@@ -39,7 +39,8 @@ namespace hemelb
       auto propertyCache = lb::MacroscopicPropertyCache(simState, *latticeData);
       auto unitConverter = util::UnitConverter(simState.GetTimeStepLength(),
 					       VoxelSize,
-					       PhysicalPosition::Zero());
+					       PhysicalPosition::Zero(),
+					       DEFAULT_FLUID_DENSITY_Kg_per_m3);
       auto dataSourceIterator = extraction::LbDataSourceIterator(propertyCache,
 								 *latticeData,
 								 0,

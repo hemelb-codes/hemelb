@@ -19,7 +19,7 @@ namespace hemelb
 
   constexpr double REFERENCE_PRESSURE_mmHg = 0.0;
   constexpr double mmHg_TO_PASCAL = 133.3223874;
-  constexpr double BLOOD_DENSITY_Kg_per_m3 = 1000.0;
+  constexpr double DEFAULT_FLUID_DENSITY_Kg_per_m3 = 1000.0;
   constexpr double BLOOD_VISCOSITY_Pa_s = 0.001;
 
   /* This is the number of boundary types. It was 4, but the

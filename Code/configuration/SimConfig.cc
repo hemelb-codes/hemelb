@@ -185,6 +185,15 @@ namespace hemelb
       // <origin value="(x,y,z)" units="m" />
       const io::xml::Element originEl = simEl.GetChildOrThrow("origin");
       GetDimensionalValue(originEl, "m", geometryOriginMetres);
+
+      // Optional element
+      // <fluid_density value="float" units="kg/m3" />
+      auto maybeDensityEl = simEl.GetChildOrNull("fluid_density");
+      if (maybeDensityEl) {
+	GetDimensionalValue(maybeDensityEl, "kg/m3", fluidDensityKgm3);
+      } else {
+	fluidDensityKgm3 = DEFAULT_FLUID_DENSITY_Kg_per_m3;
+      }
     }
 
     void SimConfig::DoIOForGeometry(const io::xml::Element geometryEl)
@@ -200,7 +209,8 @@ namespace hemelb
     {
       unitConverter = new util::UnitConverter(timeStepSeconds,
                                               voxelSizeMetres,
-                                              geometryOriginMetres);
+                                              geometryOriginMetres,
+					      fluidDensityKgm3);
     }
 
     /**

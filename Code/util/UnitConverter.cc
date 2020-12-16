@@ -11,10 +11,11 @@ namespace hemelb
   namespace util
   {
 
-    UnitConverter::UnitConverter(PhysicalTime timeStep, PhysicalDistance voxelSize,
-                                 PhysicalPosition latticeOrigin) :
+    UnitConverter::UnitConverter(PhysicalTime timeStep,
+				 PhysicalDistance voxelSize, PhysicalPosition latticeOrigin,
+				 PhysicalDensity fluidDensity) :
         latticeDistance(voxelSize), latticeTime(timeStep),
-            latticeMass(BLOOD_DENSITY_Kg_per_m3 * voxelSize * voxelSize * voxelSize),
+            latticeMass(fluidDensity * voxelSize * voxelSize * voxelSize),
             latticeSpeed(voxelSize / latticeTime), latticeOrigin(latticeOrigin),
             latticePressure(latticeMass / (latticeDistance * latticeTime * latticeTime))
     {

@@ -41,7 +41,7 @@ namespace hemelb
 
       SECTION("CarreauYasuda") {
 	const std::vector<distribn_t> carreauViscosities{
-	  0.0001579855, 0.0001283352, 2.597279780e-05, 4.282559500e-06, 3.521182515e-06
+	  0.1579855, 0.1283352, 2.597279780e-02, 4.282559500e-03, 3.521182515e-03
         };
 	CompareModelAgainsHardcodedValues<CarreauYasudaRheologyModelHumanFit>(density,
 									      shearRates,
@@ -51,7 +51,7 @@ namespace hemelb
 
       SECTION("Casson") {
 	const std::vector<distribn_t> cassonViscosities{
-	  0.00016, 0.00016, 6.185169e-05, 5.5308969e-06, 3.241821969e-06};
+	  0.16, 0.16, 6.185169e-02, 5.5308969e-03, 3.241821969e-03};
 	CompareModelAgainsHardcodedValues<CassonRheologyModel>(density,
 							       shearRates,
 							       cassonViscosities,
@@ -60,7 +60,7 @@ namespace hemelb
 
       SECTION("TruncatedPowerLaw") {
 	const std::vector<distribn_t> powerLawViscosities{
-	  0.00016, 4e-05, 4e-06, 3.500030078e-06, 3.500030078e-06};
+	  0.16, 4e-02, 4e-03, 3.500030078e-03, 3.500030078e-03};
 	CompareModelAgainsHardcodedValues<TruncatedPowerLawRheologyModel>(density,
 									  shearRates,
 									  powerLawViscosities,

@@ -28,8 +28,9 @@ namespace hemelb
         public:
 
           LBGKNN(InitParams& initParams)
+	    : mTau(initParams.latDat->GetLocalFluidSiteCount(), initParams.lbmParams->GetTau()),
+	      mLbParams(*initParams.lbmParams)
           {
-            InitState(initParams);
           }
 
           inline void DoCalculateDensityMomentumFeq(HydroVars<LBGKNN>& hydroVars, site_t index)
@@ -107,25 +108,8 @@ namespace hemelb
            */
           std::vector<distribn_t> mTau;
 
-          /** Current time step */
-          distribn_t mTimeStep;
-
-          /** Current space step */
-          distribn_t mSpaceStep;
-
-          /**
-           *  Helper method to set/update member variables. Called from the constructor and Reset()
-           *
-           *  @param initParams struct used to store variables required for initialisation of various operators
-           */
-          void InitState(const InitParams& initParams)
-          {
-            // Initialise relaxation time across the domain to HemeLB's default value.
-            mTau.resize(initParams.latDat->GetLocalFluidSiteCount(),
-                        initParams.lbmParams->GetTau());
-            mTimeStep = initParams.lbmParams->GetTimeStep();
-            mSpaceStep = initParams.lbmParams->GetVoxelSize();
-          }
+          // Our copy of the base LB parameters
+          LbmParameters mLbParams;
 
           /**
            *  Helper method to update the value of local relaxation time (tau) from a given hydrodynamic
@@ -144,13 +128,12 @@ namespace hemelb
              */
             double shear_rate = LatticeType::CalculateShearRate(localTau,
                                                                 hydroVars.f_neq.f,
-                                                                hydroVars.density) / mTimeStep;
+                                                                hydroVars.density) / mLbParams.GetTimeStep();
 
             // Update tau
             localTau = tRheologyModel::CalculateTauForShearRate(shear_rate,
                                                                 hydroVars.density,
-                                                                mSpaceStep,
-                                                                mTimeStep);
+                                                                mLbParams);
 
             // In some rheology models viscosity tends to infinity as shear rate goes to zero.
             /// @todo: #633 refactor

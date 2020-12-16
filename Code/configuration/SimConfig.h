@@ -346,6 +346,7 @@ namespace hemelb
         unsigned long warmUpSteps;
         PhysicalDistance voxelSizeMetres;
         PhysicalPosition geometryOriginMetres;
+	PhysicalDensity fluidDensityKgm3;
         util::UnitConverter* unitConverter;
         ICConfig icConfig;
       private:

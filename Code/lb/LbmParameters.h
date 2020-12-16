@@ -22,14 +22,12 @@ namespace hemelb
       IgnoreStress = 2
     };
 
-    constexpr double DEFAULT_FLUID_DENSITY_KG_PER_M3 = 1000.0;
-
     class LbmParameters
     {
       public:
         inline LbmParameters(PhysicalTime timeStepSeconds,
 		    PhysicalDistance voxelSizeMetres,
-		    PhysicalDensity fluidDensityKgm3 = DEFAULT_FLUID_DENSITY_KG_PER_M3) :
+		    PhysicalDensity fluidDensityKgm3 = DEFAULT_FLUID_DENSITY_Kg_per_m3) :
 	  timeStep(timeStepSeconds),
 	  voxelSize(voxelSizeMetres),
 	  fluidDensity(fluidDensityKgm3),
@@ -40,32 +38,37 @@ namespace hemelb
         {
         }
 
-        inline PhysicalTime GetTimeStep() const
+        inline const PhysicalTime& GetTimeStep() const
         {
           return timeStep;
         }
 
-        inline PhysicalDistance GetVoxelSize() const
+        inline const PhysicalDistance& GetVoxelSize() const
         {
           return voxelSize;
         }
 
-        inline distribn_t GetOmega() const
+        inline const PhysicalDensity& GetFluidDensity() const
+        {
+          return fluidDensity;
+        }
+
+        inline const distribn_t& GetOmega() const
         {
           return omega;
         }
 
-        inline distribn_t GetTau() const
+        inline const distribn_t& GetTau() const
         {
           return tau;
         }
 
-        inline distribn_t GetStressParameter() const
+        inline const distribn_t& GetStressParameter() const
         {
           return stressParameter;
         }
 
-        inline distribn_t GetBeta() const
+        inline const distribn_t& GetBeta() const
         {
           return beta;
         }
