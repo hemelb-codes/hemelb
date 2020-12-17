@@ -27,6 +27,7 @@ namespace hemelb
             CarreauYasudaRheologyModel<CYFIT> >
         {
           public:
+            CarreauYasudaRheologyModel(const InitParams&) {}
             /*
              *  Compute nu for a given shear rate according to the Carreau-Yasuda model:
              *
@@ -39,8 +40,8 @@ namespace hemelb
              *
              *  @return dynamic viscosity (Pa s).
              */
-            static double CalculateViscosityForShearRate(const double &iShearRate,
-                                                         const distribn_t &iDensity);
+            double CalculateViscosityForShearRate(const double &iShearRate,
+						  const distribn_t &iDensity) const;
         };
 
 #define CY_FIT_NEW(NAME, ETA_INF_PA_S, ETA_ZERO_PA_S, LAMBDA_S, A_DIMLESS, N_DIMLESS) \

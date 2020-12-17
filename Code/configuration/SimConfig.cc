@@ -194,6 +194,16 @@ namespace hemelb
       } else {
 	fluidDensityKgm3 = DEFAULT_FLUID_DENSITY_Kg_per_m3;
       }
+
+      // Optional element
+      // <fluid_viscosity value="float" units="Pa.s" />
+      auto maybeViscosityEl = simEl.GetChildOrNull("fluid_viscosity");
+      if (maybeViscosityEl) {
+	GetDimensionalValue(maybeViscosityEl, "Pa.s", fluidViscosityPas);
+      } else {
+	fluidViscosityPas = DEFAULT_FLUID_VISCOSITY_Pas;
+      }
+
     }
 
     void SimConfig::DoIOForGeometry(const io::xml::Element geometryEl)

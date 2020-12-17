@@ -16,8 +16,24 @@ namespace hemelb
 
     namespace kernels
     {
+      struct InitParams;
+
       namespace rheologyModels
       {
+	// To satisfy the RheologyModel concept, a class must:
+	//
+	// - inherit from this with CRTP (i.e. `class R : public AbstractRheologyModel<R>`)
+	//
+	// - have a constructor `RheologyModel(const InitParams&)`
+	//
+	// - have a member function that computes the dynamic
+	//   viscosity (in Pa s) predicted by a given rheology model
+	//   for given shear rate and viscosity. Prototype:
+	//
+	//   PhysicalDynamicViscosity CalculateViscosityForShearRate(const PhysicalRate &iShearRate, const LatticeDensity &iDensity) const;
+	//
+	//   @param iShearRate local shear rate value (s^{-1}).
+	//   @param iDensity local density (TODO: at the moment this value is not used in any subclass)
         template<class tRheologyImplementation>
         class AbstractRheologyModel
         {
@@ -42,27 +58,14 @@ namespace hemelb
              *
              *  @return relaxation time (dimensionless)
              */
-            static LatticeTime CalculateTauForShearRate(const PhysicalRate &iShearRate,
-							const LatticeDensity &iDensity,
-							const LbmParameters& lbParams);
+            LatticeTime CalculateTauForShearRate(const PhysicalRate &iShearRate,
+						 const LatticeDensity &iDensity,
+						 const LbmParameters& lbParams) const;
 
-            /*
-             *  Computes the dynamic viscosity predicted by a given rheology model for
-             *  given shear rate and viscosity
-             *
-             *  To be implemented in each AbstractRheologyModel subclass.
-             *
-             *  @param iShearRate local shear rate value (s^{-1}).
-             *  @param iDensity local density. TODO at the moment this value is not used
-             *         in any subclass.
-             *
-             *  @return dynamic viscosity (Pa s).
-             */
-            static double CalculateViscosityForShearRate(const PhysicalRate &iShearRate,
-                                                         const LatticeDensity &iDensity);
-          private:
-            AbstractRheologyModel();
+          protected:
+            AbstractRheologyModel() = default;
         };
+
       }
     }
   }

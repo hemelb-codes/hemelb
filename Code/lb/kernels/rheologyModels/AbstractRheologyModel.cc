@@ -17,11 +17,12 @@ namespace hemelb
       {
         template<class tRheologyImplementation>
         double AbstractRheologyModel<tRheologyImplementation>::CalculateTauForShearRate(
-            const double &iShearRate, const distribn_t &iDensity, const LbmParameters& lbParams)
+            const double &iShearRate, const distribn_t &iDensity, const LbmParameters& lbParams) const
         {
 	  auto&& dx = lbParams.GetVoxelSize();
 	  auto&& dt = lbParams.GetTimeStep();
-	  auto eta = tRheologyImplementation::CalculateViscosityForShearRate(iShearRate, iDensity);
+	  auto self = static_cast<const tRheologyImplementation*>(this);
+	  auto eta = self->CalculateViscosityForShearRate(iShearRate, iDensity);
 	  // TODO: Investigate whether we should be using lbParams.GetFluidDensity() * iDensity
 	  auto nu = eta / lbParams.GetFluidDensity();
           return 0.5 + (dt * nu) / (Cs2 * dx * dx);

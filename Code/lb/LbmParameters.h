@@ -27,11 +27,13 @@ namespace hemelb
       public:
         inline LbmParameters(PhysicalTime timeStepSeconds,
 		    PhysicalDistance voxelSizeMetres,
-		    PhysicalDensity fluidDensityKgm3 = DEFAULT_FLUID_DENSITY_Kg_per_m3) :
+		    PhysicalDensity fluidDensityKgm3 = DEFAULT_FLUID_DENSITY_Kg_per_m3,
+		    PhysicalDynamicViscosity newtonianViscosityPas = DEFAULT_FLUID_VISCOSITY_Pas) :
 	  timeStep(timeStepSeconds),
 	  voxelSize(voxelSizeMetres),
 	  fluidDensity(fluidDensityKgm3),
-	  tau(0.5 + (timeStep * BLOOD_VISCOSITY_Pa_s / fluidDensity) / (Cs2 * voxelSize * voxelSize)),
+	  eta(newtonianViscosityPas),
+	  tau(0.5 + (timeStep * eta / fluidDensity) / (Cs2 * voxelSize * voxelSize)),
 	  omega(-1.0 / tau),
 	  stressParameter((1.0 - 1.0 / (2.0 * tau)) / std::sqrt(2.0)),
 	  beta(-1.0 / (2.0 * tau))
@@ -51,6 +53,11 @@ namespace hemelb
         inline const PhysicalDensity& GetFluidDensity() const
         {
           return fluidDensity;
+        }
+
+        inline const PhysicalDynamicViscosity& GetEta() const
+        {
+          return eta;
         }
 
         inline const distribn_t& GetOmega() const
@@ -76,9 +83,10 @@ namespace hemelb
         StressTypes StressType;
 
       private:
-        PhysicalTime timeStep;
-        PhysicalDistance voxelSize;
-        PhysicalDensity fluidDensity;
+        PhysicalTime timeStep; // seconds
+        PhysicalDistance voxelSize; // metres
+        PhysicalDensity fluidDensity; // kg m^-3
+        PhysicalDynamicViscosity eta; // Newtonian viscosity of fluid in Pa s
         distribn_t tau;
         distribn_t omega;
         distribn_t stressParameter;

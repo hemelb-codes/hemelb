@@ -16,7 +16,7 @@ namespace hemelb
       namespace rheologyModels
       {
         double CassonRheologyModel::CalculateViscosityForShearRate(const double &iShearRate,
-                                                                   const distribn_t &iDensity)
+                                                                   const distribn_t &iDensity) const
         {
           double k0_k1_gamma = K0 + K1 * std::sqrt(iShearRate);
           double eta = (k0_k1_gamma * k0_k1_gamma) / iShearRate;

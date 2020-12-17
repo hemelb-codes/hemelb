@@ -25,6 +25,8 @@ namespace hemelb
         class CassonRheologyModel : public AbstractRheologyModel<CassonRheologyModel>
         {
           public:
+            // Satisfy RheologyModel concept
+            inline CassonRheologyModel(const InitParams&) {}
             /*
              *  Compute nu for a given shear rate according to the Casson model:
              *
@@ -37,8 +39,8 @@ namespace hemelb
              *
              *  @return dynamic viscosity (m^2/s).
              */
-            static double CalculateViscosityForShearRate(const double &iShearRate,
-                                                         const distribn_t &iDensity);
+            double CalculateViscosityForShearRate(const double &iShearRate,
+						  const distribn_t &iDensity) const;
         };
       }
     }

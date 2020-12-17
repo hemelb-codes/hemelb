@@ -17,7 +17,7 @@ namespace hemelb
 
         template<class CYFIT>
         double CarreauYasudaRheologyModel<CYFIT>::CalculateViscosityForShearRate(
-            const double &iShearRate, const distribn_t &iDensity)
+            const double &iShearRate, const distribn_t &iDensity) const
         {
 	  constexpr double exponent = (CYFIT::N - 1.0) / CYFIT::A;
           double eta = CYFIT::ETA_INF

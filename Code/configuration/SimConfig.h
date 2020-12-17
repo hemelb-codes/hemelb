@@ -347,6 +347,7 @@ namespace hemelb
         PhysicalDistance voxelSizeMetres;
         PhysicalPosition geometryOriginMetres;
 	PhysicalDensity fluidDensityKgm3;
+	PhysicalDynamicViscosity fluidViscosityPas;
         util::UnitConverter* unitConverter;
         ICConfig icConfig;
       private:

@@ -83,6 +83,11 @@ namespace hemelb
   typedef double PhysicalPressureGradient;
   typedef double LatticePressureGradient;
 
+  typedef double PhysicalDynamicViscosity;
+  typedef double PhysicalKinematicViscosity;
+  typedef double LatticeDynamicViscosity;
+  typedef double LatticeKinematicViscosity;
+
   typedef double Dimensionless;
 }
 #endif //HEMELB_UNITS_H

@@ -17,6 +17,23 @@ namespace hemelb
   {
     namespace kernels
     {
+      namespace rheologyModels
+      {
+        template<class tRheologyImplementation>
+        class AbstractRheologyModel;
+      }
+
+      namespace detail
+      {
+	template <typename RHEO>
+	struct has_calc_visc {
+	  using prototype = PhysicalDynamicViscosity (RHEO::*)(const PhysicalRate&, const LatticeDensity&) const;
+	  static constexpr bool value = std::is_same<
+	    prototype,
+	    decltype(&RHEO::CalculateViscosityForShearRate)
+	    >::value;
+	};
+      }
 
       /**
        * Class extending the original BGK collision operator to support non-Newtonian
@@ -25,11 +42,25 @@ namespace hemelb
       template<class tRheologyModel, class LatticeType>
       class LBGKNN : public BaseKernel<LBGKNN<tRheologyModel, LatticeType>, LatticeType>
       {
+	// Eventually these could be made a concept
+	//
+	// One might like to check these in AbstractRheologyModel, but
+	// the derived class is incomplete at that point so can't
+	// check its traits there.
+	static_assert(std::is_base_of<rheologyModels::AbstractRheologyModel<tRheologyModel>, tRheologyModel>::value,
+		      "tRheologyModel must inherit AbstractRheologyModel via CRTP");
+	static_assert(std::is_constructible<tRheologyModel, const InitParams>::value,
+		      "tRheologyModel must be constructable from InitParams");
+	static_assert(detail::has_calc_visc<tRheologyModel>::value,
+		      "tRheologyModel must have member function "
+		      "`PhysicalDynamicViscosity CalculateViscosityForShearRate(const PhysicalRate&, const LatticeDensity&) const`");
+
         public:
 
           LBGKNN(InitParams& initParams)
 	    : mTau(initParams.latDat->GetLocalFluidSiteCount(), initParams.lbmParams->GetTau()),
-	      mLbParams(*initParams.lbmParams)
+	      mLbParams(*initParams.lbmParams),
+	      mRheo(initParams)
           {
           }
 
@@ -111,6 +142,9 @@ namespace hemelb
           // Our copy of the base LB parameters
           LbmParameters mLbParams;
 
+          // Our rheology model
+          tRheologyModel mRheo;
+
           /**
            *  Helper method to update the value of local relaxation time (tau) from a given hydrodynamic
            *  configuration. It requires values of f_neq and density at the current time step and it will
@@ -131,9 +165,9 @@ namespace hemelb
                                                                 hydroVars.density) / mLbParams.GetTimeStep();
 
             // Update tau
-            localTau = tRheologyModel::CalculateTauForShearRate(shear_rate,
-                                                                hydroVars.density,
-                                                                mLbParams);
+            localTau = mRheo.CalculateTauForShearRate(shear_rate,
+						      hydroVars.density,
+						      mLbParams);
 
             // In some rheology models viscosity tends to infinity as shear rate goes to zero.
             /// @todo: #633 refactor
