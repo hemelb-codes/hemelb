@@ -151,13 +151,19 @@ namespace hemelb
 
     bool SiteData::HasWall(Direction direction) const
     {
-      unsigned mask = 1U << (direction - 1);
+      // If at the zero direction then always false, so set mask to all zeros.
+      const unsigned mask = direction ?
+	1U << (direction - 1U) :
+	0U;
       return (wallIntersection & mask) != 0;
     }
 
     bool SiteData::HasIolet(Direction direction) const
     {
-      unsigned mask = 1U << (direction - 1);
+      // If at the zero direction then always false, so set mask to all zeros.
+      unsigned mask = direction ?
+	1U << (direction - 1U) :
+	0U;
       return (ioletIntersection & mask) != 0;
     }
 
