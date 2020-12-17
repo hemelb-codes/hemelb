@@ -281,7 +281,7 @@ namespace hemelb
 
       SECTION("TestIoletCoordinates") {
 	// unit converter - make physical and lattice units the same
-	util::UnitConverter units(1, 1, PhysicalPosition::Zero(), DEFAULT_FLUID_DENSITY_Kg_per_m3);
+	util::UnitConverter units(1, 1, PhysicalPosition::Zero(), DEFAULT_FLUID_DENSITY_Kg_per_m3, 0.0);
 
 	ConcreteIolet iolet;
 	// normal

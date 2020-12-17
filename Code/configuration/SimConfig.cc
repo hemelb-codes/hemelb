@@ -204,6 +204,14 @@ namespace hemelb
 	fluidViscosityPas = DEFAULT_FLUID_VISCOSITY_Pas;
       }
 
+      // Optional element (default = 0)
+      // <reference_pressure value="float" units="mmHg" />
+      auto maybeRefPresEl = simEl.GetChildOrNull("reference_pressure");
+      if (maybeRefPresEl) {
+	GetDimensionalValue(maybeRefPresEl, "mmHg", reference_pressure_mmHg);
+      } else {
+	reference_pressure_mmHg = 0;
+      }
     }
 
     void SimConfig::DoIOForGeometry(const io::xml::Element geometryEl)
@@ -220,7 +228,8 @@ namespace hemelb
       unitConverter = new util::UnitConverter(timeStepSeconds,
                                               voxelSizeMetres,
                                               geometryOriginMetres,
-					      fluidDensityKgm3);
+					      fluidDensityKgm3,
+					      reference_pressure_mmHg);
     }
 
     /**
@@ -492,10 +501,15 @@ namespace hemelb
         field.name = *name;
       }
 
+      // Default offset is zero
+      field.offset = 0.0;
+
       // Check and assign the type.
       if (type == "pressure")
       {
         field.type = extraction::OutputField::Pressure;
+	// Pressure uses the reference pressure
+	field.offset = reference_pressure_mmHg;
       }
       else if (type == "velocity")
       {

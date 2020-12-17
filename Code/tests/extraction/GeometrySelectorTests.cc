@@ -40,7 +40,8 @@ namespace hemelb
       auto unitConverter = util::UnitConverter(simState.GetTimeStepLength(),
 					       VoxelSize,
 					       PhysicalPosition::Zero(),
-					       DEFAULT_FLUID_DENSITY_Kg_per_m3);
+					       DEFAULT_FLUID_DENSITY_Kg_per_m3,
+					       0.0);
       auto dataSourceIterator = extraction::LbDataSourceIterator(propertyCache,
 								 *latticeData,
 								 0,

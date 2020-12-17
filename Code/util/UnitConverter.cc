@@ -13,23 +13,24 @@ namespace hemelb
 
     UnitConverter::UnitConverter(PhysicalTime timeStep,
 				 PhysicalDistance voxelSize, PhysicalPosition latticeOrigin,
-				 PhysicalDensity fluidDensity) :
+				 PhysicalDensity fluidDensity, PhysicalPressure reference_pressure) :
         latticeDistance(voxelSize), latticeTime(timeStep),
             latticeMass(fluidDensity * voxelSize * voxelSize * voxelSize),
             latticeSpeed(voxelSize / latticeTime), latticeOrigin(latticeOrigin),
-            latticePressure(latticeMass / (latticeDistance * latticeTime * latticeTime))
+            latticePressure(latticeMass / (latticeDistance * latticeTime * latticeTime)),
+            reference_pressure_mmHg(reference_pressure)
     {
 
     }
 
     LatticePressure UnitConverter::ConvertPressureToLatticeUnits(PhysicalPressure pressure) const
     {
-      return Cs2 + ConvertPressureDifferenceToLatticeUnits(pressure - REFERENCE_PRESSURE_mmHg);
+      return Cs2 + ConvertPressureDifferenceToLatticeUnits(pressure - reference_pressure_mmHg);
     }
 
     PhysicalPressure UnitConverter::ConvertPressureToPhysicalUnits(LatticePressure pressure) const
     {
-      return REFERENCE_PRESSURE_mmHg + ConvertPressureDifferenceToPhysicalUnits(pressure - Cs2);
+      return reference_pressure_mmHg + ConvertPressureDifferenceToPhysicalUnits(pressure - Cs2);
     }
 
     LatticePressure UnitConverter::ConvertPressureDifferenceToLatticeUnits(

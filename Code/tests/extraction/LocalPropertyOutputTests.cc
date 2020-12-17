@@ -25,6 +25,8 @@ namespace hemelb
     namespace {
       const char* tempXtrFileName = "simple.xtr";
       const char* tempOffFileName = "simple.off";
+      // Power of 2 for simple binary
+      constexpr double REFERENCE_PRESSURE_mmHg = 8.0;
 
       auto closer = [](FILE* f) {
 	if (f)
@@ -121,10 +123,10 @@ namespace hemelb
 
       auto simpleOutFile = extraction::PropertyOutputFile{tempXtrFileName, 100, std::make_unique<extraction::WholeGeometrySelector>()};
 
-      extraction::OutputField pressure{"Pressure", extraction::OutputField::Pressure};
+      extraction::OutputField pressure{"Pressure", extraction::OutputField::Pressure, REFERENCE_PRESSURE_mmHg};
       simpleOutFile.fields.push_back(pressure);
 
-      extraction::OutputField velocity{"Velocity", extraction::OutputField::Velocity};
+      extraction::OutputField velocity{"Velocity", extraction::OutputField::Velocity, 0.0};
       simpleOutFile.fields.push_back(velocity);
 
       auto simpleDataSource = std::make_unique<DummyDataSource>();
@@ -192,7 +194,7 @@ namespace hemelb
 	  "\x50\x72\x65\x73"
 	  "\x73\x75\x72\x65"
 	  "\x00\x00\x00\x01"
-	  "\x00\x00\x00\x00"
+	  "\x40\x20\x00\x00"
 	  "\x00\x00\x00\x00"
 	  "\x00\x00\x00\x08"
 	  "\x56\x65\x6C\x6F"

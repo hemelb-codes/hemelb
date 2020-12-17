@@ -17,7 +17,6 @@ namespace hemelb
   // TODO: when we hit C++20, use std::pi_v
   constexpr double PI = 3.14159265358979323846264338327950288;
 
-  constexpr double REFERENCE_PRESSURE_mmHg = 0.0;
   constexpr double mmHg_TO_PASCAL = 133.3223874;
   constexpr double DEFAULT_FLUID_DENSITY_Kg_per_m3 = 1000.0;
   constexpr double DEFAULT_FLUID_VISCOSITY_Pas = 0.001;

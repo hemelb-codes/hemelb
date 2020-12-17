@@ -20,7 +20,8 @@ namespace hemelb
 	unitConverter = new util::UnitConverter(timeStepSeconds,
 						voxelSizeMetres,
 						geometryOriginMetres,
-						DEFAULT_FLUID_DENSITY_Kg_per_m3);
+						DEFAULT_FLUID_DENSITY_Kg_per_m3,
+						0.0);
 
 	lb::iolets::InOutLetCosine* inlet = new lb::iolets::InOutLetCosine();
 	inlet->SetPressureAmp(unitConverter->ConvertPressureDifferenceToLatticeUnits(1.0));

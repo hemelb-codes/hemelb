@@ -70,13 +70,6 @@ namespace hemelb
          */
         unsigned GetFieldLength(OutputField::FieldType field) const;
 
-        /**
-         * Returns the offset to the field, as it should be written to file.
-         * @param field
-         * @return
-         */
-        static double GetOffset(OutputField::FieldType field);
-
       private:
 	//typedef hemelb::lb::lattices:: HEMELB_LATTICE latticeType;
         const net::IOCommunicator& comms;

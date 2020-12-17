@@ -23,7 +23,7 @@ namespace hemelb
       auto pressureToDensity = [&](double pressure) -> double {
 	double inverseVelocity = simConfig->GetTimeStepLength() / simConfig->GetVoxelSize();
 	return 1
-	  + (pressure - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * inverseVelocity * inverseVelocity
+	  + pressure * mmHg_TO_PASCAL * inverseVelocity * inverseVelocity
 	  / (Cs2 * lbmParams->GetFluidDensity());
       };
 

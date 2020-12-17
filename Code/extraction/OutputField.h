@@ -29,6 +29,7 @@ namespace hemelb
 
         std::string name;
         FieldType type;
+        double offset;
     };
   }
 }
