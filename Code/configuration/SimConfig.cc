@@ -87,14 +87,14 @@ namespace hemelb
     void SimConfig::DoIO(io::xml::Element topNode)
     {
       // Top element must be:
-      // <hemelbsettings version="2" />
+      // <hemelbsettings version="4" />
       if (topNode.GetName() != "hemelbsettings")
         throw Exception() << "Invalid root element: " << topNode.GetPath();
 
       unsigned version;
       const std::string& versionStr = topNode.GetAttributeOrThrow("version", version);
-      if (version != 3U)
-        throw Exception() << "Unrecognised XML version. Expected 3, got " << versionStr;
+      if (version != 4U)
+        throw Exception() << "Unrecognised XML version. Expected 4, got " << versionStr;
 
       DoIOForSimulation(topNode.GetChildOrThrow("simulation"));
       CreateUnitConverter();
