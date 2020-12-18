@@ -13,7 +13,6 @@ dependencies/build/*
 deploy/.jobscripts
 deploy/machines_user.json
 deploy/machines_user.yml
-Doc/*
 personal/*
 CMakeFiles/*
 CMakeCache.txt
