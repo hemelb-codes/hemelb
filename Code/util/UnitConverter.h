@@ -132,7 +132,7 @@ namespace hemelb
         }
         LatticePosition GetPhysicalOrigin() const
         {
-          return LatticePosition() - (latticeOrigin / latticeDistance);
+          return LatticePosition::Zero() - (latticeOrigin / latticeDistance);
         }
 
         template <typename T>

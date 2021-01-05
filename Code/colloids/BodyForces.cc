@@ -44,7 +44,7 @@ namespace hemelb
 
     const LatticeForceVector BodyForces::GetBodyForcesForParticle(const Particle& particle)
     {
-      LatticeForceVector totalForce;
+      auto totalForce = LatticeForceVector::Zero();
       for (std::map<std::string, const BodyForce* const >::const_iterator iter = bodyForces.begin(); iter
           != bodyForces.end(); iter++)
         totalForce += iter->second->GetForceForParticle(particle);

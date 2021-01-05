@@ -119,13 +119,8 @@ namespace hemelb
          */
         T x, y, z;
 
-        /**
-         * Default constructor, instantiates with zeros.
-         */
-        Vector3D() :
-            x(0), y(0), z(0)
-        {
-        }
+        // Default constructor. It's a value type so this has undefined value when default constructed.
+        constexpr Vector3D() = default;
 
         /**
          * Constructor accepting elements
@@ -133,7 +128,7 @@ namespace hemelb
          * @param y-component
          * @param z-component
          */
-        Vector3D(const T iX, const T iY, const T iZ) :
+        constexpr Vector3D(const T iX, const T iY, const T iZ) :
             x(iX), y(iY), z(iZ)
         {
         }
@@ -142,10 +137,32 @@ namespace hemelb
          * Constructor filling in each component with the supplied argument.
          * @param used for all components
          */
-        Vector3D(const T iX) :
+        constexpr Vector3D(const T iX) :
             x(iX), y(iX), z(iX)
         {
         }
+
+        // Copy constructor from Vector3D<this type>
+        constexpr Vector3D(const Vector3D&) = default;
+
+        // Move constructor from Vector3D<this type>
+        //
+        // Note that this doesn't gain us anything, unless T is
+        // usefully moveable. We also don't provide a converting move
+        // c'tor as that will need a copy even if one of the types
+        // involved is moveable.
+        constexpr Vector3D(Vector3D&&) = default;
+
+        // Copy constructor converting elements from another type
+        template<class U>
+        constexpr Vector3D(const Vector3D<U>& i) :
+	    x(T(i.x)), y(T(i.y)), z(T(i.z))
+        {
+        }
+
+        // Copy and move assignment are both explicitly defaulted
+        constexpr Vector3D& operator=(const Vector3D&) = default;
+        constexpr Vector3D& operator=(Vector3D&&) = default;
 
         /**
          * Get a component by Direction
@@ -226,21 +243,9 @@ namespace hemelb
         }
 
         /**
-         * Copy constructor. Can perform type conversion.
-         * @param source
-         */
-        template<class OldTypeT>
-        Vector3D(const Vector3D<OldTypeT> & iOldVector3D)
-        {
-          x = (T) (iOldVector3D.x);
-          y = (T) (iOldVector3D.y);
-          z = (T) (iOldVector3D.z);
-        }
-
-        /**
          * Equality
          */
-        bool operator==(const Vector3D& right) const
+        constexpr bool operator==(const Vector3D& right) const
         {
           if (x != right.x)
           {
@@ -272,7 +277,7 @@ namespace hemelb
          * Compute the unit vector that points in this direction.
          * @return the unit vector
          */
-        Vector3D GetNormalised() const
+        constexpr Vector3D GetNormalised() const
         {
           Vector3D normed(*this);
           normed.Normalise();
@@ -299,7 +304,7 @@ namespace hemelb
          * @return
          */
         template <typename U, typename RES = mul_result_t<U>>
-        RES Dot(const Vector3D<U>& otherVector) const
+        constexpr RES Dot(const Vector3D<U>& otherVector) const
         {
           return (x * otherVector.x + y * otherVector.y + z * otherVector.z);
         }
@@ -310,7 +315,7 @@ namespace hemelb
          * @return
          */
         template <typename U, typename RES = mul_result_t<U>>
-        static RES Dot(const Vector3D &V1, const Vector3D<U> &V2)
+        constexpr static RES Dot(const Vector3D &V1, const Vector3D<U> &V2)
         {
           return V1.Dot(V2);
         }
@@ -322,7 +327,7 @@ namespace hemelb
          * @return
          */
         template <typename U, typename RES = mul_result_t<U>>
-        static Vector3D<RES> Cross(const Vector3D& V1, const Vector3D<U>& V2)
+        constexpr static Vector3D<RES> Cross(const Vector3D& V1, const Vector3D<U>& V2)
         {
           return Vector3D(V1.y * V2.z - V1.z * V2.y,
                           V1.z * V2.x - V1.x * V2.z,
@@ -335,7 +340,7 @@ namespace hemelb
          * @return
          */
         template <typename U, typename RES = mul_result_t<U>>
-	Vector3D<RES> Cross(const Vector3D<U>& other) const
+	constexpr Vector3D<RES> Cross(const Vector3D<U>& other) const
         {
           return Cross(*this, other);
         }
@@ -344,7 +349,7 @@ namespace hemelb
          * Compute the magnitude squared of the vector
          * @return magnitude**2
          */
-        T GetMagnitudeSquared() const
+        constexpr T GetMagnitudeSquared() const
         {
           return this->Dot(*this);
         }
@@ -365,7 +370,7 @@ namespace hemelb
          * @return this + right
          */
         template <typename U, typename RES = add_result_t<U>>
-        Vector3D<RES> operator+(const Vector3D<U>& right) const
+        constexpr Vector3D<RES> operator+(const Vector3D<U>& right) const
         {
           return Vector3D(x + right.x, y + right.y, z + right.z);
         }
@@ -376,7 +381,7 @@ namespace hemelb
          * @return the updated vector
          */
         template <typename U, typename = typename std::enable_if<add_result_same_v<U>>::type>
-        Vector3D& operator+=(const Vector3D<U>& right)
+        constexpr Vector3D& operator+=(const Vector3D<U>& right)
         {
           x += right.x;
           y += right.y;
@@ -389,7 +394,7 @@ namespace hemelb
          * Vector unary negation
          * @return -this
          */
-        Vector3D operator-() const
+        constexpr Vector3D operator-() const
         {
           return Vector3D(-x, -y, -z);
         }
@@ -400,7 +405,7 @@ namespace hemelb
          * @return this - right
          */
         template <typename U, typename RES = add_result_t<U>>
-        Vector3D operator-(const Vector3D<U>& right) const
+        constexpr Vector3D operator-(const Vector3D<U>& right) const
         {
           return Vector3D(x - right.x, y - right.y, z - right.z);
         }
@@ -411,7 +416,7 @@ namespace hemelb
          * @return this - right
          */
         template <typename U, typename = typename std::enable_if<add_result_same_v<U>>::type>
-        Vector3D& operator-=(const Vector3D<U>& right)
+        constexpr Vector3D& operator-=(const Vector3D<U>& right)
         {
           x -= right.x;
           y -= right.y;
@@ -427,7 +432,7 @@ namespace hemelb
         template<class U,
 		 typename = typename std::enable_if<std::is_arithmetic<U>::value>::type,
 		 typename RES = mul_result_t<U>>
-        friend Vector3D<RES> operator*(const Vector3D& lhs, const U& rhs)
+        friend constexpr Vector3D<RES> operator*(const Vector3D& lhs, const U& rhs)
         {
           return Vector3D<RES>{
 	    lhs.x * rhs,
@@ -440,7 +445,7 @@ namespace hemelb
         template<class U,
 		 typename = typename std::enable_if<std::is_arithmetic<U>::value>::type,
 		 typename RES = mul_result_t<U>>
-        friend Vector3D<RES> operator*(const U& lhs, const Vector3D& rhs)
+        friend constexpr Vector3D<RES> operator*(const U& lhs, const Vector3D& rhs)
         {
           return rhs*lhs;
         }
@@ -451,7 +456,7 @@ namespace hemelb
          * @return
          */
         template<class U, typename = typename std::enable_if<mul_result_same_v<U>>::type>
-        Vector3D& operator*=(const U& multiplier)
+        constexpr Vector3D& operator*=(const U& multiplier)
         {
           x *= multiplier;
           y *= multiplier;
@@ -464,7 +469,7 @@ namespace hemelb
         template<class U,
 		 typename = typename std::enable_if<std::is_arithmetic<U>::value>::type,
 		 typename RES = mul_result_t<U>>
-        Vector3D<RES> operator/(const U& divisor) const
+        constexpr Vector3D<RES> operator/(const U& divisor) const
         {
           return Vector3D<RES>{x / divisor,
 			       y / divisor,
@@ -475,7 +480,7 @@ namespace hemelb
         // Only enabled if the type of T/U == T
         // Returns the updated object
         template<class U, typename = typename std::enable_if<mul_result_same_v<U>>::type>
-        Vector3D& operator/=(const U& divisor)
+        constexpr Vector3D& operator/=(const U& divisor)
         {
           x /= divisor;
           y /= divisor;
@@ -488,7 +493,7 @@ namespace hemelb
          * @param divisor
          */
         template<class U, typename RES = mul_result_t<U>>
-        Vector3D<RES> operator%(const U& divisor) const
+        constexpr Vector3D<RES> operator%(const U& divisor) const
         {
           return Vector3D{x % divisor, y % divisor, z % divisor};
         }
@@ -498,7 +503,7 @@ namespace hemelb
          * @param divisor
          */
         template<class U, typename = typename std::enable_if<mul_result_same_v<U>>::type>
-        Vector3D& operator%=(const U& divisor)
+        constexpr Vector3D& operator%=(const U& divisor)
         {
           x %= divisor;
           y %= divisor;
@@ -509,7 +514,7 @@ namespace hemelb
         /**
          * Point-wise multiplication
          */
-        Vector3D PointwiseMultiplication(const Vector3D& rightArgument) const
+        constexpr Vector3D PointwiseMultiplication(const Vector3D& rightArgument) const
         {
           return Vector3D(x * rightArgument.x, y * rightArgument.y, z * rightArgument.z);
         }
@@ -517,7 +522,7 @@ namespace hemelb
         /**
          * Point-wise division
          */
-        Vector3D PointwiseDivision(const Vector3D& rightArgument) const
+        constexpr Vector3D PointwiseDivision(const Vector3D& rightArgument) const
         {
           return Vector3D(x / rightArgument.x, y / rightArgument.y, z / rightArgument.z);
         }
@@ -528,7 +533,7 @@ namespace hemelb
          *
          * @param vector to compare against
          */
-        void UpdatePointwiseMin(const Vector3D& iCompareVector)
+        constexpr void UpdatePointwiseMin(const Vector3D& iCompareVector)
         {
           x = std::min(x, iCompareVector.x);
 
@@ -543,7 +548,7 @@ namespace hemelb
          *
          * @param vector to compare against
          */
-        void UpdatePointwiseMax(const Vector3D& iCompareVector)
+        constexpr void UpdatePointwiseMax(const Vector3D& iCompareVector)
         {
           x = std::max(x, iCompareVector.x);
 
@@ -558,7 +563,7 @@ namespace hemelb
          * @param vMax
          * @return
          */
-        bool IsInRange(const Vector3D& vMin, const Vector3D& vMax) const
+        constexpr bool IsInRange(const Vector3D& vMin, const Vector3D& vMax) const
         {
           return NumericalFunctions::IsInRange(x, vMin.x, vMax.x)
               && NumericalFunctions::IsInRange(y, vMin.y, vMax.y)
@@ -569,7 +574,7 @@ namespace hemelb
          * Vector filled with the maximum value for the element type.
          * @return
          */
-        static Vector3D MaxLimit()
+        static constexpr Vector3D MaxLimit()
         {
           return Vector3D(std::numeric_limits<T>::max());
         }
@@ -578,7 +583,7 @@ namespace hemelb
          * Vector filled with the minimum value for the element type.
          * @return
          */
-        static Vector3D MinLimit()
+        static constexpr Vector3D MinLimit()
         {
           return Vector3D(std::numeric_limits<T>::min());
         }
@@ -587,7 +592,7 @@ namespace hemelb
          * Factory for Vector3Ds of ones.
          * @return
          */
-        static Vector3D Ones()
+        static constexpr Vector3D Ones()
         {
           return Vector3D(1);
         }
@@ -596,7 +601,7 @@ namespace hemelb
          * Factory for Vector3Ds of zeros.
          * @return
          */
-        static Vector3D Zero()
+        static constexpr Vector3D Zero()
         {
           return Vector3D(0);
         }
