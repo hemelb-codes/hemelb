@@ -329,9 +329,9 @@ namespace hemelb
         template <typename U, typename RES = mul_result_t<U>>
         constexpr static Vector3D<RES> Cross(const Vector3D& V1, const Vector3D<U>& V2)
         {
-          return Vector3D(V1.y * V2.z - V1.z * V2.y,
-                          V1.z * V2.x - V1.x * V2.z,
-                          V1.x * V2.y - V1.y * V2.x);
+          return Vector3D<RES>(V1.y * V2.z - V1.z * V2.y,
+			       V1.z * V2.x - V1.x * V2.z,
+			       V1.x * V2.y - V1.y * V2.x);
         }
 
         /**
@@ -342,7 +342,7 @@ namespace hemelb
         template <typename U, typename RES = mul_result_t<U>>
 	constexpr Vector3D<RES> Cross(const Vector3D<U>& other) const
         {
-          return Cross(*this, other);
+          return Cross<U, RES>(*this, other);
         }
 
         /**
@@ -372,7 +372,7 @@ namespace hemelb
         template <typename U, typename RES = add_result_t<U>>
         constexpr Vector3D<RES> operator+(const Vector3D<U>& right) const
         {
-          return Vector3D(x + right.x, y + right.y, z + right.z);
+          return Vector3D<RES>(x + right.x, y + right.y, z + right.z);
         }
 
         /**
@@ -405,9 +405,9 @@ namespace hemelb
          * @return this - right
          */
         template <typename U, typename RES = add_result_t<U>>
-        constexpr Vector3D operator-(const Vector3D<U>& right) const
+        constexpr Vector3D<RES> operator-(const Vector3D<U>& right) const
         {
-          return Vector3D(x - right.x, y - right.y, z - right.z);
+          return Vector3D<RES>(x - right.x, y - right.y, z - right.z);
         }
 
         /**
@@ -495,7 +495,7 @@ namespace hemelb
         template<class U, typename RES = mul_result_t<U>>
         constexpr Vector3D<RES> operator%(const U& divisor) const
         {
-          return Vector3D{x % divisor, y % divisor, z % divisor};
+          return Vector3D<RES>{x % divisor, y % divisor, z % divisor};
         }
 
         /**
