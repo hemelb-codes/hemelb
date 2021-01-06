@@ -42,7 +42,8 @@ namespace hemelb
         template<class InputType>
         InputType ConvertStressToLatticeUnits(InputType stress) const
         {
-          return stress / (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
+	  using SCALAR = typename scalar_type<InputType>::type;
+          return stress / SCALAR(latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
         }
 
         /**
@@ -51,7 +52,8 @@ namespace hemelb
         template<class InputType>
         InputType ConvertStressToPhysicalUnits(InputType stress) const
         {
-          return stress * latticePressure;
+	  using SCALAR = typename scalar_type<InputType>::type;
+          return stress * SCALAR(latticePressure);
         }
 
         /**
@@ -81,7 +83,8 @@ namespace hemelb
         Vector3D<VectorType> ConvertTractionToPhysicalUnits(Vector3D<VectorType> traction,
                                                             const Vector3D<Dimensionless>& wallNormal) const
         {
-          Vector3D<VectorType> ret = traction * (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
+	  using SCALAR = typename scalar_type<VectorType>::type;
+          Vector3D<VectorType> ret = traction * SCALAR(latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
           ret += wallNormal * REFERENCE_PRESSURE_mmHg * mmHg_TO_PASCAL;
           return ret;
         }
@@ -94,7 +97,8 @@ namespace hemelb
         template<class InputType>
         InputType ConvertVelocityToLatticeUnits(InputType velocity) const
         {
-          return velocity / latticeSpeed;
+	  using SCALAR = typename scalar_type<InputType>::type;
+	  return velocity / SCALAR(latticeSpeed);
         }
 
         /**
@@ -105,8 +109,9 @@ namespace hemelb
         template<class InputType>
         InputType ConvertVelocityToPhysicalUnits(InputType velocity) const
         {
+	  using SCALAR = typename scalar_type<InputType>::type;
           // convert velocity from lattice units to physical units (m/s)
-          return velocity * latticeSpeed;
+          return velocity * SCALAR(latticeSpeed);
         }
         double ConvertPressureDifferenceToPhysicalUnits(distribn_t pressure_grad) const;
 
@@ -185,7 +190,8 @@ namespace hemelb
           {
             throw Exception() << "Unknown units '" << units << "'";
           }
-          return value / scale_factor;
+	  using SCALAR = typename scalar_type<T>::type;
+          return value / SCALAR(scale_factor);
         }
 
       private:
@@ -195,6 +201,15 @@ namespace hemelb
         const PhysicalSpeed latticeSpeed; //!< Lattice displacement length divided by time step.
         const PhysicalPosition latticeOrigin;
         const PhysicalPressure latticePressure;
+
+      template <typename T>
+      struct scalar_type {
+	using type = T;
+      };
+      template <typename T>
+      struct scalar_type<Vector3D<T>> {
+	using type = T;
+      };
     };
 
   }

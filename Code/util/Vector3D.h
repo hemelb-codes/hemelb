@@ -137,7 +137,7 @@ namespace hemelb
          * Constructor filling in each component with the supplied argument.
          * @param used for all components
          */
-        constexpr Vector3D(const T iX) :
+        explicit constexpr Vector3D(const T iX) :
             x(iX), y(iX), z(iX)
         {
         }
@@ -153,11 +153,17 @@ namespace hemelb
         // involved is moveable.
         constexpr Vector3D(Vector3D&&) = default;
 
-        // Copy constructor converting elements from another type
+        // Constructor converting elements from another type
         template<class U>
-        constexpr Vector3D(const Vector3D<U>& i) :
+        explicit constexpr Vector3D(const Vector3D<U>& i) :
 	    x(T(i.x)), y(T(i.y)), z(T(i.z))
         {
+        }
+
+        // Go the other way and create a copy as the supplied type
+        template <class U>
+        Vector3D<U> as() const {
+          return Vector3D<U>{U(x), U(y), U(z)};
         }
 
         // Copy and move assignment are both explicitly defaulted
