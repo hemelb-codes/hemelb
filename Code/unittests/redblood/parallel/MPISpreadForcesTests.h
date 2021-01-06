@@ -176,7 +176,7 @@ namespace hemelb
             }
             else
             {
-              forces.push_back(0);
+              forces.push_back(LatticeForceVector::Zero());
             }
           }
         }

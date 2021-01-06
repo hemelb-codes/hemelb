@@ -140,7 +140,7 @@ namespace hemelb
           geometry::LatticeData const &latDat,
           std::size_t &nbtests,
           hemelb::redblood::CellContainer const &cells) {
-        std::vector<LatticePosition> positions;
+        std::vector<LatticeVector> positions;
         std::vector<LatticeForceVector> forces;
         for(site_t i(0); i < latDat.GetLocalFluidSiteCount(); ++i)
         {
@@ -157,7 +157,7 @@ namespace hemelb
         }
         if(world.Rank() == 0)
         {
-          auto const parallel_positions = world.Gather(std::vector<LatticePosition>{}, 0);
+          auto const parallel_positions = world.Gather(std::vector<LatticeVector>{}, 0);
           auto const parallel_forces = world.Gather(std::vector<LatticeForceVector>{}, 0);
           CPPUNIT_ASSERT_EQUAL(positions.size(), parallel_positions.size());
           for(std::size_t i(0); i < positions.size(); ++i)

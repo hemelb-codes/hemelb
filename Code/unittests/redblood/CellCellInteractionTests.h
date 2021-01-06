@@ -144,13 +144,13 @@ namespace hemelb
         CPPUNIT_ASSERT(std::distance(empty.first, empty.second) == 0);
         CPPUNIT_ASSERT(std::distance(haloed.first, haloed.second) == 1);
 
-        CPPUNIT_ASSERT(helpers::is_zero(omega.first->first));
+        CPPUNIT_ASSERT_EQUAL(LatticeVector::Zero(), omega.first->first);
         CPPUNIT_ASSERT(omega.first->second.cellIterator == cells.begin());
         CPPUNIT_ASSERT(omega.first->second.nodeIndex == 0 or omega.first->second.nodeIndex == 1);
         CPPUNIT_ASSERT(omega.first->second.nearBorder == (size_t) Borders::CENTER);
         DivideConquer<CellReference>::const_iterator other = omega.first;
         ++other;
-        CPPUNIT_ASSERT(helpers::is_zero(other->first));
+        CPPUNIT_ASSERT_EQUAL(LatticeVector::Zero(), other->first);
         CPPUNIT_ASSERT(other->second.cellIterator == cells.begin());
         CPPUNIT_ASSERT(other->second.nodeIndex == 0 or other->second.nodeIndex == 1);
         CPPUNIT_ASSERT(other->second.nodeIndex != omega.first->second.nodeIndex);

@@ -132,7 +132,7 @@ namespace hemelb
                       "    <fadelength units=\"m\" value=\"0.05\" />"
                       "  </flowextension>"
                       "</inlet>");
-            util::UnitConverter converter(0.5, 0.6, 0.7, DEFAULT_FLUID_DENSITY_Kg_per_m3, 0.0);
+            util::UnitConverter converter(0.5, 0.6, PhysicalPosition{0.7}, DEFAULT_FLUID_DENSITY_Kg_per_m3, 0.0);
             auto flow = readFlowExtension(doc.FirstChildElement("inlet"), converter);
             // Normal is opposite direction compared to XML inlet definition
             CPPUNIT_ASSERT_DOUBLES_EQUAL(-2e0 / std::sqrt(2),

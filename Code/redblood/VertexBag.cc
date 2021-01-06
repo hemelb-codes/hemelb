@@ -13,7 +13,7 @@ namespace hemelb
     {
       // avoids a warning
 #     ifndef HEMELB_DOING_UNITTESTS
-      proc_t get_proc(geometry::LatticeData const &latDat, LatticePosition const &pos)
+      proc_t get_proc(geometry::LatticeData const &latDat, LatticeVector const &pos)
       {
         proc_t procid;
         site_t siteid;
@@ -104,7 +104,7 @@ namespace hemelb
         std::shared_ptr<CellBase const> cell, geometry::LatticeData const &latticeData,
         proc_t selfRegion)
     {
-      auto proc_getter = [&latticeData](LatticePosition const &position)
+      auto proc_getter = [&latticeData](LatticeVector const &position)
       {
         return get_proc(latticeData, position);
       };

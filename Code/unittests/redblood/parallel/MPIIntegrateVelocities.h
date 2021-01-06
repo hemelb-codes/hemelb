@@ -187,7 +187,7 @@ namespace hemelb
           typedef std::vector<LatticePosition> Positions;
           Positions positions = world.Rank() == 0 ?
             cell->GetVertices() :
-            Positions(cell->GetNumberOfNodes(), 0);
+            Positions(cell->GetNumberOfNodes(), LatticePosition::Zero());
           world.Broadcast(positions, 0);
           if (world.Rank() != 0 and owned.find(cell) != owned.end())
           {

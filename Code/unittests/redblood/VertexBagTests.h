@@ -114,7 +114,7 @@ namespace hemelb
                                  splits[0]->GetVertices().size() + splits[2]->GetVertices().size());
           }
 
-          static proc_t proc_at_pos(LatticePosition const &position)
+          static proc_t proc_at_pos(LatticeVector const &position)
           {
             return (position.x > 0 ?
               0 :

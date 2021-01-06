@@ -19,7 +19,7 @@ namespace hemelb
       //! \brief gathers mid-domain and egde positions from all procs
       //! \details If there are insufficient number of edges, mid-domains are used instead.
       //! erase removes the components from the first process.
-      std::vector<LatticePosition> GatherSpecialPositions(geometry::LatticeData const & latDat,
+      std::vector<LatticeVector> GatherSpecialPositions(geometry::LatticeData const & latDat,
                                                           size_t mid, size_t edges,
                                                           net::MpiCommunicator const &c)
       {
@@ -28,7 +28,7 @@ namespace hemelb
 
         int const nMids = latDat.GetMidDomainCollisionCount(0);
         int const nEdges = latDat.GetDomainEdgeCollisionCount(0);
-        std::vector<LatticePosition> positions(c.Size() * (mid + edges));
+        std::vector<LatticeVector> positions(c.Size() * (mid + edges));
         std::vector<int> shuf(nMids);
         std::iota(shuf.begin(), shuf.end(), 0);
         std::shuffle(shuf.begin(), shuf.end(), g);
@@ -106,7 +106,7 @@ namespace hemelb
           LatticeEnergy operator()(std::vector<LatticeForceVector> &f) const override
           {
             f.resize(GetNumberOfNodes());
-            std::fill(f.begin(), f.end(), force);
+            std::fill(f.begin(), f.end(), LatticeForceVector{force});
             return 0e0;
           }
           std::unique_ptr<CellBase> cloneImpl() const override

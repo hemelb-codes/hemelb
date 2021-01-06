@@ -51,6 +51,11 @@ namespace hemelb
               }
           };
 
+	template <typename VEC3>
+	auto vector_of_zero_vec3(std::size_t count) {
+	  return std::vector<VEC3>{count, VEC3::Zero()};
+	}
+
         public:
           void setUp()
           {
@@ -69,7 +74,7 @@ namespace hemelb
           void testNullTemplateScaling()
           {
             Mesh templateMesh(original);
-            std::vector<LatticeForceVector> forces(original.vertices.size(), 0);
+	    auto forces = vector_of_zero_vec3<LatticeForceVector>(original.vertices.size());
 
             std::vector<Dimensionless> scales;
             scales.push_back(1.0);
@@ -100,8 +105,8 @@ namespace hemelb
             scaled.GetVertices()[1] += LatticePosition(0.0837, -0.012632, 0.0872935);
             scaled.GetVertices()[2] += LatticePosition(0.02631, -0.00824223, -0.098362);
 
-            std::vector<LatticeForceVector> uforces(original.vertices.size(), 0),
-                sforces(original.vertices.size(), 0);
+            auto uforces = vector_of_zero_vec3<LatticeForceVector>(original.vertices.size());
+	    auto sforces = vector_of_zero_vec3<LatticeForceVector>(original.vertices.size());
 
             scaled *= 1.1;
             auto const uenergy = GetCellWithEnergy(scaled, templateMesh, 1.1)(uforces);
