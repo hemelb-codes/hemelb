@@ -1,0 +1,9 @@
+name: hemelb-check-cr
+on: [push]
+jobs:
+  check-copyright:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - run: python Scripts/checkCopyright.py
+
