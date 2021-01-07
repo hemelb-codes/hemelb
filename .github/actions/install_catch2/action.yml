@@ -1,0 +1,30 @@
+name: Install Catch2
+inputs:
+  version:
+    required: false
+    default: 2.13.4
+runs:
+  using: "composite"
+  steps:
+    - name: Make dirs
+      shell: bash
+      run: mkdir -p ${{runner.temp}}/${{github.action}}/${{inputs.version}}-build
+
+    - name: Fetch
+      shell: bash
+      working-directory: ${{runner.temp}}/${{github.action}}
+      run: wget https://github.com/catchorg/Catch2/archive/v${{inputs.version}}.tar.gz
+
+    - name: Extract
+      shell: bash
+      working-directory: ${{runner.temp}}/${{github.action}}
+      run: tar -xzf v${{inputs.version}}.tar.gz
+
+    - name: Configure
+      shell: bash
+      working-directory: ${{runner.temp}}/${{github.action}}/${{inputs.version}}-build
+      run: cmake -S ${{runner.temp}}/${{github.action}}/Catch2-${{inputs.version}} -DBUILD_TESTING=OFF
+
+    - name: Install
+      shell: bash
+      run: sudo cmake --build ${{runner.temp}}/${{github.action}}/${{inputs.version}}-build --target install
