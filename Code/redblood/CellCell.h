@@ -3,11 +3,11 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_REDBLOOD_CELL_CELL_INTERACTION_H
-#define HEMELB_REDBLOOD_CELL_CELL_INTERACTION_H
+#ifndef HEMELB_REDBLOOD_CELLCELL_H
+#define HEMELB_REDBLOOD_CELLCELL_H
 
 #include <vector>
-#include <assert.h>
+#include <cassert>
 #include <memory>
 #include <initializer_list>
 #include <type_traits>
@@ -39,6 +39,185 @@ namespace hemelb
         size_t nearBorder;
     };
 
+    class DivideConquerCells;
+    namespace detail {
+#     ifndef NDEBUG
+#       define HEMELB_GET(X) .at(X)
+#     else
+#       define HEMELB_GET(X) [X]
+#     endif
+
+      // Use const base_type for const_iterator, (mutable) base_type for (mutable) iterator.
+      template <typename BASE>
+      class iterator_base
+      {
+	using base_type = std::remove_const_t<BASE>;
+	static constexpr bool am_const = std::is_const<BASE>::value;
+
+	using wrappee_iterator = std::conditional_t<am_const,
+						    typename base_type::const_iterator,
+						    typename base_type::iterator>;
+
+	using owner_type = std::conditional_t<am_const,
+					      DivideConquerCells const,
+					      DivideConquerCells>;
+
+      public:
+	using value_type = LatticePosition;
+	using reference = std::conditional_t<am_const,
+					     value_type const &,
+					     value_type&>;
+	using pointer = std::conditional_t<am_const,
+					   value_type const*,
+					   value_type*>;
+	typedef value_type const &const_reference;
+	typedef value_type const *const_pointer;
+	using difference_type = typename wrappee_iterator::difference_type;
+	using iterator_category = typename wrappee_iterator::iterator_category;
+
+	iterator_base(owner_type &owner, wrappee_iterator const &w) :
+	  owner(owner), wrappee(w)
+	{
+	}
+
+	// Copy(ish) constructors
+	//
+	// Want: const{const}, const{mutable}, mutable{mutable}
+	// Don't want: mutable{const}
+	//
+	// Because constructors don't have a return, we can't do this the
+	// simple way (see operator= below), instead we SFINAE on a
+	// default template argument.
+	//
+	// First: require that B == BASE after discarding any const
+	// Then: if we are const_iterator, accept B whether const or not/
+	// If we're not const, then only accept mutable B.
+	template <typename B,
+		  typename = std::enable_if_t<
+		    std::is_same< std::remove_const_t<B>, base_type>::value
+		    && (am_const || !std::is_const<B>::value) >
+		  >
+	iterator_base(iterator_base<B> const &in) :
+	  owner(in.owner), wrappee(in.wrappee)
+	{
+	}
+
+	// Want mutable to declare that const is it's friend.
+	// let the other one be our friend (cos can't easily make this one way)
+	friend class iterator_base<const base_type>;
+
+	reference operator*()
+	{
+	  // @formatter:off
+	  return (*wrappee->second.cellIterator)->GetVertices()HEMELB_GET(wrappee->second.nodeIndex);
+	  // @formatter:on
+	}
+	pointer operator->()
+	{
+	  return &this->operator*();
+	}
+
+	const_reference operator*() const
+	{
+	  // @formatter:off
+	  return (*wrappee->second.cellIterator)->GetVertices()HEMELB_GET(wrappee->second.nodeIndex);
+	  // @formatter:on
+	}
+	const_pointer operator->() const
+	{
+	  return &this->operator*();
+	}
+	LatticeVector const &GetKey() const
+	{
+	  return wrappee->first;
+	}
+	iterator_base &operator++()
+	{
+	  ++wrappee;
+	  return *this;
+	}
+	iterator_base &operator--()
+	{
+	  --wrappee;
+	  return *this;
+	}
+	iterator_base operator++(int)
+	{
+	  return iterator_base(owner, wrappee++);
+	}
+	iterator_base operator--(int)
+	{
+	  return iterator_base(owner, wrappee--);
+	}
+
+	bool operator==(iterator_base const &in) const
+	{
+	  return in.wrappee == wrappee;
+	}
+	bool operator!=(iterator_base const &in) const
+	{
+	  return not operator==(in);
+	}
+
+	CellReference const &GetCellReference() const
+	{
+	  return wrappee->second;
+	}
+
+	std::conditional_t<am_const, CellReference const&, CellReference&> GetCellReference()
+	{
+	  return wrappee->second;
+	}
+
+	//! Gets integer coding for whether node is close to boundary
+	size_t GetNearBorder() const
+	{
+	  return GetCellReference().nearBorder;
+	}
+	//! True if close to given boundary
+	bool IsNearBorder(Borders border) const
+	{
+	  return GetNearBorder() bitand size_t(border);
+	}
+	//! True if close to any boundary
+	bool IsNearBorder() const
+	{
+	  return GetNearBorder() != static_cast<size_t>(Borders::CENTER);
+	}
+
+	//! Returns shared pointer to cell pointed to by this object
+	CellContainer::const_reference GetCell() const
+	{
+	  return *GetCellReference().cellIterator;
+	}
+
+	operator wrappee_iterator() const
+	{
+	  return wrappee;
+	}
+
+	// Want: C = C, C = M, M = M
+	// Don't want: M = C
+	// So always allow self = self
+	void operator=(iterator_base<base_type> const &c)
+	{
+	  wrappee = c.wrappee;
+	}
+	// Allow self = other if self == const
+	std::enable_if<am_const> operator=(iterator_base<base_type const> const &c)
+	{
+	  wrappee = c.wrappee;
+	}
+
+      protected:
+	//! Container from which this object was obtained
+	owner_type & owner;
+	//! Iterator over the mapped objects
+	wrappee_iterator wrappee;
+      };
+#     undef HEMELB_GET
+    } // namespace detail
+
     //! Organizes nodes in cells in boxes
     //! The object is to easily check nodes that are within interaction distance
     class DivideConquerCells : public DivideConquer<CellReference>
@@ -50,11 +229,12 @@ namespace hemelb
         //! Iterates over vertices
         //! Wraps a multimap iterator. As such it provides the exact same
         //! garantees.
-        class iterator;
+        using iterator = detail::iterator_base<base_type>;
         //! Iterates over vertices
         //! Wraps a multimap iterator. As such it provides the exact same
         //! garantees.
-        class const_iterator;
+        using const_iterator = detail::iterator_base<base_type const>;
+
         typedef std::reverse_iterator<iterator> reverse_iterator;
         typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
         //! Iterator pair over single box
@@ -92,13 +272,6 @@ namespace hemelb
                                             *std::next(pos.begin()),
                                             *std::next(std::next(pos.begin()))));
         }
-
-// Implementation of DivideConquerCell::iterator
-#define HEMELB_DOING_NONCONST
-#include "CellCellIterator.impl.h"
-#undef HEMELB_DOING_NONCONST
-// Implementation of DivideConquerCell::const_iterator
-#include "CellCellIterator.impl.h"
 
         iterator begin()
         {
