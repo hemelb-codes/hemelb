@@ -172,7 +172,7 @@ foreach(subdir ${package_subdirs})
 endforeach()
 add_subdirectory(resources)
 target_link_libraries(${HEMELB_EXECUTABLE} 
-  ${heme_libraries}
+  ${heme_libraries} ${heme_libraries}
   ${MPI_LIBRARIES}
   ${Boost_LIBRARIES}
   )
@@ -180,7 +180,7 @@ target_link_libraries(${HEMELB_EXECUTABLE}
 # Config XML checker (confcheck)
 add_executable(${HEMELB_EXECUTABLE}-confcheck confcheck.cc)
 target_link_libraries(${HEMELB_EXECUTABLE}-confcheck
-  ${heme_libraries}
+  ${heme_libraries} ${heme_libraries}
   ${MPI_LIBRARIES}
   )
 
