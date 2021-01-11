@@ -2,8 +2,8 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
-#ifndef HEMELB_UNITTESTS_REDBLOOD_FEDOSOVVALIDATION_H
-#define HEMELB_UNITTESTS_REDBLOOD_FEDOSOVVALIDATION_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_FEDOSOVVALIDATIONTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_FEDOSOVVALIDATIONTESTS_H
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <boost/uuid/uuid_io.hpp>

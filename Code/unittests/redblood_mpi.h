@@ -3,7 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTEST_REDBLOOD_PARALLEL_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_MPI_H
+#define HEMELB_UNITTESTS_REDBLOOD_MPI_H
 #define HEMELB_DOING_UNITTESTS
 #include <unittests/redblood/parallel/CellParallelizationTests.h>
 #include <unittests/redblood/parallel/MPISpreadForcesTests.h>

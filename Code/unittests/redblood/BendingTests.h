@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_BENDING_TESTS_H
-#define HEMELB_UNITTESTS_REDBLOOD_BENDING_TESTS_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_BENDINGTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_BENDINGTESTS_H
 
 #include <iomanip>
 #include <cppunit/TestFixture.h>
@@ -249,4 +249,3 @@ namespace hemelb
 }
 
 #endif  // ONCE
-

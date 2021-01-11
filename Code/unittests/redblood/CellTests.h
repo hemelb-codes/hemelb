@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_PARTICLE_H
-#define HEMELB_UNITTESTS_REDBLOOD_PARTICLE_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_CELLTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_CELLTESTS_H
 
 #include <cppunit/TestFixture.h>
 #include "redblood/Cell.h"

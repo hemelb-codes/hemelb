@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_PARALLEL_GRAPHCOMMSTEST_H
-#define HEMELB_UNITTESTS_REDBLOOD_PARALLEL_GRAPHCOMMSTEST_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_PARALLEL_GRAPHCOMMSTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_PARALLEL_GRAPHCOMMSTESTS_H
 
 #include "redblood/RBCConfig.h"
 #include "unittests/helpers/FolderTestFixture.h"

@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_TRAITS_H
-#define HEMELB_TRAITS_H
+#ifndef HEMELB_TRAITS_IN_H
+#define HEMELB_TRAITS_IN_H
 
 #include "lb/streamers/SimpleCollideAndStream.h"
 #include "lb/collisions/Normal.h"

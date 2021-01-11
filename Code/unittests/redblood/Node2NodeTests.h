@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_NODE2NODE_H
-#define HEMELB_UNITTESTS_REDBLOOD_NODE2NODE_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_NODE2NODETESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_NODE2NODETESTS_H
 
 #include <cppunit/TestFixture.h>
 #include "redblood/Node2Node.h"

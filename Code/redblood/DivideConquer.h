@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_REDBLOOD_DIVIDE_AND_CONQUER_H
-#define HEMELB_REDBLOOD_DIVIDE_AND_CONQUER_H
+#ifndef HEMELB_REDBLOOD_DIVIDECONQUER_H
+#define HEMELB_REDBLOOD_DIVIDECONQUER_H
 
 #include <vector>
 #include <map>

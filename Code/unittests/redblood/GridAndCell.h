@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_GRID_AND_CELL_H
-#define HEMELB_UNITTESTS_REDBLOOD_GRID_AND_CELL_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_GRIDANDCELL_H
+#define HEMELB_UNITTESTS_REDBLOOD_GRIDANDCELL_H
 
 #include <cppunit/TestFixture.h>
 #include "redblood/GridAndCell.h"

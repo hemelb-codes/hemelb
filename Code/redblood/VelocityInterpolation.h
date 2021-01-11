@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_REDBLOOD_VELOCITY_INTERPOLATION_H
-#define HEMELB_REDBLOOD_VELOCITY_INTERPOLATION_H
+#ifndef HEMELB_REDBLOOD_VELOCITYINTERPOLATION_H
+#define HEMELB_REDBLOOD_VELOCITYINTERPOLATION_H
 
 #include <iostream>
 

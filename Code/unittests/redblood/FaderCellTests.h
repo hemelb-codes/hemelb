@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_FADERCELLS_TESTS_H
-#define HEMELB_UNITTESTS_REDBLOOD_FADERCELLS_TESTS_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_FADERCELLTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_FADERCELLTESTS_H
 
 #include <cppunit/TestFixture.h>
 

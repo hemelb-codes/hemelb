@@ -2,8 +2,8 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
-#ifndef HEMELB_REDBLOODE_PARALLELIZATION_NODE_CHARACTERIZATION
-#define HEMELB_REDBLOODE_PARALLELIZATION_NODE_CHARACTERIZATION
+#ifndef HEMELB_REDBLOOD_PARALLEL_NODECHARACTERIZER_H
+#define HEMELB_REDBLOOD_PARALLEL_NODECHARACTERIZER_H
 
 #include <set>
 #include <memory>

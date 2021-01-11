@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_BUFFER_BUFFER_H
-#define HEMELB_UNITTESTS_REDBLOOD_BUFFER_BUFFER_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_BUFFER_BUFFERTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_BUFFER_BUFFERTESTS_H
 
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>

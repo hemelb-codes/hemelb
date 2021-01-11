@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_STENCIL_H
-#define HEMELB_UNITTESTS_REDBLOOD_STENCIL_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_STENCILTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_STENCILTESTS_H
 
 #include <cppunit/TestFixture.h>
 #include "redblood/stencil.h"

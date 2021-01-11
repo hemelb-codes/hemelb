@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_REDBLOOD_METACELL_H
-#define HEMELB_REDBLOOD_METACELL_H
+#ifndef HEMELB_REDBLOOD_FADERCELL_H
+#define HEMELB_REDBLOOD_FADERCELL_H
 
 #include <list>
 #include <functional>

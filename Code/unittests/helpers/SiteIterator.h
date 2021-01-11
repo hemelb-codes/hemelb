@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_SITE_ITERATOR_H
-#define HEMELB_UNITTESTS_SITE_ITERATOR_H
+#ifndef HEMELB_UNITTESTS_HELPERS_SITEITERATOR_H
+#define HEMELB_UNITTESTS_HELPERS_SITEITERATOR_H
 
 #include <memory>
 #include <iterator>

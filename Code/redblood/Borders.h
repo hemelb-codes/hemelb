@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_REDBLOOD_BORDERS_INTERACTION_H
-#define HEMELB_REDBLOOD_BORDERS_INTERACTION_H
+#ifndef HEMELB_REDBLOOD_BORDERS_H
+#define HEMELB_REDBLOOD_BORDERS_H
 
 #include <cassert>
 #include "redblood/DivideConquer.h"

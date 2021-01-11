@@ -2,8 +2,8 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
-#ifndef HEMELB_REDBLOODE_PARALLELIZATION_INTEGRATE_VELOCITIES_H
-#define HEMELB_REDBLOODE_PARALLELIZATION_INTEGRATE_VELOCITIES_H
+#ifndef HEMELB_REDBLOOD_PARALLEL_INTEGRATEVELOCITIES_H
+#define HEMELB_REDBLOOD_PARALLEL_INTEGRATEVELOCITIES_H
 
 #include <map>
 #include <vector>

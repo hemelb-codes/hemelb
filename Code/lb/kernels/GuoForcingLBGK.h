@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_LB_KERNELS_GUO_FORCING_LBGK_H
-#define HEMELB_LB_KERNELS_GUO_FORCING_LBGK_H
+#ifndef HEMELB_LB_KERNELS_GUOFORCINGLBGK_H
+#define HEMELB_LB_KERNELS_GUOFORCINGLBGK_H
 
 #include <cstdlib>
 #include <cmath>

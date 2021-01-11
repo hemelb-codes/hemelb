@@ -3,7 +3,6 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include <stdio.h>
 #include "io/writers/xdr/XdrVectorWriter.h"
 
 namespace hemelb

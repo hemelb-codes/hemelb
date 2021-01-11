@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_CELL_ARMY_H
-#define HEMELB_UNITTESTS_REDBLOOD_CELL_ARMY_H
+#ifndef HEMELB_REDBLOOD_CELLARMY_H
+#define HEMELB_REDBLOOD_CELLARMY_H
 
 #include <algorithm>
 #include <vector>

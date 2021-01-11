@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_TIMM_MESH_H
-#define HEMELB_UNITTESTS_TIMM_MESH_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_LOADINGTIMMMESHTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_LOADINGTIMMMESHTESTS_H
 
 #include <sstream>
 #include <cppunit/TestFixture.h>

@@ -3,6 +3,9 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
+#ifndef HEMELB_REDBLOOD_GRIDANDCELL_IMPL_H
+#define HEMELB_REDBLOOD_GRIDANDCELL_IMPL_H
+
 namespace details
 {
   //! Iterates over vertices of a mesh and the nearby nodes of a grid
@@ -58,3 +61,5 @@ namespace details
   };
 
 } // namespace details::anonymous
+
+#endif

@@ -2,8 +2,8 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
-#ifndef HEMELB_REDBLOOD_RBC_INSERTER_H
-#define HEMELB_REDBLOOD_RBC_INSERTER_H
+#ifndef HEMELB_REDBLOOD_RBCINSERTER_H
+#define HEMELB_REDBLOOD_RBCINSERTER_H
 
 #include <iostream>
 #include <memory>
@@ -13,8 +13,8 @@
 #include "io/xml/XmlAbstractionLayer.h"
 #include "lb/iolets/InOutLet.h"
 #include "redblood/types.h"
-#include "Mesh.h"
-#include "Cell.h"
+#include "redblood/Mesh.h"
+#include "redblood/Cell.h"
 #include "units.h"
 #include "util/Matrix3D.h"
 

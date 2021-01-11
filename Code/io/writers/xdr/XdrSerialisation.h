@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_IO_WRITERS_XDR_SERIALISATION_H
-#define HEMELB_IO_WRITERS_XDR_SERIALISATION_H
+#ifndef HEMELB_IO_WRITERS_XDR_XDRSERIALISATION_H
+#define HEMELB_IO_WRITERS_XDR_XDRSERIALISATION_H
 
 #include <boost/optional.hpp>
 #include <arpa/inet.h>

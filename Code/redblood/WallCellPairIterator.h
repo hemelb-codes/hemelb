@@ -3,10 +3,10 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_REDBLOOD_WALL_CELL_PAIR_ITERATOR_H
-#define HEMELB_REDBLOOD_WALL_CELL_PAIR_ITERATOR_H
+#ifndef HEMELB_REDBLOOD_WALLCELLPAIRITERATOR_H
+#define HEMELB_REDBLOOD_WALLCELLPAIRITERATOR_H
 
-#include <assert.h>
+#include <cassert>
 #include <tuple>
 #include <iterator>
 #include "units.h"

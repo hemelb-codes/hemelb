@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_TOPOLOGY_TESTS_H
-#define HEMELB_UNITTESTS_REDBLOOD_TOPOLOGY_TESTS_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_TOPOLOGYTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_TOPOLOGYTESTS_H
 
 #include <sstream>
 #include <cppunit/TestFixture.h>

@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_MULTISCALE_MOCKMPWIDE_H
-#define HEMELB_UNITTESTS_MULTISCALE_MOCKMPWIDE_H
+#ifndef HEMELB_TESTS_MULTISCALE_MPWIDE_MOCKMPWIDE_H
+#define HEMELB_TESTS_MULTISCALE_MPWIDE_MOCKMPWIDE_H
 
 #include <iostream>
 #include <cassert>

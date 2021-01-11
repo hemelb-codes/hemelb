@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_CELLINSERTER_TESTS_H
-#define HEMELB_UNITTESTS_REDBLOOD_CELLINSERTER_TESTS_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_CELLINSERTERTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_CELLINSERTERTESTS_H
 
 #include <cppunit/TestFixture.h>
 #include "io/xml/XmlAbstractionLayer.h"
@@ -220,4 +220,4 @@ namespace hemelb
   } // namespace: unittests
 } // namespace: hemelb
 
-#endif // HEMELB_UNITTESTS_REDBLOOD_FLOWEXTENSION_TESTS_H
+#endif // HEMELB_UNITTESTS_REDBLOOD_CELLINSERTERTESTS_H

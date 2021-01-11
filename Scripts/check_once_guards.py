@@ -161,6 +161,7 @@ if __name__ == '__main__':
         'tinyxml.h',
         'parmetis.h',
         'ctemplate/template.h',
+        'unittests/@HEMELB_UNITTEST_INCLUDE@'
         ))
 
     errors = False

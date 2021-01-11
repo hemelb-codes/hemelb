@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_DIVIDE_AND_CONQUER_H
-#define HEMELB_UNITTESTS_REDBLOOD_DIVIDE_AND_CONQUER_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_DIVIDECONQUERTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_DIVIDECONQUERTESTS_H
 
 #include <iterator>
 #include <cppunit/TestFixture.h>
@@ -159,4 +159,4 @@ namespace hemelb
   }
 }
 
-#endif  // ONCE
+#endif // ONCE

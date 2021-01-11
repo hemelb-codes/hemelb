@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_REDBLOOD_VERTEX_BAG_H
-#define HEMELB_REDBLOOD_VERTEX_BAG_H
+#ifndef HEMELB_REDBLOOD_VERTEXBAG_H
+#define HEMELB_REDBLOOD_VERTEXBAG_H
 
 #include <map>
 #include <string>
