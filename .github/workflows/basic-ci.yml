@@ -13,7 +13,12 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - run: python Scripts/checkCopyright.py
+
+      - name: Check copyright statements
+        run: python Scripts/checkCopyright.py
+
+      - name: Check C++ include guards
+        run: python Scripts/check_once_guards.py
 
   code_build:
     name: Build the main HemeLB application, code-only
