@@ -10,6 +10,7 @@
 #include <boost/variant.hpp>
 #include <boost/optional.hpp>
 
+#include "configuration/MonitoringConfig.h"
 #include "util/Vector3D.h"
 #include "lb/LbmParameters.h"
 #include "lb/iolets/InOutLets.h"
@@ -77,24 +78,6 @@ namespace hemelb
     class SimConfig
     {
       public:
-        /**
-         * Bundles together various configuration parameters concerning simulation monitoring
-         */
-        struct MonitoringConfig
-        {
-            MonitoringConfig() :
-                doConvergenceCheck(false), convergenceRelativeTolerance(0),
-                    convergenceTerminate(false), doIncompressibilityCheck(false)
-            {
-            }
-            bool doConvergenceCheck; ///< Whether to turn on the convergence check or not
-            extraction::OutputField::FieldType convergenceVariable; ///< Macroscopic variable used to check for convergence
-            double convergenceReferenceValue; ///< Reference value used to normalise an absolute error (making it relative)
-            double convergenceRelativeTolerance; ///< Convergence check relative tolerance
-            bool convergenceTerminate; ///< Whether to terminate a converged run or not
-            bool doIncompressibilityCheck; ///< Whether to turn on the IncompressibilityChecker or not
-        };
-
 	static SimConfig* New(const std::string& path);
 
       protected:

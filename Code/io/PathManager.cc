@@ -4,7 +4,9 @@
 // license in the file LICENSE.
 
 #include "io/PathManager.h"
+
 #include "Exception.h"
+#include "configuration/CommandLine.h"
 #include "io/writers/null/NullWriter.h"
 #include "io/writers/xdr/XdrFileWriter.h"
 

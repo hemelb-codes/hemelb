@@ -8,9 +8,10 @@
 
 #include <vector>
 
+#include <boost/container/flat_map.hpp>
+
 #include "units.h"
 #include "util/Vector3D.h"
-#include "util/FlatMap.h"
 #include "lb/iolets/InOutLet.h"
 #include "lb/lattices/LatticeInfo.h"
 #include "lb/kernels/BaseKernel.h"
@@ -27,7 +28,7 @@ namespace hemelb
        */
       struct RSHV
       {
-          typedef util::FlatMap<site_t, RSHV>::Type Map;
+          using Map = boost::container::flat_map<site_t, RSHV>;
           // Time step at which this was last updated
           LatticeTimeStep t;
           // Density at that time

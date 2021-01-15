@@ -7,6 +7,7 @@
 #define HEMELB_COLLOIDS_DELETIONBC_H
 
 #include "colloids/BoundaryConditions.h"
+#include "configuration/SimConfig.h"
 
 namespace hemelb
 {

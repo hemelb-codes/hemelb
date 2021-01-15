@@ -8,3 +8,4 @@ add_library(hemelb_extraction GeometrySelector.cc
   IterableDataSource.cc PlaneGeometrySelector.cc PropertyActor.cc
   PropertyWriter.cc WholeGeometrySelector.cc LbDataSourceIterator.cc
   GeometrySurfaceSelector.cc SurfacePointSelector.cc LocalDistributionInput.cc)
+hemelb_add_target_dependency_boost(hemelb_extraction)

@@ -7,6 +7,7 @@
 
 #include <catch2/catch.hpp>
 
+#include "configuration/SimConfig.h"
 #include "geometry/LatticeData.h"
 #include "lb/lattices/D3Q15.h"
 #include "resources/Resource.h"

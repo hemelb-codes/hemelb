@@ -16,6 +16,11 @@
 
 namespace hemelb
 {
+  namespace configuration
+  {
+    class SimConfig;
+  }
+
   namespace redblood
   {
     class RBCInserter;

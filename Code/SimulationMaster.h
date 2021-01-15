@@ -121,7 +121,7 @@ namespace hemelb
       std::shared_ptr<hemelb::lb::SimulationState> simulationState;
 
       /** Struct containing the configuration of various checkers/testers */
-      const hemelb::configuration::SimConfig::MonitoringConfig* monitoringConfig;
+      const hemelb::configuration::MonitoringConfig* monitoringConfig;
       std::shared_ptr<hemelb::lb::StabilityTester<latticeType>> stabilityTester;
       std::shared_ptr<hemelb::lb::EntropyTester<latticeType>> entropyTester;
       /** Actor in charge of checking the maximum density difference across the domain */

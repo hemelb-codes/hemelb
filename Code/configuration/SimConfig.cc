@@ -758,7 +758,7 @@ namespace hemelb
           > (criterionEl, "m/s");
     }
 
-    const SimConfig::MonitoringConfig* SimConfig::GetMonitoringConfiguration() const
+    const MonitoringConfig* SimConfig::GetMonitoringConfiguration() const
     {
       return &monitoringConfig;
     }

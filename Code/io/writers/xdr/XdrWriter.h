@@ -6,7 +6,8 @@
 #ifndef HEMELB_IO_WRITERS_XDR_XDRWRITER_H
 #define HEMELB_IO_WRITERS_XDR_XDRWRITER_H
 
-#include <boost/optional.hpp>
+#include <cassert>
+
 #include "io/writers/Writer.h"
 #include "io/writers/xdr/XdrSerialisation.h"
 
@@ -94,9 +95,8 @@ namespace hemelb
 	    start(start_),
 	    end(end_)
 	  {
-	    //static_assert(boi_traits::can_add, "Can't use this constructor for non-RandomAccessIterators!");
-	    assert(detail::is_rai<ByteOutputIterator>::value);
-	    assert(boi_traits::can_add);
+	    static_assert(detail::is_rai<ByteOutputIterator>::value,
+			  "Can't use this constructor for non-RandomAccessIterators!");
 	  }
 
 	  virtual ~XdrMetaWriter() {

@@ -3,4 +3,8 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 hemelb_dependency(boost find)
-include_directories(${Boost_INCLUDE_DIRS})
+
+macro(hemelb_add_target_dependency_boost tgt)
+  target_link_libraries(${tgt} PRIVATE Boost::boost)
+endmacro()
+

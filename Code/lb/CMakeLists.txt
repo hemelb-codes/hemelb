@@ -18,3 +18,4 @@ add_library(hemelb_lb
   MacroscopicPropertyCache.cc SimulationState.cc StabilityTester.cc
   InitialCondition.cc
   )
+hemelb_add_target_dependency_boost(hemelb_lb)

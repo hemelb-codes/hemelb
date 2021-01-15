@@ -8,6 +8,7 @@
 
 #include "net/PhasedBroadcastRegular.h"
 #include "geometry/LatticeData.h"
+#include "configuration/MonitoringConfig.h"
 
 namespace hemelb
 {
@@ -31,7 +32,7 @@ namespace hemelb
       public:
         StabilityTester(const geometry::LatticeData * iLatDat, net::Net* net,
                         SimulationState* simState, reporting::Timers& timings,
-                        const hemelb::configuration::SimConfig::MonitoringConfig* testerConfig) :
+                        const hemelb::configuration::MonitoringConfig* testerConfig) :
             net::PhasedBroadcastRegular<>(net, simState, SPREADFACTOR), mLatDat(iLatDat),
                 mSimState(simState), timings(timings), testerConfig(testerConfig)
         {
@@ -305,7 +306,7 @@ namespace hemelb
         reporting::Timers& timings;
 
         /** Object containing the user-provided configuration for this class */
-        const hemelb::configuration::SimConfig::MonitoringConfig* testerConfig;
+        const hemelb::configuration::MonitoringConfig* testerConfig;
     };
   }
 }

@@ -6,6 +6,7 @@
 #ifndef HEMELB_LB_STREAMERS_GUOZHENGSHIDELEGATE_H
 #define HEMELB_LB_STREAMERS_GUOZHENGSHIDELEGATE_H
 
+#include "lb/iolets/InOutLetVelocity.h"
 #include "lb/streamers/BaseStreamerDelegate.h"
 #include "geometry/neighbouring/RequiredSiteInformation.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"

@@ -7,6 +7,7 @@
 #define HEMELB_COLLOIDS_BODYFORCEEXAMPLES_H
 
 #include "colloids/BodyForces.h"
+#include "configuration/SimConfig.h"
 
 namespace hemelb
 {

@@ -8,16 +8,25 @@
 
 #include "net/PhasedBroadcastRegular.h"
 #include "lb/SimulationState.h"
-#include "configuration/SimConfig.h"
 #include "steering/Network.h"
 #include "vis/DomainStats.h"
-#include "vis/Control.h"
-#include "steering/ImageSendComponent.h"
 
 namespace hemelb
 {
+  namespace configuration {
+    class SimConfig;
+  }
+  namespace util {
+    class UnitConverter;
+  }
+  namespace vis {
+    class Control;
+  }
+
   namespace steering
   {
+    class ImageSendComponent;
+
     enum parameter
     {
       SceneCentreX = 0,

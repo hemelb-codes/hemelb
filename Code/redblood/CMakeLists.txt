@@ -22,7 +22,7 @@ if (HEMELB_BUILD_RBC)
 
   hemelb_add_target_dependency_hdf5(hemelb_redblood)
   hemelb_add_target_dependency_vtk(hemelb_redblood)
-
+  hemelb_add_target_dependency_boost(hemelb_redblood)
 else()
   # Build minimal interface
   add_library(hemelb_redblood

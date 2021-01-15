@@ -8,8 +8,6 @@
 
 #include <stack>
 
-#include "geometry/LatticeData.h"
-
 #include "lb/LbmParameters.h"
 #include "lb/SimulationState.h"
 
@@ -32,6 +30,10 @@
 
 namespace hemelb
 {
+  namespace geometry {
+    class LatticeData;
+  }
+
   namespace vis
   {
     /**

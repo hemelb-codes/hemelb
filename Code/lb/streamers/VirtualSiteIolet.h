@@ -6,14 +6,16 @@
 #ifndef HEMELB_LB_STREAMERS_VIRTUALSITEIOLET_H
 #define HEMELB_LB_STREAMERS_VIRTUALSITEIOLET_H
 
+#include <map>
+
+#include <boost/container/flat_map.hpp>
+
 #include "geometry/neighbouring/RequiredSiteInformation.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "lb/lattices/LatticeInfo.h"
 #include "lb/streamers/BaseStreamerDelegate.h"
 #include "lb/streamers/VirtualSite.h"
 #include "log/Logger.h"
-#include "util/FlatMap.h"
-#include <map>
 
 namespace hemelb
 {
@@ -51,7 +53,7 @@ namespace hemelb
               VirtualSite<LatticeType>* vsite;
               Direction direction;
           };
-          typedef typename util::FlatMultiMap<site_t, IoletVSiteDirection>::Type VSiteByLocalIdxMultiMap;
+          using VSiteByLocalIdxMultiMap = boost::container::flat_multimap<site_t, IoletVSiteDirection>;
           VSiteByLocalIdxMultiMap vsByLocalIdx;
 
         public:

@@ -175,7 +175,6 @@ add_subdirectory(resources)
 target_link_libraries(${HEMELB_EXECUTABLE} 
   ${heme_libraries} ${heme_libraries}
   ${MPI_LIBRARIES}
-  ${Boost_LIBRARIES}
   )
 
 # Config XML checker (confcheck)
@@ -208,7 +207,7 @@ if (HEMELB_BUILD_MULTISCALE)
   list(APPEND ms_heme_libraries "hemelb_multiscale")
   add_subdirectory(multiscale)
   target_link_libraries(multiscale_hemelb
-    PRIVATE ${ms_heme_libraries} ${MPI_LIBRARIES} ${Boost_LIBRARIES}
+    PRIVATE ${ms_heme_libraries} ${MPI_LIBRARIES}
     )
   INSTALL(TARGETS multiscale_hemelb RUNTIME DESTINATION bin)
   add_to_resources(resources/report.txt.ctp resources/report.xml.ctp)

@@ -4,6 +4,7 @@
 // license in the file LICENSE.
 #include <utility>
 #include <chrono>
+#include "configuration/SimConfig.h"
 #include "io/xml/XmlAbstractionLayer.h"
 #include "redblood/stencil.h"
 #include "redblood/Cell.h"

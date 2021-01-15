@@ -6,8 +6,6 @@
 #ifndef HEMELB_EXTRACTION_LOCALDISTRIBUTIONINPUT_H
 #define HEMELB_EXTRACTION_LOCALDISTRIBUTIONINPUT_H
 
-#include <boost/optional.hpp>
-
 #include "extraction/IterableDataSource.h"
 #include "extraction/InputField.h"
 #include "io/writers/xdr/XdrMemReader.h"
@@ -15,6 +13,11 @@
 #include "net/mpi.h"
 #include "net/MpiFile.h"
 #include "net/IOCommunicator.h"
+
+namespace boost {
+  template <typename>
+  class optional;
+}
 
 namespace hemelb
 {

@@ -7,13 +7,13 @@ add_library(hemelb_colloidsBCs
   BoundaryConditions.cc
   )
 target_link_libraries(hemelb_colloidsBCs
-  hemelb_io
+  hemelb_io hemelb_configuration
   )
 add_library(hemelb_colloidsForces
   BodyForces.cc
   )
 target_link_libraries(hemelb_colloidsForces
-  hemelb_io
+  hemelb_io hemelb_configuration
   )
 add_library(hemelb_colloids
   ParticleMpiDatatypes.cc

@@ -5,6 +5,10 @@
 
 #include "steering/SteeringComponent.h"
 
+#include "configuration/SimConfig.h"
+#include "steering/ImageSendComponent.h"
+#include "vis/Control.h"
+
 namespace hemelb
 {
   namespace steering

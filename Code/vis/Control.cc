@@ -7,6 +7,7 @@
 #include <cmath>
 #include <limits>
 
+#include "geometry/LatticeData.h"
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
 #include "vis/Control.h"

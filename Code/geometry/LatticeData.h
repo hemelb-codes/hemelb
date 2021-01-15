@@ -11,7 +11,6 @@
 
 #include "net/net.h"
 #include "constants.h"
-#include "configuration/SimConfig.h"
 #include "extraction/LocalDistributionInput.h"
 #include "geometry/Block.h"
 #include "geometry/GeometryReader.h"

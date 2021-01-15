@@ -7,13 +7,17 @@
 #define HEMELB_IO_PATHMANAGER_H
 
 #include <string>
-#include "configuration/CommandLine.h"
 #include "util/fileutils.h"
 #include "log/Logger.h"
-#include "configuration/SimConfig.h"
 
 namespace hemelb
 {
+  namespace configuration
+  {
+    class CommandLine;
+    class SimConfig;
+  }
+
   namespace io
   {
     // Forward declare the Writer

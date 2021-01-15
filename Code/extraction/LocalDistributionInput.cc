@@ -3,6 +3,9 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 #include "extraction/LocalDistributionInput.h"
+
+#include <boost/optional.hpp>
+
 #include "extraction/OutputField.h"
 #include "extraction/LocalPropertyOutput.h"
 #include "geometry/LatticeData.h"

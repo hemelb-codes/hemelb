@@ -16,6 +16,7 @@
 #include "extraction/PlaneGeometrySelector.h"
 #include "extraction/WholeGeometrySelector.h"
 #include "extraction/GeometrySurfaceSelector.h"
+#include "extraction/SurfacePointSelector.h"
 
 #include "tests/helpers/FourCubeLatticeData.h"
 #include "tests/helpers/HasCommsTestFixture.h"
