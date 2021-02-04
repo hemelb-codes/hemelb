@@ -3,6 +3,8 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
+include_guard()
+
 # - Find TinyXML
 # Find the native TinyXML includes and library
 #

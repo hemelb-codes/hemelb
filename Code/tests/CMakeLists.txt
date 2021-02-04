@@ -9,14 +9,12 @@ add_executable(hemelb-tests)
 
 target_sources(hemelb-tests PRIVATE ${root_sources})
 
-hemelb_add_target_dependency_catch2(hemelb-tests)
 # ReporterTests directly use ctemplate
-hemelb_add_target_dependency_ctemplate(hemelb-tests)
-
 target_link_libraries(hemelb-tests PRIVATE
+  Catch2::Catch2
+  CTemplate::CTemplate
   ${heme_libraries}
-  ${MPI_LIBRARIES}
-  ${Boost_Libraries})
+  ${MPI_LIBRARIES})
 INSTALL(TARGETS hemelb-tests RUNTIME DESTINATION bin)
 
 add_to_resources(resources/four_cube.gmy resources/four_cube.xml resources/four_cube_multiscale.xml

@@ -20,9 +20,10 @@ if (HEMELB_BUILD_RBC)
     parallel/IntegrateVelocities.cc parallel/GraphBasedCommunication.cc
     )
 
-  hemelb_add_target_dependency_hdf5(hemelb_redblood)
-  hemelb_add_target_dependency_vtk(hemelb_redblood)
-  hemelb_add_target_dependency_boost(hemelb_redblood)
+  target_link_libraries(hemelb_redblood PRIVATE
+    hdf5::hdf5_hl
+    VTK::CommonCore VTK::CommonDataModel VTK::IOXML VTK::FiltersCore
+    Boost::boost)
 else()
   # Build minimal interface
   add_library(hemelb_redblood

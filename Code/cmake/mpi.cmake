@@ -2,6 +2,7 @@
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
+include_guard()
 
 # ------MPI------------------
 # Require MPI for this project:

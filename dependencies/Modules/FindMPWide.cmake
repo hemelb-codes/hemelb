@@ -3,6 +3,8 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
+include_guard()
+
 # - Find MPWide
 # Find the native MPWide includes and library
 #
@@ -29,3 +31,11 @@ INCLUDE( "FindPackageHandleStandardArgs" )
 FIND_PACKAGE_HANDLE_STANDARD_ARGS( "MPWide" DEFAULT_MSG MPWide_INCLUDE_DIR MPWide_LIBRARIES )
 
 MARK_AS_ADVANCED( MPWide_INCLUDE_DIR MPWide_LIBRARIES )
+
+if (MPWide_FOUND)
+  add_library(MPWide::MPWide INTERFACE IMPORTED)
+  set_target_properties(MPWide::MPWide PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${MPWide_INCLUDE_DIR}"
+    INTERFACE_LINK_LIBRARIES "${MPWide_LIBRARIES}"
+    )
+endif()

@@ -2,6 +2,8 @@
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
+include_guard()
+
 find_package(HDF5 1.8 REQUIRED COMPONENTS C HL)
 
 if(NOT TARGET hdf5::hdf5)

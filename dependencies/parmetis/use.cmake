@@ -2,6 +2,8 @@
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
+include_guard()
+
 hemelb_dependency(parmetis find)
 
 # category = IDX or REAL
@@ -34,6 +36,5 @@ metis_type(IDX "32;64" "int32_t;int64_t" METIS_IDX_T)
 metis_type(REAL "32;64" "float;double" METIS_REAL_T)
 
 macro(hemelb_add_target_dependency_parmetis tgt)
-  target_include_directories(${tgt} PRIVATE ${PARMETIS_INCLUDE_DIRS})
-  target_link_libraries(${tgt} PRIVATE ${ZLIB_LIBRARIES} ${PARMETIS_LIBRARIES})
+  target_link_libraries(${tgt} PRIVATE Parmetis::Parmetis)
 endmacro()

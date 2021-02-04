@@ -199,15 +199,12 @@ if (HEMELB_BUILD_MULTISCALE)
   endif()
   
   add_executable(multiscale_hemelb mainMultiscale.cc)
-  hemelb_add_target_dependency_mpwide(multiscale_hemelb)
   
   include_directories(${PROJECT_SOURCE_DIR})
 
-  set(ms_heme_libraries "${heme_libraries}")
-  list(APPEND ms_heme_libraries "hemelb_multiscale")
   add_subdirectory(multiscale)
   target_link_libraries(multiscale_hemelb
-    PRIVATE ${ms_heme_libraries} ${MPI_LIBRARIES}
+    PRIVATE ${heme_libraries} hemelb_multiscale ${MPI_LIBRARIES}
     )
   INSTALL(TARGETS multiscale_hemelb RUNTIME DESTINATION bin)
   add_to_resources(resources/report.txt.ctp resources/report.xml.ctp)

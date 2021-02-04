@@ -3,6 +3,8 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
+include_guard()
+
 # Find the METIS includes and libraries
 #
 # METIS is a library that implements a variety of algorithms for 
@@ -42,3 +44,11 @@ include("FindPackageHandleStandardArgs")
 FIND_PACKAGE_HANDLE_STANDARD_ARGS("Parmetis" DEFAULT_MSG PARMETIS_INCLUDE_DIR PARMETIS_LIBRARY)
 MARK_AS_ADVANCED(PARMETIS_INCLUDE_DIR PARMETIS_LIBRARY PARMETIS_INCLUDE_DIRS PARMETIS_LIBRARIES)
 
+if(PARMETIS_FOUND)
+  add_library(Parmetis::Parmetis INTERFACE IMPORTED)
+  set_target_properties(Parmetis::Parmetis PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${PARMETIS_INCLUDE_DIR}"
+    INTERFACE_LINK_LIBRARIES "${PARMETIS_LIBRARY}"
+  )
+  target_link_libraries(Parmetis::Parmetis INTERFACE Metis::Metis)
+endif()

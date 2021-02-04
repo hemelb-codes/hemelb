@@ -3,6 +3,8 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
+include_guard()
+
 # Find the PARMETIS includes and libraries
 #
 # ParMETIS is an MPI-based parallel library that implements a variety of algorithms for 
@@ -23,3 +25,10 @@ include("FindPackageHandleStandardArgs")
 FIND_PACKAGE_HANDLE_STANDARD_ARGS("Metis" DEFAULT_MSG METIS_INCLUDE_DIR METIS_LIBRARY)
 MARK_AS_ADVANCED(METIS_INCLUDE_DIR METIS_LIBRARY)
 
+if (METIS_FOUND)
+  add_library(Metis::Metis INTERFACE IMPORTED)
+  set_target_properties(Metis::Metis PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${METIS_INCLUDE_DIR}"
+    INTERFACE_LINK_LIBRARIES "${METIS_LIBRARY}"
+  )
+endif()

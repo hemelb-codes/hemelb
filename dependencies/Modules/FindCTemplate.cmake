@@ -3,6 +3,8 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
+include_guard()
+
 # - Find CTEMPLATE
 # Find the native CTEMPLATE includes and library
 #
@@ -37,3 +39,11 @@ INCLUDE( "FindPackageHandleStandardArgs" )
 FIND_PACKAGE_HANDLE_STANDARD_ARGS( "CTemplate" DEFAULT_MSG CTEMPLATE_INCLUDE_DIR CTEMPLATE_LIBRARIES )
 
 MARK_AS_ADVANCED( CTEMPLATE_INCLUDE_DIR CTEMPLATE_LIBRARIES )
+
+if (CTEMPLATE_FOUND)
+  add_library(CTemplate::CTemplate INTERFACE IMPORTED)
+  set_target_properties(CTemplate::CTemplate PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${CTEMPLATE_INCLUDE_DIR}"
+    INTERFACE_LINK_LIBRARIES "${CTEMPLATE_LIBRARIES}"
+  )
+endif()

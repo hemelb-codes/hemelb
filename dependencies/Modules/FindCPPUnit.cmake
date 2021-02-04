@@ -3,6 +3,8 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
+include_guard()
+
 FIND_PATH(CPPUNIT_INCLUDE_DIR cppunit/Test.h)
 option(CPPUNIT_USE_STATIC "Prefer Static CPPUNIT library" OFF)
 if(CPPUNIT_USE_STATIC)

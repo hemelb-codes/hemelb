@@ -2,6 +2,8 @@
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
+include_guard()
+
 hemelb_dependency(cppunit find)
 if (CPPUNIT_FOUND)
   message("CPPUnit already installed, no need to download")
