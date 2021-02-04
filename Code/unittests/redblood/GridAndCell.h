@@ -8,7 +8,7 @@
 
 #include <cppunit/TestFixture.h>
 #include "redblood/GridAndCell.h"
-#include "redblood/Facet.impl.cc"
+#include "redblood/Facet.h"
 #include "unittests/redblood/Fixtures.h"
 
 namespace hemelb
