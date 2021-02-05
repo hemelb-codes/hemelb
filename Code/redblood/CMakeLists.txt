@@ -3,10 +3,44 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
+function(get_vtkIdType outvar)
+  # Figure out what vtkIdType is
+  list(APPEND CMAKE_REQUIRED_LIBRARIES VTK::CommonCore)
+
+  # These are the possibilities
+  set(possible_idtypes "long long" long int)
+  foreach(potential_idtype ${possible_idtypes})
+    message(STATUS "idtype=${potential_idtype}")
+    # Spaces in variable names cause problems
+    string(REPLACE " " "_" varname "${potential_idtype}")
+    string(TOUPPER ${varname} varname)
+
+    check_cxx_source_compiles("
+#include <type_traits>
+#include <vtkType.h>
+static_assert(std::is_same<vtkIdType, ${potential_idtype}>::value, \"\");
+int main(){}
+"
+      HAVE_VTKIDTYPE_${varname})
+
+    if (HAVE_VTKIDTYPE_${varname})
+      set(${outvar} "${potential_idtype}" PARENT_SCOPE)
+      return()
+    endif()
+  endforeach()
+  message(FATAL_ERROR "Could not figure out vtkIdType")
+endfunction()
+
 if (HEMELB_BUILD_RBC)
   # Build full RBC code
   hemelb_dependency(hdf5 use)
   hemelb_dependency(vtk use)
+
+  get_vtkIdType(HEMELB_RBC_IDTYPE)
+  configure_file (
+  "${PROJECT_SOURCE_DIR}/redblood/MeshIdType.h.in"
+  "${PROJECT_BINARY_DIR}/redblood/MeshIdType.h"
+  )
 
   add_library(hemelb_redblood
     RBCConfig.cc

@@ -14,6 +14,7 @@
 #include <type_traits>
 #include <map>
 
+#include "redblood/MeshIdType.h"
 #include "util/Vector3D.h"
 #include "util/Matrix3D.h"
 #include "util/UnitConverter.h"
@@ -25,10 +26,6 @@ namespace hemelb
 {
   namespace redblood
   {
-    // Should get this from VTK but don't want the include
-    // TODO: add to CMake
-    using IdType = int64_t;
-
     //! Holds raw mesh data
     //! Data is separated into vertices and triangular facets
     struct MeshData
