@@ -28,7 +28,7 @@ class ErrCollector:
         #self.error_occurred = True
         print(filename, msg)
 
-py_coding_re = re.compile('#.*coding[=:]\s*([-\w.]+)')
+py_coding_re = re.compile(r'#.*coding[=:]\s*([-\w.]+)')
 
 comment_chars = {
     '.applescript': '--',
@@ -75,6 +75,16 @@ def is_in_git(filename):
         output = output.decode()
     return os.path.abspath(output) == os.path.abspath(filename)
 
+_re_cache = {}
+def make_emacs_varline_re(cc):
+    try:
+        return _re_cache[cc]
+    except KeyError:
+        # Pattern is: comment char; optional whitespace; literal '-*-';
+        # anything; literal '-*-'; optional whitespace; end of string.
+        ans = _re_cache[cc] = re.compile(cc + r'\s*-\*-.*-\*-\s*$')
+        return ans
+
 def get_initial_comment(filename, file_or_lines):
     root, ext = os.path.splitext(filename)
 
@@ -84,6 +94,9 @@ def get_initial_comment(filename, file_or_lines):
     # State vars
     needs_shebang_checked = ext in (".py", ".sh")
     needs_py_encoding_checked = ext == ".py"
+    needs_emacs_varline_checked = True
+    emacs_varline_re = make_emacs_varline_re(cc)
+
     # Candidate CR message
     file_msg = []
 
@@ -98,6 +111,13 @@ def get_initial_comment(filename, file_or_lines):
             # .py may have an encoding spec in lines 1 or 2
             needs_py_encoding_checked = False
             if py_coding_re.match(line):
+                # discard
+                continue
+
+        if needs_emacs_varline_checked:
+            # Files may have emacs file variables set
+            needs_emacs_varline_checked = False
+            if emacs_varline_re.match(line):
                 # discard
                 continue
 
@@ -134,6 +154,9 @@ def try_fix(log, filename,dryrun=True):
 
     needs_shebang_checked = ext in (".py", ".sh")
     needs_py_encoding_checked = ext == ".py"
+    needs_emacs_varline_checked = True
+    emacs_varline_re = make_emacs_varline_re(cc)
+
     discard_blank = True
     discard_comment = True
 
@@ -152,6 +175,14 @@ def try_fix(log, filename,dryrun=True):
             if py_coding_re.match(line):
                 out.append(line)
                 continue
+
+        if needs_emacs_varline_checked:
+            needs_emacs_varline_checked = False
+            if line.startswith(cc):
+                if emacs_varline_re.match(line):
+                    # discard
+                    continue
+
 
         if discard_blank:
             if line.strip() == "":
