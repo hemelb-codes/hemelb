@@ -34,7 +34,9 @@ namespace hemelb
           CPPUNIT_TEST (testPairIteratorSinglePair);
           CPPUNIT_TEST (testPairIteratorOnePairPerBox);
           CPPUNIT_TEST (testPairIteratorDiagonalBoxes);
-          CPPUNIT_TEST (testPairIteratorBoxHalo);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testPairIteratorBoxHalo);
+	  CPPUNIT_TEST (testDetailIteratorBase);
+	  CPPUNIT_TEST_SUITE_END();
 
           LatticeDistance const cutoff = 5.0;
           LatticeDistance const halo = 2.0;
@@ -55,6 +57,7 @@ namespace hemelb
           void testPairIteratorDiagonalBoxes();
           void testPairIteratorBoxHalo();
           void testUpdateLentCells();
+	  void testDetailIteratorBase();
       };
 
       void CellCellInteractionTests::testBoxHaloTooBig()
@@ -542,6 +545,46 @@ namespace hemelb
         CPPUNIT_ASSERT_EQUAL(3ul, dnc.size());
       }
 
+      void CellCellInteractionTests::testDetailIteratorBase()
+      {
+	// Mutable and constant iterators
+	using mut = DivideConquerCells::iterator;
+	using con = DivideConquerCells::const_iterator;
+
+        auto cells = TwoPancakeSamosas<>(cutoff);
+	DivideConquerCells m_dnc(cells, cutoff, halo);
+	DivideConquerCells const c_dnc(cells, cutoff, halo);
+
+	auto m_iter = m_dnc.begin();
+	auto c_iter = c_dnc.begin();
+
+	static_assert(std::is_same<decltype(m_iter), detail::iterator_base<DivideConquer<CellReference>>>::value,
+		      "");
+	static_assert(std::is_same<decltype(c_iter), detail::iterator_base<DivideConquer<CellReference> const>>::value,
+		      "");
+
+	{
+	  // Copy construction
+	  mut tmp1{m_iter};
+	  con tmp2{c_iter};
+	  con tmp3{m_iter};
+	  // Not allowed
+	  // mut tmp4{c_iter};
+	  CPPUNIT_ASSERT(tmp1 == m_iter);
+	  CPPUNIT_ASSERT(tmp2 == c_iter);
+	}
+
+	{
+	  // Copy assignment
+	  mut tmp1 = m_iter;
+	  con tmp2 = c_iter;
+	  con tmp3 = m_iter;
+	  // Not allowed
+	  //mut tmp4 = c_iter;
+	  CPPUNIT_ASSERT(tmp1 == m_iter);
+	  CPPUNIT_ASSERT(tmp2 == c_iter);
+	}
+      }
       CPPUNIT_TEST_SUITE_REGISTRATION (CellCellInteractionTests);
     }
   }

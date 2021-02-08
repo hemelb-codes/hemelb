@@ -51,16 +51,20 @@ namespace hemelb
       template <typename BASE>
       class iterator_base
       {
+	// This is the unqualified type
 	using base_type = std::remove_const_t<BASE>;
 	static constexpr bool am_const = std::is_const<BASE>::value;
+	// This is possibly const qualified type we are instantiated on
+	using owner_type = BASE;
+	// This is the other one
+	using other_type = std::conditional_t<am_const,
+					      base_type,
+					      base_type const>;
 
+	// This is the iterator type we are wrapping
 	using wrappee_iterator = std::conditional_t<am_const,
 						    typename base_type::const_iterator,
 						    typename base_type::iterator>;
-
-	using owner_type = std::conditional_t<am_const,
-					      DivideConquerCells const,
-					      DivideConquerCells>;
 
       public:
 	using value_type = LatticePosition;
@@ -70,13 +74,16 @@ namespace hemelb
 	using pointer = std::conditional_t<am_const,
 					   value_type const*,
 					   value_type*>;
-	typedef value_type const &const_reference;
-	typedef value_type const *const_pointer;
+	using const_reference = value_type const &;
+	using const_pointer = value_type const *;
 	using difference_type = typename wrappee_iterator::difference_type;
 	using iterator_category = typename wrappee_iterator::iterator_category;
 
-	iterator_base(owner_type &owner, wrappee_iterator const &w) :
-	  owner(owner), wrappee(w)
+	// Iterators really should be default constructible
+	iterator_base() = default;
+
+	iterator_base(owner_type const &owner, wrappee_iterator const &w) :
+	  owner(&owner), wrappee(w)
 	{
 	}
 
@@ -85,25 +92,16 @@ namespace hemelb
 	// Want: const{const}, const{mutable}, mutable{mutable}
 	// Don't want: mutable{const}
 	//
-	// Because constructors don't have a return, we can't do this the
-	// simple way (see operator= below), instead we SFINAE on a
-	// default template argument.
-	//
-	// First: require that B == BASE after discarding any const
-	// Then: if we are const_iterator, accept B whether const or not/
-	// If we're not const, then only accept mutable B.
-	template <typename B,
-		  typename = std::enable_if_t<
-		    std::is_same< std::remove_const_t<B>, base_type>::value
-		    && (am_const || !std::is_const<B>::value) >
-		  >
-	iterator_base(iterator_base<B> const &in) :
+	// Allow self{self}
+	iterator_base(iterator_base const& in) = default;
+	// Allow self{other} iff self == const
+	iterator_base(iterator_base<other_type> const& in) :
 	  owner(in.owner), wrappee(in.wrappee)
 	{
+	  static_assert(am_const, "Cannot convert const->mutable");
 	}
 
 	// Want mutable to declare that const is it's friend.
-	// let the other one be our friend (cos can't easily make this one way)
 	friend class iterator_base<const base_type>;
 
 	reference operator*()
@@ -150,13 +148,13 @@ namespace hemelb
 	  return iterator_base(owner, wrappee--);
 	}
 
-	bool operator==(iterator_base const &in) const
+	friend bool operator==(iterator_base const& a, iterator_base const& b)
 	{
-	  return in.wrappee == wrappee;
+	  return (a.owner == b.owner) && (a.wrappee == b.wrappee);
 	}
-	bool operator!=(iterator_base const &in) const
+	friend bool operator!=(iterator_base const& a, iterator_base const& b)
 	{
-	  return not operator==(in);
+	  return !(a == b);
 	}
 
 	CellReference const &GetCellReference() const
@@ -199,19 +197,16 @@ namespace hemelb
 	// Want: C = C, C = M, M = M
 	// Don't want: M = C
 	// So always allow self = self
-	void operator=(iterator_base<base_type> const &c)
+	iterator_base& operator=(iterator_base const &c)
 	{
+	  owner = c.owner;
 	  wrappee = c.wrappee;
-	}
-	// Allow self = other if self == const
-	std::enable_if<am_const> operator=(iterator_base<base_type const> const &c)
-	{
-	  wrappee = c.wrappee;
+	  return *this;
 	}
 
       protected:
 	//! Container from which this object was obtained
-	owner_type & owner;
+	owner_type const* owner = nullptr;
 	//! Iterator over the mapped objects
 	wrappee_iterator wrappee;
       };
