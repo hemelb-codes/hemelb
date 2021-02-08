@@ -445,7 +445,7 @@ namespace hemelb
       GetDimensionalValue(point1El, "m", point1);
       GetDimensionalValue(point2El, "m", point2);
 
-      return new extraction::StraightLineGeometrySelector(point1, point2);
+      return new extraction::StraightLineGeometrySelector(point1.as<float>(), point2.as<float>());
     }
 
     extraction::PlaneGeometrySelector* SimConfig::DoIOForPlaneGeometry(
@@ -464,13 +464,13 @@ namespace hemelb
 
       if (radiusEl == io::xml::Element::Missing())
       {
-        return new extraction::PlaneGeometrySelector(point, normal);
+        return new extraction::PlaneGeometrySelector(point.as<float>(), normal);
       }
       else
       {
         PhysicalDistance radius;
         GetDimensionalValue(radiusEl, "m", radius);
-        return new extraction::PlaneGeometrySelector(point, normal, radius);
+        return new extraction::PlaneGeometrySelector(point.as<float>(), normal, radius);
       }
 
     }
@@ -482,7 +482,7 @@ namespace hemelb
 
       PhysicalPosition point;
       GetDimensionalValue(pointEl, "m", point);
-      return new extraction::SurfacePointSelector(point);
+      return new extraction::SurfacePointSelector(point.as<float>());
     }
 
     extraction::OutputField SimConfig::DoIOForPropertyField(const io::xml::Element& fieldEl)

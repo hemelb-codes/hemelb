@@ -295,7 +295,7 @@ namespace hemelb
             // ray can travel to the next voxel in each of the three directions in ray units
             util::Vector3D<float> rayUnitsUntilNextSite =
                 CalculateRayUnitsBeforeNextSite(fromFirstRayClusterIntersectionToLowerSiteOfCurrentBlock,
-                                                util::Vector3D<float>(truncatedLocationInBlock),
+                                                truncatedLocationInBlock,
                                                 ioRay);
 
             while (siteTraverser.CurrentLocationValid())

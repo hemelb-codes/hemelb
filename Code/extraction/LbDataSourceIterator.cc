@@ -42,7 +42,7 @@ namespace hemelb
 
     util::Vector3D<FloatingType> LbDataSourceIterator::GetVelocity() const
     {
-      return converter.ConvertVelocityToPhysicalUnits(propertyCache.velocityCache.Get(position));
+      return converter.ConvertVelocityToPhysicalUnits(propertyCache.velocityCache.Get(position).as<float>());
     }
 
     FloatingType LbDataSourceIterator::GetShearStress() const

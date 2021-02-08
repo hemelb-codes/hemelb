@@ -43,7 +43,8 @@ namespace hemelb
         template<class InputType>
         InputType ConvertStressToLatticeUnits(InputType stress) const
         {
-          return stress / latticePressure;
+	  using SCALAR = typename scalar_type<InputType>::type;
+          return stress / SCALAR(latticePressure);
         }
 
         /**
@@ -52,7 +53,8 @@ namespace hemelb
         template<class InputType>
         InputType ConvertStressToPhysicalUnits(InputType stress) const
         {
-          return stress * latticePressure;
+	  using SCALAR = typename scalar_type<InputType>::type;
+          return stress * SCALAR(latticePressure);
         }
 
         /**
@@ -82,7 +84,8 @@ namespace hemelb
         Vector3D<VectorType> ConvertTractionToPhysicalUnits(
             Vector3D<VectorType> traction, const Vector3D<Dimensionless>& wallNormal) const
         {
-          Vector3D<VectorType> ret = traction * latticePressure;
+	  using SCALAR = typename scalar_type<VectorType>::type;
+          Vector3D<VectorType> ret = traction * SCALAR(latticePressure);
           ret += wallNormal * reference_pressure_mmHg * mmHg_TO_PASCAL;
           return ret;
         }
@@ -95,7 +98,8 @@ namespace hemelb
         template<class InputType>
         InputType ConvertVelocityToLatticeUnits(InputType velocity) const
         {
-          return velocity / latticeSpeed;
+	  using SCALAR = typename scalar_type<InputType>::type;
+	  return velocity / SCALAR(latticeSpeed);
         }
 
         /**
@@ -106,8 +110,9 @@ namespace hemelb
         template<class InputType>
         InputType ConvertVelocityToPhysicalUnits(InputType velocity) const
         {
+	  using SCALAR = typename scalar_type<InputType>::type;
           // convert velocity from lattice units to physical units (m/s)
-          return velocity * latticeSpeed;
+          return velocity * SCALAR(latticeSpeed);
         }
         double ConvertPressureDifferenceToPhysicalUnits(distribn_t pressure_grad) const;
 
@@ -134,7 +139,7 @@ namespace hemelb
         }
         LatticePosition GetPhysicalOrigin() const
         {
-          return LatticePosition() - (latticeOrigin / latticeDistance);
+          return LatticePosition::Zero() - (latticeOrigin / latticeDistance);
         }
 
         template<typename T>
@@ -199,7 +204,8 @@ namespace hemelb
           {
             throw Exception() << "Unknown units '" << units << "'";
           }
-          return value / scale_factor;
+	  using SCALAR = typename scalar_type<T>::type;
+          return value / SCALAR(scale_factor);
         }
 
       private:
@@ -210,6 +216,15 @@ namespace hemelb
         PhysicalPosition latticeOrigin;
         PhysicalPressure latticePressure;
         PhysicalPressure reference_pressure_mmHg;
+
+      template <typename T>
+      struct scalar_type {
+	using type = T;
+      };
+      template <typename T>
+      struct scalar_type<Vector3D<T>> {
+	using type = T;
+      };
     };
 
   }

@@ -125,20 +125,20 @@ namespace hemelb
 	for (site_t xCoord = 1; xCoord <= CubeSize; ++xCoord) {
 	  for (site_t yCoord = 1; yCoord <= CubeSize; ++yCoord) {
 	    for (site_t zCoord = 1; zCoord <= CubeSize; ++zCoord) {
-	      const auto x = util::Vector3D<float>(xCoord, yCoord, zCoord);
+	      const auto x = util::Vector3D<site_t>(xCoord, yCoord, zCoord);
 	      // Use that p.n = x.n for x on the same plane.
 	      // I.e. the current point's coordinate dotted with the
 	      // normal must be roughly equal to the centre point's
 	      // coordinate dotted with the normal for the current
 	      // point to be on the plane.
-	      if (std::abs(planeNormal.Dot(x) - 3 * CentreCoordinate) > 0.5) {
+	      if (std::abs(planeNormal.Dot(x) - 3 * CentreCoordinate) > 0.5f) {
 		continue;
 	      }
 
 	      includedCoordsWithoutRadius.push_back(x);
 
 	      // Compute the distance from the centre point, include the site if it is within the radius.
-	      if ( (x - centrePoint).GetMagnitude() < float(CubeSize) / 3.0f) {
+	      if ( (x - centrePoint).GetMagnitudeSquared() < CubeSize*CubeSize / 9.0f) {
 		includedCoordsWithRadius.push_back(x);
 	      }
 	    }

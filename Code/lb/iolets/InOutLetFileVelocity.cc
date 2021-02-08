@@ -196,7 +196,7 @@ namespace hemelb
             xyz_residual[2] = -(std::ceil(x.z) - x.z);
           }
 
-          LatticeVelocity v_tot = 0;
+	  auto v_tot = LatticeVelocity::Zero();
           int iterations = 0;
 
           while (iterations < 3)

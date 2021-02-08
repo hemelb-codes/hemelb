@@ -81,7 +81,7 @@ namespace hemelb
            direction.x, direction.y, direction.z);
            */
           if (direction.GetMagnitudeSquared() < 0.0000001)
-            return LatticeForceVector();
+            return LatticeForceVector::Zero();
           return direction.GetNormalised() * (magnitude / direction.GetMagnitudeSquared());
         }
         ;

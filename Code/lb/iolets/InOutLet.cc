@@ -17,10 +17,11 @@ namespace hemelb
 
       namespace
       {
-        unsigned SmallestMagnitudeComponent(const LatticeVector r)
+	template <typename T>
+        unsigned SmallestMagnitudeComponent(const util::Vector3D<T>& r)
         {
           // Return which direction has the smallest component
-          LatticeVector rSq = r.PointwiseMultiplication(r);
+          const auto rSq = r.PointwiseMultiplication(r);
           if (rSq.x < rSq.y)
           {
             if (rSq.x < rSq.z)

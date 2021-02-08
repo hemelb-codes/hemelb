@@ -96,7 +96,7 @@ namespace hemelb
 	  REQUIRE(Approx(datasource->GetPressure()).epsilon(epsilon) == (REFERENCE_PRESSURE_mmHg + double{pressure}));
 
 	  // Read the velocity and compare
-	  PhysicalVelocity velocity = datasource->GetVelocity();
+	  auto velocity = datasource->GetVelocity();
 	  float vx, vy, vz;
 	  reader.read(vx);
 	  reader.read(vy);

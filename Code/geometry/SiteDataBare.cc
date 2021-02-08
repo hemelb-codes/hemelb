@@ -41,32 +41,28 @@ namespace hemelb
         // Iterate over each (non-zero) direction
         for (Direction direction = 1; direction <= readResult.links.size(); ++direction)
         {
+	  using CutType = io::formats::geometry::CutType;
           // Get the link
           const GeometrySiteLink& link = readResult.links[direction - 1];
-
-          // If it's a wall link, set the bit for this direction
-          if (link.type == GeometrySiteLink::WALL_INTERSECTION)
-          {
+	  switch (link.type) {
+	  case CutType::WALL:
             wallIntersection |= 1 << (direction - 1);
-          }
-          else if (link.type == GeometrySiteLink::INLET_INTERSECTION || link.type
-              == GeometrySiteLink::OUTLET_INTERSECTION)
-          {
-            ioletIntersection |= 1 << (direction - 1);
-          }
+	    break;
 
-          // If it's an inlet, take the IOlet id
-          if (link.type == GeometrySiteLink::INLET_INTERSECTION)
-          {
+          case CutType::INLET:
+	    // This is meant to fall-through.
+	  case CutType::OUTLET:
             ioletId = link.ioletId;
-            hadInlet = true;
-          }
-          // Ditto if it's an outlet.
-          else if (link.type == GeometrySiteLink::OUTLET_INTERSECTION)
-          {
-            ioletId = link.ioletId;
-            hadOutlet = true;
-          }
+            ioletIntersection |= 1 << (direction - 1);
+	    if (link.type == CutType::INLET) {
+	      hadInlet = true;
+	    } else {
+	      hadOutlet = true;
+	    }
+	    break;
+	  default:
+	    break;
+	  }
         }
 
         type = hadInlet
@@ -150,13 +146,19 @@ namespace hemelb
 
     bool SiteData::HasWall(Direction direction) const
     {
-      unsigned mask = 1U << (direction - 1);
+      // If at the zero direction then always false, so set mask to all zeros.
+      const unsigned mask = direction ?
+	1U << (direction - 1U) :
+	0U;
       return (wallIntersection & mask) != 0;
     }
 
     bool SiteData::HasIolet(Direction direction) const
     {
-      unsigned mask = 1U << (direction - 1);
+      // If at the zero direction then always false, so set mask to all zeros.
+      unsigned mask = direction ?
+	1U << (direction - 1U) :
+	0U;
       return (ioletIntersection & mask) != 0;
     }
 
