@@ -45,7 +45,12 @@ namespace hemelb {
       result.normal *= -1;
       result.normal.Normalise();
 
-      GetDimensionalValueInLatticeUnits(node.GetChildOrThrow("position"), "m", converter, result.origin);
+      {
+	// Position has to be offset by origin, so can't use the simple converter here
+	PhysicalPosition tmp;
+	GetDimensionalValue(node.GetChildOrThrow("position"), "m", tmp);
+	result.origin = converter.ConvertPositionToLatticeUnits(tmp);
+      }
       result.origin -= result.normal * result.length;
 
       return result;
