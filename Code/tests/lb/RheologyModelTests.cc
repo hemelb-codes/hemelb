@@ -40,7 +40,8 @@ namespace hemelb
     TEST_CASE("RheologyModelTests") {
       const distribn_t density = 1.0;
       const std::vector<distribn_t> shearRates{1e-4, 1e-2, 1, 1e2, 1e4};
-      const lb::LbmParameters lbp{1.0, 1.0};
+      // Ensure we are using coarsegrained blood parameters
+      const lb::LbmParameters lbp{1.0, 1.0, DEFAULT_FLUID_DENSITY_Kg_per_m3, 0.004};
       lb::kernels::InitParams ip;
       ip.lbmParams = &lbp;
 
