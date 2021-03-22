@@ -35,8 +35,8 @@ SurfaceVoxeliser::SurfaceVoxeliser(const int ns,
 {
 }
 
-typedef boost::optional< CgalSearchTree::Intersection_and_primitive_id<CgalSegment>::Type > Segment_intersection;
-typedef std::pair<double, int> dist_isec;
+using Segment_intersection = boost::optional< CgalSearchTree::Intersection_and_primitive_id<CgalSegment>::Type >;
+using dist_isec = std::pair<double, int>;
 
 // Helper class for filtering out clusters of intersections
 struct Clusterer {
@@ -261,8 +261,8 @@ std::unique_ptr<FluidSite> SurfaceVoxeliser::ClassifySite(const EdgeSite& node) 
 // Nodes at tri_level will be treated as solid blocks.
 // Nodes at that level will be handled in parallel.
 FluidTree SurfaceVoxeliser::operator()(const TriTree& inTree, const TriTree::Int tri_level) {
-  typedef ParallelApply<FluidTree::NodePtr, TriTree::ConstNodePtr> Pool;
-  typedef hemelb::util::Vector3D<Int> Coord;
+  using Pool =  ParallelApply<FluidTree::NodePtr, TriTree::ConstNodePtr>;
+  using Coord = hemelb::util::Vector3D<Int>;
   
   // Set up pool to call block processing lambda on each tri_level node
   Pool pool([this](TriTree::ConstNodePtr in) {
@@ -287,7 +287,7 @@ FluidTree SurfaceVoxeliser::operator()(const TriTree& inTree, const TriTree::Int
 	  }
       ans->Data().count = nleaf;
       return ans;
-    }, 1, std::numeric_limits<int>::max());
+    }, 0, std::numeric_limits<int>::max());
   
   // Submit all the tri_level blocks for processing
   // Merging of output done below  

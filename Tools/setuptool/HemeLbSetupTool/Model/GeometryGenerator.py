@@ -13,6 +13,14 @@ def DVfromV(v):
     """
     return Generation.DoubleVector(v.x, v.y, v.z)
 
+def get_hwm():
+    import os
+    with open('/proc/{pid}/status'.format(pid=os.getpid())) as stats:
+        for line in stats:
+            if line.startswith('VmHWM:'):
+                key, val, unit = line.split()
+                return (int(val), unit)
+
 class GeometryGenerator(object):
 
     def __init__(self):
@@ -54,12 +62,17 @@ class GeometryGenerator(object):
     def Execute(self):
         """Forward this to the C++ implementation.
         """
+        m0 = get_hwm()
         t = Timer()
         t.Start()
         self.generator.Execute()
         XmlWriter(self).Write()
         t.Stop()
         print "Setup time: %f s" % t.GetTime()
+        m1 = get_hwm()
+        assert m1[1] == m0[1]
+        print "Memory used by generator: {} {}".format(m1[0] - m0[0], m1[1])
+
         return
 
     pass

@@ -21,7 +21,7 @@ setup(name='HemeTools',
       description='HemeLB tools',
       author='Rupert Nash',
       author_email='rupert.nash@ucl.ac.uk',
-      packages=['hemeTools', 'hemeTools.converters', 'hemeTools.parsers', 'hemeTools.parsers.snapshot', 'hemeTools.parsers.geometry', 'hemeTools.parsers.extraction', 'hemeTools.surfacegenerator', 'hemeTools.utils'],
+      packages=['hemeTools', 'hemeTools.converters', 'hemeTools.parsers', 'hemeTools.parsers.snapshot', 'hemeTools.parsers.geometry', 'hemeTools.parsers.extraction', 'hemeTools.parsers.octree', 'hemeTools.surfacegenerator', 'hemeTools.utils'],
       ext_modules=cythonize(ext_modules),
       zip_safe=False
      )
