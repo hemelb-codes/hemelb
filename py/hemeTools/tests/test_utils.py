@@ -1,15 +1,16 @@
-#!/usr/bin/env python
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
-import sys
+
 import os
+import sys
 import unittest
-import numpy as np
 import xdrlib
-from ..utils import *
-from .. import xdr
+
+import numpy as np
+
+from hemeTools.utils import MatchCorresponding, xdr
 
 
 class utilsTests(unittest.TestCase):
@@ -45,7 +46,3 @@ class utilsTests(unittest.TestCase):
         assert unpacked == testDouble
         unpacked = l.unpack_float()
         assert abs(unpacked - testFloat) / testFloat < 1e-7
-
-
-if __name__ == "__main__":
-    unittest.main()

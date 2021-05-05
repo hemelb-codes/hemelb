@@ -7,6 +7,7 @@
 """
 
 import numpy as np
+from six.moves import range
 
 
 def MatchCorresponding(first, second):
@@ -23,7 +24,7 @@ def MatchCorresponding(first, second):
     sAS = np.argsort(second)
     # Know that first[fAS[i]] == second[sAS[i]]
     result = np.empty_like(second)
-    for i in xrange(n):
+    for i in range(n):
         result[sAS[i]] = fAS[i]
 
     return result
@@ -33,8 +34,8 @@ def MatchCorrespondingOld(first, second):
     count = second.shape[0]
     result = np.empty_like(first)
 
-    for index in xrange(count):
-        for search in xrange(count):
+    for index in range(count):
+        for search in range(count):
             if first[search] == second[index]:
                 result[index] = search
                 break
