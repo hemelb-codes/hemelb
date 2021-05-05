@@ -1,10 +1,9 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-import numpy as N
+import numpy as np
 
 class Plane(object):
     """Simple class to represent a plane.
@@ -17,10 +16,10 @@ class Plane(object):
         """
         if normal is None:
             normal = (0,0,1.)
-        self.normal = N.array(normal, dtype=N.float)
+        self.normal = np.array(normal, dtype=np.float)
         if centre is None:
             centre = (0.,0.,0.)
-        self.centre = N.array(centre, dtype=N.float)
+        self.centre = np.array(centre, dtype=np.float)
         
         self.name = name
         return
