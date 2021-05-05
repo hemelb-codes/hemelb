@@ -1,4 +1,3 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
@@ -28,36 +27,41 @@ def GetLogger():
     if _logger is None:
         _logger = multiprocessing.log_to_stderr()
     return _logger
+
+
 def SetLogger(logger):
     global _logger
     _logger = logger
     return
+
+
 _logger = None
+
 
 class SubDomain(Domain):
     """A Domain subclass that only has a subset of the full
     domain. This is useful to avoid sending very large messages over
     interprocess Queues.
     """
-    
+
     def __init__(self, parent, bIdx):
         """Constructor; requires the domain it's mimicking and the 3D
         index of the block at the centre.
         """
         self._BlockCounts = parent._BlockCounts
         self._BlockSize = parent._BlockSize
-        
+
         self.VoxelSize = parent.VoxelSize
         self.Origin = parent.Origin
-        
+
         self.BlockIndexer = parent.BlockIndexer
         self.BlockSiteIndexer = parent.BlockSiteIndexer
 
         self._Index = bIdx
         self._Shift = bIdx - 1
-        
+
         self.Blocks = np.empty(27, dtype=object)
-        self.LocalBlockIndexer = NdIndexConverter((3,3,3))
+        self.LocalBlockIndexer = NdIndexConverter((3, 3, 3))
         for lbIjk, lbIdx in self.LocalBlockIndexer.IterBoth():
             pbIdx = lbIdx + self._Shift
             pb = parent.GetBlock(pbIdx)
@@ -69,9 +73,9 @@ class SubDomain(Domain):
                 lb = PartialBlock(self, pb, lbIdx - 1)
             self.Blocks[lbIjk] = lb
             continue
-        
+
         return
-    
+
     def GetBlock(self, pbIndex):
         # The block index is from the parent Domain's array, must
         # convert to our local index.
@@ -80,16 +84,17 @@ class SubDomain(Domain):
             return self.Blocks[self.LocalBlockIndexer.NdToOne(lbIndex)]
         else:
             raise ValueError("Don't have that block")
-        
+
     def SetBlock(self, bIndex, block):
         raise ValueError("Can't set blocks!")
-        
+
     def GetSite(self, sIndex):
         bIndex = sIndex / self.BlockSize
         block = self.GetBlock(bIndex)
         return block.GetLocalSite(sIndex % self.BlockSize)
 
     pass
+
 
 class PartialBlock(Block):
     """A Block that only actually has sites for the parts needed by
@@ -98,6 +103,7 @@ class PartialBlock(Block):
     offset from the centre only has one face of Sites, <110> offset
     has only one edge and a <111> offset has only a single corner.
     """
+
     def __init__(self, newDomain, parent, targetToThis):
         """Constructor; requires the SubDomain this is part of, the
         Block this is mirroring and the vector from the block at the
@@ -106,11 +112,11 @@ class PartialBlock(Block):
         self.GetDomain = weakref.ref(newDomain)
         self.Index = parent.Index
         self.nFluidSites = parent.nFluidSites
-        
+
         self.Sites = np.empty(parent.Sites.shape, dtype=object)
 
         # We only want to copy the bits we care about
-        
+
         # Here, set up iterators for the accessible subset of of this
         # block, from the target block
         bs = newDomain.BlockSize
@@ -125,7 +131,7 @@ class PartialBlock(Block):
                 pass
             iters.append(it)
             continue
-        
+
         # Now iterate over the interesting bit
         sIdx = np.zeros(3, dtype=np.int)
         for sIdx[0] in iters[0]:
@@ -138,7 +144,7 @@ class PartialBlock(Block):
                     continue
                 continue
             continue
-        
+
         return
 
     def GetLocalSite(self, sIndex):
@@ -148,8 +154,9 @@ class PartialBlock(Block):
 
     def GetSite(self, sIndex):
         return self.GetDomain().GetSite(sIndex)
-    
+
     pass
+
 
 class AsyncBlockProcessingLoader(FreeingConfigLoader):
     """A ConfigLoader that will asynchronously and in parallel apply a
@@ -159,23 +166,24 @@ class AsyncBlockProcessingLoader(FreeingConfigLoader):
     specified signatures in your subclass.
 
     You must assign thProcessBlock(block) -> result
-    
+
     HandleBlockProcessingResult(result) -> None
 
     This class will ensure that OnBlockProcessed is called
     appropriately once HandleBlockProcessingResult has returned.
-    
+
     """
+
     @staticmethod
     def InitializeWorker():
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         return
-    
+
     def __init__(self, *args, **kwargs):
         self._Workers = multiprocessing.Pool(initializer=self.InitializeWorker)
         FreeingConfigLoader.__init__(self, *args, **kwargs)
         return
-    
+
     def SetBlockProcessor(self, bp):
         """Specify the object to process each Block. This MUST be a
         pickable object, unfortunately instance methods are not
@@ -184,18 +192,18 @@ class AsyncBlockProcessingLoader(FreeingConfigLoader):
         """
         self._BlockProcessor = BlockProcessorWrapper(bp)
         return
-    
+
     def OnBlockNeighboursAvailable(self, bIdx):
-        GetLogger().debug('Submit block ' + str(bIdx))
+        GetLogger().debug("Submit block " + str(bIdx))
         sd = SubDomain(self.Domain, bIdx)
-        self._Workers.apply_async(self._BlockProcessor,
-                                  args=(sd, bIdx),
-                                  callback=self._HandleBlockResult)
+        self._Workers.apply_async(
+            self._BlockProcessor, args=(sd, bIdx), callback=self._HandleBlockResult
+        )
         return
-    
+
     def _HandleBlockResult(self, args):
         bIdx, result = args
-        GetLogger().debug('Got results for block ' + str(bIdx))
+        GetLogger().debug("Got results for block " + str(bIdx))
         self.HandleBlockProcessingResult(result)
         self.OnBlockProcessed(bIdx)
         return
@@ -219,6 +227,7 @@ class AsyncBlockProcessingLoader(FreeingConfigLoader):
 
     pass
 
+
 class BlockProcessorWrapper(object):
     """Wrapper around the Block-processing callable.
 
@@ -226,21 +235,21 @@ class BlockProcessorWrapper(object):
     AsyncBlockProcessingLoader._HandleBlockResults above and ensures
     any uncaught exceptions are logged.
     """
-    
+
     def __init__(self, callable):
         self.callable = callable
         return
-    
+
     def __call__(self, domain, bIdx):
         """Executed in the worker process. This deals with calling the
         user function and returning the result packaged up with the
         block index.
         """
-        
-        GetLogger().debug('Process block {}'.format(bIdx))
+
+        GetLogger().debug("Process block {}".format(bIdx))
         try:
             result = self.callable(domain, bIdx)
-            
+
         except Exception as e:
             # multiprocessing.Pool normally just swallows any
             # exceptions.  Here we log the exception at a high level
@@ -249,8 +258,8 @@ class BlockProcessorWrapper(object):
             # Re-raise the original exception so the Pool worker can
             # clean up
             raise
-        
+
         # It was fine, give a normal answer
         return (bIdx, result)
-    
+
     pass

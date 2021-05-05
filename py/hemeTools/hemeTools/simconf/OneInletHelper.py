@@ -1,4 +1,3 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
@@ -29,6 +28,7 @@ from ..vtkhelp.cells import IterCellPtIds
 
 import pdb
 
+
 def FindSeeds(surfaceSrc, inletPt, outletPts):
     """Given a vtkAlgorithm and a list of Inlets and Outlets, return
     the point IDs of the closest points to the inlets and outlets (as
@@ -37,7 +37,7 @@ def FindSeeds(surfaceSrc, inletPt, outletPts):
     surfaceSrc.Update()
     ptFinder = vtk.vtkPointLocator()
     ptFinder.SetDataSet(surfaceSrc.GetOutput())
-    
+
     inletPtIds = vtk.vtkIdList()
     inletPtIds.InsertNextId(ptFinder.FindClosestPoint(inletPt))
     outletPtIds = vtk.vtkIdList()
@@ -46,20 +46,21 @@ def FindSeeds(surfaceSrc, inletPt, outletPts):
         continue
     return inletPtIds, outletPtIds
 
+
 class IoletProxy(object):
     """Proxy for Model.Iolets.Iolet, delegates unknown attribute
     lookup to the proxied object.
     """
-    
+
     def __init__(self, iolet, profile):
         self._iolet = iolet
         self._profile = profile
-        
+
     def __getattr__(self, attr):
         # This is only called if self doesn't have the requested
         # attribute. We delegate to the real object
         return getattr(self._iolet, attr)
-    
+
     @property
     def Centre(self):
         return self._profile.LengthUnit * Vector2Numpy(self._iolet.Centre)
@@ -71,17 +72,18 @@ class IoletProxy(object):
     @property
     def Normal(self):
         return Vector2Numpy(self._iolet.Normal)
-    
+
     @Normal.setter
     def Normal(self, value):
         self._iolet.Normal = Numpy2Vector(value)
         return
-    
+
     @memo_property
     def ClosestPointId(self):
-        """Find the ID of the closest point to the iolet's centre.
-        """
-        return self._profile.CentreLinePointLocator.FindClosestPoint(self.Centre/self._profile.LengthUnit)
+        """Find the ID of the closest point to the iolet's centre."""
+        return self._profile.CentreLinePointLocator.FindClosestPoint(
+            self.Centre / self._profile.LengthUnit
+        )
 
     @memo_property
     def ActualRadius(self):
@@ -89,8 +91,10 @@ class IoletProxy(object):
         centre.
         """
         clPD = self._profile.CentreLinePolyData
-        return self._profile.LengthUnit * clPD.GetPointData().GetArray('radius').GetTuple1(self.ClosestPointId)
-    
+        return self._profile.LengthUnit * clPD.GetPointData().GetArray(
+            "radius"
+        ).GetTuple1(self.ClosestPointId)
+
     pass
 
 
@@ -98,14 +102,15 @@ class ProfileProxy(HemeLbParameters):
     """Add a few properties to the Profile. Delegates unknown
     attribute look up to the profile.
     """
+
     _OutputUnitsMap = HemeLbParameters._UnitQuantitiesToMap([pq.mmHg])
-    
+
     def __init__(self, proFile):
         # Configurable parameters
         self.MaxAllowedMachNumber = 0.05
         self.InletReynoldsNumber = 300.0
         self.MinRadiusVoxels = 5.0
-        
+
         # Read the profile
         self.FileName = proFile
         self._profile = Profile()
@@ -114,8 +119,8 @@ class ProfileProxy(HemeLbParameters):
         self.Iolets = [IoletProxy(iolet, self) for iolet in self._profile.Iolets]
 
         # Work out where to store the centrelines
-        base = os.path.splitext(self.StlFile)[0]        
-        self.CentreLineFile = base + '_centrelines.vtp'
+        base = os.path.splitext(self.StlFile)[0]
+        self.CentreLineFile = base + "_centrelines.vtp"
 
         # Sort iolets -> inlets/outlets
         inlets = []
@@ -133,26 +138,28 @@ class ProfileProxy(HemeLbParameters):
         # Require 1 or more outlet
         assert len(outlets) > 0
         self.Outlets = outlets
-        
+
         return
-        
+
     def __getattr__(self, attr):
         # This is only called if self doesn't have the requested
         # attribute. We delegate to the real Profile object
         return getattr(self._profile, attr)
-    
+
     @property
     def LengthUnit(self):
         return self.StlFileUnit.SizeInMetres * pq.metre
-    
+
     @memo_property
     def CentreLinePolyData(self):
         """Compute centrelines based on the profile, reusing our
         memoed copy or reading from the cache file if possible.
         """
-        if (os.path.exists(self.CentreLineFile ) and 
-            os.path.getmtime(self.CentreLineFile ) > os.path.getmtime(self.StlFile) and
-            os.path.getmtime(self.CentreLineFile ) > os.path.getmtime(self.FileName)):
+        if (
+            os.path.exists(self.CentreLineFile)
+            and os.path.getmtime(self.CentreLineFile) > os.path.getmtime(self.StlFile)
+            and os.path.getmtime(self.CentreLineFile) > os.path.getmtime(self.FileName)
+        ):
             # Cached!
             reader = vtk.vtkXMLPolyDataReader()
             reader.SetFileName(self.CentreLineFile)
@@ -160,20 +167,21 @@ class ProfileProxy(HemeLbParameters):
             return reader.GetOutput()
 
         # Have to compute it
-        
+
         # Read the STL file
         reader = vtk.vtkSTLReader()
         reader.SetFileName(profile.StlFile)
-        
+
         # Find the seed points for centreline calculation
         # Use points one iolet radius back along the normal.
-        
+
         outletPts = []
+
         def scale(iolet):
-            pt = (iolet.Centre - iolet.Radius * iolet.Normal)
+            pt = iolet.Centre - iolet.Radius * iolet.Normal
             pt = pt / self.LengthUnit
             return pt.magnitude
-        
+
         for iolet in self.Iolets:
             if isinstance(iolet._iolet, Inlet):
                 inletPt = scale(iolet)
@@ -181,14 +189,15 @@ class ProfileProxy(HemeLbParameters):
                 outletPts.append(scale(iolet))
                 pass
             continue
-        
+
         srcPts, tgtPts = FindSeeds(reader, inletPt, outletPts)
-        
+
         # Lazy import since it's so slow!
         from vmtk import vtkvmtk
+
         centreliner = vtkvmtk.vtkvmtkPolyDataCenterlines()
         centreliner.SetInputConnection(reader.GetOutputPort())
-    
+
         centreliner.SetSourceSeedIds(srcPts)
         centreliner.SetTargetSeedIds(tgtPts)
         centreliner.SetRadiusArrayName("radius")
@@ -196,7 +205,7 @@ class ProfileProxy(HemeLbParameters):
 
         cleaner = vtk.vtkCleanPolyData()
         cleaner.SetInputConnection(centreliner.GetOutputPort())
-        
+
         writer = vtk.vtkXMLPolyDataWriter()
         writer.SetInputConnection(cleaner.GetOutputPort())
         writer.SetFileName(self.CentreLineFile)
@@ -215,11 +224,17 @@ class ProfileProxy(HemeLbParameters):
 
     @memo_property
     def CentreLinePoints(self):
-        return vtk_to_numpy(self.CentreLinePolyData.GetPoints().GetData()) * self.LengthUnit
+        return (
+            vtk_to_numpy(self.CentreLinePolyData.GetPoints().GetData())
+            * self.LengthUnit
+        )
 
     @memo_property
     def CentreLineRadii(self):
-        return vtk_to_numpy(self.CentreLinePolyData.GetPointData().GetArray('radius')) * self.LengthUnit
+        return (
+            vtk_to_numpy(self.CentreLinePolyData.GetPointData().GetArray("radius"))
+            * self.LengthUnit
+        )
 
     @memo_property
     def VolumeEstimate(self):
@@ -233,7 +248,7 @@ class ProfileProxy(HemeLbParameters):
         nPts = clPD.GetNumberOfPoints()
 
         # List of the point IDs that have been done already.
-        
+
         # Use this rather than the segments of the vessel tree as this
         # can cope with a network graph that has mergers as well as
         # bifurcations.
@@ -242,8 +257,8 @@ class ProfileProxy(HemeLbParameters):
         # Convert to numpy for easier access
         points = self.CentreLinePoints
         r = self.CentreLineRadii
-                
-        ans = 0.0 * pq.metre**3
+
+        ans = 0.0 * pq.metre ** 3
         # Get the IDs for each path through the network
         for linePtIds in IterCellPtIds(clPD.GetLines()):
             # Iterate over adjacent IDs, each of which defines a segment.
@@ -254,48 +269,48 @@ class ProfileProxy(HemeLbParameters):
                     continue
 
                 # Length of the segment
-                delta_s = (np.sum((points[i] - points[j])**2))**0.5
+                delta_s = (np.sum((points[i] - points[j]) ** 2)) ** 0.5
                 # s = distance along centreline
-                # 
+                #
                 #   r_i_____
                 #    |      -------_____r_j
                 #    |                   |
                 #    |                   |
                 # --s_i-----------------s_j-----> s Centreline
-                # 
+                #
                 #  V = \int_{s_i}^{s_j} \pi r^2 ds
-                # 
+                #
                 #  r(s) = (r_j - r_i) * (s - s_i) + r_i
                 #         -----------
                 #         (s_j - s_i)
-                # 
+                #
                 # so dr = (r_j - r_i) * ds
                 #         -----------
                 #         (s_j - s_i)
-                # 
+                #
                 # V = \pi (s_j - s_i) * \int_{r_i}^{r_j} r^2 dr
                 #         -----------
                 #         (r_j - r_i)
                 #   = \pi (s_j - s_i) * (r_j^3 - r_i^3)
                 #         -----------
                 #         (r_j - r_i)
-                delta_V = (r[i]**2 + r[i]*r[j] + r[j]**2) * np.pi * delta_s / 3.
+                delta_V = (r[i] ** 2 + r[i] * r[j] + r[j] ** 2) * np.pi * delta_s / 3.0
 
                 ans += delta_V
                 # Mark the point as seen.
                 seenPts.add(j)
         return ans
-    
+
     def _AdjustIoletNormals(self):
         """Adjust the iolet normals such that they are parallel to the
         centre line at their location.
         """
         if hasattr(self, "_Adjusted") and self._Adjusted:
             return
-        
+
         # Point IDs of them all
         closestIds = [iolet.ClosestPointId for iolet in self.Iolets]
-        
+
         clinesPD = self.CentreLinePolyData
         points = vtk_to_numpy(clinesPD.GetPoints().GetData())
 
@@ -307,7 +322,7 @@ class ProfileProxy(HemeLbParameters):
         # normal. (Hence why we need the connectivity data of the
         # lines)
         adjustedPtIds = set()
-        
+
         for linePtIds in IterCellPtIds(clinesPD.GetLines()):
             nPtsOnLine = len(linePtIds)
             # Find which iolets are closest to points on this line.
@@ -316,15 +331,15 @@ class ProfileProxy(HemeLbParameters):
                 if len(match) == 0:
                     # Not this iolet
                     continue
-                
+
                 # This iolet is closest to this line.
                 iolet = self.Iolets[i]
                 closestPointOnLine = match[0]
-                
+
                 if linePtIds[closestPointOnLine] in adjustedPtIds:
                     # But we've seen this one - next!
                     continue
-                
+
                 # Haven't seen this one, add it so don't repeat ourselves
                 adjustedPtIds.add(linePtIds[closestPointOnLine])
 
@@ -343,7 +358,7 @@ class ProfileProxy(HemeLbParameters):
                 n /= np.linalg.norm(n)
                 # If it's the wrong way round, flip it.
                 if np.dot(n, iolet.Normal) < 0:
-                    n *= -1.
+                    n *= -1.0
                     pass
 
                 # Set in the iolet object.
@@ -355,15 +370,19 @@ class ProfileProxy(HemeLbParameters):
             continue
         self._Adjusted = True
         return
-        
+
     @property
     def InletRadius(self):
         return self.Inlet.ActualRadius
-    
+
     @property
     @simplify
     def InletPeakVelocity(self):
-        return self.KinematicViscosity * self.InletReynoldsNumber / (2. * self.InletRadius)
+        return (
+            self.KinematicViscosity
+            * self.InletReynoldsNumber
+            / (2.0 * self.InletRadius)
+        )
 
     @property
     @simplify
@@ -372,16 +391,27 @@ class ProfileProxy(HemeLbParameters):
 
         Using standard poiseuille flow results and Re = rho * U_max * dia / visc
         """
-        return np.pi * self.InletReynoldsNumber * self.KinematicViscosity * self.InletRadius / 4.0
-    
+        return (
+            np.pi
+            * self.InletReynoldsNumber
+            * self.KinematicViscosity
+            * self.InletRadius
+            / 4.0
+        )
+
     @property
     def OutletPressure(self):
-        return 0. * pq.mmHg
+        return 0.0 * pq.mmHg
 
     @simplify
     def ResistanceForIds(self, idList):
-        return SpecificResistance(self.CentreLinePoints[idList], self.CentreLineRadii[idList]) * self.DynamicViscosity
-            
+        return (
+            SpecificResistance(
+                self.CentreLinePoints[idList], self.CentreLineRadii[idList]
+            )
+            * self.DynamicViscosity
+        )
+
     def IndexForUnknown(self, unkn):
         return self.Unknowns.index(unkn)
 
@@ -395,66 +425,69 @@ class ProfileProxy(HemeLbParameters):
         eqs = self.Tree.BuildSystem(self)
         assert len(eqs) == len(self.Unknowns)
         return eqs
-    
+
     @memo_property
     def EquationSystemMatrix(self):
         # This needs to have uniform type, i.e. no quantities
         # Use SI base for everything.
         nUnknowns = len(self.Unknowns)
         eqs = self.EquationSystem
-        ans = np.zeros((nUnknowns, nUnknowns+1))
-        
+        ans = np.zeros((nUnknowns, nUnknowns + 1))
+
         with self.SIunits():
             for i in xrange(nUnknowns):
                 for j in xrange(nUnknowns):
-                    ans[i,j] = self.ScaleForOutput(eqs[i].get(self.Unknowns[j], 0.))
+                    ans[i, j] = self.ScaleForOutput(eqs[i].get(self.Unknowns[j], 0.0))
                     continue
-                ans[i, nUnknowns] = eqs[i]['rhs']
+                ans[i, nUnknowns] = eqs[i]["rhs"]
                 continue
             pass
         return ans
 
     @memo_property
     def Matrix(self):
-        return self.EquationSystemMatrix[:,:len(self.Unknowns)]
+        return self.EquationSystemMatrix[:, : len(self.Unknowns)]
+
     @memo_property
     def Rhs(self):
         return self.EquationSystemMatrix[:, len(self.Unknowns)]
-    
+
     @memo_property
     def Tree(self):
         # Before constructing the tree, must trim away the bits of
         # centreline beyond the iolets.
         inletPtId = self.Inlet.ClosestPointId
         outletPtIds = [out.ClosestPointId for out in self.Outlets]
-        
+
         linePtIds = []
         for pathIdList in IterCellPtIds(self.CentreLinePolyData.GetLines()):
             # Find where the inlet is
             inletIndex = np.where(pathIdList == inletPtId)[0]
             assert inletIndex.shape == (1,)
             inletIndex = inletIndex[0]
-            
+
             # Now the outlet
             # First figure out which outlet
             outletId = np.where(np.in1d(outletPtIds, pathIdList))[0]
             # Must be only one outlet.
-            assert outletId.shape == (1,)            
+            assert outletId.shape == (1,)
             # Now where is this outlet's point ID in pathIdList?
             outletIndex = np.where(pathIdList == outletPtIds[outletId])[0]
             assert outletIndex.shape == (1,)
             outletIndex = outletIndex[0]
-            
+
             linePtIds.append(pathIdList[inletIndex:outletIndex])
             continue
 
         # Now can split into the tree
         tree = VesselSegment(linePtIds)
-        
+
         # To fully initialise the tree segments, need to BuildTerms
-        self.Unknowns = tree.BuildTerms(flowRate=self.InletFlowRate, finalOutletPressure=self.OutletPressure)
+        self.Unknowns = tree.BuildTerms(
+            flowRate=self.InletFlowRate, finalOutletPressure=self.OutletPressure
+        )
         return tree
-        
+
     @memo_property
     def SolutionVector(self):
         return np.linalg.solve(self.Matrix, self.Rhs)
@@ -463,7 +496,7 @@ class ProfileProxy(HemeLbParameters):
     def SolutionForUnknown(self, unkn):
         i = self.IndexForUnknown(unkn)
         return self.SolutionVector[i] * unkn.units
-    
+
     @memo_property
     def MaxVelocity(self):
         return self.Tree.MaxVelocity(self)
@@ -475,16 +508,18 @@ class ProfileProxy(HemeLbParameters):
 
         SpeedOfSound = VoxelSize / (sqrt(3) TimeStep)
         """
-        return self.MaxAllowedMachNumber * self.VoxelSize / (np.sqrt(3) * self.MaxVelocity)
+        return (
+            self.MaxAllowedMachNumber * self.VoxelSize / (np.sqrt(3) * self.MaxVelocity)
+        )
 
     @default_property
     def VoxelSize(self):
         return self.Tree.MinRadius(self) / self.MinRadiusVoxels
-    
+
     @property
     def PulsatilePeriod(self):
         return 1.0 * pq.second
-    
+
     @property
     def SimulationTime(self):
         return 10 * self.PulsatilePeriod
@@ -496,21 +531,21 @@ class ProfileProxy(HemeLbParameters):
     @property
     def MachNumber(self):
         return self.MaxVelocity / self.SpeedOfSound
-    
+
     @property
     def WomersleyNumber(self):
         omega = 2.0 * np.pi / self.PulsatilePeriod
-        return self.InletRadius * (omega / self.KinematicViscosity)**0.5
-    
+        return self.InletRadius * (omega / self.KinematicViscosity) ** 0.5
+
     @property
     @simplify
     def SoundTime(self):
         return self.MaxPathLength / self.SpeedOfSound
-    
+
     @property
     @simplify
     def MomentumTime(self):
-        return self.CentreLineRadii.max()**2 / self.KinematicViscosity
+        return self.CentreLineRadii.max() ** 2 / self.KinematicViscosity
 
     @property
     @simplify
@@ -520,10 +555,12 @@ class ProfileProxy(HemeLbParameters):
     @property
     def PressureDifference(self):
         return self.InletPressure - self.OutletPressure
-    
+
     @property
     def TotalSups(self):
-        return self.ScaleToLatticeUnits(self.VolumeEstimate) * self.ScaleToLatticeUnits(self.SimulationTime)
+        return self.ScaleToLatticeUnits(self.VolumeEstimate) * self.ScaleToLatticeUnits(
+            self.SimulationTime
+        )
 
     @property
     def HectorTime(self):
@@ -533,18 +570,18 @@ class ProfileProxy(HemeLbParameters):
 
     def _UpdateProfile(self):
         self._AdjustIoletNormals()
-        
+
         self._profile.TimeStepSeconds = self.ScaleForOutput(self.TimeStep)
         self._profile.DurationSeconds = self.ScaleForOutput(self.SimulationTime)
-        
+
         self._profile.VoxelSize = float(self.VoxelSize / self.LengthUnit)
         return
-    
+
     def RewriteProfile(self):
         self._UpdateProfile()
-        
+
         base, ext = os.path.splitext(self.FileName)
-        newFile = base + '_adjusted' + ext
+        newFile = base + "_adjusted" + ext
         self.Save(newFile)
         return
 
@@ -553,60 +590,60 @@ class ProfileProxy(HemeLbParameters):
         self._profile.Generate()
         self.RewriteConfigXml()
         return
-    
+
     def RewriteConfigXml(self):
         from HemeLbSetupTool.Model.XmlWriter import XmlWriter
-        
+
         tree = ElementTree.parse(self.OutputXmlFile)
         root = tree.getroot()
-        
+
         self.RewriteProperties(root)
         self.RewriteInletCondition(root)
         self.RewriteOutletConditions(root)
 
         XmlWriter.indent(root)
-        
+
         tree.write(self.OutputXmlFile)
         return
-    
+
     def RewriteInletCondition(self, root):
-        condEl = root.find('inlets/inlet/condition')
+        condEl = root.find("inlets/inlet/condition")
         condEl.clear()
-        
-        condEl.set('type', 'pressure')
-        condEl.set('subtype', 'cosine')
-        
+
+        condEl.set("type", "pressure")
+        condEl.set("subtype", "cosine")
+
         inP = self.SolutionForUnknown(self.Tree.InletPressure)
-        self.QuantityToXml(condEl, 'amplitude', inP)
-        self.QuantityToXml(condEl, 'mean', inP)
-        self.QuantityToXml(condEl, 'phase', np.pi * pq.radian)
-        self.QuantityToXml(condEl, 'period', self.PulsatilePeriod)
-        
+        self.QuantityToXml(condEl, "amplitude", inP)
+        self.QuantityToXml(condEl, "mean", inP)
+        self.QuantityToXml(condEl, "phase", np.pi * pq.radian)
+        self.QuantityToXml(condEl, "period", self.PulsatilePeriod)
+
         return
 
     def RewriteOutletConditions(self, root):
-        for condEl in root.findall('outlets/outlet/condition'):
+        for condEl in root.findall("outlets/outlet/condition"):
             condEl.clear()
-            
-            condEl.set('type', 'pressure')
-            condEl.set('subtype', 'cosine')
-            
-            self.QuantityToXml(condEl, 'amplitude', self.OutletPressure)
-            self.QuantityToXml(condEl, 'mean', self.OutletPressure)
-            self.QuantityToXml(condEl, 'phase', 0.0 * pq.radian)
-            self.QuantityToXml(condEl, 'period', self.PulsatilePeriod)
+
+            condEl.set("type", "pressure")
+            condEl.set("subtype", "cosine")
+
+            self.QuantityToXml(condEl, "amplitude", self.OutletPressure)
+            self.QuantityToXml(condEl, "mean", self.OutletPressure)
+            self.QuantityToXml(condEl, "phase", 0.0 * pq.radian)
+            self.QuantityToXml(condEl, "period", self.PulsatilePeriod)
             continue
         return
-    
+
     def RewriteProperties(self, root):
         # Remove any old ones
-        propertiesEl = root.find('properties')
+        propertiesEl = root.find("properties")
         while propertiesEl is not None:
             root.remove(propertiesEl)
-            propertiesEl = root.find('properties')
+            propertiesEl = root.find("properties")
             continue
-        
-        propertiesEl = ElementTree.SubElement(root, 'properties')
+
+        propertiesEl = ElementTree.SubElement(root, "properties")
 
         # Get our plane centres
         planePtIds = self.Tree.SamplePtIds(50)
@@ -615,33 +652,36 @@ class ProfileProxy(HemeLbParameters):
         # And the next point along for the normals
         nextPtIds = self.Tree.SamplePtIds(50, start=1)
         dx = self.CentreLinePoints[nextPtIds] - points
-        normals = dx / np.sum(dx**2,axis=-1)[:, np.newaxis]**0.5
+        normals = dx / np.sum(dx ** 2, axis=-1)[:, np.newaxis] ** 0.5
         # And the radius at that point, plus  a bit
-        radii = self.CentreLineRadii[planePtIds]*1.1
+        radii = self.CentreLineRadii[planePtIds] * 1.1
 
         nDigits = int(np.ceil(np.log10(nPoints)))
-        fileFmtStr = 'plane{:0%dd}.xtr' % nDigits
-        periodStr = str(int(self.ScaleToLatticeUnits(self.PulsatilePeriod/25.)))
+        fileFmtStr = "plane{:0%dd}.xtr" % nDigits
+        periodStr = str(int(self.ScaleToLatticeUnits(self.PulsatilePeriod / 25.0)))
         for i in xrange(len(points)):
-            poEl = ElementTree.SubElement(propertiesEl, 'propertyoutput',
-                                          file=fileFmtStr.format(i),
-                                          period=periodStr)
-            geoEl = ElementTree.SubElement(poEl, 'geometry', type='plane')
-            self.QuantityToXml(geoEl, 'point', points[i])
-            self.QuantityToXml(geoEl, 'normal', normals[i])
-            self.QuantityToXml(geoEl, 'radius', radii[i])
+            poEl = ElementTree.SubElement(
+                propertiesEl,
+                "propertyoutput",
+                file=fileFmtStr.format(i),
+                period=periodStr,
+            )
+            geoEl = ElementTree.SubElement(poEl, "geometry", type="plane")
+            self.QuantityToXml(geoEl, "point", points[i])
+            self.QuantityToXml(geoEl, "normal", normals[i])
+            self.QuantityToXml(geoEl, "radius", radii[i])
 
-            ElementTree.SubElement(poEl, 'field', type='velocity')
-            ElementTree.SubElement(poEl, 'field', type='pressure')
-            
+            ElementTree.SubElement(poEl, "field", type="velocity")
+            ElementTree.SubElement(poEl, "field", type="pressure")
+
             continue
         return
-    
+
     def QuantityToXml(self, parent, name, quantity):
         value = self.ScaleForOutput(quantity)
         if isinstance(value, np.ndarray):
             assert value.shape == (3,)
-            value = '({},{},{})'.format(*value)
+            value = "({},{},{})".format(*value)
         else:
             value = str(value)
             pass
@@ -651,21 +691,22 @@ class ProfileProxy(HemeLbParameters):
         except KeyError:
             units = quantity.dimensionality.string
             pass
-        
+
         return ElementTree.SubElement(parent, name, value=value, units=units)
-    
+
     pass
-    
+
 
 def Vector2Numpy(v):
-    """HemeLbSetupTool.Model.Vector.Vector -> numpy array
-    """
-    return np.array((v.x, v.y, v.z),dtype=float)
+    """HemeLbSetupTool.Model.Vector.Vector -> numpy array"""
+    return np.array((v.x, v.y, v.z), dtype=float)
+
 
 def Numpy2Vector(v):
     v = np.atleast_1d(v).squeeze()
     assert v.shape == (3,)
     return Vector(float(v[0]), float(v[1]), float(v[2]))
+
 
 def GetPlane(iolet):
     """Return parameters for a vtkDisc + vtkTransform to represent an
@@ -673,22 +714,36 @@ def GetPlane(iolet):
     """
     centre = Vec2Vec(iolet.Centre)
     nx, ny, nz = Vec2Vec(iolet.Normal)
-    
-    beta = np.arccos(nz)*180/np.pi
-    gamma = np.arcsin(ny / np.sqrt(1-nz**2))*180/np.pi
-    
+
+    beta = np.arccos(nz) * 180 / np.pi
+    gamma = np.arcsin(ny / np.sqrt(1 - nz ** 2)) * 180 / np.pi
+
     return centre, iolet.Radius, beta, gamma
+
 
 if __name__ == "__main__":
     # Read command line
     import sys
+
     proFile = sys.argv[1]
 
     profile = ProfileProxy(proFile)
 
-    ToPrint = ['PulsatilePeriod', 'MomentumTime', 'SoundTime', 'HectorTime', 'VolumeEstimate', 'PressureDifference', 'MaxVelocity', 'Tau', 'MachNumber', 'WomersleyNumber']
+    ToPrint = [
+        "PulsatilePeriod",
+        "MomentumTime",
+        "SoundTime",
+        "HectorTime",
+        "VolumeEstimate",
+        "PressureDifference",
+        "MaxVelocity",
+        "Tau",
+        "MachNumber",
+        "WomersleyNumber",
+    ]
+
     def Print():
-        headers = ['Name', 'Physical', 'Lattice']
+        headers = ["Name", "Physical", "Lattice"]
         lengths = map(len, headers)
         table = []
 
@@ -696,25 +751,24 @@ if __name__ == "__main__":
             val = getattr(profile, attr)
             if isinstance(val, pq.Quantity):
                 units = val.dimensionality.string
-                if units == 'dimensionless':
-                    units = ''
-                phys = '{:.3g} {:s}'.format(float(val.magnitude), units)
+                if units == "dimensionless":
+                    units = ""
+                phys = "{:.3g} {:s}".format(float(val.magnitude), units)
             else:
-                phys = '-'
+                phys = "-"
 
-            lat = '{:.3g}'.format(profile.ScaleToLatticeUnits(val))
+            lat = "{:.3g}".format(profile.ScaleToLatticeUnits(val))
             row = (attr, phys, lat)
             table.append(row)
             lengths = map(max, zip(lengths, map(len, row)))
             continue
 
-        fmtStr = '{:%ds} | {:%ds} | {:%ds}' % tuple(lengths)
+        fmtStr = "{:%ds} | {:%ds} | {:%ds}" % tuple(lengths)
         header = fmtStr.format(*headers)
-        print header
-        print len(header)*'-'
+        print(header)
+        print(len(header) * "-")
 
         for row in table:
-            print fmtStr.format(*row)
+            print(fmtStr.format(*row))
 
     Print()
-

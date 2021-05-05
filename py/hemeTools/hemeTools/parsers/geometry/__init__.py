@@ -1,4 +1,3 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
@@ -26,33 +25,35 @@
 """
 import numpy as np
 
-GeometryMagicNumber = 0x676d7904
+GeometryMagicNumber = 0x676D7904
 MooreNeighbourhoodDirections = np.array(
-    [[-1,-1,-1],
-     [-1,-1, 0],
-     [-1,-1,+1],
-     [-1, 0,-1],
-     [-1 , 0, 0],
-     [-1, 0,+1],
-     [-1,+1,-1],
-     [-1,+1, 0],
-     [-1,+1,+1],
-     [ 0,-1,-1],
-     [ 0,-1, 0],
-     [ 0,-1,+1],
-     [ 0, 0,-1],
-     #[ 0, 0, 0], <= the null displacement is not part of the Moore N'hood
-     [ 0, 0,+1],
-     [ 0,+1,-1],
-     [ 0,+1, 0],
-     [ 0,+1,+1],
-     [+1,-1,-1],
-     [+1,-1, 0],
-     [+1,-1,+1],
-     [+1, 0,-1],
-     [+1, 0, 0],
-     [+1, 0,+1],
-     [+1,+1,-1],
-     [+1,+1, 0],
-     [+1,+1,+1]]
-    )
+    [
+        [-1, -1, -1],
+        [-1, -1, 0],
+        [-1, -1, +1],
+        [-1, 0, -1],
+        [-1, 0, 0],
+        [-1, 0, +1],
+        [-1, +1, -1],
+        [-1, +1, 0],
+        [-1, +1, +1],
+        [0, -1, -1],
+        [0, -1, 0],
+        [0, -1, +1],
+        [0, 0, -1],
+        # [ 0, 0, 0], <= the null displacement is not part of the Moore N'hood
+        [0, 0, +1],
+        [0, +1, -1],
+        [0, +1, 0],
+        [0, +1, +1],
+        [+1, -1, -1],
+        [+1, -1, 0],
+        [+1, -1, +1],
+        [+1, 0, -1],
+        [+1, 0, 0],
+        [+1, 0, +1],
+        [+1, +1, -1],
+        [+1, +1, 0],
+        [+1, +1, +1],
+    ]
+)

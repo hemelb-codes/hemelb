@@ -1,4 +1,3 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
@@ -8,11 +7,12 @@ class default_property(object):
     of evaluating the method) that can be overriden by setting a
     value. The default is restored by deleting the attribute.
     """
+
     def __init__(self, fcalc):
-        self.value_attr_name = '_default_' + fcalc.func_name
+        self.value_attr_name = "_default_" + fcalc.func_name
         self.calc_default = fcalc
         return
-    
+
     def __get__(self, instance, owner_cls):
         try:
             return getattr(instance, self.value_attr_name)
@@ -27,5 +27,5 @@ class default_property(object):
             return delattr(instance, self.value_attr_name)
         except AttributeError:
             raise AttributeError("can't delete attribute")
-        
+
     pass

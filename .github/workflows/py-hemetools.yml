@@ -4,6 +4,28 @@ on:
   - pull_request
 
 jobs:
+  python-lint:
+    runs-on: ubuntu-20.04
+
+    defaults:
+      run:
+        working-directory: py/hemeTools
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: install
+        run: |
+          pip install black
+
+      - name: Run black format check
+        run: black --check .
+
   python-tests:
     runs-on: ubuntu-20.04
 
@@ -25,11 +47,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-
       - name: install tox
         run: |
           pip install -U pip setuptools wheel
           pip install tox tox-gh-actions
+
 
       - name: Test with tox
         run: tox

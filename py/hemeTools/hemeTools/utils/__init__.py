@@ -7,10 +7,10 @@ import sys
 import os
 from utils import *
 
+
 def main():
     pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
