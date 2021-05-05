@@ -12,11 +12,12 @@ set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} ${CMAKE_CXX_LINK_FLAGS}")
 include_directories(${MPI_INCLUDE_PATH})
 
 # Figure out if this MPI implementation has a const-correct API (supports MPI 3)
-set(CMAKE_REQUIRED_FLAGS -Werror)
-set(CMAKE_REQUIRED_DEFINITIONS ${MPI_COMPILE_FLAGS})
-set(CMAKE_REQUIRED_INCLUDES ${MPI_INCLUDE_PATH})
-set(CMAKE_REQUIRED_LIBRARIES ${MPI_LIBRARIES})
-CHECK_CXX_SOURCE_COMPILES("#include <mpi.h>
+function(get_constcorrectmpi)
+  set(CMAKE_REQUIRED_FLAGS -Werror)
+  set(CMAKE_REQUIRED_DEFINITIONS ${MPI_COMPILE_FLAGS})
+  set(CMAKE_REQUIRED_INCLUDES ${MPI_INCLUDE_PATH})
+  set(CMAKE_REQUIRED_LIBRARIES ${MPI_LIBRARIES})
+  CHECK_CXX_SOURCE_COMPILES("#include <mpi.h>
 int main(int argc, char* argv[]) {
   const int send = 0;
   int recv;
@@ -27,4 +28,6 @@ int main(int argc, char* argv[]) {
   MPI_Wait(&req, MPI_STATUS_IGNORE);
   MPI_Finalize();
 }" HAVE_CONSTCORRECTMPI)
+endfunction()
 
+get_constcorrectmpi()
