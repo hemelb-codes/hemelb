@@ -6,6 +6,7 @@
 cimport numpy as np
 import numpy as np
 import weakref
+from ...utils cimport xdr
 
 cdef public enum:
     DIRECTIONS = 26
