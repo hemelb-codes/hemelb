@@ -1,4 +1,3 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
@@ -6,7 +5,7 @@
 
 import pdb
 import xdrlib
-import numpy as N
+import numpy as np
 
 class Image(object):
     
@@ -22,18 +21,18 @@ class Image(object):
         self.screen = (reader.unpack_uint(), reader.unpack_uint())
         self.nPixels = reader.unpack_uint()
 
-        tempPixels = N.zeros((self.nPixels,4), dtype=N.uint32)
+        tempPixels = np.zeros((self.nPixels,4), dtype=np.uint32)
 
         for i in xrange(self.nPixels):
             for j in xrange(4):
                 tempPixels[i,j] = reader.unpack_uint()
                 continue
             continue
-        sortedIndices = N.argsort(tempPixels[:,0])
-        self.pixels = tempPixels[sortedIndices].view(dtype=[('index', N.uint16, 2),
-                                                            ('r', N.uint8, 4),
-                                                            ('g', N.uint8, 4),
-                                                            ('b', N.uint8, 4)]).view(N.recarray)
+        sortedIndices = np.argsort(tempPixels[:,0])
+        self.pixels = tempPixels[sortedIndices].view(dtype=[('index', np.uint16, 2),
+                                                            ('r', np.uint8, 4),
+                                                            ('g', np.uint8, 4),
+                                                            ('b', np.uint8, 4)]).view(np.recarray)
 
         # The above statement puts the pixel indices in the wrong order (i.e. j,i rather than i,j).
         # This is corrected here.
@@ -53,7 +52,7 @@ class Image(object):
         self.screen = (reader.unpack_uint(), reader.unpack_uint())
         self.nPixels = reader.unpack_uint()
 
-        tempPixels = N.zeros(self.nPixels, dtype=type(self).RowType)
+        tempPixels = np.zeros(self.nPixels, dtype=type(self).RowType)
 
         # Masks and shifts to get the bits for each vis mode
         masks = [(2**32-1) ^ (2**24-1),
@@ -97,7 +96,7 @@ class Image(object):
             #     )
             
             continue
-        sortedIndices = N.argsort(tempPixels['index'][:, 0]<<16 + tempPixels['index'][:, 1])
+        sortedIndices = np.argsort(tempPixels['index'][:, 0]<<16 + tempPixels['index'][:, 1])
         self.pixels = tempPixels[sortedIndices]
         
         return
@@ -111,7 +110,7 @@ class Image(object):
                 return False
             continue
         
-        if not N.alltrue(self.pixels.view(dtype=N.uint32) == other.pixels.view(dtype=N.uint32)):
+        if not np.alltrue(self.pixels.view(dtype=np.uint32) == other.pixels.view(dtype=np.uint32)):
             return False
         
         return True
@@ -128,9 +127,9 @@ class Image(object):
                 return False
             continue
 
-        if not N.alltrue(self.pixels.index == other.pixels.index):
+        if not np.alltrue(self.pixels.index == other.pixels.index):
             for i in range(self.pixels.index.shape[0]):
-                if not N.alltrue(self.pixels.index[i] == other.pixels.index[i]):
+                if not np.alltrue(self.pixels.index[i] == other.pixels.index[i]):
                     print 'Images differed on indices, first at index: ' + str(i)
                     print 'left array had ' + str(self.pixels.index[i])
                     print 'right array had ' + str(other.pixels.index[i])
@@ -138,13 +137,13 @@ class Image(object):
 
         for attr in ('r', 'g', 'b'):
             d = self.pixels[attr] - other.pixels[attr] + 128
-            if N.min(d) < (128-tol) or N.max(d) > (128+tol):
-                minArg = N.argmin(d, 0)[0][0]
-                maxArg = N.argmax(d, 0)[0][0]
+            if np.min(d) < (128-tol) or np.max(d) > (128+tol):
+                minArg = np.argmin(d, 0)[0][0]
+                maxArg = np.argmax(d, 0)[0][0]
                 print 'Differed on ' + attr + ' channel with delta range:'
-                print str(N.min(d) - 128) + ' between ' + str(self.pixels[minArg]) + ' and ' + str(other.pixels[minArg])
+                print str(np.min(d) - 128) + ' between ' + str(self.pixels[minArg]) + ' and ' + str(other.pixels[minArg])
                 print 'and'
-                print str(N.max(d) - 128) + ' between ' + str(self.pixels[maxArg]) + ' and ' + str(other.pixels[maxArg])
+                print str(np.max(d) - 128) + ' between ' + str(self.pixels[maxArg]) + ' and ' + str(other.pixels[maxArg])
                 return False
             continue
         

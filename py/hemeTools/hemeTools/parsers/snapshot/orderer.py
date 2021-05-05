@@ -1,4 +1,3 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
@@ -11,7 +10,7 @@ The ordering is based on the grid positions, z fastest varying.
 
 """
 
-import numpy as N
+import numpy as np
 
 def computeGridIdx(snap):
     return (snap.grid[:,0] * snap.bb_len[1] +
@@ -38,8 +37,8 @@ def computeIncreasingGridIndex(snap):
     # Then can order by i * (max-min)^2 + j * (max-min) + k. Sweet!
     # THIS IS A HACK BUT I JUST WANT IT TO WORK. Better than multiplying by 100 would be
     # to do it some other way, i.e. define an ordering, pass that into some sort function.
-    min = N.min(snap.position) * 100.0
-    max = N.max(snap.position) * 100.0
+    min = np.min(snap.position) * 100.0
+    max = np.max(snap.position) * 100.0
 
     return ((snap.position[:,0])  * (max-min) +
             (snap.position[:,1])) * (max-min) + \
