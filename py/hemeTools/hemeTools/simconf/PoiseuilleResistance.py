@@ -1,9 +1,9 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 import numpy as np
+
 
 def SpecificResistance(points, radii):
     """
@@ -67,17 +67,16 @@ def SpecificResistance(points, radii):
 
     Dr = r_j - r_i
     r_mean = 0.5 * (r_i + r_j)
-    
-    Dx = points[1:] - points[:-1]
-    Ds = np.sqrt(np.sum(Dx**2, axis=-1))
 
-    common = (8. * Ds) / (3.0 * np.pi)
-    
-    simple = common * ( r_i ** -3 - r_j**-3) / Dr
-    
-    expansion = common * (3.0 * r_mean**-4 +
-                          2.5 * Dr**2 * r_mean**-6)
+    Dx = points[1:] - points[:-1]
+    Ds = np.sqrt(np.sum(Dx ** 2, axis=-1))
+
+    common = (8.0 * Ds) / (3.0 * np.pi)
+
+    simple = common * (r_i ** -3 - r_j ** -3) / Dr
+
+    expansion = common * (3.0 * r_mean ** -4 + 2.5 * Dr ** 2 * r_mean ** -6)
 
     assert simple.units == expansion.units
-    ans = np.where(Dr/r_mean < 0.1, expansion, simple)
+    ans = np.where(Dr / r_mean < 0.1, expansion, simple)
     return ans.sum() * simple.units

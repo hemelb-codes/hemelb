@@ -1,4 +1,3 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
@@ -10,6 +9,7 @@ import numpy as np
 from .simple import ConfigLoader
 from .generic import Block
 
+
 class FreeingConfigLoader(ConfigLoader):
     """This ConfigLoader will ensure a Block is kept until all Blocks
     in it's neighbourhood (see below) have been marked as finished
@@ -17,13 +17,14 @@ class FreeingConfigLoader(ConfigLoader):
     unneeded Block. Your subclass must ensure that OnBlockProcessed is
     called with the Idx of the finished Block once you have processed
     it. This is to enable asynchronous analysis of Blocks.
-    
+
     A Block's neighbourhood is defined similarly to the mathematical
     concept of a neighbours; viz. as the Block itself and all the
     adjacent Blocks. These are the possible offsets to the
     neighbourhood.
     """
-    NeighbourhoodOffsets = np.mgrid[-1:2, -1:2, -1:2].reshape((3,27)).transpose()
+
+    NeighbourhoodOffsets = np.mgrid[-1:2, -1:2, -1:2].reshape((3, 27)).transpose()
 
     def _LoadHeader(self):
         ConfigLoader._LoadHeader(self)
@@ -47,28 +48,31 @@ class FreeingConfigLoader(ConfigLoader):
                 nIdx = bIdx + delta
                 if np.any(nIdx < 0) or np.any(nIdx >= bc):
                     continue
-                
+
                 nIjk = self.Domain.BlockIndexer.NdToOne(nIdx)
                 self.BlockNeighbourhoodSize[nIjk] += 1
                 continue
             continue
         return
-    
+
     def _LoadBlock(self, domain, bIdx, bIjk):
         block = ConfigLoader._LoadBlock(self, domain, bIdx, bIjk)
-        
+
         for delta in self.NeighbourhoodOffsets:
             nIdx = bIdx + delta
             if np.any(nIdx < 0) or np.any(nIdx >= self.Domain.BlockCounts):
                 continue
-            
+
             nIjk = self.Domain.BlockIndexer.NdToOne(nIdx)
             self.BlockNeighbourhoodAvailable[nIjk] += 1
-            if self.BlockNeighbourhoodAvailable[nIjk] == self.BlockNeighbourhoodSize[nIjk]:
+            if (
+                self.BlockNeighbourhoodAvailable[nIjk]
+                == self.BlockNeighbourhoodSize[nIjk]
+            ):
                 self.OnBlockNeighboursAvailable(nIdx)
-                
+
             continue
-        
+
         return
 
     def OnBlockNeighboursAvailable(self, bIdx):
@@ -80,8 +84,7 @@ class FreeingConfigLoader(ConfigLoader):
         return
 
     def OnBlockProcessed(self, bIdx):
-        """Mark a block as finished with.
-        """
+        """Mark a block as finished with."""
         bIjk = self.Domain.BlockIndexer.NdToOne(bIdx)
         with self.DoneLock:
             self.IsBlockDone[bIjk] = True
@@ -92,13 +95,16 @@ class FreeingConfigLoader(ConfigLoader):
 
                 nIjk = self.Domain.BlockIndexer.NdToOne(nIdx)
                 self.BlockNeighbourhoodDone[nIjk] += 1
-                if self.BlockNeighbourhoodDone[nIjk] == self.BlockNeighbourhoodSize[nIjk]:
+                if (
+                    self.BlockNeighbourhoodDone[nIjk]
+                    == self.BlockNeighbourhoodSize[nIjk]
+                ):
                     self.OnBlockNeighboursProcessed(nIdx)
                     pass
                 continue
             if np.alltrue(self.IsBlockDone):
                 self.OnAllBlocksProcessed()
-                
+
         return
 
     def OnAllBlocksProcessed(self):
@@ -106,9 +112,9 @@ class FreeingConfigLoader(ConfigLoader):
         as processed.
         """
         return
-    
+
     def OnBlockNeighboursProcessed(self, bIdx):
         self.Domain.DeleteBlock(bIdx)
         return
-    
+
     pass

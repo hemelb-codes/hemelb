@@ -9,7 +9,14 @@ import Cython.Build
 import numpy as np
 
 ext_modules = [
-    Extension("hemeTools.utils.xdr", ["hemeTools/utils/xdr.pyx", "hemeTools/utils/xdr.pxd", "hemeTools/utils/cxdr.pxd"]),
+    Extension(
+        "hemeTools.utils.xdr",
+        [
+            "hemeTools/utils/xdr.pyx",
+            "hemeTools/utils/xdr.pxd",
+            "hemeTools/utils/cxdr.pxd",
+        ],
+    ),
     Extension(
         "hemeTools.parsers.geometry.BaseSite",
         ["hemeTools/parsers/geometry/BaseSite.pyx"],
@@ -36,5 +43,5 @@ setup(
         "hemeTools.utils",
     ],
     ext_modules=ext_modules,
-    cmdclass={'build_ext': Cython.Build.build_ext},
+    cmdclass={"build_ext": Cython.Build.build_ext},
 )

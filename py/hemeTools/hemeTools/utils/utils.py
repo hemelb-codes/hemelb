@@ -8,6 +8,7 @@
 
 import numpy as np
 
+
 def MatchCorresponding(first, second):
     """
     Given two 1D arrays of the same length, containing different
@@ -17,24 +18,25 @@ def MatchCorresponding(first, second):
     assert first.shape == second.shape
     assert first.ndim == 1
     n = len(first)
-    
+
     fAS = np.argsort(first)
     sAS = np.argsort(second)
     # Know that first[fAS[i]] == second[sAS[i]]
     result = np.empty_like(second)
     for i in xrange(n):
         result[sAS[i]] = fAS[i]
-    
+
     return result
 
-def MatchCorrespondingOld(first,second):
-    count=second.shape[0]
+
+def MatchCorrespondingOld(first, second):
+    count = second.shape[0]
     result = np.empty_like(first)
-    
+
     for index in xrange(count):
         for search in xrange(count):
             if first[search] == second[index]:
                 result[index] = search
                 break
-                
+
     return result
