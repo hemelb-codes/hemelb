@@ -6,8 +6,6 @@ if (HEMELB_BUILD_RBC)
 hemelb_dependency(cppunit use)
 # hemelb_dependency(vtk use)
 
-include_directories(${CPPUNIT_INCLUDE_DIR})
-
 function(create_test_executable target includename)
   set(HEMELB_UNITTEST_INCLUDE ${includename})
   configure_file(main.in.cc "${CMAKE_CURRENT_BINARY_DIR}/${target}.cc")
@@ -17,8 +15,8 @@ function(create_test_executable target includename)
     ${MPI_LIBRARIES}
     ${HDF5_LIBRARIES}
     ${PARMETIS_LIBRARIES}
-    ${TINYXML_LIBRARIES}
-    ${CPPUNIT_LIBRARY}
+    TinyXML::TinyXML
+    CPPUnit::CPPUnit
     ${Boost_LIBRARIES}
     ${CTEMPLATE_LIBRARIES}
     ${ZLIB_LIBRARIES}
