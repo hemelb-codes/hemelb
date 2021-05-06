@@ -10,9 +10,11 @@ the corresponding .vtu (VTk Unstructured grid XML file), for usage, run the
 script with no arguments. 
 """
 
+import numpy as np
+import six
 import vtk
 from vtk.util import numpy_support
-import numpy as np
+
 from hemeTools.utils import MatchCorresponding
 from hemeTools.parsers.extraction import ExtractedProperty
 from xml.etree import ElementTree as et
@@ -180,8 +182,7 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
 
             # Set up the VTK array
             field = vtk.vtkDoubleArray()
-            if isinstance(length, tuple):
-                length = length[0]
+            length = length[0] if len(length) else 1
             field.SetNumberOfComponents(length)
             field.SetNumberOfTuples(nExtractedPoints)
             field.SetName(name)
@@ -193,7 +194,7 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
         # the array to the output.
         # TODO: this needs a case for the stress. We should check what
         # representation VTK uses for rank 3 tensors.
-        for field_name, field in field_dict.iteritems():
+        for field_name, field in six.iteritems(field_dict):
             fieldArray = numpy_support.vtk_to_numpy(field)
             fieldArray[self.OutputCellIdsByInputIndex] = getattr(
                 extracted_data, field_name
@@ -219,7 +220,7 @@ def WritePVDFile(timestepToFileMap, baseFilename):
     # Collection element containing individual time steps
     collection = et.SubElement(vtkFile, "Collection")
     # Write out each time step and associated file
-    for timestep, filename in timestepToFileMap.iteritems():
+    for timestep, filename in six.iteritems(timestepToFileMap):
         et.SubElement(
             collection,
             "DataSet",
