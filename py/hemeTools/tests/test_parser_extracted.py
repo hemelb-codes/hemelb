@@ -1,17 +1,8 @@
 import os.path
 
 import numpy as np
-import pytest
 
 from hemeTools.parsers.extraction import ExtractedProperty
-
-
-@pytest.fixture
-def diffTestDir():
-    testdir = os.environ["HEMELB_TESTS_DIR"]
-    diff = os.path.join(testdir, "diffTest")
-    assert os.path.isdir(diff)
-    return diff
 
 
 def test_load_xtr(diffTestDir):
