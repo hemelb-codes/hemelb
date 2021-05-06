@@ -6,6 +6,8 @@
 import os.path
 import xdrlib
 import numpy as np
+import six
+from six.moves import range
 
 from .. import HemeLbMagicNumber
 
@@ -39,12 +41,13 @@ class FieldSpec(object):
 
     def Append(self, name, length, pyType, datatype):
         """Add a new field to the specification."""
-        if length > 1:
-            length = (length,)
-            pass
+        if length == 1:
+            np_len = ()
+        else:
+            np_len = (length,)
 
         offset = self.GetRecordLength()
-        self._filespec.append((name, pyType, datatype, length, offset))
+        self._filespec.append((name, pyType, datatype, np_len, offset))
         return
 
     def GetMem(self):
@@ -94,12 +97,12 @@ class ExtractedPropertyV3Parser(object):
     def ParseFieldHeader(self, decoder):
         self._fieldSpec = FieldSpec(
             [
-                ("id", None, np.uint64, 1, None),
+                ("id", None, np.uint64, (), None),
                 ("position", None, np.float32, (3,), None),
             ]
         )
 
-        for iField in xrange(self._fieldCount):
+        for iField in range(self._fieldCount):
             name = decoder.unpack_string()
             length = decoder.unpack_uint()
             self._fieldSpec.Append(name, length, ">f8", np.float64)
@@ -129,14 +132,16 @@ class ExtractedPropertyV4Parser(object):
     def ParseFieldHeader(self, decoder):
         self._fieldSpec = FieldSpec(
             [
-                ("id", None, np.uint64, 1, None),
+                ("id", None, np.uint64, (), None),
                 ("position", None, np.float32, (3,), None),
             ]
         )
         self._dataOffset = [0]
 
-        for iField in xrange(self._fieldCount):
+        for iField in range(self._fieldCount):
             name = decoder.unpack_string()
+            if six.PY3:
+                name = name.decode()
             length = decoder.unpack_uint()
             self._dataOffset.append(decoder.unpack_double())
             self._fieldSpec.Append(name, length, ">f4", np.float32)
@@ -162,7 +167,7 @@ class ExtractedProperty(object):
         """
 
         self.filename = filename
-        self._file = file(filename, "rb")
+        self._file = open(filename, "rb")
 
         self._ReadMainHeader()
         self._ReadFieldHeader()
@@ -197,7 +202,7 @@ class ExtractedProperty(object):
         ), "Incorrect extraction format version number"
 
         self.voxelSizeMetres = decoder.unpack_double()
-        self.originMetres = np.array([decoder.unpack_double() for i in xrange(3)])
+        self.originMetres = np.array([decoder.unpack_double() for i in range(3)])
 
         self.siteCount = decoder.unpack_uhyper()
         self.fieldCount = decoder.unpack_uint()
@@ -245,10 +250,10 @@ class ExtractedProperty(object):
             "Extraction file appears to have partial record(s), residual %s / %s , bodysize %s"
             % (bodysize % self._recordLength, self._recordLength, bodysize)
         )
-        nTimes = bodysize / self._recordLength
+        nTimes = bodysize // self._recordLength
 
         times = np.zeros(nTimes, dtype=int)
-        for iT in xrange(nTimes):
+        for iT in range(nTimes):
             pos = self._totalHeaderLength + iT * self._recordLength
             self._file.seek(pos)
             timeBuf = self._file.read(TimeStepDataLength)

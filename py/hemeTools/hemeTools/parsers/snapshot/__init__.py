@@ -3,9 +3,11 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-import numpy as np
 import xdrlib
 import warnings
+
+import numpy as np
+from six.moves import range
 
 from .. import HemeLbMagicNumber
 
@@ -26,7 +28,7 @@ def HemeLbSnapshot(filename):
        numbers and more metadata.
     """
 
-    start = file(filename).read(8)
+    start = open(filename).read(8)
     reader = xdrlib.Unpacker(start)
     firstInt = reader.unpack_uint()
 
@@ -187,7 +189,7 @@ class TextSnapshot(PositionlessSnapshot):
 
         """
 
-        f = file(filename)
+        f = open(filename)
         stable = int(f.readline())
         voxel_size = float(f.readline())
         bb_min = np.array([int(x) for x in f.readline().split()])
@@ -217,13 +219,13 @@ class XdrVoxelFormatOneSnapshot(object):
     @classmethod
     def _load(cls, filename, header):
         # Skip past the header, slurp data, create XDR object
-        f = file(filename)
+        f = open(filename)
         f.seek(cls._headerLengthBytes)
         reader = xdrlib.Unpacker(f.read())
 
         ans = np.recarray((header["voxel_count"],), dtype=cls._readable_row)
         # Read all the voxels.
-        for i in xrange(header["voxel_count"]):
+        for i in range(header["voxel_count"]):
             ans[i] = (
                 (reader.unpack_int(), reader.unpack_int(), reader.unpack_int()),
                 reader.unpack_float(),
@@ -255,7 +257,7 @@ class XdrSnapshotVersionOne(PositionlessSnapshot, XdrVoxelFormatOneSnapshot):
         5- total number of fluid voxels
 
         """
-        reader = xdrlib.Unpacker(file(filename).read(cls._headerLengthBytes))
+        reader = xdrlib.Unpacker(open(filename).read(cls._headerLengthBytes))
         header = {}
         header["stable"] = reader.unpack_int()
         header["voxel_size"] = reader.unpack_double()
@@ -284,7 +286,7 @@ class XdrSnapshotVersionTwo(BaseSnapshot, XdrVoxelFormatOneSnapshot):
     @classmethod
     def _readHeader(cls, filename):
         """Read the header lines, according to description in Code/io/formats/snapshot.h"""
-        reader = xdrlib.Unpacker(file(filename).read(cls._headerLengthBytes))
+        reader = xdrlib.Unpacker(open(filename).read(cls._headerLengthBytes))
         header = {}
         assert reader.unpack_uint() == HemeLbMagicNumber
         assert reader.unpack_uint() == SnapshotMagicNumber
@@ -319,7 +321,7 @@ class XdrSnapshotVersionTwo(BaseSnapshot, XdrVoxelFormatOneSnapshot):
 def VersionedXdrSnapshot(filename):
     """Examine the file and dispatch to the appropriate constructor."""
     # Need the two magic numbers and the version number, i.e. 12 bytes
-    reader = xdrlib.Unpacker(file(filename).read(12))
+    reader = xdrlib.Unpacker(open(filename).read(12))
 
     assert reader.unpack_uint() == HemeLbMagicNumber
     assert reader.unpack_uint() == SnapshotMagicNumber

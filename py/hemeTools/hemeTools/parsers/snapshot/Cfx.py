@@ -124,7 +124,7 @@ def parseHeader(filename, AllData=False):
     """Parses header to get data type for record array"""
     fieldRegEx = re.compile("(.+?)\s*\[\s*(.+?)\s*\]")
 
-    f = file(filename)
+    f = open(filename)
     for i in range(findStart(filename, AllData=AllData) + 2):
         header = f.readline()
         continue
@@ -187,7 +187,7 @@ def findStart(filename, AllData=False):
     if AllData == True:
         return -1
 
-    for i, line in enumerate(file(filename)):
+    for i, line in enumerate(open(filename)):
         if line.find("[Data]") >= 0:
             return i
         continue

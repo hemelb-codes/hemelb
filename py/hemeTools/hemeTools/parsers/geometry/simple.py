@@ -9,6 +9,7 @@ from ...utils import xdr
 import zlib
 import os.path
 from xml.etree import ElementTree
+from six.moves import range
 
 from .generic import Domain, Block, AllSolidBlock, Site
 from .. import HemeLbMagicNumber
@@ -73,7 +74,7 @@ class ConfigLoader(object):
         self.Domain.Origin = np.array(oStr[1:-1].split(","), dtype=float)
         assert self.Domain.Origin.shape == (3,)
 
-        self.File = file(self.GmyFileName)
+        self.File = open(self.GmyFileName)
         return
 
     def Load(self):
@@ -127,7 +128,7 @@ class ConfigLoader(object):
             pass
 
         self.Domain.BlockCounts = np.array(
-            [preambleLoader.unpack_uint() for i in xrange(3)], dtype=np.uint
+            [preambleLoader.unpack_uint() for i in range(3)], dtype=np.uint
         )
         self.Domain.BlockSize = preambleLoader.unpack_uint()
 

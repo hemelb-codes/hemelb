@@ -10,6 +10,7 @@ import quantities as pq
 
 import vtk
 from vtk.util.numpy_support import vtk_to_numpy
+from six.moves import range
 
 from HemeLbSetupTool.Model.Profile import Profile
 from HemeLbSetupTool.Model.Iolets import Inlet
@@ -435,8 +436,8 @@ class ProfileProxy(HemeLbParameters):
         ans = np.zeros((nUnknowns, nUnknowns + 1))
 
         with self.SIunits():
-            for i in xrange(nUnknowns):
-                for j in xrange(nUnknowns):
+            for i in range(nUnknowns):
+                for j in range(nUnknowns):
                     ans[i, j] = self.ScaleForOutput(eqs[i].get(self.Unknowns[j], 0.0))
                     continue
                 ans[i, nUnknowns] = eqs[i]["rhs"]
@@ -659,7 +660,7 @@ class ProfileProxy(HemeLbParameters):
         nDigits = int(np.ceil(np.log10(nPoints)))
         fileFmtStr = "plane{:0%dd}.xtr" % nDigits
         periodStr = str(int(self.ScaleToLatticeUnits(self.PulsatilePeriod / 25.0)))
-        for i in xrange(len(points)):
+        for i in range(len(points)):
             poEl = ElementTree.SubElement(
                 propertiesEl,
                 "propertyoutput",

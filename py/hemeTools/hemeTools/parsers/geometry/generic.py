@@ -4,8 +4,11 @@
 # license in the file LICENSE.
 
 import itertools
-import numpy as np
 import weakref
+
+import numpy as np
+from six.moves import range
+
 from . import BaseSite
 
 
@@ -29,7 +32,7 @@ class NdIndexConverter(object):
     def OneToNd(self, one):
         """Go from a 1d index to an Nd index."""
         ans = np.zeros(self.ndim, dtype=np.int)
-        for i in xrange(self.ndim):
+        for i in range(self.ndim):
             ans[i] = one / self._conv[i]
             one = one % self._conv[i]
             continue
@@ -41,7 +44,7 @@ class NdIndexConverter(object):
 
     def IterOne(self):
         """Return an iterator over the 1d indices."""
-        return xrange(np.prod(self.shape))
+        return range(np.prod(self.shape))
 
     def IterNd(self):
         """Return an iterator over the Nd indices."""
@@ -201,7 +204,7 @@ class Block(object):
 
     _template = (
         "Block ["
-        + ", ".join("{0[%d]:{2[%d]}}/{1[%d]:{2[%d]}}" % (i, i, i, i) for i in xrange(3))
+        + ", ".join("{0[%d]:{2[%d]}}/{1[%d]:{2[%d]}}" % (i, i, i, i) for i in range(3))
         + "]"
     )
 
@@ -243,7 +246,7 @@ class Site(BaseSite.BaseSite):
 
     _template = (
         "Site ["
-        + ", ".join("{0[%d]:{2[%d]}}/{1[%d]:{2[%d]}}" % (i, i, i, i) for i in xrange(3))
+        + ", ".join("{0[%d]:{2[%d]}}/{1[%d]:{2[%d]}}" % (i, i, i, i) for i in range(3))
         + "]"
     )
 
