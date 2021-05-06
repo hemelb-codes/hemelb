@@ -88,19 +88,19 @@ cdef class BaseSite:
         self.WallNormal = picdic['WallNormal']
 
     cpdef LoadFrom(self, xdr.Unpacker loader):
-        cdef np.ndarray[np.uint_t] itype
+        cdef np.ndarray[np.uint32_t] itype
         cdef np.ndarray[np.float32_t] idist
-        cdef np.ndarray[np.int_t] ioind
+        cdef np.ndarray[np.int32_t] ioind
         cdef int i
         
         self.Type = loader.unpack_uint()
         # Solid and simple fluid, we are done loading
         if self.Type == FLUID:
             # Initialise arrays
-            itype = self.IntersectionType = np.empty(DIRECTIONS, dtype=np.uint)
+            itype = self.IntersectionType = np.empty(DIRECTIONS, dtype=np.uint32)
             itype[:] = NO_INTERSECTION
             idist = self.IntersectionDistance = np.zeros(DIRECTIONS, dtype=np.float32)
-            ioind = self.IOletIndex = np.empty(DIRECTIONS, dtype=np.int)
+            ioind = self.IOletIndex = np.empty(DIRECTIONS, dtype=np.int32)
             ioind[:] = NO_IOLET
             
             for i in xrange(DIRECTIONS):

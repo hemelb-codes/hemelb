@@ -135,7 +135,7 @@ class PartialBlock(Block):
             continue
 
         # Now iterate over the interesting bit
-        sIdx = np.zeros(3, dtype=np.int)
+        sIdx = np.zeros(3, dtype=int)
         for sIdx[0] in iters[0]:
             for sIdx[1] in iters[1]:
                 for sIdx[2] in iters[2]:

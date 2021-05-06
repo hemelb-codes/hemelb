@@ -7,7 +7,7 @@ import itertools
 import weakref
 
 import numpy as np
-from six.moves import range
+from six.moves import map, range, zip
 
 from . import BaseSite
 
@@ -25,13 +25,13 @@ class NdIndexConverter(object):
         self.shape = np.array(shape).squeeze()
         self.ndim = len(self.shape)
         self._conv = np.array(
-            [np.prod(self.shape[i:]) for i in range(1, self.ndim + 1)], dtype=np.int
+            [np.prod(self.shape[i:]) for i in range(1, self.ndim + 1)], dtype=int
         )
         return
 
     def OneToNd(self, one):
         """Go from a 1d index to an Nd index."""
-        ans = np.zeros(self.ndim, dtype=np.int)
+        ans = np.zeros(self.ndim, dtype=int)
         for i in range(self.ndim):
             ans[i] = one / self._conv[i]
             one = one % self._conv[i]
@@ -48,11 +48,11 @@ class NdIndexConverter(object):
 
     def IterNd(self):
         """Return an iterator over the Nd indices."""
-        return itertools.imap(np.array, np.ndindex(tuple(self.shape)))
+        return map(np.array, np.ndindex(tuple(self.shape)))
 
     def IterBoth(self):
         """Return an iterator yielding (1d, Nd) index tuples."""
-        return itertools.izip(self.IterOne(), self.IterNd())
+        return zip(self.IterOne(), self.IterNd())
 
     pass
 
