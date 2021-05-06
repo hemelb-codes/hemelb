@@ -52,7 +52,7 @@ def test_ExtractedPropertyUnstructuredGridReader(diffTestDir):
     xtr_reader.SetTime(1000)
 
     xtr_reader.Update()
-    out = xtr_reader.GetOutput()
+    out = xtr_reader.GetOutputDataObject(0)
     cd = out.GetCellData()
     assert cd.GetNumberOfArrays() == 3
     n_sites = 44250

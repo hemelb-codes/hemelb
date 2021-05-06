@@ -9,30 +9,19 @@ This module can be run as a script on the command line to convert an extraction 
 the corresponding .vtu (VTk Unstructured grid XML file), for usage, run the
 script with no arguments. 
 """
+from xml.etree import ElementTree as et
 
 import numpy as np
 import six
 import vtk
+from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtk.util import numpy_support
 
 from hemeTools.utils import MatchCorresponding
 from hemeTools.parsers.extraction import ExtractedProperty
-from xml.etree import ElementTree as et
-
-# Work around limitations of the VTK bindings support (enum wrapping added in 5.8)
-v = vtk.vtkVersion()
-if v.GetVTKMajorVersion() > 5 or (
-    v.GetVTKMajorVersion() == 5 and v.GetVTKMinorVersion() > 6
-):
-    CELL = vtk.vtkSelectionNode.CELL
-    INDICES = vtk.vtkSelectionNode.INDICES
-else:
-    CELL = 0
-    INDICES = 4
-del v
 
 
-class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
+class ExtractedPropertyUnstructuredGridReader(VTKPythonAlgorithmBase):
     """VTK-style filter for reading HemeLB extracted property files as VTK
     data into the geometry provided as input. This input must be that derived
     from the HemeLB geometry file used by the simulation from which the
@@ -46,7 +35,13 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
     """
 
     def __init__(self):
-        self.SetExecuteMethod(self._Execute)
+        VTKPythonAlgorithmBase.__init__(
+            self,
+            nInputPorts=1,
+            inputType="vtkUnstructuredGrid",
+            nOutputPorts=1,
+            outputType="vtkUnstructuredGrid",
+        )
         self.Extracted = None
         self.Time = None
         self.Skeleton = None
@@ -70,7 +65,7 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
             self.Modified()
         return
 
-    def _CreateSkeleton(self):
+    def _CreateSkeleton(self, input_ug):
         """Create the structure of the output vtkUnstructuredGrid and a map
         from the index of a point in the extraction file to the corresponding
         cellId in the skeleton.
@@ -79,15 +74,9 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
         instance is working on has changed since the last time this method was
         called.
         """
-        input = self.GetUnstructuredGridInput()
-
         # Get the centres as these should match the extracted property positions
         centers = vtk.vtkCellCenters()
-        if vtk.vtkVersion().GetVTKMajorVersion() <= 5:
-            centers.SetInput(input)
-        else:
-            centers.SetInputData(input)
-        # centers.SetInput(input)
+        centers.SetInputData(input_ug)
         centers.Update()
         # Use this to find the cell ID for each point.
         locator = vtk.vtkOctreePointLocator()
@@ -121,8 +110,8 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
 
         # Make an object to select only the cell ids we want
         selector = vtk.vtkSelectionNode()
-        selector.SetFieldType(CELL)
-        selector.SetContentType(INDICES)
+        selector.SetFieldType(vtk.vtkSelectionNode.CELL)
+        selector.SetContentType(vtk.vtkSelectionNode.INDICES)
         selector.SetSelectionList(gmyCellIdsByInput)
 
         # Make an object to hold the selector
@@ -131,12 +120,8 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
 
         # Perform the selection
         extractSelection = vtk.vtkExtractSelectedIds()
-        if vtk.vtkVersion().GetVTKMajorVersion() <= 5:
-            extractSelection.SetInput(0, input)
-            extractSelection.SetInput(1, selectors)
-        else:
-            extractSelection.SetInputData(0, input)
-            extractSelection.SetInputData(1, selectors)
+        extractSelection.SetInputData(0, input_ug)
+        extractSelection.SetInputData(1, selectors)
         extractSelection.Update()
 
         gmyCellIdsByOutput = (
@@ -154,17 +139,18 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
         self.Skeleton.CopyStructure(extractSelection.GetOutput())
         return
 
-    def _Execute(self):
-        """Private method that actually does the reading. Called by the VTK
+    def RequestData(self, request, inInfo, outInfo):
+        """Method that actually does the reading. Called by the VTK
         API.
         """
+        inp = vtk.vtkUnstructuredGrid.GetData(inInfo[0])
         # Check if we have a skeleton and if so, if it is up-to-date.
-        if self.Skeleton is None or (self.GetInput().GetMTime() > self.InputMTime):
-            self._CreateSkeleton()
-            self.InputMTime = self.GetInput().GetMTime()
+        if self.Skeleton is None or (inp.GetMTime() > self.InputMTime):
+            self._CreateSkeleton(inp)
+            self.InputMTime = inp.GetMTime()
 
         # Copy the structure to output.
-        output = self.GetUnstructuredGridOutput()
+        output = vtk.vtkUnstructuredGrid.GetData(outInfo)
         output.CopyStructure(self.Skeleton)
 
         # Get the data we want to visualise, Note that this is likely to
@@ -201,7 +187,7 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
             )
             output.GetCellData().AddArray(field)
 
-        return
+        return 1
 
     pass
 
