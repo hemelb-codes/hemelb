@@ -47,10 +47,6 @@ class GmyUnstructuredGridReader(VTKPythonAlgorithmBase):
         """The file to read."""
         return self.FileName
 
-    def Initialize(self, vtkself):
-        vtkself.SetNumberOfInputPorts(0)
-        vtkself.SetNumberOfOutputPorts(1)
-
     def RequestData(self, request, inInfo, outInfo):
         loader = GeneratingLoader(self.FileName)
         loader.Load()
