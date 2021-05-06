@@ -74,7 +74,7 @@ class ConfigLoader(object):
         self.Domain.Origin = np.array(oStr[1:-1].split(","), dtype=float)
         assert self.Domain.Origin.shape == (3,)
 
-        self.File = open(self.GmyFileName)
+        self.File = open(self.GmyFileName, "rb")
         return
 
     def Load(self):
