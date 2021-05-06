@@ -13,11 +13,12 @@ script with no arguments.
 
 """
 import vtk
+from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 import numpy as np
 from hemeTools.parsers.geometry.simple import ConfigLoader
 
 
-class GmyUnstructuredGridReader(vtk.vtkProgrammableSource):
+class GmyUnstructuredGridReader(VTKPythonAlgorithmBase):
     """VTK-style reader for HemeLB Geometry files (.gmy). When run, it will
     create a VTK data structure with the same geometry as the file.
 
@@ -31,35 +32,31 @@ class GmyUnstructuredGridReader(vtk.vtkProgrammableSource):
     The output units are metres and the object has no cell data or point data.
     """
 
-    def __init__(self):
-        self.SetExecuteMethod(self._Execute)
-        self.GetUnstructuredGridOutput()
-        self.FileName = ""
-        return
-
-    def GetOutputPort(self, index=3):
-        return vtk.vtkAlgorithm.GetOutputPort(self, index)
+    def __init__(self, FileName=""):
+        VTKPythonAlgorithmBase.__init__(
+            self, nInputPorts=0, nOutputPorts=1, outputType="vtkUnstructuredGrid"
+        )
+        self.FileName = FileName
 
     def SetFileName(self, name):
         """The file to read."""
         self.FileName = name
         self.Modified()
-        return
 
     def GetFileName(self):
         """The file to read."""
         return self.FileName
 
-    def _Execute(self):
-        """Private method that actually does the reading. Called by the VTK
-        API.
-        """
-        output = self.GetUnstructuredGridOutput()
+    def Initialize(self, vtkself):
+        vtkself.SetNumberOfInputPorts(0)
+        vtkself.SetNumberOfOutputPorts(1)
+
+    def RequestData(self, request, inInfo, outInfo):
         loader = GeneratingLoader(self.FileName)
         loader.Load()
-
+        output = vtk.vtkUnstructuredGrid.GetData(outInfo)
         output.ShallowCopy(loader.Grid)
-        return
+        return 1
 
 
 class GeneratingLoader(ConfigLoader):
