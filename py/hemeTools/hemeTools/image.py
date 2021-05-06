@@ -3,16 +3,16 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-import pdb
 import xdrlib
 import numpy as np
+from six.moves import range
 
 
 class Image(object):
     def __init__(self, filename):
         self.filename = filename
 
-        f = file(filename)
+        f = open(filename)
         reader = xdrlib.Unpacker(f.read())
         self.mode = reader.unpack_uint()
         self.pressure_threshold = (reader.unpack_float(), reader.unpack_float())
@@ -23,8 +23,8 @@ class Image(object):
 
         tempPixels = np.zeros((self.nPixels, 4), dtype=np.uint32)
 
-        for i in xrange(self.nPixels):
-            for j in xrange(4):
+        for i in range(self.nPixels):
+            for j in range(4):
                 tempPixels[i, j] = reader.unpack_uint()
                 continue
             continue
@@ -51,7 +51,7 @@ class Image(object):
     def old__init__(self, filename):
         self.filename = filename
 
-        f = file(filename)
+        f = open(filename)
         reader = xdrlib.Unpacker(f.read())
         self.mode = reader.unpack_uint()
         self.pressure_threshold = (reader.unpack_float(), reader.unpack_float())
@@ -72,7 +72,7 @@ class Image(object):
         shifts = [24, 16, 8, 0]
 
         conversions = zip(masks, shifts)
-        for i in xrange(self.nPixels):
+        for i in range(self.nPixels):
             ind = reader.unpack_uint()
             tempPixels[i]["index"][0] = (ind & ((2 ** 32 - 1) ^ (2 ** 16 - 1))) >> 16
             tempPixels[i]["index"][1] = ind & (2 ** 16 - 1)

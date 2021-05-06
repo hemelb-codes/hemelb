@@ -15,8 +15,10 @@ import copy
 import signal
 import traceback
 import weakref
+
 import numpy as np
-import pdb
+from six.moves import range
+
 from .generic import NdIndexConverter, Domain, Block, OutOfDomainBlock, AllSolidBlock
 from .freeing import FreeingConfigLoader
 
@@ -123,11 +125,11 @@ class PartialBlock(Block):
         iters = []
         for diff in targetToThis:
             if diff < 0:
-                it = xrange(bs - 1, bs)
+                it = range(bs - 1, bs)
             elif diff == 0:
-                it = xrange(0, bs)
+                it = range(0, bs)
             else:
-                it = xrange(0, 1)
+                it = range(0, 1)
                 pass
             iters.append(it)
             continue

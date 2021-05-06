@@ -5,6 +5,7 @@
 
 from vtk import *
 import numpy as np
+from six.moves import range
 
 
 class TriangulatedCylinderSource(vtkProgrammableSource):
@@ -128,7 +129,7 @@ class TriangulatedCylinderSource(vtkProgrammableSource):
         line.GetPointIds().SetNumberOfIds(nSegments + 1)
 
         # Set the coordinates along the line and the ids
-        for i in xrange(nSegments + 1):
+        for i in range(nSegments + 1):
             # Points start at -h/2 along the axis and advance in steps of dz
             # along the direction (n, a unit vector)
             x = c + (i * dz - 0.5 * h) * n
