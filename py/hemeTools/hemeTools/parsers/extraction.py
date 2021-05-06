@@ -9,7 +9,7 @@ import numpy as np
 import six
 from six.moves import range
 
-from .. import HemeLbMagicNumber
+from . import HemeLbMagicNumber
 
 ExtractionMagicNumber = 0x78747204
 MainHeaderLength = 60
