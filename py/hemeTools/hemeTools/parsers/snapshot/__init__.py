@@ -6,6 +6,11 @@
 import xdrlib
 import warnings
 
+warnings.warn(
+    "This module is for very old output formats and will be removed, eventually",
+    stacklevel=2,
+)
+
 import numpy as np
 from six.moves import range
 
