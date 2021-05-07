@@ -91,7 +91,7 @@ class SubDomain(Domain):
         raise ValueError("Can't set blocks!")
 
     def GetSite(self, sIndex):
-        bIndex = sIndex / self.BlockSize
+        bIndex = sIndex // self.BlockSize
         block = self.GetBlock(bIndex)
         return block.GetLocalSite(sIndex % self.BlockSize)
 
