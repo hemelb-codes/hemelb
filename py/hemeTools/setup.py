@@ -52,4 +52,10 @@ setup(
         "pytest",
         "pyyaml",
     ],
+    entry_points={
+        "console_scripts": [
+            "CompressGmy = hemeTools.parsers.geometry.compression:compress_main",
+            "DecompressGmy = hemeTools.parsers.geometry.compression:decompress_main",
+        ],
+    },
 )
