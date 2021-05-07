@@ -431,6 +431,7 @@ namespace hemelb
       if (format == "VTK") {
 	return std::make_unique<VTKMeshIO>();
       } else if (format == "Krueger") {
+	log::Logger::Log<log::Warning, log::Singleton>("Krueger format meshes are deprecated, move to VTK when you can.");
 	return std::make_unique<KruegerMeshIO>();
       } else {
 	throw Exception() << "Invalid " << format_attr_name << " '" << format << "' on element " << shape.GetPath();
