@@ -57,6 +57,7 @@ setup(
             "CompressGmy = hemeTools.parsers.geometry.compression:compress_main",
             "DecompressGmy = hemeTools.parsers.geometry.compression:decompress_main",
             "DumpExtractedProperties = hemeTools.converters.ExtractedPropertyTextDump:main",
+            "GmySelfConsistent = hemeTools.parsers.geometry.self_consistency:main",
         ],
     },
 )

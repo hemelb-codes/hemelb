@@ -37,7 +37,7 @@ class FreeingConfigLoader(ConfigLoader):
         # Number of blocks in the neighbourhood that are done
         self.BlockNeighbourhoodDone = np.zeros(nBlocks, dtype=np.uint8)
         # Is the block itself done
-        self.IsBlockDone = np.zeros(nBlocks, dtype=np.bool)
+        self.IsBlockDone = np.zeros(nBlocks, dtype=bool)
         # Lock to ensure only one thread at a time updates IsBlockDone
         # and BlockNeighbourhoodDone
         self.DoneLock = threading.RLock()
