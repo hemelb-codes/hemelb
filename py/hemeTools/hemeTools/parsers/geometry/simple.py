@@ -47,33 +47,42 @@ class ConfigLoader(object):
     MIN_VERSION = 4
     MAX_VERSION = 4
 
-    def __init__(self, filename):
-        self.XmlFileName = filename
-        tree = ElementTree.ElementTree()
-        root = tree.parse(filename)
-        # Get the GMY file from the XML
-        gmyEl = root.find("geometry/datafile")
-        assert gmyEl is not None, "XML does not have element 'geometry/datafile'!"
-        relpath = gmyEl.get("path")
-        assert (
-            relpath is not None
-        ), "Element 'geometry/datafile' does not have attribute 'path'"
-        self.GmyFileName = os.path.join(os.path.dirname(filename), relpath)
+    def __init__(self, filename, gmy=False):
+        if gmy:
+            # In GMY-only mode so use dummy values for origin and
+            # voxel size.
+            self.XmlFileName = None
+            self.GmyFileName = filename
+            voxel = 1.0
+            origin = np.zeros(3, dtype=float)
+        else:
+            self.XmlFileName = filename
+            tree = ElementTree.ElementTree()
+            root = tree.parse(filename)
+            # Get the GMY file from the XML
+            gmyEl = root.find("geometry/datafile")
+            assert gmyEl is not None, "XML does not have element 'geometry/datafile'!"
+            relpath = gmyEl.get("path")
+            assert (
+                relpath is not None
+            ), "Element 'geometry/datafile' does not have attribute 'path'"
+            self.GmyFileName = os.path.join(os.path.dirname(filename), relpath)
+            # Now the voxel size
+            vsEl = root.find("simulation/voxel_size")
+            assert vsEl.get("units") == "m", "voxel_size units not 'm'"
+            voxel = float(vsEl.get("value"))
+            # and origin
+            oEl = root.find("simulation/origin")
+            assert oEl.get("units") == "m", "origin units not 'm'"
+            oStr = oEl.get("value")
+            assert oStr[0] == "(" and oStr[-1] == ")"
+            origin = np.array(oStr[1:-1].split(","), dtype=float)
+            assert origin.shape == (3,)
 
+        # Set up the domain
         self.Domain = Domain()
-
-        # Now the voxel size and origin
-        vsEl = root.find("simulation/voxel_size")
-        assert vsEl.get("units") == "m", "voxel_size units not 'm'"
-        self.Domain.VoxelSize = float(vsEl.get("value"))
-
-        oEl = root.find("simulation/origin")
-        assert oEl.get("units") == "m", "origin units not 'm'"
-        oStr = oEl.get("value")
-        assert oStr[0] == "(" and oStr[-1] == ")"
-        self.Domain.Origin = np.array(oStr[1:-1].split(","), dtype=float)
-        assert self.Domain.Origin.shape == (3,)
-
+        self.Domain.VoxelSize = voxel
+        self.Domain.Origin = origin
         self.File = open(self.GmyFileName, "rb")
         return
 
