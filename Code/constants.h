@@ -19,7 +19,7 @@ namespace hemelb
 
   constexpr double mmHg_TO_PASCAL = 133.3223874;
   constexpr double DEFAULT_FLUID_DENSITY_Kg_per_m3 = 1000.0;
-  constexpr double DEFAULT_FLUID_VISCOSITY_Pas = 0.001;
+  constexpr double DEFAULT_FLUID_VISCOSITY_Pas = 0.004;
 
   /* This is the number of boundary types. It was 4, but the
    * "CHARACTERISTIC_BOUNDARY" type is never used and I don't know what it is
