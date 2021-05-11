@@ -63,7 +63,7 @@ namespace hemelb
 
           void testWriteMesh()
           {
-            auto output = io.writeString(*mesh, util::UnitConverter(1, 1, LatticePosition(0, 0, 0)));
+            auto output = io.writeString(*mesh, util::UnitConverter(1, 1, LatticePosition(0, 0, 0), 1000.0, 0.0));
             std::shared_ptr<MeshData> other = io.readString(output, true);
             CPPUNIT_ASSERT(other->vertices.size() == mesh->vertices.size());
             CPPUNIT_ASSERT(other->facets.size() == mesh->facets.size());

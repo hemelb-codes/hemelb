@@ -74,7 +74,7 @@ namespace hemelb {
 
       auto&& moduli = cell.moduli;
 
-      std::vector<LatticeForceVector> forces(cell.GetNumberOfNodes(), 0.0);
+      std::vector<LatticeForceVector> forces(cell.GetNumberOfNodes(), LatticeForceVector::Zero());
       cell.facetBending(forces);
       fields.push_back(make_force_field(cell, "bending", forces));
 

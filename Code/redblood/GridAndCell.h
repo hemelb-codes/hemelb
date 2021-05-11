@@ -69,7 +69,7 @@ namespace hemelb
     Dimensionless forcesOnGrid(std::shared_ptr<CellBase const> cell,
                                geometry::LatticeData &latticeData)
     {
-      std::vector<LatticeForceVector> forces(cell->GetNumberOfNodes(), 0);
+      std::vector<LatticeForceVector> forces(cell->GetNumberOfNodes(), {0.0, 0.0, 0.0});
       return forcesOnGrid<LATTICE, STENCIL>(cell, forces, latticeData);
     }
   }

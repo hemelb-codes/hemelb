@@ -118,7 +118,7 @@ namespace hemelb
         for(std::size_t i(0); i < positions.size(); ++i)
         {
           auto const procs = hemelb::redblood::parallel::details::positionAffectsProcs<Stencil>(
-              globalCoordsToProcMap, positions[i]);
+												globalCoordsToProcMap, positions[i].as<LatticeDistance>());
 
           // Send set of affected procs as known by owner proc
           decltype(world.Rank()) positions_are_from_this_proc = i / (nmid + nedges) + 1;

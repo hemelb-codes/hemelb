@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<hemelbsettings version="3">
+<hemelbsettings version="4">
   <simulation>
     <step_length units="s" value="4.4e-07" />
     <steps units="lattice" value="50000" />

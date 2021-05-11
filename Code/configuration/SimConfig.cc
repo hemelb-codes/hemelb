@@ -87,14 +87,14 @@ namespace hemelb
     void SimConfig::DoIO(io::xml::Element topNode)
     {
       // Top element must be:
-      // <hemelbsettings version="2" />
+      // <hemelbsettings version="4" />
       if (topNode.GetName() != "hemelbsettings")
         throw Exception() << "Invalid root element: " << topNode.GetPath();
 
       unsigned version;
       const std::string& versionStr = topNode.GetAttributeOrThrow("version", version);
-      if (version != 3U)
-        throw Exception() << "Unrecognised XML version. Expected 3, got " << versionStr;
+      if (version != 4U)
+        throw Exception() << "Unrecognised XML version. Expected 4, got " << versionStr;
 
       DoIOForSimulation(topNode.GetChildOrThrow("simulation"));
       CreateUnitConverter();
@@ -185,6 +185,33 @@ namespace hemelb
       // <origin value="(x,y,z)" units="m" />
       const io::xml::Element originEl = simEl.GetChildOrThrow("origin");
       GetDimensionalValue(originEl, "m", geometryOriginMetres);
+
+      // Optional element
+      // <fluid_density value="float" units="kg/m3" />
+      auto maybeDensityEl = simEl.GetChildOrNull("fluid_density");
+      if (maybeDensityEl) {
+	GetDimensionalValue(maybeDensityEl, "kg/m3", fluidDensityKgm3);
+      } else {
+	fluidDensityKgm3 = DEFAULT_FLUID_DENSITY_Kg_per_m3;
+      }
+
+      // Optional element
+      // <fluid_viscosity value="float" units="Pa.s" />
+      auto maybeViscosityEl = simEl.GetChildOrNull("fluid_viscosity");
+      if (maybeViscosityEl) {
+	GetDimensionalValue(maybeViscosityEl, "Pa.s", fluidViscosityPas);
+      } else {
+	fluidViscosityPas = DEFAULT_FLUID_VISCOSITY_Pas;
+      }
+
+      // Optional element (default = 0)
+      // <reference_pressure value="float" units="mmHg" />
+      auto maybeRefPresEl = simEl.GetChildOrNull("reference_pressure");
+      if (maybeRefPresEl) {
+	GetDimensionalValue(maybeRefPresEl, "mmHg", reference_pressure_mmHg);
+      } else {
+	reference_pressure_mmHg = 0;
+      }
     }
 
     void SimConfig::DoIOForGeometry(const io::xml::Element geometryEl)
@@ -200,7 +227,9 @@ namespace hemelb
     {
       unitConverter = new util::UnitConverter(timeStepSeconds,
                                               voxelSizeMetres,
-                                              geometryOriginMetres);
+                                              geometryOriginMetres,
+					      fluidDensityKgm3,
+					      reference_pressure_mmHg);
     }
 
     /**
@@ -416,7 +445,7 @@ namespace hemelb
       GetDimensionalValue(point1El, "m", point1);
       GetDimensionalValue(point2El, "m", point2);
 
-      return new extraction::StraightLineGeometrySelector(point1, point2);
+      return new extraction::StraightLineGeometrySelector(point1.as<float>(), point2.as<float>());
     }
 
     extraction::PlaneGeometrySelector* SimConfig::DoIOForPlaneGeometry(
@@ -435,13 +464,13 @@ namespace hemelb
 
       if (radiusEl == io::xml::Element::Missing())
       {
-        return new extraction::PlaneGeometrySelector(point, normal);
+        return new extraction::PlaneGeometrySelector(point.as<float>(), normal);
       }
       else
       {
         PhysicalDistance radius;
         GetDimensionalValue(radiusEl, "m", radius);
-        return new extraction::PlaneGeometrySelector(point, normal, radius);
+        return new extraction::PlaneGeometrySelector(point.as<float>(), normal, radius);
       }
 
     }
@@ -453,7 +482,7 @@ namespace hemelb
 
       PhysicalPosition point;
       GetDimensionalValue(pointEl, "m", point);
-      return new extraction::SurfacePointSelector(point);
+      return new extraction::SurfacePointSelector(point.as<float>());
     }
 
     extraction::OutputField SimConfig::DoIOForPropertyField(const io::xml::Element& fieldEl)
@@ -472,10 +501,15 @@ namespace hemelb
         field.name = *name;
       }
 
+      // Default offset is zero
+      field.offset = 0.0;
+
       // Check and assign the type.
       if (type == "pressure")
       {
         field.type = extraction::OutputField::Pressure;
+	// Pressure uses the reference pressure
+	field.offset = reference_pressure_mmHg;
       }
       else if (type == "velocity")
       {

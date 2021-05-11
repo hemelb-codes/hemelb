@@ -59,7 +59,7 @@ namespace hemelb
                                             LatticeVector(1, -2, 2) };
 
         for (size_t i(0); i < N; ++i)
-          CPPUNIT_ASSERT(helpers::is_zero(dnc.DowngradeKey(inputs[i]) - expected[i]));
+          CPPUNIT_ASSERT_EQUAL(LatticeVector::Zero(), dnc.DowngradeKey(inputs[i]) - expected[i]);
       }
 
       void DivideAndConquerTests::testNoDowngradeKey()

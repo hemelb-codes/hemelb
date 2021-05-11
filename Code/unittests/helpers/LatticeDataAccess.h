@@ -90,7 +90,7 @@ namespace hemelb
       }
       inline void LatticeDataAccess::ZeroOutForces() const
       {
-        std::fill(latDat->forceAtSite.begin(), latDat->forceAtSite.end(), 0);
+        std::fill(latDat->forceAtSite.begin(), latDat->forceAtSite.end(), LatticeForceVector::Zero());
       }
 
       template<class LATTICE>

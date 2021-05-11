@@ -45,6 +45,7 @@ namespace hemelb
 
   typedef distribn_t LatticeReciprocalTime; ///< 1/timestep
   typedef double PhysicalReciprocalTime; ///< 1/seconds
+  typedef double PhysicalRate; // inverse seconds / Hz
 
   typedef double PhysicalMass; // kilograms
 
@@ -81,6 +82,11 @@ namespace hemelb
 
   typedef double PhysicalPressureGradient;
   typedef double LatticePressureGradient;
+
+  typedef double PhysicalDynamicViscosity;
+  typedef double PhysicalKinematicViscosity;
+  typedef double LatticeDynamicViscosity;
+  typedef double LatticeKinematicViscosity;
 
   typedef double Dimensionless;
 }

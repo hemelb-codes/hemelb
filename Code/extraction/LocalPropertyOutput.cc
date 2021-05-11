@@ -136,10 +136,10 @@ namespace hemelb
 		     << uint32_t(fieldHeaderLength);
 
 	// Main header now finished - do field headers
-	for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber) {
-	  headerWriter << outputSpec->fields[outputNumber].name
-		       << uint32_t(GetFieldLength(outputSpec->fields[outputNumber].type))
-		       << GetOffset(outputSpec->fields[outputNumber].type);
+	for (auto& field: outputSpec->fields) {
+	  headerWriter << field.name
+		       << uint32_t(GetFieldLength(field.type))
+		       << field.offset;
 	}
 
 	assert(headerWriter.GetBuf().size() == totalHeaderLength);
@@ -225,14 +225,14 @@ namespace hemelb
           xdrWriter << (uint32_t) position.x << (uint32_t) position.y << (uint32_t) position.z;
 
           // Write for each field.
-          for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
+          for (auto& fieldSpec: outputSpec->fields)
           {
-            switch (outputSpec->fields[outputNumber].type)
+            switch (fieldSpec.type)
             {
               case OutputField::Pressure:
                 xdrWriter
                     << static_cast<WrittenDataType>(dataSource.GetPressure()
-                        - REFERENCE_PRESSURE_mmHg);
+                        - fieldSpec.offset);
                 break;
               case OutputField::Velocity:
                 xdrWriter << static_cast<WrittenDataType>(dataSource.GetVelocity().x)
@@ -356,15 +356,5 @@ namespace hemelb
       }
     }
 
-    double LocalPropertyOutput::GetOffset(OutputField::FieldType field)
-    {
-      switch (field)
-      {
-        case OutputField::Pressure:
-          return REFERENCE_PRESSURE_mmHg;
-        default:
-          return 0.;
-      }
-    }
   }
 }

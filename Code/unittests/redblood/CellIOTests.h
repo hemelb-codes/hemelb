@@ -40,7 +40,7 @@ namespace hemelb
           void setUp()
           {
 	    helpers::FolderTestFixture::setUp();
-            converter.reset(new util::UnitConverter(0.5, 0.6, LatticePosition(1, 2, 3)));
+            converter.reset(new util::UnitConverter(0.5, 0.6, LatticePosition(1, 2, 3), 1000.0, 0.0));
 
 	    CopyResourceToTempdir("red_blood_cell.txt");
 	    CopyResourceToTempdir("empty_for_relative_paths.xml");

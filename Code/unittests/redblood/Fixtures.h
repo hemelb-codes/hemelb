@@ -105,7 +105,7 @@ namespace hemelb
           FourCubeBasedTestFixture::setUp();
           mesh = redblood::refine(initial_mesh(), refinement());
           mesh *= Dimensionless(CubeSize() - 3) * 0.5;
-          mesh += Dimensionless(CubeSize()) * 0.5;
+          mesh += LatticePosition{Dimensionless(CubeSize()) * 0.5};
         }
 
       protected:

@@ -71,7 +71,7 @@ namespace hemelb
 
       const float lTemp = iVector.x * iSinThetaY + iVector.z * iCosThetaY;
 
-      return util::Vector3D<distribn_t>(iVector.x * iCosThetaY - iVector.z * iSinThetaY,
+      return util::Vector3D<float>(iVector.x * iCosThetaY - iVector.z * iSinThetaY,
                                         -lTemp * iSinThetaX + iVector.y * iCosThetaX,
                                         lTemp * iCosThetaX + iVector.y * iSinThetaX);
     }

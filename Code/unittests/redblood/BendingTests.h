@@ -55,7 +55,7 @@ namespace hemelb
           {
             for (auto const theta : { 1e-2, 2e-2, 3e-2 })
             {
-              std::fill(forces.begin(), forces.end(), 0e0);
+              std::fill(forces.begin(), forces.end(), LatticeForceVector::Zero());
               vertices.back() = bending(mesh.vertices.back(), theta);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(std::sqrt(3.) * theta * theta * moduli, energy(), 1e-10);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(std::sqrt(3.) * theta * theta * moduli, energy(), 1e-10);
@@ -166,7 +166,7 @@ namespace hemelb
             auto const theta = orientedAngle(Facet(vertices, mesh.facets, 0),
                                              Facet(vertices, mesh.facets, 1));
             auto const epsilon = 1e-4;
-            std::fill(forces.begin(), forces.end(), 0e0);
+            std::fill(forces.begin(), forces.end(), LatticeForceVector::Zero());
             auto const oldPos = vertices[node];
 
             auto const e0 = energyAndForces();

@@ -20,10 +20,51 @@
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
 #include "constants.h"
+
 namespace hemelb
 {
   namespace geometry
   {
+    namespace fmt = io::formats;
+    using gmy = fmt::geometry;
+
+    // Helper for checking that integers are allowed values for enums.
+    template <typename Enum, Enum... allowed>
+    struct EnumValidator {
+    private:
+      using INT = std::underlying_type_t<Enum>;
+
+      // Want to turn the parameter pack into something iterable at
+      // constexpr time, such as an initializer_list
+      static constexpr bool IsValid(INT raw, std::initializer_list<Enum> vals) {
+	for (auto& val: vals) {
+	  if (val == static_cast<Enum>(raw))
+	    return true;
+	}
+	return false;
+      }
+
+    public:
+      static Enum Run(INT raw) {
+	if (IsValid(raw, {allowed...})) {
+	  return static_cast<Enum>(raw);
+	} else {
+	  throw Exception() << "Invalid value for enum " << raw;
+	}
+      }
+    };
+
+    using SiteTypeValidator =  EnumValidator<gmy::SiteType,
+					     gmy::SiteType::SOLID,
+					     gmy::SiteType::FLUID>;
+    using CutTypeValidator = EnumValidator<gmy::CutType,
+					   gmy::CutType::NONE,
+					   gmy::CutType::WALL,
+					   gmy::CutType::INLET,
+					   gmy::CutType::OUTLET>;
+    using WallNormalAvailabilityValidator = EnumValidator<gmy::WallNormalAvailability,
+							  gmy::WallNormalAvailability::NOT_AVAILABLE,
+							  gmy::WallNormalAvailability::AVAILABLE>;
 
     GeometryReader::GeometryReader(const bool reserveSteeringCore,
                                    const lb::lattices::LatticeInfo& latticeInfo,
@@ -185,12 +226,11 @@ namespace hemelb
      */
     Geometry GeometryReader::ReadPreamble()
     {
-      const unsigned preambleBytes = io::formats::geometry::PreambleLength;
-      std::vector<char> preambleBuffer = ReadOnAllTasks(preambleBytes);
+      std::vector<char> preambleBuffer = ReadOnAllTasks(gmy::PreambleLength);
 
       // Create an Xdr translator based on the read-in data.
       auto preambleReader = io::writers::xdr::XdrMemReader(preambleBuffer.data(),
-							   preambleBytes);
+							   gmy::PreambleLength);
 
       uint32_t hlbMagicNumber, gmyMagicNumber, version;
       // Read in housekeeping values
@@ -199,24 +239,26 @@ namespace hemelb
       preambleReader.read(version);
 
       // Check the value of the HemeLB magic number.
-      if (hlbMagicNumber != io::formats::HemeLbMagicNumber)
+      if (hlbMagicNumber != fmt::HemeLbMagicNumber)
       {
         throw Exception() << "This file does not start with the HemeLB magic number."
-            << " Expected: " << unsigned(io::formats::HemeLbMagicNumber) << " Actual: "
-            << hlbMagicNumber;
+            << " Expected: " << unsigned(fmt::HemeLbMagicNumber)
+            << " Actual: " << hlbMagicNumber;
       }
 
       // Check the value of the geometry file magic number.
-      if (gmyMagicNumber != io::formats::geometry::MagicNumber)
+      if (gmyMagicNumber != gmy::MagicNumber)
       {
-        throw Exception() << "This file does not have the geometry magic number." << " Expected: "
-            << unsigned(io::formats::geometry::MagicNumber) << " Actual: " << gmyMagicNumber;
+        throw Exception() << "This file does not have the geometry magic number."
+            << " Expected: " << unsigned(gmy::MagicNumber)
+            << " Actual: " << gmyMagicNumber;
       }
 
-      if (version != io::formats::geometry::VersionNumber)
+      if (version != gmy::VersionNumber)
       {
-        throw Exception() << "Version number incorrect." << " Supported: "
-            << unsigned(io::formats::geometry::VersionNumber) << " Input: " << version;
+        throw Exception() << "Version number incorrect."
+            << " Supported: " << unsigned(gmy::VersionNumber)
+            << " Input: " << version;
       }
 
       // Variables we'll read.
@@ -291,14 +333,14 @@ namespace hemelb
         for (site_t block = 0; block < geometry.GetBlockCount(); ++block)
         {
           if (bytesPerUncompressedBlock[block]
-              > io::formats::geometry::GetMaxBlockRecordLength(geometry.GetBlockSize(),
-                                                               fluidSitesOnEachBlock[block]))
+              > gmy::GetMaxBlockRecordLength(geometry.GetBlockSize(),
+					     fluidSitesOnEachBlock[block]))
           {
             log::Logger::Log<log::Critical, log::OnePerCore>("Block %i is %i bytes when the longest possible block should be %i bytes",
                                                              block,
                                                              bytesPerUncompressedBlock[block],
-                                                             io::formats::geometry::GetMaxBlockRecordLength(geometry.GetBlockSize(),
-                                                                                                            fluidSitesOnEachBlock[block]));
+                                                             gmy::GetMaxBlockRecordLength(geometry.GetBlockSize(),
+											  fluidSitesOnEachBlock[block]));
           }
         }
       }
@@ -318,7 +360,7 @@ namespace hemelb
 
       // Set the initial offset to the first block, which will be updated as we progress
       // through the blocks.
-      MPI_Offset offset = io::formats::geometry::PreambleLength
+      MPI_Offset offset = gmy::PreambleLength
           + GetHeaderLength(geometry.GetBlockCount());
 
       // Iterate over each block.
@@ -479,17 +521,15 @@ namespace hemelb
 
     GeometrySite GeometryReader::ParseSite(io::writers::xdr::XdrReader& reader)
     {
-      // Read the fluid property.
-      unsigned isFluid;
-      bool success = reader.read(isFluid);
-
+      // Read the site type
+      unsigned readSiteType;
+      bool success = reader.read(readSiteType);
       if (!success)
       {
         log::Logger::Log<log::Error, log::OnePerCore>("Error reading site type");
       }
-
-      /// @todo #598 use constant in hemelb::io::formats::geometry
-      GeometrySite readInSite(isFluid != 0);
+      auto siteType = SiteTypeValidator::Run(readSiteType);
+      GeometrySite readInSite(siteType == gmy::SiteType::FLUID);
 
       // If solid, there's nothing more to do.
       if (!readInSite.isFluid)
@@ -497,25 +537,26 @@ namespace hemelb
         return readInSite;
       }
 
-      const io::formats::geometry::DisplacementVector& neighbourhood =
-          io::formats::geometry::Get().GetNeighbourhood();
       // Prepare the links array to have enough space.
       readInSite.links.resize(latticeInfo.GetNumVectors() - 1);
 
       bool isGmyWallSite = false;
 
       // For each link direction...
-      for (Direction readDirection = 0; readDirection < neighbourhood.size(); readDirection++)
+      for (auto&& dir: gmy::Neighbourhood)
       {
         // read the type of the intersection and create a link...
-        unsigned intersectionType;
-        reader.read(intersectionType);
+	auto intersectionType = [&]() {
+	  unsigned readType;
+	  reader.read(readType);
+	  return CutTypeValidator::Run(readType);
+	} ();
 
         GeometrySiteLink link;
-        link.type = (GeometrySiteLink::IntersectionType) intersectionType;
+        link.type = intersectionType;
 
         // walls have a floating-point distance to the wall...
-        if (link.type == GeometrySiteLink::WALL_INTERSECTION)
+        if (link.type == gmy::CutType::WALL)
         {
           isGmyWallSite = true;
           float distance;
@@ -524,7 +565,7 @@ namespace hemelb
         }
         // inlets and outlets (which together with none make up the other intersection types)
         // have an iolet id and a distance float...
-        else if (link.type != GeometrySiteLink::NO_INTERSECTION)
+        else if (link.type != gmy::CutType::NONE)
         {
           float distance;
           unsigned ioletId;
@@ -541,7 +582,7 @@ namespace hemelb
         for (Direction usedLatticeDirection = 1; usedLatticeDirection < latticeInfo.GetNumVectors();
             usedLatticeDirection++)
         {
-          if (latticeInfo.GetVector(usedLatticeDirection) == neighbourhood[readDirection])
+          if (latticeInfo.GetVector(usedLatticeDirection) == dir)
           {
             // If this link direction is necessary to the lattice in use, keep the link data.
             readInSite.links[usedLatticeDirection - 1] = link;
@@ -550,10 +591,12 @@ namespace hemelb
         }
       }
 
-      unsigned normalAvailable;
-      reader.read(normalAvailable);
-      readInSite.wallNormalAvailable = (normalAvailable
-          == io::formats::geometry::WALL_NORMAL_AVAILABLE);
+      auto normalAvailable = [&]() {
+	unsigned normalAvailable;
+	reader.read(normalAvailable);
+	return WallNormalAvailabilityValidator::Run(normalAvailable);
+      }();
+      readInSite.wallNormalAvailable = (normalAvailable == gmy::WallNormalAvailability::AVAILABLE);
 
       if (readInSite.wallNormalAvailable != isGmyWallSite)
       {
@@ -624,7 +667,7 @@ namespace hemelb
             {
               if (geometry.Blocks[block].Sites[localSite].isFluid)
               {
-                dummySiteData.push_back(geometry.Blocks[block].Sites[localSite].links[direction - 1].type);
+                dummySiteData.push_back(static_cast<unsigned>(geometry.Blocks[block].Sites[localSite].links[direction - 1].type));
               }
               else
               {
@@ -771,7 +814,7 @@ namespace hemelb
     // The header section of the config file contains a number of records.
     site_t GeometryReader::GetHeaderLength(site_t blockCount) const
     {
-      return io::formats::geometry::HeaderRecordLength * blockCount;
+      return gmy::HeaderRecordLength * blockCount;
     }
 
     void GeometryReader::RereadBlocks(Geometry& geometry, const std::vector<idx_t>& movesPerProc,

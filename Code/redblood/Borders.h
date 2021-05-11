@@ -82,26 +82,27 @@ namespace hemelb
         bool wannaSee(value_type const &current) const;
     };
 
-    template<class T> util::Vector3D<T> direction(Borders border)
+    template<class T>
+    util::Vector3D<T> direction(Borders border)
     {
       switch (border)
       {
         case Borders::TOP:
-          return util::Vector3D<T>(1, 0, 0);
+          return {1, 0, 0};
         case Borders::BOTTOM:
-          return util::Vector3D<T>(-1, 0, 0);
+          return {-1, 0, 0};
         case Borders::NORTH:
-          return util::Vector3D<T>(0, 1, 0);
+          return {0, 1, 0};
         case Borders::SOUTH:
-          return util::Vector3D<T>(0, -1, 0);
+          return {0, -1, 0};
         case Borders::WEST:
-          return util::Vector3D<T>(0, 0, -1);
+          return {0, 0, -1};
         case Borders::EAST:
-          return util::Vector3D<T>(0, 0, 1);
+          return {0, 0, 1};
         default:
-          return util::Vector3D<T>(0, 0, 0);
+          return {0, 0, 0};
       };
-      return LatticeVector(0, 0, 0);
+      return {0, 0, 0};
     }
     template<class T> util::Vector3D<T> direction(size_t border)
     {

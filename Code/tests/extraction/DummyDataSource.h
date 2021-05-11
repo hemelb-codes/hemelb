@@ -157,7 +157,7 @@ namespace hemelb
           site_t location;
           std::vector<hemelb::util::Vector3D<site_t> > gridPositions;
           std::vector<distribn_t> pressures;
-          std::vector<hemelb::util::Vector3D<distribn_t> > velocities;
+          std::vector<hemelb::util::Vector3D<hemelb::extraction::FloatingType> > velocities;
           distribn_t voxelSize;
           hemelb::util::Vector3D<distribn_t> origin;
       };

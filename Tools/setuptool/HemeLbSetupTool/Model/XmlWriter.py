@@ -14,7 +14,7 @@ from .Vector import Vector
 import pdb
 
 class XmlWriter(object):
-    VERSION = 3
+    VERSION = 4
     STRESSTYPE = 1
     
     def __init__(self, profile):

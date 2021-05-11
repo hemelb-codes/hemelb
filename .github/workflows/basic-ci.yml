@@ -85,3 +85,7 @@ jobs:
     - name: Build
       working-directory: ${{github.workspace}}/build
       run: cmake --build .
+
+    - name: Run main unit tests
+      working-directory: ${{github.workspace}}/build
+      run: tests/hemelb-tests

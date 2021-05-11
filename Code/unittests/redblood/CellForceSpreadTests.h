@@ -75,7 +75,8 @@ namespace hemelb
                                                                                             {}),
                                                                   details::SpreadForces(forces,
                                                                                         *latDat));
-        return latDat->GetSite(center).GetForce();
+	// TODO #759: is this truncation OK?
+        return latDat->GetSite(LatticeVector{center}).GetForce();
       }
 
       void CellForceSpreadTests::setUp()

@@ -338,7 +338,8 @@ namespace hemelb
       auto const barycenter = cell->GetBarycenter();
 
       //! @todo: #623 AddCell should only be called if the subdomain contains the relevant RBC inlet
-      auto const iter = globalCoordsToProcMap.find(barycenter);
+      // TODO: #759 truncation of barycenter
+      auto const iter = globalCoordsToProcMap.find(LatticeVector{barycenter});
       bool insertAtThisRank = (iter != globalCoordsToProcMap.end()) && (iter->second == neighbourDependenciesGraph.Rank());
       if (insertAtThisRank)
       {

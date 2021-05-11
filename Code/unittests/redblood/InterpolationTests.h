@@ -56,6 +56,11 @@ namespace hemelb
                                        LatticePosition(-1, 2, 1).Dot(pos),
                                        LatticePosition(0, 0, 1).Dot(pos));
               }
+              // We need to accept grid point and continuous input points
+              LatticePosition operator()(LatticeVector const &pos) const
+              {
+                return operator()(pos.as<double>());
+              }
               LatticePosition operator()(Dimensionless x, Dimensionless y, Dimensionless z) const
               {
                 return operator()(LatticePosition(x, y, z));
@@ -64,6 +69,7 @@ namespace hemelb
 
           struct QuadraticFunction
           {
+              // We need to accept grid point and continuous input points
               LatticePosition operator()(LatticePosition const &pos) const
               {
                 Dimensionless const offset(0);
@@ -73,6 +79,11 @@ namespace hemelb
                                            * (LatticePosition(0, 1, 0).Dot(pos) - offset),
                                        (LatticePosition(0, 0, 1).Dot(pos) - offset)
                                            * (LatticePosition(0, 0, 1).Dot(pos) - offset));
+              }
+              // We need to accept grid point and continuous input points
+              LatticePosition operator()(LatticeVector const &pos) const
+              {
+                return operator()(pos.as<double>());
               }
               LatticePosition operator()(Dimensionless x, Dimensionless y, Dimensionless z) const
               {
@@ -102,7 +113,7 @@ namespace hemelb
               for (size_t j(0); j < incs[i]; ++j, ++iterator)
                 ;
 
-              CPPUNIT_ASSERT(helpers::is_zero(*iterator - vectors[i]));
+              CPPUNIT_ASSERT_EQUAL(LatticeVector::Zero(), (*iterator - vectors[i]));
               CPPUNIT_ASSERT(iterator.IsValid());
             }
 

@@ -65,7 +65,7 @@ namespace hemelb
 		/// @todo: #597 use CPPUNIT_ASSERT_EQUAL directly (having trouble with Vector3D templated over different types at the minute)
 		/// CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetWallNormal(), readResult.Blocks[0].Sites[siteIndex].wallNormal);
 		REQUIRE(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetWallNormal()
-			== readResult.Blocks[0].Sites[siteIndex].wallNormal);
+			== readResult.Blocks[0].Sites[siteIndex].wallNormal.as<double>());
 	      }
 	    }
 	  }

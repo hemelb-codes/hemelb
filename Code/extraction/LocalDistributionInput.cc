@@ -128,7 +128,7 @@ namespace hemelb
 	  dataReader.read(tmp.z);
 
 	  // Convert to canonical type
-	  util::Vector3D<site_t> grid = tmp;
+	  util::Vector3D<site_t> grid{tmp};
 	  // Look up the site ID and rank, as decomposed by this run
 	  // of HemeLB, for the grid coordinate read from the
 	  // checkpoint file.
