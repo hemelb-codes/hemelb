@@ -5,13 +5,13 @@ if (CTEMPLATE_FOUND)
   add_custom_target(ctemplate)
 else()
   message("Ctemplate not installed, will build from source")
-  find_file(CTEMPLATE_TARBALL ctemplate-2.3.tar.gz
+  find_file(CTEMPLATE_TARBALL ctemplate-2.4.tar.gz
     DOC "Path to download CTemplate (can be url http://)"
     PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
     )
   if(NOT CTEMPLATE_TARBALL)
     message("No ctemplate source found, will download.")
-    set(CTEMPLATE_TARBALL http://github.com/OlafvdSpek/ctemplate/archive/ctemplate-2.3.tar.gz
+    set(CTEMPLATE_TARBALL http://github.com/OlafvdSpek/ctemplate/archive/ctemplate-2.4.tar.gz
       CACHE STRING "Path to download CTemplate (can be local file://)" FORCE)
   endif()
   
@@ -38,4 +38,13 @@ else()
     BUILD_IN_SOURCE 1
     PATCH_COMMAND ${PATCH_COMMAND_ALIGN} && ${PATCH_COMMAND_VACOPY}
     )
+  ExternalProject_Add_Step(
+    ctemplate
+    autogen
+    DEPENDEES patch
+    DEPENDERS configure
+    WORKING_DIRECTORY <SOURCE_DIR>
+    COMMENT "Running ./autogen.sh, possibly twice"
+    COMMAND ./autogen.sh || ./autogen.sh
+  )
 endif()
