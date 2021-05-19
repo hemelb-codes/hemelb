@@ -4,4 +4,5 @@
 # license in the file LICENSE.
 target_sources(hemelb-tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/CellCellInteractionTests.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/CellCellInteractionWithGridTests.cc
   )
