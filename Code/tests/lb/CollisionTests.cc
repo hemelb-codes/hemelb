@@ -24,7 +24,7 @@ namespace hemelb
     // 
     // Note that we are only testing collision operators here, so we
     // can assume that the kernel objects work perfectly.
-    TEST_CASE_METHOD(public helpers::FourCubeBasedTestFixture, "Collisions") {
+    TEST_CASE_METHOD(public helpers::FourCubeBasedTestFixture<>, "Collisions") {
       const distribn_t allowedError = 1e-10;
       auto apprx = [&](double x) {
 	return Approx(x).margin(allowedError);

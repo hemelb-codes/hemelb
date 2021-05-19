@@ -14,7 +14,7 @@ namespace hemelb
   namespace tests
   {
     using namespace hemelb::geometry;
-    TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture, "LatticeDataTests") {
+    TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<>, "LatticeDataTests") {
       SECTION("TestConvertGlobalId") {
 	// Not really a very good test to use a one-proc geometry.  We
 	// need to create a sixteen-cube lattice data test fixture to

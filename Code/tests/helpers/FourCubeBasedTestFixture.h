@@ -26,11 +26,11 @@ namespace hemelb
   {
     namespace helpers
     {
-      class FourCubeBasedTestFixture : public FolderTestFixture {
+      class FourCubeBasedTestFixtureBase : public FolderTestFixture {
 
       public:
-	FourCubeBasedTestFixture();
-	~FourCubeBasedTestFixture();
+	FourCubeBasedTestFixtureBase(int cubesize);
+	~FourCubeBasedTestFixtureBase();
 
       protected:
 	FourCubeLatticeData* latDat;
@@ -42,6 +42,13 @@ namespace hemelb
 	const util::UnitConverter* unitConverter;
       private:
 	std::string path;
+      };
+
+      template <int CUBESIZE = 4>
+      class FourCubeBasedTestFixture : public FourCubeBasedTestFixtureBase {
+      public:
+	FourCubeBasedTestFixture() : FourCubeBasedTestFixtureBase(CUBESIZE) {
+	}
       };
     }
   }

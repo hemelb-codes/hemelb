@@ -13,10 +13,11 @@ namespace hemelb
   {
     namespace helpers
     {
-      FourCubeBasedTestFixture::FourCubeBasedTestFixture() :
+      FourCubeBasedTestFixtureBase::FourCubeBasedTestFixtureBase(int cubesize) :
 	initParams()
       {
-	latDat = FourCubeLatticeData::Create(Comms());
+	// +2 for the halo of empty valid locations around the cube
+	latDat = FourCubeLatticeData::Create(Comms(), cubesize + 2);
 	simConfig = new OneInOneOutSimConfig(path);
 	simState = std::make_unique<lb::SimulationState>(simConfig->GetTimeStepLength(),
 							 simConfig->GetTotalTimeSteps());
@@ -30,7 +31,7 @@ namespace hemelb
 	numSites = initParams.latDat->GetLocalFluidSiteCount();
       }
 
-      FourCubeBasedTestFixture::~FourCubeBasedTestFixture() {
+      FourCubeBasedTestFixtureBase::~FourCubeBasedTestFixtureBase() {
 	delete latDat;
 	delete lbmParams;
 	delete simConfig;

@@ -17,7 +17,7 @@ namespace hemelb
 {
   namespace tests
   {
-    TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture, "IncompressibilityCheckerTests") {
+    TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<>, "IncompressibilityCheckerTests") {
       using LATTICE = lb::lattices::D3Q15;
 
       LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(latDat);

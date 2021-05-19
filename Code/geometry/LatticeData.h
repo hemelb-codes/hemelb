@@ -33,6 +33,14 @@ namespace hemelb
       class LatticeDataAccess;
     }
   }
+  namespace tests
+  {
+    namespace helpers
+    {
+      // Friend class to access all of LatticeData's internals in tests
+      class LatticeDataAccess;
+    }
+  }
   namespace lb
   {
     // Ugly forward definition is currently necessary.
@@ -49,6 +57,7 @@ namespace hemelb
         friend lb::InitialConditionBase;
       public:
         friend class unittests::helpers::LatticeDataAccess;
+        friend class tests::helpers::LatticeDataAccess;
         template<class TRAITS>
 	friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
         template<class LatticeData>

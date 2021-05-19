@@ -28,7 +28,7 @@ namespace hemelb
     // then compare the post-streamed values with the values we expect
     // to have been streamed there.
     
-    TEST_CASE_METHOD(public helpers::FourCubeBasedTestFixture, "StreamerTests") {
+    TEST_CASE_METHOD(public helpers::FourCubeBasedTestFixture<>, "StreamerTests") {
       using LATTICE = lb::lattices::D3Q15;
       using KERNEL = lb::kernels::LBGK<LATTICE>;
       using COLLISION = lb::collisions::Normal<KERNEL>;

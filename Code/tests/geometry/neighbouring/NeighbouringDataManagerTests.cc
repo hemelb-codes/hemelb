@@ -20,7 +20,7 @@ namespace hemelb
   {
     
     using namespace hemelb::geometry::neighbouring;
-    TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture, "NeighbouringDataManagerTests") {
+    TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<>, "NeighbouringDataManagerTests") {
       auto communicatorMock = helpers::MockMpiCommunicator(0, 1);
       auto netMock = net::NetMock{communicatorMock};
       auto data = latDat->GetNeighbouringData();

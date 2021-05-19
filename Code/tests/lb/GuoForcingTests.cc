@@ -27,7 +27,7 @@ namespace hemelb
       using namespace ::hemelb::unittests::helpers;
     }
 
-    TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture, "GuoForcingTests") {
+    TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<>, "GuoForcingTests") {
 
         typedef lb::lattices::D3Q19 LatticeType;
         typedef lb::kernels::GuoForcingLBGK<LatticeType> Kernel;

@@ -19,7 +19,7 @@ namespace hemelb
 
     // Class asserting behaviour of boundary-collection objects and
     // the boundaries (in- and out- lets) within them.
-    TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture, "BoundaryTests") {
+    TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<>, "BoundaryTests") {
       auto pressureToDensity = [&](double pressure) -> double {
 	double inverseVelocity = simConfig->GetTimeStepLength() / simConfig->GetVoxelSize();
 	return 1

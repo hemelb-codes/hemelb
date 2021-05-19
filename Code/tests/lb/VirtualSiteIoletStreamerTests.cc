@@ -83,7 +83,7 @@ namespace hemelb
      * then compare the post-streamed values with the values we expect
      * to have been streamed there.
      */
-    TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture, "VirtualSiteIoletStreamerTests") {
+    TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<>, "VirtualSiteIoletStreamerTests") {
 
       typedef lb::lattices::D3Q15 Lattice;
       typedef lb::kernels::LBGK<Lattice> Kernel;
