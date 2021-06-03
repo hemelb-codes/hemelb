@@ -36,7 +36,6 @@ namespace hemelb
   }
 }
 #define HEMELB_DOING_UNITTESTS
-#include "unittests/redblood/RedBloodMeshDataIOTests.h"
 #include "unittests/redblood/TopologyTests.h"
 #include "unittests/redblood/FacetTests.h"
 #include "unittests/redblood/EnergyTests.h"
