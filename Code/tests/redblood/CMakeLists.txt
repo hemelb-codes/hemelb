@@ -3,6 +3,9 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 target_sources(hemelb-tests PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/Fixtures.cc
+
   ${CMAKE_CURRENT_SOURCE_DIR}/CellCellInteractionTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/CellCellInteractionWithGridTests.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/RedBloodMeshTests.cc
   )

@@ -12,6 +12,10 @@
 #include "redblood/Mesh.h"
 
 namespace hemelb {
+  namespace redblood {
+    class Cell;
+  }
+
   namespace tests {
     template<class CELLTYPE = redblood::Cell>
     redblood::CellContainer TwoPancakeSamosas(LatticeDistance cutoff)
@@ -26,6 +30,14 @@ namespace hemelb {
 
       return cells;
     }
+
+    class BasisFixture {
+    public:
+      BasisFixture();
+    protected:
+      hemelb::redblood::MeshData mesh;
+    };
+
   }
 }
 
