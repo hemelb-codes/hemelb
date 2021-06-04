@@ -36,7 +36,6 @@ namespace hemelb
   }
 }
 #define HEMELB_DOING_UNITTESTS
-#include "unittests/redblood/FacetTests.h"
 #include "unittests/redblood/EnergyTests.h"
 #include "unittests/redblood/GradientTests.h"
 #include "unittests/redblood/GradientKernTests.h"
