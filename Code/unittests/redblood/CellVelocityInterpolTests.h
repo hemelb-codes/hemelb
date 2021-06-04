@@ -7,6 +7,7 @@
 #define HEMELB_UNITTESTS_REDBLOOD_CELLVELOCITYINTERPOLTESTS_H
 
 #include <cppunit/TestFixture.h>
+#include "redblood/Facet.h"
 #include "redblood/GridAndCell.h"
 #include "unittests/redblood/Fixtures.h"
 
