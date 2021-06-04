@@ -7,6 +7,7 @@
 #define HEMELB_TESTS_REDBLOOD_FIXTURES_H
 
 #include <memory>
+#include <catch2/catch.hpp>
 
 #include "redblood/types_fwd.h"
 #include "redblood/Mesh.h"
@@ -36,6 +37,43 @@ namespace hemelb {
       BasisFixture();
     protected:
       hemelb::redblood::MeshData mesh;
+    };
+
+    class EnergyVsGradientFixture : public BasisFixture
+    {
+    public:
+      template<class ENERGY, class GRADIENT>
+      void energyVsForces(ENERGY const &energy, GRADIENT const &gradient,
+			  LatticePosition const &dir, size_t node, double epsilon = 1e-8)
+      {
+	std::vector<LatticeForceVector> forces(4, LatticeForceVector(0, 0, 0));
+	LatticeEnergy const firstE(gradient(mesh, forces));
+
+	redblood::MeshData newmesh(mesh);
+	newmesh.vertices[node] += dir * epsilon;
+	LatticeEnergy const deltaE(energy(newmesh) - firstE);
+
+	double const tolerance(std::max(std::abs( (deltaE / epsilon) * 1e-4), 1e-8));
+	REQUIRE(Approx(- (deltaE / epsilon)).margin(tolerance) == forces[node].Dot(dir));
+      }
+
+      template<class ENERGY, class GRADIENT>
+      void energyVsForces(ENERGY const &energy, GRADIENT const &gradient, double epsilon = 1e-8)
+      {
+	for (size_t node(0); node < mesh.vertices.size(); ++node)
+	  for (size_t i(0); i < 3; ++i)
+	    energyVsForces(energy,
+			   gradient,
+			   LatticePosition(i == 0, i == 1, i == 2),
+			   node,
+			   epsilon);
+      }
+
+      template<class BOTH>
+      void energyVsForces(BOTH const &both, double epsilon = 1e-8)
+      {
+	energyVsForces(both, both, epsilon);
+      }
     };
 
   }

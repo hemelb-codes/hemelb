@@ -7,6 +7,7 @@
 #define HEMELB_UNITTESTS_REDBLOOD_GRADIENTKERNTESTS_H
 
 #include <cppunit/TestFixture.h>
+#include "redblood/CellEnergy.h"
 #include "resources/Resource.h"
 #include "unittests/redblood/Fixtures.h"
 
