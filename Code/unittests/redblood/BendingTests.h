@@ -10,6 +10,7 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include "redblood/Cell.h"
+#include "redblood/CellEnergy.h"
 #include "redblood/Facet.h"
 #include "redblood/Mesh.h"
 
