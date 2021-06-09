@@ -118,9 +118,9 @@ namespace hemelb
           assert(current[1] <= max[1]);
           assert(current[2] >= min[2]);
           assert(current[2] <= max[2]);
-          assert(current[0] - min[0] < xWeight.size());
-          assert(current[1] - min[1] < yWeight.size());
-          assert(current[2] - min[2] < zWeight.size());
+          assert(current[0] - min[0] < LatticeCoordinate(xWeight.size()));
+          assert(current[1] - min[1] < LatticeCoordinate(yWeight.size()));
+          assert(current[2] - min[2] < LatticeCoordinate(zWeight.size()));
           return xWeight[current[0] - min[0]] * yWeight[current[1] - min[1]]
               * zWeight[current[2] - min[2]];
         }

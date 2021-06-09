@@ -249,7 +249,7 @@ namespace hemelb
          */
         inline const Block& GetBlock(site_t blockNumber) const
         {
-          assert(blockNumber < blocks.size());
+          assert(blockNumber < site_t(blocks.size()));
           return blocks[blockNumber];
         }
 
