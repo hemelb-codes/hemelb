@@ -36,7 +36,6 @@ namespace hemelb
   }
 }
 #define HEMELB_DOING_UNITTESTS
-#include "unittests/redblood/Node2NodeTests.h"
 #include "unittests/redblood/DivideConquerTests.h"
 #include "unittests/redblood/CellArmyTests.h"
 #include "unittests/redblood/FlowExtensionTests.h"

@@ -7,10 +7,11 @@
 #define HEMELB_UNITTESTS_REDBLOOD_CELLARMYTESTS_H
 
 #include <cppunit/TestFixture.h>
-#include "unittests/redblood/Fixtures.h"
 #include "redblood/CellArmy.h"
 #include "redblood/Facet.h"
 #include "Traits.h"
+#include "unittests/redblood/Fixtures.h"
+#include "unittests/helpers/LatticeDataAccess.h"
 
 namespace hemelb
 {
