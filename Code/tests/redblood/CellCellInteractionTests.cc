@@ -521,7 +521,6 @@ namespace hemelb
 	// Copy assignment
 	mut tmp1 = m_iter;
 	con tmp2 = c_iter;
-	con tmp3 = m_iter;
 	// Not allowed
 	//mut tmp4 = c_iter;
 	REQUIRE(tmp1 == m_iter);

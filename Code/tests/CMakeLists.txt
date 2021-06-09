@@ -7,6 +7,8 @@ hemelb_dependency(catch2 use)
 
 add_executable(hemelb-tests)
 
+target_compile_definitions(hemelb-tests PRIVATE HEMELB_DOING_UNITTESTS)
+
 target_sources(hemelb-tests PRIVATE ${root_sources})
 
 # ReporterTests directly use ctemplate

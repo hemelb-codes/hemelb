@@ -36,7 +36,6 @@ namespace hemelb
   }
 }
 #define HEMELB_DOING_UNITTESTS
-#include "unittests/redblood/CellArmyTests.h"
 #include "unittests/redblood/FlowExtensionTests.h"
 #include "unittests/redblood/FaderCellTests.h"
 #include "unittests/redblood/VertexBagTests.h"
