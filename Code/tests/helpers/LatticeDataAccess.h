@@ -37,11 +37,7 @@ namespace hemelb
       class LatticeDataAccess
       {
         public:
-          LatticeDataAccess(geometry::LatticeData * const latDat) :
-              latDat(latDat)
-          {
-          }
-          ;
+          LatticeDataAccess(geometry::LatticeData * const latDat);
 
           // Empty distribution
           void ZeroOutFOld() const;
@@ -64,11 +60,7 @@ namespace hemelb
           }
           template<class LATTICE>
           distribn_t const * GetFNew(LatticeVector const &_pos) const;
-          distribn_t const * GetFNew(site_t index) const
-          {
-            return latDat->GetFNew(index);
-          }
-
+	  distribn_t const * GetFNew(site_t index) const;
 
           void SetMinWallDistance(PhysicalDistance _mindist);
           void SetWallDistance(PhysicalDistance _mindist);
@@ -117,26 +109,6 @@ namespace hemelb
         distribn_t const * const firstFOld = &latDat->oldDistributions[0];
         size_t const indexFOld(siteFOld - firstFOld);
         return latDat->GetFNew(indexFOld);
-      }
-
-      void LatticeDataAccess::SetMinWallDistance(PhysicalDistance _mindist)
-      {
-        typedef std::vector<distribn_t>::iterator iterator;
-        iterator i_first = latDat->distanceToWall.begin();
-        iterator const i_end = latDat->distanceToWall.end();
-        for (; i_first != i_end; ++i_first)
-          if (*i_first > 0e0 and *i_first < _mindist)
-            *i_first = _mindist;
-      }
-
-      void LatticeDataAccess::SetWallDistance(PhysicalDistance _mindist)
-      {
-        typedef std::vector<distribn_t>::iterator iterator;
-        iterator i_first = latDat->distanceToWall.begin();
-        iterator const i_end = latDat->distanceToWall.end();
-        for (; i_first != i_end; ++i_first)
-          if (*i_first > 0e0)
-            *i_first = _mindist;
       }
 
       inline void ZeroOutFOld(geometry::LatticeData * const latDat)
@@ -191,19 +163,6 @@ namespace hemelb
       distribn_t const * GetFNew(geometry::LatticeData *latDat, LatticeVector const &_pos)
       {
         return LatticeDataAccess(latDat).GetFNew<LATTICE>(_pos);
-      }
-      distribn_t const * GetFNew(geometry::LatticeData *latDat, site_t const &index)
-      {
-        return LatticeDataAccess(latDat).GetFNew(index);
-      }
-
-      void SetMinWallDistance(geometry::LatticeData * const latDat, PhysicalDistance _mindist)
-      {
-        LatticeDataAccess(latDat).SetMinWallDistance(_mindist);
-      }
-      void SetWallDistance(geometry::LatticeData * const latDat, PhysicalDistance _mindist)
-      {
-        LatticeDataAccess(latDat).SetWallDistance(_mindist);
       }
 
       template<class LATTICE = lb::lattices::D3Q15>
