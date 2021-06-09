@@ -11,6 +11,7 @@ target_sources(hemelb-tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/CellForceSpreadTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/CellTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/CellVelocityInterpolTests.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/DivideConquerTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/EnergyTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/FacetTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/GradientKernTests.cc
