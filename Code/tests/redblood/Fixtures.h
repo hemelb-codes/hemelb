@@ -10,12 +10,12 @@
 #include <catch2/catch.hpp>
 
 #include "redblood/types_fwd.h"
+#include "redblood/Cell.h"
 #include "redblood/Mesh.h"
 
+#include "tests/helpers/FourCubeBasedTestFixture.h"
+
 namespace hemelb {
-  namespace redblood {
-    class Cell;
-  }
 
   namespace tests {
     template<class CELLTYPE = redblood::Cell>
@@ -76,6 +76,15 @@ namespace hemelb {
       }
     };
 
+    class SquareDuctTetrahedronFixture : public helpers::FourCubeBasedTestFixture<32>
+    {
+    protected:
+      size_t refinement = 3;
+      hemelb::redblood::Cell mesh;
+
+    public:
+      SquareDuctTetrahedronFixture(redblood::Mesh const & initial_mesh, size_t refinement);
+    };
   }
 }
 

@@ -40,6 +40,8 @@ namespace hemelb
 	configuration::SimConfig* simConfig;
 	std::unique_ptr<lb::SimulationState> simState;
 	const util::UnitConverter* unitConverter;
+	int cubeSize;
+	int cubeSizeWithHalo;
       private:
 	std::string path;
       };

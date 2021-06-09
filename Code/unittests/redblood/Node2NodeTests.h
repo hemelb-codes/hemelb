@@ -8,6 +8,8 @@
 
 #include <cppunit/TestFixture.h>
 #include "redblood/Node2Node.h"
+#include "unittests/helpers/Comparisons.h"
+#include "unittests/helpers/LatticeDataAccess.h"
 
 namespace hemelb
 {

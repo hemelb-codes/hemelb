@@ -55,41 +55,6 @@ namespace hemelb
         hemelb::redblood::MeshData mesh;
     };
 
-
-    class SquareDuctTetrahedronFixture : public helpers::FourCubeBasedTestFixture
-    {
-      public:
-        SquareDuctTetrahedronFixture() :
-            FourCubeBasedTestFixture(), mesh(redblood::tetrahedron())
-        {
-        }
-
-        void setUp()
-        {
-          FourCubeBasedTestFixture::setUp();
-          mesh = redblood::refine(initial_mesh(), refinement());
-          mesh *= Dimensionless(CubeSize() - 3) * 0.5;
-          mesh += LatticePosition{Dimensionless(CubeSize()) * 0.5};
-        }
-
-      protected:
-        // Functions to parameterize the fizture
-        virtual size_t CubeSize() const
-        {
-          return 32 + 2;
-        }
-        virtual size_t refinement() const
-        {
-          return 3;
-        }
-        virtual redblood::Mesh initial_mesh() const
-        {
-          return redblood::tetrahedron();
-        }
-
-        hemelb::redblood::Cell mesh;
-    };
-
     class FlowExtensionFixture : public CppUnit::TestFixture
     {
       public:

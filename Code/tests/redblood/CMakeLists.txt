@@ -8,7 +8,9 @@ target_sources(hemelb-tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/BendingTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/CellCellInteractionTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/CellCellInteractionWithGridTests.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/CellForceSpreadTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/CellTests.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/CellVelocityInterpolTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/EnergyTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/FacetTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/GradientKernTests.cc

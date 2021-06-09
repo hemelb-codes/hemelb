@@ -14,7 +14,7 @@ namespace hemelb
     namespace helpers
     {
       FourCubeBasedTestFixtureBase::FourCubeBasedTestFixtureBase(int cubesize) :
-	initParams()
+	initParams(), cubeSize(cubesize), cubeSizeWithHalo(cubesize + 2)
       {
 	// +2 for the halo of empty valid locations around the cube
 	latDat = FourCubeLatticeData::Create(Comms(), cubesize + 2);

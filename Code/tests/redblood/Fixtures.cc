@@ -33,5 +33,12 @@ namespace hemelb {
       mesh.facets.push_back(indices);
       redblood::orientFacets(mesh);
     }
+
+    SquareDuctTetrahedronFixture::SquareDuctTetrahedronFixture(redblood::Mesh const & initial_mesh, size_t refinement) :
+      FourCubeBasedTestFixture{}, mesh{redblood::refine(initial_mesh, refinement)} {
+      mesh *= Dimensionless(cubeSizeWithHalo - 3) * 0.5;
+      mesh += LatticePosition{Dimensionless(cubeSizeWithHalo) * 0.5};
+    }
+
   }
 }
