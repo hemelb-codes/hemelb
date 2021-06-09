@@ -51,12 +51,16 @@ namespace hemelb {
 	return !(lhs == rhs);
       }
 
+      friend std::ostream& operator<<(std::ostream& o, ApproxVectorImpl const& av)
+      {
+	return o << av.value << "+/-" << av.margin;
+      }
+
     private:
       bool impl(const vec& other) const {
         return (value - other).GetMagnitudeSquared() < margin * margin;
       }
     };
-
     
     namespace detail {
       // build an overload set and SFINAE
