@@ -36,7 +36,6 @@ namespace hemelb
   }
 }
 #define HEMELB_DOING_UNITTESTS
-#include "unittests/redblood/InterpolationTests.h"
 #include "unittests/redblood/CellVelocityInterpolTests.h"
 #include "unittests/redblood/CellForceSpreadTests.h"
 #include "unittests/redblood/Node2NodeTests.h"

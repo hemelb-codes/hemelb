@@ -7,9 +7,11 @@
 #define HEMELB_UNITTESTS_REDBLOOD_CELLVELOCITYINTERPOLTESTS_H
 
 #include <cppunit/TestFixture.h>
+#include "lb/kernels/LBGK.h"
 #include "redblood/Facet.h"
 #include "redblood/GridAndCell.h"
 #include "unittests/redblood/Fixtures.h"
+#include "unittests/helpers/LatticeDataAccess.h"
 
 namespace hemelb
 {
