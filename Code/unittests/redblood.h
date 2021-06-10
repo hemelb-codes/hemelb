@@ -36,13 +36,11 @@ namespace hemelb
   }
 }
 #define HEMELB_DOING_UNITTESTS
-#include "unittests/redblood/FlowExtensionTests.h"
 #include "unittests/redblood/FaderCellTests.h"
 #include "unittests/redblood/VertexBagTests.h"
 #include "unittests/redblood/buffer/BufferTests.h"
 #include "unittests/redblood/buffer/ColumnsTests.h"
 #include "unittests/redblood/CellIOTests.h"
-#include "unittests/redblood/CellInserterTests.h"
 #include "unittests/redblood/BordersTests.h"
 #include "unittests/redblood/WallNodeDnCTests.h"
 #include "unittests/redblood/WallCellPairIteratorTests.h"

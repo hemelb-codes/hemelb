@@ -11,6 +11,7 @@
 
 #include "redblood/types_fwd.h"
 #include "redblood/Cell.h"
+#include "redblood/FlowExtension.h"
 #include "redblood/Mesh.h"
 
 #include "tests/helpers/FourCubeBasedTestFixture.h"
@@ -85,6 +86,15 @@ namespace hemelb {
     public:
       SquareDuctTetrahedronFixture(redblood::Mesh const & initial_mesh, size_t refinement);
     };
+
+    class FlowExtensionFixture
+    {
+    public:
+      FlowExtensionFixture();
+    protected:
+      hemelb::redblood::FlowExtension flowExt;
+    };
+
   }
 }
 

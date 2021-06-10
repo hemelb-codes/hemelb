@@ -12,9 +12,11 @@ target_compile_definitions(hemelb-tests PRIVATE HEMELB_DOING_UNITTESTS)
 target_sources(hemelb-tests PRIVATE ${root_sources})
 
 # ReporterTests directly use ctemplate
+# FlowExtensionTests directly uses tinyxml
 target_link_libraries(hemelb-tests PRIVATE
   Catch2::Catch2
   CTemplate::CTemplate
+  TinyXML::TinyXML
   ${heme_libraries}
   ${MPI_LIBRARIES})
 INSTALL(TARGETS hemelb-tests RUNTIME DESTINATION bin)

@@ -40,5 +40,12 @@ namespace hemelb {
       mesh += LatticePosition{Dimensionless(cubeSizeWithHalo) * 0.5};
     }
 
+    FlowExtensionFixture::FlowExtensionFixture() {
+      flowExt.normal = util::Vector3D<LatticeDistance>(1.0, 0.0, 0.0);
+      flowExt.origin = util::Vector3D<LatticeDistance>(0.0, 0.0, 0.0);
+      flowExt.length = 10.0;
+      flowExt.radius = 1.0;
+    }
+
   }
 }

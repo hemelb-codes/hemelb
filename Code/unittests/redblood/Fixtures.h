@@ -55,20 +55,6 @@ namespace hemelb
         hemelb::redblood::MeshData mesh;
     };
 
-    class FlowExtensionFixture : public CppUnit::TestFixture
-    {
-      public:
-        void setUp()
-        {
-          flowExt.normal = util::Vector3D<LatticeDistance>(1.0, 0.0, 0.0);
-          flowExt.origin = util::Vector3D<LatticeDistance>(0.0, 0.0, 0.0);
-          flowExt.length = 10.0;
-          flowExt.radius = 1.0;
-        }
-      protected:
-        hemelb::redblood::FlowExtension flowExt;
-    };
-
     template<class CELLTYPE = redblood::Cell>
     redblood::CellContainer TwoPancakeSamosas(LatticeDistance cutoff)
     {
