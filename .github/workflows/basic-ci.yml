@@ -29,6 +29,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Apt update
+      shell: bash
+      run: sudo apt-get update
+
     - name: Install Ubuntu-provided dependencies
       shell: bash
       run: >-
