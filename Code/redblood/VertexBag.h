@@ -12,6 +12,7 @@
 #include <boost/uuid/uuid.hpp>
 
 #include "redblood/Cell.h"
+#include "redblood/Interpolation.h"
 #include "redblood/stencil.h"
 #include "geometry/LatticeData.h"
 #include "Exception.h"
@@ -73,6 +74,66 @@ namespace hemelb
         std::shared_ptr<CellBase const> cell, geometry::LatticeData const &latticeData,
         proc_t selfRegion = std::numeric_limits<proc_t>::max(), redblood::stencil::types stencil =
             redblood::stencil::types::FOUR_POINT);
+
+    namespace detail {
+      proc_t get_proc(geometry::LatticeData const &latDat, LatticeVector const &pos);
+
+      //! Set of procs affected by this position
+      //! \param[in] latDat will tell us which site belongs to which proc
+      //! \param[in] iterator a  stencil iterator going over affected lattice points
+      template<class STENCIL, class T_FUNC>
+      std::set<proc_t> procsAffectedByPosition(
+          T_FUNC get_proc, InterpolationIterator<STENCIL> &&iterator, proc_t avoid
+					       ) {
+        std::set<proc_t> result;
+        for (; iterator.IsValid(); ++iterator)
+        {
+          auto const procid = get_proc(*iterator);
+          if (procid != avoid)
+          {
+            result.insert(procid);
+          }
+        }
+        return result;
+      }
+
+      //! Set of procs affected by this position
+      //! \param[in] latDat will tell us which site belongs to which proc
+      //! \param[in] position for which to figure out affected processes
+      //! \param[in] stencil giving interaction range
+      template<class STENCIL, class T_FUNC>
+      std::set<proc_t> procsAffectedByPosition(
+          T_FUNC get_proc, LatticePosition const &position,
+          proc_t avoid = std::numeric_limits<proc_t>::max()
+					       ) {
+        return procsAffectedByPosition(get_proc, interpolationIterator<STENCIL>(position), avoid);
+      }
+
+      template<class STENCIL, class T_FUNC>
+      std::map<size_t, std::shared_ptr<VertexBag>> splitVertices(
+          T_FUNC get_proc, std::shared_ptr<CellBase const> cell,
+          proc_t avoid = std::numeric_limits<proc_t>::max())
+      {
+        std::map<size_t, std::shared_ptr<VertexBag>> result;
+        for (auto const &vertex : cell->GetVertices())
+        {
+          auto const regions = procsAffectedByPosition<STENCIL>(get_proc, vertex, avoid);
+          for (auto const region : regions)
+          {
+            auto const i_bag = result.find(region);
+            if (i_bag == result.end())
+            {
+              result.emplace(region, std::make_shared<VertexBag>(cell, vertex));
+            }
+            else
+            {
+              i_bag->second->addVertex(vertex);
+            }
+          }
+        }
+        return result;
+      }
+    }
   }
 } // namespace hemelb::redblood
 #endif
