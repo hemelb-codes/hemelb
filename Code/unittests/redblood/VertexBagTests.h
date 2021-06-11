@@ -8,7 +8,7 @@
 
 #include <cppunit/TestFixture.h>
 #include "redblood/VertexBag.h"
-
+#include "Traits.h"
 #include "redblood/VertexBag.cc"
 
 namespace hemelb
