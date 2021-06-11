@@ -8,6 +8,7 @@
 
 #include <cppunit/TestFixture.h>
 #include "unittests/helpers/FolderTestFixture.h"
+#include "configuration/SimConfig.h"
 #include "redblood/MeshIO.h"
 #include "redblood/RBCInserter.h"
 #include "redblood/xmlIO.h"
