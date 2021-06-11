@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_HELPERS_SITEITERATOR_H
-#define HEMELB_UNITTESTS_HELPERS_SITEITERATOR_H
+#ifndef HEMELB_TESTS_HELPERS_SITEITERATOR_H
+#define HEMELB_TESTS_HELPERS_SITEITERATOR_H
 
 #include <memory>
 #include <iterator>
@@ -14,7 +14,7 @@
 
 namespace hemelb
 {
-  namespace unittests
+  namespace tests
   {
     //! Enables ranged-for iterations over lattice sites
     class site_iterator
@@ -63,14 +63,14 @@ namespace hemelb
 
 namespace std
 {
-  inline hemelb::unittests::site_iterator begin(hemelb::geometry::LatticeData const& latDat)
+  inline hemelb::tests::site_iterator begin(hemelb::geometry::LatticeData const& latDat)
   {
     return {latDat, hemelb::site_t(0)};
   }
-  inline hemelb::unittests::site_iterator end(hemelb::geometry::LatticeData const& latDat)
+  inline hemelb::tests::site_iterator end(hemelb::geometry::LatticeData const& latDat)
   {
     return {latDat, latDat.GetTotalFluidSites()};
   }
 }
 
-#endif /* HEMELB_UNITTESTS_FOURCUBELATTICEDATA_H */
+#endif

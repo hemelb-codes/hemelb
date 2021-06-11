@@ -9,7 +9,6 @@
 #include <cstdlib>
 #include <iterator>
 #include "units.h"
-#include "unittests/helpers/SiteIterator.h"
 #include "geometry/LatticeData.h"
 #include "lb/lattices/D3Q15.h"
 #include "io/formats/geometry.h"
@@ -246,18 +245,6 @@ namespace hemelb
 
         }
     };
-  }
-}
-
-namespace std
-{
-  hemelb::unittests::site_iterator begin(hemelb::unittests::FourCubeLatticeData const& latDat)
-  {
-    return {*static_cast<hemelb::geometry::LatticeData const*>(&latDat), hemelb::site_t(0)};
-  }
-  hemelb::unittests::site_iterator end(hemelb::unittests::FourCubeLatticeData const& latDat)
-  {
-    return {*static_cast<hemelb::geometry::LatticeData const*>(&latDat), latDat.GetTotalFluidSites()};
   }
 }
 
