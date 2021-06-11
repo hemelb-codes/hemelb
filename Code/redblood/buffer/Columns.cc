@@ -13,7 +13,7 @@ namespace hemelb
   {
     namespace buffer
     {
-      namespace
+      namespace detail
       {
         LatticeDistance maxExtension(MeshData::Vertices const &vertices,
                                      LatticePosition const &direction)
@@ -29,8 +29,6 @@ namespace hemelb
           return 2e0 * result;
         }
 
-        // avoids a warning
-#     ifndef HEMELB_DOING_UNITTESTS
         LatticePosition maxExtensions(MeshData::Vertices const &vertices,
                                       LatticePosition const &col, LatticePosition const& normal)
         {
@@ -39,10 +37,8 @@ namespace hemelb
           LatticeDistance const z = maxExtension(vertices, col);
           return LatticePosition(x, y, z);
         }
-#     endif
       }
 
-#     ifndef HEMELB_DOING_UNITTESTS
       ColumnPositionIterator::ColumnPositionIterator(std::shared_ptr<Cylinder const> cylinder,
                                                      MeshData::Vertices const& vertices,
                                                      LatticePosition cellAxis,
@@ -65,7 +61,7 @@ namespace hemelb
 
         // Rotation is opposite to the one that will be applied to the mesh
         auto const antiRot = rotationMatrix(colAxis, cellAxis);
-        auto const extents = maxExtensions(vertices, antiRot * colAxis, antiRot * cylinder->normal)
+        auto const extents = detail::maxExtensions(vertices, antiRot * colAxis, antiRot * cylinder->normal)
 	  + LatticePosition{separation};
 
         max.x = std::numeric_limits<LatticeCoordinate>::max();
@@ -135,7 +131,6 @@ namespace hemelb
         return result;
       }
 
-#     endif
     } // namespace buffer
   }
 } // hemelb::redblood

@@ -82,6 +82,14 @@ namespace hemelb
           std::unique_ptr<CellBase> templateCell;
       };
 
+      namespace detail
+      {
+	LatticeDistance maxExtension(MeshData::Vertices const &vertices,
+                                     LatticePosition const &direction);
+
+        LatticePosition maxExtensions(MeshData::Vertices const &vertices,
+                                      LatticePosition const &col, LatticePosition const& normal);
+      }
     }
   }
 } // namespace hemelb::redblood
