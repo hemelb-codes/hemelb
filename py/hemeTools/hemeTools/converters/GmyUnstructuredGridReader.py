@@ -29,8 +29,9 @@ class GmyUnstructuredGridReader(VTKPythonAlgorithmBase):
     point and its corners half a lattice unit away in each of the eight
     <1,1,1> type directions.
 
-    The output units are metres and the object has no cell data or point data.
-    """
+    If the input file is the XML, then output units are metres; if
+    GMY, then output in lattice units. The object has no cell data or
+    point data."""
 
     def __init__(self, FileName=""):
         VTKPythonAlgorithmBase.__init__(

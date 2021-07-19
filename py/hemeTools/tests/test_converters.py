@@ -1,10 +1,11 @@
 import os.path
 
 import numpy as np
-from vtk import vtkUnstructuredGrid, vtkVoxel
+from vtk import vtkPolyData, vtkUnstructuredGrid, vtkVoxel
 
 from hemeTools.converters import ExtractedPropertyUnstructuredGridReader as xtr
 from hemeTools.converters import GmyUnstructuredGridReader as gmy
+from hemeTools.converters import GmyWallPointsReader as wp
 from hemeTools.parsers.extraction import ExtractedProperty
 
 
@@ -30,12 +31,42 @@ def test_converting_gmy_loader(diffTestDir):
     check_difftest_gmy(loader.Grid)
 
 
-def test_GmyUnstructuredGridReader(diffTestDir):
-    config_path = os.path.join(diffTestDir, "config.xml")
+def read_gmy_ug(path):
     reader = gmy.GmyUnstructuredGridReader()
-    reader.SetFileName(config_path)
+    reader.SetFileName(path)
     reader.Update()
-    check_difftest_gmy(reader.GetOutputDataObject(0))
+    return reader.GetOutputDataObject(0)
+
+
+def test_GmyUnstructuredGridReader(diffTestDir):
+    check_difftest_gmy(read_gmy_ug(os.path.join(diffTestDir, "config.xml")))
+
+
+def test_GmyUnstructuredGridReaderLatticeUnits(diffTestDir):
+    check_difftest_gmy(read_gmy_ug(os.path.join(diffTestDir, "config.gmy")))
+
+
+def read_gmy_wp(path):
+    reader = wp.GmyWallPointsReader()
+    reader.SetFileName(path)
+    reader.Update()
+    return reader.GetOutputDataObject(0)
+
+
+def check_gmy_wp(points):
+    assert isinstance(points, vtkPolyData)
+    n = 107888
+    assert points.GetNumberOfPieces() == 1
+    assert points.GetNumberOfPoints() == n
+    assert points.GetNumberOfVerts() == n
+
+
+def test_GmyWallPointsReader(diffTestDir):
+    check_gmy_wp(read_gmy_wp(os.path.join(diffTestDir, "config.xml")))
+
+
+def test_GmyWallPointsReaderLatticeUnits(diffTestDir):
+    check_gmy_wp(read_gmy_wp(os.path.join(diffTestDir, "config.gmy")))
 
 
 def test_ExtractedPropertyUnstructuredGridReader(diffTestDir):
