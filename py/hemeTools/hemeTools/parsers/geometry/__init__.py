@@ -23,7 +23,9 @@
  - sl : Index of a site in the block (site local)
  
 """
+import xdrlib
 import numpy as np
+from .. import HemeLbMagicNumber
 
 GeometryMagicNumber = 0x676D7904
 MooreNeighbourhoodDirections = np.array(
@@ -57,3 +59,13 @@ MooreNeighbourhoodDirections = np.array(
         [+1, +1, +1],
     ]
 )
+
+
+def sniff_gmy(filename):
+    """Look for HemeLB Geometry magic numbers at the start of the file."""
+    with open(filename, "rb") as f:
+        data = f.read(8)
+    up = xdrlib.Unpacker(data)
+    hlbNumber = up.unpack_uint()
+    gmyNumber = up.unpack_uint()
+    return hlbNumber == HemeLbMagicNumber and gmyNumber == GeometryMagicNumber

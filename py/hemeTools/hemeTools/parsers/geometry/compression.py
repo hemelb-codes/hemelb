@@ -15,8 +15,6 @@ import zlib
 import numpy as np
 from six.moves import range
 
-from .. import HemeLbMagicNumber
-from . import GeometryMagicNumber
 from .simple import ConfigLoader
 
 
@@ -27,8 +25,7 @@ class CompressionBase(ConfigLoader):
     (de)compression."""
 
     def __init__(self, filename, outfilename):
-        is_gmy = sniff_gmy(filename)
-        ConfigLoader.__init__(self, filename, gmy=is_gmy)
+        ConfigLoader.__init__(self, filename)
         self.OutputFileName = outfilename
 
     def OnEndPreamble(self):
@@ -79,16 +76,6 @@ class Compressor(CompressionBase):
         self.BlockDataLength[bIjk] = len(compressed)
         self.OutFile.write(compressed)
         return
-
-
-def sniff_gmy(filename):
-    """Look for HemeLB Geometry magic numbers at the start of the file."""
-    with open(filename, "rb") as f:
-        data = f.read(8)
-    up = xdrlib.Unpacker(data)
-    hlbNumber = up.unpack_uint()
-    gmyNumber = up.unpack_uint()
-    return hlbNumber == HemeLbMagicNumber and gmyNumber == GeometryMagicNumber
 
 
 def mk_argparser():

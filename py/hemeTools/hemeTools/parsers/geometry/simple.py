@@ -13,7 +13,7 @@ from six.moves import range
 
 from .generic import Domain, Block, AllSolidBlock, Site
 from .. import HemeLbMagicNumber
-from . import GeometryMagicNumber
+from . import GeometryMagicNumber, sniff_gmy
 
 
 class GeometryParsingError(Exception):
@@ -47,7 +47,8 @@ class ConfigLoader(object):
     MIN_VERSION = 4
     MAX_VERSION = 4
 
-    def __init__(self, filename, gmy=False):
+    def __init__(self, filename):
+        gmy = sniff_gmy(filename)
         if gmy:
             # In GMY-only mode so use dummy values for origin and
             # voxel size.
