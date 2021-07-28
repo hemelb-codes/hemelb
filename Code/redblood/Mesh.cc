@@ -445,11 +445,11 @@ namespace hemelb
       return mesh;
     }
 
-    void orientFacets(Mesh &mesh, bool outward)
+    unsigned orientFacets(Mesh &mesh, bool outward)
     {
-      orientFacets(*mesh.GetData(), outward);
+      return orientFacets(*mesh.GetData(), outward);
     }
-    void orientFacets(MeshData &mesh, bool outward)
+    unsigned orientFacets(MeshData &mesh, bool outward)
     {
       log::Logger::Log<log::Warning, log::Singleton>("orientFacets method for meshes constructed from a .msh file has been deprecated. Consider using VTK input files instead.");
 
@@ -465,7 +465,7 @@ namespace hemelb
       {
         vertex += recenter;
       }
-
+      unsigned nflips = 0;
       // Loop over each facet, checks orientation and modify as appropriate
       for (auto &facet : mesh.facets)
       {
@@ -477,9 +477,11 @@ namespace hemelb
 
         if ( ( (v0 - v1).Cross(v2 - v1).Dot(direction) > 0e0) xor outward)
         {
+	  ++nflips;
           std::swap(facet[0], facet[2]);
         }
       }
+      return nflips;
     }
     unsigned orientFacets(MeshData &mesh, vtkPolyData &polydata, bool outward)
     {

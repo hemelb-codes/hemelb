@@ -37,7 +37,6 @@ namespace hemelb
 }
 #define HEMELB_DOING_UNITTESTS
 #include <unittests/redblood/parallel/NodeParallelizationTests.h>
-#include "unittests/redblood/LoadingTimmMeshTests.h"
 #include "unittests/redblood/RedBloodMeshVTKDataIOTests.h"
 #include "unittests/redblood/LoadDeformedCellTests.h"
 #undef HEMELB_DOING_UNITTESTS

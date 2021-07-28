@@ -55,7 +55,7 @@ namespace hemelb
     LatticeArea area(MeshData const &mesh);
     LatticeArea area(MeshData::Vertices const &vertices, MeshData::Facets const &facets);
     //! DEPRECATED. Orients facets outward, or inward. Algorithm cannot handle case of facet being coplanar with mesh barycenter.
-    void orientFacets(MeshData &mesh, bool outward = true);
+    unsigned orientFacets(MeshData &mesh, bool outward = true);
     //! Orients facets inwards/outwards using VTK algorithm to determining outward facing direction. MeshData object should have been constructed from vtkPolyData object. See readMeshDataFromVTKPolyData.
     unsigned orientFacets(MeshData &mesh, vtkPolyData &polydata, bool outward = true);
 
@@ -243,7 +243,7 @@ namespace hemelb
     Mesh icoSphere(unsigned int depth = 0);
 
     //! Orients facet outward, or inward
-    void orientFacets(Mesh &mesh, bool outward = true);
+    unsigned orientFacets(Mesh &mesh, bool outward = true);
   }
 }
 #endif
