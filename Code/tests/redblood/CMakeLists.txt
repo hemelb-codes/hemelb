@@ -24,6 +24,7 @@ target_sources(hemelb-tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/GradientTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/InterpolationTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/Node2NodeTests.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/NodeIntegrationTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/RedBloodMeshDataIOTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/RedBloodMeshTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/StencilTests.cc

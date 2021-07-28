@@ -4,6 +4,7 @@
 // license in the file LICENSE.
 
 #include "tests/redblood/Fixtures.h"
+
 namespace hemelb {
   namespace tests {
     
@@ -47,5 +48,34 @@ namespace hemelb {
       flowExt.radius = 1.0;
     }
 
+    NodeCell::NodeCell(LatticePosition const&position, std::string const &templateName) :
+      NodeCell(std::vector<LatticePosition> { position }, templateName)
+    {
+    }
+
+    NodeCell::NodeCell(std::vector<LatticePosition> const &positions, std::string const &templateName) :
+      hemelb::redblood::Cell(positions,
+			     hemelb::redblood::Mesh(std::make_shared<
+						    hemelb::redblood::MeshData>(hemelb::redblood::MeshData { positions,
+							  { } }),
+						    std::make_shared<
+						    hemelb::redblood::MeshTopology>()),
+			     1e0,
+			     templateName)
+    {
+    }
+
+    LatticeEnergy NodeCell::operator()() const
+    {
+      return 0e0;
+    }
+    LatticeEnergy NodeCell::operator()(std::vector<LatticeForceVector> &) const
+    {
+      return 0e0;
+    }
+    std::unique_ptr<redblood::CellBase> NodeCell::cloneImpl() const
+    {
+      return std::unique_ptr<NodeCell> { new NodeCell(*this) };
+    }
   }
 }

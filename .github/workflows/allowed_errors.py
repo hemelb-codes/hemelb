@@ -9,9 +9,6 @@ import xml.etree.ElementTree as ET
 
 expected_fail_names = {
     "hemelb::unittests::redblood::LoadingTimmMeshTests::testSimulationOutputFile",
-    "hemelb::unittests::redblood::NodeIntegrationTests::testNodeWall<hemelb::redblood::stencil::FourPoint>",
-    "hemelb::unittests::redblood::NodeIntegrationTests::testNodeWall<hemelb::redblood::stencil::CosineApprox>",
-    "hemelb::unittests::redblood::NodeIntegrationTests::testNodeWall<hemelb::redblood::stencil::ThreePoint>",
 }
 
 p = argparse.ArgumentParser()

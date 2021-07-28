@@ -95,6 +95,24 @@ namespace hemelb {
       hemelb::redblood::FlowExtension flowExt;
     };
 
+    //! Fake cell that contains a single node
+    class NodeCell : public redblood::Cell
+    {
+    public:
+      NodeCell(LatticePosition const&position, std::string const &templateName = "nope");
+
+      template<class ITER>
+      NodeCell(ITER first, ITER last, std::string const &templateName = "nope") :
+	NodeCell(std::vector<LatticePosition> { first, last }, templateName)
+      {
+      }
+      NodeCell(std::vector<LatticePosition> const &positions, std::string const &templateName =
+	       "nope");
+
+      LatticeEnergy operator()() const override;
+      LatticeEnergy operator()(std::vector<LatticeForceVector> &) const override;
+      std::unique_ptr<redblood::CellBase> cloneImpl() const override;
+    };
   }
 }
 
