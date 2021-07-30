@@ -3,10 +3,11 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include <fstream>
 #include <cassert>
-#include <numeric>
+#include <deque>
+#include <fstream>
 #include <map>
+#include <numeric>
 
 #include <vtkCellData.h>
 #include <vtkPolyData.h>
@@ -14,7 +15,9 @@
 #include <vtkSmartPointer.h>
 
 #include "redblood/Mesh.h"
+#include "redblood/Facet.h"
 #include "util/fileutils.h"
+#include "util/Iterator.h"
 #include "log/Logger.h"
 #include "Exception.h"
 #include "constants.h"
@@ -449,40 +452,305 @@ namespace hemelb
     {
       return orientFacets(*mesh.GetData(), outward);
     }
+
+    using UnitVector = util::Vector3D<Dimensionless>;
+
+    // What index (i.e. 0, 1, 2) does the point `id` have in the facet `f`?
+    // If not present will return 3.
+    // This is known as Facet = std::array<IdType, 3>;
+    unsigned find_index(MeshData::Facet const& f, IdType const& id) {
+      return (unsigned)std::distance(f.begin(), std::find(f.begin(), f.end(), id));
+    }
+
+    struct MeshConnectivity {
+      IdType nPts;
+      IdType nTris;
+      
+      // We represent point-to-cell data with two arrays of `IdType`. First:
+      //   std::vector<IdType> offsets;
+      // which will hold at index `i` the offset into the second array
+      // where the data for point `i` can be found.
+      //
+      // Second: this array holds the concatenated data for all points.
+      // One point's data consists of:
+      //  - first, the number of triangles that use it
+      //  - second, the ids of all triangles that use it
+      // We know that there are 3*nTri uses of points + 1 value per
+      // point to hold the count.
+      //   std::vector<IdType> tris_using_pt;
+      //
+      // But, we can stick these together offsets first, followed by tris_using_pt
+      std::vector<IdType> point2cell;
+
+      // We have triangles on a closed, manifold surface, so each
+      // triangle connects to exactly three others.
+      std::vector<IdType> neighbours;
+
+      IdType& neigh(IdType triId, IdType i) {
+	return neighbours[3*triId + i];
+      }
+
+      IdType const& neigh(IdType triId, IdType i) const {
+	return neighbours[3*triId + i];
+      }
+      
+      explicit MeshConnectivity(MeshData const& mesh) :
+	nPts(mesh.vertices.size()),
+	nTris(mesh.facets.size()),
+	point2cell(2*nPts + 3*nTris),
+	neighbours(3*nTris, -1)
+	// point_starts(nPts),
+	// point_to_cell(nTris * 3 + nPts)
+      {
+	// First get the use counts of each point
+	// 
+	// Initialise in the IIFE so can have const
+	auto const point_use_counts = [&]() {
+	  auto ans = std::vector<IdType>(nPts, 0);
+	  for (auto const& tri: mesh.facets) {
+	    for (int dim = 0; dim < 3; ++dim) {
+	      ++ans[tri[dim]];
+	    }
+	  }
+	  return ans;
+	}();
+
+	// Compute the scan/partial sum to get the offsets (if we
+	// didn't have counts). We really want the exclusive_scan, but
+	// don't have that until C++17
+	auto const cumulative_use_count = [&]() {
+	  auto ans = std::vector<IdType>(nPts);
+	  ans[0] = 0;
+	  std::partial_sum(point_use_counts.begin(), --point_use_counts.end(),
+			   ++ans.begin());
+	  return ans;
+	}();
+	// Know sum(use_counts) == nTris * 3 and last elem of
+	// cumulative use counts is sum of all except the last
+	// element.
+	if (cumulative_use_count[nPts - 1] + point_use_counts[nPts - 1]
+	    != nTris * 3) {
+	  throw Exception() << "Use counts incorrect. I can't use partial_sum right.";
+	}
+
+	// Initialise point_starts, accounting for per-point count,
+	// and zero the count in output (as we shall use that to
+	// figure out where to write the cell IDs as we go).
+	for (IdType ptId = 0; ptId < nPts; ++ptId) {
+	  point2cell[ptId] = cumulative_use_count[ptId] + ptId + nPts;
+	  point2cell[point2cell[ptId]] = 0;
+	}
+
+	// Now fill point2cell and neighbours
+	for (IdType triId = 0; triId < nTris; ++triId) {
+	  for (int dim = 0; dim < 3; ++dim) {
+	    // For each point in each triangle, get its ID
+	    auto const& ptId = mesh.facets[triId][dim];
+
+	    // Where's it's data?
+	    auto const& start = point2cell[ptId];
+	    // Note mutable ref for inc below
+	    auto& nSeen = point2cell[start];
+
+	    // Edge i goes from point i -> i+1
+	    auto const& endPtId = mesh.facets[triId][(dim + 1) % 3];
+
+	    // First loop over tris we already know share ptId with
+	    // us, looking for those that also share endPtId. Those
+	    // are edge-neighbours. We do this first to avoid having
+	    // to exclude ourself.
+	    for (IdType const& neighId: iter_tris_using_pt(ptId)) {
+	      const auto& neighFacet = mesh.facets[neighId];
+	      auto neighEndDim = find_index(neighFacet, endPtId);
+	      if (neighEndDim != neighFacet.size()) {
+		// Found, so this is an edge neighbour, record as such
+		if (neigh(triId, dim) != -1)
+		  throw Exception() << "Setting a neighbour map value that has already been set";
+
+		neigh(triId, dim) = neighId;
+		// Find the other end within the neighbouring tri to
+		// figure out which way round it is.
+		auto neighDim = find_index(neighFacet, ptId);
+		if (neighDim == neighFacet.size())
+		  throw Exception() << "Can't find a point that I really should";
+
+		auto neighEdgeId = ((neighDim + 1) % 3 == neighEndDim) ?
+		  // This is edge neighDim
+		  neighDim :
+		  // This is edge neighDimEnd
+		  neighEndDim;
+
+		if (neigh(neighId, neighEdgeId) != -1)
+		  throw Exception() << "Setting a neighbour map value that has already been set";
+		neigh(neighId, neighEdgeId) = triId;
+	      }
+	    }
+
+	    point2cell[start + 1 + nSeen] = triId;
+	    ++nSeen;
+
+	  }
+	}
+
+#ifndef NDEBUG
+	// Check counts are correct
+	for (IdType ptId = 0; ptId < nPts; ++ptId) {
+	  if (point2cell[point2cell[ptId]] != point_use_counts[ptId]) {
+	    throw Exception() << "Point use count not correct";
+	  }
+	}
+
+	// Check no neighbours uninitialised
+	for (IdType triId = 0; triId < nTris; ++triId) {
+	  for (int i = 0; i < 3; ++i) {
+	    if (neighbours[3*triId + i] == -1) {
+	      throw Exception()
+		<< "Uninitialised neighbour map for triangle " << triId << " edge " << i;
+	    }
+	  }
+	}
+#endif
+
+      }
+
+      struct pt_cell_range {
+	IdType const * _begin;
+	IdType const * _end;
+
+	pt_cell_range(MeshConnectivity const* mc, IdType ptId) {
+	  auto data_idx = mc->point2cell[ptId];
+	  auto n = mc->point2cell[data_idx];
+
+	  _begin = &mc->point2cell[data_idx + 1];
+	  _end = &mc->point2cell[data_idx + 1 + n];
+	}
+	IdType const * begin() const {
+	  return _begin;
+	}
+	IdType const* end() const {
+	  return _end;
+	}
+      };
+
+      pt_cell_range iter_tris_using_pt(IdType ptId) const {
+	return pt_cell_range{this, ptId};
+      }
+
+    };
+
     unsigned orientFacets(MeshData &mesh, bool outward)
     {
-      log::Logger::Log<log::Warning, log::Singleton>("orientFacets method for meshes constructed from a .msh file has been deprecated. Consider using VTK input files instead.");
+      auto const nTris = mesh.facets.size();
 
-      // create a new mesh at slighly smaller scale
-      MeshData smaller(mesh);
-      auto const scale = 0.99;
-      for (auto &vertex : smaller.vertices)
-      {
-        vertex *= scale;
-      }
-      auto const recenter = barycenter(mesh) - barycenter(smaller);
-      for (auto &vertex : smaller.vertices)
-      {
-        vertex += recenter;
-      }
-      unsigned nflips = 0;
-      // Loop over each facet, checks orientation and modify as appropriate
-      for (auto &facet : mesh.facets)
-      {
-        auto const &v0 = mesh.vertices[facet[0]];
-        auto const &v1 = mesh.vertices[facet[1]];
-        auto const &v2 = mesh.vertices[facet[2]];
-        auto const direction = v0 + v1 + v2 - smaller.vertices[facet[0]]
-            - smaller.vertices[facet[1]] - smaller.vertices[facet[2]];
+      // Mutable as we'll be flipping facets below
+      MeshConnectivity conn{mesh};
 
-        if ( ( (v0 - v1).Cross(v2 - v1).Dot(direction) > 0e0) xor outward)
-        {
-	  ++nflips;
-          std::swap(facet[0], facet[2]);
-        }
+      std::vector<UnitVector> normals(nTris);
+      std::transform(mesh.facets.cbegin(), mesh.facets.cend(),
+		     normals.begin(),
+		     [&mesh](MeshData::Facet const& facet) {
+		       auto& v0 = mesh.vertices[facet[0]];
+		       auto& v1 = mesh.vertices[facet[1]];
+		       auto& v2 = mesh.vertices[facet[2]];
+		       return (v0 - v1).Cross(v2 - v1).GetNormalised();
+		     });
+
+      // Do as vtkPolyDataNormals, does, but simplified as only have
+      // one connected component.
+      // 
+      // The left-most polygon should have its outward pointing normal
+      // facing left. If it doesn't, reverse the vertex order. Then
+      // use it as the seed for other connected polys.
+
+      // To find left-most polygon, first find left-most point, and
+      // examine neighboring polys and see which one has a normal
+      // that's "most aligned" with the X-axis.
+      auto leftmost_pt_iter =
+	std::min_element(mesh.vertices.cbegin(), mesh.vertices.cend(),
+			 [](LatticePosition const& a, LatticePosition const& b) {
+			   return a.x < b.x;
+			 });
+      const IdType leftmost_pt_id = std::distance(mesh.vertices.cbegin(), leftmost_pt_iter);
+      auto leftmost_cells = conn.iter_tris_using_pt(leftmost_pt_id);
+      if (leftmost_cells.begin() == leftmost_cells.end()) {
+	throw Exception() << "No leftmost triangles found when orienting facets";
       }
-      return nflips;
+	
+      auto leftmost_tri_id =
+	*std::max_element(leftmost_cells.begin(), leftmost_cells.end(),
+			  [&normals](std::size_t a, std::size_t b) {
+			    return std::fabs(normals[a].x) < std::fabs(normals[b].x);
+			  });
+
+      unsigned nFlips = 0;
+      auto flip = [&](IdType triId) {
+	// Half-edge i is from pt i -> (i+1)%3
+	// 
+	//  0        2
+	//  |\ 2     |\ 2
+	//  | \      | \
+	// 0|  2 => 1|  0
+	//  | /      | /
+	//  |/ 1     |/ 0
+	//  1        1
+	std::swap(mesh.facets[triId][0], mesh.facets[triId][2]);
+	std::swap(conn.neigh(triId,0), conn.neigh(triId, 1));
+	normals[triId] = -normals[triId];
+	nFlips++;
+      };
+
+      // We need to track whether cells have been checked
+      auto visited = std::vector<bool>(nTris, false);
+
+      // Flip if pointing to the right.
+      if (normals[leftmost_tri_id].x > 0) {
+	flip(leftmost_tri_id);
+      }
+      visited[leftmost_tri_id] = true;
+
+      // Now we have at least one properly oriented triangle, spread this.       
+      auto edge_tris = std::deque<IdType>{};
+      edge_tris.push_back(leftmost_tri_id);
+
+      while (edge_tris.size()) {
+	IdType const curTriId = edge_tris.front();
+	edge_tris.pop_front();
+
+	auto& curTri = mesh.facets[curTriId];
+
+	// For each edge on the triangle
+	for (int i1 = 0; i1 < 3; i1++) {
+	  int i2 = (i1 + 1) % 3;
+	  IdType p1 = curTri[i1];
+	  IdType p2 = curTri[i2];
+
+	  // Find the triangle that shares this edge.
+	  IdType const& neighId = conn.neigh(curTriId, i1);
+
+	  if (visited[neighId])
+	    continue;
+	  auto const& neigh = mesh.facets[neighId];
+
+	  // What order are the points in?
+	  int j1 = find_index(neigh, p1);
+	  int j2 = find_index(neigh, p2);
+	  // If the edges run the same way, then neigh needs to flip,
+	  // otherwise fine. By that we mean:
+	  if ((j1 + 1) % 3 == j2) {
+	    flip(neighId);
+	  }
+	  visited[neighId] = true;
+	  edge_tris.push_back(neighId);
+	}
+      }
+#ifndef NDEBUG
+      if (!std::all_of(visited.begin(), visited.end(), [](bool x) { return x; }))
+	throw Exception() << "Some triangles not visited";
+#endif
+
+      return nFlips;
     }
+
     unsigned orientFacets(MeshData &mesh, vtkPolyData &polydata, bool outward)
     {
       vtkSmartPointer<vtkPolyDataNormals> normalCalculator = vtkSmartPointer<vtkPolyDataNormals>::New();
@@ -493,8 +761,11 @@ namespace hemelb
       normalCalculator->Update();
       auto normals = normalCalculator->GetOutput()->GetCellData()->GetNormals();
 
-      assert(normals->GetNumberOfComponents() == 3);
-      assert(normals->GetNumberOfTuples() == mesh.facets.size());
+      if (normals->GetNumberOfComponents() != 3)
+	throw Exception() << "Normals does not have 3 components";
+
+      if (normals->GetNumberOfTuples() != IdType(mesh.facets.size()))
+	throw Exception() << "Normals does not have " << mesh.facets.size() << " entries, it has " << normals->GetNumberOfTuples();
 
       // Loop over each facet, checks orientation and modify as appropriate
       unsigned normalId = 0;
