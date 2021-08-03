@@ -19,7 +19,7 @@ target_link_libraries(hemelb-tests PRIVATE
   TinyXML::TinyXML
   ${heme_libraries}
   ${MPI_LIBRARIES})
-INSTALL(TARGETS hemelb-tests RUNTIME DESTINATION bin)
+install(TARGETS hemelb-tests RUNTIME DESTINATION bin)
 
 add_to_resources(resources/four_cube.gmy resources/four_cube.xml resources/four_cube_multiscale.xml
   resources/config.xml resources/config0_2_0.xml
@@ -43,7 +43,12 @@ add_subdirectory(io)
 add_subdirectory(lb)
 add_subdirectory(multiscale)
 add_subdirectory(net)
-add_subdirectory(redblood)
 add_subdirectory(reporting)
 add_subdirectory(util)
 add_subdirectory(vis)
+
+if (HEMELB_BUILD_RBC)
+  add_subdirectory(redblood)
+  # redblood tests need VTK
+  target_link_libraries(hemelb-tests PRIVATE VTK::CommonCore)
+endif()

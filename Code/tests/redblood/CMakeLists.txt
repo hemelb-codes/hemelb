@@ -28,6 +28,7 @@ target_sources(hemelb-tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/NodeIntegrationTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/RedBloodMeshDataIOTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/RedBloodMeshTests.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/RedBloodMeshVTKDataIOTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/StencilTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/TopologyTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/VertexBagTests.cc
