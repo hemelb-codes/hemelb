@@ -7,6 +7,7 @@
 #define HEMELB_TESTS_HELPERS_FOLDERTESTFIXTURE_H
 
 #include <string>
+#include <fstream>
 #include <tinyxml.h>
 
 #include "tests/helpers/HasCommsTestFixture.h"
