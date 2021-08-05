@@ -234,12 +234,12 @@ namespace hemelb
 
         redblood::MeshData::Facet indices;
         indices[0] = 0;
-        indices[1] = 1;
-        indices[2] = 2;
-        data->facets.push_back(indices);
-        indices[0] = 0;
         indices[1] = 2;
         indices[2] = 3;
+        data->facets.push_back(indices);
+        indices[0] = 0;
+        indices[1] = 1;
+        indices[2] = 2;
         data->facets.push_back(indices);
         indices[0] = 0;
         indices[1] = 3;
