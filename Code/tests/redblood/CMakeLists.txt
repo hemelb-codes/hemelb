@@ -38,4 +38,6 @@ target_sources(hemelb-tests PRIVATE
 
   ${CMAKE_CURRENT_SOURCE_DIR}/buffer/BufferTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/buffer/ColumnsTests.cc
+
+  ${CMAKE_CURRENT_SOURCE_DIR}/parallel/NodeParallelizationTests.cc
   )
