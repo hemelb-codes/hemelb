@@ -9,7 +9,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: py/hemeTools
+        working-directory: python-tools/hemeTools
 
     steps:
       - uses: actions/checkout@v2
@@ -62,4 +62,4 @@ jobs:
 
       - name: Test with tox
         run: tox
-        working-directory: main/py/hemeTools
+        working-directory: main/python-tools/hemeTools
