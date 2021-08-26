@@ -33,7 +33,7 @@ bool BlockHasEdges(const Block& block) {
 	if (_CheckMin(ind))
 		return true;
 
-	if (_CheckMax(ind, block.GetDomain().GetBlockCounts() - 1))
+	if (_CheckMax(ind, block.GetDomain().GetBlockCounts() - Index{1}))
 		return true;
 	return false;
 }
@@ -42,14 +42,14 @@ bool SiteIsEdge(const Site& site) {
 	if (_CheckMin(ind))
 		return true;
 
-	if (_CheckMax(ind, site.GetBlock().GetDomain().GetSiteCounts() - 1))
+	if (_CheckMax(ind, site.GetBlock().GetDomain().GetSiteCounts() - Index{1}))
 		return true;
 	return false;
 }
 
 
 Block::Block(Domain& dom, const Index& ind, const unsigned int& size) :
-	size(size), index(ind), min(ind * size), max((ind + 1) * size), domain(dom) {
+	size(size), index(ind), min(ind * size), max((ind + Index{1}) * size), domain(dom) {
 	this->sites.resize(size * size * size);
 	unsigned int ijk = 0;
 	const bool blockHasEdge = BlockHasEdges(*this);

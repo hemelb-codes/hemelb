@@ -27,7 +27,7 @@ struct LinkData {
 	float DistanceInVoxels;
 	Vector WallNormalAtWallCut;
 	inline LinkData() :
-			Type(geometry::CUT_NONE), Distance(0.), DistanceInVoxels(0.), WallNormalAtWallCut(
+	  Type(geometry::CutType::NONE), Distance(0.), DistanceInVoxels(0.), WallNormalAtWallCut(
 					0) {
 	}
 	;

@@ -71,10 +71,10 @@ void SquareDuctGenerator::ClassifySite(Site& site) {
 		// Will handle the last two together.
 		if (site.IsFluid == neigh.IsFluid) {
 			if (site.IsFluid) {
-				// Fluid-fluid, must set CUT_NONE for both
-				site.Links[iNeigh].Type = geometry::CUT_NONE;
+				// Fluid-fluid, must set CutType::NONE for both
+				site.Links[iNeigh].Type = geometry::CutType::NONE;
 				neigh.Links[Neighbours::inverses[iNeigh]].Type =
-						geometry::CUT_NONE;
+						geometry::CutType::NONE;
 			} else {
 				// solid-solid, nothing to do.
 			}
@@ -119,14 +119,14 @@ void SquareDuctGenerator::ClassifySite(Site& site) {
 			// Figure out what this means
 			if (type[this->SquareDuct->OpenAxis] == 0) {
 				// Def not an iolet
-				link.Type = geometry::CUT_WALL;
+				link.Type = geometry::CutType::WALL;
 			} else {
 				// Assume it's iolet
 				if (type[this->SquareDuct->OpenAxis] < 0) {
-					link.Type = geometry::CUT_INLET;
+					link.Type = geometry::CutType::INLET;
 					link.IoletId = 0;
 				} else {
-					link.Type = geometry::CUT_OUTLET;
+					link.Type = geometry::CutType::OUTLET;
 					link.IoletId = 0;
 				}
 
@@ -136,14 +136,14 @@ void SquareDuctGenerator::ClassifySite(Site& site) {
 				 * happening exactly at the duct edge, we take the wall normal
 				 * to be the same as the direction of the intersecting link.
 				 */
-				link.WallNormalAtWallCut = 0.0;
+				link.WallNormalAtWallCut = {0.0, 0.0, 0.0};
 				for (i = 0; i < 3; ++i) {
 					if (i == this->SquareDuct->OpenAxis) {
 						// skip
 					} else {
 						if (type[i] != 0) {
 							// This also crosses a wall - so wall
-							link.Type = geometry::CUT_WALL;
+							link.Type = geometry::CutType::WALL;
 							switch (i) {
 							case 0:
 								link.WallNormalAtWallCut += Vector(type[i], 0,

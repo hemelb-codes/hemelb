@@ -229,10 +229,10 @@ void CylinderGenerator::ClassifySite(Site& site) {
 		// Will handle the last two together.
 		if (site.IsFluid == neigh.IsFluid) {
 			if (site.IsFluid) {
-				// Fluid-fluid, must set CUT_NONE for both
-				site.Links[iNeigh].Type = geometry::CUT_NONE;
+				// Fluid-fluid, must set CutType::NONE for both
+				site.Links[iNeigh].Type = geometry::CutType::NONE;
 				neigh.Links[Neighbours::inverses[iNeigh]].Type =
-						geometry::CUT_NONE;
+						geometry::CutType::NONE;
 			} else {
 				// solid-solid, nothing to do.
 			}
@@ -270,21 +270,21 @@ void CylinderGenerator::ClassifySite(Site& site) {
 
 			if (hit.cellId < 0) {
 				// -1 => we hit a wall
-				link.Type = geometry::CUT_WALL;
+				link.Type = geometry::CutType::WALL;
 			} else {
 				// We hit an inlet or outlet
 				Iolet* iolet = this->Iolets[hit.cellId];
 				if (iolet->IsInlet) {
-					link.Type = geometry::CUT_INLET;
+					link.Type = geometry::CutType::INLET;
 				} else {
-					link.Type = geometry::CUT_OUTLET;
+					link.Type = geometry::CutType::OUTLET;
 				}
 				// Set the Id
 				link.IoletId = iolet->Id;
 			}
 
 			// If this link intersected the wall, store the normal of the cell we hit and the distance to it.
-			if (link.Type == geometry::CUT_WALL) {
+			if (link.Type == geometry::CutType::WALL) {
 				this->ComputeCylinderNormalAtAPoint(link.WallNormalAtWallCut,
 						hit.pt, this->Cylinder->Axis);
 				link.DistanceInVoxels = distanceInVoxels;

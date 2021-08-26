@@ -66,17 +66,17 @@ BlockIterator Domain::end() {
 
 BlockIterator::BlockIterator() :
 	domain(NULL), current(0, 0, 0) {
-	this->maxima = this->domain->BlockCounts - 1;
+	this->maxima = this->domain->BlockCounts - Index{1};
 }
 
 BlockIterator::BlockIterator(Domain& dom) :
 	domain(&dom), current(0, 0, 0) {
-	this->maxima = this->domain->BlockCounts - 1;
+	this->maxima = this->domain->BlockCounts - Index{1};
 }
 
 BlockIterator::BlockIterator(Domain& dom, const Index& start) :
 	domain(&dom), current(start) {
-	this->maxima = this->domain->BlockCounts - 1;
+	this->maxima = this->domain->BlockCounts - Index{1};
 }
 
 BlockIterator::BlockIterator(const BlockIterator& other) :

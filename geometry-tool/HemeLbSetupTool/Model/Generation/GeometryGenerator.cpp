@@ -93,7 +93,7 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks)
 				site.CreateLinksVector();
 				for (unsigned int link_index = 0;
 						link_index < site.Links.size(); ++link_index) {
-					site.Links[link_index].Type = geometry::CUT_NONE;
+					site.Links[link_index].Type = geometry::CutType::NONE;
 				}
 				blockWriterPtr->IncrementFluidSitesCount();
 				WriteFluidSite(*blockWriterPtr, site);
@@ -110,25 +110,25 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks)
 }
 
 void GeometryGenerator::WriteSolidSite(BlockWriter& blockWriter, Site& site) {
-	blockWriter << static_cast<unsigned int>(geometry::SOLID);
+	blockWriter << static_cast<unsigned int>(geometry::SiteType::SOLID);
 	// That's all in this case.
 }
 
 void GeometryGenerator::WriteFluidSite(BlockWriter& blockWriter, Site& site) {
-	blockWriter << static_cast<unsigned int>(geometry::FLUID);
+	blockWriter << static_cast<unsigned int>(geometry::SiteType::FLUID);
 
 	// Iterate over the displacements of the neighbourhood
 	for (unsigned int i = 0; i < Neighbours::n; ++i) {
-		unsigned int cutType = site.Links[i].Type;
+		auto&& cutType = site.Links[i].Type;
 
-		if (cutType == geometry::CUT_NONE) {
-			blockWriter << static_cast<unsigned int>(geometry::CUT_NONE);
-		} else if (cutType == geometry::CUT_WALL
-				|| cutType == geometry::CUT_INLET
-				|| cutType == geometry::CUT_OUTLET) {
+		if (cutType == geometry::CutType::NONE) {
+			blockWriter << static_cast<unsigned int>(geometry::CutType::NONE);
+		} else if (cutType == geometry::CutType::WALL
+				|| cutType == geometry::CutType::INLET
+				|| cutType == geometry::CutType::OUTLET) {
 			blockWriter << static_cast<unsigned int>(cutType);
-			if (cutType == geometry::CUT_INLET
-					|| cutType == geometry::CUT_OUTLET) {
+			if (cutType == geometry::CutType::INLET
+					|| cutType == geometry::CutType::OUTLET) {
 				blockWriter << static_cast<unsigned int>(site.Links[i].IoletId);
 			}
 			blockWriter << static_cast<float>(site.Links[i].Distance);
@@ -144,13 +144,13 @@ void GeometryGenerator::WriteFluidSite(BlockWriter& blockWriter, Site& site) {
 	// if so write it.
 	if (site.WallNormalAvailable) {
 		blockWriter
-				<< static_cast<unsigned int>(geometry::WALL_NORMAL_AVAILABLE);
+				<< static_cast<unsigned int>(geometry::WallNormalAvailability::AVAILABLE);
 		blockWriter << static_cast<float>(site.WallNormal[0]);
 		blockWriter << static_cast<float>(site.WallNormal[1]);
 		blockWriter << static_cast<float>(site.WallNormal[2]);
 	} else {
 		blockWriter
-				<< static_cast<unsigned int>(geometry::WALL_NORMAL_NOT_AVAILABLE);
+				<< static_cast<unsigned int>(geometry::WallNormalAvailability::NOT_AVAILABLE);
 	}
 }
 
@@ -158,12 +158,12 @@ void GeometryGenerator::ComputeAveragedNormal(Site& site) const {
 	site.WallNormalAvailable = false;
 
 	if (site.IsFluid) {
-		site.WallNormal = 0.0;
+		site.WallNormal = {0.0, 0.0, 0.0};
 
 		// Compute a weighted sum of the wall normals available and normalise it.
 		for (unsigned neighId = 0; neighId < Neighbours::n; ++neighId) {
 			LinkData& link = site.Links[neighId];
-			if (link.Type == geometry::CUT_WALL) {
+			if (link.Type == geometry::CutType::WALL) {
 
 				assert(link.DistanceInVoxels != 0);
 				double weight = 1 / link.DistanceInVoxels;

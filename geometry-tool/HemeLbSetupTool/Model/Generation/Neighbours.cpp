@@ -8,11 +8,10 @@
 
 #include "io/formats/geometry.h"
 // shortcut to geometry class
-using hemelb::io::formats::geometry;
 
 void Neighbours::Init() {
-	// copy in the vectors of the neighbourhood
-	Neighbours::vectors = geometry::GetNeighbourhood();
+  // copy in the vectors of the neighbourhood
+  Neighbours::vectors = {gmy::Neighbourhood.begin(), gmy::Neighbourhood.end()};
 
 	//unsigned int iLater = 0;
 	for (unsigned int i = 0, iLater = 0; i < Neighbours::n; ++i) {

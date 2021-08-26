@@ -11,23 +11,19 @@
 #include "Index.h"
 
 #include "io/formats/geometry.h"
-// shortcut to geometry class
-using hemelb::io::formats::geometry;
 
 struct Neighbours {
-	// This assumes that the hemelb lattice descriptor class has a zero vector.
+  // shortcut to geometry class
+  using gmy = hemelb::io::formats::geometry;
 
-	enum {
-		n = geometry::NumberOfDisplacements
-	};
-	enum {
-		nLater = n / 2
-	};
+  // This assumes that the hemelb lattice descriptor class has a zero vector.
+  static constexpr int n = gmy::NumberOfDisplacements;
+  static constexpr int nLater = n / 2;
 
-	static std::vector<unsigned int> laterNeighbourIndices;
-	static geometry::DisplacementVector vectors;
-	static std::vector<double> norms;
-	static std::vector<unsigned int> inverses;
+  static std::vector<unsigned int> laterNeighbourIndices;
+  static std::vector<gmy::Displacement> vectors;
+  static std::vector<double> norms;
+  static std::vector<unsigned int> inverses;
 
 	static void Init();
 private:
