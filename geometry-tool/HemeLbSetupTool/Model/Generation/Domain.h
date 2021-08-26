@@ -84,7 +84,7 @@ protected:
 	Index BlockCounts;
 	Index SiteCounts;
 	Vector OriginWorking;
-	unsigned int BlockSize;
+	int BlockSize;
 
 	std::vector<Block*> blocks;
 
