@@ -6,6 +6,21 @@
 
 #include "PolyDataGenerator.h"
 
+#include <iostream>
+#include <cmath> 
+#include <ctime>
+#include <vector>
+
+#include <vtkPolyDataAlgorithm.h>
+#include <vtkOBBTree.h>
+#include <vtkPolyData.h>
+#include <vtkPoints.h>
+#include <vtkIdList.h>
+#include <vtkCellData.h>
+#include <vtkDataSet.h>
+#include <vtkMatrix4x4.h>
+#include <vtkXMLPolyDataWriter.h>
+
 #include "Neighbours.h"
 #include "Site.h"
 #include "InconsistentFluidnessError.h"
@@ -21,21 +36,8 @@
 
 #include "io/formats/geometry.h"
 
-#include "vtkPolyDataAlgorithm.h"
-#include "vtkOBBTree.h"
-#include "vtkPolyData.h"
-#include "vtkPoints.h"
-#include "vtkIdList.h"
-#include "vtkCellData.h"
-#include "vtkDataSet.h"
-#include "vtkMatrix4x4.h"
-#include "Block.h"
-#include "vtkXMLPolyDataWriter.h"
 
-#include <iostream>
-#include <cmath> 
-#include <ctime>
-#include <vector>
+#include "Block.h"
 
 
 using namespace hemelb::io::formats;
@@ -51,12 +53,6 @@ PolyDataGenerator::PolyDataGenerator():
 }
 
 PolyDataGenerator::~PolyDataGenerator() {
-	this->Locator->Delete();
-	this->hitPoints->Delete();
-	this->hitCellIds->Delete();
-	delete this->AABBtree;
-	delete this->ClippedCGALSurface;
-	delete this->triangle;
 }
 
 void PolyDataGenerator::ComputeBounds(double bounds[6]) const {
@@ -166,8 +162,8 @@ void PolyDataGenerator::CreateCGALPolygon(void){
 	polys = this->ClippedSurface->GetPolys();
 	pts =  this->ClippedSurface->GetPoints();
 	vtkIntArray* Iolets = this->IoletIdArray;
-	this->triangle = new BuildCGALPolygon<HalfedgeDS>(pts, polys,Iolets);
-	this->ClippedCGALSurface = new Polyhedron;
+	this->triangle = std::make_unique<BuildCGALPolygon<HalfedgeDS>>(pts, polys,Iolets);
+	this->ClippedCGALSurface = std::make_unique<Polyhedron>();
 	this->ClippedCGALSurface->delegate(*this->triangle);
 	this->ClippedCGALSurface->normalize_border();
 	if (!this->ClippedCGALSurface->is_closed()){
@@ -199,7 +195,7 @@ void PolyDataGenerator::CreateCGALPolygon(void){
 			out.close();
 		}
 	}
-	this->AABBtree = new Tree(this->ClippedCGALSurface->facets_begin(),this->ClippedCGALSurface->facets_end());
+	this->AABBtree = std::make_unique<Tree>(this->ClippedCGALSurface->facets_begin(),this->ClippedCGALSurface->facets_end());
 	duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
     std::cout << "Preprocessing took: "<< duration << " s " << endl;
 
@@ -363,14 +359,14 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 				link.Type = geometry::CutType::WALL;
 			} else {
 				// We hit an inlet or outlet
-				Iolet* iolet = this->Iolets[ioletId];
-				if (iolet->IsInlet) {
+				Iolet const& iolet = this->Iolets[ioletId];
+				if (iolet.IsInlet) {
 					link.Type = geometry::CutType::INLET;
 				} else {
 					link.Type = geometry::CutType::OUTLET;
 				}
 				// Set the Id
-				link.IoletId = iolet->Id;
+				link.IoletId = iolet.Id;
 			}
 			
 			// If this link intersected the wall, store the normal of the cell we hit and the distance to it.
@@ -575,17 +571,17 @@ int IntersectingLeafCounter(vtkOBBNode* polyNode, vtkOBBNode* cubeNode,
 
 int PolyDataGenerator::BlockInsideOrOutsideSurface(const Block &block) {
 	// Create an OBB tree for the block
-	vtkOBBTree *blockSlightlyLargerOBBTree = block.CreateOBBTreeModel(1.0);
+	vtkSmartPointer<vtkOBBTree> blockSlightlyLargerOBBTree = block.CreateOBBTreeModel(1.0);
 
 	// Count the number of domain OBB leaf nodes that intersect the single
 	// node created for the block.
 	int intersection_count = 0;
 	Locator->IntersectWithOBBTree(blockSlightlyLargerOBBTree, NULL,
 			IntersectingLeafCounter, static_cast<void*>(&intersection_count));
-	// Delete the underlying polydata
-	blockSlightlyLargerOBBTree->GetDataSet()->Delete();
-	// And the OBBTree itself
-	blockSlightlyLargerOBBTree->Delete();
+	// // Delete the underlying polydata
+	// blockSlightlyLargerOBBTree->GetDataSet()->Delete();
+	// // And the OBBTree itself
+	// blockSlightlyLargerOBBTree->Delete();
 
 	if (intersection_count == 0) {
 		// either entirely inside or entirely outside

@@ -29,11 +29,17 @@ import pdb
 
 np.seterr(divide='ignore')
 
+# Add Pythonic printing
+class DoubleVector(Generation.DoubleVector):
+    def __str__(self):
+        return f"({self.x}, {self.y}, {self.z})"
+    def __repr__(self):
+        return f"DoubleVector({self.x}, {self.y}, {self.z})"
 
 def DVfromV(v):
     """Translate a Model.Vector.Vector to a Generation.DoubleVector.
     """
-    return Generation.DoubleVector(v.x, v.y, v.z)
+    return DoubleVector(v.x, v.y, v.z)
 
 
 class GeometryGenerator(object):
@@ -69,9 +75,9 @@ class GeometryGenerator(object):
     def _SetCommonGeneratorProperties(self):
         self.generator.SetOutputGeometryFile(
             str(self._profile.OutputGeometryFile))
-        # We need to keep a reference to this to make sure it's not GC'ed
-        self.ioletProxies = self._MakeIoletProxies()
-        self.generator.SetIolets(self.ioletProxies)
+        # # We need to keep a reference to this to make sure it's not GC'ed
+        # self.ioletProxies = 
+        self.generator.SetIolets(self._MakeIoletProxies())
         return
 
     def Execute(self):
@@ -221,8 +227,8 @@ class CylinderGenerator(GeometryGenerator):
 
         self.generator.SetCylinderLength(LengthMetres / VoxelSizeMetres)
         self.generator.SetCylinderRadius(RadiusMetres / VoxelSizeMetres)
-        self.generator.SetCylinderCentre(Generation.DoubleVector(0., 0., 0.))
-        self.generator.SetCylinderAxis(Generation.DoubleVector(*self.Axis))
+        self.generator.SetCylinderCentre(DoubleVector(0., 0., 0.))
+        self.generator.SetCylinderAxis(DoubleVector(*self.Axis))
         return
 
     def _MakeIolets(self):
@@ -262,7 +268,7 @@ class SquareDuctGenerator(GeometryGenerator):
         self.OpenAxis = OpenAxis
         self.LengthVoxels = LengthVoxels
         self.SideVoxels = SideVoxels
-        self.Sizes = Generation.DoubleVector(SideVoxels, SideVoxels, SideVoxels)
+        self.Sizes = DoubleVector(SideVoxels, SideVoxels, SideVoxels)
         self.Sizes[OpenAxis] = LengthVoxels
         
         self.InletPressure = InletPressure
@@ -292,7 +298,7 @@ class SquareDuctGenerator(GeometryGenerator):
         c[self.OpenAxis] = -0.5 * self.LengthVoxels * self._profile.VoxelSize
         inlet.Centre = Vector(*c)
         
-        n = Generation.DoubleVector()
+        n = DoubleVector()
         n[self.OpenAxis] = 1.
         inlet.Normal = Vector(n.x, n.y, n.z)
         
@@ -306,7 +312,7 @@ class SquareDuctGenerator(GeometryGenerator):
         c[self.OpenAxis] = 0.5 * self.LengthVoxels * self._profile.VoxelSize
         outlet.Centre = Vector(*c)
         
-        n = Generation.DoubleVector()
+        n = DoubleVector()
         n[self.OpenAxis] = -1.
         outlet.Normal = Vector(n.x, n.y, n.z)
         

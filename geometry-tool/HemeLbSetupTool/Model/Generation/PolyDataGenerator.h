@@ -10,6 +10,7 @@
 #include "GeometryGenerator.h"
 
 // VTK bits we need
+#include <vtkSmartPointer.h>
 class vtkPolyData;
 class vtkOBBTree;
 class vtkPoints;
@@ -17,7 +18,6 @@ class vtkIdList;
 class vtkIntArray;
 
 #include "GetSet.h"
-#include "Iolet.h"
 #include "GenerationError.h"
 
 class GeometryWriter;
@@ -49,10 +49,10 @@ public:
 		this->SeedPointWorking[2] = z;
 	}
 
-	inline vtkPolyData* GetClippedSurface(void) {
+	inline vtkSmartPointer<vtkPolyData> GetClippedSurface(void) {
 		return this->ClippedSurface;
 	}
-	inline void SetClippedSurface(vtkPolyData* val) {
+	inline void SetClippedSurface(vtkSmartPointer<vtkPolyData> val) {
 		this->ClippedSurface = val;
 	}
 
@@ -65,22 +65,22 @@ private:
 	int ComputeIntersections(Site& from, Site& to);
 	int ComputeIntersectionsCGAL(Site& from, Site& to);
 	bool InsideOutside(Site& site);
-	BuildCGALPolygon<HalfedgeDS>* triangle;
+	std::unique_ptr<BuildCGALPolygon<HalfedgeDS>> triangle;
 	// represents whether the block is inside (-1) outside (+1) or undetermined (0)
 	virtual int BlockInsideOrOutsideSurface(const Block &block);
 	// Members set from outside to initialise
 	double SeedPointWorking[3];
-	vtkPolyData* ClippedSurface;
-	vtkOBBTree* Locator;
-	Polyhedron* ClippedCGALSurface;
-	Tree* AABBtree;
+	vtkSmartPointer<vtkPolyData> ClippedSurface;
+	vtkSmartPointer<vtkOBBTree> Locator;
+	std::unique_ptr<Polyhedron> ClippedCGALSurface;
+	std::unique_ptr<Tree> AABBtree;
 	//PointInside *inside_with_ray;
 	// Members used internally
-	vtkPoints* hitPoints;
-	vtkIdList* hitCellIds;
+	vtkSmartPointer<vtkPoints> hitPoints;
+	vtkSmartPointer<vtkIdList> hitCellIds;
 	std::vector<Object_and_primitive_id> hitCellIdsCGAL;
 	std::vector<Object_Primitive_and_distance> IntersectionCGAL;
-	vtkIntArray* IoletIdArray;
+	vtkSmartPointer<vtkIntArray> IoletIdArray;
 	std::vector<PointCGAL> HitPointsCGAL;
 	int Intersect(Site& site, Site& neigh);
 	static bool distancesort(const Object_Primitive_and_distance i,const Object_Primitive_and_distance j);

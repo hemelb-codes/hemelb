@@ -7,9 +7,23 @@
 #include "BuildCGALPolygon.h"
 #include "io/formats/geometry.h"
 
-
 #include <CGAL/Polyhedron_incremental_builder_3.h>
 #include <CGAL/Polyhedron_3.h>
+
+#include <vtkIntArray.h>
+#include <vtkPoints.h>
+#include <vtkCellArray.h>
+
+// #include "vtkIdList.h"
+// #include "vtkCellData.h"
+// #include "vtkPolyDataAlgorithm.h"
+// #include "vtkOBBTree.h"
+
+// #include "vtkCellData.h"
+// #include "vtkDataSet.h"
+// #include "vtkMatrix4x4.h"
+// #include "vtkXMLPolyDataWriter.h"
+// #include "vtkCellArray.h"
 
 using namespace hemelb::io::formats;
 

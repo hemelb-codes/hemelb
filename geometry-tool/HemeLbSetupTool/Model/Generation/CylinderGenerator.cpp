@@ -90,17 +90,17 @@ typedef std::priority_queue<Hit> HitList;
  * parametic line coordinate t. We use a priority_queue to keep the hits in
  * order.
  */
-Hit ComputeIntersection(CylinderData* cyl, std::vector<Iolet*>& iolets,
+Hit ComputeIntersection(CylinderData const* cyl, std::vector<Iolet> const& iolets,
 		Site& from, Site& to) {
 	HitList hitList = HitList();
 	/*
 	 * The equation of the line segment is:
 	 * x(t) = a + t (b - a)		t E (0, 1)
 	 */
-	Vector& n = cyl->Axis;
-	double& r = cyl->Radius;
-	Vector& c = cyl->Centre;
-	double& h = cyl->Length;
+	auto const& n = cyl->Axis;
+	auto const& r = cyl->Radius;
+	auto const& c = cyl->Centre;
+	auto const& h = cyl->Length;
 
 	{
 		/*
@@ -162,15 +162,14 @@ Hit ComputeIntersection(CylinderData* cyl, std::vector<Iolet*>& iolets,
 	Vector& a = from.Position;
 	Vector& b = to.Position;
 	Vector b_a = b - a;
-	for (std::vector<Iolet*>::iterator iIt = iolets.begin();
-			iIt != iolets.end(); ++iIt) {
-		Iolet* iolet = *iIt;
+	for (auto iIt = iolets.begin(); iIt != iolets.end(); ++iIt) {
+		Iolet const& iolet = *iIt;
 		/*
 		 * Plane equation is x.p = q.p (p = plane normal, q = point on plane)
 		 * Line is x = a + t(b-a)
 		 */
-		Vector& q = iolet->Centre;
-		Vector& p = iolet->Normal;
+		Vector const& q = iolet.Centre;
+		Vector const& p = iolet.Normal;
 
 		double t = Vector::Dot(q - a, p) / Vector::Dot(b_a, p);
 		if (t > 0. && t < 1. + TOL) {
@@ -273,14 +272,14 @@ void CylinderGenerator::ClassifySite(Site& site) {
 				link.Type = geometry::CutType::WALL;
 			} else {
 				// We hit an inlet or outlet
-				Iolet* iolet = this->Iolets[hit.cellId];
-				if (iolet->IsInlet) {
+				Iolet const& iolet = this->Iolets[hit.cellId];
+				if (iolet.IsInlet) {
 					link.Type = geometry::CutType::INLET;
 				} else {
 					link.Type = geometry::CutType::OUTLET;
 				}
 				// Set the Id
-				link.IoletId = iolet->Id;
+				link.IoletId = iolet.Id;
 			}
 
 			// If this link intersected the wall, store the normal of the cell we hit and the distance to it.

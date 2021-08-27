@@ -11,7 +11,6 @@
 
 #include "Index.h"
 #include "GetSet.h"
-#include "Iolet.h"
 #include "GenerationError.h"
 
 class GeometryWriter;
