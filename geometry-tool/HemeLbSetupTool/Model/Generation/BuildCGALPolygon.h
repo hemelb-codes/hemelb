@@ -10,24 +10,14 @@
 
 #include "CGALtypedef.h"
 
-#include "vtkIdList.h"
-#include "vtkCellData.h"
-#include "vtkPolyDataAlgorithm.h"
-#include "vtkOBBTree.h"
-#include "vtkPolyData.h"
-#include "vtkPoints.h"
-#include "vtkCellData.h"
-#include "vtkDataSet.h"
-#include "vtkMatrix4x4.h"
 #include "Block.h"
-#include "vtkXMLPolyDataWriter.h"
-#include "vtkCellArray.h"
-
 
 #include <CGAL/Polyhedron_incremental_builder_3.h>
 #include <CGAL/Polyhedron_3.h>
 
-
+class vtkPoints;
+class vtkCellArray;
+class vtkIntArray;
 
 template <class HDS>
 class BuildCGALPolygon: public CGAL::Modifier_base<HDS> {

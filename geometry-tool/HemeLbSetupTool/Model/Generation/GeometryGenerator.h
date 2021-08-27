@@ -31,11 +31,14 @@ public:
 		this->OutputGeometryFile = val;
 	}
 
-	inline std::vector<Iolet*>& GetIolets() {
+	inline std::vector<Iolet>& GetIolets() {
 		return this->Iolets;
 	}
-	inline void SetIolets(std::vector<Iolet*> iv) {
-		this->Iolets = std::vector<Iolet*>(iv);
+	inline std::vector<Iolet> const& GetIolets() const{
+		return this->Iolets;
+	}
+	inline void SetIolets(std::vector<Iolet> iv) {
+		this->Iolets = iv;
 	}
 
 	inline void SetOriginWorking(double x, double y, double z) {
@@ -73,7 +76,7 @@ protected:
 	double OriginWorking[3];
 	unsigned SiteCounts[3];
 	std::string OutputGeometryFile;
-	std::vector<Iolet*> Iolets;
+	std::vector<Iolet> Iolets;
 	virtual int BlockInsideOrOutsideSurface(const Block &block) = 0;
 };
 

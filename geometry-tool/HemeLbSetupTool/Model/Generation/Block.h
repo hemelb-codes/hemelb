@@ -8,14 +8,17 @@
 #define HEMELBSETUPTOOL_BLOCK_H
 
 #include <vector>
+#include <vtkSmartPointer.h>
+
+class vtkOBBTree;
 
 #include "Index.h"
 class Site;
-class vtkOBBTree;
 #include "Domain.h"
 
-typedef std::vector<Site*> SiteVec;
-typedef SiteVec::iterator SiteIterator;
+using SiteVec = std::vector<Site*>;
+using SiteIterator = SiteVec::iterator;
+
 class Block {
 public:
 	//typedef std::vector<Site*>::iterator iterator;
@@ -40,7 +43,7 @@ public:
 	inline const Index& GetIndex() const {
 		return this->index;
 	}
-    vtkOBBTree * CreateOBBTreeModel(double extraSize) const;
+    vtkSmartPointer<vtkOBBTree> CreateOBBTreeModel(double extraSize) const;
     
     const Site & Middle() const {
         return *sites[sites.size()/2];

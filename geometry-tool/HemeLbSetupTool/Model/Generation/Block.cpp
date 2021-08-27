@@ -13,7 +13,6 @@
 #include "vtkOBBTree.h"
 #include "vtkCubeSource.h"
 #include "vtkXMLPolyDataWriter.h"
-#include "vtkTriangleFilter.h"
 
 /*
  * Helper functions to check if sites are on the edge of the Domain.
@@ -75,11 +74,11 @@ Block::Block(Domain& dom, const Index& ind, const unsigned int& size) :
 	}
 }
 
-vtkOBBTree * Block::CreateOBBTreeModel(double extraSize) const
+vtkSmartPointer<vtkOBBTree> Block::CreateOBBTreeModel(double extraSize) const
 {
     // Create an OBB Tree which is a cube slightly bigger than this block
-    vtkOBBTree * result = vtkOBBTree::New();
-    vtkCubeSource * cubeSource = vtkCubeSource::New();
+    vtkNew<vtkOBBTree> result;
+    vtkNew<vtkCubeSource> cubeSource;
     
     cubeSource->SetBounds(
         sites.front()->Position[0] - extraSize,
@@ -89,7 +88,7 @@ vtkOBBTree * Block::CreateOBBTreeModel(double extraSize) const
         sites.front()->Position[2] -extraSize,
         sites.back()->Position[2]  +extraSize);
 
-    vtkPolyData * cubePolyData = vtkPolyData::New();
+    vtkNew<vtkPolyData> cubePolyData;
     cubeSource->SetOutput(cubePolyData);
     cubeSource->Update();
 
