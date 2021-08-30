@@ -1,0 +1,87 @@
+name: Geometry tool
+on:
+  push:
+    branches:
+      - main
+
+    paths:
+      - '.github/workflows/gmy-*'
+      - 'geometry-tool/**'
+      - Code/util/Vector3D.cc
+      - Code/geometry/SiteDataBare.cc
+      - Code/lb/lattices/D3Q27.cc
+      - Code/io/formats/geometry.cc
+      - Code/io/writers/xdr/XdrFileWriter.cc
+      - Code/io/writers/xdr/XdrMemWriter.cc
+      - Code/io/writers/xdr/XdrWriter.cc
+      - Code/io/writers/Writer.cc
+
+  pull_request:
+    paths:
+      - '.github/workflows/gmy-*'
+      - 'geometry-tool/**'
+
+jobs:
+  gmy-tool:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: APT packages
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libboost-dev \
+            libcgal-dev \
+            ninja-build
+
+      - name: Cope with conda requiring a .yml extension and GHA treating any .yml as a workflow
+        working-directory: .github/workflows
+        run: cp gmy-${{ runner.os }}.conda-env conda-env.yml
+
+      - name: Cache conda
+        uses: actions/cache@v2
+        env:
+          # Increase this value to reset cache
+          CACHE_NUMBER: 0
+        with:
+          path: /usr/share/miniconda/pkgs/*.tar.bz2
+          key: conda-${{ runner.os }}-${{ env.CACHE_NUMBER }}-${{ hashFiles('.github/workflows/conda-env.yml') }}
+
+      - name: Sort out conda and packages
+        working-directory: .github/workflows
+        env:
+          CONDA_RESTORE_FREE_CHANNEL: 1
+        run: |
+          cp gmy-${{ runner.os }}.conda-env conda-env.yml
+          $CONDA/bin/conda env update --file conda-env.yml --name base
+
+      - name: Check conda env
+        run: conda env export -n base || conda list
+
+      - name: pip cache
+        uses: actions/cache@v2
+        env:
+          # Increase this value to reset cache
+          CACHE_NUMBER: 0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ env.CACHE_NUMBER }}-${{ hashFiles('geometry-tool/pyproject.toml', 'geometry-tool/setup.py') }}
+
+      - name: ensure pip is up-to-date
+        run: pip install --upgrade pip
+
+      - name: Build and install the app
+        working-directory: geometry-tool
+        run: |
+          CMAKE_PREFIX_PATH=$CONDA pip install --use-feature=in-tree-build .
+
+      - name: Store build tree on error
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: failed-build-tree
+          path: geometry-tool/_skbuild
