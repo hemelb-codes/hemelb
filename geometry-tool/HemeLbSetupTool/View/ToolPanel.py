@@ -193,11 +193,11 @@ class IoletsDetailPanel(wx.Panel):
         self.radiusField = wx.TextCtrl(self)
 #        self.radiusField.SetEditable(False)
         
-        controller.BindValue(
-            'Iolets.Selection.Radius',
-            WxWidgetMapper(self.radiusField, 'Value', wx.EVT_TEXT,
-                           translator=Constraint(lambda x: x > 0.0, inner=FloatTranslator()))
-            )
+        # controller.BindValue(
+        #     'Iolets.Selection.Radius',
+        #     WxWidgetMapper(self.radiusField, 'Value', wx.EVT_TEXT,
+        #                    translator=Constraint(lambda x: x > 0.0, inner=FloatTranslator()))
+        #     )
         
         self.placeButton = wx.Button(self, label='Place')
         controller.BindValue('Pipeline.IoletPlaceButtonEnabled',
@@ -256,7 +256,7 @@ class IoletsDetailPanel(wx.Panel):
             RectSpacer(0, 2)
             )
         self.SetSizer(layout.create())
-        
+
         controller.BindValue(
             'Iolets.SelectedIndex',
             WxWidgetEnabledMapper(self, translator=selectionToTrueTranslator)

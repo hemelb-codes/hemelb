@@ -24,7 +24,7 @@ class AverageSideLengthCalculator(vtkProgrammableFilter):
         nTris = polydata.GetNumberOfCells()
         
         totalPerim = 0.
-        for i in xrange(nTris):
+        for i in range(nTris):
             tri = polydata.GetCell(i)
             perim = 0.
             for j in range(3):

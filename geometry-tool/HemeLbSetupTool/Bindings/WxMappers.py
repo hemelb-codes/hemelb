@@ -30,8 +30,8 @@ class WxWidgetMapper(Mapper):
                 # Now try using properties
                 prop = getattr(type(widget), key)
                 assert isinstance(prop, property)
-                self._Get = types.MethodType(prop.fget, widget, type(widget))
-                self._Set = types.MethodType(prop.fset, widget, type(widget))
+                self._Get = types.MethodType(prop.fget, widget)
+                self._Set = types.MethodType(prop.fset, widget)
             except (AttributeError, AssertionError):
                 raise AttributeError("'%s' object has no property '%s' or Get%s/Set%s pair" \
                                      % (self.__class__.__name__, key,key,key))
@@ -188,7 +188,7 @@ class WxListCtrlItemMapper(WriteOnlyMapper):
         return
 
     def _Set(self, val):
-        self.listCtrl.SetStringItem(self.row, self.col, val)
+        self.listCtrl.SetItem(self.row, self.col, val)
         return
     
     pass

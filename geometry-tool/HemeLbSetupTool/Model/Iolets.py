@@ -26,8 +26,7 @@ class AutoReg(type):
         type.__init__(cls, name, bases, dict)
         return
     
-class Iolet(Observable):
-    __metaclass__ = AutoReg
+class Iolet(Observable, metaclass=AutoReg):
     """Represent boundary across which there can be flow.
     Do not instantiate
     """
@@ -40,7 +39,7 @@ class Iolet(Observable):
     # into this class from PlacedIolet. It should have the side 
     # effect of simplifying the bindings.
     def __init__(self, **kwargs):
-        it = self._Args.iteritems()
+        it = self._Args.items()
         for a, default in it:
             setattr(self, a,
                     kwargs.pop(a, copy(default)))

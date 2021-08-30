@@ -49,11 +49,7 @@ class XmlWriter(object):
         self.DoInitialConditions(root)
         
         self.indent(root)
-
-        xmlFile = file(self.profile.OutputXmlFile, 'wb')
-        xmlFile.write('<?xml version="1.0" ?>\n')
-        ElementTree(root).write(xmlFile)
-        return
+        ElementTree(root).write(self.profile.OutputXmlFile, encoding="US-ASCII", xml_declaration=True)
 
     def DoSimulation(self, root):
         sim = SubElement(root, 'simulation')
@@ -138,4 +134,3 @@ def ValueElement(parent, name, value):
 
 def QuantityElement(parent, name, value, units):
     return SubElement(parent, name, value=str(value), units=units)
-    

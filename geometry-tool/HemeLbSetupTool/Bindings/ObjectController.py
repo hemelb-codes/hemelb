@@ -83,7 +83,15 @@ class ObjectController(Observable):
             self.delegate._AddObserverToLocalKey(keyPath, callback, options)
             pass
         return
-    
+
+    def _RemoveObserverFromLocalKey(self, keyPath, callback):
+        if hasattr(self, keyPath) or '.' in keyPath:
+            # If its our attribute or a dotted path, remove from self
+            Observable._RemoveObserverFromLocalKey(self, keyPath, callback)
+        else:
+            # from the delegate
+            self.delegate._RemoveObserverFromLocalKey(keyPath, callback)
+
     def BindValue(self, modelKey, widgetMapper):
         """Bind a mapper to a value. First find the responsible
         controller by walking the key path, then dispatched on the

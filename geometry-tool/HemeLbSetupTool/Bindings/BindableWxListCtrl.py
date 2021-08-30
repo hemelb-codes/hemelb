@@ -32,7 +32,7 @@ class BindableWxListCtrl(wx.ListCtrl):
         itemCon = self.contentController[row]
         self.itemControllers.insert(row, itemCon)
         
-        self.InsertStringItem(row, '')
+        self.InsertItem(row, '')
         for col, colName in enumerate(self.colData):
             itemCon.BindValue(colName,
                               WxListCtrlItemMapper(self, row, col))

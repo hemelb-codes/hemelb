@@ -18,8 +18,8 @@ class VtkObjectController(ObjectController):
         
         assert isinstance(delegate, vtkObject)
         
-        delegate._GetLocalValueForKey = types.MethodType(getattr, delegate, type(delegate))
-        delegate._SetLocalValueForKey = types.MethodType(setattr, delegate, type(delegate))
+        delegate._GetLocalValueForKey = types.MethodType(getattr, delegate)
+        delegate._SetLocalValueForKey = types.MethodType(setattr, delegate)
         self.delegate = delegate
         self._values = dict()
         self._actions = set()
@@ -29,8 +29,8 @@ class VtkObjectController(ObjectController):
         return
     
     def _HandleModifiedEvent(self, obj, evt):
-        for cbsForKey in self._observedKeys.itervalues():
-            for cb in cbsForKey:
+        for cbsForKey in self._observedKeys.values():
+            for cb in cbsForKey.values():
                 cb(Change(time=ChangeTimes.AFTER, obj=self))
                 continue
             continue
@@ -44,11 +44,11 @@ class VtkObjectController(ObjectController):
         else:
             # Delegate it
             try:
-                cbSet = self._observedKeys[keyPath]
+                cbMap = self._observedKeys[keyPath]
             except KeyError:
-                cbSet = self._observedKeys[keyPath] = set()
+                cbMap = self._observedKeys[keyPath] = {}
                 pass
-            cbSet.add(callback)
+            cbMap[id(callback)] = callback
             pass
         return
 

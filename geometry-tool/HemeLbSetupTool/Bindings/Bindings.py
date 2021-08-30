@@ -77,13 +77,13 @@ class ValueBinding(object):
             dest.Set(source.Get())
         except Translators.FormattingError:
             # Can't format this properly, so just give up for now
-            print "Warning: Could not properly format the model object for display"
+            print("Warning: Could not properly format the model object for display")
             pass
         except Translators.ValidationError as e:
             # We got a value from the widget (i.e. source) that
             # doesn't convert to the model requirements. Put back the
             # last known good
-            print "Warning: Could not convert input to model key %s because: %s" % (self.modelMapper.key, e.message)
+            print("Warning: Could not convert input to model key %s because: %s" % (self.modelMapper.key, e.message))
             source.Set(self.modelMapper.Get())
             pass
         

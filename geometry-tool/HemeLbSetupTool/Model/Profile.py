@@ -6,7 +6,7 @@
 # license in the file LICENSE.
 
 import os.path
-import cPickle
+import pickle
 from copy import copy
 import numpy as np
 import yaml
@@ -56,7 +56,7 @@ class Profile(Observable):
         """
         # Set attributes on this instance according to the keyword
         # args given here or the default dict if they aren't present.
-        for a, default in Profile._Args.iteritems():
+        for a, default in Profile._Args.items():
             setattr(self, a,
                     kwargs.pop(a, copy(default)))
             continue
@@ -108,7 +108,7 @@ class Profile(Observable):
                     cmdLineArgsDict.pop(attrName)
 
         # Set the rest
-        for k, val in cmdLineArgsDict.iteritems():
+        for k, val in cmdLineArgsDict.items():
             if val is not None:
                 setattr(self, k, val)
 
@@ -187,13 +187,15 @@ class Profile(Observable):
             raise ValueError("Unexpected extension on profile file: " + ext)
         
     def LoadProfileV2(self, filename):
-        state = yaml.load(file(filename))
+        with open(filename) as f:
+            state = yaml.load(f)
         self._ResetPathsV2(state, filename)
         self.LoadFrom(state)
         return
     
     def LoadProfileV1(self, filename):
-        restored = cPickle.Unpickler(file(filename)).load()
+        with open(filename) as f:
+            restored = pickle.Unpickler(f).load()
         restored._ResetPaths(filename)
         self.CloneFrom(restored)
         return
@@ -236,7 +238,7 @@ class Profile(Observable):
         state['StlFile'] = os.path.relpath(state['StlFile'], basePath)
         state['OutputXmlFile'] = os.path.relpath(state['OutputXmlFile'], basePath)
         state['OutputGeometryFile'] = os.path.relpath(state['OutputGeometryFile'], basePath)
-        with file(filename, 'w') as outfile:
+        with open(filename, 'w') as outfile:
             yaml.dump(state, stream=outfile)
             
         return
@@ -256,7 +258,7 @@ class Profile(Observable):
     pass
     
 def IsFileValid(path, ext=None, exists=None):
-    if not isinstance(path, (str, unicode)):
+    if not isinstance(path, str):
         return False
     if path == '':
         return False

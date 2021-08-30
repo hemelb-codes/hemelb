@@ -58,8 +58,8 @@ def UpdateOutputGeometryFile(profile):
     try:
         outfile = profile.OutputConfigFile
         del profile.OutputConfigFile
-        print 'Info: updating from Config to Geometry'
-        print 'Info: old file "' + outfile + '"'
+        print('Info: updating from Config to Geometry')
+        print('Info: old file "' + outfile + '"')
     except AttributeError:
         outfile = profile.OutputGeometryFile
         pass
@@ -67,15 +67,15 @@ def UpdateOutputGeometryFile(profile):
     base, ext = os.path.splitext(outfile)
     if ext != '.gmy':
         outfile = base + '.gmy'
-        print 'Info: updating from .dat to .gmy'
-        print 'Info: new file "' + outfile + '"'
+        print('Info: updating from .dat to .gmy')
+        print('Info: new file "' + outfile + '"')
     profile.OutputGeometryFile = outfile
     return
 
 def RebaseFilePath(profile, attr):
     filename = getattr(profile, attr)
     if os.path.isabs(filename):
-        print 'Info: ' + attr + ' is an absolute path, truncating. Output profile will assume file is in the same directory as it.'
+        print('Info: ' + attr + ' is an absolute path, truncating. Output profile will assume file is in the same directory as it.')
         setattr(profile, attr, os.path.basename(filename))
         pass
     return
@@ -91,12 +91,12 @@ def UpdateProfileAttributes(profile):
         try:
             unusedAttrs.remove(attr)
         except ValueError:
-            print 'Warning: using default (' + str(Profile._Args[attr]) + ') for missing attribute "' + attr + '"'
+            print('Warning: using default (' + str(Profile._Args[attr]) + ') for missing attribute "' + attr + '"')
             pass
         continue
     
     for attr in unusedAttrs:
-        print 'Warning: ignoring unknown attribute "' + attr + '"'
+        print('Warning: ignoring unknown attribute "' + attr + '"')
         continue
     
     return

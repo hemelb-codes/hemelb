@@ -24,7 +24,7 @@ class Model(Observable):
         return
 
     def change(self, ignored):
-        print 'T = %f K' % self.tKelvin
+        print('T = %f K' % self.tKelvin)
         return
 
 

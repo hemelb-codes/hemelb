@@ -10,6 +10,8 @@ Create a subclass of Observable to use.
 """
 import collections
 from copy import copy
+from types import MethodType
+import warnings
 import numpy as np
 from .Enum import Enum
 
@@ -33,7 +35,7 @@ class NotifyOptions(object):
                     # 'FOR_REPLACEMENT': False,
                     }
 
-        for key, default in defaults.iteritems():
+        for key, default in defaults.items():
             setattr(self, key, kwargs.pop(key, default))
             continue
 
@@ -81,12 +83,11 @@ class Observable(object):
         # new = super(Observable, cls).__new__(cls, *args, **kwargs)
         new = object.__new__(cls)
         # Explicitly use object setattr to avoid our overrided one
-        # that needs these attributes to have already been set!  Note
-        # that we have to do the name mangling ourselves to mark them
-        # as private
-        object.__setattr__(new, '_Observable__preObservers', {})
-        object.__setattr__(new, '_Observable__postObservers', {})
-        object.__setattr__(new, '_Observable__dependencies', {})
+        # that needs these attributes to have already been set!
+        object.__setattr__(new, '_preObservers', {})
+        object.__setattr__(new, '_postObservers', {})
+        object.__setattr__(new, '_wrappers', {})
+        object.__setattr__(new, '_dependencies', {})
         return new
 
     def __setattr__(self, name, newValue, **changeOpts):
@@ -113,13 +114,13 @@ class Observable(object):
         self.DidChangeValueForKey(name, **changeOpts)
         return
 
-    def __notifyList(self, oMap, key, **changeOpts):
+    def _notifyList(self, oMap, key, **changeOpts):
         try:
             # Get the set of observers
             attrObservers = oMap[key]
         except KeyError:
             # No observers have been set for attr
-            attrObservers = set()
+            attrObservers = {}
             pass
         
         if '.' not in key:
@@ -128,13 +129,15 @@ class Observable(object):
                 anyObservers = oMap['@ANY']
             except KeyError:
                 # No observers set for @ANY
-                anyObservers = set()
+                anyObservers = {}
                 pass
-            oList = set.union(attrObservers, anyObservers)
+            oList = {}
+            oList.update(attrObservers)
+            oList.update(anyObservers)
         else:
             oList = attrObservers
             pass
-        
+
         # No observers, quit now
         if not len(oList): return
         
@@ -144,7 +147,7 @@ class Observable(object):
         # Construct a change object
         change = Change(**opts)
         
-        for cb in oList:
+        for cb in oList.values():
             # Call each observer callback with the change object
             cb(change)
             continue
@@ -180,74 +183,108 @@ class Observable(object):
         """Tell our observes that we're about to change.
         """
         changeOpts['time'] = ChangeTimes.BEFORE
-        self.__notifyList(self.__preObservers, key, **changeOpts)
+        self._notifyList(self._preObservers, key, **changeOpts)
         return
     
     def DidChangeValueForKey(self, key, **changeOpts):
         """Tell our observers that we have just changed.
         """
         changeOpts['time'] = ChangeTimes.AFTER
-        self.__notifyList(self.__postObservers, key, **changeOpts)
+        self._notifyList(self._postObservers, key, **changeOpts)
         return
     
+    @staticmethod
+    def _CallbackId(callback):
+        if isinstance(callback, MethodType):
+            # While functions are in general hashable, member
+            # functions are iff the object itself is
+            # hashable. Further, each time you get a new member
+            # function, it won't have the same id() as other ones.
+            #
+            # Combine object identity with function hash to get a
+            # reasonable key for the dict.
+            obj = callback.__self__
+            func = callback.__func__
+            return hash((id(callback.__self__), callback.__func__))
+        return id(callback)
+
     def AddObserver(self, keyPath, callback, options=NotifyOptions()):
         """Make 'callback' an observer of changes to the key path
         'keyPath'. The callback must be a callable taking one argument,
         which will be an Observer.Change object.
         """
         assert isinstance(keyPath, str)
-
         keyParts = keyPath.split('.', 1)
 
         # We always add an observer to the raw string
         self._AddObserverToLocalKey(keyPath, callback, options)
         if len(keyParts) == 2:
+            try:
+                wrap_for_key = self._wrappers[keyPath]
+            except KeyError:
+                wrap_for_key = self._wrappers[keyPath] = {}
+
             localKey, restOfKey = keyParts
-            self._AddObserverToComplexKey(localKey, restOfKey, callback, options)
+            wrapper = ComplexKeyCallbackWrapper(self, localKey, restOfKey, callback, options)
+            wrap_for_key[self._CallbackId(callback)] = wrapper
+            # Make the wrapper observe the local part of the key path
+            self._AddObserverToLocalKey(localKey, wrapper.LocalKeyPartChange,
+                                        NotifyOptions(BEFORE_CHANGE=True,
+                                                      AFTER_CHANGE=True))
+            localValue = getattr(self, localKey)
+            # And make it observe the sub-objects part of the key path
+            localValue.AddObserver(restOfKey, wrapper.RestOfKeyChange, options)
             pass
 
         return
-    
-    def _AddObserverToComplexKey(self, localKey, restOfKey, callback, options):
-        # Create the wrapper object
-        wrapper = ComplexKeyCallbackWrapper(self, localKey, restOfKey, callback, options)
-        # Make the wrapper observe the local part of the key path
-        self._AddObserverToLocalKey(localKey, wrapper.LocalKeyPartChange,
-                                    NotifyOptions(BEFORE_CHANGE=True,
-                                                  AFTER_CHANGE=True))
-        localValue = getattr(self, localKey)
-        # And make it observe the sub-objects part of the key path
-        localValue.AddObserver(restOfKey, wrapper.RestOfKeyChange, options)
-        return
-    
+
     def _AddObserverToLocalKey(self, keyPath, callback, options):
-        for flag, obs in ((options.BEFORE_CHANGE, self.__preObservers),
-                          (options.AFTER_CHANGE, self.__postObservers)):
+        for flag, obs in ((options.BEFORE_CHANGE, self._preObservers),
+                          (options.AFTER_CHANGE, self._postObservers)):
             
             if flag:
                 try:
                     attrObs = obs[keyPath]
                 except KeyError:
-                    attrObs = obs[keyPath] = set()
+                    attrObs = obs[keyPath] = {}
                     pass
-                attrObs.add(callback)
+                attrObs[self._CallbackId(callback)] = callback
                 pass
             continue
         
         return
 
-    def RemoveObserver(self, attr, observer):
+    def RemoveObserver(self, keyPath, callback):
         """Remove the observer from the list to be notified on change.
         """
-        for timeObservers in (self.__preObservers, self.__postObservers):
+        keyParts = keyPath.split('.', 1)
+        # Always remove the raw string
+        self._RemoveObserverFromLocalKey(keyPath, callback)
+        if len(keyParts) == 2:
+            localKey, restOfKey = keyParts
+            # Get the wrapper
+            wrap_for_key = self._wrappers[keyPath]
+            wrapper = wrap_for_key[self._CallbackId(callback)]
+            # Remove the wrapper from the local part
+            self._RemoveObserverFromLocalKey(localKey, wrapper.LocalKeyPartChange)
+            # And the from the sub-object
+            localValue = getattr(self, localKey)
+            localValue.RemoveObserver(restOfKey, wrapper.RestOfKeyChange)
+            del wrap_for_key[self._CallbackId(callback)]
+
+    def _RemoveObserverFromLocalKey(self, attr, observer):
+        rm = False
+        for timeObservers in (self._preObservers, self._postObservers):
             try:
-                # TODO: Shouldn't we deal with complex keys here? 
                 attrObs = timeObservers[attr]
-                attrObs.remove(observer)
+                del attrObs[self._CallbackId(observer)]
             except KeyError:
                 pass
+            else:
+                rm = True
             continue
-        
+        if not rm:
+            warnings.warn(f"Attempting to remove observer from {self} key {attr}")
         return
     
     def AddDependency(self, ofAttr, onAttr):
@@ -256,9 +293,9 @@ class Observable(object):
         observers of ofAttr will be notified.
         """
         try:
-            depMap = self.__dependencies[ofAttr]
+            depMap = self._dependencies[ofAttr]
         except KeyError:
-            depMap = self.__dependencies[ofAttr] = dict()
+            depMap = self._dependencies[ofAttr] = dict()
             pass
         
         if onAttr in depMap:
@@ -311,9 +348,6 @@ class Observable(object):
             return part.Yamlify()
         except AttributeError:
             # Wasn't provided, let's hope it was simple!
-            # WX deals in unicode not strings so encode these.
-            if isinstance(part, unicode):
-                return part.encode()
             if isinstance(part, np.number):
                 return part.tolist()
             return part
@@ -544,61 +578,3 @@ class ObservableListOf(ObservableList):
     def insert(self, index, obj):
         self.CheckType(obj)
         return ObservableList.insert(self, index, obj)
-    
-if __name__ == "__main__":
-    class Observed(Observable):
-        def __init__(self, x, pressure):
-            self.x = x
-            self.Pressure = pressure
-            
-            self.AddDependency('y', 'x')
-            self.AddDependency('PressureString', 'Pressure.x')
-            self.AddDependency('PressureString', 'Pressure.y')
-            self.AddDependency('PressureString', 'Pressure.z')
-            return
-        
-        @property
-        def y(self):
-            return self.x
-
-        @property
-        def PressureString(self):
-            return 'p = %f + %f cos(wt + degtorad(%f))' % (self.Pressure.x,
-                                                           self.Pressure.y,
-                                                           self.Pressure.z)
-        
-        pass
-    
-    class Vector(Observable):
-        def __init__(self, x,y,z):
-            self.x = x
-            self.y = y
-            self.z = z
-            return
-        
-    class Observer(object):
-        def change(self, change):
-            print change.key, change.obj.GetValueForKey(change.key)
-            return
-        pass
-
-    print "Intantiate Observed a"
-    a = Observed(7, Vector(1,2,3))
-    b = Observer()
-    print "Add b as observer of a.y, a.Pressure.x and a.PressureString"
-    a.AddObserver('y', b.change)
-    a.AddObserver('Pressure.x', b.change)
-    a.AddObserver('PressureString', b.change)
-    
-    print "Set a.x"
-    a.x = 1
-    print "Set a.Pressure.x"
-    a.Pressure.x = 3e8
-    print "Set a.Pressure"
-    a.Pressure = Vector(10,12,14)
-    
-    olist = ObservableList()
-    print 'Add b as observer of olist.@INSERTION'
-    olist.AddObserver('@INSERTION', b.change)
-    print 'Append to olist'
-    olist.append(6)

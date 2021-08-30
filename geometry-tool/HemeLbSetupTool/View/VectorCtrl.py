@@ -13,18 +13,18 @@ from HemeLbSetupTool.View.Layout import H
 
 def ForwardGet(func):
     def Get(self, val):
-        return tuple(getattr(getattr(self, coord), func.func_name)() for coord in ('x', 'y', 'z'))
-    Get.func_name = func.func_name
+        return tuple(getattr(getattr(self, coord), func.__name__)() for coord in ('x', 'y', 'z'))
+    Get.__name__ = func.__name__
     return Get
 
 def ForwardSet(func):
     def Set(self, val):
         for coord in ('x', 'y', 'z'):
-            setter = getattr(getattr(self, coord), func.func_name)
+            setter = getattr(getattr(self, coord), func.__name__)
             setter(val)
             continue
         return
-    Set.func_name = func.func_name
+    Set.__name__ = func.__name__
     return Set
 
 class VectorCtrl(wx.Panel):
