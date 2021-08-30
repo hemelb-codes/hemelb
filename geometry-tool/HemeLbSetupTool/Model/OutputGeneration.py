@@ -24,7 +24,7 @@ from .Vector import Vector
 from .Profile import Profile, metre
 from .XmlWriter import XmlWriter
 
-import Generation
+from . import Generation
 import pdb
 
 np.seterr(divide='ignore')
@@ -88,7 +88,7 @@ class GeometryGenerator(object):
         self.generator.Execute(self.skipNonIntersectingBlocks)
         XmlWriter(self).Write()
         t.Stop()
-        print "Setup time: %f s" % t.GetTime()
+        print("Setup time: %f s" % t.GetTime())
         return
 
     pass
@@ -126,9 +126,9 @@ class PolyDataGenerator(GeometryGenerator):
         # write = StageWriter('/Users/rupert/working/compare/aneurysm').WriteOutput
         # i = 0
         # for alg in getpipeline(transformer):
-        #     print i
+        #     print(i)
         #     i += 1
-        #     print alg
+        #     print(alg)
         #     write(alg)
 
         transformer.Update()
@@ -166,7 +166,7 @@ class PolyDataGenerator(GeometryGenerator):
         OriginWorking = np.zeros(3, dtype=float)
         nSites = np.zeros(3, dtype=np.uint)
         
-        for i in xrange(3):
+        for i in range(3):
             # Bounds of the vtkPolyData
             min = SurfaceBoundsWorking[2 * i]
             max = SurfaceBoundsWorking[2 * i + 1]
@@ -542,7 +542,7 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
         boundaryExtractor.Update()
         boundaries = boundaryExtractor.GetOutput()
         boundariesPointIdMap = boundaries.GetPointData().GetScalars()
-        for i in xrange(boundaries.GetNumberOfCells()):
+        for i in range(boundaries.GetNumberOfCells()):
             boundary = vtkPolyLine.SafeDownCast(boundaries.GetCell(i))
 
             barycentre = [0., 0., 0.]
@@ -556,7 +556,7 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
             trianglePoints = vtkIdList()
             trianglePoints.SetNumberOfIds(3)
 
-            for j in xrange(numberOfBoundaryPoints):
+            for j in range(numberOfBoundaryPoints):
                 trianglePoints.SetId(0,
                                      boundariesPointIdMap.GetValue(boundary.GetPointId(j)))
                 trianglePoints.SetId(1, barycentreId)

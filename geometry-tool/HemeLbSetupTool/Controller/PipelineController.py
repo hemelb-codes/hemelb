@@ -6,6 +6,8 @@
 
 import operator
 from math import sqrt
+from functools import reduce
+
 from vtk import vtkInteractorStyleTrackballCamera
 
 from ..Bindings.ObjectController import ObjectController
