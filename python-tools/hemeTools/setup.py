@@ -36,7 +36,6 @@ setup(
         "hemeTools",
         "hemeTools.converters",
         "hemeTools.parsers",
-        "hemeTools.parsers.snapshot",
         "hemeTools.parsers.geometry",
         "hemeTools.surfacegenerator",
         "hemeTools.utils",
