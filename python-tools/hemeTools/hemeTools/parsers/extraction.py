@@ -6,8 +6,6 @@
 import os.path
 import xdrlib
 import numpy as np
-import six
-from six.moves import range
 
 from . import HemeLbMagicNumber
 
@@ -140,8 +138,7 @@ class ExtractedPropertyV4Parser(object):
 
         for iField in range(self._fieldCount):
             name = decoder.unpack_string()
-            if six.PY3:
-                name = name.decode()
+            name = name.decode()
             length = decoder.unpack_uint()
             self._dataOffset.append(decoder.unpack_double())
             self._fieldSpec.Append(name, length, ">f4", np.float32)

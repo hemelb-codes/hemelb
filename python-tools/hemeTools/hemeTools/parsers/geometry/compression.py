@@ -13,7 +13,6 @@ import xdrlib
 import zlib
 
 import numpy as np
-from six.moves import range
 
 from .simple import ConfigLoader
 

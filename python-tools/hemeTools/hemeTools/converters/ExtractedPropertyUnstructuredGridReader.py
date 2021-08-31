@@ -12,7 +12,6 @@ script with no arguments.
 from xml.etree import ElementTree as et
 
 import numpy as np
-import six
 import vtk
 from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtk.util import numpy_support
@@ -180,7 +179,7 @@ class ExtractedPropertyUnstructuredGridReader(VTKPythonAlgorithmBase):
         # the array to the output.
         # TODO: this needs a case for the stress. We should check what
         # representation VTK uses for rank 3 tensors.
-        for field_name, field in six.iteritems(field_dict):
+        for field_name, field in field_dict.items():
             fieldArray = numpy_support.vtk_to_numpy(field)
             fieldArray[self.OutputCellIdsByInputIndex] = getattr(
                 extracted_data, field_name
@@ -206,7 +205,7 @@ def WritePVDFile(timestepToFileMap, baseFilename):
     # Collection element containing individual time steps
     collection = et.SubElement(vtkFile, "Collection")
     # Write out each time step and associated file
-    for timestep, filename in six.iteritems(timestepToFileMap):
+    for timestep, filename in timestepToFileMap.items():
         et.SubElement(
             collection,
             "DataSet",

@@ -6,11 +6,10 @@
 
 import collections
 import os.path
+import queue
 import threading
 
 import numpy as np
-from six import itervalues
-from six.moves import queue
 
 from . import MooreNeighbourhoodDirections
 from .generic import (
@@ -80,7 +79,7 @@ class ErrorCollection(Error):
             errLines.append(self.Indent(iErr.Format()))
             continue
 
-        for siErrColl in itervalues(self.subItemErrors):
+        for siErrColl in self.subItemErrors:
             try:
                 subLines = siErrColl.Format()
                 errLines.extend(self.Indent(sl) for sl in subLines)

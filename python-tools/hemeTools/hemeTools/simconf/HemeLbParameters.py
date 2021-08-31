@@ -6,7 +6,6 @@ import abc
 import quantities as pq
 import numpy as np
 from contextlib import contextmanager
-import six
 
 from .simplify import simplify
 
@@ -62,7 +61,7 @@ class HemeLbParameters(object):
         dims = q.dimensionality.simplified
 
         scaleFactor = pq.dimensionless
-        for dim, power in six.iteritems(dims):
+        for dim, power in dims.items():
             scaleFactor = scaleFactor * self._LatticeUnitsMap[dim] ** power
 
         # Scale

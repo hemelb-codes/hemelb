@@ -5,7 +5,6 @@
 
 from vtk import *
 import numpy as np
-from six.moves import range
 
 
 class TriangulatedCylinderSource(vtkProgrammableSource):
