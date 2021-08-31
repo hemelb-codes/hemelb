@@ -7,7 +7,6 @@
 """
 
 import numpy as np
-from six.moves import range
 
 
 def MatchCorresponding(first, second):

@@ -10,7 +10,6 @@ import quantities as pq
 
 import vtk
 from vtk.util.numpy_support import vtk_to_numpy
-from six.moves import range
 
 from HemeLbSetupTool.Model.Profile import Profile
 from HemeLbSetupTool.Model.Iolets import Inlet

@@ -1,6 +1,5 @@
+from io import StringIO
 import os.path
-
-from six import StringIO
 
 from hemeTools.converters.ExtractedPropertyTextDump import unpack
 

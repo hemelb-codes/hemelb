@@ -44,7 +44,6 @@ setup(
     cmdclass={"build_ext": Cython.Build.build_ext},
     install_requires=[
         "numpy",
-        "six",
         "vtk",
     ],
     tests_require=[

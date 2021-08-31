@@ -7,7 +7,6 @@ import itertools
 import weakref
 
 import numpy as np
-from six.moves import map, range, zip
 
 from . import BaseSite
 

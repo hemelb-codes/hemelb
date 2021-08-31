@@ -3,14 +3,14 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-import numpy as np
 import xdrlib
-from ...utils import xdr
 import zlib
 import os.path
 from xml.etree import ElementTree
-from six.moves import range
 
+import numpy as np
+
+from ...utils import xdr
 from .generic import Domain, Block, AllSolidBlock, Site
 from .. import HemeLbMagicNumber
 from . import GeometryMagicNumber, sniff_gmy

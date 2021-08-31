@@ -17,7 +17,6 @@ import traceback
 import weakref
 
 import numpy as np
-from six.moves import range
 
 from .generic import NdIndexConverter, Domain, Block, OutOfDomainBlock, AllSolidBlock
 from .freeing import FreeingConfigLoader
