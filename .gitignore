@@ -49,3 +49,6 @@ Tools/hemeTools/utils/xdr.so
 revision_info.txt
 hemelb-prefix/src/hemelb-stamp/hemelb-urlinfo.txt
 *-slack-token
+*.egg-info
+_skbuild
+dist
