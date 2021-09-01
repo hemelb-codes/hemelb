@@ -1,7 +1,16 @@
-name: HemeLB tools python packages
+name: Python tools
+
 on:
-  - push
-  - pull_request
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/py-*'
+      - 'python-tools/**'
+  pull_request:
+    paths:
+      - '.github/workflows/py-*'
+      - 'python-tools/**'
 
 jobs:
   python-lint:
