@@ -11,6 +11,7 @@
 #include "Iolet.h"
 #include "GeometryGenerator.h"
 #include "PolyDataGenerator.h"
+#include "CylinderGenerator.h"
 
 namespace {
   using DV = hemelb::util::Vector3D<double>;
@@ -73,4 +74,12 @@ PYBIND11_MODULE(Generation, mod) {
     .def("SetClippedSurface", &PolyDataGenerator::SetClippedSurface)
     ;
 
+  // Cylinder
+  py::class_<CylinderGenerator>(mod, "CylinderGenerator", gmy_gen)
+    .def(py::init<>())
+    .def("SetCylinderCentre", &CylinderGenerator::SetCylinderCentre)
+    .def("SetCylinderAxis", &CylinderGenerator::SetCylinderAxis)
+    .def("SetCylinderRadius", &CylinderGenerator::SetCylinderRadius)
+    .def("SetCylinderLength", &CylinderGenerator::SetCylinderLength)
+    ;
 }

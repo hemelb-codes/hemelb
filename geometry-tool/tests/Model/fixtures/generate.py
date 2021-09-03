@@ -30,3 +30,7 @@ def cylinder():
     source = vtk.vtkCylinderSource()
     source.SetResolution(32)
     source_fixture(source, 'cylinder')
+
+if __name__ == "__main__":
+    generate.cube()
+    generate.cylinder()

@@ -194,8 +194,8 @@ class Profile(Observable):
         return
     
     def LoadProfileV1(self, filename):
-        with open(filename) as f:
-            restored = pickle.Unpickler(f).load()
+        with open(filename, "rb") as f:
+            restored = pickle.Unpickler(f, fix_imports=True).load()
         restored._ResetPaths(filename)
         self.CloneFrom(restored)
         return

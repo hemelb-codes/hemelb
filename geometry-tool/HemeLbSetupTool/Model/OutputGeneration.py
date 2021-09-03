@@ -47,6 +47,11 @@ class GeometryGenerator(object):
     def __init__(self):
         self.skipNonIntersectingBlocks = False
 
+    def __getattr__(self, attr):
+        """Delegate unknown attribute access to profile object.
+        """
+        return getattr(self._profile, attr)
+
     def _MakeIoletProxies(self):
         # Construct the Iolet structs
         nIn = 0
@@ -140,11 +145,6 @@ class PolyDataGenerator(GeometryGenerator):
         self.generator.SetSiteCounts(*(int(x) for x in nSites))
         self.OriginMetres = Vector(originWorking * self.VoxelSizeMetres) 
         return
-    
-    def __getattr__(self, attr):
-        """Delegate unknown attribute access to profile object.
-        """
-        return getattr(self._profile, attr)
     
     def _ComputeOriginWorking(self):
         """
