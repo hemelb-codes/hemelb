@@ -1,0 +1,42 @@
+DurationSeconds: 2.5714285714
+Iolets:
+- Centre:
+    x: -0.7175087835232064
+    y: -0.35176118745805307
+    z: 0.8487027773518294
+  Name: Inlet1
+  Normal:
+    x: 0.5714906833845466
+    y: 0.24691163832925012
+    z: -0.7825810128429067
+  Pressure:
+    x: 80.0
+    y: 0.0
+    z: 0.0
+  Radius: 1.499999999999994
+  Type: Inlet
+- Centre:
+    x: 0.6813976915146475
+    y: 0.2935393127862492
+    z: -0.8835672185368557
+  Name: Outlet1
+  Normal:
+    x: -0.5838005926470043
+    y: -0.24178811710621645
+    z: 0.7750583039044462
+  Pressure:
+    x: 80.0
+    y: 0.0
+    z: 0.0
+  Radius: 1.4999999999999991
+  Type: Outlet
+OutputGeometryFile: test.gmy
+OutputXmlFile: test.xml
+SeedPoint:
+  x: 0.2804247306759349
+  y: 1.0472264605233645
+  z: -0.08133472310153574
+StlFile: test.stl
+StlFileUnitId: 1
+TimeStepSeconds: 8.571428571e-4
+VoxelSize: 0.1
