@@ -1,4 +1,3 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
@@ -23,35 +22,34 @@ class PlacedIoletController(HasVtkObjectKeys, ObjectController):
         self.DefineVtkObjectKey("widget")
         self.DefineVtkObjectKey("representation")
         return
-    
+
     pass
 
+
 class VectorMapper(SimpleObservingMapper):
-    """Mapper for Vectors to components of a list.
-    """
-    
+    """Mapper for Vectors to components of a list."""
+
     def CreateSubMapper(self, component):
-        return VectorComponentMapper(self.model,
-                                     self.key+'.'+component,
-                                     translator=self.translator)
-    
+        return VectorComponentMapper(
+            self.model, self.key + "." + component, translator=self.translator
+        )
+
     pass
+
 
 class VectorComponentMapper(SimpleObservingMapper):
     def __init__(self, model, key, translator=UnitTranslator()):
         self.model = model
         self.fullkey = key
-        baseKey, self.component = key.rsplit('.', 1)
-        self.index = {'x': 0,
-                      'y': 1,
-                      'z': 2}[self.component.lower()]
-        
+        baseKey, self.component = key.rsplit(".", 1)
+        self.index = {"x": 0, "y": 1, "z": 2}[self.component.lower()]
+
         SimpleObservingMapper.__init__(self, model, baseKey, translator)
         return
-    
+
     def _Get(self):
         return self.model.GetValueForKey(self.key)[self.index]
-    
+
     def _Set(self, val):
         # Can't set a single component. So get the coords (it's a
         # tuple so must convert to a list to allow item assignment)
@@ -68,8 +66,10 @@ class VectorComponentMapper(SimpleObservingMapper):
     # VCMappers can ignore us.
     def WillChangeValueForKey(self, key):
         return SimpleObservingMapper.WillChangeValueForKey(self, key, index=self.index)
+
     def DidChangeValueForKey(self, key):
         return SimpleObservingMapper.DidChangeValueForKey(self, key, index=self.index)
+
     # Here we ignore the update if we have an index in the
     # ChangeOptions object and it's not ours.
     def HandleUpdate(self, change=None, alsoIgnored=None):
@@ -77,15 +77,19 @@ class VectorComponentMapper(SimpleObservingMapper):
         index = change.index
         if isinstance(index, int) and index != self.index:
             return
-        
+
         return SimpleObservingMapper.HandleUpdate(self, change, alsoIgnored)
+
     pass
 
+
 class PlacedIoletListController(ListController):
-    """Controller for a list of PlacedIolet objects.
-    """
+    """Controller for a list of PlacedIolet objects."""
+
     def __init__(self, delegate):
-        ListController.__init__(self, delegate, SelectionControllerClass=PlacedIoletController)
+        ListController.__init__(
+            self, delegate, SelectionControllerClass=PlacedIoletController
+        )
         self.translator = QuickTranslator(self.IoletToPlacedIolet, lambda x: x)
         return
 
@@ -96,36 +100,35 @@ class PlacedIoletListController(ListController):
             pi = PlacedOutlet()
         else:
             raise ValueError("Must be an Inlet or Outlet")
-        
+
         controller = IoletController.New(iolet)
-        controller.BindValue('Radius', SimpleObservingMapper(pi, 'Radius'))
-        controller.BindValue('Centre', VectorMapper(pi, 'Centre'))
-        controller.BindValue('Normal', VectorMapper(pi, 'Normal'))
+        controller.BindValue("Radius", SimpleObservingMapper(pi, "Radius"))
+        controller.BindValue("Centre", VectorMapper(pi, "Centre"))
+        controller.BindValue("Normal", VectorMapper(pi, "Normal"))
         return pi
-    
+
     pass
+
 
 class HasPlacedIoletListKeys(HasListKeys):
     """Mixin for ObjectController subclasses with PlacedIoletList
     keys.
     """
-    BindFunctionDispatchTable = ((PlacedIoletListController, 'BindList'),)
+
+    BindFunctionDispatchTable = ((PlacedIoletListController, "BindList"),)
 
     def BindList(self, top, modelKey, widgetMapper):
         HasListKeys.BindList(self, top, modelKey, widgetMapper)
         # widgetMapper.controller = top
         # widgetMapper.key = modelKey
         return
-    
+
     def DefinePlacedIoletListKey(self, name):
         """Typically used in the subclass __init__ method to easily
         mark a key as being a List and hence needing a ListController
         to manage it.
         """
-        setattr(self, name,
-                PlacedIoletListController(getattr(self.delegate, name))
-                )
+        setattr(self, name, PlacedIoletListController(getattr(self.delegate, name)))
         return
-    
-    
+
     pass

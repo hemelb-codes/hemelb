@@ -9,83 +9,98 @@ import time
 
 from HemeLbSetupTool.Util.Observer import Observable, NotifyOptions, ObservableList
 
+
 class Circle(Observable):
     def __init__(self, r):
         self.radius = r
-        self.AddDependency('diameter', 'radius')
-        self.AddDependency('perimeter', 'diameter')
-        self.AddDependency('area', 'radius')
+        self.AddDependency("diameter", "radius")
+        self.AddDependency("perimeter", "diameter")
+        self.AddDependency("area", "radius")
         return
-    
+
     @property
     def diameter(self):
-        return 2*self.radius
+        return 2 * self.radius
+
     @property
     def perimeter(self):
         return math.pi * self.diameter
+
     @property
     def area(self):
-        return math.pi * self.radius**2
+        return math.pi * self.radius ** 2
+
     pass
+
 
 class Something(Observable):
     def __init__(self, r):
         self.circle = Circle(r)
         return
+
     pass
+
 
 class Observer(object):
     """Helper - will record when it was called as precisely as the system allows"""
+
     def __init__(self):
         self.CallTime = None
         self.Change = None
         return
+
     def __call__(self, change):
         self.CallTime = time.clock()
         self.Change = change
         time.sleep(0.01)
         return
+
     def Reset(self):
         self.CallTime = None
         self.Change = None
+
     pass
 
 
 def test_circle():
-    c = Circle(5.)
-    assert c.diameter == 10.
+    c = Circle(5.0)
+    assert c.diameter == 10.0
     assert c.perimeter == 10 * math.pi
     assert c.area == 25 * math.pi
+
 
 def test_observation():
     # Check it works at all
     ob = Observer()
 
-    c = Circle(5.)
-    c.AddObserver('radius', ob)
-    c.radius = 10.
+    c = Circle(5.0)
+    c.AddObserver("radius", ob)
+    c.radius = 10.0
 
     assert ob.CallTime is not None
 
     # Check the ordering of PRE and POST change is correct
     preOb = Observer()
     postOb = Observer()
-    c.AddObserver('radius', preOb, options=NotifyOptions(BEFORE_CHANGE=True,
-                                                         AFTER_CHANGE=False))
-    c.AddObserver('radius', postOb, options=NotifyOptions(BEFORE_CHANGE=False,
-                                                          AFTER_CHANGE=True))
+    c.AddObserver(
+        "radius", preOb, options=NotifyOptions(BEFORE_CHANGE=True, AFTER_CHANGE=False)
+    )
+    c.AddObserver(
+        "radius", postOb, options=NotifyOptions(BEFORE_CHANGE=False, AFTER_CHANGE=True)
+    )
 
-    c.radius = 5.
+    c.radius = 5.0
 
     assert preOb.CallTime < postOb.CallTime
     return
 
+
 def test_dependency():
     # Create a circle and observe its perimeter
-    c = Circle(5.)
+    c = Circle(5.0)
     ob = Observer()
-    c.AddObserver('perimeter', ob)
-    c.radius = 10.
+    c.AddObserver("perimeter", ob)
+    c.radius = 10.0
     assert ob.CallTime is not None
 
     # Remove the observer, reset
@@ -97,14 +112,15 @@ def test_dependency():
     c.radius = 3.0
     assert ob.CallTime is None
 
+
 def test_dependency_method():
     # As above, but observer is a bound method
 
     # Create a circle and observe its perimeter
-    c = Circle(5.)
+    c = Circle(5.0)
     ob = Observer()
-    c.AddObserver('perimeter', ob.__call__)
-    c.radius = 10.
+    c.AddObserver("perimeter", ob.__call__)
+    c.radius = 10.0
     assert ob.CallTime is not None
 
     # Remove the observer, reset
@@ -116,15 +132,16 @@ def test_dependency_method():
     c.radius = 3.0
     assert ob.CallTime is None
 
+
 def test_keypath():
     # Test the basic working of complex observation keypaths
 
     # Create sonmething with a Circle object as a member
-    obj = Something(7.)
+    obj = Something(7.0)
     ob = Observer()
 
     # Observe the dependend object
-    obj.AddObserver('circle.diameter', ob)
+    obj.AddObserver("circle.diameter", ob)
 
     # Set by full key
     obj.SetValueForKey("circle.radius", 4.0)
@@ -132,7 +149,7 @@ def test_keypath():
 
     # Test by direct setting on circle
     ob.Reset()
-    obj.circle.radius = 5.
+    obj.circle.radius = 5.0
     assert ob.CallTime is not None
 
     # Test that this correctly unsubscribes the old object and subscribes the new one
@@ -177,42 +194,42 @@ def test_listyness():
     assert len(new) == 9
     assert new.length == 9
 
-    new.insert(0, 'foo')
-    old.insert(0, 'foo')
+    new.insert(0, "foo")
+    old.insert(0, "foo")
     assert old == new
 
     return
 
+
 def MakeListObservers(lst):
-    pre = NotifyOptions(BEFORE_CHANGE=True,
-                        AFTER_CHANGE=False)
-    post = NotifyOptions(BEFORE_CHANGE=False,
-                         AFTER_CHANGE=True)
+    pre = NotifyOptions(BEFORE_CHANGE=True, AFTER_CHANGE=False)
+    post = NotifyOptions(BEFORE_CHANGE=False, AFTER_CHANGE=True)
 
     preInsOb = Observer()
-    lst.AddObserver('@INSERTION', preInsOb, pre)
+    lst.AddObserver("@INSERTION", preInsOb, pre)
     postInsOb = Observer()
-    lst.AddObserver('@INSERTION', postInsOb, post)
+    lst.AddObserver("@INSERTION", postInsOb, post)
 
     preRemOb = Observer()
-    lst.AddObserver('@REMOVAL', preRemOb, pre)
+    lst.AddObserver("@REMOVAL", preRemOb, pre)
     postRemOb = Observer()
-    lst.AddObserver('@REMOVAL', postRemOb, post)
+    lst.AddObserver("@REMOVAL", postRemOb, post)
 
     preRepOb = Observer()
-    lst.AddObserver('@REPLACEMENT', preRepOb, pre)
+    lst.AddObserver("@REPLACEMENT", preRepOb, pre)
     postRepOb = Observer()
-    lst.AddObserver('@REPLACEMENT', postRepOb, post)
+    lst.AddObserver("@REPLACEMENT", postRepOb, post)
 
     preLenOb = Observer()
-    lst.AddObserver('length', preLenOb, pre)
+    lst.AddObserver("length", preLenOb, pre)
     postLenOb = Observer()
-    lst.AddObserver('length', postLenOb, post)
-    return ((preInsOb, postInsOb),
-            (preRemOb, postRemOb),
-            (preRepOb, postRepOb),
-            (preLenOb, postLenOb))
-
+    lst.AddObserver("length", postLenOb, post)
+    return (
+        (preInsOb, postInsOb),
+        (preRemOb, postRemOb),
+        (preRepOb, postRepOb),
+        (preLenOb, postLenOb),
+    )
 
 
 def test_observation():
@@ -253,14 +270,14 @@ def test_observation():
 
     return
 
+
 def test_copy():
     import copy
+
     old = ObservableList(range(3))
     new = copy.copy(old)
 
-    new.append('wibble')
+    new.append("wibble")
 
     with pytest.raises(IndexError):
         old[3]
-
-

@@ -1,4 +1,3 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
@@ -9,11 +8,12 @@ from ..Util.Observer import Observable
 from .Mappers import SimpleObservingMapper
 from .Bindings import ValueBinding
 
+
 class ObjectController(Observable):
-    """Acts as an intermediary between the model object and view objects.
-    """
-    BindFunctionDispatchTable = ((object, 'BindSimpleValue'), )
-    
+    """Acts as an intermediary between the model object and view objects."""
+
+    BindFunctionDispatchTable = ((object, "BindSimpleValue"),)
+
     def ChooseBindFunction(self, key):
         """Here we walk up the class hierarchy looking in the
         BindFunctionDispatchTable for each class to see if the value
@@ -29,7 +29,7 @@ class ObjectController(Observable):
         except AttributeError:
             value = getattr(self.delegate, key)
             pass
-        
+
         # Walk up the hierarchy
         for controllerClass in type(self).__mro__:
             try:
@@ -37,7 +37,7 @@ class ObjectController(Observable):
             except AttributeError:
                 # If the class doesn't have a BindFunctionDispatchTable
                 continue
-            
+
             for cls, methodName in table:
                 # Loop through the entries
                 if isinstance(value, cls):
@@ -45,20 +45,22 @@ class ObjectController(Observable):
                     return getattr(self, methodName)
                 continue
             continue
-        
+
         # Search terminated without matching
-        raise ValueError('No matching Bind method for Mapper of type "%s"' % str(type(self.widgetMapper)))
-    
+        raise ValueError(
+            'No matching Bind method for Mapper of type "%s"'
+            % str(type(self.widgetMapper))
+        )
+
     def __init__(self, delegate):
-        """The delegate will typically be the model or another controller.
-        """
-        
+        """The delegate will typically be the model or another controller."""
+
         assert isinstance(delegate, Observable)
         self.delegate = delegate
         self._values = dict()
         self._actions = set()
         return
-    
+
     def _GetLocalValueForKey(self, key):
         try:
             return getattr(self, key)
@@ -73,9 +75,9 @@ class ObjectController(Observable):
             self.delegate._SetLocalValueForKey(key, value)
             pass
         return
-    
+
     def _AddObserverToLocalKey(self, keyPath, callback, options):
-        if hasattr(self, keyPath) or '.' in keyPath:
+        if hasattr(self, keyPath) or "." in keyPath:
             # If its our attribute or a dotted path, add to self
             Observable._AddObserverToLocalKey(self, keyPath, callback, options)
         else:
@@ -85,7 +87,7 @@ class ObjectController(Observable):
         return
 
     def _RemoveObserverFromLocalKey(self, keyPath, callback):
-        if hasattr(self, keyPath) or '.' in keyPath:
+        if hasattr(self, keyPath) or "." in keyPath:
             # If its our attribute or a dotted path, remove from self
             Observable._RemoveObserverFromLocalKey(self, keyPath, callback)
         else:
@@ -98,27 +100,33 @@ class ObjectController(Observable):
         type of the mapper.
         """
         con, conKey = self.FindResponsibleControllerAndKey(modelKey)
-        
+
         con.ChooseBindFunction(conKey)(self, modelKey, widgetMapper)
         return
-    
+
     def FindResponsibleControllerAndKey(self, modelKey):
         """Find the responsible controller by walking along the key
         path, return that and the key path from that point to the full
         key.
         """
-        parts = modelKey.split('.', 1)
+        parts = modelKey.split(".", 1)
         if len(parts) == 1:
             return self, parts[0]
-        
+
         local = parts[0]
         rest = parts[1]
         subController = getattr(self, local)
         return subController.FindResponsibleControllerAndKey(rest)
-    
-    def BindComplexValue(self, topController, modelKey,
-                         modelMapperFactory, modelFactoryArgs,
-                         bindMgrFactory, widgetMapper):
+
+    def BindComplexValue(
+        self,
+        topController,
+        modelKey,
+        modelMapperFactory,
+        modelFactoryArgs,
+        bindMgrFactory,
+        widgetMapper,
+    ):
         try:
             # If the topController's already got a BindingManager for
             # this attribute of the model, use that.
@@ -136,18 +144,22 @@ class ObjectController(Observable):
         # Bind our widget to the manager
         bindingMgr.BindWidget(widgetMapper)
         return
-    
+
     def BindSimpleValue(self, topController, modelKey, widgetMapper):
-        """Do a simple value binding.
-        """
-        self.BindComplexValue(topController, modelKey,
-                              SimpleObservingMapper, (), ValueBinding,
-                              widgetMapper)
-        
+        """Do a simple value binding."""
+        self.BindComplexValue(
+            topController,
+            modelKey,
+            SimpleObservingMapper,
+            (),
+            ValueBinding,
+            widgetMapper,
+        )
+
         return
-    
+
     def BindAction(self, modelKey, action):
-        parts = modelKey.split('.', 1)
+        parts = modelKey.split(".", 1)
         if len(parts) == 1:
             self._actions.add(action)
             action.Bind(self._getCallbackWrapper(modelKey))
@@ -159,7 +171,7 @@ class ObjectController(Observable):
             pass
 
         return
-    
+
     def _getCallbackWrapper(self, key):
         obj = self
         cb = None
@@ -168,16 +180,18 @@ class ObjectController(Observable):
                 cb = getattr(obj, key)
                 break
                 pass
-            
+
             try:
                 obj = obj.delegate
             except AttributeError:
-                raise AttributeError('No matching key found')
-            
+                raise AttributeError("No matching key found")
+
             continue
 
         def cbwrapper(self, ignored=None):
             cb()
             return
+
         return cbwrapper
+
     pass

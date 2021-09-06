@@ -1,4 +1,3 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
@@ -16,28 +15,30 @@ from .Mappers import ReadOnlyMapper, WriteOnlyMapper
 
 import pdb
 
+
 class ListController(ObjectController, collections.MutableSequence):
     def __init__(self, delegate, SelectionControllerClass=ObjectController):
         assert isinstance(delegate, ObservableList)
         ObjectController.__init__(self, delegate)
         self.SelectionControllerClass = SelectionControllerClass
         self.SelectedIndex = None
-        self.AddDependency('Selection', 'SelectedIndex')
+        self.AddDependency("Selection", "SelectedIndex")
         return
-    
+
     @property
     def Selection(self):
         if self.SelectedIndex is None:
             return self.SelectionControllerClass(EmptySelection)
         return self.SelectionControllerClass(self.delegate[self.SelectedIndex])
-    
+
     def insert(self, index, object):
         self.delegate.insert(index, object)
         self.SelectedIndex = index
         return
-    
+
     def __getitem__(self, index):
         return self.SelectionControllerClass(self.delegate[index])
+
     def __setitem__(self, index, obj):
         if isinstance(obj, self.SelectionControllerClass):
             self.delegate[index] = obj.delegate
@@ -45,7 +46,7 @@ class ListController(ObjectController, collections.MutableSequence):
             self.delegate[index] = obj
             pass
         return
-    
+
     def __delitem__(self, index):
         curLen = len(self.delegate)
         newLen = curLen - 1
@@ -60,49 +61,48 @@ class ListController(ObjectController, collections.MutableSequence):
         if newLen == 0:
             newInd = None
             pass
-        self.WillChangeValueForKey('SelectedIndex')
-        
+        self.WillChangeValueForKey("SelectedIndex")
+
         del self.delegate[index]
-        # Now, we've pre notified of the SelectedIndex change, so skip the Observable setattr        
-        object.__setattr__(self, 'SelectedIndex', newInd)
+        # Now, we've pre notified of the SelectedIndex change, so skip the Observable setattr
+        object.__setattr__(self, "SelectedIndex", newInd)
         # And post the change
-        self.DidChangeValueForKey('SelectedIndex')
+        self.DidChangeValueForKey("SelectedIndex")
         return
-    
+
     def __len__(self):
         return self.delegate.__len__()
-    
+
     pass
 
+
 class HasListKeys(object):
-    """Mixin for ObjectController subclasses with ObservableList keys.
-    """
-    BindFunctionDispatchTable = ((ListController, 'BindList'),)
-    
+    """Mixin for ObjectController subclasses with ObservableList keys."""
+
+    BindFunctionDispatchTable = ((ListController, "BindList"),)
+
     def BindList(self, top, modelKey, widgetMapper):
-        """We need to bind the selection and deal with add/remove/update.
-        """
-        self.BindComplexValue(top, modelKey, ListContentsSourceMapper, (),
-                              ValueBinding, widgetMapper)
-        
+        """We need to bind the selection and deal with add/remove/update."""
+        self.BindComplexValue(
+            top, modelKey, ListContentsSourceMapper, (), ValueBinding, widgetMapper
+        )
+
         return
-    
+
     def DefineListKey(self, name):
         """Typically used in the subclass __init__ method to easily
         mark a key as being a List and hence needing a ListController
         to manage it.
         """
-        setattr(self, name,
-                ListController(getattr(self.delegate, name))
-                )
+        setattr(self, name, ListController(getattr(self.delegate, name)))
         return
-    
+
     pass
 
 
 class ListContentsSourceMapper(ReadOnlyMapper):
-    """This is a mapper for list add/remove/replace events.
-    """
+    """This is a mapper for list add/remove/replace events."""
+
     def __init__(self, controller, key):
         ReadOnlyMapper.__init__(self)
         listController = getattr(controller, key)
@@ -110,7 +110,7 @@ class ListContentsSourceMapper(ReadOnlyMapper):
         self.key = key
         self.currentChange = None
         return
-    
+
     def HandleListChange(self, change):
         self.currentChange = change
         try:
@@ -122,18 +122,19 @@ class ListContentsSourceMapper(ReadOnlyMapper):
 
     def _Get(self):
         return self.model, self.currentChange
-    
+
     def Observe(self):
-        self.model.AddObserver('@INSERTION', self.HandleListChange)
-        self.model.AddObserver('@REMOVAL', self.HandleListChange)
-        self.model.AddObserver('@REPLACEMENT', self.HandleListChange)
+        self.model.AddObserver("@INSERTION", self.HandleListChange)
+        self.model.AddObserver("@REMOVAL", self.HandleListChange)
+        self.model.AddObserver("@REPLACEMENT", self.HandleListChange)
         return
-    
+
     def Unobserve(self):
-        self.model.RemoveObserver('@INSERTION', self.HandleListChange)
-        self.model.RemoveObserver('@REMOVAL', self.HandleListChange)
-        self.model.RemoveObserver('@REPLACEMENT', self.HandleListChange)
+        self.model.RemoveObserver("@INSERTION", self.HandleListChange)
+        self.model.RemoveObserver("@REMOVAL", self.HandleListChange)
+        self.model.RemoveObserver("@REPLACEMENT", self.HandleListChange)
         return
+
     pass
 
 
@@ -145,13 +146,14 @@ class ListContentsDestMapper(WriteOnlyMapper):
     HemeLbSetupTool.Bindings.ListController.ListContentsMapper (or
     subclass thereof) object that will produce appropriate data for
     it. The list you bind must implement the MutableSequence ABC.
-    
+
     The translator supplied operates on individual items of the
     managed list.
     """
+
     def __init__(self, target, translator=UnitTranslator()):
         WriteOnlyMapper.__init__(self, translator=translator)
-        
+
         self.target = target
         return
 
@@ -168,12 +170,12 @@ class ListContentsDestMapper(WriteOnlyMapper):
         if change is None:
             self.Clean(model)
             return
-        
-        if change.key == '@REMOVAL':
+
+        if change.key == "@REMOVAL":
             self.Delete(model, change)
-        elif change.key == '@INSERTION':
+        elif change.key == "@INSERTION":
             self.Insert(model, change)
-        elif change.key == '@REPLACEMENT':
+        elif change.key == "@REPLACEMENT":
             self.Replace(model, change)
         return
 
@@ -181,29 +183,29 @@ class ListContentsDestMapper(WriteOnlyMapper):
         while len(self.target) > 0:
             self.target.pop()
             continue
-        
+
         for item in model:
             self.target.append(self.translator.Translate(item))
             continue
         return
-    
+
     def Insert(self, model, change):
         index = change.index
         # This effectively creates a new control- we will probably
         # have to bind it to a model key
         self.target.insert(index, self.translator.Translate(model[index]))
         return
-    
+
     def Delete(self, model, change):
         index = change.index
         # This effectively deletes a control. We should throw away any
         # bindings
         del self.target[index]
         return
-    
-    def Replace (self, model, change):
+
+    def Replace(self, model, change):
         index = change.index
         self.target[index] = model[index]
         return
-    
+
     pass

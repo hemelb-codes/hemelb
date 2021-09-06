@@ -1,4 +1,3 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
@@ -6,11 +5,10 @@
 
 from HemeLbSetupTool.Util.Observer import Observable
 
+
 class Vector(Observable):
-    _Args = {'x': float("nan"),
-             'y': float("nan"),
-             'z': float("nan")}
-    
+    _Args = {"x": float("nan"), "y": float("nan"), "z": float("nan")}
+
     def __init__(self, *args):
         if len(args) == 0:
             nan = float("nan")
@@ -25,12 +23,11 @@ class Vector(Observable):
             raise ValueError
 
         return
-    
+
     def __repr__(self):
-        return 'Vector({0.x}, {0.y}, {0.z})'.format(self)
+        return "Vector({0.x}, {0.y}, {0.z})".format(self)
+
     def __str__(self):
-        return '({0.x},{0.y},{0.z})'.format(self)
-    
+        return "({0.x},{0.y},{0.z})".format(self)
+
     pass
-
-
