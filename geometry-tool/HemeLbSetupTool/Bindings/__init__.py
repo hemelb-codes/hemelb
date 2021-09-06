@@ -1,4 +1,3 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
@@ -83,10 +82,13 @@ def View.__init__(self, controller):
 
 
 """
+
+
 class BindingError(Exception):
     pass
 
+
 if __name__ == "__main__":
     from test import test
-    test()
 
+    test()

@@ -1,13 +1,21 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-from vtk import vtkPolyDataMapper, vtkActor, vtkModifiedBSPTree, \
-     vtkPolygonalSurfacePointPlacer, vtkRenderer, vtkAnnotatedCubeActor, \
-     vtkAxesActor, vtkTextProperty, vtkPropAssembly, \
-     vtkOrientationMarkerWidget, vtkSphereSource
+from vtk import (
+    vtkPolyDataMapper,
+    vtkActor,
+    vtkModifiedBSPTree,
+    vtkPolygonalSurfacePointPlacer,
+    vtkRenderer,
+    vtkAnnotatedCubeActor,
+    vtkAxesActor,
+    vtkTextProperty,
+    vtkPropAssembly,
+    vtkOrientationMarkerWidget,
+    vtkSphereSource,
+)
 
 from ..Util.Observer import Observable
 
@@ -15,86 +23,89 @@ from .PlacedIolet import PlacedIoletList
 
 import pdb
 
+
 class Pipeline(Observable):
     def __init__(self):
         # 1 mm is probably about right.
         # TODO: force this to be recalculated when the StlReader updates
         self.WidgetSize = 1
-        
+
         self.SurfaceMapper = vtkPolyDataMapper()
         self.SurfaceActor = vtkActor()
         self.SurfaceActor.SetMapper(self.SurfaceMapper)
         # self.seeder = SeedPlacer(self, self.stlActor)
         self.Locator = vtkModifiedBSPTree()
-        
+
         self.SurfacePlacer = vtkPolygonalSurfacePointPlacer()
         self.SurfacePlacer.AddProp(self.SurfaceActor)
 
         self.Renderer = vtkRenderer()
         self.Renderer.AddActor(self.SurfaceActor)
-        
+
         self.CreateMarker()
 
         self.PlacedSeed = PlacedSeed(self)
-        self.PlacedSeed.AddObserver('Enabled', self.HandlePlacedItemEnabledChange)
-        self.AddObserver('WidgetSize', self.PlacedSeed.HandleWidgetSizeChange)
-        
+        self.PlacedSeed.AddObserver("Enabled", self.HandlePlacedItemEnabledChange)
+        self.AddObserver("WidgetSize", self.PlacedSeed.HandleWidgetSizeChange)
+
         self.PlacedIolets = PlacedIoletList()
-        self.PlacedIolets.SetItemEnabledChangeHandler(self.HandlePlacedItemEnabledChange)
-        
+        self.PlacedIolets.SetItemEnabledChangeHandler(
+            self.HandlePlacedItemEnabledChange
+        )
+
         return
-    
+
     def SetSurfaceSource(self, src):
         self.SurfaceMapper.SetInputConnection(src)
         self.PlacedIolets.SetSurfaceSource(src)
         return
-    
-                    
+
     def ResetView(self):
-        """Reset the view on the current scene.
-        """
+        """Reset the view on the current scene."""
         self.Renderer.ResetCamera()
         return
-    
+
     def SetViewX(self):
         cam = self.Renderer.GetActiveCamera()
         focus = cam.GetFocalPoint()
         dist = cam.GetDistance()
-        cam.SetPosition(focus[0]+dist,focus[1], focus[2])
-        cam.SetViewUp(0,0,1)
+        cam.SetPosition(focus[0] + dist, focus[1], focus[2])
+        cam.SetViewUp(0, 0, 1)
         return
+
     def SetViewY(self):
         cam = self.Renderer.GetActiveCamera()
         focus = cam.GetFocalPoint()
         dist = cam.GetDistance()
-        cam.SetPosition(focus[0],focus[1]+dist, focus[2])
-        cam.SetViewUp(0,0,1)
+        cam.SetPosition(focus[0], focus[1] + dist, focus[2])
+        cam.SetViewUp(0, 0, 1)
         return
+
     def SetViewZ(self):
         cam = self.Renderer.GetActiveCamera()
         focus = cam.GetFocalPoint()
         dist = cam.GetDistance()
-        cam.SetPosition(focus[0],focus[1], focus[2]+dist)
-        cam.SetViewUp(1,0,0)
+        cam.SetPosition(focus[0], focus[1], focus[2] + dist)
+        cam.SetViewUp(1, 0, 0)
         return
 
     def SetInteractor(self, iact):
         self.Interactor = iact
         self.SetMarkerInteractor(iact)
         self.PlacedIolets.SetInteractor(iact)
-        
+
         return
-    
+
     def SetInteractorForObject(self, obj):
         obj.SetInteractor(self.Interactor)
         return
-    
+
     def SetMarkerInteractor(self, iact):
         self.OrientationMarker.SetInteractor(iact)
         self.OrientationMarker.SetEnabled(1)
         self.OrientationMarker.InteractiveOff()
         return
-    
+
     def CreateMarker(self):
         # Create a composite orientation marker using
         # vtkAnnotatedCubeActor and vtkAxesActor.
@@ -120,11 +131,9 @@ class Pipeline(Observable):
         prop.SetAmbient(1)
         prop.SetColor(0.18, 0.28, 0.23)
 
-        for axis, colour in (('X', (0,0,1)),
-                             ('Y', (0,1,0)),
-                             ('Z', (1,0,0))):
-            for orient in ('Plus', 'Minus'):
-                prop = getattr(cube, 'Get'+axis+orient+'FaceProperty')()
+        for axis, colour in (("X", (0, 0, 1)), ("Y", (0, 1, 0)), ("Z", (1, 0, 0))):
+            for orient in ("Plus", "Minus"):
+                prop = getattr(cube, "Get" + axis + orient + "FaceProperty")()
                 prop.SetColor(*colour)
                 prop.SetInterpolationToFlat()
                 continue
@@ -157,10 +166,10 @@ class Pipeline(Observable):
 
         # Add the composite marker to the widget.  The widget
         # should be kept in non-interactive mode and the aspect
-        # ratio of the render window taken into account explicitly, 
-        # since the widget currently does not take this into 
+        # ratio of the render window taken into account explicitly,
+        # since the widget currently does not take this into
         # account in a multi-renderer environment.
-        # 
+        #
         marker = vtkOrientationMarkerWidget()
         marker.SetOutlineColor(0.93, 0.57, 0.13)
         marker.SetOrientationMarker(assembly)
@@ -174,7 +183,7 @@ class Pipeline(Observable):
         """
         aList = self.Renderer.GetActors()
         iterator = aList.NewIterator()
-        
+
         while not iterator.IsDoneWithTraversal():
             a = iterator.GetCurrentObject()
             if a is actor:
@@ -198,35 +207,37 @@ class Pipeline(Observable):
 
     pass
 
+
 class PlacedSeed(Observable):
-    def __init__(self, pipeline, colour=(0,0,1)):
+    def __init__(self, pipeline, colour=(0, 0, 1)):
         self.representation = vtkSphereSource()
         self.representation.SetRadius(pipeline.WidgetSize)
-#        pipeline.AddObserver('WidgetSize', self.HandleWidgetSizeChange)
-        
+        #        pipeline.AddObserver('WidgetSize', self.HandleWidgetSizeChange)
+
         self.mapper = vtkPolyDataMapper()
         self.mapper.SetInputConnection(self.representation.GetOutputPort())
-        
+
         self.actor = vtkActor()
         self.actor.SetMapper(self.mapper)
         # Make it blue
         self.actor.GetProperty().SetColor(colour)
 
         self.Enabled = False
-        
+
         return
-    
+
     def HandleWidgetSizeChange(self, change):
         pro = change.obj
         self.representation.SetRadius(pro.WidgetSize)
         return
-    
+
     def SetCentre(self, centre):
         self.representation.SetCenter(centre)
         return
+
     def GetCentre(self):
         return self.representation.GetCenter()
-    Centre = property(GetCentre, SetCentre)
-    
-    pass
 
+    Centre = property(GetCentre, SetCentre)
+
+    pass

@@ -12,11 +12,12 @@ import numpy as np
 from HemeLbSetupTool.Util.Observer import Observable, ObservableListOf
 from HemeLbSetupTool.Model.Vector import Vector
 
+
 class AutoReg(type):
-    """Quick metaclass to have subclasses register themselves on definition.
-    """
+    """Quick metaclass to have subclasses register themselves on definition."""
+
     def __init__(cls, name, bases, dct):
-        if not hasattr(cls, '_registry'):
+        if not hasattr(cls, "_registry"):
             # Base - create an empty one
             cls._registry = {}
         else:
@@ -25,31 +26,34 @@ class AutoReg(type):
             pass
         type.__init__(cls, name, bases, dict)
         return
-    
+
+
 class Iolet(Observable, metaclass=AutoReg):
     """Represent boundary across which there can be flow.
     Do not instantiate
     """
-    _Args = {'Name': 'Unknown iolet',
-             # Initialize to the VTK defaults for now
-             'Centre': Vector(0., 0., 0.),
-             'Normal': Vector(0., 0., 1.),
-             'Radius': 0.5}
-    # TODO: Move the representation of the plane (a vtkPlaneSource) 
-    # into this class from PlacedIolet. It should have the side 
+
+    _Args = {
+        "Name": "Unknown iolet",
+        # Initialize to the VTK defaults for now
+        "Centre": Vector(0.0, 0.0, 0.0),
+        "Normal": Vector(0.0, 0.0, 1.0),
+        "Radius": 0.5,
+    }
+    # TODO: Move the representation of the plane (a vtkPlaneSource)
+    # into this class from PlacedIolet. It should have the side
     # effect of simplifying the bindings.
     def __init__(self, **kwargs):
         it = self._Args.items()
         for a, default in it:
-            setattr(self, a,
-                    kwargs.pop(a, copy(default)))
+            setattr(self, a, kwargs.pop(a, copy(default)))
             continue
-        
+
         for k in kwargs:
             raise TypeError("__init__() got an unexpected keyword argument '%'" % k)
 
         return
-        
+
     @property
     def Plane(self):
         p = vtkPlaneSource()
@@ -58,69 +62,70 @@ class Iolet(Observable, metaclass=AutoReg):
         # Normal = 0,0,1
         # Origin = -0.5, -0.5, 0
         # So set the radius first while it's simple
-        p.SetOrigin(-self.Radius, -self.Radius, 0.)
-        p.SetPoint1(+self.Radius, -self.Radius, 0.)
-        p.SetPoint2(-self.Radius, +self.Radius, 0.)
+        p.SetOrigin(-self.Radius, -self.Radius, 0.0)
+        p.SetPoint1(+self.Radius, -self.Radius, 0.0)
+        p.SetPoint2(-self.Radius, +self.Radius, 0.0)
         # Shift to the right place
         p.SetCenter(self.Centre.x, self.Centre.y, self.Centre.z)
         # Orient correctly
         p.SetNormal(self.Normal.x, self.Normal.y, self.Normal.z)
-        
+
         return p
-    
+
     def IntersectWithLine(self, p1, p2):
         """Given a line defined by the two points p1,p2; and a plane defined by the
         normal n and point p0, compute an intersection. The parametric
-        coordinate along the line is returned in t, and the coordinates of 
+        coordinate along the line is returned in t, and the coordinates of
         intersection are returned in x. A zero is returned if the plane and line
         do not intersect between (0<=t<=1). If the plane and line are parallel,
         zero is returned and t is set to VTK_LARGE_DOUBLE.
         """
         tol = 1e-6
         n = np.array([self.Normal.x, self.Normal.y, self.Normal.z])
-        p0 =np.array([self.Centre.x, self.Centre.y, self.Centre.z])
+        p0 = np.array([self.Centre.x, self.Centre.y, self.Centre.z])
         # Compute line vector
         p21 = np.array(p2) - p1
-    
+
         # Compute denominator.  If ~0, line and plane are parallel.
-        num = np.dot(n,p0) - np.dot(n ,p1)
+        num = np.dot(n, p0) - np.dot(n, p1)
         den = np.dot(n, p21)
-        
+
         # If denominator with respect to numerator is "zero", then the line and
-        # plane are considered parallel. 
-        if np.fabs(den) <= np.fabs(num*tol):
+        # plane are considered parallel.
+        if np.fabs(den) <= np.fabs(num * tol):
             return np.finfo(float).max, None
-        
+
         # valid intersection
         t = num / den
         x = p1 + t * p21
-        
-        rSq = np.sum((x - p0)**2)
-        
+
+        rSq = np.sum((x - p0) ** 2)
+
         if rSq <= self.Radius:
             return t, x
-        
+
         return np.finfo(float).max, None
 
     def Yamlify(self):
         dic = Observable.Yamlify(self)
-        dic['Type'] = self.__class__.__name__
+        dic["Type"] = self.__class__.__name__
         return dic
-    
+
     pass
-    
+
+
 class SinusoidalPressureIolet(Iolet):
-    """Do not instantiate
-    """
+    """Do not instantiate"""
+
     _Args = Iolet._Args.copy()
-    _Args['Pressure'] = Vector(0., 0., 0.)
-    
+    _Args["Pressure"] = Vector(0.0, 0.0, 0.0)
+
     def __init__(self, **kwargs):
         Iolet.__init__(self, **kwargs)
-        
-        self.AddDependency('PressureEquation', 'Pressure.x')
-        self.AddDependency('PressureEquation', 'Pressure.y')
-        self.AddDependency('PressureEquation', 'Pressure.z')
+
+        self.AddDependency("PressureEquation", "Pressure.x")
+        self.AddDependency("PressureEquation", "Pressure.y")
+        self.AddDependency("PressureEquation", "Pressure.z")
         return
 
     @property
@@ -129,30 +134,34 @@ class SinusoidalPressureIolet(Iolet):
             avg = self.Pressure.x
             amp = self.Pressure.y
             phs = self.Pressure.z
-            ans = u'p = %.2f + %.2f cos(wt + %.0f°)' % (avg, amp, phs)
+            ans = u"p = %.2f + %.2f cos(wt + %.0f°)" % (avg, amp, phs)
             return ans
         except:
-            return ''
+            return ""
         return
-    
+
     pass
+
 
 class Inlet(SinusoidalPressureIolet):
     pass
 
+
 class Outlet(SinusoidalPressureIolet):
     pass
 
+
 class ObservableListOfIolets(ObservableListOf):
     ElementType = Iolet
+
     def _FindType(self, attr, source):
-        cls = source['Type']
+        cls = source["Type"]
         return Iolet._registry[cls]
-    
+
+
 def IoletLoader(d):
-    className = d.pop('Type')
+    className = d.pop("Type")
     cls = Iolet._registry[className]
     inst = cls()
     inst.LoadFrom(d)
     return inst
-

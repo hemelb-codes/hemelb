@@ -1,4 +1,3 @@
-
 # This file is part of HemeLB and is Copyright (C)
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
@@ -18,20 +17,19 @@ import fixtures
 
 
 class TestPolyDataGenerator:
-
     def test_regression(self, tmpdir):
         """Generate a gmy from a stored profile and check that the output is
         identical.
         """
-        dataDir = os.path.join(os.path.split(__file__)[0], 'data')
-        proFileName = os.path.join(dataDir, 'test.pr2')
+        dataDir = os.path.join(os.path.split(__file__)[0], "data")
+        proFileName = os.path.join(dataDir, "test.pr2")
 
         p = Profile()
         p.LoadFromFile(proFileName)
         # Change the output to the tmpdir
-        basename = tmpdir.join('test').strpath
-        outGmyFileName = basename + '.gmy'
-        outXmlFileName = basename + '.xml'
+        basename = tmpdir.join("test").strpath
+        outGmyFileName = basename + ".gmy"
+        outXmlFileName = basename + ".xml"
         p.OutputGeometryFile = outGmyFileName
         p.OutputXmlFile = outXmlFileName
 
@@ -39,8 +37,9 @@ class TestPolyDataGenerator:
         generator.Execute()
 
         import filecmp
-        assert filecmp.cmp(outGmyFileName, os.path.join(dataDir, 'test.gmy'))
-        assert filecmp.cmp(outXmlFileName, os.path.join(dataDir, 'test.xml'))
+
+        assert filecmp.cmp(outGmyFileName, os.path.join(dataDir, "test.gmy"))
+        assert filecmp.cmp(outXmlFileName, os.path.join(dataDir, "test.xml"))
 
     def test_cube(self, tmpdir):
         """Generate a gmy from a simple cubic profile and check the output"""
@@ -60,7 +59,7 @@ class TestPolyDataGenerator:
         sites = block_count * block_size ** 3
         # assert(sites==4096)
         # assert(fluid_sites==729)
-        assert(sites != fluid_sites)
+        assert sites != fluid_sites
         # # Now, turn on the skip-non-intersecting-blocks optimisation, and
         # # assert same result
         # generator.skipNonIntersectingBlocks = True
@@ -73,41 +72,43 @@ class TestPolyDataGenerator:
         # assert(fluid_sites_nonintersecting == fluid_sites)
 
     def test_cube_normals(self, tmpdir):
-        """Generate a gmy from a simple cubic profile and check the computed 
+        """Generate a gmy from a simple cubic profile and check the computed
         normals.
         """
         cube = fixtures.cube(tmpdir)
         cube.VoxelSize = 0.23
         cube.StlFileUnitId = 0
-        
+
         """The default VTK cube has 1m edges and it is centred at the origin 
         of coordinates. We place the inlet and the outlet at the faces 
         perpendicular to the z axis.
         """
-        inlet = Iolet(Name='inlet',
-                      Centre=Vector(0., 0., -0.5),
-                      Normal=Vector(0., 0., -1.),
-                      Radius=np.sqrt(2) / 2)
-        outlet = Iolet(Name='outlet',
-                       Centre=Vector(0., 0., 0.5),
-                       Normal=Vector(0., 0., 1.),
-                       Radius=np.sqrt(2) / 2)
+        inlet = Iolet(
+            Name="inlet",
+            Centre=Vector(0.0, 0.0, -0.5),
+            Normal=Vector(0.0, 0.0, -1.0),
+            Radius=np.sqrt(2) / 2,
+        )
+        outlet = Iolet(
+            Name="outlet",
+            Centre=Vector(0.0, 0.0, 0.5),
+            Normal=Vector(0.0, 0.0, 1.0),
+            Radius=np.sqrt(2) / 2,
+        )
         cube.Iolets = [inlet, outlet]
-         
+
         generator = OutputGeneration.PolyDataGenerator(cube)
         # generator.skipNonIntersectingBlocks = True
         generator.Execute()
-        
+
         """Load back the resulting geometry file and assert things are as 
         expected
         """
-        checker = CubeNormalsTestingGmyParser(cube.OutputXmlFile, 
-                                              cube.VoxelSize)
+        checker = CubeNormalsTestingGmyParser(cube.OutputXmlFile, cube.VoxelSize)
         checker.Load()
 
     def test_cylinder(self, tmpdir):
-        """Generate a gmy from a simple cylinder profile and check the output
-        """
+        """Generate a gmy from a simple cylinder profile and check the output"""
         cylinder = fixtures.cylinder(tmpdir)
         cylinder.VoxelSize = 0.23
         cylinder.StlFileUnitId = 0
@@ -115,24 +116,31 @@ class TestPolyDataGenerator:
         """ The default VTK cylinder is 1 length unit long, aligned with the 
         y-axis, and centred at the origin of coordinates.
         """
-        inlet = Iolet(Name='inlet',
-                      Centre=Vector(0., -0.5, 0.),
-                      Normal=Vector(0., -1., 0.),
-                      Radius=1)
-        outlet = Iolet(Name='outlet',
-                       Centre=Vector(0., 0.5, 0.),
-                       Normal=Vector(0., 1., 0.),
-                       Radius=1)
+        inlet = Iolet(
+            Name="inlet",
+            Centre=Vector(0.0, -0.5, 0.0),
+            Normal=Vector(0.0, -1.0, 0.0),
+            Radius=1,
+        )
+        outlet = Iolet(
+            Name="outlet",
+            Centre=Vector(0.0, 0.5, 0.0),
+            Normal=Vector(0.0, 1.0, 0.0),
+            Radius=1,
+        )
         cylinder.Iolets = [inlet, outlet]
-        
+
         generator = OutputGeneration.PolyDataGenerator(cylinder)
         generator.Execute()
         # Load back the resulting geometry file and assert things are as
         # expected
-        checker = CylinderTestingGmyParser(cylinder.OutputXmlFile,
-                                           cylinder.VoxelSize,
-                                           np.array([0.0, 1.0, 0.0]),
-                                           1.0, 0.5)
+        checker = CylinderTestingGmyParser(
+            cylinder.OutputXmlFile,
+            cylinder.VoxelSize,
+            np.array([0.0, 1.0, 0.0]),
+            1.0,
+            0.5,
+        )
         checker.Load()
 
         fluid_sites = sum(checker.Domain.BlockFluidSiteCounts)
@@ -141,7 +149,7 @@ class TestPolyDataGenerator:
         sites = block_count * block_size ** 3
         # assert(sites==4096)
         # assert(fluid_sites==621)
-        assert(sites != fluid_sites)
+        assert sites != fluid_sites
         # # Now, turn on the skip-non-intersecting-blocks optimisation, and
         # # assert same result
         # generator.skipNonIntersectingBlocks = True
@@ -156,7 +164,6 @@ class TestPolyDataGenerator:
 
 
 class TestCylinderGenerator:
-
     @pytest.mark.parametrize(("randSeed",), [(828,), (341,), (1432,)])
     def test_regression(self, tmpdir, randSeed):
         """Generate a small cylinder GMY with a random orientation. Then check
@@ -164,9 +171,9 @@ class TestCylinderGenerator:
         a ConfigLoader.
         """
 
-        basename = tmpdir.join('cyl')
-        OutputGeometryFile = basename.strpath + '.gmy'
-        OutputXmlFile = basename.strpath + '.xml'
+        basename = tmpdir.join("cyl")
+        OutputGeometryFile = basename.strpath + ".gmy"
+        OutputXmlFile = basename.strpath + ".xml"
         VoxelSizeMetres = 0.1
 
         rng = np.random.RandomState(randSeed)
@@ -175,7 +182,7 @@ class TestCylinderGenerator:
 
         LengthMetres = 1.32
         RadiusMetres = 0.74
-        
+
         # generator = OutputGeneration.CylinderGenerator(
         #     OutputGeometryFile, OutputXmlFile,
         #     VoxelSizeMetres, Axis, LengthMetres,
@@ -191,7 +198,6 @@ class TestCylinderGenerator:
 
 
 class BaseTestingGmyParser(ConfigLoader):
-
     def __init__(self, filename, VoxelSize):
         ConfigLoader.__init__(self, filename)
         self.VoxelSize = VoxelSize
@@ -214,7 +220,6 @@ class BaseTestingGmyParser(ConfigLoader):
 
 
 class CylinderTestingGmyParser(BaseTestingGmyParser):
-
     def __init__(self, filename, VoxelSize, Axis, Length, Radius):
         BaseTestingGmyParser.__init__(self, filename, VoxelSize)
         self.Axis = Axis
@@ -233,41 +238,40 @@ class CylinderTestingGmyParser(BaseTestingGmyParser):
 
     def OnEndSite(self, block, site):
         BaseTestingGmyParser.OnEndSite(self, block, site)
-        assert (site.IsEdge == site.WallNormalAvailable)
-        is_cylinder_end = (np.any(site.IntersectionType == 
-                                  site.INLET_INTERSECTION) 
-                           or np.any(site.IntersectionType == 
-                                     site.OUTLET_INTERSECTION))
+        assert site.IsEdge == site.WallNormalAvailable
+        is_cylinder_end = np.any(
+            site.IntersectionType == site.INLET_INTERSECTION
+        ) or np.any(site.IntersectionType == site.OUTLET_INTERSECTION)
         if site.IsEdge and not is_cylinder_end:
             assert np.any(site.IntersectionType == site.WALL_INTERSECTION)
-            axis_perpendicular_at_site = (site.Position - 
-                                          np.dot(site.Position, 
-                                                 self.Axis) * self.Axis)
+            axis_perpendicular_at_site = (
+                site.Position - np.dot(site.Position, self.Axis) * self.Axis
+            )
             axis_perpendicular_at_site /= norm(axis_perpendicular_at_site)
             """ (ticket #597) 0.02 is an arbitrary tolerance for how accurate 
             the wall normal estimates are.
             """
-            assert np.absolute(1 - np.dot(site.WallNormal, 
-                                          axis_perpendicular_at_site)) < 0.02
+            assert (
+                np.absolute(1 - np.dot(site.WallNormal, axis_perpendicular_at_site))
+                < 0.02
+            )
 
 
 class CubeTestingGmyParser(BaseTestingGmyParser):
-
     def IsInside(self, position):
-        result = (
-            all(component < 0.5 and component > -0.5 for component in position)
-        )
+        result = all(component < 0.5 and component > -0.5 for component in position)
         return result
 
 
 class CubeNormalsTestingGmyParser(CubeTestingGmyParser):
 
-    ValidNormals = np.array([(1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0)], 
-                            dtype=np.float)
+    ValidNormals = np.array(
+        [(1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0)], dtype=np.float
+    )
 
     def OnEndSite(self, block, site):
         CubeTestingGmyParser.OnEndSite(self, block, site)
-        assert (site.IsEdge == site.WallNormalAvailable)
+        assert site.IsEdge == site.WallNormalAvailable
         is_cube_edge = (site.Index[0] in [1, 4]) and (site.Index[1] in [1, 4])
         if site.IsEdge and not is_cube_edge:
             assert np.any(site.IntersectionType == site.WALL_INTERSECTION)
