@@ -22,6 +22,15 @@ on:
       - 'geometry-tool/**'
 
 jobs:
+  lint-python:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run black to check Python formatting
+        working-directory: geometry-tool
+        run: pip install black && black --check .
+
   gmy-tool:
     runs-on: ubuntu-20.04
 
@@ -37,6 +46,18 @@ jobs:
             libboost-dev \
             libcgal-dev \
             ninja-build
+
+      - name: pip cache
+        uses: actions/cache@v2
+        env:
+          # Increase this value to reset cache
+          CACHE_NUMBER: 0
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ env.CACHE_NUMBER }}-${{ hashFiles('geometry-tool/pyproject.toml', 'geometry-tool/setup.py') }}
+
+      - name: ensure pip is up-to-date
+        run: pip install --upgrade pip
 
       - name: Cope with conda requiring a .yml extension and GHA treating any .yml as a workflow
         working-directory: .github/workflows
@@ -61,18 +82,6 @@ jobs:
 
       - name: Check conda env
         run: conda env export -n base || conda list
-
-      - name: pip cache
-        uses: actions/cache@v2
-        env:
-          # Increase this value to reset cache
-          CACHE_NUMBER: 0
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ runner.os }}-${{ env.CACHE_NUMBER }}-${{ hashFiles('geometry-tool/pyproject.toml', 'geometry-tool/setup.py') }}
-
-      - name: ensure pip is up-to-date
-        run: pip install --upgrade pip
 
       - name: Build and install the app
         working-directory: geometry-tool
