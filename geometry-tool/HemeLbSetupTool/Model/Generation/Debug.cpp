@@ -7,9 +7,9 @@
 #include "Debug.h"
 
 namespace {
-	DummyStream ds;
+DummyStream ds;
 }
 
 DummyStream& Log() {
-	return ds;
+  return ds;
 }

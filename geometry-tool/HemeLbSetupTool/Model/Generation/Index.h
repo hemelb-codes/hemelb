@@ -10,14 +10,12 @@
 #include <exception>
 #include "util/Vector3D.h"
 
-class IndexError: public std::exception {
+class IndexError : public std::exception {
  public:
-	virtual const char* what() const throw () {
-		return "IndexError";
-	}
+  virtual const char* what() const throw() { return "IndexError"; }
 };
 
 typedef hemelb::util::Vector3D<int> Index;
 typedef hemelb::util::Vector3D<double> Vector;
 
-#endif // HEMELBSETUPTOOL_INDEX_H
+#endif  // HEMELBSETUPTOOL_INDEX_H

@@ -25,9 +25,10 @@ struct Neighbours {
   static std::vector<double> norms;
   static std::vector<unsigned int> inverses;
 
-	static void Init();
-private:
-	// Private to ensure it's not instantiated.
-	Neighbours();
+  static void Init();
+
+ private:
+  // Private to ensure it's not instantiated.
+  Neighbours();
 };
-#endif // HEMELBSETUPTOOL_NEIGHBOURS_H
+#endif  // HEMELBSETUPTOOL_NEIGHBOURS_H

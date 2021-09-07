@@ -9,12 +9,12 @@
 
 #include "Index.h"
 struct Iolet {
-	Vector Centre;
-	Vector Normal;
+  Vector Centre;
+  Vector Normal;
 
-	double Radius;
-	int Id;
-	bool IsInlet;
+  double Radius;
+  int Id;
+  bool IsInlet;
 };
 
-#endif // HEMELBSETUPTOOL_IOLET_H
+#endif  // HEMELBSETUPTOOL_IOLET_H

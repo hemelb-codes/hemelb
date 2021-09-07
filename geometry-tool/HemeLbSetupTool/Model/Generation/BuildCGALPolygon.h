@@ -7,33 +7,33 @@
 #ifndef HEMELBSETUPTOOL_BUILDCGALPOLYGON_H
 #define HEMELBSETUPTOOL_BUILDCGALPOLYGON_H
 
-
 #include "CGALtypedef.h"
 
 #include "Block.h"
 
-#include <CGAL/Polyhedron_incremental_builder_3.h>
 #include <CGAL/Polyhedron_3.h>
+#include <CGAL/Polyhedron_incremental_builder_3.h>
 
 class vtkPoints;
 class vtkCellArray;
 class vtkIntArray;
 
 template <class HDS>
-class BuildCGALPolygon: public CGAL::Modifier_base<HDS> {
-public:
-	BuildCGALPolygon(vtkPoints* ptsin, vtkCellArray *polysin,vtkIntArray* IoletIdArrayIn) {
-		this->pts = ptsin;
-		this->polys = polysin;
-		this->IoletIdArray = IoletIdArrayIn;
-	}
-	void operator()( HDS& hds);
-	
-private:
-	vtkPoints* pts;
-	vtkCellArray* polys;
-	vtkIntArray* IoletIdArray;
-	
+class BuildCGALPolygon : public CGAL::Modifier_base<HDS> {
+ public:
+  BuildCGALPolygon(vtkPoints* ptsin,
+                   vtkCellArray* polysin,
+                   vtkIntArray* IoletIdArrayIn) {
+    this->pts = ptsin;
+    this->polys = polysin;
+    this->IoletIdArray = IoletIdArrayIn;
+  }
+  void operator()(HDS& hds);
+
+ private:
+  vtkPoints* pts;
+  vtkCellArray* polys;
+  vtkIntArray* IoletIdArray;
 };
 
-#endif //HEMELBSETUPTOOL_BUILDCGALPOLYGON_H
+#endif  // HEMELBSETUPTOOL_BUILDCGALPOLYGON_H

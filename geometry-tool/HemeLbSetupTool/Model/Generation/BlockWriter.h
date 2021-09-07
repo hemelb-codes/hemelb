@@ -20,32 +20,32 @@ class BufferPool;
  */
 
 class BlockWriter {
-public:
-	BlockWriter(BufferPool* bp);
-	void Reset();
+ public:
+  BlockWriter(BufferPool* bp);
+  void Reset();
 
-	~BlockWriter();
+  ~BlockWriter();
 
-	void IncrementFluidSitesCount();
+  void IncrementFluidSitesCount();
 
-	void Finish();
-	void Write(GeometryWriter& gw);
+  void Finish();
+  void Write(GeometryWriter& gw);
 
-	// Overload << to delegate to the XdrMemWriter
-	template<typename T>
-	BlockWriter& operator<<(T const & value) {
-		(*this->writer) << value;
-		return *this;
-	}
+  // Overload << to delegate to the XdrMemWriter
+  template <typename T>
+  BlockWriter& operator<<(T const& value) {
+    (*this->writer) << value;
+    return *this;
+  }
 
-protected:
-	char* buffer;
-	hemelb::io::writers::xdr::XdrMemWriter* writer;
-	BufferPool* bufferPool;
-	unsigned int nFluidSites;
-	unsigned int CompressedBlockLength;
-	unsigned int UncompressedBlockLength;
-	bool IsFinished;
+ protected:
+  char* buffer;
+  hemelb::io::writers::xdr::XdrMemWriter* writer;
+  BufferPool* bufferPool;
+  unsigned int nFluidSites;
+  unsigned int CompressedBlockLength;
+  unsigned int UncompressedBlockLength;
+  bool IsFinished;
 };
 
-#endif // HEMELBSETUPTOOL_BLOCKWRITER_H
+#endif  // HEMELBSETUPTOOL_BLOCKWRITER_H
