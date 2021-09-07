@@ -31,6 +31,15 @@ jobs:
         working-directory: geometry-tool
         run: pip install black && black --check .
 
+  lint-cpp:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run clang-format
+        working-directory: geometry-tool/HemeLbSetupTool/Model/Generation
+        run: ${{ github.workspace }}/.github/workflows/run-clang-format.py --style file -r .
+
   gmy-tool:
     runs-on: ubuntu-20.04
 
