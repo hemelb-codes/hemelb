@@ -9,34 +9,34 @@
 
 #include <iostream>
 
-class DummyStream {
-};
+class DummyStream {};
 
 #ifdef DEBUG
 
-template<typename T>
-DummyStream& operator<<(DummyStream &ds, const T& val) {
-	std::cout << val;
-	return ds;
+template <typename T>
+DummyStream& operator<<(DummyStream& ds, const T& val) {
+  std::cout << val;
+  return ds;
 }
-inline DummyStream& operator<<(DummyStream& ds, std::ostream& (*func) ( std::ostream& os )) {
-	std::cout << std::endl;
-	return ds;
+inline DummyStream& operator<<(DummyStream& ds,
+                               std::ostream& (*func)(std::ostream& os)) {
+  std::cout << std::endl;
+  return ds;
 }
 
 #else
 
-template<typename T>
-DummyStream& operator<<(DummyStream &ds, const T& val) {
-	return ds;
+template <typename T>
+DummyStream& operator<<(DummyStream& ds, const T& val) {
+  return ds;
 }
-inline DummyStream& operator<<(DummyStream& ds, std::ostream& (*func) ( std::ostream& os )) {
-	return ds;
+inline DummyStream& operator<<(DummyStream& ds,
+                               std::ostream& (*func)(std::ostream& os)) {
+  return ds;
 }
 
-#endif // DEBUG
+#endif  // DEBUG
 
 DummyStream& Log();
 
-#endif // HEMELBSETUPTOOL_DEBUG_H
-
+#endif  // HEMELBSETUPTOOL_DEBUG_H

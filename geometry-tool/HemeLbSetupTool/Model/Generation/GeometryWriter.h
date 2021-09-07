@@ -7,8 +7,8 @@
 #ifndef HEMELBSETUPTOOL_GEOMETRYWRITER_H
 #define HEMELBSETUPTOOL_GEOMETRYWRITER_H
 
-#include <string>
 #include <cstdio>
+#include <string>
 
 #include "Index.h"
 
@@ -19,29 +19,30 @@ class BlockWriter;
 class BufferPool;
 
 class GeometryWriter {
-public:
-	GeometryWriter(const std::string& OutputGeometryFile, int BlockSize,
-			Index BlockCounts);
+ public:
+  GeometryWriter(const std::string& OutputGeometryFile,
+                 int BlockSize,
+                 Index BlockCounts);
 
-	~GeometryWriter();
+  ~GeometryWriter();
 
-	void Close();
-	BlockWriter* StartNextBlock();
+  void Close();
+  BlockWriter* StartNextBlock();
 
-protected:
-	std::string OutputGeometryFile;
-	int BlockSize;
-	Index BlockCounts;
+ protected:
+  std::string OutputGeometryFile;
+  int BlockSize;
+  Index BlockCounts;
 
-	int headerStart;
-	XdrWriter* headerEncoder;
-	unsigned int headerBufferLength;
-	char *headerBuffer;
+  int headerStart;
+  XdrWriter* headerEncoder;
+  unsigned int headerBufferLength;
+  char* headerBuffer;
 
-	int bodyStart;
-	FILE* bodyFile;
-	BufferPool* BlockBufferPool;
-	friend class BlockWriter;
+  int bodyStart;
+  FILE* bodyFile;
+  BufferPool* BlockBufferPool;
+  friend class BlockWriter;
 };
 
-#endif // HEMELBSETUPTOOL_GEOMETRYWRITER_H
+#endif  // HEMELBSETUPTOOL_GEOMETRYWRITER_H

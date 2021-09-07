@@ -9,43 +9,36 @@
 
 #include "GeometryGenerator.h"
 
-#include "Index.h"
-#include "GetSet.h"
 #include "GenerationError.h"
+#include "GetSet.h"
+#include "Index.h"
 
 class GeometryWriter;
 class Site;
 class BlockWriter;
 
 struct SquareDuctData {
-	Vector LowerBound;
-	Vector UpperBound;
-	int OpenAxis;
+  Vector LowerBound;
+  Vector UpperBound;
+  int OpenAxis;
 };
 
 class SquareDuctGenerator : public GeometryGenerator {
-public:
-	SquareDuctGenerator();
-	virtual ~SquareDuctGenerator();
+ public:
+  SquareDuctGenerator();
+  virtual ~SquareDuctGenerator();
 
-	inline void SetLowerBound(Vector v) {
-		this->SquareDuct->LowerBound = v;
-	}
-	inline void SetUpperBound(Vector v) {
-			this->SquareDuct->UpperBound = v;
-		}
-	inline void SetOpenAxis(int i) {
-		this->SquareDuct->OpenAxis = i;
-	}
+  inline void SetLowerBound(Vector v) { this->SquareDuct->LowerBound = v; }
+  inline void SetUpperBound(Vector v) { this->SquareDuct->UpperBound = v; }
+  inline void SetOpenAxis(int i) { this->SquareDuct->OpenAxis = i; }
 
-private:
-	virtual void ComputeBounds(double []) const;
-	void ClassifySite(Site& site);
-	SquareDuctData* SquareDuct;
-protected:
-	virtual int BlockInsideOrOutsideSurface(const Block &block) {
-        return 0;
-    }
+ private:
+  virtual void ComputeBounds(double[]) const;
+  void ClassifySite(Site& site);
+  SquareDuctData* SquareDuct;
+
+ protected:
+  virtual int BlockInsideOrOutsideSurface(const Block& block) { return 0; }
 };
 
-#endif // HEMELBSETUPTOOL_SQUAREDUCTGENERATOR_H
+#endif  // HEMELBSETUPTOOL_SQUAREDUCTGENERATOR_H

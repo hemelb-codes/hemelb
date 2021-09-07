@@ -10,19 +10,20 @@
 
 // Allocates and frees or reuses buffers of a given size.
 class BufferPool {
-public:
-	// C'tor- argument is the size of buffers to work with.
-	BufferPool(unsigned int);
-	~BufferPool();
-	// Returns an uninitialized buffer
-	char* New();
-	// Return a buffer to the pool or free it
-	void Free(char*);
-	// Returns the size of buffers managed by the pool
-	unsigned int GetSize() const;
-private:
-	unsigned int size;
-	std::stack<char*> unused;
+ public:
+  // C'tor- argument is the size of buffers to work with.
+  BufferPool(unsigned int);
+  ~BufferPool();
+  // Returns an uninitialized buffer
+  char* New();
+  // Return a buffer to the pool or free it
+  void Free(char*);
+  // Returns the size of buffers managed by the pool
+  unsigned int GetSize() const;
+
+ private:
+  unsigned int size;
+  std::stack<char*> unused;
 };
 
 #endif

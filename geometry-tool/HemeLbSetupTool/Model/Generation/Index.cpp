@@ -7,13 +7,13 @@
 #include "Index.h"
 
 namespace {
-	void DefaultHandlerFunction(int direction) {
-		throw IndexError();
-	}
+void DefaultHandlerFunction(int direction) {
+  throw IndexError();
 }
+}  // namespace
 
 namespace hemelb {
-	namespace util {
-		Vector3DBase::HandlerFunction* Vector3DBase::handler = DefaultHandlerFunction;
-	}
+namespace util {
+Vector3DBase::HandlerFunction* Vector3DBase::handler = DefaultHandlerFunction;
 }
+}  // namespace hemelb
