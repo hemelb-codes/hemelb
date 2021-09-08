@@ -43,8 +43,24 @@ jobs:
   gmy-tool:
     runs-on: ubuntu-20.04
 
+    strategy:
+      matrix:
+        python-version:
+          - "3.6"
+          - "3.7"
+          - "3.8"
+          - "3.9"
+
+    env:
+      VMTK_VERSION: 1.4.1-rc2
+      VMTK_DIR: /opt/vmtk
     steps:
       - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - name: APT packages
         env:
@@ -54,7 +70,8 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             libboost-dev \
             libcgal-dev \
-            ninja-build
+            ninja-build \
+            libopengl0 libglx0 libxt6
 
       - name: pip cache
         uses: actions/cache@v2
@@ -68,34 +85,21 @@ jobs:
       - name: ensure pip is up-to-date
         run: pip install --upgrade pip
 
-      - name: Cope with conda requiring a .yml extension and GHA treating any .yml as a workflow
-        working-directory: .github/workflows
-        run: cp gmy-${{ runner.os }}.conda-env conda-env.yml
-
-      - name: Cache conda
-        uses: actions/cache@v2
-        env:
-          # Increase this value to reset cache
-          CACHE_NUMBER: 0
-        with:
-          path: /usr/share/miniconda/pkgs/*.tar.bz2
-          key: conda-${{ runner.os }}-${{ env.CACHE_NUMBER }}-${{ hashFiles('.github/workflows/conda-env.yml') }}
-
-      - name: Sort out conda and packages
-        working-directory: .github/workflows
-        env:
-          CONDA_RESTORE_FREE_CHANNEL: 1
+      - name: Get and install VMTK from our builder (and check setuptools sees it)
         run: |
-          cp gmy-${{ runner.os }}.conda-env conda-env.yml
-          $CONDA/bin/conda env update --file conda-env.yml --name base
-
-      - name: Check conda env
-        run: conda env export -n base || conda list
+          wget -nv -O vmtk.tar.gz https://github.com/hemelb-codes/vmtk-build/releases/download/v${VMTK_VERSION}/all-${VMTK_VERSION}-ubuntu-py${{ matrix.python-version }}.tar.gz
+          mkdir -p /opt/vmtk
+          tar -xzf vmtk.tar.gz -C $VMTK_DIR
+          echo "PATH=$VMTK_DIR/bin:$PATH" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$VMTK_DIR/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "PYTHONPATH=$VMTK_DIR/lib/python${{ matrix.python-version }}/site-packages:$PYTHONPATH" >> $GITHUB_ENV
+          echo "CMAKE_PREFIX_PATH=$VMTK_DIR:$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
+          pip list
 
       - name: Build and install the app
         working-directory: geometry-tool
         run: |
-          CMAKE_PREFIX_PATH=$CONDA pip install --use-feature=in-tree-build .
+          pip install pybind11 scikit-build && python setup.py install
 
       - name: Store build tree on error
         if: failure()
@@ -103,3 +107,22 @@ jobs:
         with:
           name: failed-build-tree
           path: geometry-tool/_skbuild
+
+      - name: Install test dependencies
+        working-directory: python-tools/hemeTools
+        run: pip install pytest cython && python setup.py install
+
+      - name: Run the tests
+        working-directory: geometry-tool/tests
+        run: py.test
+
+      - name: Tar failed install
+        if: failure()
+        run: tar -czf fail-${{ matrix.python-version }}.tar.gz $pythonLocation
+
+      - name: Store failed install
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: failed-python-${{ matrix.python-version }}
+          path: fail-${{ matrix.python-version }}.tar.gz
