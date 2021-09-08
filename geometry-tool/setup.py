@@ -34,7 +34,6 @@ setup(
     scripts=[
         "scripts/hemelb-setup",
         "scripts/hemelb-setup-nogui",
-        "scripts/hemelb-countsites",
         "scripts/upgrade-profile",
     ],
 )
