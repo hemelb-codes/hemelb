@@ -30,10 +30,26 @@ setup(
         "HemeLbSetupTool.Model",
         "HemeLbSetupTool.View",
         "HemeLbSetupTool.Controller",
+        "HemeLbSetupTool.scripts",
     ],
-    scripts=[
-        "scripts/hemelb-setup",
-        "scripts/hemelb-setup-nogui",
-        "scripts/upgrade-profile",
+    entry_points={
+        "console_scripts": [
+            "hemelb-gmy-cli=HemeLbSetupTool.scripts.cli:main",
+            "hemelb-config2gmy=HemeLbSetupTool.scripts.config_to_geometry:main",
+            "hemelb-pro2pr2=HemeLbSetupTool.scripts.pro_to_pr2:main",
+        ],
+        "gui_scripts": [
+            "hemelb-gmy-gui=HemeLbSetupTool.scripts.gui:main[gui]",
+        ],
+    },
+    python_requires=">=3.6",
+    install_requires=[
+        "pyyaml",
+        "numpy",
+        "vtk",
+        "vmtk",
     ],
+    extras_require={
+        "gui": ["wxPython"],
+    },
 )
