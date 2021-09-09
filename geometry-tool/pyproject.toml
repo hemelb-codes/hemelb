@@ -6,3 +6,4 @@ requires = [
     "pybind11",
     "cmake"
 ]
+build-backend = "setuptools.build_meta"
