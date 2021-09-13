@@ -7,7 +7,7 @@
 
 Create a subclass of Observable to use.
 """
-import collections
+from collections.abc import MutableSequence
 from copy import copy
 from types import MethodType
 import warnings
@@ -472,7 +472,7 @@ class Dependency(object):
     pass
 
 
-class ObservableList(Observable, collections.MutableSequence):
+class ObservableList(Observable, MutableSequence):
     """A list whose member mutations can be observed. Do this by
     observing special attributes '@INSERTION', '@REMOVAL',
     '@REPLACEMENT'.
