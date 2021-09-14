@@ -10,13 +10,13 @@
 #include <string>
 
 struct GenerationError : public std::exception {
-  virtual const char* what() const throw() { return "GenerationError"; }
+  virtual const char* what() const noexcept { return "GenerationError"; }
 };
 
 struct GenerationErrorMessage : public GenerationError {
   GenerationErrorMessage(const std::string errorMessage) : msg(errorMessage) {}
-  ~GenerationErrorMessage() throw() {}
-  virtual const char* what() const throw() { return msg.c_str(); }
+  ~GenerationErrorMessage() {}
+  virtual const char* what() const noexcept { return msg.c_str(); }
 
   const std::string msg;
 };

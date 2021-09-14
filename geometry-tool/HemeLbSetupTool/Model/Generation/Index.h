@@ -12,7 +12,7 @@
 
 class IndexError : public std::exception {
  public:
-  virtual const char* what() const throw() { return "IndexError"; }
+  virtual const char* what() const noexcept { return "IndexError"; }
 };
 
 typedef hemelb::util::Vector3D<int> Index;
