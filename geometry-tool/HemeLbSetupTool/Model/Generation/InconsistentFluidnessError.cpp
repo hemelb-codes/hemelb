@@ -57,10 +57,10 @@ InconsistentIntersectRayError::InconsistentIntersectRayError(const Site& s1,
   this->msg = msgStream.str();
 }
 
-const char* InconsistentFluidnessError::what() const throw() {
+const char* InconsistentFluidnessError::what() const noexcept {
   return this->msg.c_str();
 }
 
-const char* InconsistentIntersectRayError::what() const throw() {
+const char* InconsistentIntersectRayError::what() const noexcept {
   return this->msg.c_str();
 }

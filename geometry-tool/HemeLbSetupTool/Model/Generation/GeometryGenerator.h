@@ -22,7 +22,7 @@ class GeometryGenerator {
  public:
   GeometryGenerator();
   virtual ~GeometryGenerator();
-  void Execute(bool skipNonIntersectingBlocks) throw(GenerationError);
+  void Execute(bool skipNonIntersectingBlocks);
 
   inline std::string GetOutputGeometryFile(void) {
     return this->OutputGeometryFile;

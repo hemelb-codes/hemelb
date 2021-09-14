@@ -27,8 +27,7 @@ GeometryGenerator::~GeometryGenerator() {}
 
 void GeometryGenerator::PreExecute() {}
 
-void GeometryGenerator::Execute(bool skipNonIntersectingBlocks) throw(
-    GenerationError) {
+void GeometryGenerator::Execute(bool skipNonIntersectingBlocks) {
   if (skipNonIntersectingBlocks) {
     throw GenerationErrorMessage(
         "Skip non intersecting blocks functionality currently not available. "
