@@ -39,6 +39,7 @@ find_package(VTK REQUIRED COMPONENTS
   vtkFiltersGeneral
   vtkFiltersSources
   vtkIOXML
+  vtkWrappingPythonCore
 )
 find_package(CGAL REQUIRED)
 
