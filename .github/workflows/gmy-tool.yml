@@ -126,3 +126,25 @@ jobs:
         with:
           name: failed-python-${{ matrix.python-version }}
           path: fail-${{ matrix.python-version }}.tar.gz
+
+      - name: Get hemelb-tests repo
+        uses: actions/checkout@v2
+        with:
+          repository: hemelb-codes/hemelb-tests
+          path: hemelb-tests
+
+      - name: Decompress input mesh
+        working-directory: hemelb-tests/diffTest
+        run: gunzip cyl.stl.gz
+
+      - name: Run the gmy tool without GUI
+        working-directory: hemelb-tests/diffTest
+        run: hemelb-gmy-cli cyl.pr2
+
+      - name: Run the self-consistency checker
+        working-directory: hemelb-tests/diffTest
+        run: GmySelfConsistent config.xml
+
+      - name: Count the sites
+        working-directory: hemelb-tests/diffTest
+        run: "[[ $(CountSites config.gmy) == 44250 ]]"
