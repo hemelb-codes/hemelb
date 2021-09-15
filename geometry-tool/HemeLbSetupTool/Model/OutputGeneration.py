@@ -365,18 +365,18 @@ class Timer(object):
     def Start(self):
         assert not self._running
         self._running = True
-        self._startTime = time.clock()
+        self._startTime = time.perf_counter()
         return
 
     def Stop(self):
         assert self._running
-        self._stopTime = time.clock()
+        self._stopTime = time.perf_counter()
         self._running = False
         return
 
     def GetTime(self):
         if self._running:
-            return time.clock() - self._startTime
+            return time.perf_counter() - self._startTime
         return self._stopTime - self._startTime
 
     pass
