@@ -4,7 +4,10 @@
 # license in the file LICENSE.
 import pytest
 
+import filecmp
 import os.path
+import xml.etree.ElementTree as ET
+
 import numpy as np
 from numpy.linalg import norm
 
@@ -16,12 +19,133 @@ from hemeTools.parsers.geometry.simple import ConfigLoader
 import fixtures
 
 
+class XmlChecker:
+    def __init__(self, ref):
+        self.ref_root = ref
+        self.elem_path = []
+
+    @classmethod
+    def from_path(cls, ref_path):
+        return cls(ET.parse(ref_path).getroot())
+
+    @classmethod
+    def from_string(cls, ref_data):
+        return cls(ET.fromstring(ref_data))
+
+    @property
+    def path(self):
+        return "/".join(self.elem_path)
+
+    def check_attrib(self, rAttr, tAttr):
+        for k in rAttr:
+            assert k in tAttr, f"Missing attribute '{self.path}:{k}'"
+            assert (
+                rAttr[k] == tAttr[k]
+            ), f"Attribute values differ for '{self.path}:{k}'"
+            tAttr.pop(k)
+
+        assert (
+            len(tAttr) == 0
+        ), f"Unexpected attribute(s) of '{self.path}': " + ", ".join(
+            f"'{k}'" for k in tAttr.keys()
+        )
+
+    def check_elem(self, rEl, tEl):
+        assert rEl.tag == tEl.tag
+        self.elem_path.append(rEl.tag)
+        try:
+            self.check_attrib(rEl.attrib, tEl.attrib)
+
+            for rChild in rEl:
+                tChild = tEl.find(rChild.tag)
+                assert tChild is not None, f"Missing element '{self.path}/{rChild.tag}'"
+                self.check_elem(rChild, tChild)
+                tEl.remove(tChild)
+            assert (
+                len(tEl) == 0
+            ), f"Unexpected child element(s) of '{self.path}': " + ", ".join(
+                f"'{el.tag}'" for el in tEl
+            )
+        finally:
+            self.elem_path.pop()
+
+    def check_path(self, test_path):
+        test_tree = ET.parse(test_path)
+        test_root = test_tree.getroot()
+        self.check_elem(self.ref_root, test_root)
+
+    def check_string(self, test_str):
+        test_root = ET.fromstring(test_str)
+        self.check_elem(self.ref_root, test_root)
+
+
+dataDir = os.path.join(os.path.split(__file__)[0], "data")
+
+
+def test_xmlchecker():
+    xmlChecker = XmlChecker.from_path(os.path.join(dataDir, "test.xml"))
+
+    # Self test
+    xmlChecker.check_path(os.path.join(dataDir, "test.xml"))
+    assert xmlChecker.elem_path == []
+
+    with pytest.raises(AssertionError):
+        xmlChecker.check_string("<foo />")
+    assert xmlChecker.elem_path == []
+
+    with pytest.raises(AssertionError) as ex:
+        xmlChecker.check_string("<hemelbsettings />")
+    assert xmlChecker.elem_path == []
+    assert ex.value.args[0].startswith("Missing attribute 'hemelbsettings:version'")
+
+    with pytest.raises(AssertionError) as ex:
+        xmlChecker.check_string('<hemelbsettings version="not 3" />')
+    assert xmlChecker.elem_path == []
+    assert ex.value.args[0].startswith(
+        "Attribute values differ for 'hemelbsettings:version'"
+    )
+
+    with pytest.raises(AssertionError) as ex:
+        xmlChecker.check_string('<hemelbsettings version="3" extra="whatever"/>')
+    assert xmlChecker.elem_path == []
+    assert ex.value.args[0].startswith(
+        "Unexpected attribute(s) of 'hemelbsettings': 'extra'"
+    )
+
+    txt = "<root><child><granddaughter /><grandson /></child></root>"
+    xmlChecker = XmlChecker.from_string(txt)
+    # Self test
+    xmlChecker.check_string(txt)
+    # Equivalent
+    xmlChecker.check_string(
+        """
+<root>
+  <child>
+    <grandson />
+    <granddaughter></granddaughter>
+  </child>
+</root>"""
+    )
+
+    with pytest.raises(AssertionError) as ex:
+        xmlChecker.check_string("<root><child><granddaughter /></child></root>")
+    assert xmlChecker.elem_path == []
+    assert ex.value.args[0].startswith("Missing element 'root/child/grandson'")
+    with pytest.raises(AssertionError) as ex:
+        xmlChecker.check_string(
+            "<root><child><granddaughter /><grandson /></child><child /><branch /></root>"
+        )
+    assert xmlChecker.elem_path == []
+    assert ex.value.args[0].startswith(
+        "Unexpected child element(s) of 'root': 'child', 'branch'"
+    )
+
+
 class TestPolyDataGenerator:
     def test_regression(self, tmpdir):
         """Generate a gmy from a stored profile and check that the output is
         identical.
         """
-        dataDir = os.path.join(os.path.split(__file__)[0], "data")
         proFileName = os.path.join(dataDir, "test.pr2")
 
         p = Profile()
@@ -36,10 +160,9 @@ class TestPolyDataGenerator:
         generator = OutputGeneration.PolyDataGenerator(p)
         generator.Execute()
 
-        import filecmp
-
         assert filecmp.cmp(outGmyFileName, os.path.join(dataDir, "test.gmy"))
-        assert filecmp.cmp(outXmlFileName, os.path.join(dataDir, "test.xml"))
+        xmlChecker = XmlChecker.from_path(os.path.join(dataDir, "test.xml"))
+        xmlChecker.check_path(outXmlFileName)
 
     def test_cube(self, tmpdir):
         """Generate a gmy from a simple cubic profile and check the output"""
