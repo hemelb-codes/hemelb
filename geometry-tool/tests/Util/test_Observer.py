@@ -50,7 +50,7 @@ class Observer(object):
         return
 
     def __call__(self, change):
-        self.CallTime = time.clock()
+        self.CallTime = time.perf_counter()
         self.Change = change
         time.sleep(0.01)
         return
