@@ -15,6 +15,7 @@ ext_modules = [
             "hemeTools/utils/xdr.pyx",
             "hemeTools/utils/xdr.pxd",
             "hemeTools/utils/cxdr.pxd",
+            "hemeTools/utils/XdrSerialisation.c",
         ],
     ),
     Extension(
