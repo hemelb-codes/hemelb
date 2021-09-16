@@ -52,7 +52,7 @@ jobs:
           - "3.9"
 
     env:
-      VMTK_VERSION: 1.4.1-rc2
+      VMTK_VERSION: 1.4.1-rc3
       VMTK_DIR: /opt/vmtk
     steps:
       - uses: actions/checkout@v2
