@@ -499,7 +499,7 @@ def main():
     args = parser.parse_args()
 
     if args.debug:
-        from hemeTools.parsers.geometry.multiprocess import GetLogger
+        from .multiprocess import GetLogger
 
         GetLogger().setLevel("DEBUG")
         pass

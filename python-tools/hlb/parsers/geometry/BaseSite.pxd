@@ -4,7 +4,7 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 cimport numpy as np
-from hemeTools.utils cimport xdr
+from hlb.utils cimport xdr
 
 cdef class BaseSite:
     cdef public:

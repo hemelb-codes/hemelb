@@ -1,6 +1,6 @@
 import pytest
 
-from hemeTools.utils.xml_compare import XmlChecker
+from hlb.utils.xml_compare import XmlChecker
 
 data = """<?xml version='1.0' encoding='US-ASCII'?>
 <hemelbsettings version="3">

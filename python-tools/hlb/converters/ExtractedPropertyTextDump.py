@@ -3,9 +3,8 @@
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
-from __future__ import print_function
 import sys
-from hemeTools.parsers.extraction import ExtractedProperty
+from ..parsers.extraction import ExtractedProperty
 
 
 def unpack(filename, stream=sys.stdout):

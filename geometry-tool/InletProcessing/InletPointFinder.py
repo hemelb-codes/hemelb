@@ -5,8 +5,8 @@
 
 import numpy as np
 import vtk
-from hemeTools.parsers.geometry.simple import ConfigLoader
-from hemeTools.parsers.geometry.generic import Site
+from hlb.parsers.geometry.simple import ConfigLoader
+from hlb.parsers.geometry.generic import Site
 
 
 class GeometryInletPointFinder(ConfigLoader):
@@ -14,7 +14,7 @@ class GeometryInletPointFinder(ConfigLoader):
     (.gmy). Data is returned as a vtkPolyData, with the 3D index of the points
     supplied as CellData in an array named "PointsIds".
 
-    It's based on the hemeTools.parsers.geometry classes.
+    It's based on the hlb.parsers.geometry classes.
     """
 
     def __init__(self, filename):

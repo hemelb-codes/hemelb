@@ -1,5 +1,5 @@
 import os.path
-from hemeTools.parsers.geometry.self_consistency import CheckingLoader
+from hlb.parsers.geometry.self_consistency import CheckingLoader
 
 
 def test_gmy_selfconsist(diffTestDir):
