@@ -7,8 +7,8 @@ import os.path
 import numpy as np
 import vtk
 
-from HemeLbSetupTool.Model.Profile import Profile
-from HemeLbSetupTool.Model.Iolets import Inlet
+from HlbGmyTool.Model.Profile import Profile
+from HlbGmyTool.Model.Iolets import Inlet
 
 from InletPointFinder import GeometryInletPointFinder
 from SurfaceIntersectionFinder import SurfaceIntersectionFinder

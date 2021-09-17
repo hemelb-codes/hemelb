@@ -53,11 +53,11 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "CompressGmy = hlb.parsers.geometry.compression:compress_main",
-            "DecompressGmy = hlb.parsers.geometry.compression:decompress_main",
-            "DumpExtractedProperties = hlb.converters.ExtractedPropertyTextDump:main",
-            "GmySelfConsistent = hlb.parsers.geometry.self_consistency:main",
-            "CountSites = hlb.parsers.geometry.count_sites:main",
+            "hlb-gmy-compress = hlb.parsers.geometry.compression:compress_main",
+            "hlb-gmy-decompress = hlb.parsers.geometry.compression:decompress_main",
+            "hlb-dump-extracted-properties = hlb.converters.ExtractedPropertyTextDump:main",
+            "hlb-gmy-selfconsistent = hlb.parsers.geometry.self_consistency:main",
+            "hlb-gmy-countsites = hlb.parsers.geometry.count_sites:main",
         ],
     },
 )

@@ -59,8 +59,8 @@ endif()
 find_package(pybind11 CONFIG REQUIRED)
 
 set(HEMELB_CODE_DIR ${PROJECT_SOURCE_DIR}/../Code)
-set(model_dir HemeLbSetupTool/Model)
-set(generation_dir HemeLbSetupTool/Model/Generation)
+set(model_dir HlbGmyTool/Model)
+set(generation_dir HlbGmyTool/Model/Generation)
 
 # First, the bits of HemeLB main we re-use (micro-hemelb geometry).
 set(hemelb_cpps
