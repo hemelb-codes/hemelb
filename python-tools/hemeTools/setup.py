@@ -29,7 +29,7 @@ ext_modules = [
 
 setup(
     name="hemeTools",
-    version="0.4",
+    version="0.4.0",
     description="HemeLB tools",
     author="Rupert Nash",
     author_email="r.nash@epcc.ed.ac.uk",
