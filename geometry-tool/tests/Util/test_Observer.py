@@ -7,7 +7,7 @@ import pytest
 import math
 import time
 
-from HemeLbSetupTool.Util.Observer import Observable, NotifyOptions, ObservableList
+from HlbGmyTool.Util.Observer import Observable, NotifyOptions, ObservableList
 
 
 class Circle(Observable):

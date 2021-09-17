@@ -19,27 +19,27 @@ if sys.platform == "darwin":
     os.environ["MACOSX_DEPLOYMENT_TARGET"] = release
 
 setup(
-    name="HemeLbSetupTool",
+    name="HlbGmyTool",
     version="1.2",
     author="Rupert Nash",
     author_email="r.nash@epcc.ed.ac.uk",
     packages=[
-        "HemeLbSetupTool",
-        "HemeLbSetupTool.Bindings",
-        "HemeLbSetupTool.Util",
-        "HemeLbSetupTool.Model",
-        "HemeLbSetupTool.View",
-        "HemeLbSetupTool.Controller",
-        "HemeLbSetupTool.scripts",
+        "HlbGmyTool",
+        "HlbGmyTool.Bindings",
+        "HlbGmyTool.Util",
+        "HlbGmyTool.Model",
+        "HlbGmyTool.View",
+        "HlbGmyTool.Controller",
+        "HlbGmyTool.scripts",
     ],
     entry_points={
         "console_scripts": [
-            "hemelb-gmy-cli=HemeLbSetupTool.scripts.cli:main",
-            "hemelb-config2gmy=HemeLbSetupTool.scripts.config_to_geometry:main",
-            "hemelb-pro2pr2=HemeLbSetupTool.scripts.pro_to_pr2:main",
+            "hlb-gmy-cli=HlbGmyTool.scripts.cli:main",
+            "hlb-config2gmy=HlbGmyTool.scripts.config_to_geometry:main",
+            "hlb-pro2pr2=HlbGmyTool.scripts.pro_to_pr2:main",
         ],
         "gui_scripts": [
-            "hemelb-gmy-gui=HemeLbSetupTool.scripts.gui:main[gui]",
+            "hlb-gmy-gui=HlbGmyTool.scripts.gui:main[gui]",
         ],
     },
     python_requires=">=3.6",

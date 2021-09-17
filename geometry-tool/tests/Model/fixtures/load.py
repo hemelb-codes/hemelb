@@ -3,7 +3,7 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 import os
-from HemeLbSetupTool.Model.Profile import Profile
+from HlbGmyTool.Model.Profile import Profile
 
 
 def fixture_path(name):

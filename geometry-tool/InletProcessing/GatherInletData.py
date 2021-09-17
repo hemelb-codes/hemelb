@@ -3,8 +3,8 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-# from HemeLbSetupTool.Model.Profile import Profile
-# from HemeLbSetupTool.Model.Iolets import Inlet
+# from HlbGmyTool.Model.Profile import Profile
+# from HlbGmyTool.Model.Iolets import Inlet
 # from InletPointFinder import InletPointFinder
 # from SurfaceIntersectionFinder import SurfaceIntersectionPipeline
 #

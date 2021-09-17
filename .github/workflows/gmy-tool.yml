@@ -37,7 +37,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Run clang-format
-        working-directory: geometry-tool/HemeLbSetupTool/Model/Generation
+        working-directory: geometry-tool/HlbGmyTool/Model/Generation
         run: ${{ github.workspace }}/.github/workflows/run-clang-format.py --style file -r .
 
   gmy-tool:
@@ -139,12 +139,12 @@ jobs:
 
       - name: Run the gmy tool without GUI
         working-directory: hemelb-tests/diffTest
-        run: hemelb-gmy-cli cyl.pr2
+        run: hlb-gmy-cli cyl.pr2
 
       - name: Run the self-consistency checker
         working-directory: hemelb-tests/diffTest
-        run: GmySelfConsistent config.xml
+        run: hlb-gmy-selfconsistent config.xml
 
       - name: Count the sites
         working-directory: hemelb-tests/diffTest
-        run: "[[ $(CountSites config.gmy) == 44250 ]]"
+        run: "[[ $(hlb-gmy-countsites config.gmy) == 44250 ]]"

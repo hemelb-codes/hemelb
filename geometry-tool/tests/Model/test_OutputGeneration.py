@@ -10,10 +10,10 @@ import os.path
 import numpy as np
 from numpy.linalg import norm
 
-from HemeLbSetupTool.Model import OutputGeneration
-from HemeLbSetupTool.Model.Profile import Profile
-from HemeLbSetupTool.Model.Vector import Vector
-from HemeLbSetupTool.Model.Iolets import Iolet
+from HlbGmyTool.Model import OutputGeneration
+from HlbGmyTool.Model.Profile import Profile
+from HlbGmyTool.Model.Vector import Vector
+from HlbGmyTool.Model.Iolets import Iolet
 from hlb.parsers.geometry.simple import ConfigLoader
 from hlb.utils.xml_compare import XmlChecker
 import fixtures
