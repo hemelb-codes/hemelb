@@ -34,8 +34,8 @@ Runtime dependencies:
 
 Test dependencies:
 - pytest
-- hemeTools (NB: this must be compiled with the same version of
-  numpy as used above)
+- hlb (NB: this must be compiled with the same version of numpy as
+  used above)
 
 
 ## Conda install
@@ -92,7 +92,7 @@ specification.
 Install pytest the usual way via `pip install pytest`.
 
 The Conda VMTK package forces you to use an old version of numpy. To
-ensure that the hemeTools package is built with the same one, you need
+ensure that the `hlb` package is built with the same one, you need
 to change to that directory, install Cython (`pip install cython`) and
 then install the package with:
 

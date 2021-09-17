@@ -1,7 +1,7 @@
 from io import StringIO
 import os.path
 
-from hemeTools.converters.ExtractedPropertyTextDump import unpack
+from hlb.converters.ExtractedPropertyTextDump import unpack
 
 
 def test_simple(diffTestDir):

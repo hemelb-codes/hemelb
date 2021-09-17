@@ -2,7 +2,7 @@ import os.path
 
 import numpy as np
 
-from hemeTools.parsers.extraction import ExtractedProperty
+from hlb.parsers.extraction import ExtractedProperty
 
 
 def test_load_xtr(diffTestDir):

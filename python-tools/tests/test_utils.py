@@ -10,7 +10,7 @@ import xdrlib
 
 import numpy as np
 
-from hemeTools.utils import MatchCorresponding, xdr
+from hlb.utils import MatchCorresponding, xdr
 
 
 class utilsTests(unittest.TestCase):

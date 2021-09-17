@@ -14,8 +14,8 @@ from HemeLbSetupTool.Model import OutputGeneration
 from HemeLbSetupTool.Model.Profile import Profile
 from HemeLbSetupTool.Model.Vector import Vector
 from HemeLbSetupTool.Model.Iolets import Iolet
-from hemeTools.parsers.geometry.simple import ConfigLoader
-from hemeTools.utils.xml_compare import XmlChecker
+from hlb.parsers.geometry.simple import ConfigLoader
+from hlb.utils.xml_compare import XmlChecker
 import fixtures
 
 dataDir = os.path.join(os.path.split(__file__)[0], "data")

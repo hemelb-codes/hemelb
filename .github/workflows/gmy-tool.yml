@@ -109,7 +109,7 @@ jobs:
           path: geometry-tool/_skbuild
 
       - name: Install test dependencies
-        working-directory: python-tools/hemeTools
+        working-directory: python-tools
         run: pip install pytest cython && python setup.py install
 
       - name: Run the tests

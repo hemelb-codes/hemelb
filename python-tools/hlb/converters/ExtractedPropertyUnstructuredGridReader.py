@@ -16,8 +16,8 @@ import vtk
 from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtk.util import numpy_support
 
-from hemeTools.utils import MatchCorresponding
-from hemeTools.parsers.extraction import ExtractedProperty
+from ..utils import MatchCorresponding
+from ..parsers.extraction import ExtractedProperty
 
 
 class ExtractedPropertyUnstructuredGridReader(VTKPythonAlgorithmBase):
@@ -243,9 +243,7 @@ if __name__ == "__main__":
 
     base, ext = os.path.splitext(geometry)
     if ext == ".gmy":
-        from hemeTools.converters.GmyUnstructuredGridReader import (
-            GmyUnstructuredGridReader,
-        )
+        from .GmyUnstructuredGridReader import GmyUnstructuredGridReader
 
         reader = GmyUnstructuredGridReader()
     elif ext == ".vtu":

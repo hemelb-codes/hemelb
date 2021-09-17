@@ -19,9 +19,9 @@ from vtk.util import numpy_support
 
 VTK_MAJOR_VERSION = vtk.vtkVersion().GetVTKMajorVersion()
 
-from hemeTools.parsers.geometry import MooreNeighbourhoodDirections
-from hemeTools.parsers.geometry.generic import Site
-from hemeTools.parsers.geometry.simple import ConfigLoader
+from ..parsers.geometry import MooreNeighbourhoodDirections
+from ..parsers.geometry.generic import Site
+from ..parsers.geometry.simple import ConfigLoader
 
 
 class GmyWallPointsReader(VTKPythonAlgorithmBase):

@@ -4,7 +4,7 @@ import os.path
 import numpy as np
 import yaml
 
-from hemeTools.parsers.geometry.compression import Compressor, Decompressor
+from hlb.parsers.geometry.compression import Compressor, Decompressor
 
 
 def test_decompress_recompress_same(diffTestDir, tmp_path):

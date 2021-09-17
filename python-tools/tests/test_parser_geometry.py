@@ -3,8 +3,8 @@ import os.path
 import numpy as np
 import yaml
 
-from hemeTools.parsers.geometry.generic import NdIndexConverter, AllSolidBlock
-from hemeTools.parsers.geometry import simple
+from hlb.parsers.geometry.generic import NdIndexConverter, AllSolidBlock
+from hlb.parsers.geometry import simple
 
 
 def test_ndindexer():

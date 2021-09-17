@@ -15,7 +15,7 @@ script with no arguments.
 import vtk
 from vtk.util.vtkAlgorithm import VTKPythonAlgorithmBase
 import numpy as np
-from hemeTools.parsers.geometry.simple import ConfigLoader
+from ..parsers.geometry.simple import ConfigLoader
 
 
 class GmyUnstructuredGridReader(VTKPythonAlgorithmBase):

@@ -3,10 +3,10 @@ import os.path
 import numpy as np
 from vtk import vtkPolyData, vtkUnstructuredGrid, vtkVoxel
 
-from hemeTools.converters import ExtractedPropertyUnstructuredGridReader as xtr
-from hemeTools.converters import GmyUnstructuredGridReader as gmy
-from hemeTools.converters import GmyWallPointsReader as wp
-from hemeTools.parsers.extraction import ExtractedProperty
+from hlb.converters import ExtractedPropertyUnstructuredGridReader as xtr
+from hlb.converters import GmyUnstructuredGridReader as gmy
+from hlb.converters import GmyWallPointsReader as wp
+from hlb.parsers.extraction import ExtractedProperty
 
 
 def check_difftest_gmy(grid):
