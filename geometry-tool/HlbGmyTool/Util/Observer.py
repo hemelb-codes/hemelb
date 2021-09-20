@@ -359,6 +359,9 @@ class Observable(object):
             return part.Yamlify()
         except AttributeError:
             # Wasn't provided, let's hope it was simple!
+            if isinstance(part, float):
+                # Store floats as hexadecial FP to avoid precision loss
+                return part.hex()
             if isinstance(part, np.number):
                 return part.tolist()
             return part
@@ -384,7 +387,11 @@ class Observable(object):
                 getattr(val, method)(getter(source, attr))
             else:
                 if checker(source, attr):
-                    setattr(self, attr, getter(source, attr))
+                    newval = getter(source, attr)
+                    # Floats can (should) be stored as hex FP
+                    if isinstance(val, float) and isinstance(newval, str):
+                        newval = float.fromhex(newval)
+                    setattr(self, attr, newval)
                 pass
             continue
         return
