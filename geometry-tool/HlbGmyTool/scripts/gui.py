@@ -14,7 +14,7 @@ parser.add_argument(
     "--profile",
     default=None,
     help="Load the profile "
-    "to use from an existing file. Other options given"
+    "to use from an existing file. Other options given "
     "override those inthe profile file.",
     metavar="PATH",
 )

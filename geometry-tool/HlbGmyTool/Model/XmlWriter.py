@@ -56,7 +56,7 @@ class XmlWriter(object):
         QuantityElement(
             sim,
             "steps",
-            int(self.profile.DurationSeconds / self.profile.TimeStepSeconds),
+            round(self.profile.DurationSeconds / self.profile.TimeStepSeconds),
             "lattice",
         )
         ValueElement(sim, "stresstype", self.STRESSTYPE)
