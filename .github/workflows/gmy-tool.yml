@@ -133,18 +133,32 @@ jobs:
           repository: hemelb-codes/hemelb-tests
           path: hemelb-tests
 
+      - name: Smoketest the update tool
+        working-directory: hemelb-tests/diffTest
+        run: hlb-config2gmy cyl.pro tmp.pr2
+
       - name: Decompress input mesh
         working-directory: hemelb-tests/diffTest
         run: gunzip cyl.stl.gz
 
       - name: Run the gmy tool without GUI
         working-directory: hemelb-tests/diffTest
-        run: hlb-gmy-cli cyl.pr2
+        run: |
+          mkdir test
+          hlb-gmy-cli --xml test/config.xml --geometry test/config.gmy cyl.pr2
 
       - name: Run the self-consistency checker
-        working-directory: hemelb-tests/diffTest
+        working-directory: hemelb-tests/diffTest/test
         run: hlb-gmy-selfconsistent config.xml
 
       - name: Count the sites
-        working-directory: hemelb-tests/diffTest
+        working-directory: hemelb-tests/diffTest/test
         run: "[[ $(hlb-gmy-countsites config.gmy) == 44250 ]]"
+
+      - name: Compare XML
+        working-directory: hemelb-tests/diffTest
+        run: python compare_xml.py config.xml test/config.xml
+
+      - name: Compare GMY
+        working-directory: hemelb-tests/diffTest
+        run: python compare_gmy.py config.gmy test/config.gmy
