@@ -1,16 +1,63 @@
+from fnmatch import fnmatch
+from functools import partial
 import xml.etree.ElementTree as ET
+import numpy as np
+
+QuantityKeys = {"units", "value"}
+
+
+class QuantityCheck:
+    def __init__(self, tol=1e-8):
+        self.tol = tol
+
+    def __call__(self, checker, ref, test):
+        assert (
+            set(ref.keys()) == QuantityKeys
+        ), f"Invalid reference attributes for quantity element '{checker.path}'"
+        assert (
+            set(test.keys()) == QuantityKeys
+        ), f"Invalid test attributes for quantity element '{checker.path}'"
+        assert ref["units"] == test["units"], f"Units differ for '{checker.path}'"
+
+
+class ScalarQuantityCheck(QuantityCheck):
+    def __call__(self, checker, ref, test):
+        super().__call__(checker, ref, test)
+        rval = float(ref["value"])
+        tval = float(test["value"])
+        assert np.abs(rval - tval) < self.tol, f"Values differ for '{checker.path}'"
+
+
+class VectorQuantityCheck(QuantityCheck):
+    @staticmethod
+    def vec3(txt):
+        assert txt.startswith("(") and txt.endswith(")")
+        return np.array(txt[1:-1].split(","), dtype=float)
+
+    def __call__(self, checker, ref, test):
+        rval = self.vec3(ref["value"])
+        tval = self.vec3(test["value"])
+        assert np.all(
+            np.abs(rval - tval) < self.tol
+        ), f"Values differ for '{checker.path}'"
 
 
 class XmlChecker:
     """Test support class to compare XML files/streams.
 
     Decidedly not thread safe.
+
+    You can add checks beyond string equality by adding key-value pairs
+    to the attr_checks mapping. Keys are element paths (compared via
+    fnmatch) and values are Callable[XmlChecker, ref_attr_dict,
+    test_attr_dict].
     """
 
     def __init__(self, ref):
         """Construct with an ET.Element with the reference document."""
         self.ref_root = ref
         self.elem_path = []
+        self.attr_checks = {}
 
     @classmethod
     def from_path(cls, ref_path):
@@ -28,6 +75,18 @@ class XmlChecker:
         return "/".join(self.elem_path)
 
     def check_attrib(self, rAttr, tAttr):
+        """Assert that the attribute dicts are equivalent."""
+        check = None
+        for p, chk in self.attr_checks.items():
+            if fnmatch(self.path, p):
+                check = partial(chk, self)
+                break
+
+        if check is None:
+            check = self.default_check_attrib
+        check(rAttr, tAttr)
+
+    def default_check_attrib(self, rAttr, tAttr):
         """Assert that the attribute dicts are equivalent."""
         for k in rAttr:
             assert k in tAttr, f"Missing attribute '{self.path}:{k}'"
