@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - main
-
     paths:
       - '.github/workflows/gmy-*'
       - 'geometry-tool/**'
@@ -20,6 +19,10 @@ on:
     paths:
       - '.github/workflows/gmy-*'
       - 'geometry-tool/**'
+
+  schedule:
+    # Run every Monday 0700 UTC
+    - cron: '0 7 * * 1'
 
 jobs:
   lint-python:
