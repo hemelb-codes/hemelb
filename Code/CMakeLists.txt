@@ -2,7 +2,7 @@
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required (VERSION 3.13)
 
 project(HemeLB)
 
@@ -150,20 +150,20 @@ add_executable(${HEMELB_EXECUTABLE} main.cc)
 
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
+  redblood
   configuration
   extraction
-  reporting
   steering
   vis
   lb
   geometry
-  net
   debug
+  net
   util
   io
   log
   colloids
-  redblood
+  reporting
   )
 
 foreach(subdir ${package_subdirs})

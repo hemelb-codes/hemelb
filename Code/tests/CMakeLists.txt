@@ -4,22 +4,32 @@
 # license in the file LICENSE.
 
 hemelb_dependency(catch2 use)
+add_subdirectory(helpers)
 
-add_executable(hemelb-tests)
+function(create_test_executable target)
+  add_executable(${target})
+  target_sources(${target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/main.cc)
 
-target_compile_definitions(hemelb-tests PRIVATE HEMELB_DOING_UNITTESTS)
+  target_compile_definitions(${target} PRIVATE HEMELB_DOING_UNITTESTS)
+  # ReporterTests directly use ctemplate
+  # FlowExtensionTests directly uses tinyxml
+  target_link_libraries(${target} PRIVATE
+    Catch2::Catch2
+    CTemplate::CTemplate
+    TinyXML::TinyXML
+    ${heme_libraries}
+    ${MPI_LIBRARIES}
+    test-helpers
+    )
+  if (HEMELB_BUILD_RBC)
+    # redblood tests need VTK
+    target_link_libraries(${target} PRIVATE VTK::CommonCore)
+  endif()
 
-target_sources(hemelb-tests PRIVATE ${root_sources})
+  install(TARGETS ${target} RUNTIME DESTINATION bin)
+endfunction()
 
-# ReporterTests directly use ctemplate
-# FlowExtensionTests directly uses tinyxml
-target_link_libraries(hemelb-tests PRIVATE
-  Catch2::Catch2
-  CTemplate::CTemplate
-  TinyXML::TinyXML
-  ${heme_libraries}
-  ${MPI_LIBRARIES})
-install(TARGETS hemelb-tests RUNTIME DESTINATION bin)
+create_test_executable(hemelb-tests)
 
 add_to_resources(resources/four_cube.gmy resources/four_cube.xml resources/four_cube_multiscale.xml
   resources/config.xml resources/config0_2_0.xml
@@ -33,8 +43,6 @@ if (HEMELB_BUILD_MULTISCALE)
 endif()
 
 # TODO: when cmake min version increases to 3.13, can drop ${CMAKE_CURRENT_SOURCE_DIR}
-target_sources(hemelb-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/main.cc)
-add_subdirectory(helpers)
 target_sources(hemelb-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/SimulationMasterTests.cc)
 add_subdirectory(configuration)
 add_subdirectory(extraction)
@@ -48,7 +56,6 @@ add_subdirectory(util)
 add_subdirectory(vis)
 
 if (HEMELB_BUILD_RBC)
+  create_test_executable(mpi_redblood_tests)
   add_subdirectory(redblood)
-  # redblood tests need VTK
-  target_link_libraries(hemelb-tests PRIVATE VTK::CommonCore)
 endif()

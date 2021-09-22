@@ -32,16 +32,18 @@ int main(int argc, char* argv[]) {
 
   hemelb::net::MpiCommunicator commWorld = hemelb::net::MpiCommunicator::World();
 
-    // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
+  // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
   hemelb::debug::Debugger::Init(debug, argv[0], commWorld);
 
   // Initialise the global IOCommunicator.
   hemelb::net::IOCommunicator testCommunicator(commWorld);
   hemelb::tests::helpers::HasCommsTestFixture::Init(testCommunicator);
 
-  int returnCode = session.applyCommandLine(argc, argv);
-  if (returnCode != 0) // Indicates a command line error
-    return returnCode;
-  
-  return session.run();
+  int const cli_rc = session.applyCommandLine(argc, argv);
+  if (cli_rc != 0) // Indicates a command line error
+    return cli_rc;
+
+  int const local_rc = session.run();
+  int const total_rc = commWorld.AllReduce(local_rc, MPI_SUM);
+  return total_rc;
 }

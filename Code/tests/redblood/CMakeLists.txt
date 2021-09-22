@@ -41,3 +41,7 @@ target_sources(hemelb-tests PRIVATE
 
   ${CMAKE_CURRENT_SOURCE_DIR}/parallel/NodeParallelizationTests.cc
   )
+
+target_sources(mpi_redblood_tests PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/parallel/CellParallelizationTests.cc
+)

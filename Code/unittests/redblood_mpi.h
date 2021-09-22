@@ -6,7 +6,6 @@
 #ifndef HEMELB_UNITTESTS_REDBLOOD_MPI_H
 #define HEMELB_UNITTESTS_REDBLOOD_MPI_H
 #define HEMELB_DOING_UNITTESTS
-#include <unittests/redblood/parallel/CellParallelizationTests.h>
 #include <unittests/redblood/parallel/MPISpreadForcesTests.h>
 #include <unittests/redblood/parallel/MPIIntegrateVelocities.h>
 #include <unittests/redblood/parallel/ParallelFixtureTests.h>

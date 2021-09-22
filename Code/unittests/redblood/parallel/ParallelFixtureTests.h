@@ -109,7 +109,7 @@ namespace hemelb
         auto const positions = GatherSpecialPositions(latDat, nmid, nedges, world);
 
         auto graphComm =
-            world.Graph(redblood_parallel::ComputeProcessorNeighbourhood(world,
+	  world.Graph(hemelb::redblood::parallel::ComputeProcessorNeighbourhood(world,
                                                                          latDat,
                                                                          2e-6 / master->GetSimConfig()->GetVoxelSize()));
 
