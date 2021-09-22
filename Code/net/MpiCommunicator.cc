@@ -189,7 +189,7 @@ namespace hemelb
     MpiCommunicator MpiCommunicator::Split(int color, int key) const
     {
       MPI_Comm newComm;
-      MPI_Comm_split(*commPtr, color, key, &newComm);
+      HEMELB_MPI_CALL(MPI_Comm_split, (*commPtr, color, key, &newComm));
       return MpiCommunicator(newComm, true);
     }
 
@@ -197,22 +197,23 @@ namespace hemelb
     {
       MPI_Group keyGroup, valueGroup;
 
-      MPI_Comm_group(*commPtr, &keyGroup);
-      MPI_Comm_group(valueComm, &valueGroup);
+      HEMELB_MPI_CALL(MPI_Comm_group, (*commPtr, &keyGroup));
+      HEMELB_MPI_CALL(MPI_Comm_group, (valueComm, &valueGroup));
 
       auto const N = Size();
       std::vector<int> keys(N), values(N);
       std::iota(keys.begin(), keys.end(), 0);
 
-      MPI_Group_translate_ranks(keyGroup, N, keys.data(), valueGroup, values.data());
+      HEMELB_MPI_CALL(MPI_Group_translate_ranks,
+		      (keyGroup, N, keys.data(), valueGroup, values.data()));
       std::map<int, int> result;
       for (auto const & item : util::zip(keys, values))
       {
         result[std::get<0>(item)] = std::get<1>(item);
       }
 
-      MPI_Group_free(&keyGroup);
-      MPI_Group_free(&valueGroup);
+      HEMELB_MPI_CALL(MPI_Group_free, (&keyGroup));
+      HEMELB_MPI_CALL(MPI_Group_free, (&valueGroup));
 
       return result;
     }
