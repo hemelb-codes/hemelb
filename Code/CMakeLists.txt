@@ -143,7 +143,7 @@ if (APPLE)
 endif()
 if (HEMELB_USE_DEBUGGER)
   # Force a debug build, because the debugger makes no sense without debug symbols
-  set(CMAKE_BUILD_TYPE DEBUG)
+  set(CMAKE_BUILD_TYPE Debug)
 endif()
 
 add_executable(${HEMELB_EXECUTABLE} main.cc)
