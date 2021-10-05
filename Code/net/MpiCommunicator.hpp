@@ -23,6 +23,16 @@ namespace hemelb
     {
       HEMELB_MPI_CALL(MPI_Bcast, (&vals[0], vals.size(), MpiDataType<T>(), root, *this));
     }
+    template<typename T>
+    void MpiCommunicator::Broadcast(std::basic_string<T>& val, const int root) const
+    {
+      auto len = val.size();
+      Broadcast(len, root);
+      if (Rank() != root) {
+	val.resize(len);
+      }
+      HEMELB_MPI_CALL(MPI_Bcast, (&val[0], len, MpiDataType<T>(), root, *this));
+    }
 
     template<typename T>
     T MpiCommunicator::AllReduce(const T& val, const MPI_Op& op) const

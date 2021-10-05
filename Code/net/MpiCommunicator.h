@@ -114,6 +114,8 @@ namespace hemelb
         void Broadcast(T& val, const int root) const;
         template<typename T>
         void Broadcast(std::vector<T>& vals, const int root) const;
+	template<typename T>
+	void Broadcast(std::basic_string<T>& val, const int root) const;
 
         template<typename T>
         T AllReduce(const T& val, const MPI_Op& op) const;
