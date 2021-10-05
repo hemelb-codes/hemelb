@@ -22,10 +22,15 @@ int main(int argc, char* argv[]) {
   using namespace Catch::clara;
   auto cli = session.cli() // Get Catch's composite command line parser
     | Opt(debug, "debug") // bind variable to a new option, with a hint string
-    ["-d"] // option name
-    ("enable the parallel debugger if HEMELB_USE_DEBUGER is ON"); // help string
+    ["-g"] // option name
+    ("enable the parallel debugger if HEMELB_USE_DEBUGER is ON (no-op if OFF)"); // help string
   session.cli(cli);
-  
+
+  // Parse the command line.
+  int const cli_rc = session.applyCommandLine(argc, argv);
+  if (cli_rc != 0) // Indicates a command line error
+    return cli_rc;
+
   // Start MPI and the logger.
   hemelb::net::MpiEnvironment mpi(argc, argv);
   hemelb::log::Logger::Init();
@@ -38,10 +43,6 @@ int main(int argc, char* argv[]) {
   // Initialise the global IOCommunicator.
   hemelb::net::IOCommunicator testCommunicator(commWorld);
   hemelb::tests::helpers::HasCommsTestFixture::Init(testCommunicator);
-
-  int const cli_rc = session.applyCommandLine(argc, argv);
-  if (cli_rc != 0) // Indicates a command line error
-    return cli_rc;
 
   int const local_rc = session.run();
   int const total_rc = commWorld.AllReduce(local_rc, MPI_SUM);
