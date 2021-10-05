@@ -6,7 +6,6 @@
 #ifndef HEMELB_UNITTESTS_REDBLOOD_MPI_H
 #define HEMELB_UNITTESTS_REDBLOOD_MPI_H
 #define HEMELB_DOING_UNITTESTS
-#include <unittests/redblood/parallel/MPILockStepTests.h>
 #include <unittests/redblood/parallel/GraphCommsTests.h>
 #include <unittests/redblood/parallel/RBCInserterWithPerturbationParallelTests.h>
 #undef HEMELB_DOING_UNITTESTS
