@@ -43,5 +43,10 @@ target_sources(hemelb-tests PRIVATE
   )
 
 target_sources(mpi_redblood_tests PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/Fixtures.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/parallel/ParallelFixtures.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/parallel/ParallelFixtureTests.cc
+
   ${CMAKE_CURRENT_SOURCE_DIR}/parallel/CellParallelizationTests.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/parallel/MPISpreadForcesTests.cc
 )
