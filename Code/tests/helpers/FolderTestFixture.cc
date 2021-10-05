@@ -47,25 +47,34 @@ namespace hemelb
 
       FolderTestFixture::FolderTestFixture()
       {
-	{
-	  std::stringstream tempPathStream;
-	  // next line is a hack to get the build working again
-	  // TODO: find a portable uuid solution. BOOST?
-	  tempPathStream << util::GetTemporaryDir() << "/" << "HemeLBTest" << std::fixed
-			 << std::floor(util::myClock() * 100000) << std::flush;
-	  tempPath = tempPathStream.str();
+	auto comm = Comms();
+	if (comm.OnIORank()) {
+	  tempPath = ConstructTempPath();
+	  // create a folder to work in
+	  util::MakeDirAllRXW(tempPath);
+	  ownsTempPath = true;
 	}
+	comm.Broadcast(tempPath, comm.GetIORank());
+
 	// store current location
 	origin = util::GetCurrentDir();
-
-	// create a folder to work in
-	util::MakeDirAllRXW(tempPath);
 	MoveToTempdir();
       }
 
       FolderTestFixture::~FolderTestFixture() {
 	ReturnToOrigin();
-	util::DeleteDirTree(tempPath);
+	if (ownsTempPath) {
+	  util::DeleteDirTree(tempPath);
+	}
+      }
+
+      std::string FolderTestFixture::ConstructTempPath() const {
+	std::stringstream tempPathStream;
+	// next line is a hack to get the build working again
+	// TODO: find a portable uuid solution. BOOST?
+	tempPathStream << util::GetTemporaryDir() << "/" << "HemeLBTest" << std::fixed
+		       << std::floor(util::myClock() * 100000) << std::flush;
+	return tempPathStream.str();
       }
 
       void FolderTestFixture::ReturnToOrigin()

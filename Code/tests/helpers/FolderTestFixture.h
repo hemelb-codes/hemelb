@@ -60,6 +60,7 @@ namespace hemelb
       private:
 	std::string origin;
 	std::string tempPath;
+	bool ownsTempPath = false;
 
       public:
 	FolderTestFixture();
@@ -89,6 +90,8 @@ namespace hemelb
 	    o << doc;
 	  } (output, document);
 	}
+
+	std::string ConstructTempPath() const;
 	void DeleteXMLInput(std::string const &resource, std::vector<std::string> const& elements) const;
 	void MoveToTempdir();
 	void AssertPresent(const std::string &fname);
