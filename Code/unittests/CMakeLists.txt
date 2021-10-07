@@ -67,7 +67,6 @@ if(NOT HEMELB_TESTDIR)
 endif()
 
 # add_test_executable(unittests_redblood_integrations redblood_integrations.h)
-add_mpi_test_executable(unittests_redblood redblood_mpi.h)
 add_mpi_test_executable(unittests_redblood_integration redbloodMPIIntegrations.h)
 
 add_to_resources(
