@@ -37,6 +37,12 @@ namespace hemelb {
 	return *this;
       }
 
+      // Factory for same margin, different value.
+      template <typename... ArgTs>
+      ApproxVectorImpl operator()(ArgTs... args) const {
+	return ApproxVectorImpl{std::forward<ArgTs>(args)...}.Margin(margin);
+      }
+
       friend bool operator==(const ApproxVectorImpl& lhs, const vec& rhs) {
 	return lhs.impl(rhs);
       }
