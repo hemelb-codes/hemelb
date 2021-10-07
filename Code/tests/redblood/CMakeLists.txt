@@ -52,4 +52,5 @@ target_sources(mpi_redblood_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/parallel/MPIIntegrateVelocities.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/parallel/MPILockStepTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/parallel/GraphCommsTests.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/parallel/RBCInserterWithPerturbationParallelTests.cc
 )
