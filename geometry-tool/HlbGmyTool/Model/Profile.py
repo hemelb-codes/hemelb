@@ -199,7 +199,7 @@ class Profile(Observable):
 
     def LoadProfileV2(self, filename):
         with open(filename) as f:
-            state = yaml.load(f)
+            state = yaml.load(f, yaml.SafeLoader)
         self._ResetPathsV2(state, filename)
         self.LoadFrom(state)
         return

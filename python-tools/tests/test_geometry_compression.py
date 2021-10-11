@@ -2,7 +2,6 @@ import filecmp
 import os.path
 
 import numpy as np
-import yaml
 
 from hlb.parsers.geometry.compression import Compressor, Decompressor
 
