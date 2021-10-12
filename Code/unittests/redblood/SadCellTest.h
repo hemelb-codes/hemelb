@@ -9,6 +9,7 @@
 #include <cppunit/TestFixture.h>
 #include "redblood/Cell.h"
 #include "redblood/Mesh.h"
+#include "redblood/MeshIO.h"
 #include "resources/Resource.h"
 #include "unittests/redblood/Fixtures.h"
 
@@ -35,10 +36,14 @@ namespace hemelb
         public:
           void setUp()
           {
-            auto const normal = readMesh(resources::Resource("rbc_ico_1280.msh").Path().c_str());
-            cell =
-                std::make_shared<redblood::Cell>(readMesh(resources::Resource("sad.msh").Path().c_str())->vertices,
-                                                 normal);
+            auto const normal = io.readFile(
+		resources::Resource("rbc_ico_1280.msh").Path(), true
+	    );
+            cell = std::make_shared<redblood::Cell>(
+		io.readFile(resources::Resource("sad.msh").Path(),
+			 true)->vertices,
+		normal
+	    );
             // sad mesh is in physical units, move to something with fewer decimals.
             *cell *= 1e0 / 4.1e-6;
           }
@@ -67,7 +72,7 @@ namespace hemelb
 
           void checkForceDirection()
           {
-            std::vector<LatticeForceVector> forces(cell->GetVertices().size(), 0e0);
+            std::vector<LatticeForceVector> forces(cell->GetVertices().size(), LatticeForceVector::Zero());
             auto const e0 = (*cell)(forces);
             for (size_t i(0); i < forces.size(); ++i)
             {
@@ -79,7 +84,7 @@ namespace hemelb
 
           void checkNumericalForces()
           {
-            std::vector<LatticeForceVector> forces(cell->GetVertices().size(), 0e0);
+            std::vector<LatticeForceVector> forces(cell->GetVertices().size(), LatticeForceVector::Zero());
             (*cell)(forces);
             for (size_t i(0); i < cell->GetVertices().size(); ++i)
             {
@@ -132,6 +137,7 @@ namespace hemelb
 
         protected:
           std::shared_ptr<redblood::Cell> cell;
+	  redblood::KruegerMeshIO io = {};
       };
 
       CPPUNIT_TEST_SUITE_REGISTRATION (SadCellTests);

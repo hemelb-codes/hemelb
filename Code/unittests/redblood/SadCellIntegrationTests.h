@@ -73,10 +73,10 @@ namespace hemelb
 
           void testIntegration()
           {
-            auto const normal = readMesh(resources::Resource("rbc_ico_1280.msh").Path().c_str());
+            auto const normal = msh_io.readFile(resources::Resource("rbc_ico_1280.msh").Path(), true);
             auto const cell = std::make_shared<redblood::Cell>(normal->vertices, normal);
             auto const & converter = master->GetUnitConverter();
-            auto const deformed = readMesh(resources::Resource("sad.msh").Path().c_str());
+            auto const deformed = msh_io.readFile(resources::Resource("sad.msh").Path(), true);
             auto const sadcell = std::make_shared<redblood::Cell>(deformed->vertices, normal);
             auto const scale = converter.ConvertToLatticeUnits("m", 4e-6);
             // scale and positions cell in the middle somewhere
@@ -88,8 +88,8 @@ namespace hemelb
                 - sadcell->GetBarycenter();
             *cell += converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
                 - cell->GetBarycenter();
-            writeVTKMesh("/tmp/ideal.vtp", cell, converter);
-            writeVTKMesh("/tmp/deformed.vtp", sadcell, converter);
+            vtk_io.writeFile("/tmp/ideal.vtp", *cell, converter);
+            vtk_io.writeFile("/tmp/deformed.vtp", *sadcell, converter);
             sadcell->moduli.bending = 0.0000375;
             sadcell->moduli.surface = 1e0;
             sadcell->moduli.volume = 1e0;
@@ -105,7 +105,7 @@ namespace hemelb
               energies.push_back((**cells.begin())());
             });
 
-            controller->AddCellChangeListener([&converter](const hemelb::redblood::CellContainer &cells)
+            controller->AddCellChangeListener([this, &converter](const hemelb::redblood::CellContainer &cells)
             {
               static int iter = 0;
               for (auto cell : cells)
@@ -114,7 +114,7 @@ namespace hemelb
                 {
                   std::stringstream filename;
                   filename << cell->GetTag() << "_t_" << iter << ".vtp";
-                  writeVTKMesh(filename.str(), cell, converter);
+                  vtk_io.writeFile(filename.str(), *cell, converter);
                 }
               }
               ++iter;
@@ -122,11 +122,11 @@ namespace hemelb
 
             // run the simulation
             master->RunSimulation();
-            writeVTKMesh("/tmp/reformed.vtp", sadcell, converter);
+            vtk_io.writeFile("/tmp/reformed.vtp", *sadcell, converter);
 
             *sadcell += converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
                 - sadcell->GetBarycenter();
-            writeVTKMesh("/tmp/reformed_centered.vtp", sadcell, converter);
+            vtk_io.writeFile("/tmp/reformed_centered.vtp", *sadcell, converter);
 
             AssertPresent("results/report.txt");
             AssertPresent("results/report.xml");
@@ -137,7 +137,8 @@ namespace hemelb
           std::shared_ptr<hemelb::configuration::CommandLine> options;
           int const argc = 7;
           char const * argv[7];
-
+	  redblood::KruegerMeshIO msh_io = {};
+	  redblood::VTKMeshIO vtk_io = {};
       };
 
       CPPUNIT_TEST_SUITE_REGISTRATION (SadCellIntegrationTests);

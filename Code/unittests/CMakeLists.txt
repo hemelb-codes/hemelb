@@ -66,7 +66,7 @@ if(NOT HEMELB_TESTDIR)
   file(MAKE_DIRECTORY "${HEMELB_TESTDIR}")
 endif()
 
-# add_test_executable(unittests_redblood_integrations redblood_integrations.h)
+add_test_executable(unittests_redblood_integrations redblood_integrations.h)
 
 add_to_resources(
   resources/red_blood_cell.txt resources/red_blood_cube.txt

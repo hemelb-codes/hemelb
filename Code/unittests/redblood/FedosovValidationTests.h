@@ -61,7 +61,7 @@ namespace hemelb
             auto const & converter = master->GetUnitConverter();
             auto controller = std::static_pointer_cast<CellControl>(master->GetCellController());
             CPPUNIT_ASSERT(controller);
-            controller->AddCellChangeListener([&converter](const hemelb::redblood::CellContainer &cells)
+            controller->AddCellChangeListener([this,&converter](const hemelb::redblood::CellContainer &cells)
             {
               static int iter = 0;
               if(cells.empty())
@@ -73,7 +73,7 @@ namespace hemelb
               {
                 std::stringstream filename;
                 filename << cell->GetTag() << "_t_" << iter << ".vtp";
-                writeVTKMesh(filename.str(), cell, converter);
+                vtk_io.writeFile(filename.str(), *cell, converter);
               }
               ++iter;
             });
@@ -91,6 +91,7 @@ namespace hemelb
           std::shared_ptr<hemelb::configuration::CommandLine> options;
           int const argc = 7;
           char const * argv[7];
+	  redblood::VTKMeshIO vtk_io = {};
 
       };
 

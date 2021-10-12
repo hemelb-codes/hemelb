@@ -55,9 +55,12 @@ namespace hemelb
             options = std::make_shared<hemelb::configuration::CommandLine>(argc, argv);
 
             auto cell = std::make_shared<Cell>(icoSphere(4));
+	    templates = std::make_shared<TemplateCellContainer>();
+	    (*templates)["icosphere"] = cell;
             cell->moduli = Cell::Moduli(1e-6, 1e-6, 1e-6, 1e-6);
             cells.insert(cell);
 
+	    timings = std::make_unique<reporting::Timers>(Comms());
             master = std::make_shared<MasterSim>(*options, Comms());
             helpers::LatticeDataAccess(&master->GetLatticeData()).ZeroOutForces();
           }
@@ -71,8 +74,13 @@ namespace hemelb
           // No errors when interpolation/spreading hits nodes out of bounds
           void testCellOutOfBounds()
           {
-            (*cells.begin())->operator+=(master->GetLatticeData().GetGlobalSiteMins() * 2);
-            auto controller = std::make_shared<CellControll>(master->GetLatticeData(), cells);
+            (*cells.begin())->operator+=(master->GetLatticeData().GetGlobalSiteMins() * 2.0);
+            auto controller = std::make_shared<CellControll>(
+							     master->GetLatticeData(),
+							     cells,
+							     templates,
+							     *timings
+							     );
             master->RegisterActor(*controller, 1);
             master->RunSimulation();
             AssertPresent("results/report.txt");
@@ -89,7 +97,7 @@ namespace hemelb
             (**cells.begin()) += mid - (*cells.begin())->GetBarycenter();
             (**cells.begin()) += LatticePosition(0, 0, 8 - mid.z);
             (**cells.begin()) *= 5.0;
-            auto controller = std::make_shared<CellControll>(master->GetLatticeData(), cells);
+            auto controller = std::make_shared<CellControll>(master->GetLatticeData(), cells, templates, *timings);
             auto const barycenter = (*cells.begin())->GetBarycenter();
 
             // run
@@ -102,9 +110,10 @@ namespace hemelb
             CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, barycenter.y - moved.y, 1e-12);
             CPPUNIT_ASSERT(std::abs(barycenter.z - moved.z) > 1e-8);
 
-            // check there is force on one of the lattice site near a node
-            // node position is guessed at from geometry
-            auto const nodepos = mid + LatticePosition(0, 0, 8 - 5 - mid.z);
+            // Check there is force on one of the lattice site near a
+            // node node position is guessed at from geometry. This
+            // truncates.
+            auto const nodepos = LatticeVector{mid + LatticePosition(0, 0, 8 - 5 - mid.z)};
             auto const force = latticeData.GetSite(nodepos).GetForce();
             CPPUNIT_ASSERT(std::abs(force.z) > 1e-4);
 
@@ -116,8 +125,11 @@ namespace hemelb
           void testIntegrationWithoutCells()
           {
             // setup cell position
-            hemelb::redblood::CellContainer empty;
-            auto controller = std::make_shared<CellControll>(master->GetLatticeData(), empty);
+            CellContainer empty;
+	    auto empty_tmpl = std::make_shared<TemplateCellContainer>();
+            auto controller = std::make_shared<CellControll>(
+							     master->GetLatticeData(),
+							     empty, empty_tmpl, *timings);
 
             // run
             master->RegisterActor(*controller, 1);
@@ -129,8 +141,10 @@ namespace hemelb
 
         private:
           std::shared_ptr<MasterSim> master;
-          std::shared_ptr<hemelb::configuration::CommandLine> options;
-          hemelb::redblood::CellContainer cells;
+          std::shared_ptr<configuration::CommandLine> options;
+          CellContainer cells;
+          std::shared_ptr<TemplateCellContainer> templates;
+          std::unique_ptr<reporting::Timers> timings;
           int const argc = 7;
           char const * argv[7];
       };

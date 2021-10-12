@@ -109,11 +109,11 @@ namespace hemelb
                 {
                   if ((timestep % 1000) == 0)
                   {
-                    for (auto cell: cells)
+                    for (auto& cell: cells)
                     {
                       std::stringstream filename;
                       filename << cell->GetTag() << "_t_" << timestep << ".vtp";
-                      hemelb::redblood::writeVTKMesh(filename.str(), cell, this->master->GetUnitConverter());
+                      io.writeFile(filename.str(), *cell, this->master->GetUnitConverter());
                     }
                   }
                   timestep++;
@@ -140,11 +140,11 @@ namespace hemelb
                 {
                   if ((timestep % 1000) == 0)
                   {
-                    for (auto cell: cells)
+                    for (auto& cell: cells)
                     {
                       std::stringstream filename;
                       filename << cell->GetTag() << "_t_" << timestep << ".vtp";
-                      hemelb::redblood::writeVTKMesh(filename.str(), cell, this->master->GetUnitConverter());
+                      io.writeFile(filename.str(), *cell, this->master->GetUnitConverter());
                     }
                   }
                   timestep++;
@@ -163,6 +163,7 @@ namespace hemelb
           std::shared_ptr<hemelb::configuration::CommandLine> options;
           int const argc = 7;
           char const * argv[7];
+	  redblood::VTKMeshIO io = {};
       };
 
     // Don't register the unit test so it's not run by default as part of CI.
