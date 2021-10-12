@@ -10,6 +10,7 @@
 
 #include "lb/BuildSystemInterface.h"
 #include "Traits.h"
+#include "SimulationMaster.h"
 #include "redblood/Mesh.h"
 #include "redblood/Cell.h"
 #include "redblood/CellController.h"
