@@ -45,6 +45,7 @@ target_sources(hemelb-tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/CellIntegrationTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/FadeInOutIntegrationTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/ICCBSimulations.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/SadCellIntegrationTests.cc
 )
 
 target_sources(mpi_redblood_tests PRIVATE
