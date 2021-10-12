@@ -40,7 +40,10 @@ target_sources(hemelb-tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/buffer/ColumnsTests.cc
 
   ${CMAKE_CURRENT_SOURCE_DIR}/parallel/NodeParallelizationTests.cc
-  )
+
+  # Longer-running integration tests
+  ${CMAKE_CURRENT_SOURCE_DIR}/CellIntegrationTests.cc
+)
 
 target_sources(mpi_redblood_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/Fixtures.cc

@@ -36,7 +36,6 @@ namespace hemelb
   }
 }
 #define HEMELB_DOING_UNITTESTS
-#include "unittests/redblood/CellIntegrationTests.h"
 #include "unittests/redblood/FadeInOutIntegrationTests.h"
 #include "unittests/redblood/ICCBSimulations.h"
 #include "unittests/redblood/SadCellTest.h"
