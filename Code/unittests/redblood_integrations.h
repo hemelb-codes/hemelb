@@ -36,7 +36,6 @@ namespace hemelb
   }
 }
 #define HEMELB_DOING_UNITTESTS
-#include "unittests/redblood/SadCellTest.h"
 #undef HEMELB_DOING_UNITTESTS
 #endif
 
