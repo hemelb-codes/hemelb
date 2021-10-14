@@ -47,6 +47,7 @@ target_sources(hemelb-tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/ICCBSimulations.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/SadCellIntegrationTests.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/MulticellBenchmarkTests.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/FedosovValidationTests.cc
 )
 
 target_sources(mpi_redblood_tests PRIVATE
