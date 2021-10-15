@@ -7,7 +7,10 @@
 #include <string>
 #include <iterator>
 #include <exception>
+
 #include "redblood/Mesh.h"
+#include "redblood/MeshIO.h"
+#include "util/UnitConverter.h"
 
 int get_depth(std::vector<std::string> const &_args)
 {
@@ -71,6 +74,9 @@ bool pop_option(std::vector<std::string> &_args, std::string const &_option)
 // Usage is $ tetrahedron [filename] [-d, --depth positive integer] [--vtk]
 int main(int argc, char const *argv[])
 {
+  using namespace hemelb;
+  using namespace hemelb::redblood;
+
   std::vector<std::string> args;
   std::copy(argv + 1, argv + argc, std::back_inserter(args));
 
@@ -78,23 +84,20 @@ int main(int argc, char const *argv[])
   int const depth(get_depth(args));
   std::string const output(get_output(args));
 
-  hemelb::redblood::Mesh result = hemelb::redblood::tetrahedron(depth);
+  Mesh result = tetrahedron(depth);
+  util::UnitConverter conv{1.0, 1.0, PhysicalPosition::Zero(), 1.0, 0.0};
 
-  if (output != "" and not dovtk)
-  {
-    hemelb::redblood::writeMesh(output, *result.GetData());
-  }
-  else if (output == "" and not dovtk)
-  {
-    hemelb::redblood::writeMesh(std::cout, *result.GetData());
-  }
-  else if (output != "")
-  {
-    hemelb::redblood::writeVTKMesh(output, *result.GetData());
-  }
-  else
-  {
-    hemelb::redblood::writeVTKMesh(std::cout, *result.GetData());
+  auto io = [&]() -> std::unique_ptr<MeshIO> {
+    if (dovtk) {
+      return std::make_unique<VTKMeshIO>();
+    }
+    return std::make_unique<KruegerMeshIO>();
+  }();
+
+  if (output != "") {
+    io->writeFile(output, *result.GetData(), conv);
+  } else {
+    std::cout << io->writeString(*result.GetData(), conv);
   }
 
   return 0;

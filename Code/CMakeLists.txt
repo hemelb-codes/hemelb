@@ -158,10 +158,10 @@ set(package_subdirs
   lb
   geometry
   debug
-  net
   util
-  io
   log
+  net
+  io
   colloids
   reporting
   )
@@ -214,5 +214,4 @@ endif()
 if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
   enable_testing()
   add_subdirectory(tests)
-  add_subdirectory(unittests)
 endif()

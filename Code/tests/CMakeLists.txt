@@ -38,6 +38,7 @@ add_to_resources(resources/four_cube.gmy resources/four_cube.xml resources/four_
   resources/velocity_inlet.txt.weights.txt
   resources/xmltest.xml resources/config_file_velocity_inlet.xml resources/velocity_inlet.txt
   )
+
 if (HEMELB_BUILD_MULTISCALE)
   add_to_resources(multiscale/mpwide/MPWSettings.cfg)
 endif()
@@ -56,6 +57,30 @@ add_subdirectory(util)
 add_subdirectory(vis)
 
 if (HEMELB_BUILD_RBC)
+  add_to_resources(
+    resources/red_blood_cell.txt resources/red_blood_cube.txt
+    resources/large_cylinder.gmy resources/large_cylinder.xml
+    resources/large_cylinder_rbc.xml resources/iccb_capillary_network.xml
+    resources/P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_388889_1000_3.gmy
+    resources/P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_875_1000_3.gmy
+    resources/P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_1_75_1000_3.gmy
+    resources/rbc_ico_1280.msh resources/rbc_ico_720.msh
+    resources/fedosov1c.xml resources/fedosov1c.gmy
+    resources/sad.msh
+    resources/cyl_l100_r5.xml
+    resources/cyl_l100_r5.gmy
+    resources/rbc_ico_2880.msh
+    resources/rbc_ico_720_correct.msh
+    resources/rbc_ico_720.msh
+    resources/rbc_ico_720.vtp
+    resources/992Particles_rank3_26_t992.msh
+    resources/992Particles_rank3_26_t992.vtp
+    resources/empty_for_relative_paths.xml
+    )
+
   create_test_executable(mpi_redblood_tests)
   add_subdirectory(redblood)
+
+  add_executable(hemelb-tetgen redblood/tetrahedron.cc)
+  target_link_libraries(hemelb-tetgen ${heme_libraries} ${MPI_LIBRARIES})
 endif()
