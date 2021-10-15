@@ -4,4 +4,4 @@
 # license in the file LICENSE.
 include_guard()
 
-find_package(Parmetis QUIET)
+find_package(ParMETIS REQUIRED)

@@ -14,7 +14,7 @@ add_library(hemelb_geometry
   neighbouring/NeighbouringDataManager.cc
   neighbouring/RequiredSiteInformation.cc
   )
-target_link_libraries(hemelb_geometry PRIVATE Parmetis::Parmetis ZLIB::ZLIB)
+target_link_libraries(hemelb_geometry PRIVATE ParMETIS::ParMETIS ZLIB::ZLIB)
 
 configure_file (
   "${PROJECT_SOURCE_DIR}/geometry/decomposition/DecompositionWeights.h.in"
