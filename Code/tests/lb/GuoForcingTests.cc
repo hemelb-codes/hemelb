@@ -14,18 +14,13 @@
 #include "lb/streamers/Streamers.h"
 #include "lb/kernels/GuoForcingLBGK.h"
 #include "tests/helpers/FourCubeBasedTestFixture.h"
-#include "unittests/helpers/Comparisons.h"
-#include "unittests/helpers/LatticeDataAccess.h"
+#include "tests/helpers/LatticeDataAccess.h"
+#include "tests/helpers/ApproxVector.h"
 
 namespace hemelb
 {
   namespace tests
   {
-    // Temporary alias for test migration
-    namespace helpers
-    {
-      using namespace ::hemelb::unittests::helpers;
-    }
 
     TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<>, "GuoForcingTests") {
 
@@ -98,7 +93,7 @@ namespace hemelb
 		"Tests the correct force is assigned to HydroVars, and that the right specialization is used as well.") {
           size_t const nFluidSites(latDat->GetLocalFluidSiteCount());
           for (size_t i(1); i < nFluidSites; i <<= 1)
-            REQUIRE(helpers::is_zero(HydroVars(latDat->GetSite(i)).force - GetMeAForce(i)));
+            REQUIRE(ApproxV(HydroVars(latDat->GetSite(i)).force).Margin(1e-8) == GetMeAForce(i));
         }
 
         SECTION("testCalculatDensityAndMomentum",
@@ -132,7 +127,7 @@ namespace hemelb
                                                momentum[1],
                                                momentum[2]);
           REQUIRE(density == Approx(expected_density).margin(1e-8));
-	  REQUIRE(helpers::is_zero(momentum - expected_momentum));
+	  REQUIRE(momentum == ApproxV(expected_momentum).Margin(1e-8));
 
           // Check when forces are not zero
           Lattice::CalculateDensityAndMomentum(const_f,
@@ -144,7 +139,7 @@ namespace hemelb
                                                momentum[1],
                                                momentum[2]);
           REQUIRE(density == Approx(expected_density).margin(1e-8));
-          REQUIRE(helpers::is_zero(momentum - expected_momentum - force * 0.5));
+          REQUIRE(momentum == ApproxV(expected_momentum - force * 0.5).Margin(1e-8));
         }
 
         SECTION("testCalculateDensityMomentumFEq",
@@ -186,8 +181,8 @@ namespace hemelb
                                                force_velocity[2],
                                                force_feq);
 	  REQUIRE(noforce_density == Approx(force_density).margin(1e-8));
-          REQUIRE(helpers::is_zero(noforce_momentum + force * 0.5 - force_momentum));
-          REQUIRE(helpers::is_zero(force_velocity - force_momentum / force_density));
+          REQUIRE(noforce_momentum + force * 0.5 == ApproxV(force_momentum).Margin(1e-8));
+          REQUIRE(ApproxV(force_velocity).Margin(1e-8) == force_momentum / force_density);
 
           // Compute feq with forces directly
           Lattice::CalculateFeq(force_density,
@@ -388,7 +383,7 @@ namespace hemelb
             auto const index = site.GetStreamedIndex<LatticeType>(i);
             REQUIRE(withForce[i] == Approx(*helpers::GetFNew(latDat, index)).margin(1e-8));
             // And that forces from streaming site were used
-	    REQUIRE(not helpers::is_zero(withForce[i] - withoutForce[i]));
+	    REQUIRE(withForce[i] != Approx(withoutForce[i]));
           }
         }
 
@@ -422,7 +417,7 @@ namespace hemelb
             paranoia = true;
             REQUIRE(withForce[i] == Approx(actual[LatticeType::INVERSEDIRECTIONS[i]]).margin(1e-8));
             // And that forces from streaming site were used
-	    REQUIRE(not helpers::is_zero(withForce[i] - withoutForce[i]));
+	    REQUIRE(withForce[i] != Approx(withoutForce[i]));
           }
 	  REQUIRE(paranoia);
         }

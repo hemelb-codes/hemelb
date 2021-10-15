@@ -27,6 +27,7 @@ namespace hemelb
       // FNew at given site
       template<class Lattice>
       distribn_t const * GetFNew(geometry::LatticeData *latDat, LatticeVector const &_pos);
+      distribn_t const * GetFNew(geometry::LatticeData *latDat, site_t const &index);
 
       // Population i set to some distribution
       template<class LATTICE>
