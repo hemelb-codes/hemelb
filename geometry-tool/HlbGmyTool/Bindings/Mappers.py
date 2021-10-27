@@ -58,9 +58,21 @@ class WriteOnlyMapper(Mapper):
     pass
 
 
+class SimpleWriteOnlyMapper(WriteOnlyMapper):
+    def __init__(self, target, key, translator=UnitTranslator()):
+        super().__init__(translator=translator)
+        self.target = target
+        self.key = key
+
+    def _Set(self, val):
+        self.target.SetValueForKey(self.key, val)
+
+
 class SimpleObservingMapper(Mapper):
     def __init__(self, model, key, translator=UnitTranslator()):
         assert isinstance(model, Observable)
+        # Test for the presence of the key
+        val = model.GetValueForKey(key)
         Mapper.__init__(self, translator=translator)
         self.model = model
         self.key = key

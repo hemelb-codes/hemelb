@@ -30,8 +30,8 @@ class ValueBinding(object):
         widgetMapper.SetBinding(self)
 
         self.widgetMappers.add(widgetMapper)
-        self.Sync(self.modelMapper, widgetMapper)
         widgetMapper.Observe()
+        self.Sync(self.modelMapper, widgetMapper)
         return
 
     def MapperWasUpdated(self, source):

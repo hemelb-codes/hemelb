@@ -8,7 +8,7 @@ import wx
 from ..Bindings.ObjectController import ObjectController
 from ..Bindings.Translators import QuickTranslator
 from ..Bindings.VtkObject import HasVtkObjectKeys
-from ..Bindings.Mappers import SimpleObservingMapper
+from ..Bindings.Mappers import SimpleWriteOnlyMapper
 from .IoletListController import HasIoletListKeys
 from .VectorController import HasVectorKeys
 
@@ -27,7 +27,7 @@ class ProfileController(
         self.DefineIoletListKey("Iolets")
         self.BindValue(
             "DefaultIoletRadius",
-            SimpleObservingMapper(self.Iolets, "DefaultIoletRadius"),
+            SimpleWriteOnlyMapper(self.Iolets, "DefaultIoletRadius"),
         )
 
         self.DefineVtkObjectKey("StlReader")
