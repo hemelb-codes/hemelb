@@ -4,6 +4,7 @@
 # license in the file LICENSE.
 
 from __future__ import absolute_import
+import math
 import wx
 
 from .Layout import H, V, StretchSpacer, RectSpacer
@@ -225,10 +226,6 @@ class IoletsDetailPanel(wx.Panel):
         self.centreLabel = MakeAndBindLengthUnitLabel(self, controller, "Centre")
 
         self.centreVector = VectorCtrl(self)
-        # TODO: make these text fields (Centre, Normal, Radius)
-        # editable. At the moment I can't get the binding to VTK
-        # working properly.
-        #        self.centreVector.SetEditable(False)
         controller.BindValue(
             "Iolets.Selection.Centre",
             VectorCtrlMapper(self.centreVector, "Value", wx.EVT_TEXT),
@@ -236,13 +233,19 @@ class IoletsDetailPanel(wx.Panel):
 
         self.radiusLabel = MakeAndBindLengthUnitLabel(self, controller, "Radius")
         self.radiusField = wx.TextCtrl(self)
-        #        self.radiusField.SetEditable(False)
 
-        # controller.BindValue(
-        #     'Iolets.Selection.Radius',
-        #     WxWidgetMapper(self.radiusField, 'Value', wx.EVT_TEXT,
-        #                    translator=Constraint(lambda x: x > 0.0, inner=FloatTranslator()))
-        #     )
+        rad_trans = NoneToValueTranslator(
+            math.nan,
+            inner=Constraint(
+                lambda x: math.isnan(x) or x > 0.0, inner=FloatTranslator()
+            ),
+        )
+        controller.BindValue(
+            "Iolets.Selection.Radius",
+            WxWidgetMapper(
+                self.radiusField, "Value", wx.EVT_TEXT, translator=rad_trans
+            ),
+        )
 
         self.placeButton = wx.Button(self, label="Place")
         controller.BindValue(
@@ -260,7 +263,6 @@ class IoletsDetailPanel(wx.Panel):
 
         normalLabel = wx.StaticText(self, label="Inward Normal")
         self.normalVector = VectorCtrl(self)
-        #        self.normalVector.SetEditable(False)
         controller.BindValue(
             "Iolets.Selection.Normal",
             VectorCtrlMapper(self.normalVector, "Value", wx.EVT_TEXT),
