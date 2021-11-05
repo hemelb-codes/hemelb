@@ -64,5 +64,6 @@ else()
   # Build minimal interface
   add_library(hemelb_redblood
     RBCConfig.cc
+    FlowExtension.cc
     )
 endif()

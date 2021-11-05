@@ -150,8 +150,8 @@ add_executable(${HEMELB_EXECUTABLE} main.cc)
 
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
-  redblood
   configuration
+  redblood
   extraction
   steering
   vis

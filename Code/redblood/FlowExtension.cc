@@ -4,8 +4,8 @@
 // license in the file LICENSE.
 
 #include "redblood/FlowExtension.h"
-#include "redblood/Mesh.h"
 #include "util/Vector3D.h"
+#include "Exception.h"
 #include "units.h"
 
 namespace hemelb
@@ -13,12 +13,33 @@ namespace hemelb
   namespace redblood
   {
 
+    namespace {
+      void check(FlowExtension const& flowExt)
+      {
+	if (std::abs(flowExt.normal.GetMagnitude() - 1e0) > 1e-8)
+	  throw Exception() << "Flow extension normal not unit vector: " << flowExt.normal;
+	if (flowExt.length <= 1e-12)
+	  throw Exception() << "Flow extension too short, length = " << flowExt.length;
+	if (flowExt.radius <= 1e-12)
+	  throw Exception() << "Flow extension too narrow, radius = " << flowExt.radius;
+      }
+    }
+
+    FlowExtension::FlowExtension(LatticePosition const &n0, LatticePosition const &gamma, LatticeDistance l,
+				 LatticeDistance r, LatticeDistance fl) :
+      Cylinder( { n0, gamma, r, l }), fadeLength(fl)
+    {
+      check(*this);
+    }
+    FlowExtension::FlowExtension() :
+      Cylinder( { LatticePosition(1, 0, 0), LatticePosition(0, 0, 0), 1, 1 }), fadeLength(1)
+    {
+      check(*this);
+    }
+
     //! Checks whether a cell is inside a flow extension
     bool contains(const Cylinder & flowExt, const LatticePosition& point)
     {
-      assert(std::abs(flowExt.normal.GetMagnitude() - 1e0) < 1e-8);
-      assert(flowExt.length > 1e-12);
-      assert(flowExt.radius > 1e-12);
       // Vector from centre of start of cylinder to point
       LatticePosition const pd = point - flowExt.origin;
 
@@ -40,10 +61,6 @@ namespace hemelb
 
     Dimensionless linearWeight(FlowExtension const& flowExt, LatticePosition const& position)
     {
-      assert(std::abs(flowExt.normal.GetMagnitude() - 1e0) < 1e-8);
-      assert(flowExt.length > 1e-12);
-      assert(flowExt.radius > 1e-12);
-
       if (not contains(flowExt, position))
         return 0e0;
 
