@@ -15,75 +15,88 @@ import re
 import subprocess
 import sys
 
+
 class ErrCollector:
     def __init__(self, verbose):
         self.verbose = verbose
-        #self.error_occurred = False
+        # self.error_occurred = False
 
     def info(self, filename, msg):
         if self.verbose:
             print(filename, msg)
 
     def error(self, filename, msg):
-        #self.error_occurred = True
+        # self.error_occurred = True
         print(filename, msg)
 
-py_coding_re = re.compile(r'#.*coding[=:]\s*([-\w.]+)')
+
+py_coding_re = re.compile(r"#.*coding[=:]\s*([-\w.]+)")
 
 comment_chars = {
-    '.applescript': '--',
-    '.cc' : '//',
-    '.cmake': '#',
-    '.cpp' : '//',
-    '.sh':'#',
-    '.i' : '//',
-    '.hpp' : '//',
-    '.h' : '//',
-    '.py' : '#',
-    '.pyx' : '#',
-    '.pxd' : '#',
-    'README': '',
-    }
+    ".applescript": "--",
+    ".cc": "//",
+    ".cmake": "#",
+    ".cpp": "//",
+    ".sh": "#",
+    ".i": "//",
+    ".hpp": "//",
+    ".h": "//",
+    ".py": "#",
+    ".pyx": "#",
+    ".pxd": "#",
+    "README": "",
+}
 
-excluded_files = set((
-    'Tools/setuptool/HemeLbSetupTool/Model/Generation/Point_inside_polyhedron_3.h',
-    'Tools/setuptool/HemeLbSetupTool/Model/Generation/Triangle_3_Ray_3_do_intersect.h',
-    ))
+excluded_files = set(
+    (
+        ".github/workflows/run-clang-format.py",
+        "geometry-tool/HlbGmyTool/Model/Generation/Point_inside_polyhedron_3.h",
+        "geometry-tool/HlbGmyTool/Model/Generation/PybindVTKTypeCaster.h",
+        "geometry-tool/HlbGmyTool/Model/Generation/Triangle_3_Ray_3_do_intersect.h",
+    )
+)
+
 
 def comment_char(filename):
     base = os.path.basename(filename)
     root, ext = os.path.splitext(base)
-    if ext == '.in':
+    if ext == ".in":
         ext = os.path.splitext(root)[1]
-    if base == 'CMakeLists.txt':
-        ext = '.cmake'
-    
+    if base == "CMakeLists.txt":
+        ext = ".cmake"
+
     return comment_chars[ext]
-    
+
+
 def is_source(filename):
     try:
         cc = comment_char(filename)
         return True
     except KeyError:
-        return False    
+        return False
+
 
 def is_in_git(filename):
-    git_ls_cmd = ['git', 'ls-tree', '--name-only', '--full-name', 'HEAD', filename]
+    git_ls_cmd = ["git", "ls-tree", "--name-only", "--full-name", "HEAD", filename]
     output = subprocess.check_output(git_ls_cmd).strip()
     if not isinstance(output, str):
         # Py3
         output = output.decode()
     return os.path.abspath(output) == os.path.abspath(filename)
 
+
 _re_cache = {}
+
+
 def make_emacs_varline_re(cc):
     try:
         return _re_cache[cc]
     except KeyError:
         # Pattern is: comment char; optional whitespace; literal '-*-';
         # anything; literal '-*-'; optional whitespace; end of string.
-        ans = _re_cache[cc] = re.compile(cc + r'\s*-\*-.*-\*-\s*$')
+        ans = _re_cache[cc] = re.compile(cc + r"\s*-\*-.*-\*-\s*$")
         return ans
+
 
 def get_initial_comment(filename, file_or_lines):
     root, ext = os.path.splitext(filename)
@@ -103,7 +116,7 @@ def get_initial_comment(filename, file_or_lines):
     for line in file_or_lines:
         if needs_shebang_checked:
             needs_shebang_checked = False
-            if line.startswith('#!'):
+            if line.startswith("#!"):
                 # discard
                 continue
 
@@ -128,22 +141,14 @@ def get_initial_comment(filename, file_or_lines):
             break
     return file_msg
 
-cr_msg =  """This file is part of HemeLB and is Copyright (C)
+
+cr_msg = """This file is part of HemeLB and is Copyright (C)
 the HemeLB team and/or their institutions, as detailed in the
 file AUTHORS. This software is provided under the terms of the
 license in the file LICENSE."""
 
-old_cr_msg = """
-Copyright (C) University College London, 2007-2012, all rights reserved.
 
-This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-with, install, use, duplicate, modify, redistribute or share this
-file, or any part thereof, other than as allowed by any agreement
-specifically made by you with University College London.
-"""
-
-
-def try_fix(log, filename,dryrun=True):
+def try_fix(log, filename, dryrun=True):
     root, ext = os.path.splitext(filename)
     cc = comment_char(filename)
     ncc = len(cc)
@@ -165,7 +170,7 @@ def try_fix(log, filename,dryrun=True):
         if needs_shebang_checked:
             # .sh and .py files can have a #!
             needs_shebang_checked = False
-            if line.startswith('#!'):
+            if line.startswith("#!"):
                 out.append(line)
                 continue
 
@@ -182,7 +187,6 @@ def try_fix(log, filename,dryrun=True):
                 if emacs_varline_re.match(line):
                     # discard
                     continue
-
 
         if discard_blank:
             if line.strip() == "":
@@ -203,6 +207,7 @@ def try_fix(log, filename,dryrun=True):
         f.write("".join(out))
     return True
 
+
 def check_cr(log, filename, fix=False):
     if not is_in_git(filename):
         log.info(filename, "Skipping non-VCed file")
@@ -220,7 +225,7 @@ def check_cr(log, filename, fix=False):
     with open(filename) as f:
         msg_lines = get_initial_comment(filename, f)
 
-    msg = '\n'.join(msg_lines)
+    msg = "\n".join(msg_lines)
     if msg != cr_msg:
         log.error(filename, "copyright statement doesn't read as expected")
         if fix:
@@ -230,18 +235,21 @@ def check_cr(log, filename, fix=False):
         log.info(filename, "OK")
         return True
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--verbose", "-v", action="count", default=0)
 parser.add_argument("--fix", action="store_true")
 parser.add_argument("paths", nargs="*")
 import pdb
+
+
 def iter_repo_paths(paths):
     for p in paths:
         p = os.path.abspath(p)
         if os.path.isdir(p):
             for dirpath, dirnames, filenames in os.walk(p):
-                if '.git' in dirnames:
-                    dirnames.remove('.git')
+                if ".git" in dirnames:
+                    dirnames.remove(".git")
                 builds = [d for d in dirnames if d.startswith("build")]
                 for b in builds:
                     dirnames.remove(b)
@@ -250,6 +258,7 @@ def iter_repo_paths(paths):
                     yield os.path.relpath(os.path.join(dirpath, fn), repo_root)
         else:
             yield p
+
 
 if __name__ == "__main__":
     args = parser.parse_args()
