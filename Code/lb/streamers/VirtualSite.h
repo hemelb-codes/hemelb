@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -9,9 +8,10 @@
 
 #include <vector>
 
+#include <boost/container/flat_map.hpp>
+
 #include "units.h"
 #include "util/Vector3D.h"
-#include "util/FlatMap.h"
 #include "lb/iolets/InOutLet.h"
 #include "lb/lattices/LatticeInfo.h"
 #include "lb/kernels/BaseKernel.h"
@@ -28,7 +28,7 @@ namespace hemelb
        */
       struct RSHV
       {
-          typedef util::FlatMap<site_t, RSHV>::Type Map;
+          using Map = boost::container::flat_map<site_t, RSHV>;
           // Time step at which this was last updated
           LatticeTimeStep t;
           // Density at that time
@@ -60,7 +60,7 @@ namespace hemelb
       {
         public:
           VSExtra(InOutLet& iolet) :
-            iolets::IoletExtraData(iolet)
+              iolets::IoletExtraData(iolet)
           {
 
           }
@@ -94,7 +94,7 @@ namespace hemelb
 
           VirtualSite(kernels::InitParams& initParams, VSExtra<LatticeType>& extra,
                       const LatticeVector& location) :
-            sumQiSq(0.)
+              sumQiSq(0.)
           {
             hv.t = 0;
             hv.rho = 1.;
@@ -141,9 +141,8 @@ namespace hemelb
                 // TODO: this really must cope with neigh being off process.
                 if (neighbourSiteHomeProc == initParams.latDat->GetLocalRank())
                 {
-                  site_t
-                      neighLocalIdx =
-                          initParams.latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(neighGlobalIdx);
+                  site_t neighLocalIdx =
+                      initParams.latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(neighGlobalIdx);
                   const geometry::Site<const geometry::LatticeData> neigh =
                       initParams.latDat->GetSite(neighLocalIdx);
                   unsigned inverse = lattice.GetInverseIndex(i);
@@ -190,12 +189,11 @@ namespace hemelb
               {
                 // Store the cut distance from neigh to the iolet
                 // I.e along the direction opposite to i
-                site_t
-                    neighLocalIdx =
-                        initParams.latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(neighGlobalIdx);
+                site_t neighLocalIdx =
+                    initParams.latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(neighGlobalIdx);
                 const geometry::Site<const geometry::LatticeData> neigh =
                     initParams.latDat->GetSite(neighLocalIdx);
-                AddQ(neigh.GetWallDistance<LatticeType> (lattice.GetInverseIndex(i)));
+                AddQ(neigh.GetWallDistance<LatticeType>(lattice.GetInverseIndex(i)));
 
                 // Local sites don't need communication, so we're done here.
               }
@@ -207,11 +205,12 @@ namespace hemelb
                 requirements.Require(geometry::neighbouring::terms::Density);
                 requirements.Require(geometry::neighbouring::terms::Velocity);
 
-                initParams.neighbouringDataManager->RegisterNeededSite(neighGlobalIdx, requirements);
+                initParams.neighbouringDataManager->RegisterNeededSite(neighGlobalIdx,
+                                                                       requirements);
                 // Store the cut distance from neigh to the iolet
                 // I.e along the direction opposite to i
-                AddQ(initParams.latDat->GetNeighbouringData().GetCutDistance<LatticeType> (neighGlobalIdx,
-                                                                                           lattice.GetInverseIndex(i)));
+                AddQ(initParams.latDat->GetNeighbouringData().GetCutDistance<LatticeType>(neighGlobalIdx,
+                                                                                          lattice.GetInverseIndex(i)));
               }
             }
             distribn_t det = Matrix3DInverse(velocityMatrix, velocityMatrixInv);

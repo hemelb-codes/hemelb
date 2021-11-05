@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -18,7 +17,7 @@ namespace hemelb
 {
   namespace tests
   {
-    TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture, "IncompressibilityCheckerTests") {
+    TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<>, "IncompressibilityCheckerTests") {
       using LATTICE = lb::lattices::D3Q15;
 
       LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(latDat);

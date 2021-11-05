@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -44,7 +43,7 @@ namespace hemelb
 
     // Function to create the directory of given path, which user group
     // and anyone can read write and execute.
-    void MakeDirAllRXW(std::string &dirPath);
+    bool MakeDirAllRXW(std::string const &dirPath);
 
     // Get the full path of inPath relative to basePath
     // which can be either a directory or a file (in this case, use

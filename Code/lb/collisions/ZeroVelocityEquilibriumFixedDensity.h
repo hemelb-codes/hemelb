@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -21,14 +20,15 @@ namespace hemelb
        * fully to equilibrium.
        */
       template<typename KernelType>
-      class ZeroVelocityEquilibriumFixedDensity : public BaseCollision<ZeroVelocityEquilibriumFixedDensity<KernelType>,
-          KernelType>
+      class ZeroVelocityEquilibriumFixedDensity : public BaseCollision<
+          ZeroVelocityEquilibriumFixedDensity<KernelType>, KernelType>
       {
         public:
           typedef KernelType CKernel;
 
           ZeroVelocityEquilibriumFixedDensity(kernels::InitParams& initParams) :
-              BaseCollision<ZeroVelocityEquilibriumFixedDensity<KernelType>, KernelType>(), kernel(initParams), boundaryObject(initParams.boundaryObject)
+              BaseCollision<ZeroVelocityEquilibriumFixedDensity<KernelType>, KernelType>(),
+                  kernel(initParams), boundaryObject(initParams.boundaryObject)
           {
           }
 
@@ -42,7 +42,8 @@ namespace hemelb
             kernel.CalculateFeq(hydroVars, site.GetIndex());
           }
 
-          inline void DoCollide(const LbmParameters* lbmParams, kernels::HydroVars<KernelType>& iHydroVars)
+          inline void DoCollide(const LbmParameters* lbmParams,
+                                kernels::HydroVars<KernelType>& iHydroVars)
           {
             for (Direction direction = 0; direction < CKernel::LatticeType::NUMVECTORS; ++direction)
             {

@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -33,7 +32,8 @@ namespace hemelb
          * @param offset
          * @return
          */
-        LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile* outputSpec, const net::IOCommunicator& ioComms);
+        LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile* outputSpec,
+                            const net::IOCommunicator& ioComms);
 
         /**
          * Tidies up the LocalPropertyOutput (close files etc).
@@ -68,17 +68,10 @@ namespace hemelb
          * Returns the number of floats written for the field.
          * @param field
          */
-        static unsigned GetFieldLength(OutputField::FieldType field);
-
-        /**
-         * Returns the offset to the field, as it should be written to file.
-         * @param field
-         * @return
-         */
-        static double GetOffset(OutputField::FieldType field);
+        unsigned GetFieldLength(OutputField::FieldType field) const;
 
       private:
-	typedef hemelb::lb::lattices:: HEMELB_LATTICE latticeType;
+	//typedef hemelb::lb::lattices:: HEMELB_LATTICE latticeType;
         const net::IOCommunicator& comms;
 
         /**

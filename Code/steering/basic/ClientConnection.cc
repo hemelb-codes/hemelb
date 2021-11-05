@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -20,8 +19,8 @@ namespace hemelb
 {
   namespace steering
   {
-    ClientConnection::ClientConnection(int iSteeringSessionId, reporting::Timers & timings)
-      :mIsBusy(), timers(timings)
+    ClientConnection::ClientConnection(int iSteeringSessionId, reporting::Timers & timings) :
+        mIsBusy(), timers(timings)
     {
       // Write the name of this machine to a file.
 
@@ -57,7 +56,7 @@ namespace hemelb
         struct sockaddr_in my_address;
 
         my_address.sin_family = AF_INET;
-        my_address.sin_port = htons((in_port_t) MYPORT);
+        my_address.sin_port = htons((in_port_t ) MYPORT);
         my_address.sin_addr.s_addr = INADDR_ANY;
         memset(my_address.sin_zero, '\0', sizeof my_address.sin_zero);
 
@@ -115,8 +114,9 @@ namespace hemelb
 
 #endif
           // Try to accept a socket (from the non-blocking socket)
-          mCurrentSocket
-              = accept(mListeningSocket, (struct sockaddr *) &clientAddress, &socketSize);
+          mCurrentSocket = accept(mListeningSocket,
+                                  (struct sockaddr *) &clientAddress,
+                                  &socketSize);
 #ifdef HEMELB_WAIT_ON_CONNECT
           timers[reporting::Timers::steeringWait].Stop();
           log::Logger::Log<log::Debug, log::Singleton>("Continuing after receiving steering connection.");

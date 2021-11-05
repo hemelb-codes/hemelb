@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -22,7 +21,7 @@ namespace hemelb
       }
 
       NeighbouringProcessor::NeighbouringProcessor(proc_t neighbourRankIn) :
-        neighbourRank(neighbourRankIn)
+          neighbourRank(neighbourRankIn)
       {
       }
 
@@ -61,8 +60,7 @@ namespace hemelb
         {
           particlesToReceive.resize(numberOfParticlesToReceive);
 
-          net.RequestReceiveV(particlesToReceive,
-                             neighbourRank);
+          net.RequestReceiveV(particlesToReceive, neighbourRank);
         }
 
         if (particlesToSend.size() > 0)
@@ -71,8 +69,7 @@ namespace hemelb
         }
       }
 
-      void NeighbouringProcessor::AddSiteToRequestVelocityDataFor(site_t siteI,
-                                                                  site_t siteJ,
+      void NeighbouringProcessor::AddSiteToRequestVelocityDataFor(site_t siteI, site_t siteJ,
                                                                   site_t siteK)
       {
         siteCoordsRequestedByThisCore.push_back(util::Vector3D<site_t>(siteI, siteJ, siteK));
@@ -102,8 +99,7 @@ namespace hemelb
         {
           velocityFieldDataFromNeighbour.resize(numberOfSitesRequestedByThisCore);
 
-          net.RequestSendV(siteCoordsRequestedByThisCore,
-                          neighbourRank);
+          net.RequestSendV(siteCoordsRequestedByThisCore, neighbourRank);
         }
       }
 
@@ -113,16 +109,14 @@ namespace hemelb
         {
           velocityFieldDataFromNeighbour.resize(numberOfSitesRequestedByThisCore);
 
-          net.RequestReceiveV(velocityFieldDataFromNeighbour,
-                             neighbourRank);
+          net.RequestReceiveV(velocityFieldDataFromNeighbour, neighbourRank);
         }
 
         if (numberOfSiteBeingRequestedByNeighbour > 0)
         {
           velocityFieldDataForNeighbour.resize(numberOfSiteBeingRequestedByNeighbour);
 
-          net.RequestSendV(velocityFieldDataForNeighbour,
-                          neighbourRank);
+          net.RequestSendV(velocityFieldDataForNeighbour, neighbourRank);
         }
       }
 
@@ -131,18 +125,20 @@ namespace hemelb
         return siteCoordsRequestedByNeighbour.size();
       }
 
-      const util::Vector3D<float>& NeighbouringProcessor::GetReceivedVelocityField(const site_t receivedIndex) const
+      const util::Vector3D<float>& NeighbouringProcessor::GetReceivedVelocityField(
+          const site_t receivedIndex) const
       {
         return velocityFieldDataFromNeighbour[receivedIndex];
       }
 
-      const util::Vector3D<site_t>& NeighbouringProcessor::GetSiteCoordsBeingRequestedByNeighbour(const site_t receivedIndex) const
+      const util::Vector3D<site_t>& NeighbouringProcessor::GetSiteCoordsBeingRequestedByNeighbour(
+          const site_t receivedIndex) const
       {
         return siteCoordsRequestedByNeighbour[receivedIndex];
       }
 
-      void NeighbouringProcessor::SetVelocityFieldToSend(const site_t sendIndex,
-                                                         const util::Vector3D<float>& velocityFieldToSend)
+      void NeighbouringProcessor::SetVelocityFieldToSend(
+          const site_t sendIndex, const util::Vector3D<float>& velocityFieldToSend)
       {
         velocityFieldDataForNeighbour[sendIndex] = velocityFieldToSend;
       }
@@ -152,7 +148,8 @@ namespace hemelb
         return siteCoordsRequestedByThisCore.size();
       }
 
-      const util::Vector3D<site_t>& NeighbouringProcessor::GetSendingSiteCoorinates(site_t sendIndex) const
+      const util::Vector3D<site_t>& NeighbouringProcessor::GetSendingSiteCoorinates(
+          site_t sendIndex) const
       {
         return siteCoordsRequestedByThisCore[sendIndex];
       }

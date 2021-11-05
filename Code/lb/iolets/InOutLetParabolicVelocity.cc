@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -35,6 +34,7 @@ namespace hemelb
         LatticePosition displ = x - position;
         LatticeDistance z = displ.Dot(normal);
         Dimensionless rSq = (displ.GetMagnitudeSquared() - z * z) / (radius * radius);
+        assert(rSq <= 1.0);
 
         // Get the max velocity
         LatticeSpeed max = maxSpeed;

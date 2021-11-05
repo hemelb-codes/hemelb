@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -48,7 +47,7 @@ namespace hemelb
       }
 
       Element::Element(TiXmlElement* el_) :
-        el(el_)
+          el(el_)
       {
       }
 
@@ -57,7 +56,7 @@ namespace hemelb
       }
       const Element Element::Missing()
       {
-        return Element(NULL);
+        return Element(nullptr);
       }
       const std::string& Element::GetName() const
       {
@@ -83,7 +82,7 @@ namespace hemelb
       Element Element::GetChildOrThrow(const std::string& name)
       {
         TiXmlElement* ans = el->FirstChildElement(name);
-        if (ans == NULL)
+        if (ans == nullptr)
           throw ChildError(*this, name);
 
         return Element(ans);
@@ -91,7 +90,7 @@ namespace hemelb
       const Element Element::GetChildOrThrow(const std::string& name) const
       {
         TiXmlElement* ans = el->FirstChildElement(name);
-        if (ans == NULL)
+        if (ans == nullptr)
           throw ChildError(*this, name);
 
         return Element(ans);
@@ -105,8 +104,8 @@ namespace hemelb
       Element Element::NextSiblingOrNull(const std::string name)
       {
         TiXmlElement* ans = el->NextSiblingElement(name);
-        if (ans == NULL)
-          return NULL;
+        if (ans == nullptr)
+          return nullptr;
 
         return Element(ans);
       }
@@ -114,7 +113,7 @@ namespace hemelb
       Element Element::NextSiblingOrThrow(const std::string name)
       {
         TiXmlElement* ans = el->NextSiblingElement(name);
-        if (ans == NULL)
+        if (ans == nullptr)
           throw SiblingError(*this, name);
 
         return Element(ans);
@@ -126,7 +125,7 @@ namespace hemelb
       const std::string& Element::GetAttributeOrThrow(const std::string& name) const
       {
         const std::string* ans = el->Attribute(name);
-        if (ans == NULL)
+        if (ans == nullptr)
           throw AttributeError(*this, name);
 
         return *ans;
@@ -139,7 +138,7 @@ namespace hemelb
       Element Element::GetParentOrThrow()
       {
         TiXmlElement* parent = el->Parent()->ToElement();
-        if (parent == NULL)
+        if (parent == nullptr)
           throw ParentError(*this);
         return Element(parent);
       }
@@ -163,14 +162,14 @@ namespace hemelb
       {
         const TiXmlNode* parent = el->Parent();
         const TiXmlElement* parentEl = parent->ToElement();
-        if (parentEl != NULL)
+        if (parentEl != nullptr)
         {
           GetPathWorker(parentEl, ans);
         }
         else
         {
           const TiXmlDocument* doc = parent->ToDocument();
-          if (doc != NULL)
+          if (doc != nullptr)
           {
             ans << doc->Value() << ":";
           }
@@ -184,14 +183,14 @@ namespace hemelb
       }
 
       Element::operator bool() const {
-	return el != NULL;
+	return el != nullptr;
       }
 
       /**
        * Default constructor
        */
       ChildIterator::ChildIterator() :
-        parent(Element::Missing()), current(Element::Missing()), name()
+          parent(Element::Missing()), current(Element::Missing()), name()
       {
       }
 
@@ -201,7 +200,7 @@ namespace hemelb
        * @param subElemName
        */
       ChildIterator::ChildIterator(const Element& elem, const std::string& subElemName) :
-        parent(elem), current(elem.GetChildOrNull(subElemName)), name(subElemName)
+          parent(elem), current(elem.GetChildOrNull(subElemName)), name(subElemName)
       {
       }
 
@@ -210,7 +209,7 @@ namespace hemelb
        * @param other
        */
       ChildIterator::ChildIterator(const ChildIterator& other) :
-        parent(other.parent), current(other.current), name(other.name)
+          parent(other.parent), current(other.current), name(other.name)
       {
       }
 
@@ -285,7 +284,7 @@ namespace hemelb
       {
         // increment and return the value pre-increment
         ChildIterator ans = *this;
-        ++(*this);
+        ++ (*this);
         return ans;
       }
 
@@ -305,7 +304,7 @@ namespace hemelb
       }
 
       // Missing attribute
-      AttributeError::AttributeError(const Element& n, const std::string& attr_) :
+      AttributeError::AttributeError(const Element& n, const std::string& attr) :
         XmlError()
       {
         *this << "AttributeError: '" << n.GetPath() << "' has no attribute '" << attr << "'";

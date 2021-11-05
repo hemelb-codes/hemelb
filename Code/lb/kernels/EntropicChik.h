@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -28,7 +27,7 @@ namespace hemelb
       {
         public:
           HydroVars(const distribn_t* const f) :
-            HydroVarsBase<LatticeType> (f)
+              HydroVarsBase<LatticeType>(f)
           {
 
           }
@@ -40,7 +39,7 @@ namespace hemelb
        * EntropicChik: This class implements the entropic kernel, as per Chitakamarla et al.
        */
       template<class LatticeType>
-      class EntropicChik : public BaseKernel<EntropicChik<LatticeType> , LatticeType> ,
+      class EntropicChik : public BaseKernel<EntropicChik<LatticeType>, LatticeType>,
                            public Entropic<LatticeType>
       {
         public:
@@ -49,7 +48,7 @@ namespace hemelb
            * @param initParams
            */
           EntropicChik(InitParams& initParams) :
-            Entropic<LatticeType> (&initParams)
+              Entropic<LatticeType>(&initParams)
           {
           }
 
@@ -59,7 +58,8 @@ namespace hemelb
            * @param hydroVars
            * @param index, the current lattice site index.
            */
-          inline void DoCalculateDensityMomentumFeq(HydroVars<EntropicChik<LatticeType> >& hydroVars, site_t index)
+          inline void DoCalculateDensityMomentumFeq(
+              HydroVars<EntropicChik<LatticeType> >& hydroVars, site_t index)
           {
             hydroVars.index = index;
             LatticeType::CalculateDensityAndMomentum(hydroVars.f,

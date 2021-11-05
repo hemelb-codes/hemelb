@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -47,7 +46,8 @@ namespace hemelb
         return pressureGradientAmplitude;
       }
 
-      void InOutLetWomersleyVelocity::SetPressureGradientAmplitude(const LatticePressureGradient& pressGradAmp)
+      void InOutLetWomersleyVelocity::SetPressureGradientAmplitude(
+          const LatticePressureGradient& pressGradAmp)
       {
         pressureGradientAmplitude = pressGradAmp;
       }

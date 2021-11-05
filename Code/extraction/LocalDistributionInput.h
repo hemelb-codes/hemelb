@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -7,8 +6,6 @@
 #ifndef HEMELB_EXTRACTION_LOCALDISTRIBUTIONINPUT_H
 #define HEMELB_EXTRACTION_LOCALDISTRIBUTIONINPUT_H
 
-#include <boost/optional.hpp>
-
 #include "extraction/IterableDataSource.h"
 #include "extraction/InputField.h"
 #include "io/writers/xdr/XdrMemReader.h"
@@ -16,6 +13,11 @@
 #include "net/mpi.h"
 #include "net/MpiFile.h"
 #include "net/IOCommunicator.h"
+
+namespace boost {
+  template <typename>
+  class optional;
+}
 
 namespace hemelb
 {
@@ -49,9 +51,8 @@ namespace hemelb
         void LoadDistribution(geometry::LatticeData* latDat, boost::optional<LatticeTimeStep>& initalTime);
 
       private:
-	typedef hemelb::lb::lattices:: HEMELB_LATTICE LatticeType;
 
-        void ReadExtractionHeaders(net::MpiFile&);
+        void ReadExtractionHeaders(net::MpiFile&, const unsigned NUMVECTORS);
         void ReadOffsets(const std::string&);
 
         const net::IOCommunicator& comms;

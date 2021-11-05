@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -20,7 +19,8 @@ namespace hemelb
      * @param size
      */
     template<typename CacheType>
-    RefreshableCache<CacheType>::RefreshableCache(const lb::SimulationState& simulationState, unsigned long size) :
+    RefreshableCache<CacheType>::RefreshableCache(const lb::SimulationState& simulationState,
+                                                  unsigned long size) :
         CheckingCache<CacheType>(simulationState, size), requiresRefreshing(false), cacheSize(size)
     {
 

@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -44,8 +43,7 @@ namespace hemelb
           void ProcessParticleMovement();
 
           // Function for moving the particles between cores.
-          void CommunicateParticles(net::Net& streakNet,
-                                    const geometry::LatticeData& iLatDat,
+          void CommunicateParticles(net::Net& streakNet, const geometry::LatticeData& iLatDat,
                                     VelocityField& iVelocityField);
 
         private:

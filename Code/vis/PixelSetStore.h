@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -53,8 +52,8 @@ namespace hemelb
             if (store.front()->IsInUse())
             {
               log::Logger::Log<log::Debug, log::OnePerCore>("This could be a problem: we've just "
-                "cleared out a pixel set which appears to still be in use. If pixel sets are being "
-                "managed properly there shouldn't be more than a few of these messages per core.");
+                                                            "cleared out a pixel set which appears to still be in use. If pixel sets are being "
+                                                            "managed properly there shouldn't be more than a few of these messages per core.");
             }
 
             delete store.front();

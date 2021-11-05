@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -33,7 +32,7 @@ int main(int argc, char *argv[])
       hemelb::debug::Debugger::Init(options.GetDebug(), argv[0], commWorld);
 
       // Prepare main simulation object...
-      SimulationMaster master = SimulationMaster(options, hemelbCommunicator);
+      hemelb::SimulationMaster<> master(options, hemelbCommunicator);
 
       // ..and run it.
       master.RunSimulation();

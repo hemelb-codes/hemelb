@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -34,21 +33,28 @@ namespace hemelb
           fieldElem.GetAttributeOrThrow("z", field.z);
 
           return new GraviticBodyForce(field);
-        };
+        }
+        ;
 
         virtual const LatticeForceVector GetForceForParticle(const Particle& particle) const
         {
           return graviticForce * particle.GetMass();
-        };
+        }
+        ;
 
       protected:
         GraviticBodyForce(const LatticeForceVector constantForce) :
-          graviticForce(constantForce) {};
+            graviticForce(constantForce)
+        {
+        }
+        ;
 
         const LatticeForceVector graviticForce;
     };
 
-    class GraviticBodyForceFactory : public BodyForceFactory<GraviticBodyForce> { };
+    class GraviticBodyForceFactory : public BodyForceFactory<GraviticBodyForce>
+    {
+    };
   }
 }
 #endif /* HEMELB_COLLOIDS_GRAVITICBODYFORCE_H */

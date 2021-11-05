@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -27,11 +26,6 @@ namespace hemelb
 	 * @param size
 	 */
 	MockMpiCommunicator(int rank_, int size_);
-
-	virtual int Rank() const;
-	virtual int Size() const;
-      private:
-	int rank, size;
       };
 
       class MockNetHelper

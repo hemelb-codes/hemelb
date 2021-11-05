@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -8,6 +7,7 @@
 
 #include <catch2/catch.hpp>
 
+#include "configuration/SimConfig.h"
 #include "geometry/LatticeData.h"
 #include "lb/lattices/D3Q15.h"
 #include "resources/Resource.h"

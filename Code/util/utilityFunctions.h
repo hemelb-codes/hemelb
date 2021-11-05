@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -83,7 +82,7 @@ namespace hemelb
         template<typename T>
         static T enforceBounds(T number, T lowerBound, T upperBound)
         {
-          return max<T> (lowerBound, min(number, upperBound));
+          return max<T>(lowerBound, min(number, upperBound));
         }
 
         template<typename T>
@@ -102,9 +101,9 @@ namespace hemelb
             if (targetX < xVector[0] || targetX > xVector[xVector.size() - 1])
             {
               log::Logger::Log<log::Warning, log::OnePerCore>("Linear Interpolation beyond bounds: %f is not between %f and %f",
-                                                            targetX,
-                                                            xVector[0],
-                                                            xVector[xVector.size() - 1]);
+                                                              targetX,
+                                                              xVector[0],
+                                                              xVector[xVector.size() - 1]);
             }
           }
 
@@ -120,17 +119,18 @@ namespace hemelb
             {
               log::Logger::Log<log::Warning, log::OnePerCore>("Multiple points for same x value in LinearInterpolate: ");
               log::Logger::Log<log::Warning, log::OnePerCore>("(%f, %f) and (%f, %f). Division by zero!",
-                                                            xVector[lowerIndex],
-                                                            yVector[lowerIndex],
-                                                            xVector[lowerIndex + 1],
-                                                            yVector[lowerIndex + 1]);
+                                                              xVector[lowerIndex],
+                                                              yVector[lowerIndex],
+                                                              xVector[lowerIndex + 1],
+                                                              yVector[lowerIndex + 1]);
             }
           }
 
           // Linear interpolation of function f(x) between two points A and B
           // f(A) + (fraction along x axis between A and B) * (f(B) - f(A))
-          return (yVector[lowerIndex] + (targetX - xVector[lowerIndex]) / (xVector[lowerIndex + 1]
-              - xVector[lowerIndex]) * (yVector[lowerIndex + 1] - yVector[lowerIndex]));
+          return (yVector[lowerIndex]
+              + (targetX - xVector[lowerIndex]) / (xVector[lowerIndex + 1] - xVector[lowerIndex])
+                  * (yVector[lowerIndex + 1] - yVector[lowerIndex]));
         }
     };
 
@@ -177,13 +177,8 @@ namespace hemelb
          * so they need to be passed on as well.
          */
         template<class F>
-        static double Brent(F* func,
-                            double xLowerIn,
-                            double yLowerIn,
-                            double xHigherIn,
-                            double yHigherIn,
-                            double xAccuracy,
-                            double yAccuracy)
+        static double Brent(F* func, double xLowerIn, double yLowerIn, double xHigherIn,
+                            double yHigherIn, double xAccuracy, double yAccuracy)
         {
           double xLower = xLowerIn, yLower = yLowerIn;
           double xHigher = xHigherIn, yHigher = yHigherIn;
@@ -206,15 +201,16 @@ namespace hemelb
 
           bool mflag = true;
 
-          while (std::fabs(xHigher - xLower) > xAccuracy && std::fabs(yHigher) > yAccuracy && std::fabs(ySolution)
-              > yAccuracy)
+          while (std::fabs(xHigher - xLower) > xAccuracy && std::fabs(yHigher) > yAccuracy
+              && std::fabs(ySolution) > yAccuracy)
           {
             if (yLower != yBoundNew && yHigher != yBoundNew)
             {
-              xSolution = (xLower * yHigher * yBoundNew) / ( (yLower - yHigher) * (yLower
-                  - yBoundNew)) + (xHigher * yLower * yBoundNew) / ( (yHigher - yLower) * (yHigher
-                  - yBoundNew)) + (xBoundNew * yLower * yHigher) / ( (yBoundNew - yLower)
-                  * (yBoundNew - yHigher));
+              xSolution = (xLower * yHigher * yBoundNew)
+                  / ( (yLower - yHigher) * (yLower - yBoundNew))
+                  + (xHigher * yLower * yBoundNew) / ( (yHigher - yLower) * (yHigher - yBoundNew))
+                  + (xBoundNew * yLower * yHigher)
+                      / ( (yBoundNew - yLower) * (yBoundNew - yHigher));
             }
             else
             {
@@ -222,13 +218,14 @@ namespace hemelb
             }
 
             // s is not between (3a + b)/4 and b
-            bool condition1 = (xLower < xHigher
-              ? (xSolution < (3 * xLower + xHigher) / 4.0 || xSolution > xHigher)
-              : (xSolution > (3 * xLower + xHigher) / 4.0 || xSolution < xHigher)); // mflag is set and |s−b| ≥ |b−c| / 2)
-            bool condition2 = mflag && std::fabs(xSolution - xHigher) >= std::fabs(xHigher - xBoundNew) / 2.0;
+            bool condition1 = (xLower < xHigher ?
+              (xSolution < (3 * xLower + xHigher) / 4.0 || xSolution > xHigher) :
+              (xSolution > (3 * xLower + xHigher) / 4.0 || xSolution < xHigher)); // mflag is set and |s−b| ≥ |b−c| / 2)
+            bool condition2 = mflag
+                && std::fabs(xSolution - xHigher) >= std::fabs(xHigher - xBoundNew) / 2.0;
             // mflag is cleared and |s−b| ≥ |c−d| / 2
-            bool condition3 = !mflag && std::fabs(xSolution - xHigher) >= std::fabs(xBoundNew - xBoundOld)
-                / 2.0;
+            bool condition3 = !mflag
+                && std::fabs(xSolution - xHigher) >= std::fabs(xBoundNew - xBoundOld) / 2.0;
             // mflag is set and |b−c| < |δ|
             bool condition4 = mflag && std::fabs(xHigher - xBoundNew) < xAccuracy;
             // mflag is cleared and |c−d| < |δ|

@@ -47,4 +47,4 @@ add_library(hemelb_steering
   ${steerers}
   )
 
-target_link_libraries(hemelb_steering ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(hemelb_steering hemelb_configuration ${CMAKE_THREAD_LIBS_INIT})

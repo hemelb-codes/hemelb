@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -351,6 +350,11 @@ namespace hemelb
           return Cross<U, RES>(*this, other);
         }
 
+        template<class OTHER> Vector3D<OTHER> cast() const
+        {
+          return Vector3D<OTHER>(*this);
+        }
+
         /**
          * Compute the magnitude squared of the vector
          * @return magnitude**2
@@ -633,7 +637,7 @@ namespace hemelb
          * Default constructor
          */
         Vector3DIterator() :
-            vec(NULL), i(0)
+            vec(nullptr), i(0)
         {
         }
 

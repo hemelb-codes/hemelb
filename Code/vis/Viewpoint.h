@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -30,13 +29,15 @@ namespace hemelb
          * and the camera is at (0,0,radius) in camera coordinates
          * 
          */
-        util::Vector3D<float> RotateCameraCoordinatesToWorldCoordinates(const util::Vector3D<float>& iVector) const;
+        util::Vector3D<float> RotateCameraCoordinatesToWorldCoordinates(
+            const util::Vector3D<float>& iVector) const;
 
         /**
          * Does the reverse of the above
          *
          */
-        util::Vector3D<float> RotateWorldToCameraCoordinates(const util::Vector3D<float>& iVector) const;
+        util::Vector3D<float> RotateWorldToCameraCoordinates(
+            const util::Vector3D<float>& iVector) const;
 
         /**
          * Projects a location in world coordinates onto the infinite screen,
@@ -65,10 +66,8 @@ namespace hemelb
          * @param iDistanceFromCameraToScreen - the distance of the infinite screen
          * from the viewer. Allows for zoom
          */
-        void SetViewpointPosition(float iLongitude,
-                                  float iLatitude,
-                                  const util::Vector3D<float>& iLocalCentre,
-                                  float iRadius,
+        void SetViewpointPosition(float iLongitude, float iLatitude,
+                                  const util::Vector3D<float>& iLocalCentre, float iRadius,
                                   float iDistanceFromCameraToScreen);
 
         const util::Vector3D<float>& GetViewpointLocation() const;
@@ -76,20 +75,16 @@ namespace hemelb
         float GetDistanceFromCameraToScreen() const;
 
       private:
-        util::Vector3D<float> GetLocationInCameraCoordinates(const util::Vector3D<float>& iWorldLocation) const;
+        util::Vector3D<float> GetLocationInCameraCoordinates(
+            const util::Vector3D<float>& iWorldLocation) const;
 
         //Performs a vector rotation using stored
         //Sin and Cosine Values
-        static util::Vector3D<float> Rotate(float iSinThetaX,
-                                            float iCosThetaX,
-                                            float iSinThetaY,
-                                            float iCosThetaY,
-                                            const util::Vector3D<float>& iVector);
+        static util::Vector3D<float> Rotate(float iSinThetaX, float iCosThetaX, float iSinThetaY,
+                                            float iCosThetaY, const util::Vector3D<float>& iVector);
 
         //Reverses a vector rotation of the above
-        static util::Vector3D<float> UnRotate(float iSinThetaX,
-                                              float iCosThetaX,
-                                              float iSinThetaY,
+        static util::Vector3D<float> UnRotate(float iSinThetaX, float iCosThetaX, float iSinThetaY,
                                               float iCosThetaY,
                                               const util::Vector3D<float>& iVector);
 

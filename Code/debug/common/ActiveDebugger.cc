@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -29,7 +28,7 @@ namespace hemelb
   {
 
     ActiveDebugger::ActiveDebugger(const char* const executable, const net::MpiCommunicator& comm) :
-      Debugger(executable, comm), mAmAttached(false), mPIds()
+        Debugger(executable, comm), mAmAttached(false), mPIds()
     {
     }
 
@@ -87,7 +86,7 @@ namespace hemelb
       if (mCommunicator.Rank() == 0)
       {
         // Reap the spawner
-        int deadPid = waitpid(childPid, NULL, 0);
+        int deadPid = waitpid(childPid, nullptr, 0);
         if (deadPid != childPid)
           std::cerr << "Error in waitpid, code: " << errno << std::endl;
       }
@@ -127,7 +126,7 @@ namespace hemelb
         args.push_back(ConvertIntToString(*i));
       }
 
-      // +1 to include required NULL pointer for execvp()
+      // +1 to include required nullptr pointer for execvp()
       char **argv = new char *[args.size() + 1];
 
       // convert to C array of char arrays.
@@ -137,15 +136,16 @@ namespace hemelb
         std::strcpy(argv[i], args[i].c_str());
       }
 
-      // Terminating NULL
-      argv[args.size()] = NULL;
+      // Terminating nullptr
+      argv[args.size()] = nullptr;
 
       // Exec to replace hemelb with osascript
       int code = execvp(argv[0], argv);
 
       // OK- that didn't work if we get here, better die (since we're
       // the extra process). Print the error code too.
-      std::cerr << "Couldn't exec() script to launch debuggers. Return value: " << code << "; error code: " << errno << std::endl;
+      std::cerr << "Couldn't exec() script to launch debuggers. Return value: " << code
+          << "; error code: " << errno << std::endl;
       // Now print the command we wanted to exec()
       for (VoS::iterator it = args.begin(); it < args.end(); it++)
       {

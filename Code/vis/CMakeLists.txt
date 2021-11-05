@@ -10,3 +10,4 @@ add_library(hemelb_vis
   streaklineDrawer/NeighbouringProcessor.cc streaklineDrawer/Particle.cc streaklineDrawer/ParticleManager.cc
   streaklineDrawer/StreaklineDrawer.cc streaklineDrawer/VelocityField.cc streaklineDrawer/StreakPixel.cc
   )
+target_link_libraries(hemelb_vis PRIVATE hemelb_configuration)

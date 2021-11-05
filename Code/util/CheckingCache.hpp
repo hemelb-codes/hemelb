@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -16,7 +15,8 @@ namespace hemelb
   namespace util
   {
     template<typename CacheType>
-    CheckingCache<CacheType>::CheckingCache(const lb::SimulationState& simulationState, unsigned long size) :
+    CheckingCache<CacheType>::CheckingCache(const lb::SimulationState& simulationState,
+                                            unsigned long size) :
         Cache<CacheType>(size), simulationState(simulationState), lastUpdate(size, 0)
     {
 
@@ -29,7 +29,8 @@ namespace hemelb
       {
         if (lastUpdate[index] != simulationState.GetTimeStep())
         {
-          log::Logger::Log<log::Warning, log::OnePerCore>("The cache was out of date at index %i", index);
+          log::Logger::Log<log::Trace, log::OnePerCore>("The cache was out of date at index %i",
+                                                          index);
         }
       }
 

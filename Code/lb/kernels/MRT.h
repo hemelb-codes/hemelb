@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -59,7 +58,8 @@ namespace hemelb
             // Pre-compute the reduced moment basis divided by the basis times basis transposed.
             for (Direction direction = 0; direction < MomentBasis::Lattice::NUMVECTORS; ++direction)
             {
-              for (unsigned momentIndex = 0; momentIndex < MomentBasis::NUM_KINETIC_MOMENTS; momentIndex++)
+              for (unsigned momentIndex = 0; momentIndex < MomentBasis::NUM_KINETIC_MOMENTS;
+                  momentIndex++)
               {
                 normalisedReducedMomentBasis[momentIndex][direction] =
                     MomentBasis::REDUCED_MOMENT_BASIS[momentIndex][direction]
@@ -114,9 +114,11 @@ namespace hemelb
                *  - Compute the loop below as a matrix product in DoCalculate*, alternatively we could consider reimplementing DoCollide to work with whole arrays (consider libraries boost::ublas or Armadillo)
                */
               distribn_t collision = 0.;
-              for (unsigned momentIndex = 0; momentIndex < MomentBasis::NUM_KINETIC_MOMENTS; momentIndex++)
+              for (unsigned momentIndex = 0; momentIndex < MomentBasis::NUM_KINETIC_MOMENTS;
+                  momentIndex++)
               {
-                collision += collisionMatrix[momentIndex] * normalisedReducedMomentBasis[momentIndex][direction]
+                collision += collisionMatrix[momentIndex]
+                    * normalisedReducedMomentBasis[momentIndex][direction]
                     * hydroVars.m_neq[momentIndex];
               }
               hydroVars.SetFPostCollision(direction, hydroVars.f[direction] - collision);

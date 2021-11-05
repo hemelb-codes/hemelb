@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -17,6 +16,7 @@
 #include "configuration/SimConfig.h"
 #include "reporting/Timers.h"
 #include "lb/BuildSystemInterface.h"
+#include "Traits.h"
 #include <typeinfo>
 
 namespace hemelb
@@ -30,23 +30,27 @@ namespace hemelb
      * Class providing core Lattice Boltzmann functionality.
      * Implements the IteratedAction interface.
      */
-    template<class LatticeType>
+    template<class TRAITS = hemelb::Traits<>>
     class LBM : public net::IteratedAction
     {
+      public:
+        //! Instanciation type
+        typedef TRAITS Traits;
       private:
+        typedef typename Traits::Lattice LatticeType;
         // Use the kernel specified through the build system. This will select one of the above classes.
-        typedef typename HEMELB_KERNEL<LatticeType>::Type LB_KERNEL;
+        typedef typename Traits::Kernel LBKernel;
 
-        typedef streamers::SimpleCollideAndStream<collisions::Normal<LB_KERNEL> > tMidFluidCollision;
+        typedef typename Traits::Streamer tMidFluidCollision;
         // Use the wall boundary condition specified through the build system.
-        typedef typename HEMELB_WALL_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tWallCollision;
+        typedef typename Traits::WallBoundary tWallCollision;
         // Use the inlet BC specified by the build system
-        typedef typename HEMELB_INLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tInletCollision;
+        typedef typename Traits::InletBoundary tInletCollision;
         // Use the outlet BC specified by the build system
-        typedef typename HEMELB_OUTLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tOutletCollision;
+        typedef typename Traits::OutletBoundary tOutletCollision;
         // And again but for sites that are both in-/outlet and wall
-        typedef typename HEMELB_WALL_INLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tInletWallCollision;
-        typedef typename HEMELB_WALL_OUTLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tOutletWallCollision;
+        typedef typename Traits::WallInletBoundary tInletWallCollision;
+        typedef typename Traits::WallOutletBoundary tOutletWallCollision;
 
       public:
         /**
@@ -55,11 +59,8 @@ namespace hemelb
          * Must have Initialise(...) called also. Constructor separated due to need to access
          * the partially initialized LBM in order to initialize the arguments to the second construction phase.
          */
-        LBM(hemelb::configuration::SimConfig *iSimulationConfig,
-            net::Net* net,
-            geometry::LatticeData* latDat,
-            SimulationState* simState,
-            reporting::Timers &atimings,
+        LBM(hemelb::configuration::SimConfig *iSimulationConfig, net::Net* net,
+            geometry::LatticeData* latDat, SimulationState* simState, reporting::Timers &atimings,
             geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager);
         ~LBM();
 
@@ -84,16 +85,13 @@ namespace hemelb
          * Second constructor.
          *
          */
-        void Initialise(vis::Control* iControl,
-                        iolets::BoundaryValues* iInletValues,
-                        iolets::BoundaryValues* iOutletValues,
-                        const util::UnitConverter* iUnits);
+        void Initialise(vis::Control* iControl, iolets::BoundaryValues* iInletValues,
+                        iolets::BoundaryValues* iOutletValues, const util::UnitConverter* iUnits);
 
         void ReadVisParameters();
         void SetInitialConditions(const net::IOCommunicator& ioComms);
 
-        void CalculateMouseFlowField(const ScreenDensity densityIn,
-                                     const ScreenStress stressIn,
+        void CalculateMouseFlowField(const ScreenDensity densityIn, const ScreenStress stressIn,
                                      const LatticeDensity density_threshold_min,
                                      const LatticeDensity density_threshold_minmax_inv,
                                      const LatticeStress stress_threshold_max_inv,
@@ -127,15 +125,24 @@ namespace hemelb
         tOutletWallCollision* mOutletWallCollision;
 
         template<typename Collision>
-        void StreamAndCollide(Collision* collision, const site_t iFirstIndex, const site_t iSiteCount)
+        void StreamAndCollide(Collision* collision, const site_t iFirstIndex,
+                              const site_t iSiteCount)
         {
           if (mVisControl->IsRendering())
           {
-            collision->template StreamAndCollide<true> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+            collision->template StreamAndCollide<true>(iFirstIndex,
+                                                       iSiteCount,
+                                                       &mParams,
+                                                       mLatDat,
+                                                       propertyCache);
           }
           else
           {
-            collision->template StreamAndCollide<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+            collision->template StreamAndCollide<false>(iFirstIndex,
+                                                        iSiteCount,
+                                                        &mParams,
+                                                        mLatDat,
+                                                        propertyCache);
           }
         }
 
@@ -144,11 +151,19 @@ namespace hemelb
         {
           if (mVisControl->IsRendering())
           {
-            collision->template DoPostStep<true> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+            collision->template DoPostStep<true>(iFirstIndex,
+                                                 iSiteCount,
+                                                 &mParams,
+                                                 mLatDat,
+                                                 propertyCache);
           }
           else
           {
-            collision->template DoPostStep<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+            collision->template DoPostStep<false>(iFirstIndex,
+                                                  iSiteCount,
+                                                  &mParams,
+                                                  mLatDat,
+                                                  propertyCache);
           }
         }
 

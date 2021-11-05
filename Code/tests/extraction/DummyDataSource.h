@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -23,9 +22,9 @@ namespace hemelb
     {
         public:
           DummyDataSource() :
-              randomNumberGenerator(1358), siteCount(64), location(0), gridPositions(siteCount), pressures(siteCount), velocities(siteCount), voxelSize(0.3e-3), origin(0.034,
-                                                                                                                                                                        0.001,
-                                                                                                                                                                        0.074)
+              randomNumberGenerator(1358), siteCount(64), location(0), gridPositions(siteCount),
+                  pressures(siteCount), velocities(siteCount), voxelSize(0.3e-3),
+                  origin(0.034, 0.001, 0.074)
           {
             unsigned ijk = 0;
 

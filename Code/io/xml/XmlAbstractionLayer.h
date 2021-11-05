@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -122,11 +121,11 @@ namespace hemelb
 
           /**
            * Get the value (as a string) contained in the specified attribute.
-           * If it does not exist, return NULL
+           * If it does not exist, return nullptr
            * @param $name
            *   The name of the attribute to get
            * @return
-           *   A pointer to a string containing the attribute value (or NULL
+           *   A pointer to a string containing the attribute value (or nullptr
            *   on failure)
            */
           const std::string* GetAttributeOrNull(const std::string& name) const;
@@ -142,7 +141,7 @@ namespace hemelb
 
           /**
            * Get the value (as a string) contained in the specified attribute.
-           * If it does not exist, return NULL
+           * If it does not exist, return nullptr
            * @param $name
            *   The name of the attribute to get
            * @return
@@ -172,7 +171,7 @@ namespace hemelb
            * @param $out
            *   Variable in which to store the converted attribute.
            * @return
-           *   A pointer to a string containing the attribute value (or NULL
+           *   A pointer to a string containing the attribute value (or nullptr
            *   if it does not exist)
            */
           template<class T>
@@ -273,7 +272,6 @@ namespace hemelb
            * @return
            */
           ChildIterator& operator=(const ChildIterator& other);
-
 
           /**
            * Dereference
@@ -376,7 +374,7 @@ namespace hemelb
           template<typename T>
           XmlError& operator<<(const T& t)
           {
-            return static_cast<XmlError&> (Exception::operator<<(t));
+            return static_cast<XmlError&>(Exception::operator<<(t));
           }
 
       };
@@ -399,11 +397,8 @@ namespace hemelb
           template<typename T>
           AttributeError& operator<<(const T& t)
           {
-            return static_cast<AttributeError&> (XmlError::operator<<(t));
+            return static_cast<AttributeError&>(XmlError::operator<<(t));
           }
-
-        private:
-          const std::string attr;
       };
 
       class DeserialisationError : public XmlError
@@ -430,7 +425,7 @@ namespace hemelb
           template<typename T>
           ElementError& operator<<(const T& t)
           {
-            return static_cast<ElementError&> (XmlError::operator<<(t));
+            return static_cast<ElementError&>(XmlError::operator<<(t));
           }
 
         protected:
@@ -446,7 +441,7 @@ namespace hemelb
           template<typename T>
           ChildError& operator<<(const T& t)
           {
-            return static_cast<ChildError&> (ElementError::operator<<(t));
+            return static_cast<ChildError&>(ElementError::operator<<(t));
           }
 
       };
@@ -461,7 +456,7 @@ namespace hemelb
           template<typename T>
           ParentError& operator<<(const T& t)
           {
-            return static_cast<ParentError&> (ElementError::operator<<(t));
+            return static_cast<ParentError&>(ElementError::operator<<(t));
           }
 
       };
@@ -476,7 +471,7 @@ namespace hemelb
           template<typename T>
           SiblingError& operator<<(const T& t)
           {
-            return static_cast<SiblingError&> (ElementError::operator<<(t));
+            return static_cast<SiblingError&>(ElementError::operator<<(t));
           }
 
       };
@@ -487,7 +482,7 @@ namespace hemelb
       const std::string* Element::GetAttributeOrNull(const std::string& name, T& out) const
       {
         const std::string* attrString = GetAttributeOrNull(name);
-        if (attrString != NULL)
+        if (attrString != nullptr)
         {
           /*
            * So, basically parsing of unsigned values varies across platforms
@@ -534,7 +529,7 @@ namespace hemelb
       const std::string& Element::GetAttributeOrThrow(const std::string& name, T& out) const
       {
         const std::string* ans = GetAttributeOrNull(name, out);
-        if (ans == NULL)
+        if (ans == nullptr)
           throw AttributeError(*this, name);
         return *ans;
       }

@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -41,7 +40,8 @@ namespace hemelb
             radius = r;
           }
 
-          virtual LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTimeStep t) const = 0;
+          virtual LatticeVelocity GetVelocity(const LatticePosition& x,
+                                              const LatticeTimeStep t) const = 0;
 
           //virtual LatticeVelocity GetVelocity2(const util::Vector3D<site_t> globalCoordinates,
           //                                                          const LatticeTimeStep t) const = 0;

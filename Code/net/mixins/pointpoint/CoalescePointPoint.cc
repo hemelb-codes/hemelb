@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -28,8 +27,8 @@ namespace hemelb
       EnsurePreparedToSendReceive();
       proc_t m = 0;
 
-      for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin(); it != receiveProcessorComms.end();
-          ++it)
+      for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin();
+          it != receiveProcessorComms.end(); ++it)
       {
 
         MPI_Irecv(it->second.front().Pointer,
@@ -41,7 +40,6 @@ namespace hemelb
                   &requests[m]);
         ++m;
       }
-
 
       //if(m>1) {
       //  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("RecvPointToPoint() Neighbouring proc count: %i", m);
@@ -57,13 +55,14 @@ namespace hemelb
         return;
       }
 
-      for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end(); ++it)
+      for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin();
+          it != sendProcessorComms.end(); ++it)
       {
         it->second.CreateMPIType();
       }
 
-      for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin(); it != receiveProcessorComms.end();
-          ++it)
+      for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin();
+          it != receiveProcessorComms.end(); ++it)
       {
         it->second.CreateMPIType();
       }
@@ -80,7 +79,8 @@ namespace hemelb
       EnsurePreparedToSendReceive();
       proc_t m = 0;
 
-      for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end(); ++it)
+      for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin();
+          it != sendProcessorComms.end(); ++it)
       {
 
         int TypeSizeStorage = 0; //DTMP:byte size tracking
@@ -106,8 +106,8 @@ namespace hemelb
     {
       if (sendReceivePrepped)
       {
-        for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end();
-            ++it)
+        for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin();
+            it != sendProcessorComms.end(); ++it)
         {
           MPI_Type_free(&it->second.Type);
         }
@@ -124,16 +124,19 @@ namespace hemelb
     void CoalescePointPoint::WaitPointToPoint()
     {
 
-      MPI_Waitall((int) (sendProcessorComms.size() + receiveProcessorComms.size()), &requests[0], &statuses[0]);
+      MPI_Waitall((int) (sendProcessorComms.size() + receiveProcessorComms.size()),
+                  &requests[0],
+                  &statuses[0]);
 
-      for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin(); it != receiveProcessorComms.end();
-          ++it)
+      for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin();
+          it != receiveProcessorComms.end(); ++it)
       {
         MPI_Type_free(&it->second.Type);
       }
       receiveProcessorComms.clear();
 
-      for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end(); ++it)
+      for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin();
+          it != sendProcessorComms.end(); ++it)
       {
         MPI_Type_free(&it->second.Type);
       }

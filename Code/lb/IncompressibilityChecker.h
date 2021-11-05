@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -41,7 +40,7 @@ namespace hemelb
              */
           public:
             /** Number of densities being tracked. Needs to be exposed for send/receive. */
-            static const unsigned DENSITY_TRACKER_SIZE = 3;
+            static const unsigned DENSITY_TRACKER_SIZE = 3u;
 
             /** Identifiers of the densities being tracked. Cardinality must be kept consistent with DENSITY_TRACKER_SIZE */
             typedef enum
@@ -122,8 +121,7 @@ namespace hemelb
          * @param simState simulation state
          * @param maximumRelativeDensityDifferenceAllowed maximum density difference allowed in the domain (relative to reference density, default 5%)
          */
-        IncompressibilityChecker(const geometry::LatticeData * latticeData,
-                                 net::Net* net,
+        IncompressibilityChecker(const geometry::LatticeData * latticeData, net::Net* net,
                                  SimulationState* simState,
                                  lb::MacroscopicPropertyCache& propertyCache,
                                  reporting::Timers& timings,
@@ -254,7 +252,6 @@ namespace hemelb
         /** Array for storing the passed-up densities from child nodes. */
         distribn_t childrenDensitiesSerialised[SPREADFACTOR * DensityTracker::DENSITY_TRACKER_SIZE];
     };
-
   }
 }
 

@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -15,7 +14,7 @@ namespace hemelb
   {
 
     MpiEnvironment::MpiEnvironment(int& argc, char**& argv) :
-      doesOwnMpi(false)
+        doesOwnMpi(false)
     {
       if (!Initialized())
       {
@@ -29,7 +28,7 @@ namespace hemelb
     {
       if (doesOwnMpi)
       {
-        HEMELB_MPI_CALL(MPI_Finalize, ());
+        MPI_Finalize();
       }
     }
 
@@ -37,18 +36,18 @@ namespace hemelb
     {
       int flag;
       MPI_Initialized(&flag);
-      return flag
-        ? true
-        : false;
+      return flag ?
+        true :
+        false;
     }
 
     bool MpiEnvironment::Finalized()
     {
       int flag;
       MPI_Finalized(&flag);
-      return flag
-        ? true
-        : false;
+      return flag ?
+        true :
+        false;
     }
 
     void MpiEnvironment::Abort(int errorCode)

@@ -1,13 +1,11 @@
-// -*- mode: C++; -*-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_IO_WRITERS_XDR_SERIALISATION_H
-#define HEMELB_IO_WRITERS_XDR_SERIALISATION_H
+#ifndef HEMELB_IO_WRITERS_XDR_XDRSERIALISATION_H
+#define HEMELB_IO_WRITERS_XDR_XDRSERIALISATION_H
 
-#include <boost/optional.hpp>
 #include <arpa/inet.h>
 
 namespace hemelb
@@ -163,7 +161,25 @@ namespace hemelb
 	    // aren't invalidated...)
 	    using start_type = ItT;
 	    // End is an optional iter
-	    using end_type = boost::optional<ItT>;
+	    //
+	    // TODO: when we move to C++17, use std::optional
+	    // using end_type = std::optional<ItT>;
+	    //
+	    // For now, use a super simple, minimal optional (to avoid boost)
+	    class end_type {
+	      ItT value;
+	      bool valid = false;
+	    public:
+	      end_type(ItT i) : value(i), valid(true) {
+	      }
+	      operator bool() const {
+		return valid;
+	      }
+	      const ItT& operator*() const {
+		return value;
+	      }
+	    };
+
 	    // No counter needed (Null supports operator+=(size_t))
 	    using counter_type = Null;
 	    // Check that we have (unlimited) space

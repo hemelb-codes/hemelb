@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -27,7 +26,8 @@ namespace hemelb
          * @param point
          * @param normal
          */
-        PlaneGeometrySelector(const util::Vector3D<float>& point, const util::Vector3D<float>& normal);
+        PlaneGeometrySelector(const util::Vector3D<float>& point,
+                              const util::Vector3D<float>& normal);
 
         /**
          * Constructor makes a plane geometry object with given normal, about a given
@@ -36,7 +36,8 @@ namespace hemelb
          * @param normal
          * @param radius
          */
-        PlaneGeometrySelector(const util::Vector3D<float>& point, const util::Vector3D<float>& normal, float radius);
+        PlaneGeometrySelector(const util::Vector3D<float>& point,
+                              const util::Vector3D<float>& normal, float radius);
 
         /**
          * Returns a point that lies on the plane.

@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -9,16 +8,25 @@
 
 #include "net/PhasedBroadcastRegular.h"
 #include "lb/SimulationState.h"
-#include "configuration/SimConfig.h"
 #include "steering/Network.h"
 #include "vis/DomainStats.h"
-#include "vis/Control.h"
-#include "steering/ImageSendComponent.h"
 
 namespace hemelb
 {
+  namespace configuration {
+    class SimConfig;
+  }
+  namespace util {
+    class UnitConverter;
+  }
+  namespace vis {
+    class Control;
+  }
+
   namespace steering
   {
+    class ImageSendComponent;
+
     enum parameter
     {
       SceneCentreX = 0,
@@ -41,7 +49,7 @@ namespace hemelb
       Mode = 17,
       StreaklinePerSimulation = 18,
       StreaklineLength = 19,
-      MaxFramerate=20,
+      MaxFramerate = 20,
       SetDoRendering = 21
     };
 
@@ -55,12 +63,9 @@ namespace hemelb
     class SteeringComponent : public net::PhasedBroadcastRegular<false, 1, 0, true, false>
     {
       public:
-        SteeringComponent(Network* iNetwork,
-                          vis::Control* iVisControl,
-                          steering::ImageSendComponent* imageSendComponent,
-                          net::Net * iNet,
-                          lb::SimulationState * iSimState,
-                          configuration::SimConfig* iSimConfig,
+        SteeringComponent(Network* iNetwork, vis::Control* iVisControl,
+                          steering::ImageSendComponent* imageSendComponent, net::Net * iNet,
+                          lb::SimulationState * iSimState, configuration::SimConfig* iSimConfig,
                           const util::UnitConverter* iUnits);
 
         static bool RequiresSeparateSteeringCore();

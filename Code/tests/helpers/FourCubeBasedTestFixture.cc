@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -14,10 +13,11 @@ namespace hemelb
   {
     namespace helpers
     {
-      FourCubeBasedTestFixture::FourCubeBasedTestFixture() :
-	initParams()
+      FourCubeBasedTestFixtureBase::FourCubeBasedTestFixtureBase(int cubesize) :
+	initParams(), cubeSize(cubesize), cubeSizeWithHalo(cubesize + 2)
       {
-	latDat = FourCubeLatticeData::Create(Comms());
+	// +2 for the halo of empty valid locations around the cube
+	latDat = FourCubeLatticeData::Create(Comms(), cubesize + 2);
 	simConfig = new OneInOneOutSimConfig(path);
 	simState = std::make_unique<lb::SimulationState>(simConfig->GetTimeStepLength(),
 							 simConfig->GetTotalTimeSteps());
@@ -31,7 +31,7 @@ namespace hemelb
 	numSites = initParams.latDat->GetLocalFluidSiteCount();
       }
 
-      FourCubeBasedTestFixture::~FourCubeBasedTestFixture() {
+      FourCubeBasedTestFixtureBase::~FourCubeBasedTestFixtureBase() {
 	delete latDat;
 	delete lbmParams;
 	delete simConfig;

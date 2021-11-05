@@ -93,9 +93,9 @@ namespace hemelb
         // Processor Pi holds ni consecutive vertices and mi corresponding edges
         //
         // xadj[ni+1] has the cumulative number of adjacencies per vertex (with a leading 0 on each processor)
-        // vwgt[ni] has vertex weight coefficients and can be NULL
+        // vwgt[ni] has vertex weight coefficients and can be nullptr
         // adjncy[mi] has the adjacent vertices for each edge (using a global index, starting at 0)
-        // adjwgt[mi] has edge weights and can be NULL
+        // adjwgt[mi] has edge weights and can be nullptr
         // vtxdist[P+1] has an identical array of the number of the vertices on each processor, cumulatively.
         //           So Pi has vertices from vtxdist[i] to vtxdist[i+1]-1
         // wgtflag* is 0 with no weights (1 on edges, 2 on vertices, 3 on edges & vertices)
@@ -129,7 +129,6 @@ namespace hemelb
         idx_t weightFlag = 2;
         idx_t numberingFlag = 0;
         idx_t edgesCut = 0;
-        idx_t nDims = 3;
         idx_t options[4] = { 0, 0, 0, 0 };
         if (ShouldValidate())
         {
@@ -162,7 +161,7 @@ namespace hemelb
                              &adjacenciesPerVertex[0],
                              &localAdjacencies[0],
                              &vertexWeights[0],
-                             NULL,
+                             nullptr,
                              &weightFlag,
                              &numberingFlag,
                              &noConstraints,
@@ -1270,7 +1269,7 @@ namespace hemelb
         // because some cores will have -1 for a block (indicating that it has no neighbours on
         // that block.
         std::vector<idx_t> firstSiteIndexPerBlockRecv = comms.AllReduce(firstSiteIndexPerBlock,
-                                                                        MPI_MAX);
+        MPI_MAX);
 
         for (site_t block = 0; block < geometry.GetBlockCount(); ++block)
         {

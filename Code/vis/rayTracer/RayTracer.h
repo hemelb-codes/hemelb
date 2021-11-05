@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -46,13 +45,11 @@ namespace hemelb
       {
         public:
           // Constructor and destructor do all the usual stuff.
-          RayTracer(const geometry::LatticeData* iLatDat,
-                    const DomainStats* iDomainStats,
-                    Screen* iScreen,
-                    Viewpoint* iViewpoint,
-                    VisSettings* iVisSettings) :
-            mClusterBuilder(iLatDat, iLatDat->GetLocalRank()), mLatDat(iLatDat), mDomainStats(iDomainStats),
-                mScreen(iScreen), mViewpoint(iViewpoint), mVisSettings(iVisSettings)
+          RayTracer(const geometry::LatticeData* iLatDat, const DomainStats* iDomainStats,
+                    Screen* iScreen, Viewpoint* iViewpoint, VisSettings* iVisSettings) :
+              mClusterBuilder(iLatDat, iLatDat->GetLocalRank()), mLatDat(iLatDat),
+                  mDomainStats(iDomainStats), mScreen(iScreen), mViewpoint(iViewpoint),
+                  mVisSettings(iVisSettings)
           {
             mClusterBuilder.BuildClusters();
           }
@@ -75,7 +72,8 @@ namespace hemelb
                                                                          *mLatDat,
                                                                          propertyCache);
 
-            for (unsigned int clusterId = 0; clusterId < mClusterBuilder.GetClusters().size(); clusterId++)
+            for (unsigned int clusterId = 0; clusterId < mClusterBuilder.GetClusters().size();
+                clusterId++)
             {
               lClusterRayTracer.RenderCluster(mClusterBuilder.GetClusters()[clusterId], *pixels);
             }

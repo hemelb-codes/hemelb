@@ -1,11 +1,10 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_TESTS_LBTESTS_BROADCASTMOCKS_H
-#define HEMELB_TESTS_LBTESTS_BROADCASTMOCKS_H
+#ifndef HEMELB_TESTS_LB_BROADCASTMOCKS_H
+#define HEMELB_TESTS_LB_BROADCASTMOCKS_H
 
 #include <limits>
 
@@ -123,6 +122,7 @@ namespace hemelb
 
 
 
+#pragma intel optimization_level 0
     template<class T>
     void BroadcastMockRootNode::ReceiveFromChildren(T* dataStart, int countPerChild)
     {

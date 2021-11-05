@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -25,7 +24,7 @@ namespace hemelb
     // 
     // Note that we are only testing collision operators here, so we
     // can assume that the kernel objects work perfectly.
-    TEST_CASE_METHOD(public helpers::FourCubeBasedTestFixture, "Collisions") {
+    TEST_CASE_METHOD(public helpers::FourCubeBasedTestFixture<>, "Collisions") {
       const distribn_t allowedError = 1e-10;
       auto apprx = [&](double x) {
 	return Approx(x).margin(allowedError);

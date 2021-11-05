@@ -1,0 +1,127 @@
+<?xml version="1.0" ?>
+<hemelbsettings version="4">
+  <simulation>
+    <step_length units="s" value="2.e-7" />
+    <steps units="lattice" value="500" />
+    <stresstype value="1" />
+    <voxel_size units="m" value="1.4e-06" />
+    <origin units="m" value="(-1.05e-05,-1.05e-05,-2.45e-05)" />
+  </simulation>
+  <geometry>
+    <datafile path="large_cylinder.gmy" />
+  </geometry>
+  <inlets>
+    <inlet>
+      <condition type="pressure" subtype="cosine">
+        <amplitude value="0.0" units="mmHg" />
+        <mean value="0.1" units="mmHg" />
+        <phase value="0" units="rad" />
+        <period value="1" units="s" />
+      </condition>
+      <normal units="dimensionless" value="(0.0,0.0,1.0)" />
+      <position units="m" value="(0.0,0.0,-2.4e-05)" />
+      <flowextension>
+        <length units="m" value="10e-6" />
+        <radius units="m" value="10e-6" />
+        <fadelength units="m" value="7e-06" />
+      </flowextension>
+      <insertcell template="default">
+        <every units="s" value="2e-0"/>
+        <offset units="s" value="40e-8"/>
+        <delta_t units="s" value="0e0"/>
+        <theta units="rad" value="0e0"/>
+        <phi units="rad" value="0e0"/>
+        <delta_theta units="rad" value="0e0"/>
+        <delta_phi units="rad" value="0e0"/>
+        <delta_x units="m" value="0e0"/>
+        <delta_y units="m" value="0e0"/>
+      </insertcell>
+    </inlet>
+  </inlets>
+  <outlets>
+    <outlet>
+      <condition type="pressure" subtype="cosine">
+        <amplitude value="0." units="mmHg" />
+        <mean value="0.0" units="mmHg" />
+        <phase value="0" units="rad" />
+        <period value="1" units="s" />
+      </condition>
+      <normal units="dimensionless" value="(0.0,0.0,-1.0)" />
+      <position units="m" value="(0.0,0.0,2.4e-05)" />
+      <flowextension>
+        <length units="m" value="10e-6" />
+        <radius units="m" value="10e-6" />
+        <fadelength units="m" value="3e-06" />
+      </flowextension>
+    </outlet>
+  </outlets>
+  <properties> 
+   <propertyoutput period="1000" file="whole_domain_vel_press.xtr"> 
+     <geometry type="whole" /> 
+     <field type="velocity"/> 
+     <field type="pressure"/> 
+   </propertyoutput> 
+  </properties>    
+  <visualisation>
+    <centre units="m" value="(0.0,0.0,0.0)" />
+    <orientation>
+      <longitude units="deg" value="45.0" />
+      <latitude units="deg" value="45.0" />
+    </orientation>
+    <display brightness="0.03" zoom="1.0" />
+    <range>
+      <maxvelocity units="m/s" value="0.1" />
+      <maxstress units="Pa" value="0.1" />
+    </range>
+  </visualisation>
+  <redbloodcells>
+    <controller>
+      <boxsize units="lattice" value="3" />
+    </controller>
+    <cell2Cell>
+      <intensity units="lattice" value="0.05" />
+      <cutoffdistance units="lattice" value="1.0" />
+      <exponent value="2"/>
+    </cell2Cell>
+    <cell2Wall>
+      <intensity units="lattice" value="0.05" />
+      <cutoffdistance units="lattice" value="1.0" />
+      <exponent value="2"/>
+    </cell2Wall>
+    <cells>
+      <cell name="default">
+        <moduli>
+          <bending units="Nm" value="2e-19" />
+          <surface units="lattice" value="1e0" />
+          <volume units="lattice" value="1e0" />
+          <dilation units="lattice" value="0.75" />
+          <strain units="N/m" value="5e-6" />
+        </moduli>
+        <shape mesh_path="red_blood_cell.txt" mesh_format="Krueger" />
+        <scale units="m" value="6e-06" />
+      </cell>
+      <cell name="biggie">
+        <moduli>
+          <bending units="Nm" value="2e-19" />
+          <surface units="lattice" value="1e0" />
+          <volume units="lattice" value="1e0" />
+          <dilation units="lattice" value="0.75" />
+          <strain units="N/m" value="5e-6" />
+        </moduli>
+        <shape mesh_path="red_blood_cell.txt" mesh_format="Krueger" />
+        <scale units="m" value="8e-06" />
+      </cell>
+    </cells>
+    <output>
+      <period units="lattice" value="100" />
+    </output>
+  </redbloodcells>
+  <initialconditions>
+    <pressure>
+      <uniform units="mmHg" value="0.0" />
+    </pressure>
+  </initialconditions>
+  <monitoring>
+    <incompressibility/>
+  </monitoring>
+</hemelbsettings>

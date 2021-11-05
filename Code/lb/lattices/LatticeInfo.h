@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -20,8 +19,7 @@ namespace hemelb
       class LatticeInfo
       {
         public:
-          inline LatticeInfo(unsigned numberOfVectors,
-                             const util::Vector3D<int>* vectors,
+          inline LatticeInfo(unsigned numberOfVectors, const util::Vector3D<int>* vectors,
                              const Direction* inverseVectorIndicesIn) :
               numVectors(numberOfVectors), vectorSet(), inverseVectorIndices()
           {

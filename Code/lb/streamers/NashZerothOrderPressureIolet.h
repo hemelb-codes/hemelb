@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -22,27 +21,30 @@ namespace hemelb
       template<class CollisionType>
       struct NashZerothOrderPressureIolet
       {
-          typedef IoletStreamerTypeFactory<CollisionType, NashZerothOrderPressureDelegate<CollisionType> > Type;
+          typedef IoletStreamerTypeFactory<CollisionType,
+              NashZerothOrderPressureDelegate<CollisionType> > Type;
       };
 
       template<class CollisionType>
       struct NashZerothOrderPressureIoletSBB
       {
-          typedef WallIoletStreamerTypeFactory<CollisionType, SimpleBounceBackDelegate<CollisionType> ,
+          typedef WallIoletStreamerTypeFactory<CollisionType,
+              SimpleBounceBackDelegate<CollisionType>,
               NashZerothOrderPressureDelegate<CollisionType> > Type;
       };
 
       template<class CollisionType>
       struct NashZerothOrderPressureIoletBFL
       {
-          typedef WallIoletStreamerTypeFactory<CollisionType, BouzidiFirdaousLallemandDelegate<CollisionType> ,
+          typedef WallIoletStreamerTypeFactory<CollisionType,
+              BouzidiFirdaousLallemandDelegate<CollisionType>,
               NashZerothOrderPressureDelegate<CollisionType> > Type;
       };
 
       template<class CollisionType>
       struct NashZerothOrderPressureIoletGZS
       {
-          typedef WallIoletStreamerTypeFactory<CollisionType, GuoZhengShiDelegate<CollisionType> ,
+          typedef WallIoletStreamerTypeFactory<CollisionType, GuoZhengShiDelegate<CollisionType>,
               NashZerothOrderPressureDelegate<CollisionType> > Type;
       };
 

@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -19,7 +18,7 @@ namespace hemelb
     using namespace hemelb::util;
 
     TEST_CASE("UnitConverterTests") {
-      auto unitConverter = util::UnitConverter(1., 1., Vector3D<double>(0.));
+      auto unitConverter = util::UnitConverter(1., 1., Vector3D<double>(0.), 1000.0, 0.0);
       PhysicalPressure pressMmHg = 81.0;
       LatticeDensity densityLatt = unitConverter.ConvertPressureToLatticeUnits(pressMmHg) / Cs2;
       distribn_t tau = 0.5;

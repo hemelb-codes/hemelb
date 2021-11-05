@@ -1,0 +1,128 @@
+<?xml version="1.0" ?>
+<hemelbsettings version="4">
+  <simulation>
+    <step_length units="s" value="1.852e-08" />
+    <steps units="lattice" value="12000" />
+    <stresstype value="1" />
+    <voxel_size units="m" value="3.333e-07" />
+    <origin units="m" value="(-5.16615e-06,-5.16615e-06,-5.016165e-05)" />
+  </simulation>
+  <geometry>
+    <datafile path="cyl_l100_r5.gmy" />
+  </geometry>
+  <inlets>
+    <inlet>
+      <condition subtype="cosine" type="pressure">
+        <mean units="mmHg" value="108.01" />
+        <amplitude units="mmHg" value="0.0" />
+        <phase units="rad" value="0.0" />
+        <period units="s" value="1" />
+      </condition>
+      <normal units="dimensionless" value="(0.0,0.0,-1.0)" />
+      <position units="m" value="(0.0,0.0,5e-05)" />
+      <flowextension>
+        <length units="m" value="22e-6" />
+        <radius units="m" value="5e-6" />
+        <fadelength units="m" value="3e-06" />
+      </flowextension>
+      <insertcell template="default">
+        <every units="s" value="1"/>
+        <offset units="s" value="1.852e-6"/>
+        <delta_t units="s" value="0e0"/>
+        <theta units="rad" value="0e0"/>
+        <phi units="rad" value="0e0"/>
+        <delta_theta units="rad" value="0e0"/>
+        <delta_phi units="rad" value="0e0"/>
+        <delta_x units="m" value="0e0"/>
+        <delta_y units="m" value="0e0"/>
+      </insertcell>      
+    </inlet>
+  </inlets>
+  <outlets>
+    <outlet>
+      <condition subtype="cosine" type="pressure">
+        <mean units="mmHg" value="0.0" />
+        <amplitude units="mmHg" value="0.0" />
+        <phase units="rad" value="0.0" />
+        <period units="s" value="1" />
+      </condition>
+      <normal units="dimensionless" value="(0.0,0.0,1.0)" />
+      <position units="m" value="(0.0,0.0,-5e-05)" />
+      <flowextension>
+        <length units="m" value="10e-6" />
+        <radius units="m" value="5e-6" />
+        <fadelength units="m" value="3e-06" />
+      </flowextension>      
+    </outlet>
+  </outlets>
+  <visualisation>
+    <centre units="m" value="(0.0,0.0,0.0)" />
+    <orientation>
+      <longitude units="deg" value="45.0" />
+      <latitude units="deg" value="45.0" />
+    </orientation>
+    <display brightness="0.03" zoom="1.0" />
+    <range>
+      <maxvelocity units="m/s" value="0.1" />
+      <maxstress units="Pa" value="0.1" />
+    </range>
+  </visualisation>
+  <initialconditions>
+    <pressure>
+      <uniform units="mmHg" value="0.0" />
+    </pressure>
+  </initialconditions>
+  <redbloodcells>
+    <controller>
+      <boxsize units="lattice" value="3" />
+    </controller>
+    <cell2Cell>
+      <intensity units="lattice" value="0.002087" />
+      <cutoffdistance units="lattice" value="1.0" />
+      <exponent value="2"/>
+    </cell2Cell>
+    <cell2Wall>
+      <intensity units="lattice" value="0.002087" />
+      <cutoffdistance units="lattice" value="1.0" />
+      <exponent value="2"/>
+    </cell2Wall>
+    <cells>
+      <cell name="default">
+        <moduli>
+          <bending units="lattice" value="0.002087" />
+          <surface units="lattice" value="1.0" />
+          <volume units="lattice" value="1.0" />
+          <dilation units="lattice" value="0.5" />
+          <strain units="lattice" value="0.005797" />
+        </moduli>
+        <shape mesh_path="rbc_ico_2880.msh" mesh_format="Krueger" />
+        <scale units="m" value="4e-06" />
+      </cell>
+    </cells>
+    <output>
+      <period units="lattice" value="500" />
+    </output>
+  </redbloodcells>
+  <monitoring>
+    <incompressibility/>
+  </monitoring>
+  <properties>
+    <propertyoutput file="surface-tractions.xtr" period="1000">
+      <geometry type="surface" />
+      <field type="traction" />
+      <field type="tangentialprojectiontraction" />
+    </propertyoutput>
+    <propertyoutput file="surface-pressure.xtr" period="1000">
+      <geometry type="surface" />
+      <field type="pressure" />
+    </propertyoutput>
+    <propertyoutput file="wholegeometry-velocity.xtr" period="1000">
+      <geometry type="whole" />
+      <field type="velocity" />
+    </propertyoutput>
+    <propertyoutput file="wholegeometry-mpirank.xtr" period="1000">
+      <geometry type="whole" />
+      <field type="mpirank" />
+    </propertyoutput>
+  </properties>  
+</hemelbsettings>

@@ -35,6 +35,11 @@ hemelb_dependency(boost find_or_build)
 hemelb_dependency(ctemplate find_or_build)
 hemelb_dependency(zlib find_or_build)
 
+if (HEMELB_BUILD_RBC)
+  hemelb_dependency(hdf5 find_or_build)
+  hemelb_dependency(vtk find_or_build)
+endif()
+
 if (HEMELB_BUILD_MULTISCALE)
   hemelb_dependency(MPWide find_or_build)
 endif()

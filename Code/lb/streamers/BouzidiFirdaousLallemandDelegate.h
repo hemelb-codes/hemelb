@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -36,8 +35,9 @@ namespace hemelb
           SimpleBounceBackDelegate<CollisionType> bbDelegate;
 
         public:
-          BouzidiFirdaousLallemandDelegate(CollisionType& delegatorCollider, kernels::InitParams& initParams) :
-            bbDelegate(delegatorCollider, initParams)
+          BouzidiFirdaousLallemandDelegate(CollisionType& delegatorCollider,
+                                           kernels::InitParams& initParams) :
+              bbDelegate(delegatorCollider, initParams)
           {
           }
 
@@ -49,7 +49,7 @@ namespace hemelb
           {
             site_t invDirection = LatticeType::INVERSEDIRECTIONS[direction];
             site_t bbDestination = (site.GetIndex() * LatticeType::NUMVECTORS) + invDirection;
-            distribn_t q = site.GetWallDistance<LatticeType> (direction);
+            distribn_t q = site.GetWallDistance<LatticeType>(direction);
 
             if (site.HasWall(invDirection) || q < 0.5)
             {
@@ -64,8 +64,8 @@ namespace hemelb
             {
               // We have a fluid site and have all the data needed to complete this direction!
               // Implement Eq (5b) from Bouzidi et al.
-              * (latticeData->GetFNew(bbDestination)) = (hydroVars.GetFPostCollision()[direction] + (2.0 * q - 1)
-                  * hydroVars.GetFPostCollision()[invDirection]) / (2.0 * q);
+              * (latticeData->GetFNew(bbDestination)) = (hydroVars.GetFPostCollision()[direction]
+                  + (2.0 * q - 1) * hydroVars.GetFPostCollision()[invDirection]) / (2.0 * q);
             }
 
           }
@@ -75,7 +75,7 @@ namespace hemelb
           {
             distribn_t* fNew = latticeData->GetFNew(site.GetIndex() * LatticeType::NUMVECTORS);
             site_t invDirection = LatticeType::INVERSEDIRECTIONS[direction];
-            distribn_t q = site.GetWallDistance<LatticeType> (direction);
+            distribn_t q = site.GetWallDistance<LatticeType>(direction);
             // If there is no fluid site in the opposite direction, fall back to simple
             // bounce back, which has been done above.
 

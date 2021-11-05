@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -27,11 +26,11 @@ namespace hemelb
   {
     namespace helpers
     {
-      class FourCubeBasedTestFixture : public FolderTestFixture {
+      class FourCubeBasedTestFixtureBase : public FolderTestFixture {
 
       public:
-	FourCubeBasedTestFixture();
-	~FourCubeBasedTestFixture();
+	FourCubeBasedTestFixtureBase(int cubesize);
+	~FourCubeBasedTestFixtureBase();
 
       protected:
 	FourCubeLatticeData* latDat;
@@ -41,8 +40,17 @@ namespace hemelb
 	configuration::SimConfig* simConfig;
 	std::unique_ptr<lb::SimulationState> simState;
 	const util::UnitConverter* unitConverter;
+	int cubeSize;
+	int cubeSizeWithHalo;
       private:
 	std::string path;
+      };
+
+      template <int CUBESIZE = 4>
+      class FourCubeBasedTestFixture : public FourCubeBasedTestFixtureBase {
+      public:
+	FourCubeBasedTestFixture() : FourCubeBasedTestFixtureBase(CUBESIZE) {
+	}
       };
     }
   }

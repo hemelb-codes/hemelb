@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -12,7 +11,7 @@ namespace hemelb
   {
     PlaneGeometrySelector::PlaneGeometrySelector(const util::Vector3D<float>& point,
                                                  const util::Vector3D<float>& normal) :
-      planePoint(point), normal(normal.GetNormalised()), radius(0.)
+        planePoint(point), normal(normal.GetNormalised()), radius(0.)
     {
 
     }
@@ -25,9 +24,8 @@ namespace hemelb
      * @param radius
      */
     PlaneGeometrySelector::PlaneGeometrySelector(const util::Vector3D<float>& point,
-                                                 const util::Vector3D<float>& normal,
-                                                 float radius) :
-      planePoint(point), normal(normal.GetNormalised()), radius(radius)
+                                                 const util::Vector3D<float>& normal, float radius) :
+        planePoint(point), normal(normal.GetNormalised()), radius(radius)
     {
 
     }

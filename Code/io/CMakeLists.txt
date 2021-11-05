@@ -23,6 +23,9 @@ add_library(hemelb_io
   xml/XmlAbstractionLayer.cc
   )
 
-hemelb_add_target_dependency_tinyxml(hemelb_io)
 target_link_libraries(hemelb_io PUBLIC
-  hemelb_util)
+  hemelb_util
+  )
+target_link_libraries(hemelb_io PRIVATE
+  TinyXML::TinyXML
+  )

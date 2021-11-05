@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -40,10 +39,8 @@ namespace hemelb
       {
         public:
           // Constructor and destructor.
-          StreaklineDrawer(const geometry::LatticeData& iLatDat,
-                           const Screen& iScreen,
-                           const Viewpoint& iViewpoint,
-                           const VisSettings& iVisSettings,
+          StreaklineDrawer(const geometry::LatticeData& iLatDat, const Screen& iScreen,
+                           const Viewpoint& iViewpoint, const VisSettings& iVisSettings,
                            const lb::MacroscopicPropertyCache& propertyCache,
                            const net::MpiCommunicator& comms);
           ~StreaklineDrawer();

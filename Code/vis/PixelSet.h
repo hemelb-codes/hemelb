@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -63,8 +62,7 @@ namespace hemelb
           {
             pixels.push_back(PixelType(newPixel));
             pixelLookup.insert(std::pair<BasicPixel, unsigned int>(location,
-                                                                   (unsigned int) (pixels.size()
-                                                                       - 1)));
+                                                                   (unsigned int) (pixels.size() - 1)));
           }
         }
 
@@ -92,7 +90,7 @@ namespace hemelb
 
         void ReceiveQuantity(net::Net* net, proc_t source)
         {
-          net->RequestReceiveR(count,source);
+          net->RequestReceiveR(count, source);
         }
 
         void SendPixels(net::Net* net, proc_t destination)

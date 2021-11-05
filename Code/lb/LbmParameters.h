@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -23,53 +22,60 @@ namespace hemelb
       IgnoreStress = 2
     };
 
-    struct LbmParameters
+    class LbmParameters
     {
       public:
-        LbmParameters(PhysicalTime timeStepLength, PhysicalDistance voxelSize)
+        inline LbmParameters(PhysicalTime timeStepSeconds,
+		    PhysicalDistance voxelSizeMetres,
+		    PhysicalDensity fluidDensityKgm3 = DEFAULT_FLUID_DENSITY_Kg_per_m3,
+		    PhysicalDynamicViscosity newtonianViscosityPas = DEFAULT_FLUID_VISCOSITY_Pas) :
+	  timeStep(timeStepSeconds),
+	  voxelSize(voxelSizeMetres),
+	  fluidDensity(fluidDensityKgm3),
+	  eta(newtonianViscosityPas),
+	  tau(0.5 + (timeStep * eta / fluidDensity) / (Cs2 * voxelSize * voxelSize)),
+	  omega(-1.0 / tau),
+	  stressParameter((1.0 - 1.0 / (2.0 * tau)) / std::sqrt(2.0)),
+	  beta(-1.0 / (2.0 * tau))
         {
-          Update(timeStepLength, voxelSize);
         }
 
-        void Update(PhysicalTime timeStepLength, PhysicalDistance voxelSizeMetres)
+        inline const PhysicalTime& GetTimeStep() const
         {
-          timestep = timeStepLength;
-          voxelSize = voxelSizeMetres;
-          tau = 0.5
-              + (timeStepLength * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3)
-                  / (Cs2 * voxelSize * voxelSize);
-
-          omega = -1.0 / tau;
-          stressParameter = (1.0 - 1.0 / (2.0 * tau)) / sqrt(2.0);
-          beta = -1.0 / (2.0 * tau);
+          return timeStep;
         }
 
-        PhysicalTime GetTimeStep() const
-        {
-          return timestep;
-        }
-
-        PhysicalDistance GetVoxelSize() const
+        inline const PhysicalDistance& GetVoxelSize() const
         {
           return voxelSize;
         }
 
-        distribn_t GetOmega() const
+        inline const PhysicalDensity& GetFluidDensity() const
+        {
+          return fluidDensity;
+        }
+
+        inline const PhysicalDynamicViscosity& GetEta() const
+        {
+          return eta;
+        }
+
+        inline const distribn_t& GetOmega() const
         {
           return omega;
         }
 
-        distribn_t GetTau() const
+        inline const distribn_t& GetTau() const
         {
           return tau;
         }
 
-        distribn_t GetStressParameter() const
+        inline const distribn_t& GetStressParameter() const
         {
           return stressParameter;
         }
 
-        distribn_t GetBeta() const
+        inline const distribn_t& GetBeta() const
         {
           return beta;
         }
@@ -77,10 +83,12 @@ namespace hemelb
         StressTypes StressType;
 
       private:
-        PhysicalTime timestep;
-        PhysicalDistance voxelSize;
-        distribn_t omega;
+        PhysicalTime timeStep; // seconds
+        PhysicalDistance voxelSize; // metres
+        PhysicalDensity fluidDensity; // kg m^-3
+        PhysicalDynamicViscosity eta; // Newtonian viscosity of fluid in Pa s
         distribn_t tau;
+        distribn_t omega;
         distribn_t stressParameter;
         distribn_t beta; ///< Viscous dissipation in ELBM
     };

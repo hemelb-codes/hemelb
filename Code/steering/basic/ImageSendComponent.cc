@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -18,10 +17,8 @@ namespace hemelb
   namespace steering
   {
     // Use initialisation list to do the work.
-    ImageSendComponent::ImageSendComponent(lb::SimulationState* iSimState,
-                                           vis::Control* iControl,
-                                           const lb::LbmParameters* iLbmParams,
-                                           Network* iNetwork,
+    ImageSendComponent::ImageSendComponent(lb::SimulationState* iSimState, vis::Control* iControl,
+                                           const lb::LbmParameters* iLbmParams, Network* iNetwork,
                                            unsigned inletCountIn) :
       isConnected(false),
       mNetwork(iNetwork), mSimState(iSimState), mVisControl(iControl),
@@ -55,7 +52,10 @@ namespace hemelb
       imageWriter << (int) (pix->GetPixelCount() * bytes_per_pixel_data);
 
       // Write the pixels themselves
-      mVisControl->WritePixels(&imageWriter, *pix, mVisControl->domainStats, mVisControl->visSettings);
+      mVisControl->WritePixels(&imageWriter,
+                               *pix,
+                               mVisControl->domainStats,
+                               mVisControl->visSettings);
 
       // Write the numerical data from the simulation, wanted by the client.
       {
@@ -101,7 +101,9 @@ namespace hemelb
         else
         {
           log::Logger::Log<log::Trace, log::Singleton>("Image-send component requesting new render, %f seconds since last one at step %d max rate is %f.",
-                                                        deltaTime, mSimState->GetTimeStep(), MaxFramerate);
+                                                       deltaTime,
+                                                       mSimState->GetTimeStep(),
+                                                       MaxFramerate);
           lastRender = frameTimeStart;
           return true;
         }

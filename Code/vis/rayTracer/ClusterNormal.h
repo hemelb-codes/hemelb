@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -19,17 +18,17 @@ namespace hemelb
       class ClusterNormal : public Cluster<ClusterNormal>
       {
         public:
-          ClusterNormal(unsigned short xBlockCount,
-                        unsigned short yBlockCount,
-                        unsigned short zBlockCount,
-                        const util::Vector3D<float>& minimalSite,
+          ClusterNormal(unsigned short xBlockCount, unsigned short yBlockCount,
+                        unsigned short zBlockCount, const util::Vector3D<float>& minimalSite,
                         const util::Vector3D<float>& maximalSite,
                         const util::Vector3D<float>& minimalSiteOnMinimalBlock,
                         const util::Vector3D<site_t>& minimalBlock);
 
-          const util::Vector3D<double>* DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const;
+          const util::Vector3D<double>* DoGetWallData(site_t iBlockNumber,
+                                                      site_t iSiteNumber) const;
 
-          void DoSetWallData(site_t iBlockNumber, site_t iSiteNumber, const util::Vector3D<double>& iData);
+          void DoSetWallData(site_t iBlockNumber, site_t iSiteNumber,
+                             const util::Vector3D<double>& iData);
       };
 
     }

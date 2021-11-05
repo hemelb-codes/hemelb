@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -24,9 +23,7 @@ namespace hemelb
          * @param resourceid An identifier for the desired resource.
          * @return Error code. 0 on success.
          */
-        static int request(const char* hostname,
-                           const in_port_t port,
-                           const char* api,
+        static int request(const char* hostname, const in_port_t port, const char* api,
                            const char* resourceid);
 
       private:

@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -41,8 +40,6 @@ namespace hemelb
       }
       return true;
     }
-
-
 
     // Check the existence of a critical file - exit if it's not there
     void check_file(const char * filename)
@@ -95,12 +92,14 @@ namespace hemelb
     std::string GetTemporaryDir()
     {
       const char *dirname;
-      dirname = std::getenv("TMP");
-      if (NULL == dirname)
+      dirname = std::getenv("HEME_TMP");
+      if (nullptr == dirname)
+        dirname = std::getenv("TMP");
+      if (nullptr == dirname)
         dirname = std::getenv("TMPDIR");
-      if (NULL == dirname)
+      if (nullptr == dirname)
         dirname = std::getenv("TEMP");
-      if (NULL == dirname)
+      if (nullptr == dirname)
       {
         //assert(false); // no temp directory found
         return GetCurrentDir();
@@ -118,7 +117,7 @@ namespace hemelb
       for (int i = 0; i < file_count; i++)
       {
         std::stringstream filename;
-        filename << pathname.c_str() << "/" << files[i]->d_name <<std::flush;
+        filename << pathname.c_str() << "/" << files[i]->d_name << std::flush;
         unlink(filename.str().c_str());
       }
       return 0;
@@ -211,9 +210,10 @@ namespace hemelb
 
     // Function to create the directory of given path, which user group and anyone
     // can read write and execute.
-    void MakeDirAllRXW(std::string &dirPath)
+    bool MakeDirAllRXW(std::string const &dirPath)
     {
-      mkdir(dirPath.c_str(), 0777);
+      int returnValue = mkdir(dirPath.c_str(), 0777);
+      return (returnValue == 0);
     }
 
     std::string NormalizePathRelativeToPath(std::string inPath, std::string basePath)

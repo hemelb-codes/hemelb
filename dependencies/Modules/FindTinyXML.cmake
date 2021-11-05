@@ -3,6 +3,8 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
+include_guard()
+
 # - Find TinyXML
 # Find the native TinyXML includes and library
 #
@@ -29,3 +31,13 @@ INCLUDE( "FindPackageHandleStandardArgs" )
 FIND_PACKAGE_HANDLE_STANDARD_ARGS( "TinyXML" DEFAULT_MSG TINYXML_INCLUDE_DIR TINYXML_LIBRARIES )
 
 MARK_AS_ADVANCED( TINYXML_INCLUDE_DIR TINYXML_LIBRARIES )
+
+if(TINYXML_FOUND)
+  add_library(TinyXML::TinyXML INTERFACE IMPORTED)
+  set_target_properties(TinyXML::TinyXML PROPERTIES
+    # STL use is required by HemeLB and the build options
+    INTERFACE_COMPILE_DEFINITIONS "TIXML_USE_STL"
+    INTERFACE_INCLUDE_DIRECTORIES "${TINYXML_INCLUDE_DIR}"
+    INTERFACE_LINK_LIBRARIES "${TINYXML_LIBRARIES}"
+    )
+endif()

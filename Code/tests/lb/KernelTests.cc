@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -26,7 +25,7 @@ namespace hemelb
     // calculating hydrodynamic variables and for performing
     // collisions.
     template <typename T>
-    struct CollisionTester : public helpers::FourCubeBasedTestFixture {
+    struct CollisionTester : public helpers::FourCubeBasedTestFixture<> {
       using LATTICE = lb::lattices::D3Q15;
       static constexpr auto NV = LATTICE::NUMVECTORS;
       using KERNEL = T;
@@ -140,7 +139,7 @@ namespace hemelb
       }
     }
 
-    TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture, "LBGKNNCalculationsAndCollision") {
+    TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<>, "LBGKNNCalculationsAndCollision") {
       using LATTICE = lb::lattices::D3Q15;
       static constexpr auto NV = LATTICE::NUMVECTORS;
       using RHEO_MODEL = lb::kernels::rheologyModels::CarreauYasudaRheologyModelHumanFit;
@@ -292,7 +291,7 @@ namespace hemelb
     }
 
     template <typename L, typename B>
-    struct MRTTestFixture : public helpers::FourCubeBasedTestFixture {
+    struct MRTTestFixture : public helpers::FourCubeBasedTestFixture<> {
       using LATTICE = L;
       static constexpr auto NV = LATTICE::NUMVECTORS;
       using BASIS = B;

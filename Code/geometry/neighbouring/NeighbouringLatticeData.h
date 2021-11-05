@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -33,11 +32,9 @@ namespace hemelb
           {
           }
 
-          void SaveSite(site_t index,
-                        const std::vector<distribn_t> &distribution,
+          void SaveSite(site_t index, const std::vector<distribn_t> &distribution,
                         const std::vector<distribn_t> &distances,
-                        const util::Vector3D<distribn_t> &normal,
-                        const SiteData & data);
+                        const util::Vector3D<distribn_t> &normal, const SiteData & data);
 
           /**
            * Get a site object for the given index.

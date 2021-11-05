@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -27,9 +26,9 @@ namespace hemelb
         public:
           Ray(util::Vector3D<float> iDirection, int i, int j) :
 
-            mDirection(iDirection.Normalise()),
-                mInverseDirection(1.0F / mDirection.x, 1.0F / mDirection.y, 1.0F / mDirection.z),
-                mInWall(false), mPassedThroughNormalFluidSite(false), mRayData(i, j)
+              mDirection(iDirection.Normalise()),
+                  mInverseDirection(1.0F / mDirection.x, 1.0F / mDirection.y, 1.0F / mDirection.z),
+                  mInWall(false), mPassedThroughNormalFluidSite(false), mRayData(i, j)
           {
           }
 
@@ -58,8 +57,7 @@ namespace hemelb
             return GetDirection().z > 0.0F;
           }
 
-          void UpdateDataForWallSite(const SiteData_t& iSiteData,
-                                     const float iRayLengthInVoxel,
+          void UpdateDataForWallSite(const SiteData_t& iSiteData, const float iRayLengthInVoxel,
                                      const float iRayUnitsInCluster,
                                      const DomainStats& iDomainStats,
                                      const VisSettings& iVisSettings,

@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -36,7 +35,8 @@ namespace hemelb
           {
             return InstallPath();
           }
-          std::cerr << "Resource " << resourceName  << " not found either at: " << BuildPath() << " or: " << InstallPath() << std::endl;
+          std::cerr << "Resource " << resourceName << " not found either at: " << BuildPath()
+              << " or: " << InstallPath() << std::endl;
           return "";
         }
         std::string BuildPath() const

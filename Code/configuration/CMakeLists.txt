@@ -4,3 +4,4 @@
 # license in the file LICENSE.
 
 add_library(hemelb_configuration CommandLine.cc SimConfig.cc)
+target_link_libraries(hemelb_configuration PUBLIC Boost::boost)

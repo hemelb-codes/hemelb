@@ -3,17 +3,18 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-add_library(
-  hemelb_geometry BlockTraverser.cc BlockTraverserWithVisitedBlockTracker.cc 
-  GeometryReader.cc needs/Needs.cc LatticeData.cc SiteDataBare.cc SiteData.cc
-  SiteTraverser.cc VolumeTraverser.cc Block.cc 
-  decomposition/BasicDecomposition.cc decomposition/OptimisedDecomposition.cc
-  neighbouring/NeighbouringLatticeData.cc	neighbouring/NeighbouringDataManager.cc
+add_library(hemelb_geometry
+  BlockTraverser.cc BlockTraverserWithVisitedBlockTracker.cc
+  GeometryReader.cc needs/Needs.cc LatticeData.cc
+  SiteDataBare.cc SiteData.cc
+  SiteTraverser.cc VolumeTraverser.cc Block.cc
+  decomposition/BasicDecomposition.cc
+  decomposition/OptimisedDecomposition.cc
+  neighbouring/NeighbouringLatticeData.cc
+  neighbouring/NeighbouringDataManager.cc
   neighbouring/RequiredSiteInformation.cc
   )
-
-hemelb_add_target_dependency_parmetis(hemelb_geometry)
-hemelb_add_target_dependency_zlib(hemelb_geometry)
+target_link_libraries(hemelb_geometry PRIVATE ParMETIS::ParMETIS ZLIB::ZLIB)
 
 configure_file (
   "${PROJECT_SOURCE_DIR}/geometry/decomposition/DecompositionWeights.h.in"

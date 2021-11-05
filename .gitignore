@@ -48,6 +48,12 @@ Tools/hemeTools/utils/xdr.c
 Tools/hemeTools/utils/xdr.so
 revision_info.txt
 hemelb-prefix/src/hemelb-stamp/hemelb-urlinfo.txt
+.*.sw[p, o, n]
+tags
+i
+.astyle
+.clang-format
+Tools/GenerateStl
 *-slack-token
 *.egg-info
 _skbuild

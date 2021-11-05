@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -45,9 +44,9 @@ namespace hemelb
     const LatticeForceVector BodyForces::GetBodyForcesForParticle(const Particle& particle)
     {
       auto totalForce = LatticeForceVector::Zero();
-      for (std::map<std::string, const BodyForce* const >::const_iterator iter = bodyForces.begin(); iter
-          != bodyForces.end(); iter++)
+      for (auto iter = bodyForces.begin(); iter != bodyForces.end(); ++iter) {
         totalForce += iter->second->GetForceForParticle(particle);
+      }
       return totalForce;
     }
 

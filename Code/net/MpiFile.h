@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -7,7 +6,7 @@
 #ifndef HEMELB_NET_MPIFILE_H
 #define HEMELB_NET_MPIFILE_H
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include "net/MpiError.h"
 #include "net/MpiCommunicator.h"
 
@@ -53,17 +52,19 @@ namespace hemelb
         template<typename T>
         void Read(std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
         template<typename T>
-        void ReadAt(MPI_Offset offset, std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
+        void ReadAt(MPI_Offset offset, std::vector<T>& buffer,
+                    MPI_Status* stat = MPI_STATUS_IGNORE);
 
         template<typename T>
         void Write(const std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
         template<typename T>
-        void WriteAt(MPI_Offset offset, const std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
+        void WriteAt(MPI_Offset offset, const std::vector<T>& buffer, MPI_Status* stat =
+                         MPI_STATUS_IGNORE);
       protected:
         MpiFile(const MpiCommunicator& parentComm, MPI_File fh);
 
         const MpiCommunicator* comm;
-        boost::shared_ptr<MPI_File> filePtr;
+        std::shared_ptr<MPI_File> filePtr;
     };
 
   }

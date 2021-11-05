@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -22,15 +21,14 @@ namespace hemelb
     class ImageSendComponent
     {
       public:
-        ImageSendComponent(lb::SimulationState* iSimState,
-                           vis::Control* iControl,
-                           const lb::LbmParameters* iLbmParams,
-                           Network* iNetwork,
+        ImageSendComponent(lb::SimulationState* iSimState, vis::Control* iControl,
+                           const lb::LbmParameters* iLbmParams, Network* iNetwork,
                            unsigned inletCount);
 
         void DoWork(const vis::PixelSet<vis::ResultPixel>* pix);
-        void SetMaxFramerate(float maxFramerate){
-          MaxFramerate=maxFramerate;
+        void SetMaxFramerate(float maxFramerate)
+        {
+          MaxFramerate = maxFramerate;
         }
         bool ShouldRenderNewNetworkImage();
 
@@ -58,7 +56,8 @@ namespace hemelb
         // SimulationParameters::paramsSizeB (metadata - mouse pressure and stress etc)
         static const unsigned int XdrIntLength = 4;
         static const unsigned int maxSendSize = 2 * XdrIntLength + 1 * XdrIntLength
-            + vis::Screen::COLOURED_PIXELS_MAX * bytes_per_pixel_data + SimulationParameters::paramsSizeB;
+            + vis::Screen::COLOURED_PIXELS_MAX * bytes_per_pixel_data
+            + SimulationParameters::paramsSizeB;
     };
   }
 }

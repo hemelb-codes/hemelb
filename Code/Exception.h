@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -30,7 +29,8 @@ namespace hemelb
        */
       Exception()
       {
-      };
+      }
+      ;
       /**
        * Copy ctor required -- note that it appends the old content of the
        * stream to the message of the new one and gives the new one an empty

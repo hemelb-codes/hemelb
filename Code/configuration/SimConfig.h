@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -11,6 +10,7 @@
 #include <boost/variant.hpp>
 #include <boost/optional.hpp>
 
+#include "configuration/MonitoringConfig.h"
 #include "util/Vector3D.h"
 #include "lb/LbmParameters.h"
 #include "lb/iolets/InOutLets.h"
@@ -20,6 +20,10 @@
 
 namespace hemelb
 {
+  namespace redblood {
+    class RBCConfig;
+  }
+
   namespace configuration
   {
     template<typename T>
@@ -33,6 +37,17 @@ namespace hemelb
       }
 
       elem.GetAttributeOrThrow("value", value);
+    }
+
+    template<typename T>
+    void GetDimensionalValueInLatticeUnits(const io::xml::Element& elem, const std::string& units, const util::UnitConverter& converter, T& value)
+    {
+      if (units == "lattice")
+	return GetDimensionalValue(elem, units, value);
+
+      T phys;
+      GetDimensionalValue(elem, units, phys);
+      value = converter.ConvertToLatticeUnits(units, phys);
     }
 
     // Base for initial conditions configuration
@@ -63,24 +78,6 @@ namespace hemelb
     class SimConfig
     {
       public:
-        /**
-         * Bundles together various configuration parameters concerning simulation monitoring
-         */
-        struct MonitoringConfig
-        {
-            MonitoringConfig() :
-                doConvergenceCheck(false), convergenceRelativeTolerance(0), convergenceTerminate(false),
-                    doIncompressibilityCheck(false)
-            {
-            }
-            bool doConvergenceCheck; ///< Whether to turn on the convergence check or not
-            extraction::OutputField::FieldType convergenceVariable; ///< Macroscopic variable used to check for convergence
-            double convergenceReferenceValue; ///< Reference value used to normalise an absolute error (making it relative)
-            double convergenceRelativeTolerance; ///< Convergence check relative tolerance
-            bool convergenceTerminate; ///< Whether to terminate a converged run or not
-            bool doIncompressibilityCheck; ///< Whether to turn on the IncompressibilityChecker or not
-        };
-
 	static SimConfig* New(const std::string& path);
 
       protected:
@@ -89,6 +86,9 @@ namespace hemelb
 
       public:
         virtual ~SimConfig();
+
+        // Turn an input XML-relative path into a full path
+        std::string RelPathToFullPath(const std::string& path) const;
 
         void Save(std::string path); // TODO this method should be able to be CONST
         // but because it uses DoIo, which uses one function signature for both reading and writing, it cannot be.
@@ -192,6 +192,18 @@ namespace hemelb
          */
         const MonitoringConfig* GetMonitoringConfiguration() const;
 
+        /**
+         * True if the XML file has a section specifying red blood cells.
+         * @return
+         */
+        inline bool HasRBCSection() const
+        {
+          return rbcConf != nullptr;
+        }
+
+	inline const redblood::RBCConfig* GetRBCConfig() const {
+	  return rbcConf;
+	}
       protected:
         /**
          * Create the unit converter - virtual so that mocks can override it.
@@ -228,6 +240,7 @@ namespace hemelb
         void DoIOForGeometry(const io::xml::Element geometryEl);
 
         std::vector<lb::iolets::InOutLet*> DoIOForInOutlets(const io::xml::Element xmlNode);
+        void DoIOForFlowExtension(lb::iolets::InOutLet *, const io::xml::Element &);
 
         void DoIOForBaseInOutlet(const io::xml::Element& ioletEl, lb::iolets::InOutLet* value);
 
@@ -295,7 +308,7 @@ namespace hemelb
          */
         void DoIOForConvergenceCriterion(const io::xml::Element& criterionEl);
 
-        const std::string& xmlFilePath;
+        std::string xmlFilePath;
         io::xml::Document* rawXmlDoc;
         std::string dataFilePath;
 
@@ -316,6 +329,13 @@ namespace hemelb
 
         MonitoringConfig monitoringConfig; ///< Configuration of various checks/tests
 
+        // We want to keep the RBC types isolated in their own library
+        // so put all the configuration in a type that is opaque to
+        // the rest of the code.
+        //
+        // nullptr => no RBC
+        redblood::RBCConfig* rbcConf = nullptr;
+
       protected:
         // These have to contain pointers because there are multiple derived types that might be
         // instantiated.
@@ -326,6 +346,9 @@ namespace hemelb
         unsigned long warmUpSteps;
         PhysicalDistance voxelSizeMetres;
         PhysicalPosition geometryOriginMetres;
+	PhysicalDensity fluidDensityKgm3;
+	PhysicalDynamicViscosity fluidViscosityPas;
+	PhysicalPressure reference_pressure_mmHg;
         util::UnitConverter* unitConverter;
         ICConfig icConfig;
       private:

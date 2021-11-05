@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -15,7 +14,7 @@ namespace hemelb
   {
     using namespace hemelb::geometry::neighbouring;
 
-    TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture, "NeighbouringLatticeDataTests") {
+    TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<>, "NeighbouringLatticeDataTests") {
       site_t dummyId = 54;
       auto data = latDat->GetNeighbouringData();
       geometry::Site<geometry::LatticeData> exampleSite{latDat->GetSite(24)};

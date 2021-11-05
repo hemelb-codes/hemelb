@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -8,8 +7,6 @@
 #define HEMELB_VIS_CONTROL_H
 
 #include <stack>
-
-#include "geometry/LatticeData.h"
 
 #include "lb/LbmParameters.h"
 #include "lb/SimulationState.h"
@@ -33,6 +30,10 @@
 
 namespace hemelb
 {
+  namespace geometry {
+    class LatticeData;
+  }
+
   namespace vis
   {
     /**
@@ -51,28 +52,19 @@ namespace hemelb
                     private PixelSetStore<PixelSet<ResultPixel> >
     {
       public:
-        Control(lb::StressTypes iStressType,
-                net::Net* net,
-                lb::SimulationState* simState,
-                const lb::MacroscopicPropertyCache& propertyCache,
-                geometry::LatticeData* iLatDat,
+        Control(lb::StressTypes iStressType, net::Net* net, lb::SimulationState* simState,
+                const lb::MacroscopicPropertyCache& propertyCache, geometry::LatticeData* iLatDat,
                 reporting::Timer &atimer);
         ~Control();
 
-        void SetSomeParams(const float iBrightness,
-                           const distribn_t iDensityThresholdMin,
+        void SetSomeParams(const float iBrightness, const distribn_t iDensityThresholdMin,
                            const distribn_t iDensityThresholdMinMaxInv,
                            const distribn_t iVelocityThresholdMaxInv,
                            const distribn_t iStressThresholdMaxInv);
 
-        void SetProjection(const int &pixels_x,
-                           const int &pixels_y,
-                           const float &ctr_x,
-                           const float &ctr_y,
-                           const float &ctr_z,
-                           const float &longitude,
-                           const float &latitude,
-                           const float &zoom);
+        void SetProjection(const int &pixels_x, const int &pixels_y, const float &ctr_x,
+                           const float &ctr_y, const float &ctr_z, const float &longitude,
+                           const float &latitude, const float &zoom);
 
         bool MouseIsOverPixel(const PixelSet<ResultPixel>* result, float* density, float* stress);
 
@@ -83,14 +75,10 @@ namespace hemelb
 
         const PixelSet<ResultPixel>* GetResult(unsigned long startIteration);
 
-        void WritePixels(io::writers::Writer* writer,
-                         const PixelSet<ResultPixel>& imagePixels,
-                         const DomainStats& domainStats,
-                         const VisSettings& visSettings) const;
-        void WriteImage(io::writers::Writer* writer,
-                        const PixelSet<ResultPixel>& imagePixels,
-                        const DomainStats& domainStats,
-                        const VisSettings& visSettings) const;
+        void WritePixels(io::writers::Writer* writer, const PixelSet<ResultPixel>& imagePixels,
+                         const DomainStats& domainStats, const VisSettings& visSettings) const;
+        void WriteImage(io::writers::Writer* writer, const PixelSet<ResultPixel>& imagePixels,
+                        const DomainStats& domainStats, const VisSettings& visSettings) const;
 
         bool IsRendering() const;
 
@@ -140,8 +128,7 @@ namespace hemelb
         geometry::LatticeData* latticeData;
         Screen screen;
         Vis* vis;
-        raytracer::RayTracer<raytracer::ClusterWithWallNormals, raytracer::RayDataNormal>
-            *normalRayTracer;
+        raytracer::RayTracer<raytracer::ClusterWithWallNormals, raytracer::RayDataNormal> *normalRayTracer;
         GlyphDrawer *myGlypher;
         streaklinedrawer::StreaklineDrawer *myStreaker;
 

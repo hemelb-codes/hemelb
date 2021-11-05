@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -38,6 +37,12 @@ namespace hemelb {
 	return *this;
       }
 
+      // Factory for same margin, different value.
+      template <typename... ArgTs>
+      ApproxVectorImpl operator()(ArgTs... args) const {
+	return ApproxVectorImpl{std::forward<ArgTs>(args)...}.Margin(margin);
+      }
+
       friend bool operator==(const ApproxVectorImpl& lhs, const vec& rhs) {
 	return lhs.impl(rhs);
       }
@@ -52,12 +57,16 @@ namespace hemelb {
 	return !(lhs == rhs);
       }
 
+      friend std::ostream& operator<<(std::ostream& o, ApproxVectorImpl const& av)
+      {
+	return o << av.value << "+/-" << av.margin;
+      }
+
     private:
       bool impl(const vec& other) const {
         return (value - other).GetMagnitudeSquared() < margin * margin;
       }
     };
-
     
     namespace detail {
       // build an overload set and SFINAE

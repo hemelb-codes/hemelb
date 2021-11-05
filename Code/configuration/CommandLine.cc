@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -12,23 +11,23 @@ namespace hemelb
   namespace configuration
   {
 
-    CommandLine::CommandLine(int aargc, const char * const * const aargv) :
-      inputFile("input.xml"), outputDir(""), images(10), steeringSessionId(1), debugMode(false), argc(aargc),
-          argv(aargv)
+    CommandLine::CommandLine(std::vector<std::string> const & argv):
+        inputFile("input.xml"), outputDir(""), images(10), steeringSessionId(1), debugMode(false),
+      argv(argv)
     {
-
       // There should be an odd number of arguments since the parameters occur in pairs.
-      if ( (argc % 2) == 0)
+      if ( (argv.size() % 2) == 0)
       {
-        throw OptionError() << "There should be an odd number of arguments since the parameters occur in pairs.";
+        throw OptionError()
+            << "There should be an odd number of arguments since the parameters occur in pairs.";
       }
 
       // All arguments are parsed in pairs, one is a "-<paramName>" type, and one
       // is the <parametervalue>.
-      for (int ii = 1; ii < argc; ii += 2)
+      for (size_t ii = 1; ii < argv.size(); ii += 2)
       {
-        const char* const paramName = argv[ii];
-        const char* const paramValue = argv[ii + 1];
+        auto paramName = argv[ii].c_str();
+        auto paramValue = argv[ii + 1].c_str();
         if (std::strcmp(paramName, "-in") == 0)
         {
           inputFile = std::string(paramValue);
@@ -49,7 +48,9 @@ namespace hemelb
         }
         else if (std::strcmp(paramName, "-debug") == 0)
         {
-          debugMode = std::strcmp(paramName, "0") == 0 ? false : true;
+          debugMode = std::strcmp(paramName, "0") == 0 ?
+            false :
+            true;
         }
         else
         {

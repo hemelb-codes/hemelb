@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -41,13 +40,11 @@ namespace hemelb
           { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, -1, 1, -1, 1, 1, -1 } //m_z
         };
 
-        const distribn_t DHumieresD3Q19MRTBasis::BASIS_TIMES_BASIS_TRANSPOSED[NUM_KINETIC_MOMENTS] = { 2394, 252, 40,
-                                                                                                       40, 40, 36, 72,
-                                                                                                       12, 24, 4, 4, 4,
-                                                                                                       8, 8, 8 };
+        const distribn_t DHumieresD3Q19MRTBasis::BASIS_TIMES_BASIS_TRANSPOSED[NUM_KINETIC_MOMENTS] =
+            { 2394, 252, 40, 40, 40, 36, 72, 12, 24, 4, 4, 4, 8, 8, 8 };
 
-        void DHumieresD3Q19MRTBasis::ProjectVelsIntoMomentSpace(const distribn_t * const velDistributions,
-                                                                distribn_t * const moments)
+        void DHumieresD3Q19MRTBasis::ProjectVelsIntoMomentSpace(
+            const distribn_t * const velDistributions, distribn_t * const moments)
         {
           for (unsigned momentIndex = 0; momentIndex < NUM_KINETIC_MOMENTS; momentIndex++)
           {
@@ -60,7 +57,8 @@ namespace hemelb
           }
         }
 
-        void DHumieresD3Q19MRTBasis::SetUpCollisionMatrix(std::vector<distribn_t>& collisionMatrix, distribn_t tau)
+        void DHumieresD3Q19MRTBasis::SetUpCollisionMatrix(std::vector<distribn_t>& collisionMatrix,
+                                                          distribn_t tau)
         {
           // Relaxation values taken from d'Humieres 2002, except for the kinematic viscosity where the usual tau formula is used.
           collisionMatrix.clear();

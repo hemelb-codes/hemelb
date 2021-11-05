@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -24,13 +23,18 @@ namespace hemelb
         {
           public:
             // Method to get the current position of writing in the stream.
-            unsigned int getCurrentStreamPosition() const {return 0;}
+            unsigned int getCurrentStreamPosition() const
+            {
+              return 0;
+            }
 
             // Methods for formatting control
-            void writeFieldSeparator() {
+            void writeFieldSeparator()
+            {
               //PASS, DO NOTHING
             }
-            void writeRecordSeparator(){
+            void writeRecordSeparator()
+            {
               // PASS, DO NOTHING
             }
 

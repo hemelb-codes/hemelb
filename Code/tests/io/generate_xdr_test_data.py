@@ -129,8 +129,8 @@ def mk_header():
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_TESTS_IO_XDRTESTDATA_H
-#define HEMELB_TESTS_IO_XDRTESTDATA_H
+#ifndef HEMELB_TESTS_IO_XDR_TEST_DATA_H
+#define HEMELB_TESTS_IO_XDR_TEST_DATA_H
 #include <vector>
 
 namespace hemelb

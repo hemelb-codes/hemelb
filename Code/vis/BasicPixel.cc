@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -59,10 +58,7 @@ namespace hemelb
 
       MPI_Datatype ret;
 
-      HEMELB_MPI_CALL(
-          MPI_Type_create_struct,
-          (typeCount, blocklengths, displacements, types, &ret)
-      );
+      HEMELB_MPI_CALL(MPI_Type_create_struct, (typeCount, blocklengths, displacements, types, &ret));
 
       return ret;
     }

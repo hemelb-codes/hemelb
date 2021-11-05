@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -23,7 +22,8 @@ namespace hemelb
       }
     }
 
-    MpiGroup::MpiGroup(): groupPtr()
+    MpiGroup::MpiGroup() :
+        groupPtr()
     {
     }
 
@@ -45,7 +45,7 @@ namespace hemelb
     {
       MPI_Group ans;
       HEMELB_MPI_CALL(MPI_Group_excl,
-          (*groupPtr, ranksToExclude.size(), MpiConstCast(&ranksToExclude.front()), &ans))
+                      (*groupPtr, ranksToExclude.size(), MpiConstCast(&ranksToExclude.front()), &ans))
       return MpiGroup(ans, true);
     }
 

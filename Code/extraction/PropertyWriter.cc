@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -16,7 +15,9 @@ namespace hemelb
     {
       for (unsigned outputNumber = 0; outputNumber < propertyOutputs.size(); ++outputNumber)
       {
-        localPropertyOutputs.push_back(new LocalPropertyOutput(dataSource, propertyOutputs[outputNumber], ioComms));
+        localPropertyOutputs.push_back(new LocalPropertyOutput(dataSource,
+                                                               propertyOutputs[outputNumber],
+                                                               ioComms));
       }
     }
 

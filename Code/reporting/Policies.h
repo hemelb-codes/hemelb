@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -50,7 +49,8 @@ namespace hemelb
          * @param comm MPI Communicator to reduce over
          * @return
          */
-        int Reduce(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root)
+        int Reduce(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+                   int root)
         {
           return MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, instance);
         }

@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -26,6 +25,8 @@ namespace hemelb
         class CassonRheologyModel : public AbstractRheologyModel<CassonRheologyModel>
         {
           public:
+            // Satisfy RheologyModel concept
+            inline CassonRheologyModel(const InitParams&) {}
             /*
              *  Compute nu for a given shear rate according to the Casson model:
              *
@@ -36,10 +37,10 @@ namespace hemelb
              *  @param iDensity local density. TODO at the moment this value is not used
              *         in any subclass.
              *
-             *  @return kinematic viscosity (m^2/s).
+             *  @return dynamic viscosity (Pa s).
              */
-            static double CalculateViscosityForShearRate(const double &iShearRate,
-                                                         const distribn_t &iDensity);
+            double CalculateViscosityForShearRate(const double &iShearRate,
+						  const distribn_t &iDensity) const;
         };
       }
     }

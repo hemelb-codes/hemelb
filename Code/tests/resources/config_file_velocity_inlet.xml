@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<hemelbsettings version="3">
+<hemelbsettings version="4">
   <simulation>
     <stresstype value="1" />
     <steps value="4000" units="lattice" />

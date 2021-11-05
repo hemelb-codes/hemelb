@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -17,6 +16,7 @@
 #include "extraction/PlaneGeometrySelector.h"
 #include "extraction/WholeGeometrySelector.h"
 #include "extraction/GeometrySurfaceSelector.h"
+#include "extraction/SurfacePointSelector.h"
 
 #include "tests/helpers/FourCubeLatticeData.h"
 #include "tests/helpers/HasCommsTestFixture.h"
@@ -39,7 +39,9 @@ namespace hemelb
       auto propertyCache = lb::MacroscopicPropertyCache(simState, *latticeData);
       auto unitConverter = util::UnitConverter(simState.GetTimeStepLength(),
 					       VoxelSize,
-					       PhysicalPosition::Zero());
+					       PhysicalPosition::Zero(),
+					       DEFAULT_FLUID_DENSITY_Kg_per_m3,
+					       0.0);
       auto dataSourceIterator = extraction::LbDataSourceIterator(propertyCache,
 								 *latticeData,
 								 0,

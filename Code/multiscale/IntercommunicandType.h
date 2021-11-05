@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -47,7 +46,8 @@ namespace hemelb
           return fields;
         }
 
-        void RegisterSharedValue(const std::string &label, typename RuntimeTypeImplementation::RuntimeType type)
+        void RegisterSharedValue(const std::string &label,
+                                 typename RuntimeTypeImplementation::RuntimeType type)
         {
           fields.push_back(std::make_pair(label, type));
           hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("shared value created with label %s",

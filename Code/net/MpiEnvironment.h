@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -55,8 +54,8 @@ namespace hemelb
 
       private:
         // Make copy c'tor and copy assign private to ensure uncopyable.
-        MpiEnvironment( const MpiEnvironment& );
-        const MpiEnvironment& operator=( const MpiEnvironment& );
+        MpiEnvironment(const MpiEnvironment&);
+        const MpiEnvironment& operator=(const MpiEnvironment&);
 
         /// Whether this instance called MPI_Init
         bool doesOwnMpi;

@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -22,7 +21,7 @@ namespace hemelb
          */
       public:
         // the singleton pattern
-        static Debugger* Init(bool active, const char *const, const net::MpiCommunicator& comm);
+        static Debugger* Init(bool active, const char * const, const net::MpiCommunicator& comm);
         static Debugger* Get(void);
 
         virtual void BreakHere(void) = 0;

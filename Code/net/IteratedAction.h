@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -14,12 +13,12 @@ namespace hemelb
     class IteratedAction : public phased::Concern
     {
       public:
-      /***
-       * When an iterated actor is called through the phased::StepManager mechanism,
-       * this method dispatches to the individual step methods
-       * @param action Enumeration indicating the step
-       * @return True if an action was successfully called for the step
-       */
+        /***
+         * When an iterated actor is called through the phased::StepManager mechanism,
+         * this method dispatches to the individual step methods
+         * @param action Enumeration indicating the step
+         * @return True if an action was successfully called for the step
+         */
         bool CallAction(int action);
         virtual ~IteratedAction();
         virtual void RequestComms();
@@ -27,7 +26,7 @@ namespace hemelb
         virtual void PreReceive();
         virtual void PostReceive();
         virtual void EndIteration();
-     };
+    };
   }
 }
 

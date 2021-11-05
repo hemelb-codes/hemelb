@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -19,13 +18,13 @@ namespace hemelb
      * so the main code can be read without thinking about multiscale.
      */
     template<class Intercommunicator>
-    class MultiscaleSimulationMaster : public SimulationMaster
+    class MultiscaleSimulationMaster : public SimulationMaster<>
     {
       public:
         MultiscaleSimulationMaster(hemelb::configuration::CommandLine &options,
                                    const net::IOCommunicator& ioComm,
                                    Intercommunicator & aintercomms) :
-            SimulationMaster(options, ioComm), intercomms(aintercomms),
+            SimulationMaster<>(options, ioComm), intercomms(aintercomms),
                 multiscaleIoletType("inoutlet")
         {
           // We only have one shared object type so far, an iolet.
@@ -92,7 +91,7 @@ namespace hemelb
 
             /* Do include iolet adjacent sites (inlet) */
             long long int ioletsSiteCount = latticeData->GetMidDomainCollisionCount(2);
-            invertedInletBoundaryList = PopulateInvertedBoundaryList(latticeData,
+            invertedInletBoundaryList = PopulateInvertedBoundaryList(latticeData.get(),
                                                                      invertedInletBoundaryList,
                                                                      offset,
                                                                      ioletsSiteCount);
@@ -100,7 +99,7 @@ namespace hemelb
             offset += latticeData->GetMidDomainCollisionCount(2);
             /* Do include iolet adjacent sites (outlet) */
             ioletsSiteCount = latticeData->GetMidDomainCollisionCount(3);
-            invertedOutletBoundaryList = PopulateInvertedBoundaryList(latticeData,
+            invertedOutletBoundaryList = PopulateInvertedBoundaryList(latticeData.get(),
                                                                       invertedOutletBoundaryList,
                                                                       offset,
                                                                       ioletsSiteCount);
@@ -108,7 +107,7 @@ namespace hemelb
             offset += latticeData->GetMidDomainCollisionCount(3);
             /* Do include iolet adjacent sites (inlet-wall) */
             ioletsSiteCount = latticeData->GetMidDomainCollisionCount(4);
-            invertedInletBoundaryList = PopulateInvertedBoundaryList(latticeData,
+            invertedInletBoundaryList = PopulateInvertedBoundaryList(latticeData.get(),
                                                                      invertedInletBoundaryList,
                                                                      offset,
                                                                      ioletsSiteCount);
@@ -116,7 +115,7 @@ namespace hemelb
             offset += latticeData->GetMidDomainCollisionCount(4);
             /* Do include iolet adjacent sites (outlet-wall) */
             ioletsSiteCount = latticeData->GetMidDomainCollisionCount(5);
-            invertedOutletBoundaryList = PopulateInvertedBoundaryList(latticeData,
+            invertedOutletBoundaryList = PopulateInvertedBoundaryList(latticeData.get(),
                                                                       invertedOutletBoundaryList,
                                                                       offset,
                                                                       ioletsSiteCount);
@@ -241,13 +240,13 @@ namespace hemelb
                                                                                   outletValues->GetLocalIolet(0)->GetDensityMax(),
                                                                                   outletValues->GetLocalIolet(0)->GetPressureMax());
 
-            SetCommsRequired(inletValues, true);
-            SetCommsRequired(outletValues, true);
+            SetCommsRequired(inletValues.get(), true);
+            SetCommsRequired(outletValues.get(), true);
 
             inletValues->RequestComms();
             outletValues->RequestComms();
-            SetCommsRequired(inletValues, false);
-            SetCommsRequired(outletValues, false);
+            SetCommsRequired(inletValues.get(), false);
+            SetCommsRequired(outletValues.get(), false);
 
             for (unsigned int i = 0; i < inletValues->GetLocalIoletCount(); i++)
             {
@@ -359,7 +358,7 @@ namespace hemelb
             {
               sendList[j] = inList[i][j];
             }
-            HEMELB_MPI_CALL( MPI_Allgather,
+            HEMELB_MPI_CALL(MPI_Allgather,
                             ( &sendSize, 1, MPI_INT, recvSizes, 1, MPI_INT, ioComms ));
 
             int64_t totalSize = 0;
@@ -376,7 +375,7 @@ namespace hemelb
 
             site_t *recvList = new site_t[totalSize]; //inList[i].size()
 
-            HEMELB_MPI_CALL( MPI_Allgatherv,
+            HEMELB_MPI_CALL(MPI_Allgatherv,
                             ( sendList, inList[i].size(), MPI_LONG_LONG, recvList, recvSizes, recvDispls, MPI_LONG_LONG, ioComms ));
 
             std::vector<site_t> subList;

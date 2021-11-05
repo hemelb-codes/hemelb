@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -12,7 +11,7 @@ namespace hemelb
   namespace geometry
   {
     SiteTraverser::SiteTraverser(const geometry::LatticeData& iLatticeData) :
-      mLatticeData(iLatticeData)
+        mLatticeData(iLatticeData)
 
     {
     }

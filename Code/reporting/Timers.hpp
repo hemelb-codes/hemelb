@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -22,23 +21,14 @@ namespace hemelb
         timings[ii] = timers[ii].Get();
       }
 
-      CommsPolicy::Reduce(timings,
-                          &maxes[0],
-                          numberOfTimers,
-                          net::MpiDataType<double>(),
-                          MPI_MAX,
+      CommsPolicy::Reduce(timings, &maxes[0], numberOfTimers, net::MpiDataType<double>(),
+      MPI_MAX,
                           0);
-      CommsPolicy::Reduce(timings,
-                          &means[0],
-                          numberOfTimers,
-                          net::MpiDataType<double>(),
-                          MPI_SUM,
+      CommsPolicy::Reduce(timings, &means[0], numberOfTimers, net::MpiDataType<double>(),
+      MPI_SUM,
                           0);
-      CommsPolicy::Reduce(timings,
-                          &mins[0],
-                          numberOfTimers,
-                          net::MpiDataType<double>(),
-                          MPI_MIN,
+      CommsPolicy::Reduce(timings, &mins[0], numberOfTimers, net::MpiDataType<double>(),
+      MPI_MIN,
                           0);
       for (unsigned int ii = 0; ii < numberOfTimers; ii++)
       {

@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -21,7 +20,7 @@ namespace hemelb
     namespace iolets
     {
       InOutLetFile::InOutLetFile() :
-        InOutLet(), densityTable(0), units(NULL)
+          InOutLet(), densityTable(0), units(nullptr)
       {
 
       }
@@ -49,7 +48,7 @@ namespace hemelb
       {
         // First read in values from file
         // Used to be complex code here to keep a vector unique, but this is just achieved by using a map.
-        std::map < PhysicalTime, PhysicalPressure > timeValuePairs;
+        std::map<PhysicalTime, PhysicalPressure> timeValuePairs;
 
         double timeTemp, valueTemp;
 
@@ -73,8 +72,8 @@ namespace hemelb
         // Determine min and max pressure on the way
         PhysicalPressure pMin = timeValuePairs.begin()->second;
         PhysicalPressure pMax = timeValuePairs.begin()->second;
-        for (std::map<PhysicalTime, PhysicalPressure>::iterator entry = timeValuePairs.begin(); entry
-            != timeValuePairs.end(); entry++)
+        for (std::map<PhysicalTime, PhysicalPressure>::iterator entry = timeValuePairs.begin();
+            entry != timeValuePairs.end(); entry++)
         {
           /* If the time value stretches beyond the end of the simulation, then insert an interpolated end value and exit the loop. */
           if(entry->first > totalTimeSteps*timeStepLength) {
@@ -103,7 +102,8 @@ namespace hemelb
 
         // Check if last point's value matches the first
         if (values.back() != values.front())
-          throw Exception() << "Last point's value does not match the first point's value in " <<pressureFilePath;
+          throw Exception() << "Last point's value does not match the first point's value in "
+              << pressureFilePath;
 
         /* If the time values in the input file end BEFORE the planned end of the simulation, then loop the profile afterwards (using %TimeStepsInInletPressureProfile). */
         int TimeStepsInInletPressureProfile = times.back() / timeStepLength;
@@ -114,8 +114,9 @@ namespace hemelb
         // Now convert these vectors into arrays using linear interpolation
         for (unsigned int timeStep = 0; timeStep <= totalTimeSteps; timeStep++)
         {
-          double point = times.front() + (static_cast<double> (timeStep)
-              / static_cast<double> (totalTimeSteps)) * (times.back() - times.front());
+          double point = times.front()
+              + (static_cast<double>(timeStep) / static_cast<double>(totalTimeSteps))
+                  * (times.back() - times.front());
 
           double pressure = util::NumericalFunctions::LinearInterpolate(times, values, point);
 

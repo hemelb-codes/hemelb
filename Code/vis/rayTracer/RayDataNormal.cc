@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -18,7 +17,7 @@ namespace hemelb
     {
 
       RayDataNormal::RayDataNormal(int i, int j) :
-        RayData<RayDataNormal> (i, j)
+          RayData<RayDataNormal>(i, j)
       {
         mVelR = 0.0F;
         mVelG = 0.0F;
@@ -34,8 +33,7 @@ namespace hemelb
 
       }
 
-      void RayDataNormal::DoUpdateDataForNormalFluidSite(
-                                                         const SiteData_t& iSiteData,
+      void RayDataNormal::DoUpdateDataForNormalFluidSite(const SiteData_t& iSiteData,
                                                          const util::Vector3D<float>& iRayDirection,
                                                          const float iRayLengthInVoxel,
                                                          const VisSettings& iVisSettings)
@@ -87,11 +85,11 @@ namespace hemelb
 
       void RayDataNormal::MakeColourComponent(float value, unsigned char& colour) const
       {
-        colour
-            = util::NumericalFunctions::enforceBounds<unsigned char>((unsigned char) (value
-                                                                         / GetCumulativeLengthInFluid()),
-                                                                     0,
-                                                                     255);
+        colour =
+            util::NumericalFunctions::enforceBounds<unsigned char>((unsigned char) (value
+                                                                       / GetCumulativeLengthInFluid()),
+                                                                   0,
+                                                                   255);
       }
 
       void RayDataNormal::DoCombine(const RayDataNormal& iOtherRayData)
@@ -144,7 +142,7 @@ namespace hemelb
         return type;
       }
 
-      const DomainStats* RayDataNormal::mDomainStats = NULL;
+      const DomainStats* RayDataNormal::mDomainStats = nullptr;
     }
   }
 

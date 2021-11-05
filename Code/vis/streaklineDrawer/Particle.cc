@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -15,13 +14,13 @@ namespace hemelb
     namespace streaklinedrawer
     {
       Particle::Particle() :
-        position(NO_VALUE), velocity(NO_VALUE), vel(NO_VALUE), inletID()
+          position(NO_VALUE), velocity(NO_VALUE), vel(NO_VALUE), inletID()
       {
 
       }
 
       Particle::Particle(float iX, float iY, float iZ, unsigned int iInletId) :
-        position(iX, iY, iZ), velocity(0), vel(0), inletID(iInletId)
+          position(iX, iY, iZ), velocity(0), vel(0), inletID(iInletId)
       {
       }
     }

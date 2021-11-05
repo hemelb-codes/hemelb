@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -36,10 +35,9 @@ namespace hemelb
          * @param spreadFactor
          * @return
          */
-        PhasedBroadcastIrregular(Net * iNet,
-                                 const lb::SimulationState * iSimState,
+        PhasedBroadcastIrregular(Net * iNet, const lb::SimulationState * iSimState,
                                  unsigned int spreadFactor) :
-          base(iNet, iSimState, spreadFactor)
+            base(iNet, iSimState, spreadFactor)
         {
           performInstantBroadcast = false;
         }
@@ -82,7 +80,8 @@ namespace hemelb
           const unsigned long firstAscent = base::GetFirstAscending();
           const unsigned long firstDescent = base::GetFirstDescending();
 
-          for (storeType::const_iterator it = startIterations.begin(); it != startIterations.end(); it++)
+          for (storeType::const_iterator it = startIterations.begin(); it != startIterations.end();
+              it++)
           {
             unsigned long progress = currentIt - *it;
 
@@ -173,7 +172,8 @@ namespace hemelb
           const unsigned long cycleLength = base::GetRoundTripLength();
           const unsigned long currentIt = base::mSimState->GetTimeStep();
 
-          for (storeType::const_iterator it = startIterations.begin(); it != startIterations.end(); it++)
+          for (storeType::const_iterator it = startIterations.begin(); it != startIterations.end();
+              it++)
           {
             const unsigned long progress = currentIt - *it;
 
@@ -225,8 +225,7 @@ namespace hemelb
 
             // If this node is the root of the tree and we've just finished the upwards half, it
             // must act.
-            if (progress == (base::GetRoundTripLength() - 1)
-                && this->mNet->Rank() == 0)
+            if (progress == (base::GetRoundTripLength() - 1) && this->mNet->Rank() == 0)
             {
               TopNodeAction(*it);
             }
@@ -258,7 +257,8 @@ namespace hemelb
          */
         bool IsInitialAction() const
         {
-          for (storeType::const_iterator it = startIterations.begin(); it != startIterations.end(); it++)
+          for (storeType::const_iterator it = startIterations.begin(); it != startIterations.end();
+              it++)
           {
             if (*it == base::mSimState->GetTimeStep())
             {

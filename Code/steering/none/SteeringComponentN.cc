@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -21,15 +20,14 @@ namespace hemelb
      * @param iSimState
      * @return
      */
-    SteeringComponent::SteeringComponent(Network* network,
-                                         vis::Control* iVisControl,
+    SteeringComponent::SteeringComponent(Network* network, vis::Control* iVisControl,
                                          steering::ImageSendComponent* imageSendComponent,
-                                         net::Net * iNet,
-                                         lb::SimulationState * iSimState,
+                                         net::Net * iNet, lb::SimulationState * iSimState,
                                          configuration::SimConfig* iSimConfig,
                                          const util::UnitConverter* iUnits) :
         net::PhasedBroadcastRegular<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
-        mSimState(iSimState), mVisControl(iVisControl), imageSendComponent(imageSendComponent), mUnits(iUnits), simConfig(iSimConfig)
+            mSimState(iSimState), mVisControl(iVisControl), imageSendComponent(imageSendComponent),
+            mUnits(iUnits), simConfig(iSimConfig)
     {
       ClearValues();
       AssignValues();

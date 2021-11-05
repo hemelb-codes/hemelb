@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -8,13 +7,17 @@
 #define HEMELB_IO_PATHMANAGER_H
 
 #include <string>
-#include "configuration/CommandLine.h"
 #include "util/fileutils.h"
 #include "log/Logger.h"
-#include "configuration/SimConfig.h"
 
 namespace hemelb
 {
+  namespace configuration
+  {
+    class CommandLine;
+    class SimConfig;
+  }
+
   namespace io
   {
     // Forward declare the Writer
@@ -36,8 +39,7 @@ namespace hemelb
          * @param io Set to true if this MPI node is the I/O process and files should be written from this node.
          * @param processorCount The total count of processors, used in generating file-names for report files.
          */
-        PathManager(const configuration::CommandLine & commandLine,
-                    const bool &io,
+        PathManager(const configuration::CommandLine & commandLine, const bool &io,
                     const int &processorCount);
 
         /**
@@ -83,6 +85,14 @@ namespace hemelb
          * @return
          */
         const std::string& GetDataExtractionPath() const;
+
+        /**
+         * Create a subdirectory inside the RBC output directory and return its path
+         * @param subdirectoryName Name of the subdirectory to be created
+         * @return Path to the newly created subdirectory
+         */
+        const std::string GetRBCOutputPathWithSubdir(std::string subdirectoryName) const;
+
       private:
         void GuessOutputDir(); //! String processing to generate an appropriate outptu folder name.
         std::string outputDir;
@@ -94,6 +104,7 @@ namespace hemelb
         std::string dataPath;
         const configuration::CommandLine &options;
         bool doIo; //! Am I the input/output node?
+        std::string rbcsPath; //! Path for RBC output
     };
   }
 }

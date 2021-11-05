@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -61,7 +60,7 @@ namespace hemelb
               req != send_it->second.end(); req++)
           {
             HEMELB_MPI_CALL(MPI_Gather,
-                            (req->Pointer, 1, req->Type, NULL, 1, req->Type, send_it->first, communicator));
+                            (req->Pointer, 1, req->Type, nullptr, 1, req->Type, send_it->first, communicator));
           }
         }
       }
@@ -101,7 +100,7 @@ namespace hemelb
               req++)
           {
             HEMELB_MPI_CALL(MPI_Gatherv,
-                            ( req->Pointer, req->Count, req->Type, NULL, NULL, NULL, req->Type, send_it->first, communicator));
+                            ( req->Pointer, req->Count, req->Type, nullptr, nullptr, nullptr, req->Type, send_it->first, communicator));
           }
 
         }

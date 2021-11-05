@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -41,8 +40,14 @@ namespace hemelb
         bool IsRendering() const;
         Stability GetStability() const;
 
-        PhysicalTime GetTime() const {return GetTimeStepLength()*Get0IndexedTimeStep();}
-        PhysicalTime GetTimeStepLength() const {return timeStepLength;}
+        PhysicalTime GetTime() const
+        {
+          return GetTimeStepLength() * Get0IndexedTimeStep();
+        }
+        PhysicalTime GetTimeStepLength() const
+        {
+          return timeStepLength;
+        }
 
         void Report(reporting::Dict& dictionary);
 

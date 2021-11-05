@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -84,6 +83,18 @@ namespace hemelb
         {
           return latticeData.GetNormalToWall(index);
         }
+        const LatticeForceVector& GetForce() const
+        {
+          return latticeData.GetForceAtSite(index);
+        }
+        void SetForce(LatticeForceVector const &_force)
+        {
+          return latticeData.SetForceAtSite(index, _force);
+        }
+        void AddToForce(LatticeForceVector const &_force)
+        {
+          return latticeData.AddToForceAtSite(index, _force);
+        }
         inline site_t GetIndex() const
         {
           return index;
@@ -125,7 +136,7 @@ namespace hemelb
           return latticeData.GetSiteData(index);
         }
 
-        inline const util::Vector3D<site_t>& GetGlobalSiteCoords() const
+        inline const LatticeVector& GetGlobalSiteCoords() const
         {
           return latticeData.GetGlobalSiteCoords(index);
         }

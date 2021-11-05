@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -32,14 +31,13 @@ namespace hemelb
 
         public:
           SimpleCollideAndStream(kernels::InitParams& initParams) :
-            collider(initParams), bulkLinkDelegate(collider, initParams)
+              collider(initParams), bulkLinkDelegate(collider, initParams)
           {
 
           }
 
           template<bool tDoRayTracing>
-          inline void DoStreamAndCollide(const site_t firstIndex,
-                                         const site_t siteCount,
+          inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::LatticeData* latDat,
                                          lb::MacroscopicPropertyCache& propertyCache)
@@ -48,9 +46,7 @@ namespace hemelb
             {
               geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
 
-              const distribn_t* lFOld = site.GetFOld<LatticeType> ();
-
-              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(lFOld);
+              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site);
 
               ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
               hydroVars.tau = lbmParams->GetTau();
@@ -72,10 +68,8 @@ namespace hemelb
           }
 
           template<bool tDoRayTracing>
-          inline void DoPostStep(const site_t iFirstIndex,
-                                 const site_t iSiteCount,
-                                 const LbmParameters* iLbmParams,
-                                 geometry::LatticeData* bLatDat,
+          inline void DoPostStep(const site_t iFirstIndex, const site_t iSiteCount,
+                                 const LbmParameters* iLbmParams, geometry::LatticeData* bLatDat,
                                  lb::MacroscopicPropertyCache& propertyCache)
           {
 

@@ -18,3 +18,5 @@ add_library(hemelb_lb
   MacroscopicPropertyCache.cc SimulationState.cc StabilityTester.cc
   InitialCondition.cc
   )
+
+target_link_libraries(hemelb_lb PRIVATE Boost::boost)

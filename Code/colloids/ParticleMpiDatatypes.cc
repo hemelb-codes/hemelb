@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -54,8 +53,8 @@ namespace hemelb
       displacementOfEachFieldBlock[1] -= baseAddress;
 
       // the built-in MPI datatype of each field must match the C++ type
-      MPI_Datatype datatypeOfEachFieldBlock[] = { MPI_UNSIGNED_LONG, MpiDataType<util::Vector3D<
-          double> > () };
+      MPI_Datatype datatypeOfEachFieldBlock[] = { MPI_UNSIGNED_LONG, MpiDataType<
+                                                      util::Vector3D<double> >() };
 
       // create a first draft of the MPI datatype for a Particle
       // the lower bound and displacements of fields are correct
@@ -132,13 +131,13 @@ namespace hemelb
 
       // the built-in MPI datatype of each field must match the C++ type
       MPI_Datatype datatypeOfEachFieldBlock[] = { MPI_UNSIGNED_LONG,
-                                                  MPI_INT,
+      MPI_INT,
                                                   MPI_DOUBLE,
                                                   MPI_DOUBLE,
                                                   MPI_DOUBLE,
                                                   MPI_UNSIGNED_LONG,
-                                                  MPI_UNSIGNED_LONG,
-                                                  net::MpiDataType<util::Vector3D<double> > () };
+                                                  MPI_UNSIGNED_LONG, net::MpiDataType<
+                                                      util::Vector3D<double> >() };
 
       // create a first draft of the MPI datatype for a Particle
       // the lower bound and displacements of fields are correct
@@ -205,8 +204,8 @@ namespace hemelb
       displacementOfEachFieldBlock[1] -= baseAddress;
 
       // the built-in MPI datatype of each field must match the C++ type
-      MPI_Datatype datatypeOfEachFieldBlock[] = { MPI_UNSIGNED_LONG, net::MpiDataType<util::Vector3D<
-          double> > () };
+      MPI_Datatype datatypeOfEachFieldBlock[] = { MPI_UNSIGNED_LONG, net::MpiDataType<
+                                                      util::Vector3D<double> >() };
 
       // create a first draft of the MPI datatype for a Particle
       // the lower bound and displacements of fields are correct

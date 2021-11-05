@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -16,8 +15,7 @@ namespace hemelb
     {
 
       InOutLetCosine::InOutLetCosine() :
-        InOutLet(), densityMean(1.0), densityAmp(0.0), phase(0.0), period(1.0),
-            warmUpLength(0)
+          InOutLet(), densityMean(1.0), densityAmp(0.0), phase(0.0), period(1.0), warmUpLength(0)
       {
 
       }

@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -45,7 +44,7 @@ namespace hemelb
 	REQUIRE(Approx(6000.0) == inlet->GetPeriod());
 
 	// Check that in the absence of the <monitoring> XML element things get initiliased properly
-	const hemelb::configuration::SimConfig::MonitoringConfig* monConfig = config->GetMonitoringConfiguration();
+	const hemelb::configuration::MonitoringConfig* monConfig = config->GetMonitoringConfiguration();
 	REQUIRE(!monConfig->doConvergenceCheck);
 	REQUIRE(!monConfig->doIncompressibilityCheck);
 	REQUIRE(!monConfig->convergenceTerminate);
@@ -62,7 +61,7 @@ namespace hemelb
 	REQUIRE(inlet != nullptr);
 	REQUIRE(Approx(6000.0) == inlet->GetPeriod());
 
-	const hemelb::configuration::SimConfig::MonitoringConfig* monConfig = config->GetMonitoringConfiguration();
+	const hemelb::configuration::MonitoringConfig* monConfig = config->GetMonitoringConfiguration();
 	REQUIRE(monConfig->doConvergenceCheck);
 	REQUIRE(monConfig->doIncompressibilityCheck);
 	REQUIRE(monConfig->convergenceTerminate);

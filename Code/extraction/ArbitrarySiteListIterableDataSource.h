@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -19,8 +18,9 @@ namespace hemelb
     class ArbitrarySiteListIterableDataSource : public IterableDataSource
     {
       public:
-        ArbitrarySiteListIterableDataSource() {
-          origin = util::Vector3D<distribn_t>(0,0,0);
+        ArbitrarySiteListIterableDataSource()
+        {
+          origin = util::Vector3D<distribn_t>(0, 0, 0);
         }
 
         /**
@@ -36,7 +36,8 @@ namespace hemelb
          *
          * @return
          */
-        bool ReadNext() {
+        bool ReadNext()
+        {
           return false;
         }
 
@@ -44,7 +45,8 @@ namespace hemelb
          * Returns the coordinates of the site.
          * @return
          */
-        util::Vector3D<site_t> GetPosition() const {
+        util::Vector3D<site_t> GetPosition() const
+        {
           return util::Vector3D<site_t>(0, 0, 0);
         }
 
@@ -52,7 +54,8 @@ namespace hemelb
          * Returns the pressure at the site.
          * @return
          */
-        float GetPressure() const {
+        float GetPressure() const
+        {
           return 0.0;
         }
 
@@ -60,7 +63,8 @@ namespace hemelb
          * Returns the velocity at the site.
          * @return
          */
-        util::Vector3D<float> GetVelocity() const {
+        util::Vector3D<float> GetVelocity() const
+        {
           //TODO: Makes this work properly!
           return origin;
         }
@@ -69,7 +73,8 @@ namespace hemelb
          * Returns the shear stress at the site.
          * @return
          */
-        float GetShearStress() const {
+        float GetShearStress() const
+        {
           return 0.0;
         }
 
@@ -77,7 +82,8 @@ namespace hemelb
          * Returns the Von Mises stress at the site.
          * @return
          */
-        float GetVonMisesStress() const {
+        float GetVonMisesStress() const
+        {
           return 0.0;
         }
 
@@ -85,14 +91,16 @@ namespace hemelb
          * Returns the shear rate at the site.
          * @return
          */
-        float GetShearRate() const {
+        float GetShearRate() const
+        {
           return 0.0;
         }
 
         /**
          * Resets the iterator to the beginning again.
          */
-        void Reset() {
+        void Reset()
+        {
           return;
         }
 
@@ -102,7 +110,8 @@ namespace hemelb
          * @param
          * @return
          */
-        bool IsValidLatticeSite(const util::Vector3D<site_t>& location) const {
+        bool IsValidLatticeSite(const util::Vector3D<site_t>& location) const
+        {
           return false;
         }
 
@@ -111,7 +120,8 @@ namespace hemelb
          * lives on this core).
          * @return
          */
-        bool IsAvailable(const util::Vector3D<site_t>& location) const {
+        bool IsAvailable(const util::Vector3D<site_t>& location) const
+        {
           return false;
         }
 
@@ -119,7 +129,8 @@ namespace hemelb
          * Returns the real-world size of a single lattice unit.
          * @return
          */
-        distribn_t GetVoxelSize() const {
+        distribn_t GetVoxelSize() const
+        {
           return 0.0;
         }
 
@@ -127,7 +138,8 @@ namespace hemelb
          * Returns the origin of the geometry in real units.
          * @return
          */
-        const util::Vector3D<distribn_t>& GetOrigin() const {
+        const util::Vector3D<distribn_t>& GetOrigin() const
+        {
           return origin;
         }
 
@@ -138,7 +150,8 @@ namespace hemelb
          * @param location coordinates of interest
          * @return whether there is a boundary site at location
          */
-        bool IsWallSite(const util::Vector3D<site_t>& location) const {
+        bool IsWallSite(const util::Vector3D<site_t>& location) const
+        {
           return false;
         }
 

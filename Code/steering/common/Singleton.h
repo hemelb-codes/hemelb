@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -29,7 +28,7 @@ namespace hemelb
         public:
           static Derived* Init()
           {
-            if (Singleton<Derived>::singleton == NULL)
+            if (Singleton<Derived>::singleton == nullptr)
             {
               Singleton<Derived>::singleton = new Derived();
             }
@@ -38,7 +37,7 @@ namespace hemelb
       };
 
       template<typename Derived>
-      Singleton<Derived>* Singleton<Derived>::singleton = NULL;
+      Singleton<Derived>* Singleton<Derived>::singleton = nullptr;
 
     }
   }

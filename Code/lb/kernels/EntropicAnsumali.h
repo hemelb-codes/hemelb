@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -43,8 +42,8 @@ namespace hemelb
        * LBGK kernel which ensures the increase of entropy.
        */
       template<class LatticeType>
-      class EntropicAnsumali : public BaseKernel<EntropicAnsumali<LatticeType>, LatticeType>
-                               , public Entropic<LatticeType>
+      class EntropicAnsumali : public BaseKernel<EntropicAnsumali<LatticeType>, LatticeType>,
+                               public Entropic<LatticeType>
       {
         public:
           /**
@@ -62,7 +61,8 @@ namespace hemelb
            * @param hydroVars
            * @param index The current lattice site index.
            */
-          inline void DoCalculateDensityMomentumFeq(HydroVars<EntropicAnsumali<LatticeType> >& hydroVars, site_t index)
+          inline void DoCalculateDensityMomentumFeq(
+              HydroVars<EntropicAnsumali<LatticeType> >& hydroVars, site_t index)
           {
             hydroVars.index = index;
             LatticeType::CalculateDensityAndMomentum(hydroVars.f,
@@ -88,7 +88,8 @@ namespace hemelb
            * @param hydroVars
            * @param index The current lattice site index.
            */
-          inline void DoCalculateFeq(HydroVars<EntropicAnsumali<LatticeType> >& hydroVars, site_t index)
+          inline void DoCalculateFeq(HydroVars<EntropicAnsumali<LatticeType> >& hydroVars,
+                                     site_t index)
           {
             hydroVars.index = index;
             LatticeType::CalculateEntropicFeqAnsumali(hydroVars.density,

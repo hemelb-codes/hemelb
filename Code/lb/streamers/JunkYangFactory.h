@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -88,7 +87,7 @@ namespace hemelb
 
               geometry::Site<geometry::LatticeData> site = latticeData->GetSite(siteIndex);
 
-              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site.GetFOld<LatticeType>());
+              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site);
 
               ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
               hydroVars.tau = lbmParams->GetTau();
@@ -322,8 +321,10 @@ namespace hemelb
                     + LatticeType::CZ[*rowIndexIncomingVelocity]
                         * LatticeType::CZ[*columnIndexIncomingVelocity];
 
-                assert(site.template GetWallDistance<LatticeType> (LatticeType::INVERSEDIRECTIONS[(Direction) *rowIndexIncomingVelocity]) >= 0);
-                assert(site.template GetWallDistance<LatticeType> (LatticeType::INVERSEDIRECTIONS[(Direction) *rowIndexIncomingVelocity]) < 1);
+                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
+                    >= 0);
+                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
+                    < 1);
 
                 kMatrices[contiguousSiteIndex](rowIndex, columnIndex) =
                     (-3.0 / 2.0)
@@ -364,8 +365,10 @@ namespace hemelb
                     + LatticeType::CZ[*rowIndexIncomingVelocity]
                         * LatticeType::CZ[*columnIndexOutgoingVelocity];
 
-                assert(site.template GetWallDistance<LatticeType> (LatticeType::INVERSEDIRECTIONS[(Direction) *rowIndexIncomingVelocity]) >= 0);
-                assert(site.template GetWallDistance<LatticeType> (LatticeType::INVERSEDIRECTIONS[(Direction) *rowIndexIncomingVelocity]) < 1);
+                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
+                    >= 0);
+                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
+                    < 1);
 
                 kMatrices[contiguousSiteIndex](rowIndex, columnIndex) =
                     (-3.0 / 2.0)
@@ -413,9 +416,8 @@ namespace hemelb
             {
               luPermutationMatrices[iter->first] =
                   new ublas::permutation_matrix<std::size_t>(incomingVelocities[iter->first].size());
-              int ret = lu_factorize(iter->second, *luPermutationMatrices[iter->first]);
               // If this assertion trips, lMatrices[siteLocalIndex] is singular.
-              assert(ret == 0);
+              assert(lu_factorize(iter->second, *luPermutationMatrices[iter->first]) == 0);
             }
           }
 

@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -30,11 +29,8 @@ namespace hemelb
          * @param readingGroupSize Number sof cores to use for reading blocks
          * @param net Instance of Net communication class to use.
          */
-       Needs(const site_t blockCount,
-                          const std::vector<bool>& readBlock,
-                          const proc_t readingGroupSize,
-                          net::InterfaceDelegationNet &net,
-                          bool shouldValidate); // Temporarily during the refactor, constructed just to abstract the block sharing bit
+        Needs(const site_t blockCount, const std::vector<bool>& readBlock,
+              const proc_t readingGroupSize, net::InterfaceDelegationNet &net, bool shouldValidate); // Temporarily during the refactor, constructed just to abstract the block sharing bit
 
         /***
          * Which processors need a given block?

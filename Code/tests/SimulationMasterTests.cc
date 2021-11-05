@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -33,7 +32,7 @@ namespace hemelb
       CopyResourceToTempdir("four_cube.gmy");
 
       auto options = std::make_unique<hemelb::configuration::CommandLine>(argc, argv);
-      auto master = std::make_unique<SimulationMaster>(*options, Comms());
+      auto master = std::make_unique<SimulationMaster<>>(*options, Comms());
 
       SECTION("Running a simulation creates outputs") {
 	// TODO: This test is fatal if run with LADDIOLET. See ticket #605.

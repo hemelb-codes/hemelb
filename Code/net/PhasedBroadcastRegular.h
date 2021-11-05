@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -17,8 +16,10 @@ namespace hemelb
      * PhasedBroadcastRegular - a class for performing phased broadcasts starting at regular
      * intervals. A longer description is given in PhasedBroadcast.h.
      */
-    template<bool initialAction = false, unsigned splay = 1, unsigned overlap = 0, bool goDown = true, bool goUp = true>
-    class PhasedBroadcastRegular : public PhasedBroadcast<initialAction, splay, overlap, goDown, goUp>
+    template<bool initialAction = false, unsigned splay = 1, unsigned overlap = 0, bool goDown =
+        true, bool goUp = true>
+    class PhasedBroadcastRegular : public PhasedBroadcast<initialAction, splay, overlap, goDown,
+        goUp>
     {
       public:
         /**
@@ -29,7 +30,8 @@ namespace hemelb
          * @param spreadFactor
          * @return
          */
-        PhasedBroadcastRegular(Net * iNet, const lb::SimulationState * iSimState, unsigned int spreadFactor) :
+        PhasedBroadcastRegular(Net * iNet, const lb::SimulationState * iSimState,
+                               unsigned int spreadFactor) :
             base(iNet, iSimState, spreadFactor)
         {
 
@@ -110,16 +112,16 @@ namespace hemelb
         void PostReceive()
         {
           const unsigned long iCycleNumber = Get0IndexedIterationNumber();
-          const unsigned long firstAscent =
-              PhasedBroadcast<initialAction, splay, overlap, goDown, goUp>::GetFirstAscending();
-          const unsigned long traversalLength =
-              PhasedBroadcast<initialAction, splay, overlap, goDown, goUp>::GetTraverseTime();
+          const unsigned long firstAscent = PhasedBroadcast<initialAction, splay, overlap, goDown,
+              goUp>::GetFirstAscending();
+          const unsigned long traversalLength = PhasedBroadcast<initialAction, splay, overlap,
+              goDown, goUp>::GetTraverseTime();
 
           // Deal with the case of a cycle with an initial pass down the tree.
           if (goDown)
           {
-            const unsigned long firstDescent =
-                PhasedBroadcast<initialAction, splay, overlap, goDown, goUp>::GetFirstDescending();
+            const unsigned long firstDescent = PhasedBroadcast<initialAction, splay, overlap,
+                goDown, goUp>::GetFirstDescending();
 
             if (iCycleNumber >= firstDescent && iCycleNumber < firstAscent)
             {

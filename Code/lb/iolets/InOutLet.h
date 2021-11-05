@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -7,12 +6,17 @@
 #ifndef HEMELB_LB_IOLETS_INOUTLET_H
 #define HEMELB_LB_IOLETS_INOUTLET_H
 
+#include <memory>
 #include "util/Vector3D.h"
 #include "util/UnitConverter.h"
 #include "lb/SimulationState.h"
 
 namespace hemelb
 {
+  namespace redblood {
+    class FlowExtension;
+  }
+
   namespace lb
   {
     namespace iolets
@@ -57,7 +61,7 @@ namespace hemelb
       {
         public:
           InOutLet() :
-            comms(NULL), extraData(NULL)
+              comms(nullptr), extraData(nullptr)
           {
           }
           virtual ~InOutLet()
@@ -190,12 +194,21 @@ namespace hemelb
             extraData = ed;
           }
 
+          void SetFlowExtension(std::shared_ptr<redblood::FlowExtension> flowExt) {
+            this->flowExtension = flowExt;
+          }
+
+          const std::shared_ptr<redblood::FlowExtension> GetFlowExtension() const {
+            return this->flowExtension;
+          }
+
         protected:
           LatticeDensity minimumSimulationDensity;
           LatticePosition position;
           util::Vector3D<Dimensionless> normal;
           BoundaryComms* comms;
           IoletExtraData* extraData;
+          std::shared_ptr<redblood::FlowExtension> flowExtension;
           friend class IoletExtraData;
       };
 

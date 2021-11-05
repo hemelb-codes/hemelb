@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -30,13 +29,13 @@ namespace hemelb
 
       protected:
         typedef std::vector<int> VoI; // Vector of Ints
-        typedef std::vector<std::string> VoS;// Vector of Strings
+        typedef std::vector<std::string> VoS; // Vector of Strings
 
         // C'tor
         ActiveDebugger(const char* const executable, const net::MpiCommunicator& comm);
 
-        bool mAmAttached;// Indicate attachment state
-        VoI mPIds;// vector of process IDs
+        bool mAmAttached; // Indicate attachment state
+        VoI mPIds; // vector of process IDs
 
         void Attach(void);
         void GatherProcessIds(void);

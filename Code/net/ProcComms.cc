@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -30,7 +29,11 @@ namespace hemelb
         types.push_back(it->Type);
       }
       // Create the type and commit it.
-      MPI_Type_create_struct(this->size(), &lengths.front(), &displacements.front(), &types.front(), &Type);
+      MPI_Type_create_struct(this->size(),
+                             &lengths.front(),
+                             &displacements.front(),
+                             &types.front(),
+                             &Type);
       MPI_Type_commit(&Type);
     }
   }

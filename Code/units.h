@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -46,6 +45,7 @@ namespace hemelb
 
   typedef distribn_t LatticeReciprocalTime; ///< 1/timestep
   typedef double PhysicalReciprocalTime; ///< 1/seconds
+  typedef double PhysicalRate; // inverse seconds / Hz
 
   typedef double PhysicalMass; // kilograms
 
@@ -55,6 +55,8 @@ namespace hemelb
   typedef double PhysicalLength_deprecated;
 
   typedef double PhysicalDistance; // continuous distance in physical units
+  typedef double LatticeVolume; // continuous volume in physical units
+  typedef double LatticeArea; // continuous area in physical units
   typedef double LatticeDistance; // continuous distance in lattice units
   typedef int64_t LatticeCoordinate; // discrete distance in lattice units
 
@@ -63,8 +65,11 @@ namespace hemelb
 
   typedef util::Vector3D<PhysicalDistance> PhysicalPosition;
 
+  typedef double PhysicalEnergy; // type for energy
   typedef double PhysicalForce; // continuous scalar force in physical units
+  typedef double LatticeEnergy; // continuous scalar energy in lattice units
   typedef double LatticeForce; // continuous scalar force in lattice units
+  typedef double LatticeModulus; // placeholder for any moduli, though actual dimension may differ
   typedef util::Vector3D<LatticeForce> LatticeForceVector; // continuous force in lattice units
 
   // TODO: xxxVelocity is a Vector3D<xxxSpeed> not a scalar - should be fixed as part of ticket #437
@@ -77,6 +82,11 @@ namespace hemelb
 
   typedef double PhysicalPressureGradient;
   typedef double LatticePressureGradient;
+
+  typedef double PhysicalDynamicViscosity;
+  typedef double PhysicalKinematicViscosity;
+  typedef double LatticeDynamicViscosity;
+  typedef double LatticeKinematicViscosity;
 
   typedef double Dimensionless;
 }

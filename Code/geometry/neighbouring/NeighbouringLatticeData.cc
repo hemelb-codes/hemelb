@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -15,7 +14,8 @@ namespace hemelb
     {
 
       NeighbouringLatticeData::NeighbouringLatticeData(const lb::lattices::LatticeInfo& latticeInfo) :
-          distributions(), distanceToWall(), wallNormalAtSite(), siteData(), latticeInfo(latticeInfo)
+          distributions(), distanceToWall(), wallNormalAtSite(), siteData(),
+              latticeInfo(latticeInfo)
       {
       }
 
@@ -44,7 +44,8 @@ namespace hemelb
         return ConstNeighbouringSite(globalIndex, *this);
       }
 
-      const util::Vector3D<distribn_t>& NeighbouringLatticeData::GetNormalToWall(site_t globalIndex) const
+      const util::Vector3D<distribn_t>& NeighbouringLatticeData::GetNormalToWall(
+          site_t globalIndex) const
       {
         return wallNormalAtSite.find(globalIndex)->second;
       }

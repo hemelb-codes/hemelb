@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -18,19 +17,51 @@ namespace hemelb
   {
     namespace kernels
     {
+      namespace rheologyModels
+      {
+        template<class tRheologyImplementation>
+        class AbstractRheologyModel;
+      }
+
+      namespace detail
+      {
+	template <typename RHEO>
+	struct has_calc_visc {
+	  using prototype = PhysicalDynamicViscosity (RHEO::*)(const PhysicalRate&, const LatticeDensity&) const;
+	  static constexpr bool value = std::is_same<
+	    prototype,
+	    decltype(&RHEO::CalculateViscosityForShearRate)
+	    >::value;
+	};
+      }
 
       /**
        * Class extending the original BGK collision operator to support non-Newtonian
        * fluids. Implements support for relaxation time not constant across the domain.
        */
       template<class tRheologyModel, class LatticeType>
-      class LBGKNN : public BaseKernel<LBGKNN<tRheologyModel, LatticeType> , LatticeType>
+      class LBGKNN : public BaseKernel<LBGKNN<tRheologyModel, LatticeType>, LatticeType>
       {
+	// Eventually these could be made a concept
+	//
+	// One might like to check these in AbstractRheologyModel, but
+	// the derived class is incomplete at that point so can't
+	// check its traits there.
+	static_assert(std::is_base_of<rheologyModels::AbstractRheologyModel<tRheologyModel>, tRheologyModel>::value,
+		      "tRheologyModel must inherit AbstractRheologyModel via CRTP");
+	static_assert(std::is_constructible<tRheologyModel, const InitParams>::value,
+		      "tRheologyModel must be constructable from InitParams");
+	static_assert(detail::has_calc_visc<tRheologyModel>::value,
+		      "tRheologyModel must have member function "
+		      "`PhysicalDynamicViscosity CalculateViscosityForShearRate(const PhysicalRate&, const LatticeDensity&) const`");
+
         public:
 
           LBGKNN(InitParams& initParams)
+	    : mTau(initParams.latDat->GetLocalFluidSiteCount(), initParams.lbmParams->GetTau()),
+	      mLbParams(*initParams.lbmParams),
+	      mRheo(initParams)
           {
-            InitState(initParams);
           }
 
           inline void DoCalculateDensityMomentumFeq(HydroVars<LBGKNN>& hydroVars, site_t index)
@@ -51,7 +82,7 @@ namespace hemelb
             }
 
             // Use the value of tau computed during the previous time step in coming calls to DoCollide
-            assert( (index < (site_t) mTau.size()));
+            assert( (index < (site_t ) mTau.size()));
             hydroVars.tau = mTau[index];
 
             // Compute the local relaxation time that will be used in the next time step
@@ -72,7 +103,7 @@ namespace hemelb
             }
 
             // Use the value of tau computed during the previous time step in coming calls to DoCollide
-            assert( (index < (site_t) mTau.size()));
+            assert( (index < (site_t ) mTau.size()));
             hydroVars.tau = mTau[index];
 
             // Compute the local relaxation time that will be used in the next time step
@@ -85,7 +116,9 @@ namespace hemelb
 
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
             {
-              hydroVars.SetFPostCollision(direction, hydroVars.f[direction] + hydroVars.GetFNeq().f[direction] * omega);
+              hydroVars.SetFPostCollision(direction,
+                                          hydroVars.f[direction]
+                                              + hydroVars.GetFNeq().f[direction] * omega);
             }
           }
 
@@ -106,24 +139,11 @@ namespace hemelb
            */
           std::vector<distribn_t> mTau;
 
-          /** Current time step */
-          distribn_t mTimeStep;
+          // Our copy of the base LB parameters
+          LbmParameters mLbParams;
 
-          /** Current space step */
-          distribn_t mSpaceStep;
-
-          /**
-           *  Helper method to set/update member variables. Called from the constructor and Reset()
-           *
-           *  @param initParams struct used to store variables required for initialisation of various operators
-           */
-          void InitState(const InitParams& initParams)
-          {
-            // Initialise relaxation time across the domain to HemeLB's default value.
-            mTau.resize(initParams.latDat->GetLocalFluidSiteCount(), initParams.lbmParams->GetTau());
-            mTimeStep = initParams.lbmParams->GetTimeStep();
-            mSpaceStep = initParams.lbmParams->GetVoxelSize();
-          }
+          // Our rheology model
+          tRheologyModel mRheo;
 
           /**
            *  Helper method to update the value of local relaxation time (tau) from a given hydrodynamic
@@ -140,11 +160,14 @@ namespace hemelb
              * Shear-rate returned by CalculateShearRate is dimensionless and CalculateTauForShearRate
              * wants it in units of s^{-1}
              */
-            double shear_rate = LatticeType::CalculateShearRate(localTau, hydroVars.f_neq.f, hydroVars.density)
-                / mTimeStep;
+            double shear_rate = LatticeType::CalculateShearRate(localTau,
+                                                                hydroVars.f_neq.f,
+                                                                hydroVars.density) / mLbParams.GetTimeStep();
 
             // Update tau
-            localTau = tRheologyModel::CalculateTauForShearRate(shear_rate, hydroVars.density, mSpaceStep, mTimeStep);
+            localTau = mRheo.CalculateTauForShearRate(shear_rate,
+						      hydroVars.density,
+						      mLbParams);
 
             // In some rheology models viscosity tends to infinity as shear rate goes to zero.
             /// @todo: #633 refactor

@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -30,7 +29,8 @@ namespace hemelb
          * @param fluidSiteCount Number of fluid sites, so the cache knows how big it needs to be.
          * @return
          */
-        MacroscopicPropertyCache(const SimulationState& simState, const geometry::LatticeData& latticeData);
+        MacroscopicPropertyCache(const SimulationState& simState,
+                                 const geometry::LatticeData& latticeData);
 
         /**
          * Reset the list of cache types required to be none of them.
@@ -93,7 +93,6 @@ namespace hemelb
          * The state of the simulation, including the number of timesteps passed.
          */
         // const SimulationState& simulationState;
-
         /**
          * The number of sites.
          */

@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -20,7 +19,9 @@ namespace hemelb
 
 	unitConverter = new util::UnitConverter(timeStepSeconds,
 						voxelSizeMetres,
-						geometryOriginMetres);
+						geometryOriginMetres,
+						DEFAULT_FLUID_DENSITY_Kg_per_m3,
+						0.0);
 
 	lb::iolets::InOutLetCosine* inlet = new lb::iolets::InOutLetCosine();
 	inlet->SetPressureAmp(unitConverter->ConvertPressureDifferenceToLatticeUnits(1.0));

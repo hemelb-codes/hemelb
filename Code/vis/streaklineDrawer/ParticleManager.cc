@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -14,8 +13,9 @@ namespace hemelb
   {
     namespace streaklinedrawer
     {
-      ParticleManager::ParticleManager(std::map<proc_t, NeighbouringProcessor>& iNeighbouringProcessors) :
-        neighbouringProcessors(iNeighbouringProcessors)
+      ParticleManager::ParticleManager(
+          std::map<proc_t, NeighbouringProcessor>& iNeighbouringProcessors) :
+          neighbouringProcessors(iNeighbouringProcessors)
       {
       }
 
@@ -36,7 +36,7 @@ namespace hemelb
 
       void ParticleManager::DeleteParticle(site_t iIndex)
       {
-        assert(particles.size() > static_cast<size_t> (iIndex));
+        assert(particles.size() > static_cast<size_t>(iIndex));
 
         //Move the particle at the end to position
         particles[iIndex] = particles.back();
@@ -75,7 +75,7 @@ namespace hemelb
                                                 util::Vector3D<site_t>(particles[n].position));
 
           // TODO can we get rid of the first test?
-          if (siteVelocityData == NULL || siteVelocityData->proc_id == -1)
+          if (siteVelocityData == nullptr || siteVelocityData->proc_id == -1)
           {
             continue;
           }

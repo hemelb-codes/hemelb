@@ -1,4 +1,11 @@
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 #include "extraction/LocalDistributionInput.h"
+
+#include <boost/optional.hpp>
+
 #include "extraction/OutputField.h"
 #include "extraction/LocalPropertyOutput.h"
 #include "geometry/LatticeData.h"
@@ -33,6 +40,8 @@ namespace hemelb
 
     void LocalDistributionInput::LoadDistribution(geometry::LatticeData* latDat, boost::optional<LatticeTimeStep>& targetTime)
     {
+      const auto NUMVECTORS = latDat->GetLatticeInfo().GetNumVectors();
+
       // We could supply hints regarding how the file should be read
       // but we are not doing so yet.
 
@@ -41,7 +50,7 @@ namespace hemelb
       auto inputFile = net::MpiFile::Open(comms, filePath, MPI_MODE_RDONLY);
       // Set the view to the file.
       inputFile.SetView(0, MPI_CHAR, MPI_CHAR, "native");
-      ReadExtractionHeaders(inputFile);
+      ReadExtractionHeaders(inputFile, NUMVECTORS);
 
       // Now read offset file.
       ReadOffsets(fmt::offset::ExtractionToOffset(filePath));
@@ -136,12 +145,12 @@ namespace hemelb
 			      << " but should be read at " << index;
 	}
 
-	distribn_t* f_old_p = latDat->GetFOld(iSite * LatticeType::NUMVECTORS);
-	distribn_t* f_new_p = latDat->GetFNew(iSite * LatticeType::NUMVECTORS);
+	distribn_t* f_old_p = latDat->GetFOld(iSite * NUMVECTORS);
+	distribn_t* f_new_p = latDat->GetFNew(iSite * NUMVECTORS);
 	// distField.numberOfFloats is read on IO rank and checked to
-	// be equal to LatticeType::NUMVECTORS so we use that instead
+	// be equal to NUMVECTORS so we use that instead
 	// of broadcasting and storing.
-	for (int i = 0; i < LatticeType::NUMVECTORS; i++) {
+	for (int i = 0; i < NUMVECTORS; i++) {
 	  float field_val;
 	  dataReader.read(field_val);
 	  field_val += distField.offset;
@@ -154,7 +163,7 @@ namespace hemelb
 			  << " sites but expected " << latDat->GetLocalFluidSiteCount();
     }
 
-    void LocalDistributionInput::ReadExtractionHeaders(net::MpiFile& inputFile) {
+    void LocalDistributionInput::ReadExtractionHeaders(net::MpiFile& inputFile, const unsigned NUMVECTORS) {
       if (comms.OnIORank()) {
 	auto preambleBuf = std::vector<char>(fmt::extraction::MainHeaderLength);
 	inputFile.Read(preambleBuf);
@@ -227,9 +236,9 @@ namespace hemelb
 	  throw Exception() << "Checkpoint file must contain field named 'distributions', but has '"
 			    << distField.name << "'";
 
-	if (distField.numberOfFloats != LatticeType::NUMVECTORS)
+	if (distField.numberOfFloats != NUMVECTORS)
 	  throw Exception() << "Checkpoint field distributions contains " << distField.numberOfFloats
-			    << " distributions but this build of HemeLB requires " << LatticeType::NUMVECTORS;
+			    << " distributions but this build of HemeLB requires " << NUMVECTORS;
 
       }
       comms.Broadcast(distField.offset, comms.GetIORank());

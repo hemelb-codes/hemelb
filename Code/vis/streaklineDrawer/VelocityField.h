@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -45,19 +44,21 @@ namespace hemelb
                                            util::Vector3D<float> localVelocityField[2][2][2]);
 
           util::Vector3D<float>
-          InterpolateVelocityForPoint(const util::Vector3D<float> position,
-                                      const util::Vector3D<float> localVelocityField[2][2][2]) const;
+          InterpolateVelocityForPoint(
+              const util::Vector3D<float> position,
+              const util::Vector3D<float> localVelocityField[2][2][2]) const;
 
           void InvalidateAllCalculatedVelocities();
 
-          void UpdateLocalField(const util::Vector3D<site_t>& position, const geometry::LatticeData& latDat);
+          void UpdateLocalField(const util::Vector3D<site_t>& position,
+                                const geometry::LatticeData& latDat);
 
           bool NeededFromNeighbour(const util::Vector3D<site_t> location,
-                                   const geometry::LatticeData& latDat,
-                                   proc_t* sourceProcessor);
+                                   const geometry::LatticeData& latDat, proc_t* sourceProcessor);
 
         private:
-          void UpdateLocalField(VelocitySiteData* localVelocitySiteData, const geometry::LatticeData& latDat);
+          void UpdateLocalField(VelocitySiteData* localVelocitySiteData,
+                                const geometry::LatticeData& latDat);
 
           // Counter to make sure the velocity field blocks are correct for the current iteration.
           site_t counter;

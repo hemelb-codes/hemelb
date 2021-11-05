@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -21,9 +20,7 @@ namespace hemelb
       //See http://en.wikipedia.org/wiki/HSL_and_HSV for the
       //formulae used
       //TODO: Possibly replace truncation with rounding?
-      void HSLToRGBConverter::Convert(float iHue,
-                                      float iSaturation,
-                                      float iLightness,
+      void HSLToRGBConverter::Convert(float iHue, float iSaturation, float iLightness,
                                       unsigned char oRGBColour[3])
       {
         //All values are stored as 32-bit unsigned integers
@@ -42,9 +39,9 @@ namespace hemelb
         static const uint32_t OtherScalar = std::numeric_limits<uint16_t>::max();
 
         //Cast the inputs accodingly
-        uint32_t lHue = (uint32_t)(iHue * (float) (DegreesScalar));
-        uint32_t lSaturation = (uint32_t)(iSaturation * (float) (OtherScalar));
-        uint32_t lLightness = (uint32_t)(iLightness * (float) (OtherScalar));
+        uint32_t lHue = (uint32_t) (iHue * (float) (DegreesScalar));
+        uint32_t lSaturation = (uint32_t) (iSaturation * (float) (OtherScalar));
+        uint32_t lLightness = (uint32_t) (iLightness * (float) (OtherScalar));
 
         //Calculate the Chroma - a division by OtherScalar is 
         //required for the Chroma to remain between 0
@@ -61,7 +58,7 @@ namespace hemelb
         //remain between 0 and the maximum value of a 16-bit interger 
         uint32_t lIntermediate = (lChroma * (DegreesScalar - abs(lTemp))) / DegreesScalar;
 
-        uint32_t red=0, green=0, blue=0;
+        uint32_t red = 0, green = 0, blue = 0;
 
         //Map the hue to value to six cases 
         uint32_t lHueInt = lHuePrime / DegreesScalar;

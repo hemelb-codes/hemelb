@@ -3,7 +3,6 @@
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
-# For debugging the C++ extension.
 
 # Append '-g' and '-O0' to the compile flags and build the extension
 # in place (i.e. $ python setup.py build_ext --inplace)

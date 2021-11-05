@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -19,11 +18,10 @@ namespace hemelb
     class Reportable
     {
       public:
-        virtual ~Reportable() {}
+        virtual ~Reportable() = default;
         virtual void Report(Dict& dictionary) = 0;
     };
   }
 }
-
 
 #endif /* HEMELB_REPORTING_REPORTABLE_H */

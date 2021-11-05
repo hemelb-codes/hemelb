@@ -1,4 +1,3 @@
-
 // This file is part of HemeLB and is Copyright (C)
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
@@ -9,6 +8,7 @@
 
 #include "constants.h"
 #include "lb/LbmParameters.h"
+#include "lb/kernels/BaseKernel.h"
 #include "geometry/LatticeData.h"
 
 namespace hemelb
