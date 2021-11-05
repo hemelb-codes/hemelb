@@ -60,10 +60,7 @@ if (HEMELB_BUILD_RBC)
   add_to_resources(
     resources/red_blood_cell.txt resources/red_blood_cube.txt
     resources/large_cylinder.gmy resources/large_cylinder.xml
-    resources/large_cylinder_rbc.xml resources/iccb_capillary_network.xml
-    resources/P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_388889_1000_3.gmy
-    resources/P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_875_1000_3.gmy
-    resources/P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_1_75_1000_3.gmy
+    resources/large_cylinder_rbc.xml
     resources/rbc_ico_1280.msh resources/rbc_ico_720.msh
     resources/fedosov1c.xml resources/fedosov1c.gmy
     resources/sad.msh
