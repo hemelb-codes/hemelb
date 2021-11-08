@@ -71,7 +71,11 @@ conda activate gmy-tool
 
 The VTK and VMTK packages installed by conda do not appear to
 setuptools as they don't have the proper metadata included. You can
-run the script `bodge-packages-for-setuptools.sh` to fix this.
+run this script to fix it:
+
+```
+./bodge-packages-for-setuptools.sh
+```
 
 ### Install
 
