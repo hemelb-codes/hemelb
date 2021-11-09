@@ -66,4 +66,6 @@ else()
     RBCConfig.cc
     FlowExtension.cc
     )
+  target_link_libraries(hemelb_redblood PRIVATE
+    Boost::boost)
 endif()
