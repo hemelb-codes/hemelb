@@ -8,8 +8,10 @@ project(HemeLB)
 
 set(HEMELB_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
-set(CMAKE_CXX_STANDARD 14)
+# Set the language standard strictly.
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 #---- OPTION switches accepted by the build -------
 include("cmake/options.cmake")

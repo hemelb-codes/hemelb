@@ -131,7 +131,7 @@ namespace hemelb
         //const bool operator<(const Particle& other) const;
         /** determines if the owner rank of this particle is an existing key in map */
         const bool IsOwnerRankKnown(
-            std::map<proc_t, std::pair<unsigned int, unsigned int> > map) const;
+            std::map<proc_t, std::pair<unsigned int, unsigned int> > const& map) const;
 
         const bool IsReadyToBeDeleted() const;
 

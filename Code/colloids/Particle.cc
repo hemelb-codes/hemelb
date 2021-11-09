@@ -49,7 +49,7 @@ namespace hemelb
 //    }
 
     const bool Particle::IsOwnerRankKnown(
-        std::map<proc_t, std::pair<unsigned int, unsigned int> > map) const
+        std::map<proc_t, std::pair<unsigned int, unsigned int> > const& map) const
     {
       return map.count(ownerRank) > 0;
     }
