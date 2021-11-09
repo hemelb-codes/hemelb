@@ -7,7 +7,7 @@
 #define HEMELB_NET_MPIDATATYPE_H
 
 #include <cstdint>
-
+#include <cstddef>
 #include <mpi.h>
 
 #define HEMELB_MPI_TYPE_BEGIN(outType, Type, n) \
