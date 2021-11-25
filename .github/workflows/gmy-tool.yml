@@ -101,8 +101,7 @@ jobs:
 
       - name: Build and install the app
         working-directory: geometry-tool
-        run: |
-          pip install pybind11 scikit-build && python setup.py install
+        run: pip install --use-feature=in-tree-build .
 
       - name: Store build tree on error
         if: failure()
