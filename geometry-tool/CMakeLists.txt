@@ -7,24 +7,11 @@ cmake_minimum_required(VERSION 3.10)
 
 project(HemeLbGmyTool)
 
+# list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../CMake)
+# include(Debug)
+
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
-# Debug print a variable nicely
-macro(dvar name)
-  message("${name} = ${${name}}")
-endmacro()
-
-function(dvar_re regex)
-  get_cmake_property(all_var_names VARIABLES)
-  list (SORT all_var_names)
-  foreach (varname ${all_var_names})
-    string(REGEX MATCH "${regex}" matched "${varname}")
-    if (matched)
-      dvar(${varname})
-    endif()
-  endforeach()
-endfunction()
 
 include(GNUInstallDirs)
 
@@ -59,10 +46,11 @@ endif()
 find_package(pybind11 CONFIG REQUIRED)
 
 set(HEMELB_CODE_DIR ${PROJECT_SOURCE_DIR}/../Code)
+file(REAL_PATH "${HEMELB_CODE_DIR}" HEMELB_CODE_DIR)
 set(model_dir HlbGmyTool/Model)
 set(generation_dir HlbGmyTool/Model/Generation)
 
-# First, the bits of HemeLB main we re-use (micro-hemelb geometry).
+# First, our micro-HemeLB library (i.e. the bits we re-use).
 set(hemelb_cpps
   util/Vector3D.cc
   geometry/SiteDataBare.cc
@@ -74,6 +62,17 @@ set(hemelb_cpps
   io/writers/Writer.cc
 )
 list(TRANSFORM hemelb_cpps PREPEND "${HEMELB_CODE_DIR}/")
+# While this is located in the extension source tree, in spirit it is
+# part of hemelb::util::Vector3D's implementation.
+list(APPEND hemelb_cpps "${generation_dir}/Index.cpp")
+
+# This is a static archive as we want the objects to get pulled into
+# our final single extension library to avoid the
+# LD_LIBRARY_PATH/RPATH can of worms. But we require libuhlb to have
+# the same POSITION_INDEPENDANT_CODE property as Generation, hence the
+# function copy_picness below.
+add_library(uhlb STATIC ${hemelb_cpps})
+target_include_directories(uhlb PUBLIC ${HEMELB_CODE_DIR})
 
 # Now the C++ implementation of the extension
 set(gen_cpps
@@ -84,7 +83,6 @@ set(gen_cpps
   BufferPool.cpp
   GeometryGenerator.cpp
   GeometryWriter.cpp
-  Index.cpp
   Domain.cpp
   Site.cpp
   InconsistentFluidnessError.cpp
@@ -92,12 +90,22 @@ set(gen_cpps
   PolyDataGenerator.cpp
   SquareDuctGenerator.cpp
   Debug.cpp
+  Wrap.cpp
 )
 list(TRANSFORM gen_cpps PREPEND "${generation_dir}/")
 
-pybind11_add_module(Generation ${hemelb_cpps} ${gen_cpps} "${generation_dir}/Wrap.cpp")
-target_include_directories(Generation PRIVATE ${generation_dir} ${HEMELB_CODE_DIR})
+pybind11_add_module(Generation ${gen_cpps})
+
+function(copy_picness src_tgt dest_tgt)
+  set(pic POSITION_INDEPENDENT_CODE)
+  get_target_property(picness ${src_tgt} ${pic})
+  set_target_properties(${dest_tgt} PROPERTIES ${pic} ${picness})
+endfunction()
+copy_picness(Generation uhlb)
+
+target_include_directories(Generation PRIVATE ${generation_dir})
 target_link_libraries(Generation PRIVATE
+  uhlb
   Boost::headers
   ZLIB::ZLIB
   Boost::headers
