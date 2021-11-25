@@ -57,9 +57,6 @@ jobs:
     env:
       VMTK_VERSION: 1.4.1-rc3
       VMTK_DIR: /opt/vmtk
-      CC: gcc-10
-      CXX: g++-10
-
     steps:
       - uses: actions/checkout@v2
 
