@@ -55,7 +55,7 @@ jobs:
           - "3.9"
 
     env:
-      VMTK_VERSION: 1.4.1-rc3
+      VMTK_VERSION: 1.4.1-rc4
       VMTK_DIR: /opt/vmtk
     steps:
       - uses: actions/checkout@v2
@@ -94,7 +94,6 @@ jobs:
           mkdir -p /opt/vmtk
           tar -xzf vmtk.tar.gz -C $VMTK_DIR
           echo "PATH=$VMTK_DIR/bin:$PATH" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=$VMTK_DIR/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
           echo "PYTHONPATH=$VMTK_DIR/lib/python${{ matrix.python-version }}/site-packages:$PYTHONPATH" >> $GITHUB_ENV
           echo "CMAKE_PREFIX_PATH=$VMTK_DIR:$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
           pip list
