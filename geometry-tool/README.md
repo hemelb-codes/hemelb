@@ -41,7 +41,8 @@ Test dependencies:
 ## Conda install
 
 VMTK is hard to build yourself but is easily installed via Conda, so
-we present this process here.
+we present this process here. On some Ubuntu machines, the VMTK
+package from Conda is also broken, so please see the next section.
 
 VMTK requires VTK 8 (unfortunately it does not yet work with VTK 9,
 required by the main HemeLB application...).
@@ -114,6 +115,59 @@ support doing this automatically:
 ```
 python macos-fix-gui-launcher.py
 ```
+
+## Install with custom VMTK
+
+The hemelb-codes organisation on GitHub includes a project to build
+VMTK correctly. This currently run on Ubuntu 20.04 and is used in the
+CI for this tool.
+
+### System packages
+This is known to work with the following APT packages
+
+```bash
+apt-get install -y \
+    cmake \
+    gcc-9 \
+    libboost-dev \
+    libcgal-dev \
+    libopengl0 \
+    libosmesa6 \
+    libxt6 \
+    ninja-build \
+    python-is-python3 \
+    python3.8-venv \
+    python3.8-dev \
+    python3-pip \
+    python3-wxgtk4.0 \
+```
+
+### Virtual environment
+A virtual environment is recommended:
+
+```bash
+venv_prefix=$HOME/gmy-tool
+# system packages are optional but avoids rebuilding wxpython
+python -m venv --system-site-packages $venv_prefix
+. $venv_prefix/bin/activate
+# system packages are old
+pip install --upgrade pip setuptools
+
+VMTK_VERSION=1.4.1-rc4
+PYTHON_VERSION=3.8
+
+tarball=all-${VMTK_VERSION}-ubuntu-py${PYTHON_VERSION}.tar.gz
+wget https://github.com/hemelb-codes/vmtk-build/releases/download/v${VMTK_VERSION}/${tarball}
+
+# extract the tarball into your virtual environment
+tar -C $venv_prefix -xzf $tarball
+
+rm $tarball
+```
+
+### Install
+
+As above!
 
 ## Test
 
