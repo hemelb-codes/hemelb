@@ -58,3 +58,4 @@ Tools/GenerateStl
 *.egg-info
 _skbuild
 dist
+.vagrant
