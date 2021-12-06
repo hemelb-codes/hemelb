@@ -94,7 +94,6 @@ def complete_environment():
     results_path: Path to store results
     remote_path: Root of area for checkout and build on remote
     config_path: Path to store config files
-    analysis_path: Path to access HemeLB analysis scripts
     repository_path: Path of remote mercurial checkout
     tools_path: Path of remote python 'Tools' folder
     tools_build_path: Path of disttools python 'build' folder for python tools
@@ -117,7 +116,6 @@ def complete_environment():
 
     env.results_path = env.pather.join(env.work_path, "results")
     env.config_path = env.pather.join(env.work_path, "config_files")
-    env.analysis_path= env.pather.join(env.work_path, "Tools/analysis")
     env.profiles_path = env.pather.join(env.work_path, "profiles")
     env.scripts_path = env.pather.join(env.work_path, "scripts")
     env.build_path = env.pather.join(env.remote_path, 'build')

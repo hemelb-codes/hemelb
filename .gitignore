@@ -38,8 +38,6 @@ Tools/setuptool/HemeLbSetupTool/Model/Generation/Wrap.cpp
 Tools/steering/javagui/dependencies/jogamp/
 Tools/visclients/hs_err*.log
 Tools/visclients/dependencies/jogamp
-Tools/analysis/config.yml
-Tools/analysis/plot.sh
 Tools/derek
 Tools/hemeTools/parsers/geometry/BaseSite.c
 Tools/hemeTools/parsers/geometry/BaseSite.h
