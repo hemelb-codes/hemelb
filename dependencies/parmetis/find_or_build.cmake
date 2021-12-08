@@ -4,10 +4,12 @@
 # license in the file LICENSE.
 include_guard()
 
+cmake_policy(SET CMP0074 NEW)
+
 find_package(ParMETIS QUIET)
 if (ParMETIS_FOUND AND METIS_FOUND)
   message("ParMETIS already installed, no need to (download and) build")
-  add_custom_target(ParMETIS)
+  add_custom_target(parmetis)
 else()
   message("ParMETIS not installed, will build from source")
   find_file(ParMETIS_TARBALL parmetis-4.0.2.tar.gz 

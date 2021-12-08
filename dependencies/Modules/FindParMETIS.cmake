@@ -15,6 +15,7 @@ include_guard()
 # PARMETIS_INCLUDE_DIR - where to find autopack.h
 # PARMETIS_LIBRARIES   - List of fully qualified libraries to link against.
 # PARMETIS_FOUND       - Do not attempt to use if "no" or undefined.
+cmake_policy(SET CMP0074 NEW)
 
 if(ParMETIS_FIND_QUIETLY AND ParMETIS_FIND_REQUIRED)
   find_package(METIS QUIET REQUIRED)

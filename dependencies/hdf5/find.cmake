@@ -3,5 +3,5 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 include_guard()
-
+cmake_policy(SET CMP0074 NEW)
 find_package(HDF5 1.8 QUIET COMPONENTS C HL)
