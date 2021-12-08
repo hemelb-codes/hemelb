@@ -3,9 +3,9 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required (VERSION 3.13)
 
-Project(HemeLBDependencies)
+project(HemeLBDependencies)
 
 include(ExternalProject)
 
@@ -15,11 +15,11 @@ endif()
 if(NOT DEFINED HEMELB_DEPENDENCIES_PATH)
   set(HEMELB_DEPENDENCIES_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
-if(NOT DEFINED HEMELB_DEPENDENCIES_INSTALL_PATH)
-  set(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH} CACHE STRING "Path to install Dependencies")
+if(NOT DEFINED HEMELB_DEPENDENCIES_INSTALL_PREFIX)
+  set(HEMELB_DEPENDENCIES_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "Path to install Dependencies")
 endif()
 
-list(APPEND CMAKE_PREFIX_PATH "${HEMELB_DEPENDENCIES_INSTALL_PATH}")
+list(APPEND CMAKE_PREFIX_PATH "${HEMELB_DEPENDENCIES_INSTALL_PREFIX}")
 set(CMAKE_MODULE_PATH "${HEMELB_DEPENDENCIES_PATH}/Modules/" ${CMAKE_MODULE_PATH})
 
 #option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)

@@ -80,7 +80,7 @@ jobs:
         -S ${{github.workspace}}/dependencies
         -B ${{github.workspace}}/deps-build
         -DHEMELB_BUILD_RBC:BOOL=OFF
-        -DHEMELB_DEPENDENCIES_INSTALL_PATH:STRING=${{env.deps_install_prefix}}
+        -DHEMELB_DEPENDENCIES_INSTALL_PREFIX:STRING=${{env.deps_install_prefix}}
 
     - name: Deps install
       if: steps.deps-cache.outputs.cache-hit != 'true'
@@ -98,7 +98,7 @@ jobs:
         -S ${{github.workspace}}/Code
         -B ${{github.workspace}}/build
         -DCMAKE_BUILD_TYPE=$BUILD_TYPE
-        -DHEMELB_DEPENDENCIES_INSTALL_PATH:STRING=${{env.deps_install_prefix}}
+        -DHEMELB_DEPENDENCIES_INSTALL_PREFIX:STRING=${{env.deps_install_prefix}}
         -DHEMELB_BUILD_RBC:BOOL=OFF
         -DMPIEXEC_MAX_NUMPROCS:STRING=4
         -DHEMELB_STEERING_LIB:STRING=none
@@ -151,7 +151,7 @@ jobs:
         -S ${{github.workspace}}/dependencies
         -B ${{github.workspace}}/deps-build
         -DHEMELB_BUILD_RBC:BOOL=ON
-        -DHEMELB_DEPENDENCIES_INSTALL_PATH:STRING=${{env.deps_install_prefix}}
+        -DHEMELB_DEPENDENCIES_INSTALL_PREFIX:STRING=${{env.deps_install_prefix}}
 
     - name: Deps install
       if: steps.deps-cache.outputs.cache-hit != 'true'
@@ -169,7 +169,7 @@ jobs:
         -S ${{github.workspace}}/Code
         -B ${{github.workspace}}/build
         -DCMAKE_BUILD_TYPE=$BUILD_TYPE
-        -DHEMELB_DEPENDENCIES_INSTALL_PATH:STRING=${{env.deps_install_prefix}}
+        -DHEMELB_DEPENDENCIES_INSTALL_PREFIX:STRING=${{env.deps_install_prefix}}
         -DHEMELB_BUILD_RBC:BOOL=ON
         -DMPIEXEC_MAX_NUMPROCS:STRING=4
         -DHEMELB_STEERING_LIB:STRING=none

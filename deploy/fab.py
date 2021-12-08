@@ -160,7 +160,7 @@ def configure_cmake(configurations, extras):
     options.update(env.cmake_options)
     options.update({
         'CMAKE_INSTALL_PREFIX': env.install_path,
-        'HEMELB_DEPENDENCIES_INSTALL_PATH': env.install_path,
+        'HEMELB_DEPENDENCIES_INSTALL_PREFIX': env.install_path,
         })
     env.total_cmake_options = options
     env.cmake_flags = ' '.join(["-D%s=%s" % option for option in env.total_cmake_options.iteritems()])

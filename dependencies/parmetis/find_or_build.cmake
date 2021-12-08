@@ -30,7 +30,7 @@ else()
   endif()
   ExternalProject_Add(
     parmetis
-    INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
+    INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PREFIX}
     URL ${ParMETIS_TARBALL}
     CONFIGURE_COMMAND make config prefix=<INSTALL_DIR> ${ParMETIS_CC_OPTION} ${ParMETIS_CXX_OPTION} && 
     cd metis && 

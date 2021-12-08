@@ -118,7 +118,7 @@ hemelb_cachevar(HEMELB_STEERING_LIB basic
   STRING "Steering library, choose 'basic' or 'none'" )
 hemelb_cachevar(HEMELB_DEPENDENCIES_PATH "${HEMELB_ROOT_DIR}/dependencies"
   FILEPATH "Path to find dependency find modules")
-hemelb_cachevar(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH}
+hemelb_cachevar(HEMELB_DEPENDENCIES_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}
   FILEPATH "Path to find dependency includes and libraries")
 hemelb_cachevar(HEMELB_SUBPROJECT_MAKE_JOBS 1
   STRING "Number of jobs to use for subproject build steps")

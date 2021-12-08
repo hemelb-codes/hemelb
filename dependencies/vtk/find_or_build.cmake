@@ -23,7 +23,7 @@ else()
   # Only compile the VTK modules being used by HemeLB at the moment, may need expanding in the future
   ExternalProject_Add(
     vtk
-    INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
+    INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PREFIX}
     URL ${VTK_TARBALL}
     CMAKE_ARGS
     -DCMAKE_BUILD_TYPE:STRING=Release
@@ -42,6 +42,6 @@ else()
     -DVTK_MODULE_ENABLE_VTK_CommonDataModel=YES
     -DVTK_MODULE_ENABLE_VTK_FiltersCore=YES
     -DVTK_MODULE_ENABLE_VTK_IOXML=YES
-    -DCMAKE_INSTALL_PREFIX:PATH=${HEMELB_DEPENDENCIES_INSTALL_PATH}
+    -DCMAKE_INSTALL_PREFIX:PATH=${HEMELB_DEPENDENCIES_INSTALL_PREFIX}
     )
 endif()

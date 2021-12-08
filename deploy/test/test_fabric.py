@@ -127,7 +127,7 @@ class TestFabric(unittest.TestCase):
             'CMAKE_BUILD_TYPE': "Release",
             'CMAKE_CXX_FLAGS_RELEASE': "-O4",
             'CMAKE_INSTALL_PREFIX': env.install_path,
-            "HEMELB_DEPENDENCIES_INSTALL_PATH": env.install_path,
+            "HEMELB_DEPENDENCIES_INSTALL_PREFIX": env.install_path,
             "HEMELB_SUBPROJECT_MAKE_JOBS": 1
         }
         self.assertEqual(env.total_cmake_options,target)
@@ -142,7 +142,7 @@ class TestFabric(unittest.TestCase):
             'HEMELB_OPTIMISATION': "",
             'HEMELB_LOG_LEVEL': "debug",
             'CMAKE_INSTALL_PREFIX': env.install_path,
-            "HEMELB_DEPENDENCIES_INSTALL_PATH": env.install_path,
+            "HEMELB_DEPENDENCIES_INSTALL_PREFIX": env.install_path,
             "HEMELB_SUBPROJECT_MAKE_JOBS": 1
         })
         
