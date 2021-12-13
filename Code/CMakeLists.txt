@@ -5,8 +5,14 @@
 cmake_minimum_required (VERSION 3.13)
 
 project(HemeLB)
+set(ENV{TESTVAR} "Foo")
+message("$ENV{TESTVAR}")
 
 set(HEMELB_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
+
+list(INSERT CMAKE_MODULE_PATH 0 "${HEMELB_ROOT_DIR}/CMake")
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${HEMELB_DEPENDENCIES_PATH}/Modules/")
+list(REMOVE_DUPLICATES CMAKE_MODULE_PATH)
 
 # Set the language standard strictly.
 set(CMAKE_CXX_STANDARD 17)
@@ -14,7 +20,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 #---- OPTION switches accepted by the build -------
-include("cmake/options.cmake")
+include(GlobalOptions)
+include(HemeLbOptions)
 
 # Add warnings flags to development build types
 if (HEMELB_USE_ALL_WARNINGS_GNU)
@@ -70,10 +77,9 @@ if (HEMELB_USE_KRUEGER_ORDERING)
   add_definitions(-DHEMELB_USE_KRUEGER_ORDERING)
 endif()
 
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${HEMELB_DEPENDENCIES_PATH}/Modules/")
 list(APPEND CMAKE_PREFIX_PATH ${HEMELB_DEPENDENCIES_INSTALL_PREFIX})
-list(APPEND CMAKE_INCLUDE_PATH ${HEMELB_DEPENDENCIES_INSTALL_PREFIX}/include)
-list(APPEND CMAKE_LIBRARY_PATH ${HEMELB_DEPENDENCIES_INSTALL_PREFIX}/lib)
+# list(APPEND CMAKE_INCLUDE_PATH ${HEMELB_DEPENDENCIES_INSTALL_PREFIX}/include)
+# list(APPEND CMAKE_LIBRARY_PATH ${HEMELB_DEPENDENCIES_INSTALL_PREFIX}/lib)
 
 #--- Set up runtime search path for DLLs -----
 if(HEMELB_DEPENDENCIES_SET_RPATH)
@@ -103,7 +109,21 @@ if(LINUX_SCANDIR)
 endif()
 
 include(mpi)
-include(dependencies)
+include(HemeLbDependency)
+
+find_hemelb_dependency(Boost REQUIRED)
+find_hemelb_dependency(TinyXML REQUIRED)
+
+find_hemelb_dependency(ParMETIS REQUIRED)
+find_hemelb_dependency(CTemplate REQUIRED)
+find_hemelb_dependency(ZLIB REQUIRED)
+
+if(HEMELB_BUILD_RBC)
+  # Work around some installs of HDF5 having proper targets and others
+  # not...
+  include(UseHDF5)
+  find_hemelb_dependency(VTK REQUIRED)
+endif()
 
 #-------------Resources -----------------------
 
@@ -213,7 +233,7 @@ if (HEMELB_BUILD_MULTISCALE)
 endif()
 
 # ----------- HEMELB unittests ---------------
-if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
+if(HEMELB_BUILD_TESTS)
   enable_testing()
   add_subdirectory(tests)
 endif()

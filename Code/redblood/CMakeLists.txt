@@ -33,9 +33,6 @@ endfunction()
 
 if (HEMELB_BUILD_RBC)
   # Build full RBC code
-  hemelb_dependency(hdf5 use)
-  hemelb_dependency(vtk use)
-
   get_vtkIdType(HEMELB_RBC_IDTYPE)
   configure_file (
   "${PROJECT_SOURCE_DIR}/redblood/MeshIdType.h.in"

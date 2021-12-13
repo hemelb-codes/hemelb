@@ -2,10 +2,5 @@
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
-
-find_hemelb_dependency(MPWide REQUIRED)
-
-add_library(hemelb_multiscale
-  mpwide/MPWideIntercommunicator.cc
-  )
-target_link_libraries(hemelb_multiscale PUBLIC MPWide::MPWide)
+include_guard()
+find_package(CTemplate ${DEPS_FIND_MODE_CTemplate})

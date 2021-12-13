@@ -3,7 +3,7 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-hemelb_dependency(catch2 use)
+find_hemelb_dependency(Catch2 REQUIRED)
 add_subdirectory(helpers)
 
 function(create_test_executable target)
