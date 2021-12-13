@@ -13,7 +13,7 @@ ensure that all the dependencies are availble.
 ## Installation locations
 
 As well as the usual `CMAKE_INSTALL_PREFIX` variable, you can also set
-`HEMELB_DEPENDENCIES_INSTALL_PATH`, which will tell the superbuild
+`HEMELB_DEPENDENCIES_INSTALL_PREFIX`, which will tell the superbuild
 where to install any dependencies that it compiles and give an extra
 search location to the code-only build.
 
