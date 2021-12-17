@@ -177,7 +177,7 @@ class ExtractedPropertyUnstructuredGridReader(VTKPythonAlgorithmBase):
 
         # Copy the data into the correct position in the output array and add
         # the array to the output.
-        for field_name, field in field_dict.items():
+        for (field_name, field_length), field in field_dict.items():
             # fieldArray is a view into the data stored in field
             fieldArray = numpy_support.vtk_to_numpy(field)
             data = getattr(extracted_data, field_name)
