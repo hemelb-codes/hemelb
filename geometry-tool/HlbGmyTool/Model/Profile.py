@@ -30,7 +30,7 @@ class LengthUnit(Observable):
 
 metre = LengthUnit(1.0, "metre", "m")
 millimetre = LengthUnit(1e-3, "millimetre", "mm")
-micrometre = micron = LengthUnit(1e-6, "micrometre", u"µm")
+micrometre = micron = LengthUnit(1e-6, "micrometre", "µm")
 
 
 class Profile(Observable):

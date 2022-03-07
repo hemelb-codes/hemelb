@@ -32,7 +32,7 @@ jobs:
 
       - name: Run black to check Python formatting
         working-directory: geometry-tool
-        run: pip install black && black --check .
+        run: pip install black~=22.0 && black --check .
 
   lint-cpp:
     runs-on: ubuntu-20.04

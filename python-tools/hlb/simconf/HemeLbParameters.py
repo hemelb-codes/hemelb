@@ -15,7 +15,7 @@ class HemeLbParameters(object):
 
     ReferencePressure = 0.0 * pq.mmHg
 
-    Density = 1e3 * pq.kilogram / pq.metre ** 3
+    Density = 1e3 * pq.kilogram / pq.metre**3
     DynamicViscosity = 0.004 * pq.pascal * pq.second
     KinematicViscosity = (DynamicViscosity / Density).simplified
 
@@ -36,12 +36,12 @@ class HemeLbParameters(object):
     @simplify
     def UnitMass(self):
         """Choose this such that the density is one in lattice units."""
-        return self.Density * self.VoxelSize ** 3
+        return self.Density * self.VoxelSize**3
 
     @property
     def Tau(self):
         return (
-            self.ScaleToLatticeUnits(self.KinematicViscosity / self.SpeedOfSound ** 2)
+            self.ScaleToLatticeUnits(self.KinematicViscosity / self.SpeedOfSound**2)
             + 0.5
         )
 

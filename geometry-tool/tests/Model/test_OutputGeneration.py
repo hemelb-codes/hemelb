@@ -59,7 +59,7 @@ class TestPolyDataGenerator:
         fluid_sites = sum(checker.Domain.BlockFluidSiteCounts)
         block_count = len(checker.Domain.Blocks)
         block_size = checker.Domain.BlockSize
-        sites = block_count * block_size ** 3
+        sites = block_count * block_size**3
         # assert(sites==4096)
         # assert(fluid_sites==729)
         assert sites != fluid_sites
@@ -149,7 +149,7 @@ class TestPolyDataGenerator:
         fluid_sites = sum(checker.Domain.BlockFluidSiteCounts)
         block_count = len(checker.Domain.Blocks)
         block_size = checker.Domain.BlockSize
-        sites = block_count * block_size ** 3
+        sites = block_count * block_size**3
         # assert(sites==4096)
         # assert(fluid_sites==621)
         assert sites != fluid_sites
@@ -235,7 +235,7 @@ class CylinderTestingGmyParser(BaseTestingGmyParser):
         if xDOTn < -0.5 * self.Length or xDOTn > 0.5 * self.Length:
             return False
         perp = x - xDOTn * self.Axis
-        if np.dot(perp, perp) > self.Radius ** 2:
+        if np.dot(perp, perp) > self.Radius**2:
             return False
         return True
 

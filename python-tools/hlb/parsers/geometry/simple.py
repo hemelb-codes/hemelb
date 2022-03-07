@@ -217,7 +217,7 @@ class ConfigLoader(object):
             b = Block(domain, bIdx)
 
             b.nFluidSites = domain.BlockFluidSiteCounts[bIjk]
-            b.Sites = np.zeros(domain.BlockSize ** 3, dtype=object)
+            b.Sites = np.zeros(domain.BlockSize**3, dtype=object)
 
             compressed = self.File.read(self.BlockDataLength[bIjk])
             uncompressed = zlib.decompress(compressed)

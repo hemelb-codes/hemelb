@@ -133,7 +133,7 @@ class SinusoidalPressureIolet(Iolet):
             avg = self.Pressure.x
             amp = self.Pressure.y
             phs = self.Pressure.z
-            ans = u"p = %.2f + %.2f cos(wt + %.0f°)" % (avg, amp, phs)
+            ans = "p = %.2f + %.2f cos(wt + %.0f°)" % (avg, amp, phs)
             return ans
         except:
             return ""

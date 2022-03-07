@@ -58,7 +58,7 @@ def test_simple(diffTestDir):
         x, y, z = pt
         if z < zmin or z > zmax:
             return False
-        return x ** 2 + y ** 2 <= radius ** 2
+        return x**2 + y**2 <= radius**2
 
     def GridToWorld(idx):
         return dom.Origin + dom.VoxelSize * idx

@@ -41,7 +41,7 @@ class UnknownPressure(Unknown):
 
 
 class UnknownFlowRate(Unknown):
-    units = pq.metre ** 3 / pq.second
+    units = pq.metre**3 / pq.second
     pass
 
 
@@ -144,7 +144,7 @@ class VesselSegment(object):
             # Do continuity with children
             # sum(ch.FlowRate for ch in self.children) == self.FlowRate
             #     always unknown                        known if root
-            eq = {"rhs": 0.0 * pq.metre ** 3 / pq.second}
+            eq = {"rhs": 0.0 * pq.metre**3 / pq.second}
 
             for ch in self.children:
                 eq[ch.FlowRate] = 1.0
@@ -196,7 +196,7 @@ class VesselSegment(object):
     def MaxLength(self, prof):
         x = prof.CentreLinePoints[self.ptIds]
         dx = x[1:] - x[:-1]
-        ds = np.sum(dx ** 2, axis=-1) ** 0.5
+        ds = np.sum(dx**2, axis=-1) ** 0.5
 
         myLen = ds.sum()
         if len(self.children):

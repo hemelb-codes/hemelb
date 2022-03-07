@@ -258,7 +258,7 @@ class ProfileProxy(HemeLbParameters):
         points = self.CentreLinePoints
         r = self.CentreLineRadii
 
-        ans = 0.0 * pq.metre ** 3
+        ans = 0.0 * pq.metre**3
         # Get the IDs for each path through the network
         for linePtIds in IterCellPtIds(clPD.GetLines()):
             # Iterate over adjacent IDs, each of which defines a segment.
@@ -652,7 +652,7 @@ class ProfileProxy(HemeLbParameters):
         # And the next point along for the normals
         nextPtIds = self.Tree.SamplePtIds(50, start=1)
         dx = self.CentreLinePoints[nextPtIds] - points
-        normals = dx / np.sum(dx ** 2, axis=-1)[:, np.newaxis] ** 0.5
+        normals = dx / np.sum(dx**2, axis=-1)[:, np.newaxis] ** 0.5
         # And the radius at that point, plus  a bit
         radii = self.CentreLineRadii[planePtIds] * 1.1
 
@@ -716,7 +716,7 @@ def GetPlane(iolet):
     nx, ny, nz = Vec2Vec(iolet.Normal)
 
     beta = np.arccos(nz) * 180 / np.pi
-    gamma = np.arcsin(ny / np.sqrt(1 - nz ** 2)) * 180 / np.pi
+    gamma = np.arcsin(ny / np.sqrt(1 - nz**2)) * 180 / np.pi
 
     return centre, iolet.Radius, beta, gamma
 

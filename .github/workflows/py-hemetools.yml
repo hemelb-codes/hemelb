@@ -35,7 +35,7 @@ jobs:
 
       - name: install
         run: |
-          pip install black
+          pip install black~=22.0
 
       - name: Run black format check
         run: black --check .

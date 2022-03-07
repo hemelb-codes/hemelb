@@ -63,18 +63,18 @@ class Image(object):
 
         # Masks and shifts to get the bits for each vis mode
         masks = [
-            (2 ** 32 - 1) ^ (2 ** 24 - 1),
-            (2 ** 24 - 1) ^ (2 ** 16 - 1),
-            (2 ** 16 - 1) ^ (2 ** 8 - 1),
-            (2 ** 8 - 1),
+            (2**32 - 1) ^ (2**24 - 1),
+            (2**24 - 1) ^ (2**16 - 1),
+            (2**16 - 1) ^ (2**8 - 1),
+            (2**8 - 1),
         ]
         shifts = [24, 16, 8, 0]
 
         conversions = zip(masks, shifts)
         for i in range(self.nPixels):
             ind = reader.unpack_uint()
-            tempPixels[i]["index"][0] = (ind & ((2 ** 32 - 1) ^ (2 ** 16 - 1))) >> 16
-            tempPixels[i]["index"][1] = ind & (2 ** 16 - 1)
+            tempPixels[i]["index"][0] = (ind & ((2**32 - 1) ^ (2**16 - 1))) >> 16
+            tempPixels[i]["index"][1] = ind & (2**16 - 1)
             r = reader.unpack_uint()
             g = reader.unpack_uint()
             b = reader.unpack_uint()
