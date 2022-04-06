@@ -161,7 +161,7 @@ namespace hemelb
 
         // Go the other way and create a copy as the supplied type
         template <class U>
-        Vector3D<U> as() const {
+        constexpr Vector3D<U> as() const {
           return Vector3D<U>{U(x), U(y), U(z)};
         }
 
