@@ -111,7 +111,7 @@ jobs:
 
       - name: Install test dependencies
         working-directory: python-tools
-        run: pip install pytest cython && python setup.py install
+        run: pip install pytest cython h5py && python setup.py install
 
       - name: Run the tests
         working-directory: geometry-tool/tests
