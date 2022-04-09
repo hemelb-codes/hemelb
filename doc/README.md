@@ -10,7 +10,7 @@ A typical workflow with HemeLB consists of four steps:
 
 2. Setting options in the configuration XML file, such as timestep and
    output data and
-   frequency. [Documentation](users/XmlConfiguration.md)
+   frequency. [Documentation](user/XmlConfiguration.md)
 
 3. Compiling and running the
    [main application](user/main-application.md).
