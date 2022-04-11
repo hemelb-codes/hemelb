@@ -17,6 +17,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(GNUInstallDirs)
 
+find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(Boost REQUIRED COMPONENTS headers)
 find_package(VTK REQUIRED COMPONENTS
@@ -131,6 +132,7 @@ target_link_libraries(octgmygen
   PRIVATE
   vtksys
   vtkCommonDataModel
+  Threads::Threads
   hdf5::hdf5
   Boost::headers
   ZLIB::ZLIB
