@@ -54,6 +54,7 @@ jobs:
     env:
       VMTK_VERSION: 1.5.0
       VMTK_DIR: /opt/vmtk
+      CATCH2_VERSION: 2.13.8
     steps:
       - uses: actions/checkout@v3
 
@@ -73,6 +74,19 @@ jobs:
             libhdf5-dev \
             ninja-build \
             libopengl0 libglx0 libxt6
+
+      - name: Get Catch2
+        uses: actions/checkout@v2
+        with:
+          repository: catchorg/Catch2
+          ref: v${{ env.CATCH2_VERSION }}
+          path: Catch2
+
+      - name: Install Catch2
+        working-directory: Catch2
+        run: |
+          cmake -B build -DBUILD_TESTING=OFF
+          sudo cmake --build build --target install
 
       - name: pip cache
         uses: actions/cache@v3
