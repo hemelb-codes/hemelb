@@ -3,14 +3,14 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12)
 
 project(HemeLbGmyTool)
 
-# list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../CMake)
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../CMake)
 # include(Debug)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(GNUInstallDirs)
@@ -29,6 +29,7 @@ find_package(VTK REQUIRED COMPONENTS
   vtkWrappingPythonCore
 )
 find_package(CGAL REQUIRED)
+find_package(HDF5 REQUIRED COMPONENTS C)
 
 if(SKBUILD)
   # Scikit-Build does not add your site-packages to the search path
@@ -48,7 +49,8 @@ find_package(pybind11 CONFIG REQUIRED)
 set(HEMELB_CODE_DIR ${PROJECT_SOURCE_DIR}/../Code)
 file(REAL_PATH "${HEMELB_CODE_DIR}" HEMELB_CODE_DIR)
 set(model_dir HlbGmyTool/Model)
-set(gmy_generation_dir HlbGmyTool/Model/GmyGeneration)
+set(gmy_dir ${model_dir}/GmyGeneration)
+set(oct_dir ${model_dir}/OctGeneration)
 
 # First, our micro-HemeLB library (i.e. the bits we re-use).
 set(hemelb_cpps
@@ -64,7 +66,7 @@ set(hemelb_cpps
 list(TRANSFORM hemelb_cpps PREPEND "${HEMELB_CODE_DIR}/")
 # While this is located in the extension source tree, in spirit it is
 # part of hemelb::util::Vector3D's implementation.
-list(APPEND hemelb_cpps "${gmy_generation_dir}/Index.cpp")
+list(APPEND hemelb_cpps "${model_dir}/CommonGeneration/Index.cpp")
 
 # This is a static archive as we want the objects to get pulled into
 # our final single extension library to avoid the
@@ -73,8 +75,11 @@ list(APPEND hemelb_cpps "${gmy_generation_dir}/Index.cpp")
 # function copy_picness below.
 add_library(uhlb STATIC ${hemelb_cpps})
 target_include_directories(uhlb PUBLIC ${HEMELB_CODE_DIR})
+target_include_directories(uhlb PUBLIC ${model_dir}/CommonGeneration)
 
 # Now the C++ implementation of the extension
+
+# Older GMY file generator
 set(gmy_gen_cpps
   Neighbours.cpp
   BuildCGALPolygon.cpp
@@ -92,18 +97,11 @@ set(gmy_gen_cpps
   Debug.cpp
   Wrap.cpp
 )
-list(TRANSFORM gen_cpps PREPEND "${gmy_generation_dir}/")
+list(TRANSFORM gmy_gen_cpps PREPEND "${gmy_dir}/")
 
 pybind11_add_module(GmyGeneration ${gmy_gen_cpps})
 
-function(copy_picness src_tgt dest_tgt)
-  set(pic POSITION_INDEPENDENT_CODE)
-  get_target_property(picness ${src_tgt} ${pic})
-  set_target_properties(${dest_tgt} PROPERTIES ${pic} ${picness})
-endfunction()
-copy_picness(GmyGeneration uhlb)
-
-target_include_directories(GmyGeneration PRIVATE ${gmy_generation_dir})
+target_include_directories(GmyGeneration PRIVATE ${gmy_dir})
 target_link_libraries(GmyGeneration PRIVATE
   uhlb
   Boost::headers
@@ -113,4 +111,41 @@ target_link_libraries(GmyGeneration PRIVATE
   ${VTK_LIBRARIES}
 )
 
+# Newer octree based one
+set(oct_gen_cpps
+  FloodFill.cpp
+  H5.cpp
+  MkCgalMesh.cpp
+  PolyDataGenerator.cpp
+  SectionTree.cpp
+  SectionTreeBuilder.cpp
+  SegmentFactory.cpp
+  SurfaceVoxeliser.cpp
+  TriTree.cpp
+  TriangleSorter.cpp
+  Wrap.cpp
+)
+list(TRANSFORM oct_gen_cpps PREPEND "${oct_dir}/")
+
+pybind11_add_module(OctGeneration ${oct_gen_cpps})
+
+target_include_directories(OctGeneration PRIVATE ${oct_dir})
+target_link_libraries(OctGeneration PRIVATE
+  uhlb
+  hdf5::hdf5
+  Boost::headers
+  ZLIB::ZLIB
+  Boost::headers
+  CGAL::CGAL
+  ${VTK_LIBRARIES}
+)
+
+function(copy_picness src_tgt dest_tgt)
+  set(pic POSITION_INDEPENDENT_CODE)
+  get_target_property(picness ${src_tgt} ${pic})
+  set_target_properties(${dest_tgt} PROPERTIES ${pic} ${picness})
+endfunction()
+copy_picness(GmyGeneration uhlb)
+
 install(TARGETS GmyGeneration DESTINATION ${model_dir})
+install(TARGETS OctGeneration DESTINATION ${model_dir})
