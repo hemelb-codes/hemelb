@@ -48,7 +48,7 @@ find_package(pybind11 CONFIG REQUIRED)
 set(HEMELB_CODE_DIR ${PROJECT_SOURCE_DIR}/../Code)
 file(REAL_PATH "${HEMELB_CODE_DIR}" HEMELB_CODE_DIR)
 set(model_dir HlbGmyTool/Model)
-set(generation_dir HlbGmyTool/Model/Generation)
+set(gmy_generation_dir HlbGmyTool/Model/GmyGeneration)
 
 # First, our micro-HemeLB library (i.e. the bits we re-use).
 set(hemelb_cpps
@@ -63,7 +63,7 @@ set(hemelb_cpps
 list(TRANSFORM hemelb_cpps PREPEND "${HEMELB_CODE_DIR}/")
 # While this is located in the extension source tree, in spirit it is
 # part of hemelb::util::Vector3D's implementation.
-list(APPEND hemelb_cpps "${generation_dir}/Index.cpp")
+list(APPEND hemelb_cpps "${gmy_generation_dir}/Index.cpp")
 
 # This is a static archive as we want the objects to get pulled into
 # our final single extension library to avoid the
@@ -74,7 +74,7 @@ add_library(uhlb STATIC ${hemelb_cpps})
 target_include_directories(uhlb PUBLIC ${HEMELB_CODE_DIR})
 
 # Now the C++ implementation of the extension
-set(gen_cpps
+set(gmy_gen_cpps
   Neighbours.cpp
   BuildCGALPolygon.cpp
   Block.cpp
@@ -91,19 +91,19 @@ set(gen_cpps
   Debug.cpp
   Wrap.cpp
 )
-list(TRANSFORM gen_cpps PREPEND "${generation_dir}/")
+list(TRANSFORM gen_cpps PREPEND "${gmy_generation_dir}/")
 
-pybind11_add_module(Generation ${gen_cpps})
+pybind11_add_module(GmyGeneration ${gmy_gen_cpps})
 
 function(copy_picness src_tgt dest_tgt)
   set(pic POSITION_INDEPENDENT_CODE)
   get_target_property(picness ${src_tgt} ${pic})
   set_target_properties(${dest_tgt} PROPERTIES ${pic} ${picness})
 endfunction()
-copy_picness(Generation uhlb)
+copy_picness(GmyGeneration uhlb)
 
-target_include_directories(Generation PRIVATE ${generation_dir})
-target_link_libraries(Generation PRIVATE
+target_include_directories(GmyGeneration PRIVATE ${gmy_generation_dir})
+target_link_libraries(GmyGeneration PRIVATE
   uhlb
   Boost::headers
   ZLIB::ZLIB
@@ -112,4 +112,4 @@ target_link_libraries(Generation PRIVATE
   ${VTK_LIBRARIES}
 )
 
-install(TARGETS Generation DESTINATION ${model_dir})
+install(TARGETS GmyGeneration DESTINATION ${model_dir})

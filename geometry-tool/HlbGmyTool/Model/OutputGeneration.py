@@ -42,12 +42,12 @@ from .Vector import Vector
 from .Profile import Profile, metre
 from .XmlWriter import XmlWriter
 
-from . import Generation
+from . import GmyGeneration
 
 np.seterr(divide="ignore")
 
 # Add Pythonic printing
-class DoubleVector(Generation.DoubleVector):
+class DoubleVector(GmyGeneration.DoubleVector):
     def __str__(self):
         return f"({self.x}, {self.y}, {self.z})"
 
@@ -56,7 +56,7 @@ class DoubleVector(Generation.DoubleVector):
 
 
 def DVfromV(v):
-    """Translate a Model.Vector.Vector to a Generation.DoubleVector."""
+    """Translate a Model.Vector.Vector to a GmyGeneration.DoubleVector."""
     return DoubleVector(v.x, v.y, v.z)
 
 
@@ -74,7 +74,7 @@ class GeometryGenerator(object):
         nOut = 0
         ioletProxies = []
         for io in self._profile.Iolets:
-            proxy = Generation.Iolet()
+            proxy = GmyGeneration.Iolet()
 
             proxy.Centre = DVfromV(io.Centre) / self._profile.VoxelSize
             proxy.Normal = DVfromV(io.Normal)
@@ -120,7 +120,7 @@ class PolyDataGenerator(GeometryGenerator):
         """
         GeometryGenerator.__init__(self)
         self._profile = profile
-        self.generator = Generation.PolyDataGenerator()
+        self.generator = GmyGeneration.PolyDataGenerator()
         self._SetCommonGeneratorProperties()
         self.generator.SetSeedPointWorking(
             profile.SeedPoint.x / profile.VoxelSize,
@@ -243,7 +243,7 @@ class CylinderGenerator(GeometryGenerator):
         self._profile.OutputXmlFile = OutputXmlFile
         self._MakeIolets()
 
-        self.generator = Generation.CylinderGenerator()
+        self.generator = GmyGeneration.CylinderGenerator()
         self._SetCommonGeneratorProperties()
 
         self.generator.SetCylinderLength(LengthMetres / VoxelSizeMetres)
@@ -308,7 +308,7 @@ class SquareDuctGenerator(GeometryGenerator):
         self._profile.OutputXmlFile = OutputXmlFile
         self._MakeIolets()
 
-        self.generator = Generation.SquareDuctGenerator()
+        self.generator = GmyGeneration.SquareDuctGenerator()
         self._SetCommonGeneratorProperties()
 
         self.generator.SetOpenAxis(self.OpenAxis)
