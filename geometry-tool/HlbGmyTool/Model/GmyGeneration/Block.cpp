@@ -9,9 +9,9 @@
 #include "Domain.h"
 #include "Site.h"
 
-#include "vtkCubeSource.h"
-#include "vtkOBBTree.h"
-#include "vtkXMLPolyDataWriter.h"
+#include <vtkCubeSource.h>
+#include <vtkOBBTree.h>
+#include <vtkXMLPolyDataWriter.h>
 
 /*
  * Helper functions to check if sites are on the edge of the Domain.

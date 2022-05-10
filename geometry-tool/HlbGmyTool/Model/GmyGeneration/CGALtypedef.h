@@ -2,6 +2,9 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
+#ifndef HLBGMYTOOL_GMY_CGALTYPEDEF_H
+#define HLBGMYTOOL_GMY_CGALTYPEDEF_H
+
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 //#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <CGAL/AABB_polyhedron_triangle_primitive.h>
@@ -45,3 +48,5 @@ typedef Polyhedron::Halfedge_handle Halfedge_handle;
 
 typedef std::pair<Object_and_primitive_id, double>
     Object_Primitive_and_distance;
+
+#endif

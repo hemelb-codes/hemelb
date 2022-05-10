@@ -3,6 +3,9 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
+#ifndef HLBGMYTOOL_OCT_H5_HPP
+#define HLBGMYTOOL_OCT_H5_HPP
+
 namespace H5
 {
   template<class T>
@@ -194,3 +197,5 @@ namespace H5
   }
 
 }
+
+#endif

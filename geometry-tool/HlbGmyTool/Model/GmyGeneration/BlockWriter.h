@@ -6,7 +6,7 @@
 #ifndef HLBGMYTOOL_GMY_BLOCKWRITER_H
 #define HLBGMYTOOL_GMY_BLOCKWRITER_H
 
-#include <stddef.h>
+#include <cstddef>
 #include <string>
 #include "io/writers/xdr/XdrMemWriter.h"
 

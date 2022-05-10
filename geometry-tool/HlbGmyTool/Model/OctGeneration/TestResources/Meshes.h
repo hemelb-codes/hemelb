@@ -13,9 +13,9 @@ class vtkPolyData;
 class vtkXMLPolyDataReader;
 
 #include "Index.h"
-#include "../Iolet.h"
+#include "Iolet.h"
 
-#include "helpers.h"
+#include "TestResources/helpers.h"
 
 struct MeshData {
   std::vector<Vector> points;
