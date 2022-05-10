@@ -11,8 +11,30 @@
 #include "enumerate.hpp"
 
 // Check our iterator types satisfy the concept.
-static_assert(std::input_iterator<H5::LinkIterator>);
-static_assert(std::input_iterator<H5::AttrIterator>);
+//
+// Per DR P2325R3, std::weakly_incrementable (required by iterator
+// concept) should NOT require default constructible, but not all std
+// library implementations have caught up :(
+namespace {
+struct NonDefaultConstructible {
+  using difference_type = int;
+  using value_type = int;
+  using reference = int&;
+  using pointer = int*;
+  using iterator_category = std::input_iterator_tag;
+
+  NonDefaultConstructible(int);
+  NonDefaultConstructible& operator++();
+  NonDefaultConstructible operator++(int);
+};
+
+constexpr bool DEFAULT_CONSTRUCTIBLE_REQUIRED =
+    !std::weakly_incrementable<NonDefaultConstructible>;
+}  // namespace
+static_assert(DEFAULT_CONSTRUCTIBLE_REQUIRED ||
+              std::input_iterator<H5::LinkIterator>);
+static_assert(DEFAULT_CONSTRUCTIBLE_REQUIRED ||
+              std::input_iterator<H5::AttrIterator>);
 
 auto mk_empty_in_memory_file() {
   auto fapl = H5::PList::FileAccess();
