@@ -3,8 +3,8 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
-#ifndef HEMELBSETUPTOOL_TRIANGLESORTER_H
-#define HEMELBSETUPTOOL_TRIANGLESORTER_H
+#ifndef HLBGMYTOOL_OCT_TRIANGLESORTER_H
+#define HLBGMYTOOL_OCT_TRIANGLESORTER_H
 
 #include "TriTree.h"
 #include <vector>

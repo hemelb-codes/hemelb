@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_INCONSISTENTFLUIDNESSERROR_H
-#define HEMELBSETUPTOOL_INCONSISTENTFLUIDNESSERROR_H
+#ifndef HLBGMYTOOL_GMY_INCONSISTENTFLUIDNESSERROR_H
+#define HLBGMYTOOL_GMY_INCONSISTENTFLUIDNESSERROR_H
 
 #include <string>
 #include "GenerationError.h"
@@ -41,4 +41,4 @@ struct InconsistentIntersectRayError : public GenerationError {
   std::string msg;
 };
 
-#endif  // HEMELBSETUPTOOL_INCONSISTENTFLUIDNESSERROR_H
+#endif  // HLBGMYTOOL_GMY_INCONSISTENTFLUIDNESSERROR_H

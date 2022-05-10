@@ -4,8 +4,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_CGAL_H
-#define HEMELBSETUPTOOL_CGAL_H
+#ifndef HLBGMYTOOL_OCT_CGAL_H
+#define HLBGMYTOOL_OCT_CGAL_H
 #include <memory>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 //#include <CGAL/Exact_predicates_exact_constructions_kernel.h>

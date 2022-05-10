@@ -4,12 +4,12 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_IOLET_H
-#define HEMELBSETUPTOOL_IOLET_H
+#ifndef HLBGMYTOOL_OCT_IOLET_H
+#define HLBGMYTOOL_OCT_IOLET_H
 
 struct Iolet {
   int Id;
   bool IsInlet;
 };
 
-#endif  // HEMELBSETUPTOOL_IOLET_H
+#endif  // HLBGMYTOOL_OCT_IOLET_H

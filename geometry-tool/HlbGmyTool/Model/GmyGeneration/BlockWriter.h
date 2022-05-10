@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_BLOCKWRITER_H
-#define HEMELBSETUPTOOL_BLOCKWRITER_H
+#ifndef HLBGMYTOOL_GMY_BLOCKWRITER_H
+#define HLBGMYTOOL_GMY_BLOCKWRITER_H
 
 #include <stddef.h>
 #include <string>
@@ -47,4 +47,4 @@ class BlockWriter {
   bool IsFinished;
 };
 
-#endif  // HEMELBSETUPTOOL_BLOCKWRITER_H
+#endif  // HLBGMYTOOL_GMY_BLOCKWRITER_H

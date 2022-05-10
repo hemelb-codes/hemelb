@@ -3,8 +3,8 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
-#ifndef HEMELBSETUPTOOL_MKCGALMESH_H
-#define HEMELBSETUPTOOL_MKCGALMESH_H
+#ifndef HLBGMYTOOL_OCT_MKCGALMESH_H
+#define HLBGMYTOOL_OCT_MKCGALMESH_H
 
 #include <vector>
 #include "Index.h"
@@ -17,4 +17,4 @@ CgalMeshPtr MkCgalMesh(const std::vector<Vector>& ptsIn,
 		const std::vector<Index>& polysIn);
 
 
-#endif //HEMELBSETUPTOOL_MKCGALMESH_H
+#endif //HLBGMYTOOL_OCT_MKCGALMESH_H

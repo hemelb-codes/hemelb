@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_RANGE_HPP
-#define HEMELBSETUPTOOL_RANGE_HPP
+#ifndef HLBGMYTOOL_COMMON_RANGE_HPP
+#define HLBGMYTOOL_COMMON_RANGE_HPP
 
 #include <concepts>
 #include <ranges>

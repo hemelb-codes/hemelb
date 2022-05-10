@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_GENERATIONERROR_H
-#define HEMELBSETUPTOOL_GENERATIONERROR_H
+#ifndef HLBGMYTOOL_COMMON_GENERATIONERROR_H
+#define HLBGMYTOOL_COMMON_GENERATIONERROR_H
 #include <exception>
 #include <string>
 

@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_BUFFERPOOL_H
-#define HEMELBSETUPTOOL_BUFFERPOOL_H
+#ifndef HLBGMYTOOL_GMY_BUFFERPOOL_H
+#define HLBGMYTOOL_GMY_BUFFERPOOL_H
 #include <stack>
 
 // Allocates and frees or reuses buffers of a given size.

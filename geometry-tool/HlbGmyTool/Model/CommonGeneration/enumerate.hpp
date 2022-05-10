@@ -2,36 +2,39 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
-#ifndef ENUMERATE_ITERATOR_HPP
-#define ENUMERATE_ITERATOR_HPP
+#ifndef HLBGMYTOOL_COMMON_ENUMERATE_HPP
+#define HLBGMYTOOL_COMMON_ENUMERATE_HPP
 
 template <typename Container>
 class EnumIter {
 public:
   using iterator = decltype(std::begin(std::declval<Container>()));
-
-  EnumIter(iterator begin) : iter_{begin}, index_{0} {
-  }
-
-  EnumIter& operator++() {
-    iter_++;
-    index_++;
-    return *this;
-  }
-
-  bool operator!=(const EnumIter& rhs) {
-    return iter_ != rhs.iter_; // or self.index_ != rhs.index_;
-  }
-
   using iter_ref = typename std::iterator_traits<iterator>::reference;
-
-  std::pair<int, iter_ref> operator*() const {
-    return { index_, *iter_ };
-  }
 
 private:
   iterator iter_;
   int index_ = 0;
+
+public:
+  EnumIter(iterator begin) : iter_{begin}, index_{0} {
+  }
+
+  EnumIter& operator++() {
+    ++iter_;
+    ++index_;
+    return *this;
+  }
+
+  friend bool operator==(const EnumIter& lhs, const EnumIter& rhs) {
+    return lhs.iter_ == rhs.iter_; // or self.index_ != rhs.index_;
+  }
+  friend bool operator!=(const EnumIter& lhs, const EnumIter& rhs) {
+    return !(lhs == rhs);
+  }
+
+  std::pair<int, iter_ref> operator*() const {
+    return { index_, *iter_ };
+  }
 };
 
 template <typename Container>

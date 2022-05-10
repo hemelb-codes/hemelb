@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_DEBUG_H
-#define HEMELBSETUPTOOL_DEBUG_H
+#ifndef HLBGMYTOOL_GMY_DEBUG_H
+#define HLBGMYTOOL_GMY_DEBUG_H
 
 #include <iostream>
 
@@ -38,4 +38,4 @@ inline DummyStream& operator<<(DummyStream& ds,
 
 DummyStream& Log();
 
-#endif  // HEMELBSETUPTOOL_DEBUG_H
+#endif  // HLBGMYTOOL_GMY_DEBUG_H

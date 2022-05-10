@@ -3,8 +3,8 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
-#ifndef HEMELBSETUPTOOL_SURFACEVOXELISER_H
-#define HEMELBSETUPTOOL_SURFACEVOXELISER_H
+#ifndef HLBGMYTOOL_OCT_SURFACEVOXELISER_H
+#define HLBGMYTOOL_OCT_SURFACEVOXELISER_H
 
 #include <array>
 #include <memory>

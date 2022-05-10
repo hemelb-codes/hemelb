@@ -3,8 +3,8 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
-#ifndef HEMELBSETUPTOOL_TRITREE_H
-#define HEMELBSETUPTOOL_TRITREE_H
+#ifndef HLBGMYTOOL_OCT_TRITREE_H
+#define HLBGMYTOOL_OCT_TRITREE_H
 
 #include "Oct.h"
 #include <boost/container/flat_set.hpp>

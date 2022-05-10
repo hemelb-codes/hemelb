@@ -3,8 +3,8 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
-#ifndef HEMELBSETUPTOOL_SECTIONTREE_H
-#define HEMELBSETUPTOOL_SECTIONTREE_H
+#ifndef HLBGMYTOOL_OCT_SECTIONTREE_H
+#define HLBGMYTOOL_OCT_SECTIONTREE_H
 
 #include <vector>
 #include <list>

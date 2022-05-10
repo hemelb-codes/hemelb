@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_DOMAIN_H
-#define HEMELBSETUPTOOL_DOMAIN_H
+#ifndef HLBGMYTOOL_GMY_DOMAIN_H
+#define HLBGMYTOOL_GMY_DOMAIN_H
 
 #include <vector>
 
@@ -117,4 +117,4 @@ class BlockIterator : public std::iterator<std::forward_iterator_tag, Block> {
   Index current;
   Index maxima;
 };
-#endif  // HEMELBSETUPTOOL_DOMAIN_H
+#endif  // HLBGMYTOOL_GMY_DOMAIN_H

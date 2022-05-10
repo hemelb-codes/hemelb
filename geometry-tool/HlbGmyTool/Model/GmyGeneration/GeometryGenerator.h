@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_GEOMETRYGENERATOR_H
-#define HEMELBSETUPTOOL_GEOMETRYGENERATOR_H
+#ifndef HLBGMYTOOL_GMY_GEOMETRYGENERATOR_H
+#define HLBGMYTOOL_GMY_GEOMETRYGENERATOR_H
 
 #include <string>
 #include <vector>
@@ -73,4 +73,4 @@ class GeometryGenerator {
   virtual int BlockInsideOrOutsideSurface(const Block& block) = 0;
 };
 
-#endif  // HEMELBSETUPTOOL_GEOMETRYGENERATOR_H
+#endif  // HLBGMYTOOL_GMY_GEOMETRYGENERATOR_H

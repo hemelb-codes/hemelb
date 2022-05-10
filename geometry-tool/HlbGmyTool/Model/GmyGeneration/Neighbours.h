@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_NEIGHBOURS_H
-#define HEMELBSETUPTOOL_NEIGHBOURS_H
+#ifndef HLBGMYTOOL_GMY_NEIGHBOURS_H
+#define HLBGMYTOOL_GMY_NEIGHBOURS_H
 
 #include <vector>
 #include "Index.h"
@@ -30,4 +30,4 @@ struct Neighbours {
   // Private to ensure it's not instantiated.
   Neighbours();
 };
-#endif  // HEMELBSETUPTOOL_NEIGHBOURS_H
+#endif  // HLBGMYTOOL_GMY_NEIGHBOURS_H
