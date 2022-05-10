@@ -14,18 +14,21 @@
 
 #include <hdf5.h>
 
-namespace H5{
+namespace H5 {
   class Error : public std::runtime_error
   {
   public:
     using std::runtime_error::runtime_error;
   };
 
-  //#define H5_CONSTERROR(msg) Error(
-#define H5_CONSTRUCT(ans, func, args) {hid_t ret = func args; if (ret < 0) throw Error("HDF5 error in API function " #func " " __FILE__ ":"); ans = ret;}
-  
-#define H5_CALL(func, args) {herr_t ret = func args; if (ret < 0) throw Error("HDF5 error in API function " #func " " __FILE__ ":");}
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
 
+#define H5_CONSTRUCT(ans, func, args) {hid_t ret = func args; if (ret < 0) throw Error("HDF5 error in API function " #func " " __FILE__ ":" TOSTRING(__LINE__)); ans = ret;}
+
+#define H5_CALL(func, args) {herr_t ret = func args; if (ret < 0) throw Error("HDF5 error in API function " #func " " __FILE__ ":" TOSTRING(__LINE__));}
+
+#define H5_CALLNOTHROW(func, args) {herr_t ret = func args; if (ret < 0) {std::cerr << "HDF5 error in API function " #func " " __FILE__ ":" TOSTRING(__LINE__) "\n"; std::terminate();}}
 
   // Forward declare
   class Object;
@@ -50,9 +53,14 @@ namespace H5{
   typedef std::shared_ptr<PList> PListSharedPtr;
 
   /// HDF5 base class
-  class Object : public std::enable_shared_from_this<Object>
+  class Object
   {
   public:
+    // Objects aren't copyable.
+    Object(Object const&) = delete;
+    Object& operator=(Object const&) = delete;
+    virtual ~Object() noexcept;
+
     virtual void Close() = 0;
     inline hid_t GetId() const
     {
@@ -66,8 +74,7 @@ namespace H5{
     }
   protected:
     Object();
-    Object(hid_t id);
-    virtual ~Object();
+    explicit Object(hid_t id);
     hid_t m_Id;
   };
 
@@ -111,48 +118,123 @@ namespace H5{
     static PListSharedPtr LinkAccess();
 
     PList();
-    ~PList();
+    ~PList() noexcept override;
     void Close();
     void SetChunk(const std::vector<hsize_t>& dims);
     void SetDeflate(const unsigned level = 1);
     // void SetMpio(Comm comm);
     // void SetDxMpioCollective();
     // void SetDxMpioIndependent();
-  private:
+
     PList(hid_t cls);
   };
+
+  // Input iterator of names of things (Links and Attributes).
+  //
+  // Need to supply a Policy class that provides types, behaviour and
+  // constants.
+  template <typename Policy>
+  class NameIterator
+  {
+  private:
+    using ObjT = Policy::ObjectType;
+
+    ObjT* m_obj;
+
+    hsize_t m_idx;
+    hsize_t m_next;
+    hsize_t m_size;
+    std::string m_currentName;
+
+    static herr_t helper(hid_t id, char const* name, Policy::InfoT const* info, void* op_data) {
+      auto iter = static_cast<NameIterator*>(op_data);
+      iter->m_currentName = name;
+      return 1;
+    }
+
+    void next() {
+      m_idx = m_next;
+      if (m_idx < m_size) {
+	H5_CALL(Policy::ITER_FUNC,
+		(m_obj->GetId(), Policy::ITER_INDEX, Policy::ITER_ORDER, &m_next, NameIterator::helper, this));
+      }
+    }
+  public:
+    // Fulfill std::forward_iterator concept.
+    using difference_type = hssize_t;
+    using value_type = std::string const;
+    using reference = std::string const&;
+    using pointer = std::string const*;
+    using iterator_category = std::input_iterator_tag;
+
+    NameIterator(ObjT* obj, hsize_t idx) :
+      m_obj{obj},
+      /*m_idx{idx}, - initialised by next() below */
+      m_next{idx},
+      m_size{Policy::GetObjectSize(obj)} {
+	next();
+    }
+
+    // Iterator gives the name of the current thing.
+    const std::string& operator*() const {
+      return m_currentName;
+    }
+
+    friend inline bool operator==(const NameIterator& lhs, const NameIterator& rhs)
+    {
+      if (lhs.m_obj == rhs.m_obj)
+      {
+	if (lhs.m_idx == rhs.m_idx)
+	{
+	  return true;
+	}
+      }
+      return false;
+    }
+
+    friend inline bool operator!=(const NameIterator& lhs, const NameIterator& rhs)
+    {
+      return !(lhs == rhs);
+    }
+
+    hsize_t GetPos() const
+    {
+      return m_idx;
+    }
+
+    NameIterator& operator++() {
+      next();
+      return *this;
+    }
+    NameIterator operator++(int) {
+      NameIterator ans = *this;
+      next();
+      return ans;
+    }
+  };
+
+  // Forward iterator over the names of links of a Group/File. These
+  // can be other Groups or DataSets.
+  //
+  // Iteration order is fastest available rather than sorted in any
+  // particular way.
+  struct LinkIterPolicy {
+    using ObjectType = CanHaveGroupsDataSets;
+    using InfoT = H5L_info_t;
+    typedef herr_t (*IterFuncT)(hid_t, H5_index_t, H5_iter_order_t,
+				hsize_t *, H5L_iterate_t, void *);
+    static constexpr IterFuncT ITER_FUNC = H5Literate;
+    static constexpr auto ITER_INDEX = H5_INDEX_NAME;
+    static constexpr auto ITER_ORDER = H5_ITER_NATIVE;
+    // Definition below, once ObjectType is defined.
+    static inline hsize_t GetObjectSize(ObjectType* o);
+  };
+  using LinkIterator = NameIterator<LinkIterPolicy>;
 
   /// Mixin for objects that contain groups and datasets (Group and File)
   class CanHaveGroupsDataSets : public virtual Object
   {
   public:
-    class LinkIterator
-    {
-    public:
-      LinkIterator(CanHaveGroupsDataSetsSharedPtr grp,
-		   hsize_t idx = 0);
-      const std::string& operator*();
-      LinkIterator& operator++();
-      bool operator==(const LinkIterator& other) const;
-      inline bool operator!=(
-			     const LinkIterator& other) const
-      {
-	return !(*this == other);
-      }
-      inline hsize_t GetPos() const
-      {
-	return m_idx;
-      }
-    private:
-      static herr_t helper(hid_t g_id, const char *name,
-			   const H5L_info_t *info, void *op_data);
-      CanHaveGroupsDataSetsSharedPtr m_grp;
-      hsize_t m_idx;
-      hsize_t m_next;
-      hsize_t m_size;
-      std::string m_currentName;
-    };
-
     // Create a group with the given name. The createPL can be
     // omitted to use the default properties.
     GroupSharedPtr CreateGroup(const std::string& name,
@@ -183,44 +265,38 @@ namespace H5{
     // The accessPL can be omitted to use the defaults
     DataSetSharedPtr OpenDataSet(const std::string& name,
 				 PListSharedPtr accessPL = PList::Default()) const;
+
+    // Get the number of links within this Group or File.
     virtual hsize_t GetNumElements() = 0;
+    // Get iterator over the contained elements
     LinkIterator begin();
     LinkIterator end();
 
-    friend class key_iterator;
-
   };
+
+  inline hsize_t LinkIterPolicy::GetObjectSize(ObjectType* o) {
+    return o->GetNumElements();
+  }
+
+  // Forward iterator over the attribute names.
+  // Iteration order is whatever's fastest.
+  struct AttrIterPolicy {
+    using ObjectType = CanHaveAttributes const;
+    using InfoT = H5A_info_t;
+    typedef herr_t (*IterFuncT)(hid_t, H5_index_t, H5_iter_order_t,
+				hsize_t *, H5A_operator2_t, void *);
+    static inline IterFuncT ITER_FUNC = H5Aiterate2;
+    static constexpr auto ITER_INDEX = H5_INDEX_CRT_ORDER;
+    static constexpr auto ITER_ORDER = H5_ITER_NATIVE;
+    // Definition below, once ObjectType is defined.
+    static inline hsize_t GetObjectSize(ObjectType* o);
+  };
+  using AttrIterator = NameIterator<AttrIterPolicy>;
 
   /// Mixin for objects that can have attributes (Group, DataSet, DataType)
   class CanHaveAttributes : public virtual Object
   {
   public:
-    class AttrIterator
-    {
-    public:
-      AttrIterator(CanHaveAttributesSharedPtr obj,
-		   hsize_t idx = 0);
-      const std::string& operator*();
-      AttrIterator& operator++();
-      bool operator==(const AttrIterator& other) const;
-      inline bool operator!=(
-			     const AttrIterator& other) const
-      {
-	return !(*this == other);
-      }
-      inline hsize_t GetPos() const
-      {
-	return m_idx;
-      }
-    private:
-      static herr_t helper(hid_t g_id, const char *name,
-			   const H5A_info_t *info, void *op_data);
-      CanHaveAttributesSharedPtr m_obj;
-      hsize_t m_idx;
-      hsize_t m_next;
-      hsize_t m_size;
-      std::string m_currentName;
-    };
 
     AttributeSharedPtr CreateAttribute(const std::string& name,
 				       DataTypeSharedPtr type, DataSpaceSharedPtr space);
@@ -238,11 +314,15 @@ namespace H5{
     void GetAttribute(const std::string& name,
 		      std::vector<T>& value);
 
-    int GetNumAttr() const;
-    AttrIterator attr_begin();
-    AttrIterator attr_end();
+    hsize_t GetNumAttr() const;
+    AttrIterator attr_begin() const;
+    AttrIterator attr_end() const;
 
   };
+
+  inline hsize_t AttrIterPolicy::GetObjectSize(ObjectType* o) {
+    return o->GetNumAttr();
+  }
 
   /// HDF5 DataSpace wrapper
   class DataSpace : public Object
@@ -253,19 +333,15 @@ namespace H5{
     static DataSpaceSharedPtr OneD(hsize_t size);
 
     DataSpace();
+    DataSpace(hid_t id);
     DataSpace(hsize_t size, hsize_t max = H5S_UNLIMITED - 1);
     DataSpace(const std::vector<hsize_t>& dims);
     DataSpace(const std::vector<hsize_t>& dims,
 	      const std::vector<hsize_t>& max_dims);
-    ~DataSpace();
+    ~DataSpace() noexcept override;
 
     void Close();
     void SelectRange(const hsize_t start, const hsize_t count);
-
-  private:
-    DataSpace(hid_t id);
-    friend class Attribute;
-    friend class DataSet;
   };
 
   // Policy class for the DataTypesTraits controlling whether data
@@ -330,15 +406,12 @@ namespace H5{
       hid_t ans;
       H5_CONSTRUCT(ans, H5Tarray_create, (DataTypeTraits<T>::GetType()->GetId(), nd, dims.begin()));
       
-      return DataTypeSharedPtr(new DataType(ans));
+      return std::make_shared<DataType>(ans);
     }
     
-    virtual void Close();
-    DataTypeSharedPtr Copy() const;
-  protected:
-    template<class T>
-    friend struct DataTypeTraits;
     DataType(hid_t id);
+    void Close() override;
+    DataTypeSharedPtr Copy() const;
   };
 
   /// Predefined HDF data types that must not be closed when done with.
@@ -348,26 +421,35 @@ namespace H5{
     template<class T>
     static DataTypeSharedPtr Native();
     static DataTypeSharedPtr CS1();
-    void Close();
-  private:
     PredefinedDataType (hid_t);
-
+    void Close() override;
   };
 
   /// HDF5 Attribute Wrapper
   class Attribute : public Object
   {
+    // This type can be used in a range-for expression to iterate
+    // attribute names - get one using the `Iterate` static member
+    // function below.
+    struct AttrIterationHelper {
+      CanHaveAttributes const* thing;
+      inline AttrIterator begin() const {
+	return thing->attr_begin();
+      }
+      inline AttrIterator end() const {
+	return thing->attr_end();
+      }
+    };
+
   public:
-    ~Attribute();
+    Attribute(hid_t id);
+    ~Attribute() noexcept override;
     void Close();
     DataSpaceSharedPtr GetSpace() const;
-
-  private:
-    Attribute(hid_t id) :
-      Object(id)
-    {
-
+    inline static AttrIterationHelper Iterate(CanHaveAttributes const& thing) {
+      return AttrIterationHelper{&thing};
     }
+  private:
     static AttributeSharedPtr Create(hid_t parent,
 				     const std::string& name, DataTypeSharedPtr type,
 				     DataSpaceSharedPtr space);
@@ -387,10 +469,10 @@ namespace H5{
     static FileSharedPtr Open(const std::string& filename,
 			      unsigned mode, PListSharedPtr accessPL =
 			      PList::Default());
-    ~File();
+    ~File() noexcept override;
     void Close();
-    virtual hsize_t GetNumElements();
-  private:
+    hsize_t GetNumElements() override;
+
     File(hid_t id);
   };
 
@@ -398,21 +480,20 @@ namespace H5{
   class Group : public CanHaveAttributes, public CanHaveGroupsDataSets
   {
   public:
-    ~Group();
+    Group(hid_t id);
+    ~Group() noexcept override;
     void Close();
-    virtual hsize_t GetNumElements();
+    hsize_t GetNumElements() override;
     CanHaveAttributesSharedPtr operator[](hsize_t idx);
     CanHaveAttributesSharedPtr operator[](
 					  const std::string& key);
-  private:
-    Group(hid_t id);
-    friend class CanHaveGroupsDataSets;
   };
 
   class DataSet : public CanHaveAttributes
   {
   public:
-    ~DataSet();
+    DataSet(hid_t id);
+    ~DataSet() noexcept override;
     void Close();
     DataSpaceSharedPtr GetSpace() const;
 
@@ -450,9 +531,6 @@ namespace H5{
       H5_CALL(H5Dread,
 	      (m_Id, mem_t->GetId(), H5S_ALL, H5S_ALL,H5P_DEFAULT, &data[0]));
     }
-  private:
-    DataSet(hid_t id);
-    friend class CanHaveGroupsDataSets;
   };
 
 }

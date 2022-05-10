@@ -76,8 +76,7 @@ namespace H5
   template<class T>
   DataTypeSharedPtr PredefinedDataType::Native()
   {
-    return DataTypeSharedPtr(
-			     new PredefinedDataType(DataTypeTraits<T>::NativeType));
+    return std::make_shared<PredefinedDataType>(DataTypeTraits<T>::NativeType);
   }
 
   template<typename T>
