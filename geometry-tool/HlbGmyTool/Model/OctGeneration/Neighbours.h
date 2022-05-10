@@ -9,6 +9,7 @@
 
 #include "io/formats/geometry.h"
 #include "Index.h"
+#include "range.hpp"
 
 namespace detail {
   template <std::size_t N>
