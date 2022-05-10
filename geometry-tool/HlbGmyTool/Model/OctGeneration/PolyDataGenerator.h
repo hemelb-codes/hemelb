@@ -4,8 +4,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_POLYDATAGENERATOR_H
-#define HEMELBSETUPTOOL_POLYDATAGENERATOR_H
+#ifndef HLBGMYTOOL_OCT_POLYDATAGENERATOR_H
+#define HLBGMYTOOL_OCT_POLYDATAGENERATOR_H
 
 #include <vector>
 #include "GenerationError.h"

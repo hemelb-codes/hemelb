@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_POLYDATAGENERATOR_H
-#define HEMELBSETUPTOOL_POLYDATAGENERATOR_H
+#ifndef HLBGMYTOOL_GMY_POLYDATAGENERATOR_H
+#define HLBGMYTOOL_GMY_POLYDATAGENERATOR_H
 
 #include "GeometryGenerator.h"
 
@@ -85,4 +85,4 @@ class PolyDataGenerator : public GeometryGenerator {
                            const Object_Primitive_and_distance j);
 };
 
-#endif  // HEMELBSETUPTOOL_POLYDATAGENERATOR_H
+#endif  // HLBGMYTOOL_GMY_POLYDATAGENERATOR_H

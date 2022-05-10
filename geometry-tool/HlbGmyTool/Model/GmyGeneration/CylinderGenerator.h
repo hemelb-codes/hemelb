@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_CYLINDERGENERATOR_H
-#define HEMELBSETUPTOOL_CYLINDERGENERATOR_H
+#ifndef HLBGMYTOOL_GMY_CYLINDERGENERATOR_H
+#define HLBGMYTOOL_GMY_CYLINDERGENERATOR_H
 
 #include "GeometryGenerator.h"
 
@@ -46,4 +46,4 @@ class CylinderGenerator : public GeometryGenerator {
   virtual int BlockInsideOrOutsideSurface(const Block& block) { return 0; }
 };
 
-#endif  // HEMELBSETUPTOOL_CYLINDERGENERATOR_H
+#endif  // HLBGMYTOOL_GMY_CYLINDERGENERATOR_H

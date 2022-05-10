@@ -3,8 +3,8 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
-#ifndef HEMELBSETUPTOOL_OCT_H
-#define HEMELBSETUPTOOL_OCT_H
+#ifndef HLBGMYTOOL_OCT_OCT_H
+#define HLBGMYTOOL_OCT_OCT_H
 
 #include <memory>
 #include <list>

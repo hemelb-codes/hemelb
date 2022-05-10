@@ -4,8 +4,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_NEIGHBOURS_H
-#define HEMELBSETUPTOOL_NEIGHBOURS_H
+#ifndef HLBGMYTOOL_OCT_NEIGHBOURS_H
+#define HLBGMYTOOL_OCT_NEIGHBOURS_H
 
 #include "io/formats/geometry.h"
 #include "Index.h"

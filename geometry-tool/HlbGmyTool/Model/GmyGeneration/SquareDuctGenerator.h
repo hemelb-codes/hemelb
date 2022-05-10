@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_SQUAREDUCTGENERATOR_H
-#define HEMELBSETUPTOOL_SQUAREDUCTGENERATOR_H
+#ifndef HLBGMYTOOL_GMY_SQUAREDUCTGENERATOR_H
+#define HLBGMYTOOL_GMY_SQUAREDUCTGENERATOR_H
 
 #include "GeometryGenerator.h"
 
@@ -40,4 +40,4 @@ class SquareDuctGenerator : public GeometryGenerator {
   virtual int BlockInsideOrOutsideSurface(const Block& block) { return 0; }
 };
 
-#endif  // HEMELBSETUPTOOL_SQUAREDUCTGENERATOR_H
+#endif  // HLBGMYTOOL_GMY_SQUAREDUCTGENERATOR_H

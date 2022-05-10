@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_IOLET_H
-#define HEMELBSETUPTOOL_IOLET_H
+#ifndef HLBGMYTOOL_GMY_IOLET_H
+#define HLBGMYTOOL_GMY_IOLET_H
 
 #include "Index.h"
 struct Iolet {
@@ -16,4 +16,4 @@ struct Iolet {
   bool IsInlet;
 };
 
-#endif  // HEMELBSETUPTOOL_IOLET_H
+#endif  // HLBGMYTOOL_GMY_IOLET_H

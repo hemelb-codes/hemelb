@@ -3,8 +3,8 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
-#ifndef HEMELBSETUPTOOL_FLUIDSITETREE_H
-#define HEMELBSETUPTOOL_FLUIDSITETREE_H
+#ifndef HLBGMYTOOL_OCT_FLUIDSITETREE_H
+#define HLBGMYTOOL_OCT_FLUIDSITETREE_H
 
 #include <memory>
 #include <array>
@@ -68,4 +68,4 @@ struct FluidData {
 };
 typedef Octree<FluidData> FluidTree;
 
-#endif // HEMELBSETUPTOOL_FLUIDSITETREE_H
+#endif // HLBGMYTOOL_OCT_FLUIDSITETREE_H

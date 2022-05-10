@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_BUILDCGALPOLYGON_H
-#define HEMELBSETUPTOOL_BUILDCGALPOLYGON_H
+#ifndef HLBGMYTOOL_GMY_BUILDCGALPOLYGON_H
+#define HLBGMYTOOL_GMY_BUILDCGALPOLYGON_H
 
 #include "CGALtypedef.h"
 
@@ -35,4 +35,4 @@ class BuildCGALPolygon : public CGAL::Modifier_base<HDS> {
   vtkIntArray* IoletIdArray;
 };
 
-#endif  // HEMELBSETUPTOOL_BUILDCGALPOLYGON_H
+#endif  // HLBGMYTOOL_GMY_BUILDCGALPOLYGON_H

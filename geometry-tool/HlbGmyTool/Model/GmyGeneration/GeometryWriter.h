@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_GEOMETRYWRITER_H
-#define HEMELBSETUPTOOL_GEOMETRYWRITER_H
+#ifndef HLBGMYTOOL_GMY_GEOMETRYWRITER_H
+#define HLBGMYTOOL_GMY_GEOMETRYWRITER_H
 
 #include <cstdio>
 #include <string>
@@ -44,4 +44,4 @@ class GeometryWriter {
   friend class BlockWriter;
 };
 
-#endif  // HEMELBSETUPTOOL_GEOMETRYWRITER_H
+#endif  // HLBGMYTOOL_GMY_GEOMETRYWRITER_H

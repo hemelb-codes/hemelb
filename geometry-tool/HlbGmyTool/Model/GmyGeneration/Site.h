@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_SITE_H
-#define HEMELBSETUPTOOL_SITE_H
+#ifndef HLBGMYTOOL_GMY_SITE_H
+#define HLBGMYTOOL_GMY_SITE_H
 
 #include <vector>
 #include "Index.h"
@@ -117,4 +117,4 @@ class NeighbourIterator : public NeighbourIteratorBase {
  protected:
   bool IsCurrentValid();
 };
-#endif  // HEMELBSETUPTOOL_SITE_H
+#endif  // HLBGMYTOOL_GMY_SITE_H

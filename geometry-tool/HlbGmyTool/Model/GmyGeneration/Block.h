@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_BLOCK_H
-#define HEMELBSETUPTOOL_BLOCK_H
+#ifndef HLBGMYTOOL_GMY_BLOCK_H
+#define HLBGMYTOOL_GMY_BLOCK_H
 
 #include <vtkSmartPointer.h>
 #include <vector>
@@ -53,4 +53,4 @@ class Block {
   friend class LaterNeighbourIterator;
 };
 
-#endif  // HEMELBSETUPTOOL_BLOCK_H
+#endif  // HLBGMYTOOL_GMY_BLOCK_H

@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELBSETUPTOOL_INDEX_H
-#define HEMELBSETUPTOOL_INDEX_H
+#ifndef HLBGMYTOOL_COMMON_INDEX_H
+#define HLBGMYTOOL_COMMON_INDEX_H
 
 #include <exception>
 #include "util/Vector3D.h"
@@ -17,4 +17,4 @@ class IndexError : public std::exception {
 typedef hemelb::util::Vector3D<int> Index;
 typedef hemelb::util::Vector3D<double> Vector;
 
-#endif  // HEMELBSETUPTOOL_INDEX_H
+#endif  // HLBGMYTOOL_COMMON_INDEX_H
