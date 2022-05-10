@@ -82,7 +82,7 @@ auto Octree<T>::Branch::Get(Int i, Int j, Int k, Int l) const -> ConstNodePtr {
 // Get a node without creating - returns null pointer if doensn't exist
 template <class T>
 auto Octree<T>::Branch::GetCreate(Int i, Int j, Int k, Int l) -> NodePtr {
-  if (l >= this->level) {
+  if (l > this->level) {
     // a parent - error
     throw std::out_of_range("trying to get a parent node");
   }
@@ -91,6 +91,10 @@ auto Octree<T>::Branch::GetCreate(Int i, Int j, Int k, Int l) -> NodePtr {
     throw std::out_of_range("requested node not in my range");
 
   // OK
+  if (l == this->level) {
+    return this->shared_from_this();
+  }
+
   return get_create_internal(i, j, k, l);
 }
 
