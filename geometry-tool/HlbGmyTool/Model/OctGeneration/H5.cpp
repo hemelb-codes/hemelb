@@ -4,6 +4,21 @@
 // license in the file LICENSE.
 #include "H5.h"
 
+#include <iostream>
+
+#define H5_CLOSETHIS(func, nothr)            \
+  if (m_Id != H5I_INVALID_HID) {             \
+    herr_t ret = func(m_Id);                 \
+    if (ret < 0)                             \
+      if constexpr (nothr) {                 \
+        std::cerr << H5_ERRORMSG(func) "\n"; \
+        std::terminate();                    \
+      } else {                               \
+        throw Error(H5_ERRORMSG(func));      \
+      }                                      \
+    m_Id = H5I_INVALID_HID;                  \
+  }
+
 namespace H5 {
 
 Object::Object() : m_Id(H5I_INVALID_HID) {}
@@ -15,11 +30,10 @@ PList::PList(hid_t cls) : Object() {
   H5_CONSTRUCT(m_Id, H5Pcreate, (cls));
 }
 PList::~PList() {
-  Close();
+  H5_CLOSETHIS(H5Pclose, true);
 }
 void PList::Close() {
-  H5_CALL(H5Pclose, (m_Id));
-  m_Id = H5I_INVALID_HID;
+  H5_CLOSETHIS(H5Pclose, false);
 }
 
 /// Default options
@@ -229,13 +243,13 @@ DataSpace::DataSpace(const std::vector<hsize_t>& dims,
 }
 
 DataSpace::~DataSpace() {
-  Close();
+  H5_CLOSETHIS(H5Sclose, true);
 }
 
 void DataSpace::Close() {
-  H5_CALL(H5Sclose, (m_Id));
-  m_Id = H5I_INVALID_HID;
+  H5_CLOSETHIS(H5Sclose, false);
 }
+
 void DataSpace::SelectRange(const hsize_t start, const hsize_t count) {
   H5_CALL(H5Sselect_hyperslab,
           (m_Id, H5S_SELECT_SET, &start, NULL, &count, NULL));
@@ -251,9 +265,12 @@ DataTypeSharedPtr DataType::String(size_t len) {
   return ans;
 }
 
+DataType::~DataType() {
+  H5_CLOSETHIS(H5Tclose, true);
+}
+
 void DataType::Close() {
-  H5_CALL(H5Tclose, (m_Id));
-  m_Id = H5I_INVALID_HID;
+  H5_CLOSETHIS(H5Tclose, false);
 }
 
 DataTypeSharedPtr DataType::Copy() const {
@@ -270,6 +287,11 @@ PredefinedDataType::PredefinedDataType(hid_t id) : DataType(id) {}
 
 void PredefinedDataType::Close() {
   // No-op
+  m_Id = H5I_INVALID_HID;
+}
+
+PredefinedDataType::~PredefinedDataType() {
+  // To ensure base class does not try to call H5Tclose
   m_Id = H5I_INVALID_HID;
 }
 
@@ -313,11 +335,10 @@ AttributeSharedPtr Attribute::Open(hid_t parent, const std::string& name) {
 }
 
 Attribute::~Attribute() {
-  Close();
+  H5_CLOSETHIS(H5Aclose, true);
 }
 void Attribute::Close() {
-  H5_CALL(H5Aclose, (m_Id));
-  m_Id = H5I_INVALID_HID;
+  H5_CLOSETHIS(H5Aclose, false);
 }
 
 DataSpaceSharedPtr Attribute::GetSpace() const {
@@ -343,13 +364,13 @@ FileSharedPtr File::Open(const std::string& filename,
 }
 
 File::~File() {
-  Close();
+  H5_CLOSETHIS(H5Fclose, true);
 }
 
 void File::Close() {
-  H5_CALL(H5Fclose, (m_Id));
-  m_Id = H5I_INVALID_HID;
+  H5_CLOSETHIS(H5Fclose, false);
 }
+
 hsize_t File::GetNumElements() {
   GroupSharedPtr root = OpenGroup("/");
   return root->GetNumElements();
@@ -357,12 +378,11 @@ hsize_t File::GetNumElements() {
 Group::Group(hid_t id) : Object(id) {}
 
 Group::~Group() {
-  Close();
+  H5_CLOSETHIS(H5Gclose, true);
 }
 
 void Group::Close() {
-  H5_CALL(H5Gclose, (m_Id));
-  m_Id = H5I_INVALID_HID;
+  H5_CLOSETHIS(H5Gclose, false);
 }
 
 hsize_t Group::GetNumElements() {
@@ -374,12 +394,11 @@ hsize_t Group::GetNumElements() {
 DataSet::DataSet(hid_t id) : Object(id) {}
 
 DataSet::~DataSet() {
-  Close();
+  H5_CLOSETHIS(H5Dclose, true);
 }
 
 void DataSet::Close() {
-  H5_CALL(H5Dclose, (m_Id));
-  m_Id = H5I_INVALID_HID;
+  H5_CLOSETHIS(H5Dclose, false);
 }
 
 DataSpaceSharedPtr DataSet::GetSpace() const {
