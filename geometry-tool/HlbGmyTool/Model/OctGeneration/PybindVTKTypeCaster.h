@@ -69,8 +69,15 @@ public:
 
   bool load(handle src, bool /* convert */)
   {
-    value = dynamic_cast<Class*>(
-      vtkPythonUtil::GetPointerFromObject(src.ptr(), type_id<Class>().c_str()));
+    vtkObjectBase* ob = vtkPythonUtil::GetPointerFromObject(src.ptr(), type_id<Class>().c_str());
+    // We *should* do a dynamic_cast here, BUT if your VTK was
+    // compiled with a different compiler eveything will be wrong and
+    // this will either fail or segfault (cos RTTI across DSO
+    // boundaries is hard).
+    //
+    // It's probably fine cos GetPointerFromObject does some checking
+    // for us?
+    value = (Class*)ob;
     return value != nullptr;
   }
 };

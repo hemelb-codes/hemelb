@@ -7,8 +7,10 @@ cmake_minimum_required(VERSION 3.13)
 
 project(HemeLbGmyTool)
 
+include(CTest)
+
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../CMake)
-# include(Debug)
+include(Debug)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -44,6 +46,7 @@ if(SKBUILD)
   list(APPEND CMAKE_PREFIX_PATH "${_pybind11_cmake_dir}")
 endif()
 
+set(CMAKE_CXX_VISIBILITY_PRESET default)
 find_package(pybind11 CONFIG REQUIRED)
 
 set(HEMELB_CODE_DIR ${PROJECT_SOURCE_DIR}/../Code)
@@ -105,7 +108,6 @@ target_link_libraries(GmyGeneration PRIVATE
   uhlb
   Boost::headers
   ZLIB::ZLIB
-  Boost::headers
   CGAL::CGAL
   ${VTK_LIBRARIES}
 )
@@ -122,21 +124,30 @@ set(oct_gen_cpps
   SurfaceVoxeliser.cpp
   TriTree.cpp
   TriangleSorter.cpp
-  Wrap.cpp
 )
 list(TRANSFORM oct_gen_cpps PREPEND "${oct_dir}/")
 
-pybind11_add_module(OctGeneration ${oct_gen_cpps})
-
-target_include_directories(OctGeneration PRIVATE ${oct_dir})
-target_link_libraries(OctGeneration PRIVATE
+add_library(octgmygen STATIC ${oct_gen_cpps})
+target_include_directories(octgmygen PUBLIC ${oct_dir})
+target_link_libraries(octgmygen
+  PUBLIC
   uhlb
+  PRIVATE
+  vtksys
+  vtkCommonDataModel
   hdf5::hdf5
   Boost::headers
   ZLIB::ZLIB
-  Boost::headers
   CGAL::CGAL
-  ${VTK_LIBRARIES}
+)
+
+pybind11_add_module(OctGeneration ${oct_dir}/Wrap.cpp)
+
+target_link_libraries(OctGeneration
+  PRIVATE
+  uhlb
+  vtksys vtkCommonDataModel vtkWrappingPythonCore
+  octgmygen
 )
 
 function(copy_picness src_tgt dest_tgt)
@@ -145,6 +156,38 @@ function(copy_picness src_tgt dest_tgt)
   set_target_properties(${dest_tgt} PROPERTIES ${pic} ${picness})
 endfunction()
 copy_picness(GmyGeneration uhlb)
+copy_picness(GmyGeneration octgmygen)
 
 install(TARGETS GmyGeneration DESTINATION ${model_dir})
 install(TARGETS OctGeneration DESTINATION ${model_dir})
+
+if (BUILD_TESTING)
+  find_package(Catch2 REQUIRED)
+  include(Catch)
+
+  set(test_cpps
+    test.cpp
+    TestResources/Meshes.cpp
+    test_FloodFill.cpp
+    test_MkCgalMesh.cpp
+    test_Oct.cpp
+    test_SectionTree.cpp
+    test_SegmentFactory.cpp
+    test_SurfaceVoxeliser.cpp
+    test_TriangleSorter.cpp
+  )
+  list(TRANSFORM test_cpps PREPEND "${oct_dir}/")
+  add_executable(hlbgmytool-octtest "${test_cpps}")
+  target_link_libraries(hlbgmytool-octtest
+    octgmygen
+    vtksys
+    vtkCommonDataModel
+    vtkIOXML
+    Catch2::Catch2
+  )
+
+  catch_discover_tests(hlbgmytool-octtest
+    PROPERTIES
+    ENVIRONMENT "TESTRESOURCES=${PROJECT_SOURCE_DIR}/${oct_dir}/TestResources"
+  )
+endif()
