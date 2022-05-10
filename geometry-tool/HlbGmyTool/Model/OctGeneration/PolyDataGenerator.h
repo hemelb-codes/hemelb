@@ -14,7 +14,7 @@ class vtkPolyData;
 class Iolet;
 
 class PolyDataGenerator {
-public:
+ public:
   PolyDataGenerator();
 
   void Execute();
@@ -28,7 +28,7 @@ public:
 
   void SetNumberOfLevels(int n);
   void SetTriangleLevel(int n);
-  
+
   void GetSeedPointWorking(double out[3]);
   void SetSeedPointWorking(double out[3]);
   void SetSeedPointWorking(double x, double y, double z);
@@ -36,7 +36,7 @@ public:
   vtkPolyData* GetClippedSurface(void);
   void SetClippedSurface(vtkPolyData* val);
 
-private:
+ private:
   // Members set from outside to initialise
   double OriginWorking[3];
   uint16_t NumberOfLevels;

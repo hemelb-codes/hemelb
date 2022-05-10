@@ -62,6 +62,5 @@ PYBIND11_MODULE(Generation, mod) {
       .def("SetNumberOfLevels", &PolyDataGenerator::SetNumberOfLevels)
       .def("SetTriangleLevel", &PolyDataGenerator::SetTriangleLevel)
       .def("Execute", &PolyDataGenerator::Execute);
-    ;
-
+  ;
 }

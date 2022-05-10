@@ -6,11 +6,11 @@
 #ifndef HLBGMYTOOL_OCT_TESTRESOURCES_HELPERS_H
 #define HLBGMYTOOL_OCT_TESTRESOURCES_HELPERS_H
 
-template<class... Types>
+template <class... Types>
 std::string GetResource(const Types&... paths);
 
 // Zero arg case gets the path to folder from environment.
-template<>
+template <>
 inline std::string GetResource() {
   if (const char* env_dir = std::getenv("TESTRESOURCES")) {
     return std::string{env_dir};
@@ -19,12 +19,12 @@ inline std::string GetResource() {
   }
 }
 
-template<class T>
+template <class T>
 std::string GetResource(const T& pth) {
   return GetResource() + "/" + pth;
 }
 
-template<class T, class... Types>
+template <class T, class... Types>
 std::string GetResource(const T& pth, const Types&... paths) {
   return GetResource(pth) + "/" + GetResource(paths...);
 }

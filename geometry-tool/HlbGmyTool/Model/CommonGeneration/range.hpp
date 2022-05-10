@@ -14,14 +14,14 @@
 // for (auto i: range(5)) std::cout << i << ",";
 //
 // Will print 0,1,2,3,4,
-// 
+//
 template <std::integral T>
 constexpr auto range(T lo, T hi) {
-  return std::ranges::iota_view<T,T>{lo, hi};
+  return std::ranges::iota_view<T, T>{lo, hi};
 }
 template <std::integral T>
 constexpr auto range(T hi) {
-  return std::ranges::iota_view<T,T>{0, hi};
+  return std::ranges::iota_view<T, T>{0, hi};
 }
 
 #endif

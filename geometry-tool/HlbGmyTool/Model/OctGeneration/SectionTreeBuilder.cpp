@@ -4,11 +4,17 @@
 // license in the file LICENSE.
 #include "SectionTreeBuilder.h"
 
-SectionTreeBuilder::SectionTreeBuilder(const MaskTree& mask, const FluidTree& edges) :
-  maskTree(mask), edgeTree(edges), nLevels(mask.Level()), nEdgeSites(edges.Root()->Data().count), offsets(mask.Level()+1), edge_ptrs(mask.Level()+1), wall_normal_offset(0), links_offset(0)
-{
-}
-  
+SectionTreeBuilder::SectionTreeBuilder(const MaskTree& mask,
+                                       const FluidTree& edges)
+    : maskTree(mask),
+      edgeTree(edges),
+      nLevels(mask.Level()),
+      nEdgeSites(edges.Root()->Data().count),
+      offsets(mask.Level() + 1),
+      edge_ptrs(mask.Level() + 1),
+      wall_normal_offset(0),
+      links_offset(0) {}
+
 SectionTree::Ptr SectionTreeBuilder::operator()() {
   output = SectionTree::Ptr(new SectionTree(nLevels));
   maskTree.Root()->Accept(*this);
@@ -27,7 +33,7 @@ void SectionTreeBuilder::Arrive(MaskTree::ConstNodePtr np) {
     edge_ptrs[lvl] = edgeTree.Root();
   } else {
     // branch or leaf - must check parent equivalent is present as could be null
-    auto edge_parent = edge_ptrs[lvl+1];
+    auto edge_parent = edge_ptrs[lvl + 1];
     if (edge_parent) {
       // It exists so try to find our equivalent
       edge_ptrs[lvl] = edge_parent->Get(n.X(), n.Y(), n.Z(), lvl);
@@ -40,23 +46,22 @@ void SectionTreeBuilder::Arrive(MaskTree::ConstNodePtr np) {
   // This is the first we knew of this node's existence (unless we are
   // root), so must store its position into the parent's data
   if (lvl < nLevels) {
-    auto parent_current_i = offsets[lvl+1];
+    auto parent_current_i = offsets[lvl + 1];
     auto loffset = LocalOffset(n);
-    
+
     // Write this level's offset value into parent's current data oct
     // We will then increment offset[lvl] on Departure.
     output->indices[lvl + 1][parent_current_i + loffset] = offsets[lvl];
-    
+
   } else {
     // nothing
   }
 
-  
   if (lvl) {
     // We are not a leaf node so we must allocate space for our
     // potential children
     auto new_size = output->indices[lvl].size() + 8;
-    
+
     // Fill with null children until they add themselves
     output->indices[lvl].resize(new_size, SectionTree::NA());
     // Or zeros in case of counts
@@ -69,11 +74,11 @@ void SectionTreeBuilder::Arrive(MaskTree::ConstNodePtr np) {
 
       output->links.append(edge_site.links);
       if (edge_site.has_normal) {
-	output->wall_normals.append(edge_site.normal);
+        output->wall_normals.append(edge_site.normal);
       } else {
-	output->wall_normals.append();
+        output->wall_normals.append();
       }
-      
+
     } else {
       // we are a bulk site
       output->links.append();
@@ -84,13 +89,13 @@ void SectionTreeBuilder::Arrive(MaskTree::ConstNodePtr np) {
 
 void SectionTreeBuilder::Depart(MaskTree::ConstNodePtr n) {
   Int lvl = n->Level();
-  
+
   // Store contained site count
   SectionTree::IndT site_count = 0;
   if (lvl) {
     // non-leaf so sum my child counts
     auto iter = output->counts[lvl].cbegin() + offsets[lvl];
-    for (auto i=0; i<8; ++i) {
+    for (auto i = 0; i < 8; ++i) {
       site_count += *iter;
     }
   } else {
@@ -100,16 +105,15 @@ void SectionTreeBuilder::Depart(MaskTree::ConstNodePtr n) {
   if (lvl < nLevels) {
     // Non-root
     auto loffset = LocalOffset(*n);
-    output->counts[lvl + 1][offsets[lvl+1] + loffset] = site_count;
+    output->counts[lvl + 1][offsets[lvl + 1] + loffset] = site_count;
   } else {
     // Root
     output->total = site_count;
   }
-  
+
   // Update offset (1 for leaf nodes)
-  offsets[lvl] +=  lvl? 8 : 1;
-  
+  offsets[lvl] += lvl ? 8 : 1;
+
   // Clear the edge pointer to make sure we don't leave it hanging around
   edge_ptrs[lvl] = nullptr;
 }
- 

@@ -9,4 +9,4 @@
 #include "Oct.h"
 typedef Octree<unsigned> MaskTree;
 
-#endif //HLBGMYTOOL_OCT_MASKTREE_H
+#endif  // HLBGMYTOOL_OCT_MASKTREE_H

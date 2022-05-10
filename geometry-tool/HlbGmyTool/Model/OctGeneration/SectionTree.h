@@ -6,24 +6,23 @@
 #ifndef HLBGMYTOOL_OCT_SECTIONTREE_H
 #define HLBGMYTOOL_OCT_SECTIONTREE_H
 
-#include <vector>
-#include <list>
 #include <fstream>
+#include <list>
+#include <vector>
 
-#include "Oct.h"
-#include "MaskTree.h"
 #include "FluidSiteTree.h"
+#include "MaskTree.h"
+#include "Oct.h"
 
 // This is a flattened Octree that at the lowest level stores zero or
 // more Sections, in the meaning of PETSc.
 
-
 // This is a pair of integers (offset and a count) and some data. The
 // integers index into the data.
 namespace H5 {
-  class Group;
-  using GroupPtr = std::shared_ptr<Group>;
-}
+class Group;
+using GroupPtr = std::shared_ptr<Group>;
+}  // namespace H5
 template <class T>
 struct Section {
   using IndT = uint64_t;
@@ -32,7 +31,7 @@ struct Section {
     offsets.push_back(data.size());
     counts.push_back(0);
   }
-  
+
   template <class... Args>
   void append(Args&&... args) {
     offsets.push_back(data.size());
@@ -41,7 +40,7 @@ struct Section {
   }
 
   void write(H5::GroupPtr grp) const;
-  
+
   std::vector<IndT> offsets;
   std::vector<IndT> counts;
   std::vector<T> data;
@@ -57,7 +56,7 @@ struct Section {
 // To keep addressing consistent we add an empty vector for the leaf nodes.
 
 class SectionTree {
-public:
+ public:
   using Ptr = std::shared_ptr<SectionTree>;
 
   using Int = MaskTree::Int;
@@ -66,7 +65,7 @@ public:
   using TreeLevel = std::vector<IndT>;
   using Tree = std::vector<TreeLevel>;
 
-  static constexpr IndT NA() {return ~0;};
+  static constexpr IndT NA() { return ~0; };
 
   static inline Int LocalOffset(Int i, Int j, Int k, Int lvl) {
     Int xbit = (i >> lvl) & 1;
@@ -83,13 +82,12 @@ public:
 
   void Write(const std::string& fn) const;
 
-private:
-
+ private:
   friend class SectionTreeBuilder;
   friend class SectionTreeTests;
 
   SectionTree(size_t nl);
-  
+
   Int nLevels;
   Tree indices;
   Tree counts;
@@ -97,8 +95,6 @@ private:
 
   Section<SVector> wall_normals;
   Section<std::array<Link, 26>> links;
-
 };
-
 
 #endif
