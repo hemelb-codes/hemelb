@@ -23,31 +23,31 @@ class Error : public std::runtime_error {
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 
-#define H5_CONSTRUCT(ans, func, args)                              \
-  {                                                                \
-    hid_t ret = func args;                                         \
-    if (ret < 0)                                                   \
-      throw Error("HDF5 error in API function " #func " " __FILE__ \
-                  ":" TOSTRING(__LINE__));                         \
-    ans = ret;                                                     \
+#define H5_ERRORMSG(func) \
+  "HDF5 error in API function " #func " " __FILE__ ":" TOSTRING(__LINE__)
+
+#define H5_CONSTRUCT(ans, func, args) \
+  {                                   \
+    hid_t ret = func args;            \
+    if (ret < 0)                      \
+      throw Error(H5_ERRORMSG(func)); \
+    ans = ret;                        \
   }
 
-#define H5_CALL(func, args)                                        \
-  {                                                                \
-    herr_t ret = func args;                                        \
-    if (ret < 0)                                                   \
-      throw Error("HDF5 error in API function " #func " " __FILE__ \
-                  ":" TOSTRING(__LINE__));                         \
+#define H5_CALL(func, args)           \
+  {                                   \
+    herr_t ret = func args;           \
+    if (ret < 0)                      \
+      throw Error(H5_ERRORMSG(func)); \
   }
 
-#define H5_CALLNOTHROW(func, args)                                  \
-  {                                                                 \
-    herr_t ret = func args;                                         \
-    if (ret < 0) {                                                  \
-      std::cerr << "HDF5 error in API function " #func " " __FILE__ \
-                   ":" TOSTRING(__LINE__) "\n";                     \
-      std::terminate();                                             \
-    }                                                               \
+#define H5_CALLNOTHROW(func, args)         \
+  {                                        \
+    herr_t ret = func args;                \
+    if (ret < 0) {                         \
+      std::cerr << H5_ERRORMSG(func) "\n"; \
+      std::terminate();                    \
+    }                                      \
   }
 
 // Forward declare
@@ -132,7 +132,7 @@ class PList : public Object {
 
   PList();
   ~PList() noexcept override;
-  void Close();
+  void Close() override;
   void SetChunk(const std::vector<hsize_t>& dims);
   void SetDeflate(const unsigned level = 1);
   // void SetMpio(Comm comm);
@@ -354,7 +354,7 @@ class DataSpace : public Object {
             const std::vector<hsize_t>& max_dims);
   ~DataSpace() noexcept override;
 
-  void Close();
+  void Close() override;
   void SelectRange(const hsize_t start, const hsize_t count);
 };
 
@@ -422,6 +422,7 @@ class DataType : public Object {
   }
 
   DataType(hid_t id);
+  ~DataType() noexcept override;
   void Close() override;
   DataTypeSharedPtr Copy() const;
 };
@@ -433,6 +434,7 @@ class PredefinedDataType : public DataType {
   static DataTypeSharedPtr Native();
   static DataTypeSharedPtr CS1();
   PredefinedDataType(hid_t);
+  ~PredefinedDataType() noexcept override;
   void Close() override;
 };
 
@@ -450,7 +452,7 @@ class Attribute : public Object {
  public:
   Attribute(hid_t id);
   ~Attribute() noexcept override;
-  void Close();
+  void Close() override;
   DataSpaceSharedPtr GetSpace() const;
   inline static AttrIterationHelper Iterate(CanHaveAttributes const& thing) {
     return AttrIterationHelper{&thing};
@@ -476,7 +478,7 @@ class File : public CanHaveGroupsDataSets {
                             unsigned mode,
                             PListSharedPtr accessPL = PList::Default());
   ~File() noexcept override;
-  void Close();
+  void Close() override;
   hsize_t GetNumElements() override;
 
   File(hid_t id);
@@ -487,7 +489,7 @@ class Group : public CanHaveAttributes, public CanHaveGroupsDataSets {
  public:
   Group(hid_t id);
   ~Group() noexcept override;
-  void Close();
+  void Close() override;
   hsize_t GetNumElements() override;
   CanHaveAttributesSharedPtr operator[](hsize_t idx);
   CanHaveAttributesSharedPtr operator[](const std::string& key);
@@ -497,7 +499,7 @@ class DataSet : public CanHaveAttributes {
  public:
   DataSet(hid_t id);
   ~DataSet() noexcept override;
-  void Close();
+  void Close() override;
   DataSpaceSharedPtr GetSpace() const;
 
   template <class T>
