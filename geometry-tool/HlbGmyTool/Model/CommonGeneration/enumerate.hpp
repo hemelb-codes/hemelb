@@ -16,7 +16,7 @@ private:
   int index_ = 0;
 
 public:
-  EnumIter(iterator begin) : iter_{begin}, index_{0} {
+  explicit EnumIter(iterator begin) : iter_{begin}, index_{0} {
   }
 
   EnumIter& operator++() {
@@ -40,10 +40,11 @@ public:
 template <typename Container>
 class EnumerationAdaptor
 {
+  using wrapper = EnumIter<Container>;
 public:
   EnumerationAdaptor(Container& container) : container_(container) {}
-  EnumIter<Container> begin() const { return std::begin(container_); }
-  EnumIter<Container> end() const { return std::end(container_); }
+  wrapper begin() const { return wrapper{std::begin(container_)}; }
+  wrapper end() const { return wrapper{std::end(container_)}; }
 
 private:
   Container& container_;

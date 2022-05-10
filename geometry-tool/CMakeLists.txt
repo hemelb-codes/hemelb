@@ -165,6 +165,7 @@ if (BUILD_TESTING)
     test.cpp
     TestResources/Meshes.cpp
     test_FloodFill.cpp
+    test_H5.cpp
     test_MkCgalMesh.cpp
     test_Oct.cpp
     test_SectionTree.cpp
@@ -179,6 +180,7 @@ if (BUILD_TESTING)
     vtksys
     vtkCommonDataModel
     vtkIOXML
+    hdf5::hdf5
     Catch2::Catch2
   )
 
