@@ -13,19 +13,17 @@
 // And (eventually) propagates the fluid site count of children up the
 // tree
 class FloodFill {
-public:
+ public:
   typedef std::array<FluidTree::Int, 4> Idx;
-  
+
   FloodFill(const FluidTree& t);
-  
+
   MaskTree operator()() const;
-  
+
   Idx GetStart() const;
 
-private:
-  
-  class StopIteration : public std::exception {
-  };
+ private:
+  class StopIteration : public std::exception {};
 
   const FluidTree& tree;
 };

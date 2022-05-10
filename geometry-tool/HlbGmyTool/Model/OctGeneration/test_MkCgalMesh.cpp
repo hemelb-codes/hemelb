@@ -4,8 +4,8 @@
 // license in the file LICENSE.
 
 #include <catch2/catch.hpp>
-#include "TestResources/Meshes.h"
 #include "MkCgalMesh.h"
+#include "TestResources/Meshes.h"
 
 TEST_CASE("SphereCgalMesh") {
   auto sphere = SimpleMeshFactory::MkSphere();

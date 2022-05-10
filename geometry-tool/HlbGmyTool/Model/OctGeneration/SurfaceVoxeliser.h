@@ -9,17 +9,16 @@
 #include <array>
 #include <memory>
 
-#include "Index.h"
-#include "Oct.h"
-#include "TriTree.h"
 #include "Cgal.h"
 #include "CgalSearch.h"
 #include "FluidSiteTree.h"
+#include "Index.h"
 #include "Iolet.h"
+#include "Oct.h"
+#include "TriTree.h"
 
 struct Cut {
-  Cut() : dist(std::numeric_limits<double>::infinity()), id(-1) {
-  }
+  Cut() : dist(std::numeric_limits<double>::infinity()), id(-1) {}
   double dist;
   int id;
 };
@@ -31,27 +30,36 @@ struct EdgeSite {
 };
 
 class SurfaceVoxeliser {
-public:
+ public:
   typedef FluidTree::Int Int;
-  
-  SurfaceVoxeliser(const int node_size, const std::vector<Vector>& points, const std::vector<Index>& triangles,
-		   const std::vector<Vector>&normals, const std::vector<int>& labels, const std::vector<Iolet>& iolets);
 
-  // We maybe need a destructor because the order of destruction of mesh and searcher seems to matter?
+  SurfaceVoxeliser(const int node_size,
+                   const std::vector<Vector>& points,
+                   const std::vector<Index>& triangles,
+                   const std::vector<Vector>& normals,
+                   const std::vector<int>& labels,
+                   const std::vector<Iolet>& iolets);
+
+  // We maybe need a destructor because the order of destruction of mesh and
+  // searcher seems to matter?
   //~SurfaceVoxeliser();
-  
-  void ComputeIntersectionsForSite(Int x, Int y, Int z, EdgeSite& outleaf) const;
+
+  void ComputeIntersectionsForSite(Int x,
+                                   Int y,
+                                   Int z,
+                                   EdgeSite& outleaf) const;
   std::unique_ptr<FluidSite> ClassifySite(const EdgeSite& node) const;
 
   FluidTree operator()(const TriTree& inTree, const TriTree::Int tri_level);
-private:
+
+ private:
   const static int NDIR = 13;
   const std::vector<Vector>& Points;
   const std::vector<Index>& Triangles;
   const std::vector<Vector>& Normals;
   const std::vector<int>& Labels;
   const std::vector<Iolet>& Iolets;
-  
+
   CgalMeshPtr mesh;
   std::unique_ptr<CgalSearchTree> searcher;
 };

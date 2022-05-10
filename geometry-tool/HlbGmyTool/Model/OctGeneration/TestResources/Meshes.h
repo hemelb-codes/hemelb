@@ -26,23 +26,20 @@ struct MeshData {
 };
 
 class SimpleMeshFactory {
-public:
-
+ public:
   static std::shared_ptr<MeshData> MkTrivial();
   static std::shared_ptr<MeshData> MkSphere();
   static std::shared_ptr<MeshData> MkDuct();
 
-private:
+ private:
   using PDR_ptr = vtkSmartPointer<vtkXMLPolyDataReader>;
   using PD_ptr = vtkSmartPointer<vtkPolyData>;
 
   static PD_ptr ReadSphere();
 
   static std::shared_ptr<MeshData> sphere_mesh;
-  
-  static std::shared_ptr<MeshData> VtkToMesh(PD_ptr pd);
 
+  static std::shared_ptr<MeshData> VtkToMesh(PD_ptr pd);
 };
 
 #endif
-

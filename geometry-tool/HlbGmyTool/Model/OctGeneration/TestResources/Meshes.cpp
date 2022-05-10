@@ -6,23 +6,18 @@
 
 #include <catch2/catch.hpp>
 
-#include <vtkXMLPolyDataReader.h>
-#include <vtkPolyData.h>
-#include <vtkCellData.h>
 #include <vtkCellArray.h>
+#include <vtkCellData.h>
+#include <vtkPolyData.h>
+#include <vtkXMLPolyDataReader.h>
 
 std::shared_ptr<MeshData> SimpleMeshFactory::MkTrivial() {
   auto ans = std::make_shared<MeshData>();
-  ans->points = {{1.2, 1.2, 1.2},
-		 {1.2, 1.2, 2.2},
-		 {1.2, 2.2, 1.2},
-		 {1.2, 2.2, 2.2}};
-  ans->triangles = {{0,1,2},
-		    {2,1,3}};
-  ans->normals = {{-1, 0, 0},
-		  {-1, 0, 0}};
-  ans->labels = {-1,
-		 -1};
+  ans->points = {
+      {1.2, 1.2, 1.2}, {1.2, 1.2, 2.2}, {1.2, 2.2, 1.2}, {1.2, 2.2, 2.2}};
+  ans->triangles = {{0, 1, 2}, {2, 1, 3}};
+  ans->normals = {{-1, 0, 0}, {-1, 0, 0}};
+  ans->labels = {-1, -1};
   return ans;
 }
 
@@ -33,69 +28,49 @@ std::shared_ptr<MeshData> SimpleMeshFactory::MkSphere() {
   }
   return sphere_mesh;
 }
-  
+
 std::shared_ptr<MeshData> SimpleMeshFactory::MkDuct() {
   auto ans = std::make_shared<MeshData>();
   ans->points = {
-    {0.5, 0.5, 2.5},
-    {0.5, 3.5, 2.5},
-    {3.5, 3.5, 2.5},
-    {3.5, 0.5, 2.5},
+      {0.5, 0.5, 2.5},  {0.5, 3.5, 2.5},  {3.5, 3.5, 2.5},  {3.5, 0.5, 2.5},
 
-    {0.5, 0.5, 14.5},
-    {0.5, 3.5, 14.5},
-    {3.5, 3.5, 14.5},
-    {3.5, 0.5, 14.5}
-  };
+      {0.5, 0.5, 14.5}, {0.5, 3.5, 14.5}, {3.5, 3.5, 14.5}, {3.5, 0.5, 14.5}};
 
-  ans->triangles = {
-    // -x
-    {0,4,1},
-    {4,5,1},
-    // +y
-    {1,5,2},
-    {5,6,2},
-    // +x
-    {2,6,3},
-    {6,7,3},
-    // -y
-    {3,7,0},
-    {7,4,0},
-    // inlet
-    {0,1,3},
-    {1,2,3},
-    // outlet
-    {5,4,7},
-    {6,5,7}
-  };
+  ans->triangles = {// -x
+                    {0, 4, 1},
+                    {4, 5, 1},
+                    // +y
+                    {1, 5, 2},
+                    {5, 6, 2},
+                    // +x
+                    {2, 6, 3},
+                    {6, 7, 3},
+                    // -y
+                    {3, 7, 0},
+                    {7, 4, 0},
+                    // inlet
+                    {0, 1, 3},
+                    {1, 2, 3},
+                    // outlet
+                    {5, 4, 7},
+                    {6, 5, 7}};
 
-  ans->normals = {
-    {-1,0,0},
-    {-1,0,0},
-    {0,+1,0},
-    {0,+1,0},
-    {+1,0,0},
-    {+1,0,0},
-    {0,-1,0},
-    {0,-1,0},
-    {0,0,-1},
-    {0,0,-1},
-    {0,0,+1},
-    {0,0,+1}
-  };
+  ans->normals = {{-1, 0, 0}, {-1, 0, 0}, {0, +1, 0}, {0, +1, 0},
+                  {+1, 0, 0}, {+1, 0, 0}, {0, -1, 0}, {0, -1, 0},
+                  {0, 0, -1}, {0, 0, -1}, {0, 0, +1}, {0, 0, +1}};
 
-  ans->labels = {-1,-1, -1,-1, -1,-1, -1,-1, 0,0, 1,1};
+  ans->labels = {-1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 1, 1};
   ans->iolets = {Iolet{0, true}, Iolet{0, false}};
   return ans;
 }
 
 auto SimpleMeshFactory::ReadSphere() -> PD_ptr {
-    auto reader = PDR_ptr::New();
-    const std::string&& sphere = GetResource("sphere.vtp");
-    reader->SetFileName(sphere.c_str());
-    reader->Update();
-    REQUIRE(reader->GetOutput() != nullptr);
-    return reader->GetOutput();
+  auto reader = PDR_ptr::New();
+  const std::string&& sphere = GetResource("sphere.vtp");
+  reader->SetFileName(sphere.c_str());
+  reader->Update();
+  REQUIRE(reader->GetOutput() != nullptr);
+  return reader->GetOutput();
 }
 
 std::shared_ptr<MeshData> SimpleMeshFactory::VtkToMesh(PD_ptr pd) {
@@ -106,7 +81,7 @@ std::shared_ptr<MeshData> SimpleMeshFactory::VtkToMesh(PD_ptr pd) {
   ans->points.resize(nPoints);
   for (auto i = 0; i < nPoints; ++i) {
     auto pt = pd->GetPoint(i);
-    for (auto d = 0; d<3; ++d)
+    for (auto d = 0; d < 3; ++d)
       ans->points[i][d] = pt[d];
   }
 

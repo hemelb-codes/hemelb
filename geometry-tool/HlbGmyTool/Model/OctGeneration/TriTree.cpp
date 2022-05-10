@@ -7,7 +7,7 @@
 std::ostream& operator<<(std::ostream& os, const IdList& lst) {
   bool first = true;
   os << '[';
-  for (auto i: lst) {
+  for (auto i : lst) {
     if (!first)
       os << ',';
     os << i;

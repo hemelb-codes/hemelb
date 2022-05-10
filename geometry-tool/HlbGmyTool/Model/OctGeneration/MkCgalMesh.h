@@ -7,14 +7,13 @@
 #define HLBGMYTOOL_OCT_MKCGALMESH_H
 
 #include <vector>
-#include "Index.h"
 #include "Cgal.h"
+#include "Index.h"
 
 // Create a CGAL 3D Polyhedral surface based on the input
 // Labels each face with its index in the input - use that to index the
 // surface type vector
 CgalMeshPtr MkCgalMesh(const std::vector<Vector>& ptsIn,
-		const std::vector<Index>& polysIn);
+                       const std::vector<Index>& polysIn);
 
-
-#endif //HLBGMYTOOL_OCT_MKCGALMESH_H
+#endif  // HLBGMYTOOL_OCT_MKCGALMESH_H

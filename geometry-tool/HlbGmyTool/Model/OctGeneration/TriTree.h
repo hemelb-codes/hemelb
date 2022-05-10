@@ -6,8 +6,8 @@
 #ifndef HLBGMYTOOL_OCT_TRITREE_H
 #define HLBGMYTOOL_OCT_TRITREE_H
 
-#include "Oct.h"
 #include <boost/container/flat_set.hpp>
+#include "Oct.h"
 
 typedef boost::container::flat_set<int> IdList;
 typedef Octree<IdList> TriTree;

@@ -5,8 +5,8 @@
 // license in the file LICENSE.
 #ifndef HLBGMYTOOL_OCT_SEGMENTFACTORY_H
 #define HLBGMYTOOL_OCT_SEGMENTFACTORY_H
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include "Index.h"
 
@@ -15,33 +15,33 @@
 // (size-1, size-1, size-1)
 // User needs to add the relevant offset on
 class SegmentFactory {
-public:
-	// A line segment from first to second
-	typedef std::pair<Index, Index> Seg;
+ public:
+  // A line segment from first to second
+  typedef std::pair<Index, Index> Seg;
 
+  // size = side length of the cube
+  SegmentFactory(int size);
+  // Make all the line segments for a given lattice vector
+  std::vector<Seg> MakeSegments(const Index& vec) const;
+  // Make all the starting points for a given vector
+  std::vector<Index> MakeStartPoints(const Index& vec) const;
 
-	// size = side length of the cube
-	SegmentFactory(int size);
-	// Make all the line segments for a given lattice vector
-	std::vector<Seg> MakeSegments(const Index& vec) const;
-	// Make all the starting points for a given vector
-	std::vector<Index> MakeStartPoints(const Index& vec) const;
+ private:
+  // A single face of the axis aligned cube
+  class Face {
+   public:
+    Face(int size, int direction, bool positive);
+    std::vector<Index> MakePoints(const Index& vec) const;
 
-private:
-	// A single face of the axis aligned cube
-	class Face {
-	public:
-		Face(int size, int direction, bool positive);
-		std::vector<Index> MakePoints(const Index& vec) const;
-	private:
-		int size;
-		int direction;
-		bool positive;
-		Index normal;
-		friend SegmentFactory;
-	};
+   private:
+    int size;
+    int direction;
+    bool positive;
+    Index normal;
+    friend SegmentFactory;
+  };
 
-	int size;
-	std::vector<Face> faces;
+  int size;
+  std::vector<Face> faces;
 };
 #endif
