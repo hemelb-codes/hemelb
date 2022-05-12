@@ -11,10 +11,11 @@
 
 class vtkOBBTree;
 
-#include "Index.h"
-class Site;
 #include "Domain.h"
+#include "Index.h"
+namespace hemelb::gmytool::gmy {
 
+class Site;
 using SiteVec = std::vector<Site*>;
 using SiteIterator = SiteVec::iterator;
 
@@ -53,4 +54,5 @@ class Block {
   friend class LaterNeighbourIterator;
 };
 
+}  // namespace hemelb::gmytool::gmy
 #endif  // HLBGMYTOOL_GMY_BLOCK_H

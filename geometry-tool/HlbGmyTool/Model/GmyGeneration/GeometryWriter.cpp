@@ -12,7 +12,8 @@
 #include "io/writers/XdrFileWriter.h"
 #include "io/writers/XdrMemWriter.h"
 
-using hemelb::io::formats::geometry;
+namespace hemelb::gmytool::gmy {
+using io::formats::geometry;
 
 GeometryWriter::GeometryWriter(const std::string& OutputGeometryFile,
                                int BlockSize,
@@ -107,3 +108,5 @@ void GeometryWriter::Close() {
 BlockWriter* GeometryWriter::StartNextBlock() {
   return new BlockWriter(this->BlockBufferPool);
 }
+
+}  // namespace hemelb::gmytool::gmy

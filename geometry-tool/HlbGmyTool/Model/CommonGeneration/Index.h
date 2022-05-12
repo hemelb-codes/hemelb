@@ -9,12 +9,15 @@
 #include <exception>
 #include "util/Vector3D.h"
 
+namespace hemelb::gmytool {
+
 class IndexError : public std::exception {
  public:
   virtual const char* what() const noexcept { return "IndexError"; }
 };
 
-typedef hemelb::util::Vector3D<int> Index;
-typedef hemelb::util::Vector3D<double> Vector;
+using Index = hemelb::util::Vector3D<int>;
+using Vector = hemelb::util::Vector3D<double>;
 
+}  // namespace hemelb::gmytool
 #endif  // HLBGMYTOOL_COMMON_INDEX_H

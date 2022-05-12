@@ -5,14 +5,20 @@
 
 #include "Index.h"
 
+namespace hemelb {
+
+namespace gmytool {
+
 namespace {
 void DefaultHandlerFunction(int direction) {
   throw IndexError();
 }
 }  // namespace
 
-namespace hemelb {
+}  // namespace gmytool
+
 namespace util {
-Vector3DBase::HandlerFunction* Vector3DBase::handler = DefaultHandlerFunction;
+Vector3DBase::HandlerFunction* Vector3DBase::handler =
+    gmytool::DefaultHandlerFunction;
 }
 }  // namespace hemelb

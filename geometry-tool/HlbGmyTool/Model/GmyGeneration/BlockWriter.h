@@ -10,6 +10,8 @@
 #include <string>
 #include "io/writers/XdrMemWriter.h"
 
+namespace hemelb::gmytool::gmy {
+
 class GeometryWriter;
 class BufferPool;
 /*
@@ -47,4 +49,5 @@ class BlockWriter {
   bool IsFinished;
 };
 
+}  // namespace hemelb::gmytool::gmy
 #endif  // HLBGMYTOOL_GMY_BLOCKWRITER_H

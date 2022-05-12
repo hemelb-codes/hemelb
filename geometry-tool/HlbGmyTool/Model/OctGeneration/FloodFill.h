@@ -9,6 +9,8 @@
 #include "FluidSiteTree.h"
 #include "MaskTree.h"
 
+namespace hemelb::gmytool::oct {
+
 // This function flood fills the domain
 // And (eventually) propagates the fluid site count of children up the
 // tree
@@ -27,4 +29,6 @@ class FloodFill {
 
   const FluidTree& tree;
 };
+
+}  // namespace hemelb::gmytool::oct
 #endif

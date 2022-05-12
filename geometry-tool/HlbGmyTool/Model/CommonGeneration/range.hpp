@@ -9,6 +9,8 @@
 #include <concepts>
 #include <ranges>
 
+namespace hemelb::gmytool {
+
 // Simple use like python's `range` generator
 //
 // for (auto i: range(5)) std::cout << i << ",";
@@ -24,4 +26,5 @@ constexpr auto range(T hi) {
   return std::ranges::iota_view<T, T>{0, hi};
 }
 
+}  // namespace hemelb::gmytool
 #endif

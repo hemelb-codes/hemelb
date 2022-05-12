@@ -20,10 +20,8 @@
 #include <vtkPythonUtil.h>
 #include <vtkSmartPointer.h>
 
-namespace pybind11
-{
-namespace detail
-{
+namespace pybind11 {
+namespace detail {
 
 /// Thanks to Eric Cosineau, who figured out a more general means of casting
 /// to/from VTK's python wrappings:
@@ -31,62 +29,70 @@ namespace detail
 
 /// Direct access to VTK class.
 template <typename Class>
-struct type_caster<Class, enable_if_t<std::is_base_of<vtkObjectBase, Class>::value> >
-{
-private:
+struct type_caster<Class,
+                   enable_if_t<std::is_base_of<vtkObjectBase, Class>::value> > {
+ private:
   Class* value;
 
-public:
+ public:
   static constexpr auto name = _<Class>();
 
-  static handle cast(const Class* src, return_value_policy policy, handle /*parent*/)
-  {
+  static handle cast(const Class* src,
+                     return_value_policy policy,
+                     handle /*parent*/) {
     if (!src)
       return none().release();
-    if (policy == return_value_policy::take_ownership)
-    {
-      throw cast_error("vtk_pybind: `take_ownership` does not make sense in VTK?");
+    if (policy == return_value_policy::take_ownership) {
+      throw cast_error(
+          "vtk_pybind: `take_ownership` does not make sense in VTK?");
     }
-    if (policy == return_value_policy::copy)
-    {
+    if (policy == return_value_policy::copy) {
       throw cast_error("vtk_pybind: `copy` does not make sense in VTK?");
     }
     return vtkPythonUtil::GetObjectFromPointer(const_cast<Class*>(src));
   }
 
-  static handle cast(const Class& src, return_value_policy policy, handle parent)
-  {
+  static handle cast(const Class& src,
+                     return_value_policy policy,
+                     handle parent) {
     return cast(&src, policy, parent);
   }
 
   operator Class*() { return value; }
   operator Class&() { return *value; }
   // Does this even make sense in VTK?
-  operator Class &&() && { return std::move(*value); }
+  operator Class&&() && { return std::move(*value); }
 
   template <typename T_>
   using cast_op_type = pybind11::detail::movable_cast_op_type<T_>;
 
-  bool load(handle src, bool /* convert */)
-  {
-    value = dynamic_cast<Class*>(
-      vtkPythonUtil::GetPointerFromObject(src.ptr(), type_id<Class>().c_str()));
+  bool load(handle src, bool /* convert */) {
+    vtkObjectBase* ob = vtkPythonUtil::GetPointerFromObject(
+        src.ptr(), type_id<Class>().c_str());
+    // We *should* do a dynamic_cast here, BUT if your VTK was
+    // compiled with a different compiler eveything will be wrong and
+    // this will either fail or segfault (cos RTTI across DSO
+    // boundaries is hard).
+    //
+    // It's probably fine cos GetPointerFromObject does some checking
+    // for us?
+    value = (Class*)ob;
     return value != nullptr;
   }
 };
 
 /// VTK Pointer-like object - may be non-copyable.
 template <typename Ptr>
-struct vtk_ptr_cast_only
-{
-protected:
+struct vtk_ptr_cast_only {
+ protected:
   using Class = intrinsic_t<decltype(*std::declval<Ptr>())>;
   using value_caster_type = type_caster<Class>;
 
-public:
+ public:
   static constexpr auto name = _<Class>();
-  static handle cast(const Ptr& ptr, return_value_policy policy, handle parent)
-  {
+  static handle cast(const Ptr& ptr,
+                     return_value_policy policy,
+                     handle parent) {
     return value_caster_type::cast(*ptr, policy, parent);
     ;
   }
@@ -94,27 +100,24 @@ public:
 
 /// VTK Pointer-like object - copyable / movable.
 template <typename Ptr>
-struct vtk_ptr_cast_and_load : public vtk_ptr_cast_only<Ptr>
-{
-private:
+struct vtk_ptr_cast_and_load : public vtk_ptr_cast_only<Ptr> {
+ private:
   Ptr value;
   // N.B. Can't easily access base versions...
   using Class = intrinsic_t<decltype(*std::declval<Ptr>())>;
   using value_caster_type = type_caster<Class>;
 
-public:
+ public:
   operator Ptr&() { return value; }
   // Does this even make sense in VTK?
-  operator Ptr &&() && { return std::move(value); }
+  operator Ptr&&() && { return std::move(value); }
 
   template <typename T_>
   using cast_op_type = pybind11::detail::movable_cast_op_type<T_>;
 
-  bool load(handle src, bool convert)
-  {
+  bool load(handle src, bool convert) {
     value_caster_type value_caster;
-    if (!value_caster.load(src, convert))
-    {
+    if (!value_caster.load(src, convert)) {
       return false;
     }
     value = Ptr(value_caster.operator Class*());
@@ -123,16 +126,14 @@ public:
 };
 
 template <typename Class>
-struct type_caster<vtkSmartPointer<Class> > : public vtk_ptr_cast_and_load<vtkSmartPointer<Class> >
-{
-};
+struct type_caster<vtkSmartPointer<Class> >
+    : public vtk_ptr_cast_and_load<vtkSmartPointer<Class> > {};
 
 template <typename Class>
-struct type_caster<vtkNew<Class> > : public vtk_ptr_cast_only<vtkNew<Class> >
-{
+struct type_caster<vtkNew<Class> > : public vtk_ptr_cast_only<vtkNew<Class> > {
 };
 
-} // namespace detail
-} // namespace pybind11
+}  // namespace detail
+}  // namespace pybind11
 
 #endif

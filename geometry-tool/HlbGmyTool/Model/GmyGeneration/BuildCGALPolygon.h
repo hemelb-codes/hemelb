@@ -17,6 +17,8 @@ class vtkPoints;
 class vtkCellArray;
 class vtkIntArray;
 
+namespace hemelb::gmytool::gmy {
+
 template <class HDS>
 class BuildCGALPolygon : public CGAL::Modifier_base<HDS> {
  public:
@@ -34,5 +36,7 @@ class BuildCGALPolygon : public CGAL::Modifier_base<HDS> {
   vtkCellArray* polys;
   vtkIntArray* IoletIdArray;
 };
+
+}  // namespace hemelb::gmytool::gmy
 
 #endif  // HLBGMYTOOL_GMY_BUILDCGALPOLYGON_H

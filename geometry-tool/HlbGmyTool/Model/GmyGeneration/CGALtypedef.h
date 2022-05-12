@@ -21,6 +21,8 @@
 #include <CGAL/point_generators_3.h>
 #include <CGAL/squared_distance_3.h>
 
+namespace hemelb::gmytool::gmy {
+
 // typedef CGAL::Simple_cartesian<double> Kernel;
 typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
 // typedef CGAL::Exact_predicates_exact_constructions_kernel Kernel;
@@ -49,4 +51,5 @@ typedef Polyhedron::Halfedge_handle Halfedge_handle;
 typedef std::pair<Object_and_primitive_id, double>
     Object_Primitive_and_distance;
 
+}  // namespace hemelb::gmytool::gmy
 #endif

@@ -38,7 +38,9 @@
 
 #include "Block.h"
 
-using namespace hemelb::io::formats;
+namespace hemelb::gmytool::gmy {
+
+using namespace io::formats;
 
 PolyDataGenerator::PolyDataGenerator()
     : GeometryGenerator(), ClippedSurface(NULL) {
@@ -627,3 +629,5 @@ bool PolyDataGenerator::distancesort(const Object_Primitive_and_distance i,
                                      const Object_Primitive_and_distance j) {
   return (i.second < j.second);
 }
+
+}  // namespace hemelb::gmytool::gmy

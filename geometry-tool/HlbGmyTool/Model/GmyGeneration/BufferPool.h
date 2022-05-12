@@ -7,6 +7,8 @@
 #define HLBGMYTOOL_GMY_BUFFERPOOL_H
 #include <stack>
 
+namespace hemelb::gmytool::gmy {
+
 // Allocates and frees or reuses buffers of a given size.
 class BufferPool {
  public:
@@ -25,4 +27,5 @@ class BufferPool {
   std::stack<char*> unused;
 };
 
+}  // namespace hemelb::gmytool::gmy
 #endif

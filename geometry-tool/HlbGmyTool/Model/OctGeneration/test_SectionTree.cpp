@@ -14,6 +14,8 @@
 #include "TriangleSorter.h"
 #include "range.hpp"
 
+namespace hemelb::gmytool::oct {
+
 struct SectionTreeTests {
   // Tree with ALL leaf nodes
   std::shared_ptr<MaskTree> FullMaskTree(MaskTree::Int lvls) {
@@ -242,3 +244,4 @@ METHOD_AS_TEST_CASE(SectionTreeTests::Sphere,
                     "SphereSectionTree",
                     "[SectionTree]");
 METHOD_AS_TEST_CASE(SectionTreeTests::Duct, "DuctSectionTree", "[SectionTree]");
+}  // namespace hemelb::gmytool::oct

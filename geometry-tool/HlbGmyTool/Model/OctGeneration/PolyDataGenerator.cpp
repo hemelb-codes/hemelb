@@ -19,8 +19,10 @@
 #include "SurfaceVoxeliser.h"
 #include "TriangleSorter.h"
 
+namespace hemelb::gmytool::oct {
+
 PolyDataGenerator::PolyDataGenerator()
-    : OriginWorking{0, 0, 0}, NumberOfLevels(0), ClippedSurface(nullptr) {}
+    : NumberOfLevels(0), ClippedSurface(nullptr) {}
 
 std::string const& PolyDataGenerator::GetOutputGeometryFile() {
   return this->OutputGeometryFile;
@@ -36,32 +38,11 @@ void PolyDataGenerator::SetIolets(std::vector<Iolet*> const& iv) {
   }
 }
 
-void PolyDataGenerator::SetOriginWorking(double x, double y, double z) {
-  this->OriginWorking[0] = x;
-  this->OriginWorking[1] = y;
-  this->OriginWorking[2] = z;
-}
-
 void PolyDataGenerator::SetNumberOfLevels(int n) {
   this->NumberOfLevels = n;
 }
 void PolyDataGenerator::SetTriangleLevel(int n) {
   this->TriangleLevel = n;
-}
-
-void PolyDataGenerator::GetSeedPointWorking(double out[3]) {
-  for (unsigned int i = 0; i < 3; ++i)
-    out[i] = this->SeedPointWorking[i];
-  return;
-}
-void PolyDataGenerator::SetSeedPointWorking(double out[3]) {
-  for (unsigned int i = 0; i < 3; ++i)
-    this->SeedPointWorking[i] = out[i];
-}
-void PolyDataGenerator::SetSeedPointWorking(double x, double y, double z) {
-  this->SeedPointWorking[0] = x;
-  this->SeedPointWorking[1] = y;
-  this->SeedPointWorking[2] = z;
 }
 
 vtkPolyData* PolyDataGenerator::GetClippedSurface(void) {
@@ -163,3 +144,5 @@ void PolyDataGenerator::Execute() {
 
   total_t.Report(std::cout);
 }
+
+}  // namespace hemelb::gmytool::oct

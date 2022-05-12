@@ -7,6 +7,8 @@
 #include <deque>
 #include <future>
 
+namespace hemelb::gmytool::oct {
+
 template <>
 void WriteNodeData<IdList>(std::ostream& os, const IdList& data) {
   os << '[';
@@ -148,3 +150,5 @@ TriTree TrianglesToTreeParallel(const int n_levels,
   }
   return summer.GetTree();
 }
+
+}  // namespace hemelb::gmytool::oct

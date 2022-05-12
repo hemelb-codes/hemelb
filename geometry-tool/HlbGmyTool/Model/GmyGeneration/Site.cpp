@@ -11,6 +11,8 @@
 #include "Neighbours.h"
 #include "Site.h"
 
+namespace hemelb::gmytool::gmy {
+
 // C'tor
 Site::Site(Block& block, Index& index)
     : IsFluidKnown(false),
@@ -172,3 +174,5 @@ bool LaterNeighbourIterator::IsCurrentValid() {
     return false;
   }
 }
+
+}  // namespace hemelb::gmytool::gmy

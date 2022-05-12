@@ -11,6 +11,8 @@
 #include "BlockWriter.h"
 #include "Index.h"
 
+namespace hemelb::gmytool::gmy {
+
 class Block;
 class Site;
 class BlockIterator;
@@ -21,7 +23,6 @@ class Domain {
  protected:
   Index BlockCounts;
   Index SiteCounts;
-  Vector OriginWorking;
   int BlockSize;
 
   std::vector<Block*> blocks;
@@ -38,9 +39,7 @@ class Domain {
    * (x_min, x_max, y_min, y_max, z_min, z_max), in voxels.
    * BlockSize - number of sites along one dimension.
    */
-  Domain(double OriginWorking[3],
-         unsigned SiteCounts[3],
-         unsigned BlockSize = 8);
+  Domain(unsigned SiteCounts[3], unsigned BlockSize);
 
   Vector CalcPositionWorkingFromIndex(const Index& index) const;
   Block& GetBlock(const Index& index);
@@ -117,4 +116,6 @@ class BlockIterator : public std::iterator<std::forward_iterator_tag, Block> {
   Index current;
   Index maxima;
 };
+
+}  // namespace hemelb::gmytool::gmy
 #endif  // HLBGMYTOOL_GMY_DOMAIN_H

@@ -14,7 +14,9 @@
 #include <vtkIntArray.h>
 #include <vtkPoints.h>
 
-using namespace hemelb::io::formats;
+namespace hemelb::gmytool::gmy {
+
+using namespace io::formats;
 
 template <class HDS>
 void BuildCGALPolygon<HDS>::operator()(HDS& hds) {
@@ -69,3 +71,5 @@ void BuildCGALPolygon<HDS>::operator()(HDS& hds) {
   B.remove_unconnected_vertices();
   // cout << B.check_unconnected_vertices () << endl;
 }
+
+}  // namespace hemelb::gmytool::gmy

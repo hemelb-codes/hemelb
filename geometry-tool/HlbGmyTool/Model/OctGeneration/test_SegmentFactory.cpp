@@ -7,6 +7,8 @@
 #include "Neighbours.h"
 #include "SegmentFactory.h"
 
+namespace hemelb::gmytool::oct {
+
 class SegmentFactoryTests {
   using Seg = SegmentFactory::Seg;
 
@@ -86,3 +88,4 @@ METHOD_AS_TEST_CASE(SegmentFactoryTests::SinglePoints,
                     "[segment]");
 METHOD_AS_TEST_CASE(SegmentFactoryTests::SingleSegs, "SingleSegs", "[segment]");
 METHOD_AS_TEST_CASE(SegmentFactoryTests::Four, "Four", "[segment]");
+}  // namespace hemelb::gmytool::oct

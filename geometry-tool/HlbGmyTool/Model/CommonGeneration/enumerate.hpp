@@ -5,6 +5,8 @@
 #ifndef HLBGMYTOOL_COMMON_ENUMERATE_HPP
 #define HLBGMYTOOL_COMMON_ENUMERATE_HPP
 
+namespace hemelb::gmytool {
+
 template <typename Container>
 class EnumIter {
  public:
@@ -58,4 +60,5 @@ EnumerationAdaptor<const Container> const_enumerate(
   return container;
 }
 
+}  // namespace hemelb::gmytool
 #endif

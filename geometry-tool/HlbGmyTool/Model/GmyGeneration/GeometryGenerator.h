@@ -12,11 +12,17 @@
 #include "GenerationError.h"
 #include "Iolet.h"
 
+namespace hemelb::gmytool::gmy {
+
 class GeometryWriter;
 class Site;
 class BlockWriter;
 class Block;
 
+// Base class for creating geometry files.
+//
+// Assumption: the input object is in a coordinate system in lattice
+// units with the site at (0, 0, 0) at the origin.
 class GeometryGenerator {
  public:
   GeometryGenerator();
@@ -34,17 +40,13 @@ class GeometryGenerator {
   inline std::vector<Iolet> const& GetIolets() const { return this->Iolets; }
   inline void SetIolets(std::vector<Iolet> iv) { this->Iolets = iv; }
 
-  inline void SetOriginWorking(double x, double y, double z) {
-    this->OriginWorking[0] = x;
-    this->OriginWorking[1] = y;
-    this->OriginWorking[2] = z;
-  }
-
   inline void SetSiteCounts(unsigned x, unsigned y, unsigned z) {
     this->SiteCounts[0] = x;
     this->SiteCounts[1] = y;
     this->SiteCounts[2] = z;
   }
+
+  inline void SetBlockSize(unsigned n) { this->BlockSize = n; }
 
   /**
    * This method implements the algorithm used to approximate the wall normal at
@@ -66,11 +68,12 @@ class GeometryGenerator {
   void WriteSolidSite(BlockWriter& blockWriter, Site& site);
   void WriteFluidSite(BlockWriter& blockWriter, Site& site);
   // Members set from outside to initialise
-  double OriginWorking[3];
   unsigned SiteCounts[3];
+  unsigned BlockSize = 8;
   std::string OutputGeometryFile;
   std::vector<Iolet> Iolets;
   virtual int BlockInsideOrOutsideSurface(const Block& block) = 0;
 };
 
+}  // namespace hemelb::gmytool::gmy
 #endif  // HLBGMYTOOL_GMY_GEOMETRYGENERATOR_H

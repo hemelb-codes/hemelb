@@ -5,6 +5,7 @@
 
 #include "Debug.h"
 
+namespace hemelb::gmytool::gmy {
 namespace {
 DummyStream ds;
 }
@@ -12,3 +13,4 @@ DummyStream ds;
 DummyStream& Log() {
   return ds;
 }
+}  // namespace hemelb::gmytool::gmy

@@ -7,6 +7,9 @@
 #define HLBGMYTOOL_GMY_IOLET_H
 
 #include "Index.h"
+
+namespace hemelb::gmytool::gmy {
+
 struct Iolet {
   Vector Centre;
   Vector Normal;
@@ -16,4 +19,5 @@ struct Iolet {
   bool IsInlet;
 };
 
+}  // namespace hemelb::gmytool::gmy
 #endif  // HLBGMYTOOL_GMY_IOLET_H

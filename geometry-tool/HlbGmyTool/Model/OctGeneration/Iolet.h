@@ -7,9 +7,12 @@
 #ifndef HLBGMYTOOL_OCT_IOLET_H
 #define HLBGMYTOOL_OCT_IOLET_H
 
+namespace hemelb::gmytool::oct {
+
 struct Iolet {
   int Id;
   bool IsInlet;
 };
 
+}  // namespace hemelb::gmytool::oct
 #endif  // HLBGMYTOOL_OCT_IOLET_H

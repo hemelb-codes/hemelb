@@ -13,6 +13,8 @@
 #include "enumerate.hpp"
 #include "range.hpp"
 
+namespace hemelb::gmytool::oct {
+
 struct SurfaceVoxeliserTests {
   void NeighbourInverses() {
     auto& vectors = Neighbours::Displacements;
@@ -185,3 +187,4 @@ METHOD_AS_TEST_CASE(SurfaceVoxeliserTests::SphereIntersections,
 METHOD_AS_TEST_CASE(SurfaceVoxeliserTests::Sphere,
                     "SphereSurfaceVoxelisation",
                     "[SurfaceVoxeliser]");
+}  // namespace hemelb::gmytool::oct

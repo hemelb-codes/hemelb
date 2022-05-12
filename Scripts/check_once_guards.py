@@ -216,7 +216,7 @@ if __name__ == "__main__":
         "HLBGMYTOOL_COMMON",
         (".cpp", ".hpp", ".h"),
         ("util/Vector3D.h",),
-        (),
+        ("PybindVTKTypeCaster.h",),
     )
     commonGmyDir = rootDir / "geometry-tool/HlbGmyTool/Model/CommonGeneration"
     errors = errors or commonGmyChecker.Check(commonGmyDir)
@@ -240,7 +240,6 @@ if __name__ == "__main__":
         ]
         + common_includes,
         (
-            "PybindVTKTypeCaster.h",
             "Point_inside_polyhedron_3.h",
             "Triangle_3_Ray_3_do_intersect.h",
         ),
@@ -258,7 +257,7 @@ if __name__ == "__main__":
             "Index.h",
         ]
         + common_includes,
-        ("PybindVTKTypeCaster.h",),
+        (),
     )
     octGmyDir = rootDir / "geometry-tool/HlbGmyTool/Model/OctGeneration"
     errors = errors or octGmyChecker.Check(octGmyDir)

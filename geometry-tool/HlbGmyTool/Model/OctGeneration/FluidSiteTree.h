@@ -12,6 +12,8 @@
 #include "Oct.h"
 #include "util/Vector3D.h"
 
+namespace hemelb::gmytool::oct {
+
 enum class Intersection { None = 0, Wall = 1, Inlet = 2, Outlet = 3 };
 
 // This holds the data for a single link from a fluid site
@@ -62,4 +64,5 @@ struct FluidData {
 };
 typedef Octree<FluidData> FluidTree;
 
+}  // namespace hemelb::gmytool::oct
 #endif  // HLBGMYTOOL_OCT_FLUIDSITETREE_H

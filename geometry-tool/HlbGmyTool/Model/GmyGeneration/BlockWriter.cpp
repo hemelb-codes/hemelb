@@ -13,6 +13,8 @@
 #include "GeometryWriter.h"
 #include "Neighbours.h"
 
+namespace hemelb::gmytool::gmy {
+
 BlockWriter::BlockWriter(BufferPool* bp)
     : writer(NULL), buffer(NULL), bufferPool(bp) {
   this->Reset();
@@ -111,3 +113,5 @@ void BlockWriter::Write(GeometryWriter& gw) {
   *(gw.headerEncoder) << this->nFluidSites << this->CompressedBlockLength
                       << this->UncompressedBlockLength;
 }
+
+}  // namespace hemelb::gmytool::gmy

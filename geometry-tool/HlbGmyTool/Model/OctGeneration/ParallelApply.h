@@ -11,6 +11,8 @@
 #include <thread>
 #include <vector>
 
+namespace hemelb::gmytool::oct {
+
 template <class ReturnType, class ArgType>
 class ParallelApply {
  public:
@@ -104,4 +106,5 @@ class ParallelApply {
   }
 };
 
+}  // namespace hemelb::gmytool::oct
 #endif  // HLBGMYTOOL_OCT_PARALLELAPPLY_H

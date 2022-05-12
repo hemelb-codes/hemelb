@@ -9,6 +9,8 @@
 #include "TestResources/Meshes.h"
 #include "TriangleSorter.h"
 
+namespace hemelb::gmytool::oct {
+
 struct TriangleSorterTests {
   void Trivial() {
     // 16 cube
@@ -247,4 +249,4 @@ METHOD_AS_TEST_CASE(TriangleSorterTests::ParallelSphere,
                     "[triangle]");
 METHOD_AS_TEST_CASE(TriangleSorterTests::Duct, "Duct", "[triangle]");
 
-// #endif
+}  // namespace hemelb::gmytool::oct

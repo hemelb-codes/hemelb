@@ -13,6 +13,7 @@
 #include <vtkOBBTree.h>
 #include <vtkXMLPolyDataWriter.h>
 
+namespace hemelb::gmytool::gmy {
 /*
  * Helper functions to check if sites are on the edge of the Domain.
  */
@@ -130,3 +131,4 @@ Site& Block::GetLocalSite(const Index& ind) {
   unsigned int ijk = this->TranslateIndex(ind);
   return *this->sites[ijk];
 }
+}  // namespace hemelb::gmytool::gmy

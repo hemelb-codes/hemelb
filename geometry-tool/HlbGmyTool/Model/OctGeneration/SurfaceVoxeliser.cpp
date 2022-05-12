@@ -15,6 +15,8 @@
 
 #include <boost/function_output_iterator.hpp>
 
+namespace hemelb::gmytool::oct {
+
 SurfaceVoxeliser::SurfaceVoxeliser(const int ns,
                                    const std::vector<Vector>& p,
                                    const std::vector<Index>& t,
@@ -330,3 +332,5 @@ FluidTree SurfaceVoxeliser::operator()(const TriTree& inTree,
   outTree.Root()->Data().count = nLeafNodes;
   return outTree;
 }
+
+}  // namespace hemelb::gmytool::oct

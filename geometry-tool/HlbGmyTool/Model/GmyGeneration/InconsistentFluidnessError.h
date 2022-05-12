@@ -9,6 +9,8 @@
 #include <string>
 #include "GenerationError.h"
 
+namespace hemelb::gmytool::gmy {
+
 class Site;
 
 struct InconsistentFluidnessError : public GenerationError {
@@ -40,5 +42,7 @@ struct InconsistentIntersectRayError : public GenerationError {
  private:
   std::string msg;
 };
+
+}  // namespace hemelb::gmytool::gmy
 
 #endif  // HLBGMYTOOL_GMY_INCONSISTENTFLUIDNESSERROR_H
