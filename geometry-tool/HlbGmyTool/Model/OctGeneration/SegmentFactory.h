@@ -10,6 +10,8 @@
 
 #include "Index.h"
 
+namespace hemelb::gmytool::oct {
+
 // This produces all the line segments that pass through the points of a cube
 // of the supplied size (one corner at the origin, the diagonal at
 // (size-1, size-1, size-1)
@@ -44,4 +46,5 @@ class SegmentFactory {
   int size;
   std::vector<Face> faces;
 };
+}  // namespace hemelb::gmytool::oct
 #endif

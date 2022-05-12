@@ -4,6 +4,8 @@
 // license in the file LICENSE.
 #include "SectionTreeBuilder.h"
 
+namespace hemelb::gmytool::oct {
+
 SectionTreeBuilder::SectionTreeBuilder(const MaskTree& mask,
                                        const FluidTree& edges)
     : maskTree(mask),
@@ -117,3 +119,5 @@ void SectionTreeBuilder::Depart(MaskTree::ConstNodePtr n) {
   // Clear the edge pointer to make sure we don't leave it hanging around
   edge_ptrs[lvl] = nullptr;
 }
+
+}  // namespace hemelb::gmytool::oct

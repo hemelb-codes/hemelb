@@ -12,6 +12,8 @@
 #include "TriangleSorter.h"
 #include "range.hpp"
 
+namespace hemelb::gmytool::oct {
+
 struct FloodFillTests {
   using Idx = FloodFill::Idx;
 
@@ -86,3 +88,5 @@ METHOD_AS_TEST_CASE(FloodFillTests::GetStartMulti,
                     "GetStartMulti",
                     "[FloodFill]");
 METHOD_AS_TEST_CASE(FloodFillTests::FillSphere, "FillSphere", "[FloodFill]");
+
+}  // namespace hemelb::gmytool::oct

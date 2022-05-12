@@ -19,7 +19,7 @@
     m_Id = H5I_INVALID_HID;                  \
   }
 
-namespace H5 {
+namespace hemelb::H5 {
 
 Object::Object() : m_Id(H5I_INVALID_HID) {}
 Object::Object(hid_t id) : m_Id(id) {}
@@ -405,4 +405,4 @@ DataSpaceSharedPtr DataSet::GetSpace() const {
   return std::make_shared<DataSpace>(H5Dget_space(m_Id));
 }
 
-}  // namespace H5
+}  // namespace hemelb::H5

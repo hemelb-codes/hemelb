@@ -11,6 +11,8 @@
 #include "io/formats/geometry.h"
 #include "range.hpp"
 
+namespace hemelb::gmytool::oct {
+
 namespace detail {
 template <std::size_t N>
 static constexpr std::array<Vector, N> i2d(std::array<Index, N> const& idata) {
@@ -54,4 +56,6 @@ struct Neighbours {
   static constexpr std::array<unsigned, gmy::NumberOfDisplacements> Inverses =
       detail::mk_inv(gmy::Neighbourhood);
 };
+
+}  // namespace hemelb::gmytool::oct
 #endif

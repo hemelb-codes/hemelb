@@ -10,10 +10,11 @@
 #include "Cgal.h"
 #include "Index.h"
 
+namespace hemelb::gmytool::oct {
 // Create a CGAL 3D Polyhedral surface based on the input
 // Labels each face with its index in the input - use that to index the
 // surface type vector
 CgalMeshPtr MkCgalMesh(const std::vector<Vector>& ptsIn,
                        const std::vector<Index>& polysIn);
-
+}  // namespace hemelb::gmytool::oct
 #endif  // HLBGMYTOOL_OCT_MKCGALMESH_H

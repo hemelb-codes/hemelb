@@ -8,6 +8,8 @@
 #include "io/formats/geometry.h"
 // shortcut to geometry class
 
+namespace hemelb::gmytool::gmy {
+
 void Neighbours::Init() {
   // copy in the vectors of the neighbourhood
   Neighbours::vectors = {gmy::Neighbourhood.begin(), gmy::Neighbourhood.end()};
@@ -59,3 +61,5 @@ std::vector<unsigned int> Neighbours::laterNeighbourIndices(Neighbours::nLater);
 std::vector<Index> Neighbours::vectors(Neighbours::n);
 std::vector<unsigned int> Neighbours::inverses(Neighbours::n);
 std::vector<double> Neighbours::norms(Neighbours::n);
+
+}  // namespace hemelb::gmytool::gmy

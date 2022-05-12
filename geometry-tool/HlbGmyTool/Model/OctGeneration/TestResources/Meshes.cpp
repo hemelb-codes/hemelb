@@ -11,6 +11,8 @@
 #include <vtkPolyData.h>
 #include <vtkXMLPolyDataReader.h>
 
+namespace hemelb::gmytool::oct {
+
 std::shared_ptr<MeshData> SimpleMeshFactory::MkTrivial() {
   auto ans = std::make_shared<MeshData>();
   ans->points = {
@@ -115,3 +117,4 @@ std::shared_ptr<MeshData> SimpleMeshFactory::VtkToMesh(PD_ptr pd) {
 }
 
 std::shared_ptr<MeshData> SimpleMeshFactory::sphere_mesh = nullptr;
+}  // namespace hemelb::gmytool::oct

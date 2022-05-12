@@ -16,7 +16,9 @@
 #include <cassert>
 #include "io/formats/geometry.h"
 
-using namespace hemelb::io::formats;
+namespace hemelb::gmytool::gmy {
+
+using namespace io::formats;
 
 GeometryGenerator::GeometryGenerator() {
   Neighbours::Init();
@@ -36,9 +38,9 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks) {
   this->PreExecute();
   double bounds[6];
   this->ComputeBounds(bounds);
-  Domain domain(this->OriginWorking, this->SiteCounts);
+  Domain domain(this->SiteCounts, this->BlockSize);
 
-  GeometryWriter writer(this->OutputGeometryFile, domain.GetBlockSize(),
+  GeometryWriter writer(this->OutputGeometryFile, this->BlockSize,
                         domain.GetBlockCounts());
 
   for (BlockIterator blockIt = domain.begin(); blockIt != domain.end();
@@ -173,3 +175,5 @@ void GeometryGenerator::ComputeAveragedNormal(Site& site) const {
     }
   }
 }
+
+}  // namespace hemelb::gmytool::gmy

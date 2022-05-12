@@ -11,6 +11,8 @@
 #include <string>
 #include "Oct.h"
 
+namespace hemelb::gmytool::oct {
+
 template <class T>
 Octree<T>::Node::Node(Int i, Int j, Int k, Int l)
     : x(i), y(j), z(k), level(l), value() {}
@@ -345,4 +347,5 @@ void WriteNodeData(std::ostream& os, const T& data) {
   os << data;
 }
 
+}  // namespace hemelb::gmytool::oct
 #endif

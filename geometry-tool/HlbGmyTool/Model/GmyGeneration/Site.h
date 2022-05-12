@@ -9,8 +9,11 @@
 #include <vector>
 #include "Index.h"
 #include "io/formats/geometry.h"
+
+namespace hemelb::gmytool::gmy {
+
 // shortcut to geometry class
-using hemelb::io::formats::geometry;
+using io::formats::geometry;
 
 // class Iolet;
 class Block;
@@ -117,4 +120,6 @@ class NeighbourIterator : public NeighbourIteratorBase {
  protected:
   bool IsCurrentValid();
 };
+
+}  // namespace hemelb::gmytool::gmy
 #endif  // HLBGMYTOOL_GMY_SITE_H

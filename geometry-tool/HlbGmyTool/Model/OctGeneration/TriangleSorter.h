@@ -10,6 +10,8 @@
 #include "Index.h"
 #include "TriTree.h"
 
+namespace hemelb::gmytool::oct {
+
 // Create an Octree with n_levels potential number of levels.
 // Nodes will be created down to the level tri_level but only if voxel-voxel
 // links originating within that node could potentially intersect the triangles
@@ -52,4 +54,5 @@ class TreeSummer {
   TriTree tree;
 };
 
+}  // namespace hemelb::gmytool::oct
 #endif

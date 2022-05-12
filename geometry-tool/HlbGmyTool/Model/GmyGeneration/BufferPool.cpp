@@ -6,6 +6,8 @@
 #include "BufferPool.h"
 #include <cstddef>
 
+namespace hemelb::gmytool::gmy {
+
 BufferPool::BufferPool(unsigned int bSize) : size(bSize) {}
 
 BufferPool::~BufferPool() {
@@ -43,3 +45,5 @@ void BufferPool::Free(char* buf) {
 unsigned int BufferPool::GetSize() const {
   return this->size;
 }
+
+}  // namespace hemelb::gmytool::gmy

@@ -7,6 +7,10 @@
 #define HLBGMYTOOL_OCT_MASKTREE_H
 
 #include "Oct.h"
-typedef Octree<unsigned> MaskTree;
 
+namespace hemelb::gmytool::oct {
+
+using MaskTree = Octree<unsigned>;
+
+}
 #endif  // HLBGMYTOOL_OCT_MASKTREE_H

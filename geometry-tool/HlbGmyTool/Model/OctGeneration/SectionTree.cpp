@@ -10,6 +10,34 @@
 #include "H5.h"
 #include "enumerate.hpp"
 
+namespace hemelb {
+namespace H5 {
+
+using namespace gmytool::oct;
+
+template <>
+DataTypeSharedPtr DataTypeTraits<SVector>::GetType() {
+  return DataType::Array<float>({3});
+}
+
+template <>
+DataTypeSharedPtr DataTypeTraits<std::array<Link, 26>>::GetType() {
+  return DataType::Array<Link>({26});
+}
+
+template <>
+DataTypeSharedPtr DataTypeTraits<Link>::GetType() {
+  hid_t link_id = H5Tcreate(H5T_COMPOUND, sizeof(Link));
+  H5Tinsert(link_id, "type", HOFFSET(Link, type), H5T_NATIVE_INT);
+  H5Tinsert(link_id, "dist", HOFFSET(Link, dist), H5T_NATIVE_FLOAT);
+  H5Tinsert(link_id, "id", HOFFSET(Link, id), H5T_NATIVE_INT);
+
+  return DataTypeSharedPtr(new DataType(link_id));
+}
+}  // namespace H5
+
+namespace gmytool::oct {
+
 SectionTree::SectionTree(size_t nl)
     : nLevels(nl), indices(nl + 1), counts(nl + 1) {}
 
@@ -32,28 +60,6 @@ auto SectionTree::FindIndex(Int i, Int j, Int k) const -> IndT {
   }
   return cur_offset;
 }
-
-namespace H5 {
-template <>
-DataTypeSharedPtr DataTypeTraits<SVector>::GetType() {
-  return DataType::Array<float>({3});
-}
-
-template <>
-DataTypeSharedPtr DataTypeTraits<std::array<Link, 26>>::GetType() {
-  return DataType::Array<Link>({26});
-}
-
-template <>
-DataTypeSharedPtr DataTypeTraits<Link>::GetType() {
-  hid_t link_id = H5Tcreate(H5T_COMPOUND, sizeof(Link));
-  H5Tinsert(link_id, "type", HOFFSET(Link, type), H5T_NATIVE_INT);
-  H5Tinsert(link_id, "dist", HOFFSET(Link, dist), H5T_NATIVE_FLOAT);
-  H5Tinsert(link_id, "id", HOFFSET(Link, id), H5T_NATIVE_INT);
-
-  return DataTypeSharedPtr(new DataType(link_id));
-}
-}  // namespace H5
 
 // H5 does not allow the chunk size to be bigger than the data set's
 // size. Make a plist that satisfies this constraint.
@@ -94,3 +100,6 @@ void SectionTree::Write(const std::string& fn) const {
   wall_normals.write(root->CreateGroup("wall_normals"));
   links.write(root->CreateGroup("links"));
 }
+
+}  // namespace gmytool::oct
+}  // namespace hemelb

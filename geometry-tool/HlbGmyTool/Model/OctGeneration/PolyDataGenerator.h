@@ -11,8 +11,26 @@
 #include "GenerationError.h"
 
 class vtkPolyData;
+
+namespace hemelb::gmytool::oct {
 class Iolet;
 
+// Class that manages creating the whole process.
+//
+// Inputs:
+//
+// uint16_t NumberOfLevels - number of levels of our octree
+//
+// uint16_t TriangleLevel - index of the level to sort triangles onto
+//
+// std::string OutputGeometryFile - path to write the output
+//
+// std::vector<Iolet> Iolets - info about the inlets and outlets
+//
+// vtkPolyData* ClippedSurface - the geometry to voxelised.  Must be
+// scaled to lattice coordinates such that it lies within a cube of
+// size 2**NumberOfLevels with it's origin at (0,0,0).
+//
 class PolyDataGenerator {
  public:
   PolyDataGenerator();
@@ -24,27 +42,20 @@ class PolyDataGenerator {
 
   void SetIolets(std::vector<Iolet*> const& iv);
 
-  void SetOriginWorking(double x, double y, double z);
-
   void SetNumberOfLevels(int n);
   void SetTriangleLevel(int n);
-
-  void GetSeedPointWorking(double out[3]);
-  void SetSeedPointWorking(double out[3]);
-  void SetSeedPointWorking(double x, double y, double z);
 
   vtkPolyData* GetClippedSurface(void);
   void SetClippedSurface(vtkPolyData* val);
 
  private:
   // Members set from outside to initialise
-  double OriginWorking[3];
   uint16_t NumberOfLevels;
   uint16_t TriangleLevel;
   std::string OutputGeometryFile;
   std::vector<Iolet> Iolets;
-  double SeedPointWorking[3];
   vtkPolyData* ClippedSurface;
 };
 
+}  // namespace hemelb::gmytool::oct
 #endif

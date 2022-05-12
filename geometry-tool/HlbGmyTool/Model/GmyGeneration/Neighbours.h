@@ -11,6 +11,8 @@
 
 #include "io/formats/geometry.h"
 
+namespace hemelb::gmytool::gmy {
+
 struct Neighbours {
   // shortcut to geometry class
   using gmy = hemelb::io::formats::geometry;
@@ -30,4 +32,6 @@ struct Neighbours {
   // Private to ensure it's not instantiated.
   Neighbours();
 };
+
+}  // namespace hemelb::gmytool::gmy
 #endif  // HLBGMYTOOL_GMY_NEIGHBOURS_H

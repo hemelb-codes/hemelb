@@ -17,6 +17,8 @@ class vtkXMLPolyDataReader;
 
 #include "TestResources/helpers.h"
 
+namespace hemelb::gmytool::oct {
+
 struct MeshData {
   std::vector<Vector> points;
   std::vector<Index> triangles;
@@ -42,4 +44,5 @@ class SimpleMeshFactory {
   static std::shared_ptr<MeshData> VtkToMesh(PD_ptr pd);
 };
 
+}  // namespace hemelb::gmytool::oct
 #endif

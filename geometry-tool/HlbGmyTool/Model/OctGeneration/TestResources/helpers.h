@@ -6,6 +6,8 @@
 #ifndef HLBGMYTOOL_OCT_TESTRESOURCES_HELPERS_H
 #define HLBGMYTOOL_OCT_TESTRESOURCES_HELPERS_H
 
+namespace hemelb::gmytool::oct {
+
 template <class... Types>
 std::string GetResource(const Types&... paths);
 
@@ -29,4 +31,5 @@ std::string GetResource(const T& pth, const Types&... paths) {
   return GetResource(pth) + "/" + GetResource(paths...);
 }
 
+}  // namespace hemelb::gmytool::oct
 #endif

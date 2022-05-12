@@ -19,10 +19,16 @@
 
 // This is a pair of integers (offset and a count) and some data. The
 // integers index into the data.
+
+namespace hemelb {
+
 namespace H5 {
 class Group;
 using GroupPtr = std::shared_ptr<Group>;
 }  // namespace H5
+
+namespace gmytool::oct {
+
 template <class T>
 struct Section {
   using IndT = uint64_t;
@@ -97,4 +103,6 @@ class SectionTree {
   Section<std::array<Link, 26>> links;
 };
 
+}  // namespace gmytool::oct
+}  // namespace hemelb
 #endif

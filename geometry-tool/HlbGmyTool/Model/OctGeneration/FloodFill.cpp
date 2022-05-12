@@ -12,6 +12,8 @@
 #include "util/Vector3D.h"
 #define unpack(idx) idx[0], idx[1], idx[2], idx[3]
 
+namespace hemelb::gmytool::oct {
+
 FloodFill::FloodFill(const FluidTree& t) : tree(t) {}
 
 auto FloodFill::GetStart() const -> Idx {
@@ -122,3 +124,4 @@ MaskTree FloodFill::operator()() const {
   }
   return seen;
 }
+}  // namespace hemelb::gmytool::oct

@@ -6,6 +6,8 @@
 #include <CGAL/Polyhedron_3.h>
 #include <CGAL/Polyhedron_incremental_builder_3.h>
 
+namespace hemelb::gmytool::oct {
+
 class SurfaceCreator : public CGAL::Modifier_base<CgalPolyhedron::HalfedgeDS> {
  public:
   typedef CgalPolyhedron::HalfedgeDS HDS;
@@ -58,3 +60,5 @@ CgalMeshPtr MkCgalMesh(const std::vector<Vector>& points,
   mesh->delegate(modifier);
   return mesh;
 }
+
+}  // namespace hemelb::gmytool::oct

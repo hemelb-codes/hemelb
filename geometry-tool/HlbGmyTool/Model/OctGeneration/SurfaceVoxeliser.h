@@ -17,6 +17,8 @@
 #include "Oct.h"
 #include "TriTree.h"
 
+namespace hemelb::gmytool::oct {
+
 struct Cut {
   Cut() : dist(std::numeric_limits<double>::infinity()), id(-1) {}
   double dist;
@@ -63,4 +65,6 @@ class SurfaceVoxeliser {
   CgalMeshPtr mesh;
   std::unique_ptr<CgalSearchTree> searcher;
 };
+
+}  // namespace hemelb::gmytool::oct
 #endif

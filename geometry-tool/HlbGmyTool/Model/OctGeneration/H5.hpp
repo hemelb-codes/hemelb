@@ -6,7 +6,8 @@
 #ifndef HLBGMYTOOL_OCT_H5_HPP
 #define HLBGMYTOOL_OCT_H5_HPP
 
-namespace H5 {
+namespace hemelb::H5 {
+
 template <class T>
 typename DataTypeConversionPolicy<T>::ConvertedType
 DataTypeConversionPolicy<T>::Convert(const T& obj) {
@@ -167,6 +168,6 @@ DataSetSharedPtr CanHaveGroupsDataSets::CreateWriteDataSet(
   return dataset;
 }
 
-}  // namespace H5
+}  // namespace hemelb::H5
 
 #endif

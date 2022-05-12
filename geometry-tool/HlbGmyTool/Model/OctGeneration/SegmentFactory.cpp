@@ -5,6 +5,8 @@
 #include "SegmentFactory.h"
 #include <cassert>
 
+namespace hemelb::gmytool::oct {
+
 SegmentFactory::Face::Face(int s, int d, bool p)
     : size(s), direction(d), positive(p), normal() {
   assert(direction >= 0 && direction <= 2);
@@ -78,3 +80,5 @@ auto SegmentFactory::MakeSegments(const Index& vec) const -> std::vector<Seg> {
   }
   return segments;
 }
+
+}  // namespace hemelb::gmytool::oct

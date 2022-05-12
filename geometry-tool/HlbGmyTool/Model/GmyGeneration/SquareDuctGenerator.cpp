@@ -15,7 +15,9 @@
 
 #include <cmath>
 
-using namespace hemelb::io::formats;
+namespace hemelb::gmytool::gmy {
+
+using namespace io::formats;
 
 SquareDuctGenerator::SquareDuctGenerator() : GeometryGenerator() {
   this->SquareDuct = new SquareDuctData;
@@ -166,3 +168,5 @@ void SquareDuctGenerator::ClassifySite(Site& site) {
   // normal will be computed for this fluid site.
   this->ComputeAveragedNormal(site);
 }
+
+}  // namespace hemelb::gmytool::gmy

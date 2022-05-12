@@ -7,6 +7,10 @@
 #include <sstream>
 #include "Site.h"
 
+namespace hemelb::gmytool::gmy {
+
+namespace {
+
 void FormatSite(std::ostringstream& msg, const Site& site) {
   msg << "site index " << site.GetIndex() << ", position " << site.Position
       << ", which is ";
@@ -22,6 +26,8 @@ void FormatBoolInside(std::ostringstream& msg, const bool sinside) {
   else
     msg << "solid";
 }
+
+}  // namespace
 
 InconsistentFluidnessError::InconsistentFluidnessError(const Site& s1,
                                                        const Site& s2,
@@ -63,3 +69,4 @@ const char* InconsistentFluidnessError::what() const noexcept {
 const char* InconsistentIntersectRayError::what() const noexcept {
   return this->msg.c_str();
 }
+}  // namespace hemelb::gmytool::gmy

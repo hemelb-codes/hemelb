@@ -8,6 +8,8 @@
 
 #include <iostream>
 
+namespace hemelb::gmytool::gmy {
+
 class DummyStream {};
 
 #ifdef DEBUG
@@ -37,5 +39,7 @@ inline DummyStream& operator<<(DummyStream& ds,
 #endif  // DEBUG
 
 DummyStream& Log();
+
+}  // namespace hemelb::gmytool::gmy
 
 #endif  // HLBGMYTOOL_GMY_DEBUG_H

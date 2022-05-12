@@ -9,6 +9,8 @@
 
 #include "Oct.h"
 
+namespace hemelb::gmytool::oct {
+
 struct OctreeTests {
   using Tree = Octree<char>;
   using TreePtr = std::shared_ptr<Tree>;
@@ -82,3 +84,5 @@ struct OctreeTests {
 METHOD_AS_TEST_CASE(OctreeTests::CreateEmpty, "CreateEmpty", "[oct]");
 METHOD_AS_TEST_CASE(OctreeTests::CreateSimple, "CreateSimple", "[oct]");
 METHOD_AS_TEST_CASE(OctreeTests::SimpleIter, "SimpleIter", "[oct]");
+
+}  // namespace hemelb::gmytool::oct

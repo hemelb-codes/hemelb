@@ -8,6 +8,8 @@
 #include <exception>
 #include <string>
 
+namespace hemelb::gmytool {
+
 struct GenerationError : public std::exception {
   virtual const char* what() const noexcept { return "GenerationError"; }
 };
@@ -20,4 +22,5 @@ struct GenerationErrorMessage : public GenerationError {
   const std::string msg;
 };
 
+}  // namespace hemelb::gmytool
 #endif

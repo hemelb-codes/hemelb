@@ -7,6 +7,8 @@
 #include "MkCgalMesh.h"
 #include "TestResources/Meshes.h"
 
+namespace hemelb::gmytool::oct {
+
 TEST_CASE("SphereCgalMesh") {
   auto sphere = SimpleMeshFactory::MkSphere();
   auto surface = MkCgalMesh(sphere->points, sphere->triangles);
@@ -14,3 +16,5 @@ TEST_CASE("SphereCgalMesh") {
   REQUIRE(surface->is_pure_triangle());
   REQUIRE(surface->is_valid());
 }
+
+}  // namespace hemelb::gmytool::oct

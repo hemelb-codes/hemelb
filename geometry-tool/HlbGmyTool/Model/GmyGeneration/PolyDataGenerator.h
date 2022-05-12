@@ -16,35 +16,21 @@ class vtkPoints;
 class vtkIdList;
 class vtkIntArray;
 
+#include "BuildCGALPolygon.h"
+#include "CGALtypedef.h"
 #include "GenerationError.h"
 #include "GetSet.h"
+
+namespace hemelb::gmytool::gmy {
 
 class GeometryWriter;
 class Site;
 class BlockWriter;
 
-#include "BuildCGALPolygon.h"
-#include "CGALtypedef.h"
-
 class PolyDataGenerator : public GeometryGenerator {
  public:
   PolyDataGenerator();
   virtual ~PolyDataGenerator();
-
-  inline void GetSeedPointWorking(double out[3]) {
-    for (unsigned int i = 0; i < 3; ++i)
-      out[i] = this->SeedPointWorking[i];
-    return;
-  }
-  inline void SetSeedPointWorking(double out[3]) {
-    for (unsigned int i = 0; i < 3; ++i)
-      this->SeedPointWorking[i] = out[i];
-  }
-  inline void SetSeedPointWorking(double x, double y, double z) {
-    this->SeedPointWorking[0] = x;
-    this->SeedPointWorking[1] = y;
-    this->SeedPointWorking[2] = z;
-  }
 
   inline vtkSmartPointer<vtkPolyData> GetClippedSurface(void) {
     return this->ClippedSurface;
@@ -67,7 +53,6 @@ class PolyDataGenerator : public GeometryGenerator {
   // (0)
   virtual int BlockInsideOrOutsideSurface(const Block& block);
   // Members set from outside to initialise
-  double SeedPointWorking[3];
   vtkSmartPointer<vtkPolyData> ClippedSurface;
   vtkSmartPointer<vtkOBBTree> Locator;
   std::unique_ptr<Polyhedron> ClippedCGALSurface;
@@ -84,5 +69,7 @@ class PolyDataGenerator : public GeometryGenerator {
   static bool distancesort(const Object_Primitive_and_distance i,
                            const Object_Primitive_and_distance j);
 };
+
+}  // namespace hemelb::gmytool::gmy
 
 #endif  // HLBGMYTOOL_GMY_POLYDATAGENERATOR_H

@@ -10,6 +10,8 @@
 #include "H5.h"
 #include "enumerate.hpp"
 
+namespace hemelb::gmytool::oct {
+
 // Check our iterator types satisfy the concept.
 //
 // Per DR P2325R3, std::weakly_incrementable (required by iterator
@@ -128,3 +130,5 @@ TEST_CASE("More complex attributes work", "[h5]") {
     REQUIRE_THROWS_AS(root->GetAttribute("string", i), H5::Error);
   }
 }
+
+}  // namespace hemelb::gmytool::oct

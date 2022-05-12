@@ -12,6 +12,8 @@
 #include "GetSet.h"
 #include "Index.h"
 
+namespace hemelb::gmytool::gmy {
+
 class GeometryWriter;
 class Site;
 class BlockWriter;
@@ -40,4 +42,5 @@ class SquareDuctGenerator : public GeometryGenerator {
   virtual int BlockInsideOrOutsideSurface(const Block& block) { return 0; }
 };
 
+}  // namespace hemelb::gmytool::gmy
 #endif  // HLBGMYTOOL_GMY_SQUAREDUCTGENERATOR_H

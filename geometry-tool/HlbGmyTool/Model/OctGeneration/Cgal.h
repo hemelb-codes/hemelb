@@ -20,6 +20,8 @@
 #include <CGAL/Polyhedron_items_with_id_3.h>
 #include <CGAL/Polyhedron_traits_with_normals_3.h>
 
+namespace hemelb::gmytool::oct {
+
 typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
 // typedef CGAL::Exact_predicates_exact_constructions_kernel Kernel;
 
@@ -46,4 +48,5 @@ typedef std::shared_ptr<CgalPolyhedron> CgalMeshPtr;
 // typedef std::pair<Object_and_primitive_id, double>
 // Object_Primitive_and_distance;
 
+}  // namespace hemelb::gmytool::oct
 #endif

@@ -9,6 +9,8 @@
 #include "MaskTree.h"
 #include "SectionTree.h"
 
+namespace hemelb::gmytool::oct {
+
 // This will build a section tree from a MaskTree (i.e. the result of
 // flood filling a domain) and it's source EdgeTree (that contains all
 // the boundary condition data)
@@ -46,4 +48,5 @@ class SectionTreeBuilder : public MaskTree::ConstVisitor {
   SectionTree::Ptr output;
 };
 
+}  // namespace hemelb::gmytool::oct
 #endif

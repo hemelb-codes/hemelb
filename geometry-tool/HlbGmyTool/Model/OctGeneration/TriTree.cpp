@@ -4,6 +4,8 @@
 // license in the file LICENSE.
 #include "TriTree.h"
 
+namespace hemelb::gmytool::oct {
+
 std::ostream& operator<<(std::ostream& os, const IdList& lst) {
   bool first = true;
   os << '[';
@@ -16,3 +18,5 @@ std::ostream& operator<<(std::ostream& os, const IdList& lst) {
   os << ']';
   return os;
 }
+
+}  // namespace hemelb::gmytool::oct

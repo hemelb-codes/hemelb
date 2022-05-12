@@ -5,6 +5,9 @@
 
 #include "CylinderGenerator.h"
 
+#include <cmath>
+#include <queue>
+
 #include "InconsistentFluidnessError.h"
 #include "Neighbours.h"
 #include "Site.h"
@@ -13,9 +16,9 @@
 
 #include "io/formats/geometry.h"
 
-#include <cmath>
+namespace hemelb::gmytool::gmy {
 
-using namespace hemelb::io::formats;
+using namespace io::formats;
 
 CylinderGenerator::CylinderGenerator() : GeometryGenerator() {
   this->Cylinder = new CylinderData;
@@ -74,7 +77,6 @@ struct Hit {
   }
 };
 
-#include <queue>
 typedef std::priority_queue<Hit> HitList;
 /**
  * Compute the intersection between the line segment and the capped cylinder.
@@ -304,3 +306,5 @@ void CylinderGenerator::ComputeCylinderNormalAtAPoint(
   wallNormal = surfacePoint - cylinderAxis * surfacePoint.Dot(cylinderAxis);
   wallNormal.Normalise();
 }
+
+}  // namespace hemelb::gmytool::gmy

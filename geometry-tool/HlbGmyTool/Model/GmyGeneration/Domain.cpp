@@ -6,24 +6,24 @@
 #include "Domain.h"
 #include "Block.h"
 #include "Debug.h"
+#include "GenerationError.h"
 #include "Site.h"
 
-Domain::Domain(double OriginWorking[3],
-               unsigned SiteCounts[3],
-               unsigned BlockSize)
+namespace hemelb::gmytool::gmy {
+
+Domain::Domain(unsigned SiteCounts[3], unsigned BlockSize)
     : BlockSize(BlockSize) {
   int remainder, totalBlocks = 1;
 
   for (unsigned int i = 0; i < 3; ++i) {
+    if (SiteCounts[i] == 0) {
+      throw GenerationErrorMessage("Zero site count in dimension.");
+    }
     // Copy in
-    this->OriginWorking[i] = OriginWorking[i];
     this->SiteCounts[i] = SiteCounts[i];
 
     // Now work out how many blocks we require.
-    this->BlockCounts[i] = this->SiteCounts[i] / BlockSize;
-    remainder = this->SiteCounts[i] % BlockSize;
-    if (remainder)
-      ++this->BlockCounts[i];
+    this->BlockCounts[i] = (this->SiteCounts[i] - 1) / BlockSize + 1;
 
     // Adjust the site count
     this->SiteCounts[i] = this->BlockCounts[i] * BlockSize;
@@ -36,9 +36,7 @@ Domain::Domain(double OriginWorking[3],
 }
 
 Vector Domain::CalcPositionWorkingFromIndex(const Index& index) const {
-  Vector ans(index);
-  ans += this->OriginWorking;
-  return ans;
+  return Vector{index};
 }
 
 Block& Domain::GetBlock(const Index& index) {
@@ -154,3 +152,5 @@ BlockIterator::reference BlockIterator::operator*() {
 BlockIterator::pointer BlockIterator::operator->() {
   return &(*(*this));
 }
+
+}  // namespace hemelb::gmytool::gmy

@@ -9,6 +9,8 @@
 #include <list>
 #include <memory>
 
+namespace hemelb::gmytool::oct {
+
 template <class T>
 class Writer;
 
@@ -224,5 +226,6 @@ std::ostream& operator<<(std::ostream&, const Octree<T>& obj);
 // template<class T>
 // std::ostream& operator<<(std::ostream&, const typename Octree<T>::Node& obj);
 
+}  // namespace hemelb::gmytool::oct
 #include "Oct.hpp"
 #endif

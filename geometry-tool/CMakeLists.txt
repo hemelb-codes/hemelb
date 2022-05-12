@@ -50,6 +50,7 @@ file(REAL_PATH "${HEMELB_CODE_DIR}" HEMELB_CODE_DIR)
 set(model_dir HlbGmyTool/Model)
 set(gmy_dir ${model_dir}/GmyGeneration)
 set(oct_dir ${model_dir}/OctGeneration)
+set(common_dir ${model_dir}/CommonGeneration)
 
 # First, our micro-HemeLB library (i.e. the bits we re-use).
 set(hemelb_cpps
@@ -65,7 +66,7 @@ set(hemelb_cpps
 list(TRANSFORM hemelb_cpps PREPEND "${HEMELB_CODE_DIR}/")
 # While this is located in the extension source tree, in spirit it is
 # part of hemelb::util::Vector3D's implementation.
-list(APPEND hemelb_cpps "${model_dir}/CommonGeneration/Index.cpp")
+list(APPEND hemelb_cpps "${common_dir}/Index.cpp")
 
 # This is a static archive as we want the objects to get pulled into
 # our final single extension library to avoid the
@@ -74,9 +75,11 @@ list(APPEND hemelb_cpps "${model_dir}/CommonGeneration/Index.cpp")
 # function copy_picness below.
 add_library(uhlb STATIC ${hemelb_cpps})
 target_include_directories(uhlb PUBLIC ${HEMELB_CODE_DIR})
-target_include_directories(uhlb PUBLIC ${model_dir}/CommonGeneration)
+target_include_directories(uhlb PUBLIC ${common_dir})
 
 # Now the C++ implementation of the extension
+pybind11_add_module(CommonGeneration ${common_dir}/Wrap.cpp)
+target_link_libraries(CommonGeneration PRIVATE uhlb)
 
 # Older GMY file generator
 set(gmy_gen_cpps
@@ -156,6 +159,7 @@ endfunction()
 copy_picness(GmyGeneration uhlb)
 copy_picness(GmyGeneration octgmygen)
 
+install(TARGETS CommonGeneration DESTINATION ${model_dir})
 install(TARGETS GmyGeneration DESTINATION ${model_dir})
 install(TARGETS OctGeneration DESTINATION ${model_dir})
 

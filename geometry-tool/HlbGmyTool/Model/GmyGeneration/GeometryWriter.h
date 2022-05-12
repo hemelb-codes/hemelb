@@ -12,7 +12,10 @@
 #include "Index.h"
 
 #include "io/writers/xdr/XdrWriter.h"
-using hemelb::io::writers::xdr::XdrWriter;
+
+namespace hemelb::gmytool::gmy {
+
+using io::writers::xdr::XdrWriter;
 
 class BlockWriter;
 class BufferPool;
@@ -44,4 +47,5 @@ class GeometryWriter {
   friend class BlockWriter;
 };
 
+}  // namespace hemelb::gmytool::gmy
 #endif  // HLBGMYTOOL_GMY_GEOMETRYWRITER_H

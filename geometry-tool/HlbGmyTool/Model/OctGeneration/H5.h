@@ -14,7 +14,7 @@
 
 #include <hdf5.h>
 
-namespace H5 {
+namespace hemelb::H5 {
 class Error : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
@@ -534,7 +534,7 @@ class DataSet : public CanHaveAttributes {
   }
 };
 
-}  // namespace H5
+}  // namespace hemelb::H5
 
 #include "H5.hpp"
 #endif
