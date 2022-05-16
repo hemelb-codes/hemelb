@@ -100,7 +100,7 @@ jobs:
 
       - name: Build and install the app
         working-directory: geometry-tool
-        run: pip install --use-feature=in-tree-build .
+        run: pip install .
 
       - name: Store build tree on error
         if: failure()
