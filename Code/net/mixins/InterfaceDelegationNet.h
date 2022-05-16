@@ -25,7 +25,7 @@ namespace hemelb
         template<class T>
         void RequestSendV(std::vector<T> &payload, proc_t toRank)
         {
-          RequestSend(&payload[0], payload.size(), toRank);
+          RequestSend(payload.data(), payload.size(), toRank);
         }
 
         template<class T>
@@ -43,7 +43,7 @@ namespace hemelb
         template<class T>
         void RequestReceiveV(std::vector<T> &payload, proc_t toRank)
         {
-          RequestReceive(&payload[0], payload.size(), toRank);
+          RequestReceive(payload.data(), payload.size(), toRank);
         }
 
         template<class T>

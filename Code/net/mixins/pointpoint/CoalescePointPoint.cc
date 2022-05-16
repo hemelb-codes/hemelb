@@ -125,8 +125,8 @@ namespace hemelb
     {
 
       MPI_Waitall((int) (sendProcessorComms.size() + receiveProcessorComms.size()),
-                  &requests[0],
-                  &statuses[0]);
+                  requests.data(),
+                  statuses.data());
 
       for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin();
           it != receiveProcessorComms.end(); ++it)
