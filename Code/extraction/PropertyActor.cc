@@ -42,43 +42,40 @@ namespace hemelb
           for (unsigned outputField = 0; outputField < outputFile->fields.size(); ++outputField)
           {
             // Set the cache to calculate each required field.
-            switch (outputFile->fields[outputField].type)
-            {
-              case (OutputField::Pressure):
-                propertyCache.densityCache.SetRefreshFlag();
-                break;
-              case OutputField::Velocity:
-                propertyCache.velocityCache.SetRefreshFlag();
-                break;
-              case OutputField::ShearStress:
-                propertyCache.wallShearStressMagnitudeCache.SetRefreshFlag();
-                break;
-              case OutputField::VonMisesStress:
-                propertyCache.vonMisesStressCache.SetRefreshFlag();
-                break;
-              case OutputField::ShearRate:
-                propertyCache.shearRateCache.SetRefreshFlag();
-                break;
-              case OutputField::StressTensor:
-                propertyCache.stressTensorCache.SetRefreshFlag();
-                break;
-              case OutputField::Traction:
-                propertyCache.tractionCache.SetRefreshFlag();
-                break;
-              case OutputField::TangentialProjectionTraction:
-                propertyCache.tangentialProjectionTractionCache.SetRefreshFlag();
-                break;
-              case OutputField::Distributions:
-                // We don't actually have to cache anything to get the distribution.
-                break;
-              case OutputField::MpiRank:
-                // We don't actually have to cache anything to get the rank.
-                break;
-              default:
-                // This assert should never trip. It only occurs when someone adds a new field to OutputField
-                // and forgets adding a new case to the switch
-                assert(false);
-            }
+	    source::visit(
+	      outputFile->fields[outputField].src,
+	      [&](source::Pressure) {
+		propertyCache.densityCache.SetRefreshFlag();
+	      },
+	      [&](source::Velocity) {
+		propertyCache.velocityCache.SetRefreshFlag();
+	      },
+	      [&](source::ShearStress) {
+		propertyCache.wallShearStressMagnitudeCache.SetRefreshFlag();
+	      },
+	      [&](source::VonMisesStress) {
+		propertyCache.vonMisesStressCache.SetRefreshFlag();
+	      },
+	      [&](source::ShearRate) {
+		propertyCache.shearRateCache.SetRefreshFlag();
+	      },
+	      [&](source::StressTensor) {
+		propertyCache.stressTensorCache.SetRefreshFlag();
+	      },
+	      [&](source::Traction) {
+		propertyCache.tractionCache.SetRefreshFlag();
+	      },
+	      [&](source::TangentialProjectionTraction) {
+		propertyCache.tangentialProjectionTractionCache.SetRefreshFlag();
+	      },
+	      [](source::Distributions) {
+		// We don't actually have to cache anything to get the distribution.
+	      },
+	      [](source::MpiRank) {
+		// We don't actually have to cache anything to get the rank.
+	      }
+	    );
+
           }
         }
       }

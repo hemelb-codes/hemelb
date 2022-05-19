@@ -27,80 +27,131 @@ or:
    (since `operator>>` has been overriden to parse such a string into
    a `util::Vector3D<float>`).
 
-* `<hemelbsettings version="int">` - root element. It MUST have a version attribute, an integer. This is currently 4
-  * Required: `<simulation>`  - specify some global properties of the simulation, main time-related
-    * Required: `<stresstype value="int">` - the type of stresses to calculate. Must correspond to the `enum hemelb::lb::StressTypes`
-    * Required: `<step_length value="float" units="s" />` - the length of a time step; units must be s (seconds)
-    * Required: `<steps value="int" units="lattice" />` - the length of the main simulation; units must be lattice
-    * Required: `<voxel_size value="float" units="m" />` - the voxel size in the gmy file
-    * Required: `<origin value="(x,y,z)" units="m" />` - the location of lattice site (0,0,0) in world coordinates 
-    * Optional: `<extra_warmup_steps value="int" units="lattice" />` - the length of the simulation's warmup period; units must be lattice
-  * Required: `<geometry>`
-    * Required: <datafile path="relative path to geometry file" /> - the path (relative to the XML file) of the GMY file.
-  * `<inlets>` - the element contains zero or more `<inlet>` elements.
-    * `<inlet>` - describes the position and orientation of an inlet plane as well as the boundary conditions to impose upon it. Inlets always have the following two sub elements
-       * `<position value="(x,y,z)" units="m" />` - the location of a point on the inlet plane (should be the centre if that makes sense). Must have three attributes (x,y,z) which give the location in metres in the input coordinate system
-       * `<normal value="(x,y,z)" units="dimensionless" />` - a vector normal to the plane. Must have x,y,z attributes. Does not *have* to be normalised but for good practice should be.
-       * `<condition type="" subtype="">` - Gives the BC. There are several types available, in two classes, pressure-based and velocity-based.
-         * `type="pressure"`
-           * `subtype="cosine"` - all subelements required
-             * `<amplitude value="float" units="mmHg" />`
-             * `<mean value="float" units="mmHg" />`
-             * `<phase value="float" units="rad" />`
-             * `<period value="float" units="s" />`
-           * `subtype="file"` - all subelements required
-             * `<path value="relative/path/to/pressure/data/file" />`
-           * `subtype="multiscale"` - all subelements required
-             * `<pressure value="float" units="mmHg" />`
-             * `<velocity value="velocity" units="m/s" />`
-             * `<label value="multiscale_label_string" />`
-         * `type="velocity"`
-           * `subtype="parabolic"` - Poiseuille flow in a cylinder, i.e. parabolic
-             * `<radius value="float" units="lattice" />` -  radius of tube (in lattice units)
-             * `<maximum value="float" units="lattice">` -  maximum velocity (in lattice units)
-           * `subtype="womersley"`
-             * `<womersley_velocity>` - a Womersley flow in a cylinder
-             * `<pressure_gradient_amplitude value="float" units="lattice"/>`
-             * `<period value="float" units="lattice"/>`
-             * `<womersley_number value="float" units="dimensionless"/>`
-             * `<radius value="float" units="lattice"/>`
-           * `subtype="file"` - all subelements required
-             * `<path value="relative/path/to/velocity/data/file" />`
-             * `<radius value="float" units="lattice"/>` or `<radius value="float" units="m"/>`
-  * `<outlets>`
-     As for "inlets" but with `s/inlet/outlet/`
-  * Required: `<visualisation>` - set up the vis
-    * Required: `<centre value="(x,y,z)" units="m" />`
-    * Required: `<orientation>`
-      * Required: `<latitude value="45.0" units="deg" />`
-      * Required: `<longitude value="45.0" units="deg" />`
-    * Required: `<display brightness="0.03" zoom="1.0" />`
-    * Required: `<range>`
-      * Required: `<maxstress value="0.1" units="Pa" />`
-      * Required: `<maxvelocity value="0.1" units="m/s" />`
-  * `<initialconditions>` - describe initial conditions
-    * `<pressure>` - for the pressure
-      * `<uniform value="float" units="mmHg">` - the only option at the moment, value must be in mmHg
-  * `<properties>` - describe what data to extract
-    * `<propertyoutput file="path.xtr" period="int">` - specify the file (under the `results/Extraction` directory) and the output period (in time steps)
-      * `<geometry type="type">` - the type string must be one of the following:
-        * `type="whole"` - all lattice points - no subelements needed
-        * `type="surface"` - all lattice points with one or more links (defined by the active velocity set) intersecting a wall (not inlet/outlet) - no sublements needed
-        * `type="plane"` - all lattice points within sqrt(3)*voxel size of the specified plane
-          * Required: `<point value="(x,y,z)" units="m" />`
-          * Required: `<normal value="(x,y,z)" units="dimensionless" />`
-          * Optional: `<radius value="float" units="m" />` If absent assume r == 0, => infinite plane
-        * `type="line"` - all lattice points close to a finite line between the two points specified
-          * Required twice: `<point value="(x,y,z)" units="m" />`
-        * `type="surfacepoint"` - all lattice points close to the points specified
-          * Required: `<point value="(x,y,z)" units="m" />`
-      * `<field type="type" name="optional name">` - the type string must be one of the following:
-        * `type="velocity"`
-        * `type="pressure"`
-        * `type="vonmisesstress"`
-        * `type="shearstress"`
-        * `type="shearrate"`
-        * `type="stresstensor"`
-        * `type="traction"`
-        * `type="tangentialprojectiontraction"`
-        * `type="mpirank"`
+At the top level there must be the root element: `<hemelbsettings
+version="int">`. It MUST have a version attribute, an integer. This is
+currently 5.
+
+## Simulation
+The `<simulation>` is required and specifies some global properties of
+the simulation, mainly time-related.
+
+It's child elements are:
+* Required: `<stresstype value="int">` - the type of stresses to calculate. Must correspond to the `enum hemelb::lb::StressTypes`
+* Required: `<step_length value="float" units="s" />` - the length of a time step; units must be s (seconds)
+* Required: `<steps value="int" units="lattice" />` - the length of the main simulation; units must be lattice
+* Required: `<voxel_size value="float" units="m" />` - the voxel size in the gmy file
+* Required: `<origin value="(x,y,z)" units="m" />` - the location of lattice site (0,0,0) in world coordinates 
+* Optional: `<extra_warmup_steps value="int" units="lattice" />` - the length of the simulation's warmup period; units must be lattice
+
+## Geometry
+The `<geometry>` element is required. It has one, required, child element:
+* `<datafile path="relative path to geometry file" />` - the path
+  (relative to the XML file) of the GMY file.
+  
+## Inlets
+`<inlets>` - the element contains zero or more `<inlet>` subelements
+
+* `<inlet>` - describes the position and orientation of an inlet plane
+  as well as the boundary conditions to impose upon it. Inlets always
+  have the following two sub elements
+  * `<position value="(x,y,z)" units="m" />` - the location of a point
+    on the inlet plane (should be the centre if that makes
+    sense). Must have three attributes (x,y,z) which give the location
+    in metres in the input coordinate system
+  * `<normal value="(x,y,z)" units="dimensionless" />` - a vector
+    normal to the plane. Must have x,y,z attributes. Does not *have*
+    to be normalised but for good practice should be.
+  * `<condition type="" subtype="">` - Gives the BC. There are several
+    types available, in two classes, pressure-based and
+    velocity-based.
+    * `type="pressure"`
+      * `subtype="cosine"` - all subelements required
+	    * `<amplitude value="float" units="mmHg" />`
+		* `<mean value="float" units="mmHg" />`
+        * `<phase value="float" units="rad" />`
+        * `<period value="float" units="s" />`
+	  * `subtype="file"` - all subelements required
+	    * `<path value="relative/path/to/pressure/data/file" />`
+	  * `subtype="multiscale"` - all subelements required
+	    * `<pressure value="float" units="mmHg" />`
+        * `<velocity value="velocity" units="m/s" />`
+        * `<label value="multiscale_label_string" />`
+    * `type="velocity"`
+      * `subtype="parabolic"` - Poiseuille flow in a cylinder, i.e. parabolic
+		* `<radius value="float" units="lattice" />` -  radius of tube (in lattice units)
+		* `<maximum value="float" units="lattice">` -  maximum velocity (in lattice units)
+	  * `subtype="womersley"`
+		* `<womersley_velocity>` - a Womersley flow in a cylinder
+		* `<pressure_gradient_amplitude value="float" units="lattice"/>`
+        * `<period value="float" units="lattice"/>`
+        * `<womersley_number value="float" units="dimensionless"/>`
+        * `<radius value="float" units="lattice"/>`
+    * `subtype="file"` - all subelements required
+        * `<path value="relative/path/to/velocity/data/file" />`
+        * `<radius value="float" units="lattice"/>` or `<radius value="float" units="m"/>`
+
+## Outlets
+As for "inlets" but with `s/inlet/outlet/`
+
+## Visualisation
+Required element `<visualisation>` to configure the vis. Subelements:
+* Required: `<centre value="(x,y,z)" units="m" />`
+* Required: `<orientation>`
+  * Required: `<latitude value="45.0" units="deg" />`
+  * Required: `<longitude value="45.0" units="deg" />`
+* Required: `<display brightness="0.03" zoom="1.0" />`
+* Required: `<range>`
+  * Required: `<maxstress value="0.1" units="Pa" />`
+  * Required: `<maxvelocity value="0.1" units="m/s" />`
+  
+## Initial Conditions
+`<initialconditions>` - describe initial conditions. Child elements:
+
+* `<pressure>` - start at rest and equilibrium at the given pressure
+  field
+  * `<uniform value="float" units="mmHg">` - a uniform pressure at all
+    sites. Value must be in mmHg.
+
+* `<checkpoint file="relative/path/to/file">` - restart from a
+  checkpoint + offset file. Attribute `file` is required and gives
+  path to the checkpoint. The offset file must have the same path with
+  the extension replaced by ".off".
+
+## (Extracted) Properties
+Describe what data to extract under the `<properties>` element. Child elements:
+
+* `<propertyoutput file="path.xtr" period="int">` - specify the file
+  (under the `results/Extraction` directory) and the output period (in
+  time steps)
+  - `<geometry type="type">` - the type string must be one of the following:
+    + `type="whole"` - all lattice points - no subelements needed
+	+ `type="surface"` - all lattice points with one or more links
+      (defined by the active velocity set) intersecting a wall (not
+      inlet/outlet) - no sublements needed
+    + `type="plane"` - all lattice points within sqrt(3)*voxel size of the specified plane
+      * Required: `<point value="(x,y,z)" units="m" />`
+      * Required: `<normal value="(x,y,z)" units="dimensionless" />`
+      * Optional: `<radius value="float" units="m" />` If absent assume r == 0, => infinite plane
+    + `type="line"` - all lattice points close to a finite line between the two points specified
+      * Required twice: `<point value="(x,y,z)" units="m" />`
+    + `type="surfacepoint"` - all lattice points close to the points specified
+      * Required: `<point value="(x,y,z)" units="m" />`
+  - `<field type="type" name="optional name">` - the type string must be one of the following:
+    + `type="velocity"`
+    + `type="pressure"`
+    + `type="vonmisesstress"`
+    + `type="shearstress"`
+    + `type="shearrate"`
+    + `type="stresstensor"`
+    + `type="traction"`
+    + `type="tangentialprojectiontraction"`
+    + `type="mpirank"`
+
+* `<checkpoint file="path" period="int">` - save a checkpoint file to
+  the given path at the given interval (in timesteps).
+
+## Changes
+
+### Version 5
+
+Added checkpoint element.

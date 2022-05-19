@@ -66,7 +66,7 @@ namespace hemelb
 	REQUIRE(monConfig->doIncompressibilityCheck);
 	REQUIRE(monConfig->convergenceTerminate);
 	REQUIRE(1e-9 == monConfig->convergenceRelativeTolerance);
-	REQUIRE(monConfig->convergenceVariable == extraction::OutputField::Velocity);
+	REQUIRE(std::holds_alternative<extraction::source::Velocity>(monConfig->convergenceVariable));
 	REQUIRE(0.01 == monConfig->convergenceReferenceValue); // 1 m/s * (delta_t / delta_x) = 0.01
       }
       

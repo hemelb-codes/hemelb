@@ -113,8 +113,8 @@ namespace hemelb
     TEST_CASE_METHOD(helpers::HasCommsTestFixture, "LocalPropertyOutput") {
       //extraction::LocalPropertyOutput* propertyWriter = nullptr;
       
-      char writtenMainHeader[hemelb::io::formats::extraction::MainHeaderLength];
-      constexpr size_t fieldHeaderLength = 0x30;
+      char writtenMainHeader[io::formats::extraction::MainHeaderLength];
+      constexpr size_t fieldHeaderLength = 0x34;
       char writtenFieldHeader[fieldHeaderLength];
 
       // The code won't overwrite any existing file
@@ -123,10 +123,10 @@ namespace hemelb
 
       auto simpleOutFile = extraction::PropertyOutputFile{tempXtrFileName, 100, std::make_unique<extraction::WholeGeometrySelector>()};
 
-      extraction::OutputField pressure{"Pressure", extraction::OutputField::Pressure, REFERENCE_PRESSURE_mmHg};
+      extraction::OutputField pressure{"Pressure", extraction::source::Pressure{}, float{0}, 1, {REFERENCE_PRESSURE_mmHg}};
       simpleOutFile.fields.push_back(pressure);
 
-      extraction::OutputField velocity{"Velocity", extraction::OutputField::Velocity, 0.0};
+      extraction::OutputField velocity{"Velocity", extraction::source::Velocity{}, float{0}, 0};
       simpleOutFile.fields.push_back(velocity);
 
       auto simpleDataSource = std::make_unique<DummyDataSource>();
@@ -144,6 +144,15 @@ namespace hemelb
 	std::string s2("A");
 	REQUIRE(8U == io::formats::extraction::GetStoredLengthOfString(s2));
 
+      }
+
+      SECTION("Header length calculation") {
+	auto hl = [](extraction::OutputField const& f) {
+	  return io::formats::extraction::GetFieldHeaderLength(f.name, f.noffsets, extraction::code::type_to_enum(f.typecode));
+	};
+
+	int const hlen = hl(pressure) + hl(velocity);
+	REQUIRE(hlen == fieldHeaderLength);
       }
 
       SECTION("Write") {
@@ -167,7 +176,7 @@ namespace hemelb
 	const char expectedMainHeader[] =
 	  "\x68\x6C\x62\x21"
 	  "\x78\x74\x72\x04"
-	  "\x00\x00\x00\x04"
+	  "\x00\x00\x00\x05"
 	  "\x3F\x33\xA9\x2A"
 	  "\x30\x55\x32\x61"
 	  "\x3F\xA1\x68\x72"
@@ -179,8 +188,9 @@ namespace hemelb
 	  "\x00\x00\x00\x00"
 	  "\x00\x00\x00\x40"
 	  "\x00\x00\x00\x02"
-	  "\x00\x00\x00\x30";
+	  "\x00\x00\x00\x34";
 	for (int i = 0; i < io::formats::extraction::MainHeaderLength; ++i) {
+	  INFO(i);
 	  REQUIRE(expectedMainHeader[i] == writtenMainHeader[i]);
 	}
 
@@ -190,20 +200,26 @@ namespace hemelb
 	// Check we read enough
 	REQUIRE(fieldHeaderLength == nRead);
 
-	const char expectedFieldHeader[] = "\x00\x00\x00\x08"
-	  "\x50\x72\x65\x73"
-	  "\x73\x75\x72\x65"
-	  "\x00\x00\x00\x01"
-	  "\x40\x20\x00\x00"
-	  "\x00\x00\x00\x00"
-	  "\x00\x00\x00\x08"
-	  "\x56\x65\x6C\x6F"
-	  "\x63\x69\x74\x79"
-	  "\x00\x00\x00\x03"
-	  "\x00\x00\x00\x00"
-	  "\x00\x00\x00\x00";
+	const char expectedFieldHeader[] =
+          "\x00\x00\x00\x08"  // name length
+	  "Pressure" // name
+	  "\x00\x00\x00\x01"  // n values
+	  "\x00\x00\x00\x00"  // type code
+	  "\x00\x00\x00\x01"  // n offsets
+	  "\x41\x00\x00\x00"  // offset
+
+	  "\x00\x00\x00\x08"  // name length
+	  "Velocity" // name
+	  "\x00\x00\x00\x03"  // n values
+	  "\x00\x00\x00\x00"  // type code
+	  "\x00\x00\x00\x00"  // n offsets
+	  ;
+
+	// +1 for null terminator
+	REQUIRE(sizeof(expectedFieldHeader) == fieldHeaderLength + 1);
 
 	for (size_t i = 0; i < fieldHeaderLength; ++i) {
+	  CAPTURE(i);
 	  REQUIRE(expectedFieldHeader[i] == writtenFieldHeader[i]);
 	}
 

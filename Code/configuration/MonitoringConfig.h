@@ -18,7 +18,7 @@ namespace hemelb
     struct MonitoringConfig
     {
       bool doConvergenceCheck = false; ///< Whether to turn on the convergence check or not
-      extraction::OutputField::FieldType convergenceVariable; ///< Macroscopic variable used to check for convergence
+      extraction::source::Type convergenceVariable; ///< Macroscopic variable used to check for convergence
       double convergenceReferenceValue; ///< Reference value used to normalise an absolute error (making it relative)
       double convergenceRelativeTolerance = 0.0; ///< Convergence check relative tolerance
       bool convergenceTerminate = false; ///< Whether to terminate a converged run or not

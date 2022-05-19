@@ -65,10 +65,10 @@ namespace hemelb
 	void WriteOffsetFile();
 
         /**
-         * Returns the number of floats written for the field.
+         * Returns the number of items written for the field.
          * @param field
          */
-        unsigned GetFieldLength(OutputField::FieldType field) const;
+        unsigned GetFieldLength(source::Type) const;
 
       private:
 	//typedef hemelb::lb::lattices:: HEMELB_LATTICE latticeType;
@@ -113,11 +113,6 @@ namespace hemelb
          * The MPI file to write the offsets into.
          */
 	net::MpiFile offsetFile;
-
-        /**
-         * Type of written values
-         */
-        typedef float WrittenDataType;
     };
   }
 }

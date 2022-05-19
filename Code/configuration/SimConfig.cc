@@ -87,14 +87,14 @@ namespace hemelb
     void SimConfig::DoIO(io::xml::Element topNode)
     {
       // Top element must be:
-      // <hemelbsettings version="4" />
+      // <hemelbsettings version="5" />
       if (topNode.GetName() != "hemelbsettings")
         throw Exception() << "Invalid root element: " << topNode.GetPath();
 
       unsigned version;
       const std::string& versionStr = topNode.GetAttributeOrThrow("version", version);
-      if (version != 4U)
-        throw Exception() << "Unrecognised XML version. Expected 4, got " << versionStr;
+      if (version != 5U)
+        throw Exception() << "Unrecognised XML version. Expected 5, got " << versionStr;
 
       DoIOForSimulation(topNode.GetChildOrThrow("simulation"));
       CreateUnitConverter();
@@ -387,6 +387,29 @@ namespace hemelb
       {
         propertyOutputs.push_back(DoIOForPropertyOutputFile(*poPtr));
       }
+
+      if (auto cpEl = propertiesEl.GetChildOrNull("checkpoint")) {
+	// Create a checkpoint property extractor.
+	//
+	// This is just a normal one, but fixed to be whole geometry,
+	// only distributions, at double precision.
+	//
+	// Get stuff from XML
+	extraction::PropertyOutputFile* file = new extraction::PropertyOutputFile();
+	file->filename = cpEl.GetAttributeOrThrow("file");
+	cpEl.GetAttributeOrThrow("period", file->frequency);
+	// Configure the file
+	file->geometry.reset(new extraction::WholeGeometrySelector());
+	extraction::OutputField field;
+	field.name = "distributions";
+	field.noffsets = 0;
+	field.offset = {};
+	field.typecode = distribn_t{0};
+	field.src = extraction::source::Distributions{};
+	file->fields.push_back(field);
+	// Add to outputs
+	propertyOutputs.push_back(file);
+      }
     }
 
     extraction::PropertyOutputFile* SimConfig::DoIOForPropertyOutputFile(
@@ -501,51 +524,57 @@ namespace hemelb
         field.name = *name;
       }
 
-      // Default offset is zero
-      field.offset = 0.0;
+      // Default offset is none
+      field.noffsets = 0;
+      field.offset = {};
+
+      // The default type to be written is float
+      field.typecode = float{0.0};
 
       // Check and assign the type.
       if (type == "pressure")
       {
-        field.type = extraction::OutputField::Pressure;
-	// Pressure uses the reference pressure
-	field.offset = reference_pressure_mmHg;
+        field.src = extraction::source::Pressure{};
+	// Pressure has an offset of the reference pressure
+	field.noffsets = 1;
+	field.offset = {reference_pressure_mmHg};
       }
       else if (type == "velocity")
       {
-        field.type = extraction::OutputField::Velocity;
+        field.src = extraction::source::Velocity{};
       }
       else if (type == "vonmisesstress")
       {
-        field.type = extraction::OutputField::VonMisesStress;
+        field.src = extraction::source::VonMisesStress{};
       }
       else if (type == "shearstress")
       {
-        field.type = extraction::OutputField::ShearStress;
+        field.src = extraction::source::ShearStress{};
       }
       else if (type == "shearrate")
       {
-        field.type = extraction::OutputField::ShearRate;
+        field.src = extraction::source::ShearRate{};
       }
       else if (type == "stresstensor")
       {
-        field.type = extraction::OutputField::StressTensor;
+        field.src = extraction::source::StressTensor{};
       }
       else if (type == "traction")
       {
-        field.type = extraction::OutputField::Traction;
+        field.src = extraction::source::Traction{};
       }
       else if (type == "tangentialprojectiontraction")
       {
-        field.type = extraction::OutputField::TangentialProjectionTraction;
+        field.src = extraction::source::TangentialProjectionTraction{};
       }
       else if (type == "distributions")
       {
-        field.type = extraction::OutputField::Distributions;
+        field.src = extraction::source::Distributions{};
       }
       else if (type == "mpirank")
       {
-        field.type = extraction::OutputField::MpiRank;
+        field.src = extraction::source::MpiRank{};
+	field.typecode = int{0};
       }
       else
       {
@@ -787,7 +816,7 @@ namespace hemelb
         throw Exception() << "Invalid convergence criterion type " << criterionType << " in "
             << criterionEl.GetPath();
       }
-      monitoringConfig.convergenceVariable = extraction::OutputField::Velocity;
+      monitoringConfig.convergenceVariable = extraction::source::Velocity{};
       monitoringConfig.convergenceReferenceValue = GetDimensionalValueInLatticeUnits < LatticeSpeed
           > (criterionEl, "m/s");
     }

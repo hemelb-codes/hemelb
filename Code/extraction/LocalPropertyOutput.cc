@@ -18,28 +18,50 @@ namespace hemelb
 {
   namespace extraction
   {
-    // Declare recursive helper
-    template <typename... Ts>
-    io::writers::Writer& encode(io::writers::Writer& enc, Ts... args);
-    // Terminating case - one arg
-    template <typename T>
-    io::writers::Writer& encode(io::writers::Writer& enc, T arg) {
-      return enc << arg;
-    }
-    // Recursive case - N + 1 args
-    template <typename T, typename... Ts>
-    io::writers::Writer& encode(io::writers::Writer& enc, T arg, Ts... args) {
-      return encode(enc << arg, args...);
-    }
+    namespace
+    {
+      // Declare recursive helper
+      template <typename... Ts>
+      io::writers::Writer& encode(io::writers::Writer& enc, Ts... args);
+      // Terminating case - one arg
+      template <typename T>
+      io::writers::Writer& encode(io::writers::Writer& enc, T arg) {
+	return enc << arg;
+      }
+      // Recursive case - N + 1 args
+      template <typename T, typename... Ts>
+      io::writers::Writer& encode(io::writers::Writer& enc, T arg, Ts... args) {
+	return encode(enc << arg, args...);
+      }
 
-    // XDR encode some values and return the result buffer
-    template <typename... Ts>
-    std::vector<char> quick_encode(Ts... args) {
-      io::writers::xdr::XdrVectorWriter encoder;
-      encode(encoder, args...);
-      auto ans = encoder.GetBuf();
-      return ans;
-    }
+      // XDR encode some values and return the result buffer
+      template <typename... Ts>
+      std::vector<char> quick_encode(Ts... args) {
+	io::writers::xdr::XdrVectorWriter encoder;
+	encode(encoder, args...);
+	auto ans = encoder.GetBuf();
+	return ans;
+      }
+
+      // Helper for writing values converted to the type contained in
+      // the code::Type variant tag value.
+      //
+      // Use of std::variant + visit ensures that we generate all the
+      // types required with only a single implementation.
+      template <typename XDRW, typename... MemTs>
+      void write(XDRW& writer, code::Type tc, MemTs... vals) {
+	using common_t = std::common_type_t<MemTs...>;
+	static_assert(std::conjunction_v<std::is_same<common_t, MemTs>...>,
+		      "Values must be of uniform type");
+
+	std::visit([&] (auto tag) {
+	    using FileT = decltype(tag);
+	    (writer << ... << FileT(vals));
+	  },
+	  tc);
+      }
+
+    }  // namespace
 
     LocalPropertyOutput::LocalPropertyOutput(IterableDataSource& dataSource,
                                              const PropertyOutputFile* outputSpec,
@@ -77,10 +99,16 @@ namespace hemelb
       writeLength = 3 * 4;
 
       // Then get add each field's length
-      for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
-      {
-        writeLength += sizeof(WrittenDataType)
-            * GetFieldLength(outputSpec->fields[outputNumber].type);
+      for (auto&& f: outputSpec->fields) {
+	// Also check that len offsets makes sense
+	auto n = f.noffsets;
+	auto len = GetFieldLength(f.src);
+	if (n == 0 || n == 1 || n == len) {
+	  // ok
+	} else {
+	  throw Exception() << "Invalid length of offsets array " << n;
+	}
+        writeLength += len * code::type_to_size(f.typecode);
       }
 
       //  Now multiply by local site count
@@ -107,17 +135,18 @@ namespace hemelb
       if (comms.OnIORank())
       {
         // Compute the length of the field header
-        unsigned fieldHeaderLength = 0;
-        for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
-        {
-          // Name
-          fieldHeaderLength +=
-              io::formats::extraction::GetStoredLengthOfString(outputSpec->fields[outputNumber].name);
-          // Uint32 for number of fields
-          fieldHeaderLength += 4;
-          // Double for the offset in each field
-          fieldHeaderLength += 8;
-        }
+        unsigned const fieldHeaderLength = std::transform_reduce(
+	  outputSpec->fields.begin(), outputSpec->fields.end(),
+	  0U,
+	  std::plus<unsigned>{},
+	  [&](OutputField const& f) {
+	    return io::formats::extraction::GetFieldHeaderLength(
+	      f.name,
+	      f.noffsets,
+	      code::type_to_enum(f.typecode)
+	    );
+	  }
+	);
 
         totalHeaderLength = io::formats::extraction::MainHeaderLength + fieldHeaderLength;
 
@@ -137,9 +166,16 @@ namespace hemelb
 
 	// Main header now finished - do field headers
 	for (auto& field: outputSpec->fields) {
+	  auto const len = GetFieldLength(field.src);
 	  headerWriter << field.name
-		       << uint32_t(GetFieldLength(field.type))
-		       << field.offset;
+		       << uint32_t(len)
+		       << uint32_t(code::type_to_enum(field.typecode))
+		       << field.noffsets;
+	  std::visit([&](auto&& tag) {
+	      for(auto& offset: field.offset)
+		headerWriter << (decltype(tag))offset;
+	    },
+	    field.typecode);
 	}
 
 	assert(headerWriter.GetBuf().size() == totalHeaderLength);
@@ -227,70 +263,53 @@ namespace hemelb
           // Write for each field.
           for (auto& fieldSpec: outputSpec->fields)
           {
-            switch (fieldSpec.type)
-            {
-              case OutputField::Pressure:
-                xdrWriter
-                    << static_cast<WrittenDataType>(dataSource.GetPressure()
-                        - fieldSpec.offset);
-                break;
-              case OutputField::Velocity:
-                xdrWriter << static_cast<WrittenDataType>(dataSource.GetVelocity().x)
-                    << static_cast<WrittenDataType>(dataSource.GetVelocity().y)
-                    << static_cast<WrittenDataType>(dataSource.GetVelocity().z);
-                break;
-                //! @TODO: Work out how to handle the different stresses.
-              case OutputField::VonMisesStress:
-                xdrWriter << static_cast<WrittenDataType>(dataSource.GetVonMisesStress());
-                break;
-              case OutputField::ShearStress:
-                xdrWriter << static_cast<WrittenDataType>(dataSource.GetShearStress());
-                break;
-              case OutputField::ShearRate:
-                xdrWriter << static_cast<WrittenDataType>(dataSource.GetShearRate());
-                break;
-              case OutputField::StressTensor:
-              {
-                util::Matrix3D tensor = dataSource.GetStressTensor();
-                // Only the upper triangular part of the symmetric tensor is stored. Storage is row-wise.
-                xdrWriter << static_cast<WrittenDataType>(tensor[0][0])
-                    << static_cast<WrittenDataType>(tensor[0][1])
-                    << static_cast<WrittenDataType>(tensor[0][2])
-                    << static_cast<WrittenDataType>(tensor[1][1])
-                    << static_cast<WrittenDataType>(tensor[1][2])
-                    << static_cast<WrittenDataType>(tensor[2][2]);
-                break;
-              }
-              case OutputField::Traction:
-                xdrWriter << static_cast<WrittenDataType>(dataSource.GetTraction().x)
-                    << static_cast<WrittenDataType>(dataSource.GetTraction().y)
-                    << static_cast<WrittenDataType>(dataSource.GetTraction().z);
-                break;
-              case OutputField::TangentialProjectionTraction:
-                xdrWriter
-                    << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTraction().x)
-                    << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTraction().y)
-                    << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTraction().z);
-                break;
-              case OutputField::Distributions:
-                unsigned numComponents;
-                const distribn_t *d_ptr;
-                numComponents = dataSource.GetNumVectors();
-                d_ptr = dataSource.GetDistribution();
-                for (int i = 0; i < numComponents; i++)
-		{
-                  xdrWriter << static_cast<WrittenDataType> (*d_ptr);
-		  d_ptr++;
+	    source::visit(
+	      fieldSpec.src,
+	      [&](source::Pressure) {
+		write(xdrWriter, fieldSpec.typecode, dataSource.GetPressure() - fieldSpec.offset[0]);
+	      },
+              [&](source::Velocity) {
+		auto&& v = dataSource.GetVelocity();
+		write(xdrWriter, fieldSpec.typecode, v.x, v.y, v.z);
+	      },
+	      //! @TODO: Work out how to handle the different stresses.
+              [&](source::VonMisesStress) {
+		write(xdrWriter, fieldSpec.typecode, dataSource.GetVonMisesStress());
+              },
+              [&](source::ShearStress) {
+		write(xdrWriter, fieldSpec.typecode, dataSource.GetShearStress());
+	      },
+              [&](source::ShearRate) {
+		write(xdrWriter, fieldSpec.typecode, dataSource.GetShearRate());
+	      },
+              [&](source::StressTensor) {
+		util::Matrix3D tensor = dataSource.GetStressTensor();
+		// Only the upper triangular part of the symmetric tensor is stored. Storage is row-wise.
+                write(xdrWriter, fieldSpec.typecode,
+                      tensor[0][0], tensor[0][1], tensor[0][2],
+                                    tensor[1][1], tensor[1][2],
+                                                  tensor[2][2]);
+              },
+              [&](source::Traction) {
+		auto&& t = dataSource.GetTraction();
+		write(xdrWriter, fieldSpec.typecode, t.x, t.y, t.z);
+	      },
+              [&](source::TangentialProjectionTraction) {
+		auto&& t = dataSource.GetTangentialProjectionTraction();
+		write(xdrWriter, fieldSpec.typecode, t.x, t.y, t.z);
+	      },
+              [&](source::Distributions) {
+		unsigned numComponents= dataSource.GetNumVectors();
+		distribn_t const* d_ptr = dataSource.GetDistribution();
+		for (int i = 0; i < numComponents; i++)
+                {
+		  write(xdrWriter, fieldSpec.typecode, d_ptr[i]);
 		}
-                break;
-              case OutputField::MpiRank:
-                xdrWriter << static_cast<WrittenDataType>(comms.Rank());
-                break;
-              default:
-                // This should never trip. It only occurs when a new OutputField field is added and no
-                // implementation is provided for its serialisation.
-                assert(false);
-            }
+	      },
+              [&](source::MpiRank) {
+                write(xdrWriter, fieldSpec.typecode, comms.Rank());
+	      }
+            );
           }
         }
       }
@@ -329,32 +348,40 @@ namespace hemelb
       }
     }
 
-    unsigned LocalPropertyOutput::GetFieldLength(OutputField::FieldType field) const
+    unsigned LocalPropertyOutput::GetFieldLength(source::Type src) const
     {
-      switch (field)
-      {
-        case OutputField::Pressure:
-        case OutputField::VonMisesStress:
-        case OutputField::ShearStress:
-        case OutputField::ShearRate:
-        case OutputField::MpiRank:
-          return 1;
-        case OutputField::Velocity:
-        case OutputField::Traction:
-        case OutputField::TangentialProjectionTraction:
-          return 3;
-        case OutputField::StressTensor:
-          return 6; // We only store the upper triangular part of the symmetric tensor
-        case OutputField::Distributions:
-	  // TO DO: is this the best way to do this?
-          return dataSource.GetNumVectors();
-        default:
-          // This should never trip. Only occurs if someone adds a new field and forgets
-          // to add to this method.
-          assert(false);
-          return 0;
-      }
+      return source::visit(src,
+	[](source::Pressure) {
+	  return 1U;
+	},
+	[](source::Velocity) {
+	  return 3U;
+	},
+	[](source::ShearStress) {
+	  return 1U;
+	},
+	[](source::VonMisesStress) {
+	  return 1U;
+	},
+	[](source::ShearRate) {
+	  return 1U;
+	},
+	[](source::StressTensor) {
+	  return 6U;
+	},
+	[](source::Traction) {
+	  return 3U;
+	},
+	[](source::TangentialProjectionTraction) {
+	  return 3U;
+	},
+	[&](source::Distributions) {
+	  return dataSource.GetNumVectors();
+	},
+	[](source::MpiRank) {
+	  return 1U;
+	}
+      );
     }
-
   }
 }

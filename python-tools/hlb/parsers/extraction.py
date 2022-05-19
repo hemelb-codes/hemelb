@@ -14,7 +14,7 @@ MainHeaderLength = 60
 TimeStepDataLength = 8
 
 
-class FieldSpec(object):
+class FieldSpec:
     """Represent the data type of a single record in both XDR format and
     the native (fast) format of the machine.
 
@@ -37,7 +37,7 @@ class FieldSpec(object):
         self._memspec = memspec
         return
 
-    def Append(self, name, length, pyType, datatype):
+    def Append(self, name, length, xdrType, memType):
         """Add a new field to the specification."""
         if length == 1:
             np_len = ()
@@ -45,7 +45,7 @@ class FieldSpec(object):
             np_len = (length,)
 
         offset = self.GetRecordLength()
-        self._filespec.append((name, pyType, datatype, np_len, offset))
+        self._filespec.append((name, xdrType, memType, np_len, offset))
         return
 
     def GetMem(self):
@@ -79,39 +79,7 @@ class FieldSpec(object):
     pass
 
 
-class ExtractedPropertyV3Parser(object):
-    def __init__(self, fieldCount, siteCount):
-        self._fieldCount = fieldCount
-        self._siteCount = siteCount
-
-    def parse(self, memoryMappedData):
-        result = np.recarray(self._siteCount, dtype=self._fieldSpec.GetMem())
-
-        for name, xdrType, memType, length, offset in self._fieldSpec:
-            setattr(result, name, memoryMappedData.getfield((xdrType, length), offset))
-            continue
-        return result
-
-    def ParseFieldHeader(self, decoder):
-        self._fieldSpec = FieldSpec(
-            [
-                ("id", None, np.uint64, (), None),
-                ("position", None, np.float32, (3,), None),
-            ]
-        )
-
-        for iField in range(self._fieldCount):
-            name = decoder.unpack_string()
-            length = decoder.unpack_uint()
-            self._fieldSpec.Append(name, length, ">f8", np.float64)
-            continue
-        return self._fieldSpec
-
-    def GetRecordLength(self):
-        return self._fieldSpec.GetRecordLength()
-
-
-class ExtractedPropertyV4Parser(object):
+class ExtractedPropertyV4Parser:
     def __init__(self, fieldCount, siteCount):
         self._fieldCount = fieldCount
         self._siteCount = siteCount
@@ -137,12 +105,11 @@ class ExtractedPropertyV4Parser(object):
         self._dataOffset = [0]
 
         for iField in range(self._fieldCount):
-            name = decoder.unpack_string()
-            name = name.decode()
+            name = decoder.unpack_string().decode("ascii")
             length = decoder.unpack_uint()
             self._dataOffset.append(decoder.unpack_double())
             self._fieldSpec.Append(name, length, ">f4", np.float32)
-            continue
+
         return self._fieldSpec
 
     def _recursiveAdd(self, data, operand):
@@ -153,10 +120,75 @@ class ExtractedPropertyV4Parser(object):
         pass
 
 
-class ExtractedProperty(object):
+class ExtractedPropertyV5Parser:
+    TYPECODE_TYPE = [np.float32, np.float64, np.int32, np.uint32, np.int64, np.uint64]
+    TYPECODE_STR = [">f4", ">f8", ">i4", ">u4", ">i8", ">u8"]
+    UNPACK_TYPE = [
+        lambda up: up.unpack_float,
+        lambda up: up.unpack_double,
+        lambda up: up.unpack_int,
+        lambda up: up.unpack_uint,
+        lambda up: up.unpack_hyper,
+        lambda up: up.unpack_uhyper,
+    ]
+
+    def __init__(self, fieldCount, siteCount):
+        self._fieldCount = fieldCount
+        self._siteCount = siteCount
+
+    def ParseFieldHeader(self, decoder):
+        self._fieldSpec = FieldSpec(
+            [
+                ("id", None, np.uint64, (), None),
+                ("position", None, np.float32, (3,), None),
+            ]
+        )
+        self._dataOffset = [None]
+
+        for iField in range(self._fieldCount):
+            name = decoder.unpack_string().decode("ascii")
+            length = decoder.unpack_uint()
+            tc = decoder.unpack_uint()
+            np_type = self.TYPECODE_TYPE[tc]
+            n_offsets = decoder.unpack_uint()
+            offsets = np.empty(n_offsets, dtype=np_type)
+            for iOff in range(n_offsets):
+                offsets[iOff] = self.UNPACK_TYPE[tc](decoder)()
+
+            self._fieldSpec.Append(name, length, self.TYPECODE_STR[tc], np_type)
+            if n_offsets == 0:
+                self._dataOffset.append(None)
+            elif n_offsets == 1:
+                self._dataOffset.append(offsets[0])
+            elif n_offsets == length:
+                # Above condition will run for scalar fields
+                self._dataOffset.append(offsets[np.newaxis, :])
+            else:
+                raise ValueError(
+                    f"Invalid number of offsets in extraction file for field '{name}'"
+                )
+
+        return self._fieldSpec
+
+    def parse(self, memoryMappedData):
+        result = np.recarray(self._siteCount, dtype=self._fieldSpec.GetMem())
+
+        for ((name, xdrType, memType, length, offset), dataOffset) in zip(
+            self._fieldSpec, self._dataOffset
+        ):
+            filedata = memoryMappedData.getfield((xdrType, length), offset)
+            memdata = getattr(result, name)
+            memdata[:] = filedata[:]
+            if dataOffset is not None:
+                memdata += dataOffset
+
+        return result
+
+
+class ExtractedProperty:
     """Represent the contents of a HemeLB property extraction file."""
 
-    HandledVersions = [3, 4]
+    HandledVersions = {4, 5}
 
     def __init__(self, filename):
         """Read the file's headers and determine how many times and which times
@@ -205,10 +237,10 @@ class ExtractedProperty(object):
         self.fieldCount = decoder.unpack_uint()
         self._fieldHeaderLength = decoder.unpack_uint()
 
-        if version == 3:
-            self.parser = ExtractedPropertyV3Parser(self.fieldCount, self.siteCount)
-        elif version == 4:
+        if version == 4:
             self.parser = ExtractedPropertyV4Parser(self.fieldCount, self.siteCount)
+        elif version == 5:
+            self.parser = ExtractedPropertyV5Parser(self.fieldCount, self.siteCount)
         return
 
     def _ReadFieldHeader(self):

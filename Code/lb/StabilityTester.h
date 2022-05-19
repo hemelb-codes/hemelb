@@ -181,24 +181,18 @@ namespace hemelb
           distribn_t absoluteError;
           distribn_t referenceValue;
 
-          switch (testerConfig->convergenceVariable)
-          {
-            case extraction::OutputField::Velocity:
-            {
-              distribn_t diff_vel_x = newMomentumX / newDensity - oldMomentumX / oldDensity;
-              distribn_t diff_vel_y = newMomentumY / newDensity - oldMomentumY / oldDensity;
-              distribn_t diff_vel_z = newMomentumZ / newDensity - oldMomentumZ / oldDensity;
+	  if (std::holds_alternative<extraction::source::Velocity>(testerConfig->convergenceVariable))
+	  {
+	    distribn_t diff_vel_x = newMomentumX / newDensity - oldMomentumX / oldDensity;
+	    distribn_t diff_vel_y = newMomentumY / newDensity - oldMomentumY / oldDensity;
+	    distribn_t diff_vel_z = newMomentumZ / newDensity - oldMomentumZ / oldDensity;
 
-              absoluteError = sqrt(diff_vel_x * diff_vel_x + diff_vel_y * diff_vel_y
+	    absoluteError = sqrt(diff_vel_x * diff_vel_x + diff_vel_y * diff_vel_y
                   + diff_vel_z * diff_vel_z);
-              referenceValue = testerConfig->convergenceReferenceValue;
-              break;
-            }
-            default:
-              // Never reached
-              throw Exception()
-                  << "Convergence check based on requested variable currently not available";
-          }
+	    referenceValue = testerConfig->convergenceReferenceValue;
+	  } else {
+              throw Exception() << "Convergence check based on requested variable currently not available";
+	  }
 
           return absoluteError / referenceValue;
         }
