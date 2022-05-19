@@ -22,7 +22,7 @@ on:
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
+  BUILD_TYPE: RelWithDebInfo
   deps_install_prefix: ${{github.workspace}}/deps-install
   # VMs have 2 cores, double as compilation often IO bound
   CMAKE_BUILD_PARALLEL_LEVEL: 4
@@ -111,6 +111,19 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: tests/hemelb-tests
 
+    - name: Store build tree on error
+      if: failure()
+      uses: actions/upload-artifact@v2
+      with:
+        name: fluid-only-failed-build-tree
+        path: build
+
+    - name: Get hemelb-tests repo
+      uses: actions/checkout@v2
+      with:
+        repository: hemelb-codes/hemelb-tests
+        path: hemelb-tests
+
   rbc_build:
     name: Build in RBC mode
     runs-on: ubuntu-20.04
@@ -190,3 +203,10 @@ jobs:
       if: github.event == 'scheduled' || (github.event == 'workflow_dispatch' && inputs.run_long_tests == 'true')
       working-directory: ${{github.workspace}}/build
       run: tests/hemelb-tests [long]
+
+    - name: Store build tree on error
+      if: failure()
+      uses: actions/upload-artifact@v2
+      with:
+        name: rbc-failed-build-tree
+        path: build
