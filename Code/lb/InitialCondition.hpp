@@ -12,8 +12,12 @@ namespace hemelb {
     template<class LatticeType>
     struct FSetter {
       using result_type = void;
+      void operator()(std::monostate) {
+	throw Exception() << "No initial condition specified";
+      }
+
       template <typename T>
-      void operator()(T t) const {
+      void operator()(T&& t) const {
 	t.template SetFs<LatticeType>(latDat, ioComms);
       }
       geometry::LatticeData* latDat;
@@ -23,7 +27,11 @@ namespace hemelb {
     
     template<class LatticeType>
     void InitialCondition::SetFs(geometry::LatticeData* latDat, const net::IOCommunicator& ioComms) const {
-      boost::apply_visitor(FSetter<LatticeType>{latDat, ioComms}, *this);
+      // Since as far as std::visit is concerned, `this` is not a
+      // variant.
+      auto this_var = static_cast<ICVar const*>(this);
+
+      std::visit(FSetter<LatticeType>{latDat, ioComms}, *this_var);
     }
 
     template<class LatticeType>

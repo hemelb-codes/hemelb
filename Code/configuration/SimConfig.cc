@@ -22,18 +22,18 @@ namespace hemelb
   namespace configuration
   {
     // Base IC
-    ICConfigBase::ICConfigBase(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t) : unitConverter(units), t0(t) {
+    ICConfigBase::ICConfigBase(const util::UnitConverter* units, std::optional<LatticeTimeStep> t) : unitConverter(units), t0(t) {
     }
 
     // Uniform equilibrium IC
-    EquilibriumIC::EquilibriumIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, PhysicalPressure p) : ICConfigBase(units, t), p_mmHg(p), v_ms(0.0) {
+    EquilibriumIC::EquilibriumIC(const util::UnitConverter* units, std::optional<LatticeTimeStep> t, PhysicalPressure p) : ICConfigBase(units, t), p_mmHg(p), v_ms(0.0) {
     }
 
-    EquilibriumIC::EquilibriumIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, PhysicalPressure p, const PhysicalVelocity& v) : ICConfigBase(units, t), p_mmHg(p), v_ms(v) {
+    EquilibriumIC::EquilibriumIC(const util::UnitConverter* units, std::optional<LatticeTimeStep> t, PhysicalPressure p, const PhysicalVelocity& v) : ICConfigBase(units, t), p_mmHg(p), v_ms(v) {
     }
 
     // checkpoint IC
-    CheckpointIC::CheckpointIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, const std::string& cp) : ICConfigBase(units, t), cpFile(cp) {
+    CheckpointIC::CheckpointIC(const util::UnitConverter* units, std::optional<LatticeTimeStep> t, const std::string& cp) : ICConfigBase(units, t), cpFile(cp) {
     }
 
 
@@ -602,7 +602,7 @@ namespace hemelb
     {
       // The <time> element may be present - if so, it will set the
       // initial timestep value
-      boost::optional<LatticeTimeStep> t0;
+      std::optional<LatticeTimeStep> t0;
       if (auto timeEl = initialconditionsEl.GetChildOrNull("time")) {
 	LatticeTimeStep tmp;
 	GetDimensionalValue(timeEl, "lattice", tmp);

@@ -6,6 +6,8 @@
 #ifndef HEMELB_EXTRACTION_LOCALDISTRIBUTIONINPUT_H
 #define HEMELB_EXTRACTION_LOCALDISTRIBUTIONINPUT_H
 
+#include <optional>
+
 #include "extraction/IterableDataSource.h"
 #include "extraction/InputField.h"
 #include "io/writers/xdr/XdrMemReader.h"
@@ -14,10 +16,6 @@
 #include "net/MpiFile.h"
 #include "net/IOCommunicator.h"
 
-namespace boost {
-  template <typename>
-  class optional;
-}
 
 namespace hemelb
 {
@@ -31,44 +29,43 @@ namespace hemelb
   }
   namespace extraction
   {
-    /**
-     * Stores sufficient information to output property information from this core.
-     */
+    // Read this ranks's part of a checkpoint file.
     class LocalDistributionInput
     {
       public:
-        /**
-         * Initialises a LocalDistributionInput. Required so we can use const reference types.
-         */
-        LocalDistributionInput(const std::string dataFilePath, const net::IOCommunicator& ioComms);
+      // Construct, but don't do any I/O.
+      //
+      // Take the path string by value since we will move it into a member
+      // anyway.
+      LocalDistributionInput(std::string dataFilePath, const net::IOCommunicator& ioComms);
 
-        /**
-         * Tidies up the LocalDistributionInput (close files etc).
-         * @return
-         */
-        ~LocalDistributionInput();
+      // Open the file and load our part into the LatticeData
+      // instance.
+      //
+      // Time is optional, if not supplied will use the last one in
+      // the file.
+      //
+      // Requires the checkpoint have been saved with exactly the same
+      // domain decomposition as currently running.
+      void LoadDistribution(geometry::LatticeData* latDat, std::optional<LatticeTimeStep>& initalTime);
 
-        void LoadDistribution(geometry::LatticeData* latDat, boost::optional<LatticeTimeStep>& initalTime);
+    private:
 
-      private:
+      void ReadExtractionHeaders(net::MpiFile&, const unsigned NUMVECTORS);
+      void ReadOffsets(const std::string&);
 
-        void ReadExtractionHeaders(net::MpiFile&, const unsigned NUMVECTORS);
-        void ReadOffsets(const std::string&);
+      const net::IOCommunicator& comms;
 
-        const net::IOCommunicator& comms;
+      // The path to the file to read from.
+      std::string filePath;
 
-        /**
-         * The path to the file to read from.
-         */
-        const std::string filePath;
-
-        InputField distField;
-        uint64_t localStart;
-        uint64_t localStop;
-        uint64_t timestep;
-        uint64_t allCoresWriteLength;
+      InputField distField;
+      uint64_t localStart;
+      uint64_t localStop;
+      uint64_t timestep;
+      uint64_t allCoresWriteLength;
     };
   }
 }
 
-#endif /* HEMELB_EXTRACTION_LOCALDISTRIBUTIONINPUT_H */
+#endif // HEMELB_EXTRACTION_LOCALDISTRIBUTIONINPUT_H

@@ -6,9 +6,9 @@
 #ifndef HEMELB_CONFIGURATION_SIMCONFIG_H
 #define HEMELB_CONFIGURATION_SIMCONFIG_H
 
+#include <optional>
+#include <variant>
 #include <vector>
-#include <boost/variant.hpp>
-#include <boost/optional.hpp>
 
 #include "configuration/MonitoringConfig.h"
 #include "util/Vector3D.h"
@@ -52,28 +52,28 @@ namespace hemelb
 
     // Base for initial conditions configuration
     struct ICConfigBase {
-      ICConfigBase(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t);
+      ICConfigBase(const util::UnitConverter* units, std::optional<LatticeTimeStep> t);
 
       const util::UnitConverter* unitConverter;
-      boost::optional<LatticeTimeStep> t0;
+      std::optional<LatticeTimeStep> t0;
     };
 
     // Uniform equilibrium IC
     struct EquilibriumIC : ICConfigBase {
-      EquilibriumIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, PhysicalPressure p);
-      EquilibriumIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, PhysicalPressure p, const PhysicalVelocity& v);
+      EquilibriumIC(const util::UnitConverter* units, std::optional<LatticeTimeStep> t, PhysicalPressure p);
+      EquilibriumIC(const util::UnitConverter* units, std::optional<LatticeTimeStep> t, PhysicalPressure p, const PhysicalVelocity& v);
       PhysicalPressure p_mmHg;
       PhysicalVelocity v_ms;
     };
 
     // Read from checkpoint IC
     struct CheckpointIC : ICConfigBase {
-      CheckpointIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, const std::string& cp);
+      CheckpointIC(const util::UnitConverter* units, std::optional<LatticeTimeStep> t, const std::string& cp);
       std::string cpFile;
     };
 
     // Variant including null state
-    using ICConfig = boost::variant<std::nullptr_t, EquilibriumIC, CheckpointIC>;
+    using ICConfig = std::variant<std::monostate, EquilibriumIC, CheckpointIC>;
 
     class SimConfig
     {

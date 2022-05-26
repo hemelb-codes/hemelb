@@ -12,7 +12,7 @@ namespace hemelb {
     
     InitialConditionBase::InitialConditionBase() {
     }
-    InitialConditionBase::InitialConditionBase(boost::optional<LatticeTimeStep> t) : initial_time(t) {
+    InitialConditionBase::InitialConditionBase(std::optional<LatticeTimeStep> t) : initial_time(t) {
     }
     
     void InitialConditionBase::SetTime(SimulationState* sim) const {
@@ -29,7 +29,7 @@ namespace hemelb {
     }
     
     EquilibriumInitialCondition::EquilibriumInitialCondition(
-      boost::optional<LatticeTimeStep> t0,
+      std::optional<LatticeTimeStep> t0,
       distribn_t rho,
       distribn_t mx, distribn_t my, distribn_t mz) :
       InitialConditionBase(t0),
@@ -37,7 +37,7 @@ namespace hemelb {
       mom_x(mx), mom_y(my), mom_z(mz) {
     }
     
-    CheckpointInitialCondition::CheckpointInitialCondition(boost::optional<LatticeTimeStep> t0, const std::string& cp)
+    CheckpointInitialCondition::CheckpointInitialCondition(std::optional<LatticeTimeStep> t0, const std::string& cp)
       : InitialConditionBase(t0), cpFile(cp) {
     }
 
@@ -54,7 +54,7 @@ namespace hemelb {
     };
     void InitialCondition::SetTime(SimulationState* sim) const {
       const ICVar* self = this;
-      boost::apply_visitor(TSetter{sim}, *self);
+      std::visit(TSetter{sim}, *self);
     }
 
     // See InitialCondtions.hpp for setting Fs (distributions)
@@ -79,7 +79,7 @@ namespace hemelb {
     
     // Factory function just delegates to visitor
     InitialCondition InitialCondition::FromConfig(const configuration::ICConfig& conf) {
-      return boost::apply_visitor(ICMaker{}, conf);
+      return std::visit(ICMaker{}, conf);
     }
   }
 }

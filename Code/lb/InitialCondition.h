@@ -6,19 +6,19 @@
 #ifndef HEMELB_LB_INITIALCONDITION_H
 #define HEMELB_LB_INITIALCONDITION_H
 
-#include <boost/variant.hpp>
-#include <boost/optional.hpp>
+#include <optional>
+#include <variant>
+
 #include "geometry/LatticeData.h"
 #include "configuration/SimConfig.h"
 
-namespace hemelb {
-  namespace lb {
+namespace hemelb::lb {
 
     // This base class is a friend of SimulationState so it can set
     // the timestep
     struct InitialConditionBase {
       InitialConditionBase();
-      InitialConditionBase(boost::optional<LatticeTimeStep> t);
+      InitialConditionBase(std::optional<LatticeTimeStep> t);
 
       void SetTime(SimulationState* sim) const;
 
@@ -31,14 +31,14 @@ namespace hemelb {
 	return ld->GetFNew(i);
       }
 
-      mutable boost::optional<LatticeTimeStep> initial_time;
+      mutable std::optional<LatticeTimeStep> initial_time;
     };
     
     struct EquilibriumInitialCondition : InitialConditionBase {
       
       EquilibriumInitialCondition();
       
-      EquilibriumInitialCondition(boost::optional<LatticeTimeStep> t0,
+      EquilibriumInitialCondition(std::optional<LatticeTimeStep> t0,
 				  distribn_t rho,
 				  distribn_t mx = 0.0, distribn_t my = 0.0, distribn_t mz = 0.0);
       
@@ -53,7 +53,7 @@ namespace hemelb {
     };
     
     struct CheckpointInitialCondition : InitialConditionBase {
-      CheckpointInitialCondition(boost::optional<LatticeTimeStep> t0, const std::string& cp);
+      CheckpointInitialCondition(std::optional<LatticeTimeStep> t0, const std::string& cp);
       
       template<class LatticeType>
       void SetFs(geometry::LatticeData* latDat, const net::IOCommunicator& ioComms) const;
@@ -62,14 +62,12 @@ namespace hemelb {
       std::string cpFile;
     };
     
-    class InitialCondition : boost::variant<EquilibriumInitialCondition, CheckpointInitialCondition> {
+    class InitialCondition : std::variant<EquilibriumInitialCondition, CheckpointInitialCondition> {
       // Alias for private base
-      using ICVar = boost::variant<EquilibriumInitialCondition, CheckpointInitialCondition>;
+      using ICVar = std::variant<EquilibriumInitialCondition, CheckpointInitialCondition>;
     public:
       // Expose c'tors to allow creation
       using ICVar::ICVar;
-      // Expose apply_visitor to allow boost::apply_visitor to work
-      using ICVar::apply_visitor;
 
       // Factory function for InitialCondition
       static InitialCondition FromConfig(const configuration::ICConfig&);
@@ -81,8 +79,6 @@ namespace hemelb {
       
       //ICVar ic;
     };
-    
-  }
 
 }
 #endif // HEMELB_LB_INITIALCONDITION_H

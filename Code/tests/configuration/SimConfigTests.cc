@@ -77,7 +77,7 @@ namespace hemelb
 	auto config = std::unique_ptr<SimConfig>(SimConfig::New("config.xml"));
 
 	auto& ICconfig = config->GetInitialCondition();
-	REQUIRE(boost::apply_visitor(CfgChecker{}, ICconfig));
+	REQUIRE(std::visit(CfgChecker{}, ICconfig));
       }
 
     }

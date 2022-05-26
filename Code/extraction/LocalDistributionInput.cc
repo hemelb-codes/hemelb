@@ -4,8 +4,6 @@
 // license in the file LICENSE.
 #include "extraction/LocalDistributionInput.h"
 
-#include <boost/optional.hpp>
-
 #include "extraction/OutputField.h"
 #include "extraction/LocalPropertyOutput.h"
 #include "geometry/LatticeData.h"
@@ -15,31 +13,24 @@
 #include "io/writers/xdr/XdrFileReader.h"
 #include "log/Logger.h"
 
-namespace hemelb
-{
-  namespace extraction
+namespace hemelb::extraction {
+  namespace fmt = hemelb::io::formats;
+  namespace xdr = hemelb::io::writers::xdr;
+
+  LocalDistributionInput::LocalDistributionInput(std::string dataFilePath,
+						 const net::IOCommunicator& ioComm) :
+    comms{ioComm}, filePath{std::move(dataFilePath)}
   {
-    namespace fmt = hemelb::io::formats;
-    namespace xdr = hemelb::io::writers::xdr;
+  }
 
-    LocalDistributionInput::LocalDistributionInput(const std::string dataFilePath,
-						   const net::IOCommunicator& ioComm) :
-      comms(ioComm), filePath(dataFilePath)
-    {
-    }
+  namespace {
+    // The required xtr field header len
+    uint64_t constexpr expectedFieldHeaderLength = 32U;
+    uint64_t constexpr totalXtrHeaderLength = fmt::extraction::MainHeaderLength + expectedFieldHeaderLength;
+  }
 
-    LocalDistributionInput::~LocalDistributionInput()
-    {
-    }
-
-    namespace {
-      // The required xtr field header len
-      constexpr uint64_t expectedFieldHeaderLength = 32U;
-      constexpr uint64_t totalXtrHeaderLength = fmt::extraction::MainHeaderLength + expectedFieldHeaderLength;
-    }
-
-    void LocalDistributionInput::LoadDistribution(geometry::LatticeData* latDat, boost::optional<LatticeTimeStep>& targetTime)
-    {
+  void LocalDistributionInput::LoadDistribution(geometry::LatticeData* latDat, std::optional<LatticeTimeStep>& targetTime)
+  {
       const auto NUMVECTORS = latDat->GetLatticeInfo().GetNumVectors();
 
       // We could supply hints regarding how the file should be read
@@ -296,5 +287,4 @@ namespace hemelb
       localStart = start_finish[0];
       localStop = start_finish[1];
     }
-  }
 }
