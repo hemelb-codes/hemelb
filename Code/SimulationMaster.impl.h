@@ -636,6 +636,8 @@ namespace hemelb
     {
       fflush(nullptr);
     }
+
+    latticeData->SwapOldAndNew();
     simulationState->Increment();
   }
 

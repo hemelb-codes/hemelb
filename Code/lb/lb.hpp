@@ -331,15 +331,6 @@ namespace hemelb
     template<class TRAITS>
     void LBM<TRAITS>::EndIteration()
     {
-      timings[hemelb::reporting::Timers::lb].Start();
-      timings[hemelb::reporting::Timers::lb_calc].Start();
-
-      log::Logger::Log<log::Debug, log::OnePerCore>("LBM - EndIteration - Swap populations");
-      // Swap f_old and f_new ready for the next timestep.
-      mLatDat->SwapOldAndNew();
-
-      timings[hemelb::reporting::Timers::lb_calc].Stop();
-      timings[hemelb::reporting::Timers::lb].Stop();
     }
 
     template<class TRAITS>

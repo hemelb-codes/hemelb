@@ -79,7 +79,7 @@ namespace hemelb
 
       inline void LatticeDataAccess::ZeroOutFOld() const
       {
-        std::fill(latDat->oldDistributions.begin(), latDat->oldDistributions.end(), 0);
+        std::fill(latDat->currentDistributions.begin(), latDat->currentDistributions.end(), 0);
       }
       inline void LatticeDataAccess::ZeroOutForces() const
       {
@@ -94,9 +94,9 @@ namespace hemelb
         // This way, access is resilient versus (some) changes in memory layout.
         geometry::Site<geometry::LatticeData> const site(latDat->GetSite(_pos));
         distribn_t const * const siteFOld(site.GetFOld<LATTICE>());
-        distribn_t const * const firstFOld = &latDat->oldDistributions[0];
+        distribn_t const * const firstFOld = &latDat->currentDistributions[0];
         size_t const indexFOld(siteFOld - firstFOld);
-        latDat->oldDistributions[indexFOld + _dir] = _value;
+        latDat->currentDistributions[indexFOld + _dir] = _value;
       }
 
       template<class LATTICE>
@@ -107,7 +107,7 @@ namespace hemelb
         // This way, access is resilient versus (some) changes in memory layout.
         geometry::Site<geometry::LatticeData> const site(latDat->GetSite(_pos));
         distribn_t const * const siteFOld(site.GetFOld<LATTICE>());
-        distribn_t const * const firstFOld = &latDat->oldDistributions[0];
+        distribn_t const * const firstFOld = &latDat->currentDistributions[0];
         size_t const indexFOld(siteFOld - firstFOld);
         return latDat->GetFNew(indexFOld);
       }
@@ -135,9 +135,9 @@ namespace hemelb
           LatticeVector const pos = site.GetGlobalSiteCoords();
           LatticePosition const pos_real(pos[0], pos[1], pos[2]);
           distribn_t const * const siteFOld(site.GetFOld<LATTICE>());
-          distribn_t const * const firstFOld = &latDat->oldDistributions[0];
+          distribn_t const * const firstFOld = &latDat->currentDistributions[0];
           size_t const indexFOld(siteFOld - firstFOld);
-          latDat->newDistributions[indexFOld + _i] = latDat->oldDistributions[indexFOld + _i] = _function(pos_real);
+          latDat->nextDistributions[indexFOld + _i] = latDat->currentDistributions[indexFOld + _i] = _function(pos_real);
         }
       }
 

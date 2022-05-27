@@ -78,7 +78,8 @@ namespace hemelb
 
     const distribn_t* LbDataSourceIterator::GetDistribution() const
     {
-      return data.GetFNew(position * data.GetLatticeInfo().GetNumVectors());
+      auto site = data.GetSite(position);
+      return site.GetFOld(data.GetLatticeInfo().GetNumVectors());
     }
 
     void LbDataSourceIterator::Reset()

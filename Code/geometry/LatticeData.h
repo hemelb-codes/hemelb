@@ -77,7 +77,7 @@ namespace hemelb
          */
         inline void SwapOldAndNew()
         {
-          oldDistributions.swap(newDistributions);
+          currentDistributions.swap(nextDistributions);
         }
 
         void SendAndReceive(net::Net* net);
@@ -206,7 +206,7 @@ namespace hemelb
          */
         inline distribn_t* GetFNew(site_t distributionIndex)
         {
-          return &newDistributions[distributionIndex];
+          return &nextDistributions[distributionIndex];
         }
 
         /**
@@ -217,7 +217,7 @@ namespace hemelb
          */
         inline const distribn_t* GetFNew(site_t siteNumber) const
         {
-          return &newDistributions[siteNumber];
+          return &nextDistributions[siteNumber];
         }
 
         proc_t GetProcIdFromGlobalCoords(const util::Vector3D<site_t>& globalSiteCoords) const;
@@ -480,9 +480,9 @@ namespace hemelb
 
           }
 
-          oldDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1
+          currentDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1
               + totalSharedFs);
-          newDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1
+          nextDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1
               + totalSharedFs);
 
         }
@@ -541,7 +541,7 @@ namespace hemelb
         // Method should remain protected, intent is to access this information via Site
         distribn_t* GetFOld(site_t distributionIndex)
         {
-          return &oldDistributions[distributionIndex];
+          return &currentDistributions[distributionIndex];
         }
 
         /**
@@ -554,7 +554,7 @@ namespace hemelb
         // Method should remain protected, intent is to access this information via Site
         const distribn_t* GetFOld(site_t distributionIndex) const
         {
-          return &oldDistributions[distributionIndex];
+          return &currentDistributions[distributionIndex];
         }
 
         /*
@@ -679,8 +679,8 @@ namespace hemelb
         site_t midDomainProcCollisions[COLLISION_TYPES]; //! Number of fluid sites with all fluid neighbours on this rank, for each collision type.
         site_t domainEdgeProcCollisions[COLLISION_TYPES]; //! Number of fluid sites with at least one fluid neighbour on another rank, for each collision type.
         site_t localFluidSites; //! The number of local fluid sites.
-        std::vector<distribn_t> oldDistributions; //! The distribution values for the previous time step.
-        std::vector<distribn_t> newDistributions; //! The distribution values for the next time step.
+        std::vector<distribn_t> currentDistributions; //! The distribution values at the start of the current time step.
+        std::vector<distribn_t> nextDistributions; //! The distribution values for the next time step.
         std::vector<LatticeForceVector> forceAtSite; //! Holds the force vector at a fluid site
         std::vector<Block> blocks; //! Data where local fluid sites are stored contiguously.
 
