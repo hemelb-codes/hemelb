@@ -24,6 +24,7 @@ env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: RelWithDebInfo
   deps_install_prefix: ${{github.workspace}}/deps-install
+  hemelb_install_prefix: ${{github.workspace}}/install
   # VMs have 2 cores, double as compilation often IO bound
   CMAKE_BUILD_PARALLEL_LEVEL: 4
 
@@ -85,9 +86,7 @@ jobs:
     - name: Deps install
       if: steps.deps-cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/deps-build
-      run: >-
-        cmake
-        --build .
+      run: cmake --build .
 
     - name: Code make build dir
       run: mkdir -p ${{github.workspace}}/build
@@ -98,14 +97,18 @@ jobs:
         -S ${{github.workspace}}/Code
         -B ${{github.workspace}}/build
         -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        -DCMAKE_INSTALL_PREFIX:STRING=${{env.hemelb_install_prefix}}
         -DHEMELB_DEPENDENCIES_INSTALL_PREFIX:STRING=${{env.deps_install_prefix}}
         -DHEMELB_BUILD_RBC:BOOL=OFF
         -DMPIEXEC_MAX_NUMPROCS:STRING=4
         -DHEMELB_STEERING_LIB:STRING=none
 
-    - name: Build
+    - name: Build and install HemeLB, adding install dir to PATH
       working-directory: ${{github.workspace}}/build
-      run: cmake --build .
+      run: |
+        cmake --build .
+        cmake --install .
+        echo "${hemelb_install_prefix}/bin" >> $GITHUB_PATH
 
     - name: Run main unit tests
       working-directory: ${{github.workspace}}/build
@@ -118,11 +121,44 @@ jobs:
         name: fluid-only-failed-build-tree
         path: build
 
+    - name: Install python tools (required by diff test)
+      working-directory: python-tools
+      run: pip install .
+
     - name: Get hemelb-tests repo
       uses: actions/checkout@v2
       with:
         repository: hemelb-codes/hemelb-tests
         path: hemelb-tests
+
+    - name: Run the simple regression test
+      working-directory: hemelb-tests/diffTest
+      env:
+        MPIRUN_FLAGS: --oversubscribe
+        NUMPROCS: 2
+        HEMELB_STEERING_LIB: none
+        OFFSET_CHECK: light
+      run: ./diffTest.sh
+
+    - name: Store results on error
+      if: failure()
+      uses: actions/upload-artifact@v2
+      with:
+        name: fluid-only-failed-diffTest
+        path: hemelb-tests/diffTest/results
+
+    - name: Run the checkpoint test
+      working-directory: hemelb-tests/fluid-checkpoint
+      env:
+        MPIRUN_FLAGS: --oversubscribe
+      run: ./run.sh
+
+    - name: Store results on error
+      if: failure()
+      uses: actions/upload-artifact@v2
+      with:
+        name: fluid-only-failed-checkpointTest
+        path: hemelb-tests/fluid-checkpoint/results
 
   rbc_build:
     name: Build in RBC mode
@@ -169,9 +205,7 @@ jobs:
     - name: Deps install
       if: steps.deps-cache.outputs.cache-hit != 'true'
       working-directory: ${{github.workspace}}/deps-build
-      run: >-
-        cmake
-        --build .
+      run: cmake --build .
 
     - name: Code make build dir
       run: mkdir -p ${{github.workspace}}/build
