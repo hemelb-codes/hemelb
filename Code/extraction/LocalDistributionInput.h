@@ -43,7 +43,7 @@ namespace hemelb
       // instance.
       //
       // Time is optional, if not supplied will use the last one in
-      // the file.
+      // the file and will set the argument to that value.
       //
       // Requires the checkpoint have been saved with exactly the same
       // domain decomposition as currently running.

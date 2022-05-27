@@ -6,6 +6,10 @@
 #ifndef HEMELB_EXTRACTION_INPUTFIELD_H
 #define HEMELB_EXTRACTION_INPUTFIELD_H
 
+#include <cstdint>
+#include <string>
+#include "io/formats/extraction.h"
+
 namespace hemelb
 {
   namespace extraction
@@ -13,8 +17,14 @@ namespace hemelb
     struct InputField
     {
       std::string name;
-      uint32_t numberOfFloats;
-      double offset;
+      std::uint32_t numberOfElements;
+      std::uint32_t typecode;
+      std::uint32_t numberOfOffsets;
+      // The type of offsets varies depending on typecode, but for now
+      // we are only dealing with double precision data (the
+      // distributions) without an offset, so just omit.
+      //
+      // std::vector<T> offsets;
     };
   }
 }

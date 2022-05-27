@@ -93,6 +93,9 @@ namespace hemelb::extraction {
       }
       comms.Broadcast(timestep, comms.GetIORank());
       comms.Broadcast(iTS, comms.GetIORank());
+      if (!targetTime)
+	targetTime = timestep;
+
       log::Logger::Log<log::Info, log::Singleton>("Reading checkpoint from timestep %d with index %d", timestep, iTS);
       // Read the local part of the checkpoint
       const auto readLength = localStop - localStart;
@@ -138,13 +141,12 @@ namespace hemelb::extraction {
 
 	distribn_t* f_old_p = latDat->GetFOld(iSite * NUMVECTORS);
 	distribn_t* f_new_p = latDat->GetFNew(iSite * NUMVECTORS);
-	// distField.numberOfFloats is read on IO rank and checked to
-	// be equal to NUMVECTORS so we use that instead
-	// of broadcasting and storing.
+	// distField is read on IO rank and checked to be equal to
+	// NUMVECTORS so we use that instead of broadcasting and
+	// storing.
 	for (int i = 0; i < NUMVECTORS; i++) {
-	  float field_val;
+	  distribn_t field_val;
 	  dataReader.read(field_val);
-	  field_val += distField.offset;
 	  f_new_p[i] = f_old_p[i] = field_val;
 	}
       }
@@ -155,6 +157,8 @@ namespace hemelb::extraction {
     }
 
     void LocalDistributionInput::ReadExtractionHeaders(net::MpiFile& inputFile, const unsigned NUMVECTORS) {
+      // The headers technically aren't needed (because of the offset
+      // file), but we check that they are as expected.
       if (comms.OnIORank()) {
 	auto preambleBuf = std::vector<char>(fmt::extraction::MainHeaderLength);
 	inputFile.Read(preambleBuf);
@@ -221,18 +225,25 @@ namespace hemelb::extraction {
 	auto fieldHeaderReader = xdr::XdrMemReader(fieldHeaderBuf);
 
 	fieldHeaderReader.read(distField.name);
-	fieldHeaderReader.read(distField.numberOfFloats);
-	fieldHeaderReader.read(distField.offset);
+	fieldHeaderReader.read(distField.numberOfElements);
+	fieldHeaderReader.read(distField.typecode);
+	fieldHeaderReader.read(distField.numberOfOffsets);
+
 	if (distField.name != "distributions")
 	  throw Exception() << "Checkpoint file must contain field named 'distributions', but has '"
 			    << distField.name << "'";
 
-	if (distField.numberOfFloats != NUMVECTORS)
-	  throw Exception() << "Checkpoint field distributions contains " << distField.numberOfFloats
+	if (distField.numberOfElements != NUMVECTORS)
+	  throw Exception() << "Checkpoint field distributions contains " << distField.numberOfElements
 			    << " distributions but this build of HemeLB requires " << NUMVECTORS;
 
+	if (distField.typecode != static_cast<std::uint32_t>(io::formats::extraction::TypeCode::DOUBLE))
+	  throw Exception() << "Checkpoint contains wrong data type";
+
+	if (distField.numberOfOffsets != 0)
+	  throw Exception() << "Checkpoint should not have offsets";
+
       }
-      comms.Broadcast(distField.offset, comms.GetIORank());
     }
 
     void LocalDistributionInput::ReadOffsets(const std::string& offsetFileName) {
