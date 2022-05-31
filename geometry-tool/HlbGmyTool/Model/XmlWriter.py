@@ -13,7 +13,7 @@ from .Vector import Vector
 
 
 class XmlWriter(object):
-    VERSION = 3
+    VERSION = 5
     STRESSTYPE = 1
 
     def __init__(self, profile):
