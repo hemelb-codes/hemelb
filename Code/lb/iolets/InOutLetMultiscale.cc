@@ -31,7 +31,8 @@ namespace hemelb
        * preserve the single-scale code.
        */
       InOutLetMultiscale::InOutLetMultiscale(const InOutLetMultiscale &other) :
-          Intercommunicand(other), label(other.label), units(other.units), commsRequired(false),
+	Intercommunicand(other), InOutLet(other),
+	label(other.label), units(other.units), commsRequired(false),
               pressure(this, other.maxPressure.GetPayload()),
               minPressure(this, other.minPressure.GetPayload()),
               maxPressure(this, other.maxPressure.GetPayload()), velocity(this, other.GetVelocity())
@@ -41,10 +42,6 @@ namespace hemelb
       void InOutLetMultiscale::Initialise(const util::UnitConverter* unitConverter)
       {
         units = unitConverter;
-      }
-
-      InOutLetMultiscale::~InOutLetMultiscale()
-      {
       }
 
       InOutLet* InOutLetMultiscale::clone() const

@@ -62,7 +62,7 @@ namespace hemelb
       SECTION("TestCosineConstruct") {
 	// Bootstrap ourselves a in inoutlet, by loading config.xml.
 	UncheckedSimConfig config(Resource("config.xml").Path());
-	auto cosine = static_cast<InOutLetCosine*>(config.GetInlets()[0]);
+	auto cosine = util::clone_dynamic_cast<InOutLetCosine>(config.GetInlets()[0]);
 
 	// Bootstrap ourselves a unit converter, which the cosine needs in initialisation
 	lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
@@ -111,7 +111,7 @@ namespace hemelb
 	lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
 							config.GetTotalTimeSteps());
 	const util::UnitConverter& converter = config.GetUnitConverter();
-	auto file = static_cast<InOutLetFile*>(config.GetInlets()[0]);
+	auto file = util::clone_dynamic_cast<InOutLetFile>(config.GetInlets()[0]);
 	// at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
 	file->Initialise(&converter);
 	file->Reset(state);
@@ -138,7 +138,7 @@ namespace hemelb
 
 	// Bootstrap ourselves a in inoutlet, by loading config.xml.
 	UncheckedSimConfig config(Resource("config-velocity-iolet.xml").Path());
-	auto p_vel = dynamic_cast<InOutLetParabolicVelocity*>(config.GetInlets()[0]);
+	auto p_vel = util::clone_dynamic_cast<InOutLetParabolicVelocity>(config.GetInlets()[0]);
 	REQUIRE(p_vel != nullptr);
 
 	// Bootstrap ourselves a unit converter, which the cosine needs in initialisation
@@ -170,7 +170,7 @@ namespace hemelb
 
 	// Bootstrap ourselves a in inoutlet, by loading config.xml.
 	UncheckedSimConfig config(Resource("config_new_velocity_inlets.xml").Path());
-	auto womersVel = static_cast<InOutLetWomersleyVelocity*>(config.GetInlets()[0]);
+	auto womersVel = util::clone_dynamic_cast<InOutLetWomersleyVelocity>(config.GetInlets()[0]);
 
 	// Bootstrap ourselves a unit converter, which the cosine needs in initialisation
 	lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
@@ -240,7 +240,7 @@ namespace hemelb
 	lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
 							config.GetTotalTimeSteps());
 	const util::UnitConverter& converter = config.GetUnitConverter();
-	auto fileVel = static_cast<InOutLetFileVelocity*>(config.GetInlets()[0]);
+	auto fileVel = util::clone_dynamic_cast<InOutLetFileVelocity>(config.GetInlets()[0]);
 	// at this stage, Initialise() has not been called, so the
 	// unit converter will be invalid, so we will not be able to
 	// convert to physical units.

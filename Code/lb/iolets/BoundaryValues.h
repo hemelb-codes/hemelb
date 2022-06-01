@@ -11,6 +11,7 @@
 #include "lb/iolets/InOutLet.h"
 #include "geometry/LatticeData.h"
 #include "lb/iolets/BoundaryCommunicator.h"
+#include "util/clone_ptr.h"
 
 namespace hemelb
 {
@@ -21,12 +22,12 @@ namespace hemelb
 
       class BoundaryValues : public net::IteratedAction
       {
+	using IoletPtr = util::clone_ptr<iolets::InOutLet>;
         public:
           BoundaryValues(geometry::SiteType ioletType, geometry::LatticeData* latticeData,
-                         const std::vector<iolets::InOutLet*> &iolets,
+                         const std::vector<IoletPtr>& iolets,
                          SimulationState* simulationState, const net::MpiCommunicator& comms,
                          const util::UnitConverter& units);
-          ~BoundaryValues();
 
           void RequestComms();
           void EndIteration();
@@ -40,9 +41,12 @@ namespace hemelb
           LatticeDensity GetDensityMax(int boundaryId);
 
           static proc_t GetBCProcRank();
+
+	  // Borrow the pointer to an Iolet - this object still owns
+	  // the value.
           iolets::InOutLet* GetLocalIolet(unsigned int index)
           {
-            return iolets[localIoletIDs[index]];
+            return iolets[localIoletIDs[index]].get();
           }
           unsigned int GetLocalIoletCount()
           {
@@ -68,7 +72,7 @@ namespace hemelb
           int localIoletCount;
           std::vector<int> localIoletIDs;
           // Has to be a vector of pointers for InOutLet polymorphism
-          std::vector<iolets::InOutLet*> iolets;
+          std::vector<IoletPtr> iolets;
 
           SimulationState* state;
           const util::UnitConverter& unitConverter;

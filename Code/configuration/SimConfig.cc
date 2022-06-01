@@ -257,12 +257,12 @@ namespace hemelb
       }
     }
 
-    std::vector<lb::iolets::InOutLet*> SimConfig::DoIOForInOutlets(const io::xml::Element ioletsEl)
+    auto SimConfig::DoIOForInOutlets(const io::xml::Element ioletsEl) -> std::vector<IoletPtr>
     {
       const std::string& nodeName = ioletsEl.GetName();
 
       const std::string childNodeName = nodeName.substr(0, nodeName.size() - 1);
-      std::vector<lb::iolets::InOutLet*> ioletList;
+      std::vector<IoletPtr> ioletList;
       for (io::xml::Element currentIoletNode = ioletsEl.GetChildOrNull(childNodeName);
           currentIoletNode != io::xml::Element::Missing();
           currentIoletNode = currentIoletNode.NextSiblingOrNull(childNodeName))
@@ -271,7 +271,7 @@ namespace hemelb
         io::xml::Element conditionEl = currentIoletNode.GetChildOrThrow("condition");
         const std::string& conditionType = conditionEl.GetAttributeOrThrow("type");
 
-        lb::iolets::InOutLet* newIolet = nullptr;
+        IoletPtr newIolet;
 
         if (conditionType == "pressure")
         {
@@ -286,8 +286,8 @@ namespace hemelb
           throw Exception() << "Invalid boundary condition type '" << conditionType << "' in "
               << conditionEl.GetPath();
         }
-        DoIOForFlowExtension(newIolet, currentIoletNode);
-        ioletList.push_back(newIolet);
+        DoIOForFlowExtension(newIolet.get(), currentIoletNode);
+        ioletList.push_back(std::move(newIolet));
       }
       return ioletList;
     }
@@ -301,61 +301,56 @@ namespace hemelb
       iolet->SetFlowExtension(std::make_shared<hemelb::redblood::FlowExtension>(flowExtension));
     }
 
-    lb::iolets::InOutLet* SimConfig::DoIOForPressureInOutlet(const io::xml::Element& ioletEl)
+    auto SimConfig::DoIOForPressureInOutlet(const io::xml::Element& ioletEl) -> IoletPtr
     {
       CheckIoletMatchesCMake(ioletEl, "NASHZEROTHORDERPRESSUREIOLET");
       io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
       const std::string& conditionSubtype = conditionEl.GetAttributeOrThrow("subtype");
 
-      lb::iolets::InOutLet* newIolet = nullptr;
       if (conditionSubtype == "cosine")
       {
-        newIolet = DoIOForCosinePressureInOutlet(ioletEl);
+        return DoIOForCosinePressureInOutlet(ioletEl);
       }
       else if (conditionSubtype == "file")
       {
-        newIolet = DoIOForFilePressureInOutlet(ioletEl);
+        return DoIOForFilePressureInOutlet(ioletEl);
       }
       else if (conditionSubtype == "multiscale")
       {
-        newIolet = DoIOForMultiscalePressureInOutlet(ioletEl);
+        return DoIOForMultiscalePressureInOutlet(ioletEl);
       }
       else
       {
         throw Exception() << "Invalid boundary condition subtype '" << conditionSubtype << "' in "
             << ioletEl.GetPath();
       }
-
-      return newIolet;
     }
 
-    lb::iolets::InOutLet* SimConfig::DoIOForVelocityInOutlet(const io::xml::Element& ioletEl)
+    auto SimConfig::DoIOForVelocityInOutlet(const io::xml::Element& ioletEl) -> IoletPtr
     {
       CheckIoletMatchesCMake(ioletEl, "LADDIOLET");
       io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
       const std::string& conditionSubtype = conditionEl.GetAttributeOrThrow("subtype");
 
-      lb::iolets::InOutLet* newIolet = nullptr;
       if (conditionSubtype == "parabolic")
       {
-        newIolet = DoIOForParabolicVelocityInOutlet(ioletEl);
+        return DoIOForParabolicVelocityInOutlet(ioletEl);
       }
       else if (conditionSubtype == "womersley")
       {
-        newIolet = DoIOForWomersleyVelocityInOutlet(ioletEl);
+        return DoIOForWomersleyVelocityInOutlet(ioletEl);
       }
       else if (conditionSubtype == "file")
       {
-        newIolet = DoIOForFileVelocityInOutlet(ioletEl);
+        return DoIOForFileVelocityInOutlet(ioletEl);
       }
       else
       {
         throw Exception() << "Invalid boundary condition subtype '" << conditionSubtype << "' in "
             << ioletEl.GetPath();
       }
-
-      return newIolet;
     }
+
     void SimConfig::DoIOForVisualisation(const io::xml::Element& visEl)
     {
       GetDimensionalValue(visEl.GetChildOrThrow("centre"), "m", visualisationCentre);
@@ -631,11 +626,11 @@ namespace hemelb
       }
     }
 
-    lb::iolets::InOutLetCosine* SimConfig::DoIOForCosinePressureInOutlet(
-        const io::xml::Element& ioletEl)
+    auto SimConfig::DoIOForCosinePressureInOutlet(
+        const io::xml::Element& ioletEl) -> IoletPtr
     {
-      lb::iolets::InOutLetCosine* newIolet = new lb::iolets::InOutLetCosine();
-      DoIOForBaseInOutlet(ioletEl, newIolet);
+      auto newIolet = util::make_clone_ptr<lb::iolets::InOutLetCosine>();
+      DoIOForBaseInOutlet(ioletEl, newIolet.get());
 
       const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
@@ -662,11 +657,11 @@ namespace hemelb
       return newIolet;
     }
 
-    lb::iolets::InOutLetFile* SimConfig::DoIOForFilePressureInOutlet(
-        const io::xml::Element& ioletEl)
+    auto SimConfig::DoIOForFilePressureInOutlet(
+        const io::xml::Element& ioletEl) -> IoletPtr
     {
-      lb::iolets::InOutLetFile* newIolet = new lb::iolets::InOutLetFile();
-      DoIOForBaseInOutlet(ioletEl, newIolet);
+      auto newIolet = util::make_clone_ptr<lb::iolets::InOutLetFile>();
+      DoIOForBaseInOutlet(ioletEl, newIolet.get());
 
       const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
       const io::xml::Element pathEl = conditionEl.GetChildOrThrow("path");
@@ -675,11 +670,11 @@ namespace hemelb
       return newIolet;
     }
 
-    lb::iolets::InOutLetMultiscale* SimConfig::DoIOForMultiscalePressureInOutlet(
-        const io::xml::Element& ioletEl)
+    auto SimConfig::DoIOForMultiscalePressureInOutlet(
+        const io::xml::Element& ioletEl) -> IoletPtr
     {
-      lb::iolets::InOutLetMultiscale* newIolet = new lb::iolets::InOutLetMultiscale();
-      DoIOForBaseInOutlet(ioletEl, newIolet);
+      auto newIolet = util::make_clone_ptr<lb::iolets::InOutLetMultiscale>();
+      DoIOForBaseInOutlet(ioletEl, newIolet.get());
 
       const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
@@ -693,11 +688,11 @@ namespace hemelb
       return newIolet;
     }
 
-    lb::iolets::InOutLetParabolicVelocity* SimConfig::DoIOForParabolicVelocityInOutlet(
-        const io::xml::Element& ioletEl)
+    auto SimConfig::DoIOForParabolicVelocityInOutlet(
+        const io::xml::Element& ioletEl) -> IoletPtr
     {
-      lb::iolets::InOutLetParabolicVelocity* newIolet = new lb::iolets::InOutLetParabolicVelocity();
-      DoIOForBaseInOutlet(ioletEl, newIolet);
+      auto newIolet = util::make_clone_ptr<lb::iolets::InOutLetParabolicVelocity>();
+      DoIOForBaseInOutlet(ioletEl, newIolet.get());
 
       const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
@@ -715,11 +710,11 @@ namespace hemelb
       return newIolet;
     }
 
-    lb::iolets::InOutLetWomersleyVelocity* SimConfig::DoIOForWomersleyVelocityInOutlet(
-        const io::xml::Element& ioletEl)
+    auto SimConfig::DoIOForWomersleyVelocityInOutlet(
+        const io::xml::Element& ioletEl) -> IoletPtr
     {
-      lb::iolets::InOutLetWomersleyVelocity* newIolet = new lb::iolets::InOutLetWomersleyVelocity();
-      DoIOForBaseInOutlet(ioletEl, newIolet);
+      auto newIolet = util::make_clone_ptr<lb::iolets::InOutLetWomersleyVelocity>();
+      DoIOForBaseInOutlet(ioletEl, newIolet.get());
 
       const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
@@ -740,11 +735,11 @@ namespace hemelb
       return newIolet;
     }
 
-    lb::iolets::InOutLetFileVelocity* SimConfig::DoIOForFileVelocityInOutlet(
-        const io::xml::Element& ioletEl)
+    auto SimConfig::DoIOForFileVelocityInOutlet(
+        const io::xml::Element& ioletEl) -> IoletPtr
     {
-      lb::iolets::InOutLetFileVelocity* newIolet = new lb::iolets::InOutLetFileVelocity();
-      DoIOForBaseInOutlet(ioletEl, newIolet);
+      auto newIolet = util::make_clone_ptr<lb::iolets::InOutLetFileVelocity>();
+      DoIOForBaseInOutlet(ioletEl, newIolet.get());
 
       const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
 

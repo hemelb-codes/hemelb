@@ -348,8 +348,8 @@ namespace hemelb
     template<class TRAITS>
     void LBM<TRAITS>::ReadParameters()
     {
-      std::vector<lb::iolets::InOutLet*> inlets = mSimConfig->GetInlets();
-      std::vector<lb::iolets::InOutLet*> outlets = mSimConfig->GetOutlets();
+      auto&& inlets = mSimConfig->GetInlets();
+      auto&& outlets = mSimConfig->GetOutlets();
       inletCount = inlets.size();
       outletCount = outlets.size();
       mParams.StressType = mSimConfig->GetStressType();

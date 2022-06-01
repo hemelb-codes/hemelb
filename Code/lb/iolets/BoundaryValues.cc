@@ -18,24 +18,22 @@ namespace hemelb
     {
       BoundaryValues::BoundaryValues(geometry::SiteType ioletType,
                                      geometry::LatticeData* latticeData,
-                                     const std::vector<iolets::InOutLet*> &incoming_iolets,
+                                     const std::vector<IoletPtr> &incoming_iolets,
                                      SimulationState* simulationState,
                                      const net::MpiCommunicator& comms,
                                      const util::UnitConverter& units) :
           net::IteratedAction(), ioletType(ioletType), totalIoletCount(incoming_iolets.size()),
               localIoletCount(0), state(simulationState), unitConverter(units), bcComms(comms)
       {
-        std::vector<int> *procsList = new std::vector<int>[totalIoletCount];
+	std::vector<std::vector<int>> procsList(totalIoletCount);
 
         // Determine which iolets need comms and create them
         for (int ioletIndex = 0; ioletIndex < totalIoletCount; ioletIndex++)
         {
           // First create a copy of all iolets
-          iolets::InOutLet* iolet = (incoming_iolets[ioletIndex])->clone();
+          auto iolet = incoming_iolets[ioletIndex].clone();
 
           iolet->Initialise(&unitConverter);
-
-          iolets.push_back(iolet);
 
           bool isIOletOnThisProc = IsIOletOnThisProc(ioletType, latticeData, ioletIndex);
           hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("BOUNDARYVALUES.CC - isioletonthisproc? : %d",
@@ -58,27 +56,16 @@ namespace hemelb
                                               isIOletOnThisProc));
 //            }
           }
+	  iolets.push_back(std::move(iolet));
         }
 
         // Send out initial values
         Reset();
 
-        // Clear up
-        delete[] procsList;
-
         hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("BOUNDARYVALUES.H - ioletCount: %d, first iolet ID %d",
                                                                               localIoletCount,
                                                                               localIoletIDs[0]);
 
-      }
-
-      BoundaryValues::~BoundaryValues()
-      {
-
-        for (int i = 0; i < totalIoletCount; i++)
-        {
-          delete iolets[i];
-        }
       }
 
       bool BoundaryValues::IsIOletOnThisProc(geometry::SiteType ioletType,

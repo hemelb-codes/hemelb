@@ -23,7 +23,7 @@ namespace hemelb
 						DEFAULT_FLUID_DENSITY_Kg_per_m3,
 						0.0);
 
-	lb::iolets::InOutLetCosine* inlet = new lb::iolets::InOutLetCosine();
+	auto inlet = util::make_clone_ptr<lb::iolets::InOutLetCosine>();
 	inlet->SetPressureAmp(unitConverter->ConvertPressureDifferenceToLatticeUnits(1.0));
 	inlet->SetPressureMean(unitConverter->ConvertPressureToLatticeUnits(80.0));
 	inlet->SetPhase(PI);
@@ -32,7 +32,7 @@ namespace hemelb
 
 	inlets.push_back(inlet);
 
-	lb::iolets::InOutLetCosine* outlet = new lb::iolets::InOutLetCosine();
+	auto outlet = util::make_clone_ptr<lb::iolets::InOutLetCosine>();
 	outlet->SetPressureAmp(unitConverter->ConvertPressureDifferenceToLatticeUnits(0.0));
 	outlet->SetPressureMean(unitConverter->ConvertPressureToLatticeUnits(80.0));
 	outlet->SetPhase(0.0);

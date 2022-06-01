@@ -39,7 +39,7 @@ namespace hemelb
 	auto config = std::unique_ptr<SimConfig>(SimConfig::New(resources::Resource("config0_2_0.xml").Path()));
 	REQUIRE(3000lu == config->GetTotalTimeSteps());
 	REQUIRE(0.0001 == config->GetTimeStepLength());
-	lb::iolets::InOutLetCosine* inlet = dynamic_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0]);
+	auto inlet = util::clone_dynamic_cast<lb::iolets::InOutLetCosine>(config->GetInlets()[0]);
 	REQUIRE(inlet != nullptr);
 	REQUIRE(Approx(6000.0) == inlet->GetPeriod());
 
@@ -57,7 +57,7 @@ namespace hemelb
 	auto config = std::unique_ptr<SimConfig>(SimConfig::New(resources::Resource("config.xml").Path()));
 	REQUIRE(3000lu == config->GetTotalTimeSteps());
 	REQUIRE(0.0001 == config->GetTimeStepLength());
-	lb::iolets::InOutLetCosine* inlet = dynamic_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0]);
+	auto inlet = util::clone_dynamic_cast<lb::iolets::InOutLetCosine>(config->GetInlets()[0]);
 	REQUIRE(inlet != nullptr);
 	REQUIRE(Approx(6000.0) == inlet->GetPeriod());
 

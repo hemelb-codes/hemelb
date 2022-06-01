@@ -78,7 +78,9 @@ namespace hemelb
     class SimConfig
     {
       public:
-	static SimConfig* New(const std::string& path);
+        using IoletPtr = util::clone_ptr<lb::iolets::InOutLet>;
+
+        static SimConfig* New(const std::string& path);
 
       protected:
 	SimConfig(const std::string& path);
@@ -97,11 +99,11 @@ namespace hemelb
         {
           return visualisationCentre;
         }
-        const std::vector<lb::iolets::InOutLet*> & GetInlets() const
+        const std::vector<IoletPtr> & GetInlets() const
         {
           return inlets;
         }
-        const std::vector<lb::iolets::InOutLet*> & GetOutlets() const
+        const std::vector<IoletPtr> & GetOutlets() const
         {
           return outlets;
         }
@@ -239,19 +241,19 @@ namespace hemelb
         void DoIOForSimulation(const io::xml::Element simEl);
         void DoIOForGeometry(const io::xml::Element geometryEl);
 
-        std::vector<lb::iolets::InOutLet*> DoIOForInOutlets(const io::xml::Element xmlNode);
+        std::vector<IoletPtr> DoIOForInOutlets(const io::xml::Element xmlNode);
         void DoIOForFlowExtension(lb::iolets::InOutLet *, const io::xml::Element &);
 
         void DoIOForBaseInOutlet(const io::xml::Element& ioletEl, lb::iolets::InOutLet* value);
 
-        lb::iolets::InOutLet* DoIOForPressureInOutlet(const io::xml::Element& ioletEl);
-        lb::iolets::InOutLetCosine* DoIOForCosinePressureInOutlet(const io::xml::Element& ioletEl);
-        lb::iolets::InOutLetFile* DoIOForFilePressureInOutlet(const io::xml::Element& ioletEl);
-        lb::iolets::InOutLetMultiscale* DoIOForMultiscalePressureInOutlet(
+        IoletPtr DoIOForPressureInOutlet(const io::xml::Element& ioletEl);
+        IoletPtr DoIOForCosinePressureInOutlet(const io::xml::Element& ioletEl);
+        IoletPtr DoIOForFilePressureInOutlet(const io::xml::Element& ioletEl);
+        IoletPtr DoIOForMultiscalePressureInOutlet(
             const io::xml::Element& ioletEl);
 
-        lb::iolets::InOutLet* DoIOForVelocityInOutlet(const io::xml::Element& ioletEl);
-        lb::iolets::InOutLetParabolicVelocity* DoIOForParabolicVelocityInOutlet(
+        IoletPtr DoIOForVelocityInOutlet(const io::xml::Element& ioletEl);
+        IoletPtr DoIOForParabolicVelocityInOutlet(
             const io::xml::Element& ioletEl);
         /**
          * Reads a Womersley velocity iolet definition from the XML config file and returns
@@ -260,8 +262,7 @@ namespace hemelb
          * @param ioletEl in memory representation of <inlet> or <outlet> xml element
          * @return InOutLetWomersleyVelocity object
          */
-        lb::iolets::InOutLetWomersleyVelocity* DoIOForWomersleyVelocityInOutlet(
-            const io::xml::Element& ioletEl);
+        IoletPtr DoIOForWomersleyVelocityInOutlet(const io::xml::Element& ioletEl);
 
         /**
          * Reads a file velocity iolet definition from the XML config file and returns
@@ -270,8 +271,7 @@ namespace hemelb
          * @param ioletEl in memory representation of <inlet> or <outlet> xml element
          * @return InOutLetFileVelocity object
          */
-        lb::iolets::InOutLetFileVelocity* DoIOForFileVelocityInOutlet(
-            const io::xml::Element& ioletEl);
+        IoletPtr DoIOForFileVelocityInOutlet(const io::xml::Element& ioletEl);
 
         void DoIOForProperties(const io::xml::Element& xmlNode);
         void DoIOForProperty(io::xml::Element xmlNode, bool isLoading);
@@ -339,8 +339,8 @@ namespace hemelb
       protected:
         // These have to contain pointers because there are multiple derived types that might be
         // instantiated.
-        std::vector<lb::iolets::InOutLet*> inlets;
-        std::vector<lb::iolets::InOutLet*> outlets;
+        std::vector<IoletPtr> inlets;
+        std::vector<IoletPtr> outlets;
         PhysicalTime timeStepSeconds;
         unsigned long totalTimeSteps;
         unsigned long warmUpSteps;

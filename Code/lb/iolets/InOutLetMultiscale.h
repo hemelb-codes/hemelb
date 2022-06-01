@@ -45,7 +45,7 @@ namespace hemelb
         public:
           InOutLetMultiscale();
           InOutLetMultiscale(const InOutLetMultiscale &other);
-          virtual ~InOutLetMultiscale();
+          ~InOutLetMultiscale() override = default;
           InOutLet* clone() const override;
           void Initialise(const util::UnitConverter* unitConverter) override;
           void Reset(SimulationState &state) override;
