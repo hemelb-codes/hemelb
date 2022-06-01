@@ -20,8 +20,11 @@ namespace hemelb
         public:
           InOutLetFileVelocity();
 
-          InOutLet* Clone() const;
-          void Reset(SimulationState &state)
+	  ~InOutLetFileVelocity() override = default;
+
+          InOutLet* clone() const override;
+
+	  void Reset(SimulationState &state) override
           {
             CalculateTable(state.GetTotalTimeSteps(), state.GetTimeStepLength());
           }
@@ -35,11 +38,11 @@ namespace hemelb
             velocityFilePath = path;
           }
 
-          LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTimeStep t) const;
+          LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTimeStep t) const override;
           /*LatticeVelocity GetVelocity2(const util::Vector3D<int64_t> globalCoordinates,
                                                                   const LatticeTimeStep t) const;*/
 
-          void Initialise(const util::UnitConverter* unitConverter);
+          void Initialise(const util::UnitConverter* unitConverter) override;
 
           bool useWeightsFromFile;
 

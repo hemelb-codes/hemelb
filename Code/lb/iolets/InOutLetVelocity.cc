@@ -16,10 +16,6 @@ namespace hemelb
       {
       }
 
-      InOutLetVelocity::~InOutLetVelocity()
-      {
-      }
-
       LatticeDensity InOutLetVelocity::GetDensityMin() const
       {
         return 1.0;

@@ -46,18 +46,18 @@ namespace hemelb
           InOutLetMultiscale();
           InOutLetMultiscale(const InOutLetMultiscale &other);
           virtual ~InOutLetMultiscale();
-          virtual InOutLet* Clone() const;
-          virtual void Initialise(const util::UnitConverter* unitConverter);
-          virtual void Reset(SimulationState &state);
-          virtual bool IsRegistrationRequired() const;
+          InOutLet* clone() const override;
+          void Initialise(const util::UnitConverter* unitConverter) override;
+          void Reset(SimulationState &state) override;
+          bool IsRegistrationRequired() const override;
 
           virtual int GetNumberOfFieldPoints() const;
           // returns the number of field points that are exchanged with the coupled code.
           // field points will map one-to-one to HemeLB lattice sites initially; we will
           // rely on external tools to perform any interpolation tasks.
-          LatticeDensity GetDensity(unsigned long timeStep) const;
-          virtual LatticeDensity GetDensityMin() const;
-          virtual LatticeDensity GetDensityMax() const;
+          LatticeDensity GetDensity(unsigned long timeStep) const override;
+          LatticeDensity GetDensityMin() const override;
+          LatticeDensity GetDensityMax() const override;
           PhysicalVelocity GetVelocity() const;
           LatticePressure GetPressure() const;
           //std::vector<PhysicalPressure GetPressures() const;
@@ -86,9 +86,9 @@ namespace hemelb
           // But the way SimConfig is set up prevents this.
           std::string & GetLabel();
 
-          virtual bool IsCommsRequired() const;
+          bool IsCommsRequired() const override;
           virtual void SetCommsRequired(bool b);
-          void DoComms(const BoundaryCommunicator& bcComms, const LatticeTimeStep timeStep);
+          void DoComms(const BoundaryCommunicator& bcComms, const LatticeTimeStep timeStep) override;
 
         private:
           std::string label;

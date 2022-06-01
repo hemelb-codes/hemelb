@@ -17,9 +17,9 @@ namespace hemelb
       {
         public:
           InOutLetParabolicVelocity();
-          virtual ~InOutLetParabolicVelocity();
-          InOutLet* Clone() const;
-          LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTimeStep t) const;
+          ~InOutLetParabolicVelocity() override = default;
+          InOutLet* clone() const override;
+          LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTimeStep t) const override;
 
           const LatticeSpeed& GetMaxSpeed() const
           {

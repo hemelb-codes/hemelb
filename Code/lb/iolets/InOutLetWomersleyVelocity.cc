@@ -16,7 +16,7 @@ namespace hemelb
       const InOutLetWomersleyVelocity::Complex InOutLetWomersleyVelocity::iPowThreeHalves =
           pow(i, 1.5);
 
-      InOutLet* InOutLetWomersleyVelocity::Clone() const
+      InOutLet* InOutLetWomersleyVelocity::clone() const
       {
         InOutLet* copy = new InOutLetWomersleyVelocity(*this);
         return copy;

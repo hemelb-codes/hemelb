@@ -20,16 +20,11 @@ namespace hemelb
 
       }
 
-      InOutLet* InOutLetCosine::Clone() const
+      InOutLet* InOutLetCosine::clone() const
       {
         InOutLetCosine* copy = new InOutLetCosine(*this);
 
         return copy;
-      }
-
-      InOutLetCosine::~InOutLetCosine()
-      {
-
       }
 
       LatticeDensity InOutLetCosine::GetDensity(LatticeTimeStep time_step) const

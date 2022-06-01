@@ -28,9 +28,9 @@ namespace hemelb
       {
         public:
           InOutLetFile();
-          virtual ~InOutLetFile();
-          virtual InOutLet* Clone() const;
-          virtual void Reset(SimulationState &state)
+          virtual ~InOutLetFile() override = default;
+          InOutLet* clone() const override;
+          void Reset(SimulationState &state) override
           {
             CalculateTable(state.GetTotalTimeSteps(), state.GetTimeStepLength());
           }
@@ -44,19 +44,19 @@ namespace hemelb
             pressureFilePath = path;
           }
 
-          LatticeDensity GetDensityMin() const
+          LatticeDensity GetDensityMin() const override
           {
             return densityMin;
           }
-          LatticeDensity GetDensityMax() const
+          LatticeDensity GetDensityMax() const override
           {
             return densityMax;
           }
-          LatticeDensity GetDensity(LatticeTimeStep timeStep) const
+          LatticeDensity GetDensity(LatticeTimeStep timeStep) const override
           {
             return densityTable[timeStep];
           }
-          virtual void Initialise(const util::UnitConverter* unitConverter);
+          void Initialise(const util::UnitConverter* unitConverter) override;
         private:
           void CalculateTable(LatticeTimeStep totalTimeSteps, PhysicalTime timeStepLength);
           std::vector<LatticeDensity> densityTable;

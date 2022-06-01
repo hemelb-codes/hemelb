@@ -64,15 +64,14 @@ namespace hemelb
               comms(nullptr), extraData(nullptr)
           {
           }
-          virtual ~InOutLet()
-          {
-          }
+
+          virtual ~InOutLet() = default;
 
           /***
            * Copy the InOutLet.
            * @return Pointer to new IOLet.
            */
-          virtual InOutLet* Clone() const = 0;
+          virtual InOutLet* clone() const = 0;
 
           /***
            * This is a castable? virtual method, which is perhaps an anti-pattern

@@ -31,7 +31,7 @@ namespace hemelb
         for (int ioletIndex = 0; ioletIndex < totalIoletCount; ioletIndex++)
         {
           // First create a copy of all iolets
-          iolets::InOutLet* iolet = (incoming_iolets[ioletIndex])->Clone();
+          iolets::InOutLet* iolet = (incoming_iolets[ioletIndex])->clone();
 
           iolet->Initialise(&unitConverter);
 

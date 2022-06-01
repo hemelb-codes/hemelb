@@ -17,12 +17,12 @@ namespace hemelb
       {
         public:
           InOutLetVelocity();
-          virtual ~InOutLetVelocity();
-          LatticeDensity GetDensityMin() const;
-          LatticeDensity GetDensityMax() const;
-          LatticeDensity GetDensity(LatticeTimeStep time_step) const;
+          ~InOutLetVelocity() override = default;
+          LatticeDensity GetDensityMin() const override;
+          LatticeDensity GetDensityMax() const override;
+          LatticeDensity GetDensity(LatticeTimeStep time_step) const override;
 
-          void Reset(SimulationState &state)
+          void Reset(SimulationState &state) override
           {
             //pass;
           }

@@ -47,7 +47,7 @@ namespace hemelb
       {
       }
 
-      InOutLet* InOutLetMultiscale::Clone() const
+      InOutLet* InOutLetMultiscale::clone() const
       {
         InOutLetMultiscale* copy = new InOutLetMultiscale(*this);
         return copy;

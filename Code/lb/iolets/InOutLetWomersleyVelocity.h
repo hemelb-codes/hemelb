@@ -32,12 +32,14 @@ namespace hemelb
       {
         public:
 
-          /**
+          ~InOutLetWomersleyVelocity() override = default;
+
+	  /**
            * Returns a copy of the current iolet. The caller is responsible for freeing that memory.
            *
            * @return copy of the current iolet
            */
-          InOutLet* Clone() const;
+          InOutLet* clone() const override;
 
           /**
            * Get Womersley velocity for a given time and position.
@@ -46,7 +48,7 @@ namespace hemelb
            * @param t time
            * @return velocity
            */
-          LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTimeStep t) const;
+          LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTimeStep t) const override;
 
           /**
            * Get the amplitude of the zero average pressure gradient sine wave imposed.

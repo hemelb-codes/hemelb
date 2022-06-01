@@ -16,11 +16,7 @@ namespace hemelb
       {
       }
 
-      InOutLetParabolicVelocity::~InOutLetParabolicVelocity()
-      {
-      }
-
-      InOutLet* InOutLetParabolicVelocity::Clone() const
+      InOutLet* InOutLetParabolicVelocity::clone() const
       {
         InOutLet* copy = new InOutLetParabolicVelocity(*this);
         return copy;

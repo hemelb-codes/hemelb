@@ -24,14 +24,14 @@ namespace hemelb
       {
         public:
           InOutLetCosine();
-          virtual ~InOutLetCosine();
-          virtual InOutLet* Clone() const;
-          virtual void Reset(SimulationState &state)
+          ~InOutLetCosine() override = default;
+          InOutLet* clone() const override;
+          void Reset(SimulationState &state) override
           {
             //pass;
           }
 
-          LatticeDensity GetDensity(unsigned long time_step) const;
+          LatticeDensity GetDensity(unsigned long time_step) const override;
 
           const LatticeDensity& GetDensityMean() const
           {
@@ -51,11 +51,11 @@ namespace hemelb
             densityAmp = rho;
           }
 
-          LatticeDensity GetDensityMin() const
+          LatticeDensity GetDensityMin() const override
           {
             return (densityMean - densityAmp);
           }
-          LatticeDensity GetDensityMax() const
+          LatticeDensity GetDensityMax() const override
           {
             return (densityMean + densityAmp);
           }

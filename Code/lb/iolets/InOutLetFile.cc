@@ -25,17 +25,13 @@ namespace hemelb
 
       }
 
-      InOutLet* InOutLetFile::Clone() const
+      InOutLet* InOutLetFile::clone() const
       {
         InOutLetFile* copy = new InOutLetFile(*this);
 
         return copy;
       }
 
-      InOutLetFile::~InOutLetFile()
-      {
-
-      }
       void InOutLetFile::Initialise(const util::UnitConverter* unitConverter)
       {
         units = unitConverter;
@@ -75,7 +71,9 @@ namespace hemelb
         for (std::map<PhysicalTime, PhysicalPressure>::iterator entry = timeValuePairs.begin();
             entry != timeValuePairs.end(); entry++)
         {
-          /* If the time value stretches beyond the end of the simulation, then insert an interpolated end value and exit the loop. */
+          // If the time value stretches beyond the end of the
+          // simulation, then insert an interpolated end value and
+          // exit the loop.
           if(entry->first > totalTimeSteps*timeStepLength) {
 
             PhysicalTime time_diff = totalTimeSteps*timeStepLength - times.back();
@@ -105,13 +103,18 @@ namespace hemelb
           throw Exception() << "Last point's value does not match the first point's value in "
               << pressureFilePath;
 
-        /* If the time values in the input file end BEFORE the planned end of the simulation, then loop the profile afterwards (using %TimeStepsInInletPressureProfile). */
-        int TimeStepsInInletPressureProfile = times.back() / timeStepLength;
-        //throw Exception() << "Finding Time steps: " << times.back() << " " << timeStepLength << " " << TimeStepsInInletPressureProfile;
+        // If the time values in the input file end BEFORE the planned
+        // end of the simulation, then loop the profile afterwards
+        // (using %TimeStepsInInletPressureProfile).
+        // int TimeStepsInInletPressureProfile = times.back() / timeStepLength;
+        // throw Exception() << "Finding Time steps: " << times.back() << " " << timeStepLength << " " << TimeStepsInInletPressureProfile;
 
-        // extend the table to one past the total time steps, so that the table is valid in the end-state, where the zero indexed time step is equal to the limit.
+        // extend the table to one past the total time steps, so that
+        // the table is valid in the end-state, where the zero indexed
+        // time step is equal to the limit.
         densityTable.resize(totalTimeSteps + 1);
-        // Now convert these vectors into arrays using linear interpolation
+        // Now convert these vectors into arrays using linear
+        // interpolation
         for (unsigned int timeStep = 0; timeStep <= totalTimeSteps; timeStep++)
         {
           double point = times.front()

@@ -35,24 +35,24 @@ namespace hemelb
     };
     
     class ConcreteIolet : public InOutLet {
-      virtual InOutLet* Clone() const
+      InOutLet* clone() const override
       {
 	ConcreteIolet* copy = new ConcreteIolet(*this);
 	return copy;
       }
-      virtual LatticeDensity GetDensityMin() const
+      LatticeDensity GetDensityMin() const override
       {
 	return 1.0;
       }
-      virtual LatticeDensity GetDensityMax() const
+      LatticeDensity GetDensityMax() const override
       {
 	return 1.0;
       }
-      virtual LatticeDensity GetDensity(hemelb::LatticeTimeStep) const
+      LatticeDensity GetDensity(hemelb::LatticeTimeStep) const override
       {
 	return 1.0;
       }
-      virtual void Reset(hemelb::lb::SimulationState&)
+      void Reset(hemelb::lb::SimulationState&) override
       {
       }
     };

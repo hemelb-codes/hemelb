@@ -24,7 +24,7 @@ namespace hemelb
       {
       }
 
-      InOutLet* InOutLetFileVelocity::Clone() const
+      InOutLet* InOutLetFileVelocity::clone() const
       {
         InOutLet* copy = new InOutLetFileVelocity(*this);
         return copy;
