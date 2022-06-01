@@ -23,7 +23,7 @@ namespace hemelb
          * @return
          */
         PropertyWriter(IterableDataSource& dataSource,
-                       const std::vector<PropertyOutputFile*>& propertyOutputs,
+                       const std::vector<PropertyOutputFile>& propertyOutputs,
                        const net::IOCommunicator& ioComms);
 
         /**

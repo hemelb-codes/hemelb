@@ -15,6 +15,10 @@ namespace hemelb
     {
     }
 
+    GeometrySelector* SurfacePointSelector::clone() const {
+      return new SurfacePointSelector{*this};
+    }
+
     const util::Vector3D<float>& SurfacePointSelector::GetPoint() const
     {
       return surfacePoint;

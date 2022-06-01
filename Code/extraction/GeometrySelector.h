@@ -10,40 +10,31 @@
 #include "extraction/IterableDataSource.h"
 #include "util/Vector3D.h"
 
-namespace hemelb
+namespace hemelb::extraction
 {
-  namespace extraction
+  // Class representing a general geometry selector, i.e. a means of
+  // consistently selecting certain lattice sites from a geometry.
+  //
+  // This is done with the Include function, overridden by
+  // implementors of the interface.
+  class GeometrySelector
   {
-    /**
-     * Class representing a general geometry selector, i.e. a means of consistently selecting certain
-     * lattice sites from a geometry.
-     *
-     * This is done with the Include function, overridden by implementors of the interface.
-     */
-    class GeometrySelector
-    {
-      public:
-        /**
-         * Virtual destructor.
-         */
-        virtual ~GeometrySelector()
-        {
+  public:
+    // Virtual destructor.
+    virtual ~GeometrySelector() = default;
 
-        }
+    // Return a new copy of this (caller owns)
+    virtual GeometrySelector* clone() const = 0;
 
-        /**
-         * Returns true if the given location is within the selection.
-         */
-        bool Include(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const;
+    // Returns true if the given location is within the selection.
+    bool Include(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const;
 
-      protected:
-        virtual bool
-            IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const = 0;
+  protected:
+    virtual bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const = 0;
 
-        // Helper to do the coordinate transform for subclasses
-        util::Vector3D<float> LatticeToPhysical(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const;
-    };
-  }
+    // Helper to do the coordinate transform for subclasses
+    util::Vector3D<float> LatticeToPhysical(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const;
+  };
 }
 
-#endif /* HEMELB_EXTRACTION_GEOMETRYSELECTOR_H */
+#endif // HEMELB_EXTRACTION_GEOMETRYSELECTOR_H

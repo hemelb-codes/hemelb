@@ -32,7 +32,7 @@ namespace hemelb
          * @param offset
          * @return
          */
-        LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile* outputSpec,
+        LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile& outputSpec,
                             const net::IOCommunicator& ioComms);
 
         /**
@@ -51,7 +51,7 @@ namespace hemelb
          * Returns the property output file object to be written.
          * @return
          */
-        const PropertyOutputFile* GetOutputSpec() const;
+        const PropertyOutputFile& GetOutputSpec() const;
 
         /**
          * Write this core's section of the data file. Only writes if appropriate for the current
@@ -87,7 +87,7 @@ namespace hemelb
         /**
          * PropertyOutputFile spec.
          */
-        const PropertyOutputFile* outputSpec;
+        PropertyOutputFile outputSpec;
 
         /**
          * Where to begin writing into the file.

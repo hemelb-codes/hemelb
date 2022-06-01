@@ -64,11 +64,6 @@ namespace hemelb
 
     SimConfig::~SimConfig()
     {
-      for (unsigned outputNumber = 0; outputNumber < propertyOutputs.size(); ++outputNumber)
-      {
-        delete propertyOutputs[outputNumber];
-      }
-
       delete rawXmlDoc;
       rawXmlDoc = nullptr;
 
@@ -395,53 +390,53 @@ namespace hemelb
 	// only distributions, at double precision.
 	//
 	// Get stuff from XML
-	extraction::PropertyOutputFile* file = new extraction::PropertyOutputFile();
-	file->filename = cpEl.GetAttributeOrThrow("file");
-	cpEl.GetAttributeOrThrow("period", file->frequency);
+	auto file = extraction::PropertyOutputFile{};
+	file.filename = cpEl.GetAttributeOrThrow("file");
+	cpEl.GetAttributeOrThrow("period", file.frequency);
 	// Configure the file
-	file->geometry.reset(new extraction::WholeGeometrySelector());
+	file.geometry.reset(new extraction::WholeGeometrySelector());
 	extraction::OutputField field;
 	field.name = "distributions";
 	field.noffsets = 0;
 	field.offset = {};
 	field.typecode = distribn_t{0};
 	field.src = extraction::source::Distributions{};
-	file->fields.push_back(field);
+	file.fields.push_back(field);
 	// Add to outputs
-	propertyOutputs.push_back(file);
+	propertyOutputs.push_back(std::move(file));
       }
     }
 
-    extraction::PropertyOutputFile* SimConfig::DoIOForPropertyOutputFile(
+    extraction::PropertyOutputFile SimConfig::DoIOForPropertyOutputFile(
         const io::xml::Element& propertyoutputEl)
     {
-      extraction::PropertyOutputFile* file = new extraction::PropertyOutputFile();
-      file->filename = propertyoutputEl.GetAttributeOrThrow("file");
+      auto file = extraction::PropertyOutputFile{};
+      file.filename = propertyoutputEl.GetAttributeOrThrow("file");
 
-      propertyoutputEl.GetAttributeOrThrow("period", file->frequency);
+      propertyoutputEl.GetAttributeOrThrow("period", file.frequency);
 
       io::xml::Element geometryEl = propertyoutputEl.GetChildOrThrow("geometry");
       const std::string& type = geometryEl.GetAttributeOrThrow("type");
 
       if (type == "plane")
       {
-        file->geometry.reset(DoIOForPlaneGeometry(geometryEl));
+        file.geometry.reset(DoIOForPlaneGeometry(geometryEl));
       }
       else if (type == "line")
       {
-        file->geometry.reset(DoIOForLineGeometry(geometryEl));
+        file.geometry.reset(DoIOForLineGeometry(geometryEl));
       }
       else if (type == "whole")
       {
-        file->geometry.reset(new extraction::WholeGeometrySelector());
+        file.geometry.reset(new extraction::WholeGeometrySelector());
       }
       else if (type == "surface")
       {
-        file->geometry.reset(new extraction::GeometrySurfaceSelector());
+        file.geometry.reset(new extraction::GeometrySurfaceSelector());
       }
       else if (type == "surfacepoint")
       {
-        file->geometry.reset(DoIOForSurfacePoint(geometryEl));
+        file.geometry.reset(DoIOForSurfacePoint(geometryEl));
       }
       else
       {
@@ -451,7 +446,7 @@ namespace hemelb
 
       for (io::xml::ChildIterator fieldPtr = propertyoutputEl.IterChildren("field");
           !fieldPtr.AtEnd(); ++fieldPtr)
-        file->fields.push_back(DoIOForPropertyField(*fieldPtr));
+        file.fields.push_back(DoIOForPropertyField(*fieldPtr));
 
       return file;
     }

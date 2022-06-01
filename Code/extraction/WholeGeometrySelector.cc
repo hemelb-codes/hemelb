@@ -5,14 +5,17 @@
 
 #include "extraction/WholeGeometrySelector.h"
 
-namespace hemelb
+namespace hemelb::extraction
 {
-  namespace extraction
-  {
-    bool WholeGeometrySelector::IsWithinGeometry(const extraction::IterableDataSource& data,
-                                                 const util::Vector3D<site_t>& location) const
-    {
-      return true;
-    }
+
+  GeometrySelector* WholeGeometrySelector::clone() const {
+    return new WholeGeometrySelector{};
   }
+
+  bool WholeGeometrySelector::IsWithinGeometry(const extraction::IterableDataSource& data,
+					       const util::Vector3D<site_t>& location) const
+  {
+    return true;
+  }
+
 }

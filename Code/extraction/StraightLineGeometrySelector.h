@@ -27,6 +27,10 @@ namespace hemelb
         StraightLineGeometrySelector(const util::Vector3D<float>& endpoint1,
                                      const util::Vector3D<float>& endpoint2);
 
+	~StraightLineGeometrySelector() override = default;
+
+	GeometrySelector* clone() const override;
+
         /**
          * Get the first endpoint of the line.
          * @return
@@ -47,7 +51,7 @@ namespace hemelb
          * @param location
          * @return
          */
-        bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const;
+        bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const override;
 
       private:
         /**

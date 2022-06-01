@@ -28,6 +28,10 @@ namespace hemelb
          */
         SurfacePointSelector(const util::Vector3D<float>& surfacePoint);
 
+	~SurfacePointSelector() override = default;
+
+	GeometrySelector* clone() const override;
+
         /**
          * Get the surface point.
          * @return surface point
@@ -41,7 +45,7 @@ namespace hemelb
          * @param location lattice site coordinates to evaluate the selector on
          * @return whether location is within the selection
          */
-        bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const;
+        bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const override;
 
       private:
         /** Coordinates of the surface point to be selected. */

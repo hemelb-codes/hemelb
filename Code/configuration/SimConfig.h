@@ -161,11 +161,11 @@ namespace hemelb
         {
           return propertyOutputs.size();
         }
-        extraction::PropertyOutputFile * GetPropertyOutput(unsigned int index) const
+        extraction::PropertyOutputFile& GetPropertyOutput(unsigned int index)
         {
           return propertyOutputs[index];
         }
-        std::vector<extraction::PropertyOutputFile*> const GetPropertyOutputs() const
+        std::vector<extraction::PropertyOutputFile> const& GetPropertyOutputs() const
         {
           return propertyOutputs;
         }
@@ -276,7 +276,7 @@ namespace hemelb
         void DoIOForProperties(const io::xml::Element& xmlNode);
         void DoIOForProperty(io::xml::Element xmlNode, bool isLoading);
         extraction::OutputField DoIOForPropertyField(const io::xml::Element& xmlNode);
-        extraction::PropertyOutputFile* DoIOForPropertyOutputFile(
+        extraction::PropertyOutputFile DoIOForPropertyOutputFile(
             const io::xml::Element& propertyoutputEl);
         extraction::StraightLineGeometrySelector* DoIOForLineGeometry(
             const io::xml::Element& xmlNode);
@@ -320,7 +320,7 @@ namespace hemelb
         float maxVelocity;
         float maxStress;
         lb::StressTypes stressType;
-        std::vector<extraction::PropertyOutputFile*> propertyOutputs;
+        std::vector<extraction::PropertyOutputFile> propertyOutputs;
         std::string colloidConfigPath;
         /**
          * True if the file has a colloids section.

@@ -5,23 +5,21 @@
 
 #include "extraction/GeometrySelector.h"
 
-namespace hemelb
+namespace hemelb::extraction
 {
-  namespace extraction
+
+  bool GeometrySelector::Include(const extraction::IterableDataSource& data,
+				 const util::Vector3D<site_t>& location) const
   {
-    bool GeometrySelector::Include(const extraction::IterableDataSource& data,
-                                   const util::Vector3D<site_t>& location) const
+    if (!data.IsValidLatticeSite(location) || !data.IsAvailable(location))
     {
-      if (!data.IsValidLatticeSite(location) || !data.IsAvailable(location))
-      {
-        return false;
-      }
-
-      return IsWithinGeometry(data, location);
+      return false;
     }
 
-    util::Vector3D<float> GeometrySelector::LatticeToPhysical(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const {
-      return util::Vector3D<float>{location} * float(data.GetVoxelSize()) + data.GetOrigin().as<float>();
-    }
+    return IsWithinGeometry(data, location);
+  }
+
+  util::Vector3D<float> GeometrySelector::LatticeToPhysical(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const {
+    return util::Vector3D<float>{location} * float(data.GetVoxelSize()) + data.GetOrigin().as<float>();
   }
 }

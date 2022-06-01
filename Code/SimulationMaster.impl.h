@@ -344,8 +344,8 @@ namespace hemelb
       for (unsigned outputNumber = 0; outputNumber < simConfig->PropertyOutputCount();
           ++outputNumber)
       {
-        simConfig->GetPropertyOutput(outputNumber)->filename = fileManager->GetDataExtractionPath()
-            + simConfig->GetPropertyOutput(outputNumber)->filename;
+        simConfig->GetPropertyOutput(outputNumber).filename = fileManager->GetDataExtractionPath()
+            + simConfig->GetPropertyOutput(outputNumber).filename;
       }
 
       propertyExtractor =

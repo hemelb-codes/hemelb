@@ -17,6 +17,10 @@ namespace hemelb
 
     }
 
+    GeometrySelector* StraightLineGeometrySelector::clone() const {
+      return new StraightLineGeometrySelector{*this};
+    }
+
     util::Vector3D<float> StraightLineGeometrySelector::GetEndpoint1() const
     {
       return endpoint1;

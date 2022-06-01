@@ -6,25 +6,22 @@
 #ifndef HEMELB_EXTRACTION_PROPERTYOUTPUTFILE_H
 #define HEMELB_EXTRACTION_PROPERTYOUTPUTFILE_H
 
-#include <memory>
 #include <string>
 #include <vector>
 
+#include "util/clone_ptr.h"
 #include "extraction/GeometrySelector.h"
 #include "extraction/OutputField.h"
 
-namespace hemelb
+namespace hemelb::extraction
 {
-  namespace extraction
+  struct PropertyOutputFile
   {
-    struct PropertyOutputFile
-    {
-        std::string filename;
-        unsigned long frequency;
-        std::unique_ptr<GeometrySelector> geometry;
-        std::vector<OutputField> fields;
-    };
-  }
+    std::string filename;
+    unsigned long frequency;
+    util::clone_ptr<GeometrySelector> geometry;
+    std::vector<OutputField> fields;
+  };
 }
 
 #endif // HEMELB_EXTRACTION_PROPERTYOUTPUTFILE_H

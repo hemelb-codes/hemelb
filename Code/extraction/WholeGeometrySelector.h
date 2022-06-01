@@ -8,26 +8,19 @@
 
 #include "extraction/GeometrySelector.h"
 
-namespace hemelb
+namespace hemelb::extraction
 {
-  namespace extraction
+  // Class for selecting the whole geometry.
+  class WholeGeometrySelector : public GeometrySelector
   {
-    /**
-     * Class for selecting the whole geometry.
-     */
-    class WholeGeometrySelector : public GeometrySelector
-    {
-      protected:
-        /**
-         * Returns true for all locations.
-         *
-         * @param data
-         * @param location
-         * @return
-         */
-        bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const;
-    };
-  }
+  public:
+    ~WholeGeometrySelector() override = default;
+    GeometrySelector* clone() const override;
+
+  protected:
+    // Returns true for all locations.
+    bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const override;
+  };
 }
 
-#endif /* HEMELB_EXTRACTION_WHOLEGEOMETRYSELECTOR_H */
+#endif // HEMELB_EXTRACTION_WHOLEGEOMETRYSELECTOR_H

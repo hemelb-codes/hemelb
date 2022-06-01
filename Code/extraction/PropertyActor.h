@@ -27,7 +27,7 @@ namespace hemelb
          * @return
          */
         PropertyActor(const lb::SimulationState& simulationState,
-                      const std::vector<PropertyOutputFile*>& propertyOutputs,
+                      const std::vector<PropertyOutputFile>& propertyOutputs,
                       IterableDataSource& dataSource, reporting::Timers& timers,
                       const net::IOCommunicator& ioComms);
 

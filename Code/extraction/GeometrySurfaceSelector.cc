@@ -5,15 +5,17 @@
 
 #include "extraction/GeometrySurfaceSelector.h"
 
-namespace hemelb
+namespace hemelb::extraction
 {
-  namespace extraction
-  {
-    bool GeometrySurfaceSelector::IsWithinGeometry(const extraction::IterableDataSource& data,
-                                                   const util::Vector3D<site_t>& location) const
-    {
-      return data.IsWallSite(location);
-    }
 
-  } /* namespace extraction */
-} /* namespace hemelb */
+  GeometrySelector* GeometrySurfaceSelector::clone() const {
+    return new GeometrySurfaceSelector{};
+  }
+
+  bool GeometrySurfaceSelector::IsWithinGeometry(const extraction::IterableDataSource& data,
+						 const util::Vector3D<site_t>& location) const
+  {
+    return data.IsWallSite(location);
+  }
+
+}

@@ -8,80 +8,80 @@
 
 #include "extraction/GeometrySelector.h"
 
-namespace hemelb
+namespace hemelb::extraction
 {
-  namespace extraction
+  // Selects a geometry that forms a squat cylinder with height 0.5
+  // lattice units around a planar circle with specified normal and
+  // centre, and optionally specified radius (assumed to be infinite
+  // when absent).
+  class PlaneGeometrySelector : public GeometrySelector
   {
+  public:
     /**
-     * Selects a geometry that forms a squat cylinder with height 0.5 lattice units
-     * around a planar circle with specified normal and centre, and optionally specified
-     * radius (assumed to be infinite when absent).
+     * Constructor makes an infinite plane geometry object with given normal, about a given
+     * point.
+     * @param point
+     * @param normal
      */
-    class PlaneGeometrySelector : public GeometrySelector
-    {
-      public:
-        /**
-         * Constructor makes an infinite plane geometry object with given normal, about a given
-         * point.
-         * @param point
-         * @param normal
-         */
-        PlaneGeometrySelector(const util::Vector3D<float>& point,
-                              const util::Vector3D<float>& normal);
+    PlaneGeometrySelector(const util::Vector3D<float>& point,
+			  const util::Vector3D<float>& normal);
 
-        /**
-         * Constructor makes a plane geometry object with given normal, about a given
-         * point, with given radius.
-         * @param point
-         * @param normal
-         * @param radius
-         */
-        PlaneGeometrySelector(const util::Vector3D<float>& point,
-                              const util::Vector3D<float>& normal, float radius);
+    /**
+     * Constructor makes a plane geometry object with given normal, about a given
+     * point, with given radius.
+     * @param point
+     * @param normal
+     * @param radius
+     */
+    PlaneGeometrySelector(const util::Vector3D<float>& point,
+			  const util::Vector3D<float>& normal, float radius);
 
-        /**
-         * Returns a point that lies on the plane.
-         * @return
-         */
-        const util::Vector3D<float>& GetPoint() const;
+    ~PlaneGeometrySelector() override = default;
 
-        /**
-         * Returns the plane normal.
-         */
-        const util::Vector3D<float>& GetNormal() const;
+    /**
+     * Returns a point that lies on the plane.
+     * @return
+     */
+    const util::Vector3D<float>& GetPoint() const;
 
-        /**
-         * Returns the radius of the plane.
-         */
-        float GetRadius() const;
+    /**
+     * Returns the plane normal.
+     */
+    const util::Vector3D<float>& GetNormal() const;
 
-      protected:
-        /**
-         * Returns true for any location within 0.5 lattice units of the plane / squat cylinder.
-         *
-         * @param data
-         * @param location
-         * @return
-         */
-        bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const;
+    /**
+     * Returns the radius of the plane.
+     */
+    float GetRadius() const;
 
-      private:
-        /**
-         * A point on the plane.
-         */
-        util::Vector3D<float> planePoint;
+    GeometrySelector* clone() const override;
+  protected:
+    /**
+     * Returns true for any location within 0.5 lattice units of the plane / squat cylinder.
+     *
+     * @param data
+     * @param location
+     * @return
+     */
+    bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const override;
 
-        /**
-         * The plane normal.
-         */
-        util::Vector3D<float> normal;
+  private:
+    /**
+     * A point on the plane.
+     */
+    util::Vector3D<float> planePoint;
 
-        /**
-         * The radius around the planePoint to select. Radius <= 0 is taken as infinite.
-         */
-        float radius;
-    };
-  }
+    /**
+     * The plane normal.
+     */
+    util::Vector3D<float> normal;
+
+    /**
+     * The radius around the planePoint to select. Radius <= 0 is taken as infinite.
+     */
+    float radius;
+  };
+
 }
 
 #endif /* HEMELB_EXTRACTION_PLANEGEOMETRYSELECTOR_H */

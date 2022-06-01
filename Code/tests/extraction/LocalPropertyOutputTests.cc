@@ -121,7 +121,7 @@ namespace hemelb
       std::remove(tempXtrFileName);
       std::remove(tempOffFileName);
 
-      auto simpleOutFile = extraction::PropertyOutputFile{tempXtrFileName, 100, std::make_unique<extraction::WholeGeometrySelector>()};
+      auto simpleOutFile = extraction::PropertyOutputFile{tempXtrFileName, 100, util::make_clone_ptr<extraction::WholeGeometrySelector>()};
 
       extraction::OutputField pressure{"Pressure", extraction::source::Pressure{}, float{0}, 1, {REFERENCE_PRESSURE_mmHg}};
       simpleOutFile.fields.push_back(pressure);
@@ -157,7 +157,7 @@ namespace hemelb
 
       SECTION("Write") {
 	// Create the writer object; this should write the headers.
-	auto propertyWriter = std::make_unique<extraction::LocalPropertyOutput>(*simpleDataSource, &simpleOutFile, Comms());
+	auto propertyWriter = std::make_unique<extraction::LocalPropertyOutput>(*simpleDataSource, simpleOutFile, Comms());
 	// Open the file
 	auto writtenFile = open_as_closing(simpleOutFile.filename.c_str(), "r");
 	

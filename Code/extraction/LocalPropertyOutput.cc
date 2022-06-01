@@ -64,18 +64,18 @@ namespace hemelb
     }  // namespace
 
     LocalPropertyOutput::LocalPropertyOutput(IterableDataSource& dataSource,
-                                             const PropertyOutputFile* outputSpec,
+                                             const PropertyOutputFile& outputSpec,
                                              const net::IOCommunicator& ioComms) :
         comms(ioComms), dataSource(dataSource), outputSpec(outputSpec)
     {
       // Open the file as write-only, create it if it doesn't exist, don't create if the file
       // already exists.
-      outputFile = net::MpiFile::Open(comms, outputSpec->filename,
+      outputFile = net::MpiFile::Open(comms, outputSpec.filename,
                                       MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL);
 
       // Create a new file name by changing the suffix - outputSpec
       // must have a .-separated extension!
-      const auto offsetFileName = io::formats::offset::ExtractionToOffset(outputSpec->filename);
+      const auto offsetFileName = io::formats::offset::ExtractionToOffset(outputSpec.filename);
 
       // Now create the file.
       offsetFile = net::MpiFile::Open(comms, offsetFileName,
@@ -86,7 +86,7 @@ namespace hemelb
       dataSource.Reset();
       while (dataSource.ReadNext())
       {
-        if (outputSpec->geometry->Include(dataSource, dataSource.GetPosition()))
+        if (outputSpec.geometry->Include(dataSource, dataSource.GetPosition()))
         {
           ++siteCount;
         }
@@ -99,7 +99,7 @@ namespace hemelb
       writeLength = 3 * 4;
 
       // Then get add each field's length
-      for (auto&& f: outputSpec->fields) {
+      for (auto&& f: outputSpec.fields) {
 	// Also check that len offsets makes sense
 	auto n = f.noffsets;
 	auto len = GetFieldLength(f.src);
@@ -136,7 +136,7 @@ namespace hemelb
       {
         // Compute the length of the field header
         unsigned const fieldHeaderLength = std::transform_reduce(
-	  outputSpec->fields.begin(), outputSpec->fields.end(),
+	  outputSpec.fields.begin(), outputSpec.fields.end(),
 	  0U,
 	  std::plus<unsigned>{},
 	  [&](OutputField const& f) {
@@ -161,11 +161,11 @@ namespace hemelb
 	headerWriter << double(origin[0]) << double(origin[1]) << double(origin[2]);
 
 	// Write the total site count and number of fields
-	headerWriter << uint64_t(allSiteCount) << uint32_t(outputSpec->fields.size())
+	headerWriter << uint64_t(allSiteCount) << uint32_t(outputSpec.fields.size())
 		     << uint32_t(fieldHeaderLength);
 
 	// Main header now finished - do field headers
-	for (auto& field: outputSpec->fields) {
+	for (auto& field: outputSpec.fields) {
 	  auto const len = GetFieldLength(field.src);
 	  headerWriter << field.name
 		       << uint32_t(len)
@@ -219,10 +219,10 @@ namespace hemelb
 
     bool LocalPropertyOutput::ShouldWrite(unsigned long timestepNumber) const
     {
-      return ( (timestepNumber % outputSpec->frequency) == 0);
+      return ( (timestepNumber % outputSpec.frequency) == 0);
     }
 
-    const PropertyOutputFile* LocalPropertyOutput::GetOutputSpec() const
+    const PropertyOutputFile& LocalPropertyOutput::GetOutputSpec() const
     {
       return outputSpec;
     }
@@ -255,13 +255,13 @@ namespace hemelb
       while (dataSource.ReadNext())
       {
         const util::Vector3D<site_t>& position = dataSource.GetPosition();
-        if (outputSpec->geometry->Include(dataSource, position))
+        if (outputSpec.geometry->Include(dataSource, position))
         {
           // Write the position
           xdrWriter << (uint32_t) position.x << (uint32_t) position.y << (uint32_t) position.z;
 
           // Write for each field.
-          for (auto& fieldSpec: outputSpec->fields)
+          for (auto& fieldSpec: outputSpec.fields)
           {
 	    source::visit(
 	      fieldSpec.src,

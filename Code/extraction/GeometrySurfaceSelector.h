@@ -8,18 +8,19 @@
 
 #include "extraction/GeometrySelector.h"
 
-namespace hemelb
+namespace hemelb::extraction
 {
-  namespace extraction
+
+  class GeometrySurfaceSelector : public GeometrySelector
   {
+  public:
+    ~GeometrySurfaceSelector() override = default;
+    GeometrySelector* clone() const override;
 
-    class GeometrySurfaceSelector : public hemelb::extraction::GeometrySelector
-    {
-      protected:
+  protected:
+    bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const override;
+  };
 
-        bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) const;
-    };
+}
 
-  } /* namespace extraction */
-} /* namespace hemelb */
-#endif /* HEMELB_EXTRACTION_GEOMETRYSURFACESELECTOR_H */
+#endif // HEMELB_EXTRACTION_GEOMETRYSURFACESELECTOR_H

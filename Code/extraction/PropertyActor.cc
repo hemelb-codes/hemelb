@@ -10,7 +10,7 @@ namespace hemelb
   namespace extraction
   {
     PropertyActor::PropertyActor(const lb::SimulationState& simulationState,
-                                 const std::vector<PropertyOutputFile*>& propertyOutputs,
+                                 const std::vector<PropertyOutputFile>& propertyOutputs,
                                  IterableDataSource& dataSource, reporting::Timers& timers,
                                  const net::IOCommunicator& ioComms) :
         simulationState(simulationState), timers(timers)
@@ -36,14 +36,14 @@ namespace hemelb
         // Only consider the ones that are being written this iteration.
         if (propertyOutput->ShouldWrite(simulationState.GetTimeStep()))
         {
-          const PropertyOutputFile* outputFile = propertyOutput->GetOutputSpec();
+          auto& outputFile = propertyOutput->GetOutputSpec();
 
           // Iterate over each field.
-          for (unsigned outputField = 0; outputField < outputFile->fields.size(); ++outputField)
+	  for (auto&& fieldSpec: outputFile.fields)
           {
             // Set the cache to calculate each required field.
 	    source::visit(
-	      outputFile->fields[outputField].src,
+	      fieldSpec.src,
 	      [&](source::Pressure) {
 		propertyCache.densityCache.SetRefreshFlag();
 	      },
