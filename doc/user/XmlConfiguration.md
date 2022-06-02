@@ -120,9 +120,16 @@ Required element `<visualisation>` to configure the vis. Subelements:
 ## (Extracted) Properties
 Describe what data to extract under the `<properties>` element. Child elements:
 
-* `<propertyoutput file="path.xtr" period="int">` - specify the file
-  (under the `results/Extraction` directory) and the output period (in
-  time steps)
+* `<propertyoutput file="path.xtr" period="int"
+  timestep_mode="[multi|single]">` - specify the file (under the
+  `results/Extraction` directory) and the output period (in time
+  steps). The way that multiple timesteps of data will be handled is
+  set by the `timestep_mode` attribute. Valid values are `multi` (the
+  default if the attribute is not present) or `single`. For `multi`,
+  each subsequent timestep's data will be appended to the same
+  file. For `single`, only a single timestep will be written to each
+  file; in this case the `file` attribute must contain exactly one
+  `%d` which will be replaced with the timestep number.
   - `<geometry type="type">` - the type string must be one of the following:
     + `type="whole"` - all lattice points - no subelements needed
 	+ `type="surface"` - all lattice points with one or more links

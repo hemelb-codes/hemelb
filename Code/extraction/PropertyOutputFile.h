@@ -7,6 +7,7 @@
 #define HEMELB_EXTRACTION_PROPERTYOUTPUTFILE_H
 
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "util/clone_ptr.h"
@@ -15,12 +16,21 @@
 
 namespace hemelb::extraction
 {
+  // Tag types for the file timestep mode.
+  struct multi_timestep_file {};
+  struct single_timestep_files {};
+
+  // Multiple timesteps per file first so it will be default (as this
+  // is the old behaviour).
+  using file_timestep_mode = std::variant<multi_timestep_file, single_timestep_files>;
+
   struct PropertyOutputFile
   {
     std::string filename;
     unsigned long frequency;
     util::clone_ptr<GeometrySelector> geometry;
     std::vector<OutputField> fields;
+    file_timestep_mode ts_mode;
   };
 }
 

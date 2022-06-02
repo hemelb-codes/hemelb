@@ -406,7 +406,34 @@ namespace hemelb
         const io::xml::Element& propertyoutputEl)
     {
       auto file = extraction::PropertyOutputFile{};
+
+      if (auto ts_mode = propertyoutputEl.GetAttributeOrNull("timestep_mode")) {
+	if (*ts_mode == "multi") {
+	  file.ts_mode = extraction::multi_timestep_file{};
+	} else if (*ts_mode == "single") {
+	  file.ts_mode = extraction::single_timestep_files{};
+	} else {
+	  throw Exception()
+	    << "Invalid value of timestep_mode attribute '" << *ts_mode
+	    << "' at: " << propertyoutputEl.GetPath();
+	}
+      } else {
+	file.ts_mode = extraction::multi_timestep_file{};
+      }
+
       file.filename = propertyoutputEl.GetAttributeOrThrow("file");
+      if (std::holds_alternative<extraction::single_timestep_files>(file.ts_mode)) {
+	auto const& p = file.filename;
+	// Path must contain exactly one printf conversion specifier
+	// for an integer.
+	auto const errmsg = "For single timestep output files, "
+	  "the path must contain exactly one '%d' and no other '%' characters";
+	auto n_pc = std::count(p.begin(), p.end(), '%');
+	auto i_pcd = p.find("%d", 0, 2);
+	if (n_pc != 1 || i_pcd == std::string::npos) {
+	  throw Exception() << errmsg;
+	}
+      }
 
       propertyoutputEl.GetAttributeOrThrow("period", file.frequency);
 
