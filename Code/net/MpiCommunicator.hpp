@@ -52,6 +52,14 @@ namespace hemelb
     }
 
     template<typename T>
+    T MpiCommunicator::Scan(const T& val, const MPI_Op& op) const
+    {
+      T ans;
+      HEMELB_MPI_CALL(MPI_Scan, (MpiConstCast(&val), &ans, 1, MpiDataType<T>(), op, *this));
+      return ans;
+    }
+
+    template<typename T>
     T MpiCommunicator::Reduce(const T& val, const MPI_Op& op, const int root) const
     {
       T ans;
