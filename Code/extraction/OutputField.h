@@ -10,16 +10,10 @@
 
 #include "Exception.h"
 #include "io/formats/extraction.h"
+#include "util/variant.h"
 
 namespace hemelb::extraction
 {
-  namespace detail {
-    // Helpers for allowing one to pass a number of lambdas to visit a
-    // std:variant (see visit functions in namespaces below).
-    template<typename... Ts> struct make_overload: Ts... { using Ts::operator()...; };
-    template<typename... Ts> make_overload(Ts...) -> make_overload<Ts...>;
-  }
-
   // Namespace holding tag types and variant for the data source.
   namespace source {
     // Tag types
@@ -48,18 +42,6 @@ namespace hemelb::extraction
       Distributions,
       MpiRank
     >;
-
-    // Helper to visit the variant with a bunch of lamdbas. E.g.:
-    //
-    // source::visit(src_var,
-    //   [](Pressure unused) {/* pressure specific stuff */},
-    //   [](Velocity) { /* velocity specifi stuff */},
-    //   ... callables for other possible types ...
-    // );
-    template <typename... Callables>
-    auto visit(Type const& t, Callables&&... calls) {
-      return std::visit(detail::make_overload{std::forward<Callables>(calls)...}, t);
-    }
   }
 
   // Namespace holding variant and helpers for the type to be saved to
@@ -74,12 +56,6 @@ namespace hemelb::extraction
       std::int64_t,
       std::uint64_t
     >;
-
-    // Visit helper func (see source::visit above)
-    template <typename... Callables>
-    auto visit(Type const& t, Callables&&... calls) {
-      return std::visit(detail::make_overload{std::forward<Callables>(calls)...}, t);
-    }
 
     // Convert the enum to the variant with the appropriate type
     // active.
@@ -104,7 +80,7 @@ namespace hemelb::extraction
 
     // Convert the variant to an enum
     inline TypeCode type_to_enum(Type const& tvar) {
-      return visit(tvar,
+      return overload_visit(tvar,
 	[](float) { return TypeCode::FLOAT; },
 	[](double) { return TypeCode::DOUBLE; },
 	[](std::int32_t) { return TypeCode::INT32; },

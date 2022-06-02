@@ -263,7 +263,7 @@ namespace hemelb
           // Write for each field.
           for (auto& fieldSpec: outputSpec.fields)
           {
-	    source::visit(
+	    overload_visit(
 	      fieldSpec.src,
 	      [&](source::Pressure) {
 		write(xdrWriter, fieldSpec.typecode, dataSource.GetPressure() - fieldSpec.offset[0]);
@@ -350,7 +350,7 @@ namespace hemelb
 
     unsigned LocalPropertyOutput::GetFieldLength(source::Type src) const
     {
-      return source::visit(src,
+      return overload_visit(src,
 	[](source::Pressure) {
 	  return 1U;
 	},

@@ -42,7 +42,7 @@ namespace hemelb
 	  for (auto&& fieldSpec: outputFile.fields)
           {
             // Set the cache to calculate each required field.
-	    source::visit(
+	    overload_visit(
 	      fieldSpec.src,
 	      [&](source::Pressure) {
 		propertyCache.densityCache.SetRefreshFlag();
