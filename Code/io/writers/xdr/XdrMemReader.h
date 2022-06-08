@@ -26,7 +26,7 @@ namespace hemelb::io::writers::xdr
     ~XdrMemReader() override = default;
     unsigned GetPosition() override;
   protected:
-    virtual const char* get_bytes(size_t n);
+    const char* get_bytes(size_t n) override;
   private:
     const char* start;
     const char* current;

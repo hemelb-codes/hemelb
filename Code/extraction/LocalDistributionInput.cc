@@ -18,9 +18,15 @@ namespace hemelb::extraction {
   namespace xdr = hemelb::io::writers::xdr;
 
   LocalDistributionInput::LocalDistributionInput(std::string dataFilePath,
+						 std::optional<std::string> const& maybeOffsetPath,
 						 const net::IOCommunicator& ioComm) :
     comms{ioComm}, filePath{std::move(dataFilePath)}
   {
+    if (maybeOffsetPath) {
+      offsetPath = *maybeOffsetPath;
+    } else {
+      offsetPath = fmt::offset::ExtractionToOffset(filePath);
+    }
   }
 
   namespace {
@@ -44,7 +50,7 @@ namespace hemelb::extraction {
       ReadExtractionHeaders(inputFile, NUMVECTORS);
 
       // Now read offset file.
-      ReadOffsets(fmt::offset::ExtractionToOffset(filePath));
+      ReadOffsets(offsetPath);
 
       // Figure out how many checkpoints are in the XTR file and
       // therefore the position to start at.

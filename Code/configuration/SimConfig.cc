@@ -33,7 +33,7 @@ namespace hemelb
     }
 
     // checkpoint IC
-    CheckpointIC::CheckpointIC(const util::UnitConverter* units, std::optional<LatticeTimeStep> t, const std::string& cp) : ICConfigBase(units, t), cpFile(cp) {
+    CheckpointIC::CheckpointIC(const util::UnitConverter* units, std::optional<LatticeTimeStep> t, const std::string& cp, std::optional<std::string> const& maybeOff) : ICConfigBase(units, t), cpFile(cp), maybeOffFile(maybeOff) {
     }
 
 
@@ -390,6 +390,8 @@ namespace hemelb
 	cpEl.GetAttributeOrThrow("period", file.frequency);
 	// Configure the file
 	file.geometry.reset(new extraction::WholeGeometrySelector());
+	file.ts_mode = extraction::single_timestep_files{};
+
 	extraction::OutputField field;
 	field.name = "distributions";
 	field.noffsets = 0;
@@ -645,7 +647,13 @@ namespace hemelb
       } else {
 	if (checkpointEl) {
 	  // Only checkpoint
-	  icConfig = CheckpointIC(unitConverter, t0, checkpointEl.GetAttributeOrThrow("file"));
+	  auto cp_path = checkpointEl.GetAttributeOrThrow("file");
+	  auto off_path = checkpointEl.GetAttributeOrNull("offsets");
+	  std::optional<std::string> maybe_off_path;
+	  if (off_path != nullptr)
+	    maybe_off_path = *off_path;
+
+	  icConfig = CheckpointIC(unitConverter, t0, cp_path, maybe_off_path);
 	} else {
 	  // No IC!
 	  throw Exception() << "XML <initialconditions> element contains no known initial condition type";

@@ -38,7 +38,7 @@ namespace hemelb
          * An iterationNumber of 0 will write all files.
          * @param iterationNumber
          */
-        void Write(unsigned long iterationNumber) const;
+        void Write(unsigned long iterationNumber, unsigned long totalSteps) const;
 
         /**
          * Returns a vector of all the LocalPropertyOutputs.

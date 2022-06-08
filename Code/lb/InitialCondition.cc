@@ -37,8 +37,8 @@ namespace hemelb {
       mom_x(mx), mom_y(my), mom_z(mz) {
     }
     
-    CheckpointInitialCondition::CheckpointInitialCondition(std::optional<LatticeTimeStep> t0, const std::string& cp)
-      : InitialConditionBase(t0), cpFile(cp) {
+    CheckpointInitialCondition::CheckpointInitialCondition(std::optional<LatticeTimeStep> t0, const std::string& cp, std::optional<std::string> const& maybeOff)
+      : InitialConditionBase(t0), cpFile(cp), maybeOffFile(maybeOff) {
     }
 
     // InitialCondition - sum type container
@@ -73,7 +73,7 @@ namespace hemelb {
 	return EquilibriumInitialCondition{cfg.t0, rho};
       }
       InitialCondition operator()(const configuration::CheckpointIC& cfg) const {
-	return CheckpointInitialCondition{cfg.t0, cfg.cpFile};
+	return CheckpointInitialCondition{cfg.t0, cfg.cpFile, cfg.maybeOffFile};
       }
     };
     

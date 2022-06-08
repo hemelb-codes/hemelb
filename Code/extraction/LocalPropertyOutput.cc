@@ -63,43 +63,91 @@ namespace hemelb
 
     }  // namespace
 
+    static unsigned CalcFieldHeaderLength(std::vector<OutputField> const& fields);
+
     LocalPropertyOutput::LocalPropertyOutput(IterableDataSource& dataSource,
-                                             const PropertyOutputFile& outputSpec,
+                                             const PropertyOutputFile& outputSpec_,
                                              const net::IOCommunicator& ioComms) :
-        comms(ioComms), dataSource(dataSource), outputSpec(outputSpec)
+        comms(ioComms), dataSource(dataSource), outputSpec(outputSpec_)
     {
-      // Open the file as write-only, create it if it doesn't exist, don't create if the file
-      // already exists.
-      outputFile = net::MpiFile::Open(comms, outputSpec.filename,
-                                      MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL);
+      if (std::holds_alternative<multi_timestep_file>(outputSpec.ts_mode)) {
+	// Just replace extension with .off
+	offset_file_name = io::formats::offset::ExtractionToOffset(outputSpec.filename);
+	// empty output_file_pattern is OK
+      } else if (std::holds_alternative<single_timestep_files>(outputSpec.ts_mode)) {
+	// Get views of the whole path
+	std::string_view p = outputSpec.filename;
+	auto i_pcd = p.find("%d", 0, 2);
+	// The part before %d
+	auto beginning = p.substr(0, i_pcd);
+	// The part after
+	auto end = p.substr(i_pcd + 2);
+	// Construct the path without '%d'
+	std::string basename{beginning};
+	basename += end;
+	// Use this to compute offset file name
+	offset_file_name = io::formats::offset::ExtractionToOffset(basename);
+	// Build the pattern
+	output_file_pattern += beginning;
+	output_file_pattern += "%*ld";
+	output_file_pattern += end;
+      }
 
-      // Create a new file name by changing the suffix - outputSpec
-      // must have a .-separated extension!
-      const auto offsetFileName = io::formats::offset::ExtractionToOffset(outputSpec.filename);
+      header_length = io::formats::extraction::MainHeaderLength + CalcFieldHeaderLength(outputSpec.fields);
 
-      // Now create the file.
-      offsetFile = net::MpiFile::Open(comms, offsetFileName,
-				      MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL);
+      // Count sites on this rank
+      local_site_count = CountWrittenSitesOnRank();
+      global_site_count = comms.AllReduce(local_site_count, MPI_SUM);
 
-      // Count sites on this task
-      uint64_t siteCount = 0;
+      // Calculate how long local writes need to be (recall only IO
+      // rank writes the timestep).
+      auto const site_len = CalcSiteWriteLen(outputSpec.fields);
+      local_data_write_length = local_site_count * site_len  + (comms.OnIORank() ? 8U : 0U);
+      // Everyone needs to know the total length written during one iteration
+      global_data_write_length = site_len * global_site_count + 8U;
+
+      // Work out the offset for where this rank writes its data
+      auto const local_write_end = comms.Scan(local_data_write_length, MPI_SUM) + header_length;
+      local_write_start = local_write_end - local_data_write_length;
+
+      // Prepare the header information on the IO proc.
+      if (comms.OnIORank())
+      {
+	header_data = PrepareHeader();
+      }
+
+      // Create the buffer that we'll write each iteration's data into.
+      buffer.resize(local_data_write_length);
+
+      // Write the offset file
+      WriteOffsetFile();
+
+      // If we are doing all timesteps in one file, set it up now.
+      if (std::holds_alternative<multi_timestep_file>(outputSpec.ts_mode)) {
+	StartFile(outputSpec.filename);
+      }
+    }
+
+    uint64_t LocalPropertyOutput::CountWrittenSitesOnRank() {
+      auto n = uint64_t{0};
       dataSource.Reset();
       while (dataSource.ReadNext())
       {
-        if (outputSpec.geometry->Include(dataSource, dataSource.GetPosition()))
+	if (outputSpec.geometry->Include(dataSource, dataSource.GetPosition()))
         {
-          ++siteCount;
-        }
+	  ++n;
+	}
       }
+      return n;
+    }
 
-      // Calculate how long local writes need to be.
-
-      // First get the length per-site
+    // Work out how many bytes are needed to write one site's data.
+    std::uint64_t LocalPropertyOutput::CalcSiteWriteLen(std::vector<OutputField> const& fields) const {
       // Always have 3 uint32's for the position of a site
-      writeLength = 3 * 4;
+      std::uint64_t site_len = 3 * 4;
 
       // Then get add each field's length
-      for (auto&& f: outputSpec.fields) {
+      for (auto&& f: fields) {
 	// Also check that len offsets makes sense
 	auto n = f.noffsets;
 	auto len = GetFieldLength(f.src);
@@ -108,113 +156,61 @@ namespace hemelb
 	} else {
 	  throw Exception() << "Invalid length of offsets array " << n;
 	}
-        writeLength += len * code::type_to_size(f.typecode);
+        site_len += len * code::type_to_size(f.typecode);
       }
-
-      //  Now multiply by local site count
-      writeLength *= siteCount;
-
-      // The IO proc also writes the iteration number
-      if (comms.OnIORank())
-      {
-        writeLength += 8;
-      }
-
-      //! @TODO: These two MPI calls can be replaced with one
-
-      // Everyone needs to know the total length written during one iteration.
-      allCoresWriteLength = comms.AllReduce(writeLength, MPI_SUM);
-
-      // Only the root process needs to know the total number of sites written
-      // Note this has a garbage value on other procs.
-      uint64_t allSiteCount = comms.Reduce(siteCount, MPI_SUM, comms.GetIORank());
-
-      unsigned totalHeaderLength = 0;
-
-      // Write the header information on the IO proc.
-      if (comms.OnIORank())
-      {
-        // Compute the length of the field header
-        unsigned const fieldHeaderLength = std::transform_reduce(
-	  outputSpec.fields.begin(), outputSpec.fields.end(),
-	  0U,
-	  std::plus<unsigned>{},
-	  [&](OutputField const& f) {
-	    return io::formats::extraction::GetFieldHeaderLength(
-	      f.name,
-	      f.noffsets,
-	      code::type_to_enum(f.typecode)
-	    );
-	  }
-	);
-
-        totalHeaderLength = io::formats::extraction::MainHeaderLength + fieldHeaderLength;
-
-	io::writers::xdr::XdrVectorWriter headerWriter;
-
-	// Encoder for ONLY the main header (note shorter length)
-	headerWriter << uint32_t(io::formats::HemeLbMagicNumber)
-		     << uint32_t(io::formats::extraction::MagicNumber)
-		     << uint32_t(io::formats::extraction::VersionNumber);
-	headerWriter << double(dataSource.GetVoxelSize());
-	const util::Vector3D<distribn_t> &origin = dataSource.GetOrigin();
-	headerWriter << double(origin[0]) << double(origin[1]) << double(origin[2]);
-
-	// Write the total site count and number of fields
-	headerWriter << uint64_t(allSiteCount) << uint32_t(outputSpec.fields.size())
-		     << uint32_t(fieldHeaderLength);
-
-	// Main header now finished - do field headers
-	for (auto& field: outputSpec.fields) {
-	  auto const len = GetFieldLength(field.src);
-	  headerWriter << field.name
-		       << uint32_t(len)
-		       << uint32_t(code::type_to_enum(field.typecode))
-		       << field.noffsets;
-	  std::visit([&](auto&& tag) {
-	      for(auto& offset: field.offset)
-		headerWriter << (decltype(tag))offset;
-	    },
-	    field.typecode);
-	}
-
-	assert(headerWriter.GetBuf().size() == totalHeaderLength);
-        // Write from the buffer
-        outputFile.WriteAt(0, headerWriter.GetBuf());
-      }
-
-      // Calculate where each core should start writing
-      if (comms.OnIORank())
-      {
-        // For core 0 this is easy: it passes the value for core 1 to the core.
-        localDataOffsetIntoFile = totalHeaderLength;
-
-        if (comms.Size() > 1)
-        {
-          comms.Send(localDataOffsetIntoFile + writeLength, 1, 1);
-        }
-      }
-      else
-      {
-        // Receive the writing start position from the previous core.
-        comms.Receive(localDataOffsetIntoFile, comms.Rank() - 1, 1);
-
-        // Send the next core its start position.
-        if (comms.Rank() != (comms.Size() - 1))
-        {
-          comms.Send(localDataOffsetIntoFile + writeLength, comms.Rank() + 1, 1);
-        }
-      }
-
-      // Create the buffer that we'll write each iteration's data into.
-      buffer.resize(writeLength);
-
-      WriteOffsetFile();
+      return site_len;
     }
 
-    LocalPropertyOutput::~LocalPropertyOutput()
-    {
+    // Compute the length of the field header
+    unsigned CalcFieldHeaderLength(std::vector<OutputField> const& fields) {
+      return std::transform_reduce(
+        fields.begin(),fields.end(),
+	0U,
+	std::plus<unsigned>{},
+	[&](OutputField const& f) {
+	  return io::formats::extraction::GetFieldHeaderLength(
+	    f.name,
+	    f.noffsets,
+	    code::type_to_enum(f.typecode)
+	  );
+	}
+      );
+    }
 
+    std::vector<char> LocalPropertyOutput::PrepareHeader() const {
+
+      unsigned const field_header_len = CalcFieldHeaderLength(outputSpec.fields);
+      unsigned const total_header_len = io::formats::extraction::MainHeaderLength + field_header_len;
+      io::writers::xdr::XdrVectorWriter headerWriter;
+
+      // Encoder for ONLY the main header (note shorter length)
+      headerWriter << std::uint32_t(io::formats::HemeLbMagicNumber)
+		   << std::uint32_t(io::formats::extraction::MagicNumber)
+		   << std::uint32_t(io::formats::extraction::VersionNumber);
+      headerWriter << double(dataSource.GetVoxelSize());
+      const util::Vector3D<distribn_t> &origin = dataSource.GetOrigin();
+      headerWriter << double(origin[0]) << double(origin[1]) << double(origin[2]);
+
+      // Write the total site count and number of fields
+      headerWriter << std::uint64_t(global_site_count) << std::uint32_t(outputSpec.fields.size())
+		   << std::uint32_t(field_header_len);
+
+      // Main header now finished - do field headers
+      for (auto& field: outputSpec.fields) {
+	auto const len = GetFieldLength(field.src);
+	headerWriter << field.name
+		     << uint32_t(len)
+		     << uint32_t(code::type_to_enum(field.typecode))
+		     << field.noffsets;
+	std::visit([&](auto&& tag) {
+	    for(auto& offset: field.offset)
+	      headerWriter << (decltype(tag))offset;
+	  },
+	  field.typecode);
+      }
+
+      assert(headerWriter.GetBuf().size() == total_header_len);
+      return headerWriter.GetBuf();
     }
 
     bool LocalPropertyOutput::ShouldWrite(unsigned long timestepNumber) const
@@ -227,7 +223,22 @@ namespace hemelb
       return outputSpec;
     }
 
-    void LocalPropertyOutput::Write(unsigned long timestepNumber)
+    void LocalPropertyOutput::StartFile(std::string const& fn)
+    {
+      // Open the file as write-only, create it if it doesn't exist,
+      // don't create if the file already exists.
+      outputFile = net::MpiFile::Open(comms, fn,
+                                      MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL);
+
+      // Write the header information on the IO proc.
+      if (comms.OnIORank())
+      {
+        // Write from the buffer
+        outputFile.WriteAt(0, header_data);
+      }
+    }
+
+    void LocalPropertyOutput::Write(unsigned long timestepNumber, unsigned long totalSteps)
     {
       // Don't write if we shouldn't this iteration.
       if (!ShouldWrite(timestepNumber))
@@ -235,95 +246,121 @@ namespace hemelb
         return;
       }
 
+      if (std::holds_alternative<single_timestep_files>(outputSpec.ts_mode)) {
+	int prec = 3;
+	unsigned long next = 1000;
+	while (totalSteps > next) {
+	  prec += 1;
+	  next *= 10;
+	}
+	std::size_t sz = std::snprintf(nullptr, 0,
+				       output_file_pattern.data(), prec, timestepNumber);
+	std::string fn(sz + 1, '\0');
+	std::sprintf(fn.data(), output_file_pattern.data(), prec, timestepNumber);
+	StartFile(fn);
+      }
+
       // Don't write if this core doesn't do anything.
-      if (writeLength <= 0)
+      if (local_data_write_length > 0)
       {
-        return;
-      }
+	// Create the buffer.
+	auto xdrWriter = io::MakeXdrWriter(buffer.begin(), buffer.end());
 
-      // Create the buffer.
-      auto xdrWriter = io::MakeXdrWriter(buffer.begin(), buffer.end());
+	// Firstly, the IO proc must write the iteration number.
+	if (comms.OnIORank())
+	{
+	  xdrWriter << (uint64_t) timestepNumber;
+	}
 
-      // Firstly, the IO proc must write the iteration number.
-      if (comms.OnIORank())
-      {
-        xdrWriter << (uint64_t) timestepNumber;
-      }
+	dataSource.Reset();
 
-      dataSource.Reset();
+	while (dataSource.ReadNext())
+	{
+	  const util::Vector3D<site_t>& position = dataSource.GetPosition();
+	  if (outputSpec.geometry->Include(dataSource, position))
+	  {
+	    // Write the position
+	    xdrWriter << (uint32_t) position.x << (uint32_t) position.y << (uint32_t) position.z;
 
-      while (dataSource.ReadNext())
-      {
-        const util::Vector3D<site_t>& position = dataSource.GetPosition();
-        if (outputSpec.geometry->Include(dataSource, position))
-        {
-          // Write the position
-          xdrWriter << (uint32_t) position.x << (uint32_t) position.y << (uint32_t) position.z;
-
-          // Write for each field.
-          for (auto& fieldSpec: outputSpec.fields)
-          {
-	    overload_visit(
-	      fieldSpec.src,
-	      [&](source::Pressure) {
-		write(xdrWriter, fieldSpec.typecode, dataSource.GetPressure() - fieldSpec.offset[0]);
-	      },
-              [&](source::Velocity) {
-		auto&& v = dataSource.GetVelocity();
-		write(xdrWriter, fieldSpec.typecode, v.x, v.y, v.z);
-	      },
-	      //! @TODO: Work out how to handle the different stresses.
-              [&](source::VonMisesStress) {
-		write(xdrWriter, fieldSpec.typecode, dataSource.GetVonMisesStress());
-              },
-              [&](source::ShearStress) {
-		write(xdrWriter, fieldSpec.typecode, dataSource.GetShearStress());
-	      },
-              [&](source::ShearRate) {
-		write(xdrWriter, fieldSpec.typecode, dataSource.GetShearRate());
-	      },
-              [&](source::StressTensor) {
-		util::Matrix3D tensor = dataSource.GetStressTensor();
-		// Only the upper triangular part of the symmetric tensor is stored. Storage is row-wise.
-                write(xdrWriter, fieldSpec.typecode,
-                      tensor[0][0], tensor[0][1], tensor[0][2],
-                                    tensor[1][1], tensor[1][2],
-                                                  tensor[2][2]);
-              },
-              [&](source::Traction) {
-		auto&& t = dataSource.GetTraction();
-		write(xdrWriter, fieldSpec.typecode, t.x, t.y, t.z);
-	      },
-              [&](source::TangentialProjectionTraction) {
-		auto&& t = dataSource.GetTangentialProjectionTraction();
-		write(xdrWriter, fieldSpec.typecode, t.x, t.y, t.z);
-	      },
-              [&](source::Distributions) {
-		unsigned numComponents= dataSource.GetNumVectors();
-		distribn_t const* d_ptr = dataSource.GetDistribution();
-		for (int i = 0; i < numComponents; i++)
-                {
-		  write(xdrWriter, fieldSpec.typecode, d_ptr[i]);
+	    // Write for each field.
+	    for (auto& fieldSpec: outputSpec.fields)
+	    {
+	      overload_visit(
+	        fieldSpec.src,
+		[&](source::Pressure) {
+		  write(xdrWriter, fieldSpec.typecode, dataSource.GetPressure() - fieldSpec.offset[0]);
+		},
+		[&](source::Velocity) {
+		  auto&& v = dataSource.GetVelocity();
+		  write(xdrWriter, fieldSpec.typecode, v.x, v.y, v.z);
+		},
+		//! @TODO: Work out how to handle the different stresses.
+		[&](source::VonMisesStress) {
+		  write(xdrWriter, fieldSpec.typecode, dataSource.GetVonMisesStress());
+		},
+		[&](source::ShearStress) {
+		  write(xdrWriter, fieldSpec.typecode, dataSource.GetShearStress());
+		},
+		[&](source::ShearRate) {
+		  write(xdrWriter, fieldSpec.typecode, dataSource.GetShearRate());
+		},
+		[&](source::StressTensor) {
+		  util::Matrix3D tensor = dataSource.GetStressTensor();
+		  // Only the upper triangular part of the symmetric
+		  // tensor is stored. Storage is row-wise.
+		  write(xdrWriter, fieldSpec.typecode,
+			tensor[0][0], tensor[0][1], tensor[0][2],
+                                      tensor[1][1], tensor[1][2],
+                                                    tensor[2][2]);
+		},
+		[&](source::Traction) {
+		  auto&& t = dataSource.GetTraction();
+		  write(xdrWriter, fieldSpec.typecode, t.x, t.y, t.z);
+		},
+		[&](source::TangentialProjectionTraction) {
+		  auto&& t = dataSource.GetTangentialProjectionTraction();
+		  write(xdrWriter, fieldSpec.typecode, t.x, t.y, t.z);
+		},
+		[&](source::Distributions) {
+		  unsigned numComponents= dataSource.GetNumVectors();
+		  distribn_t const* d_ptr = dataSource.GetDistribution();
+		  for (int i = 0; i < numComponents; i++)
+		  {
+		    write(xdrWriter, fieldSpec.typecode, d_ptr[i]);
+		  }
+		},
+		[&](source::MpiRank) {
+		  write(xdrWriter, fieldSpec.typecode, comms.Rank());
 		}
-	      },
-              [&](source::MpiRank) {
-                write(xdrWriter, fieldSpec.typecode, comms.Rank());
-	      }
-            );
-          }
-        }
+              );
+	    }
+	  }
+	}
+
+	// Actually do the MPI writing.
+	outputFile.WriteAt(local_write_start, buffer);
       }
 
-      // Actually do the MPI writing.
-      outputFile.WriteAt(localDataOffsetIntoFile, buffer);
-
-      // Set the offset to the right place for writing on the next iteration.
-      localDataOffsetIntoFile += allCoresWriteLength;
+      overload_visit(
+        outputSpec.ts_mode,
+	[this](multi_timestep_file) {
+	  // Set the offset to the right place for writing on the next
+	  // iteration.
+	  local_write_start += global_data_write_length;
+	},
+	[this](single_timestep_files) {
+	  outputFile.Close();
+	}
+      );
     }
 
     // Write the offset file.
     void LocalPropertyOutput::WriteOffsetFile() {
       namespace fmt = io::formats;
+
+      // Create the file.
+      auto offsetFile = net::MpiFile::Open(comms, offset_file_name,
+				      MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL);
 
       // On process 0 only, write the header
       if (comms.OnIORank()) {
@@ -337,14 +374,14 @@ namespace hemelb
 	offsetFile.WriteAt(0, buf);
       }
       // Every rank writes its offset
-      uint64_t offsetForOffset = comms.Rank() * sizeof(localDataOffsetIntoFile)
+      uint64_t offsetForOffset = comms.Rank() * sizeof(local_write_start)
 	+ fmt::offset::HeaderLength;
-      offsetFile.WriteAt(offsetForOffset, quick_encode(localDataOffsetIntoFile));
+      offsetFile.WriteAt(offsetForOffset, quick_encode(local_write_start));
 
       // Last process writes total
       if (comms.Rank() == (comms.Size()-1)) {
-	offsetFile.WriteAt(offsetForOffset + sizeof(localDataOffsetIntoFile),
-			   quick_encode(localDataOffsetIntoFile + writeLength));
+	offsetFile.WriteAt(offsetForOffset + sizeof(local_write_start),
+			   quick_encode(local_write_start + local_data_write_length));
       }
     }
 

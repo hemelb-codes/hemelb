@@ -37,7 +37,7 @@ namespace hemelb
       //
       // Take the path string by value since we will move it into a member
       // anyway.
-      LocalDistributionInput(std::string dataFilePath, const net::IOCommunicator& ioComms);
+      LocalDistributionInput(std::string dataFilePath, std::optional<std::string> const& maybeOffsetPath, const net::IOCommunicator& ioComms);
 
       // Open the file and load our part into the LatticeData
       // instance.
@@ -58,6 +58,7 @@ namespace hemelb
 
       // The path to the file to read from.
       std::string filePath;
+      std::string offsetPath;
 
       InputField distField;
       uint64_t localStart;

@@ -227,16 +227,16 @@ namespace hemelb
 	// Create some pseudo-random data
 	simpleDataSource->FillFields();
 	// Write it
-	propertyWriter->Write(0);
+	propertyWriter->Write(0, 9999);
 
 	CheckDataWriting(simpleDataSource.get(), 0, writtenFile.get());
 
 	// Get some new data
 	simpleDataSource->FillFields();
 	// This should NOT write
-	propertyWriter->Write(10);
+	propertyWriter->Write(10, 9999);
 	// This SHOULD write
-	propertyWriter->Write(100);
+	propertyWriter->Write(100, 9999);
 
 	// The previous call to CheckDataWriting() sets the EOF indicator in writtenFile,
 	// the previous call to Write() ought to unset it but it isn't working properly in

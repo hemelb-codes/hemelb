@@ -53,15 +53,16 @@ namespace hemelb::lb {
     };
     
     struct CheckpointInitialCondition : InitialConditionBase {
-      CheckpointInitialCondition(std::optional<LatticeTimeStep> t0, const std::string& cp);
+      CheckpointInitialCondition(std::optional<LatticeTimeStep> t0, const std::string& cp, std::optional<std::string> const& maybeOff);
       
       template<class LatticeType>
       void SetFs(geometry::LatticeData* latDat, const net::IOCommunicator& ioComms) const;
 
     private:
       std::string cpFile;
+      std::optional<std::string> maybeOffFile;
     };
-    
+
     class InitialCondition : std::variant<EquilibriumInitialCondition, CheckpointInitialCondition> {
       // Alias for private base
       using ICVar = std::variant<EquilibriumInitialCondition, CheckpointInitialCondition>;

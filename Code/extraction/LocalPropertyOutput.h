@@ -20,101 +20,84 @@ namespace hemelb
   }
   namespace extraction
   {
-    /**
-     * Stores sufficient information to output property information from this core.
-     */
+    // Stores sufficient information to output property information
+    // from this core.
     class LocalPropertyOutput
     {
-      public:
-        /**
-         * Initialises a LocalPropertyOutput. Required so we can use const reference types.
-         * @param file
-         * @param offset
-         * @return
-         */
-        LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile& outputSpec,
-                            const net::IOCommunicator& ioComms);
+    public:
+      // Initialises a LocalPropertyOutput. Required so we can use
+      // const reference types. Collective on the communicator.
+      LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile& outputSpec,
+			  const net::IOCommunicator& ioComms);
 
-        /**
-         * Tidies up the LocalPropertyOutput (close files etc).
-         * @return
-         */
-        ~LocalPropertyOutput();
+      // True if this property output should be written on the current iteration.
+      bool ShouldWrite(unsigned long timestepNumber) const;
 
-        /**
-         * True if this property output should be written on the current iteration.
-         * @return
-         */
-        bool ShouldWrite(unsigned long timestepNumber) const;
+      // Returns the property output file object to be written.
+      const PropertyOutputFile& GetOutputSpec() const;
 
-        /**
-         * Returns the property output file object to be written.
-         * @return
-         */
-        const PropertyOutputFile& GetOutputSpec() const;
+      // Write this core's section of the data file. Only writes if
+      // appropriate for the current iteration number
+      void Write(unsigned long timestepNumber, unsigned long totalSteps);
 
-        /**
-         * Write this core's section of the data file. Only writes if appropriate for the current
-         * iteration number
-         */
-        void Write(unsigned long timestepNumber);
+      // Write the offset file. Collective on the communicator.
+      void WriteOffsetFile();
 
-	/**
-	 * Write the offset file
-	 */
-	void WriteOffsetFile();
+      // Returns the number of items written for the field.
+      unsigned GetFieldLength(source::Type) const;
 
-        /**
-         * Returns the number of items written for the field.
-         * @param field
-         */
-        unsigned GetFieldLength(source::Type) const;
+    private:
+      // How many sites does this MPI process write?
+      std::uint64_t CountWrittenSitesOnRank();
 
-      private:
-	//typedef hemelb::lb::lattices:: HEMELB_LATTICE latticeType;
-        const net::IOCommunicator& comms;
+      // How many bytes are written for a single site?
+      std::uint64_t CalcSiteWriteLen(std::vector<OutputField> const& fields) const;
 
-        /**
-         * The MPI file to write into.
-         */
-        net::MpiFile outputFile;
+      // Make the XTR header
+      std::vector<char> PrepareHeader() const;
 
-        /**
-         * The data source to use for file output.
-         */
-        IterableDataSource& dataSource;
+      // Open the file specified and write the header. Collective.
+      void StartFile(std::string const& fn);
 
-        /**
-         * PropertyOutputFile spec.
-         */
-        PropertyOutputFile outputSpec;
+      // Our communicator
+      const net::IOCommunicator& comms;
 
-        /**
-         * Where to begin writing into the file.
-         */
-        uint64_t localDataOffsetIntoFile;
+      // For single-timestep-per-file mode, hold the pattern we'll
+      // pass to printf.
+      std::string output_file_pattern;
 
-        /**
-         * The length, in bytes, of the local write.
-         */
-        uint64_t writeLength;
+      // The MPI file to write into.
+      net::MpiFile outputFile;
 
-        /**
-         * The length, in bytes, of the total write length;
-         */
-        uint64_t allCoresWriteLength;
+      // The data source to use for file output.
+      IterableDataSource& dataSource;
 
-        /**
-         * Buffer to write into before writing to disk.
-         */
-        std::vector<char> buffer;
+      // PropertyOutputFile spec.
+      PropertyOutputFile outputSpec;
 
-        /**
-         * The MPI file to write the offsets into.
-         */
-	net::MpiFile offsetFile;
+      // How many local/global sites will be written
+      std::uint64_t local_site_count;
+      std::uint64_t global_site_count;
+
+      // The length, in bytes, of the whole header
+      std::uint64_t header_length;
+      // The data that makes up the header (only used on rank 0)
+      std::vector<char> header_data;
+
+      // The length, in bytes, of the local/global data write for one timestep
+      std::uint64_t local_data_write_length;
+      std::uint64_t global_data_write_length;
+
+      // Where, in bytes, to begin writing into the file.
+      std::uint64_t local_write_start;
+
+      // Buffer to serialise into before writing to disk.
+      std::vector<char> buffer;
+
+      // The MPI file to write the offsets into.
+      std::string offset_file_name;
     };
   }
 }
 
-#endif /* HEMELB_EXTRACTION_LOCALPROPERTYOUTPUT_H */
+#endif // HEMELB_EXTRACTION_LOCALPROPERTYOUTPUT_H
