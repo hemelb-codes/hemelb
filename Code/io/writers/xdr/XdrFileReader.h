@@ -7,33 +7,28 @@
 #define HEMELB_IO_WRITERS_XDR_XDRFILEREADER_H
 
 #include <cstdio>
+#include <memory>
 #include <vector>
 #include "io/writers/xdr/XdrReader.h"
 
-namespace hemelb
+namespace hemelb::io::writers::xdr
 {
-  namespace io
-  {
-    namespace writers
-    {
-      namespace xdr
-      {
-        class XdrFileReader : public XdrReader {
-	public:
-	  XdrFileReader(const std::string& fn);
-	  virtual ~XdrFileReader();
-	  virtual unsigned GetPosition();
-	protected:
-	  virtual const char* get_bytes(size_t n);
-	private:
-	  std::FILE* fh;
-	  // Buffer for holding read data
-	  std::vector<char> buf;
-        };
 
-      } // namespace xdr
-    } // namespace writers
-  }
+  // Deserialise from a file given by path.
+  class XdrFileReader : public XdrReader {
+  public:
+    XdrFileReader(const std::string& fn);
+    ~XdrFileReader() override = default;
+    unsigned GetPosition() override;
+  protected:
+    const char* get_bytes(size_t n) override;
+  private:
+    using deleter_func_t = void(*)(std::FILE*);
+    std::unique_ptr<std::FILE, deleter_func_t> fh;
+    // Buffer for holding read data
+    std::vector<char> buf;
+  };
+
 }
 
-#endif /* HEMELB_IO_WRITERS_XDR_XDRFILEREADER_H */
+#endif  // HEMELB_IO_WRITERS_XDR_XDRFILEREADER_H

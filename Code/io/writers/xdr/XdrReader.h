@@ -12,62 +12,60 @@
 #include "Exception.h"
 #include "io/writers/xdr/XdrSerialisation.h"
 
-namespace hemelb
+namespace hemelb::io::writers::xdr
 {
-  namespace io
+  // Base class to read XDR data. This does the XDR related
+  // stuff. Derived classes must implement GetPosition and get_bytes
+  // member functions to allow it to work.
+  class XdrReader
   {
-    namespace writers
-    {
-      namespace xdr
-      {
-        // Class to read XDR data
-        class XdrReader
-        {
-	public:
-	  // destructor.
-	  virtual ~XdrReader() {
-	  }
+  public:
+    // Virtual destructor.
+    virtual ~XdrReader() {
+    }
 
-	  // Functions for reading the next bit of the stream.
-	  template<class T>
-	  bool read(T& val) {
-	    constexpr auto n = detail::xdr_serialised_size<T>();
-	    auto buf = get_bytes(n);
-	    detail::xdr_deserialise(val, buf);
-	    return true;
-	  }
+    // Main function for reading the next bit of the stream.
+    //
+    // Stores result of deserialising in the argument supplied and
+    // indicates success with return value.
+    template<class T>
+    bool read(T& val) {
+      constexpr auto n = detail::xdr_serialised_size<T>();
+      auto buf = get_bytes(n);
+      detail::xdr_deserialise(val, buf);
+      return true;
+    }
 
-	  template <class T>
-	  T read() {
-	    T ans;
-	    if (!read<T>(ans)) {
-	      throw Exception() << "Error reading type from XDR";
-	    }
-	    return ans;
-	  }
+    // Return result of deserialising - will throw on error.
+    template <class T>
+    T read() {
+      T ans;
+      if (!read<T>(ans)) {
+	throw Exception() << "Error reading type from XDR";
+      }
+      return ans;
+    }
 
-	  // Get the position in the stream.
-	  virtual unsigned GetPosition() = 0;
+    // Get the position in the stream.
+    virtual unsigned GetPosition() = 0;
 
-	protected:
-	  // Get some bytes from the underlying storage
-	  virtual const char* get_bytes(size_t n) = 0;
-        };
+  protected:
+    // Get some bytes from the underlying storage
+    virtual const char* get_bytes(size_t n) = 0;
+  };
 
-	template<>
-	inline bool XdrReader::read(std::string& val) {
-	  uint32_t len = 0;
-	  read(len);
-	  // p == padded
-	  uint32_t plen = 4 * ((len - 1)/4 + 1);
-	  auto pstr = get_bytes(plen);
-	  val.assign(pstr, len);
-	  return true;
-	}
-
-      } // namespace xdr
-    } // namespace writers
+  // Specialisation for strings
+  template<>
+  inline bool XdrReader::read(std::string& val) {
+    uint32_t len = 0;
+    read(len);
+    // p == padded
+    uint32_t plen = 4 * ((len - 1)/4 + 1);
+    auto pstr = get_bytes(plen);
+    val.assign(pstr, len);
+    return true;
   }
+
 }
 
 #endif // HEMELB_IO_WRITERS_XDR_XDRREADER_H

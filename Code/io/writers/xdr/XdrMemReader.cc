@@ -6,40 +6,28 @@
 #include <cassert>
 #include "io/writers/xdr/XdrMemReader.h"
 
-namespace hemelb
+namespace hemelb::io::writers::xdr
 {
-  namespace io
+  // Constructor to create an Xdr object based on a memory buffer
+  XdrMemReader::XdrMemReader(const char* buf, unsigned int dataLength)
+    : start(buf), current(buf), len(dataLength)
   {
-    namespace writers
-    {
-      namespace xdr
-      {
-        // Constructor to create an Xdr object based on a memory buffer
-        XdrMemReader::XdrMemReader(const char* buf, unsigned int dataLength)
-	  : start(buf), current(buf), len(dataLength)
-        {
-        }
-
-	XdrMemReader::XdrMemReader(const std::vector<char>& dataVec)
-	  : start(dataVec.data()), current(start), len(dataVec.size())
-	{
-	}
-
-	XdrMemReader::~XdrMemReader() {
-	}
-
-	unsigned XdrMemReader::GetPosition() {
-	  return current - start;
-	}
-
-	const char* XdrMemReader::get_bytes(size_t n) {
-	  assert(GetPosition() + n <= len);
-	  auto ans = current;
-	  current += n;
-	  return ans;
-	}
-
-      } // namespace xdr
-    } // namespace writers
   }
+
+  XdrMemReader::XdrMemReader(const std::vector<char>& dataVec)
+    : start(dataVec.data()), current(start), len(dataVec.size())
+  {
+  }
+
+  unsigned XdrMemReader::GetPosition() {
+    return current - start;
+  }
+
+  const char* XdrMemReader::get_bytes(size_t n) {
+    assert(GetPosition() + n <= len);
+    auto ans = current;
+    current += n;
+    return ans;
+  }
+
 }
