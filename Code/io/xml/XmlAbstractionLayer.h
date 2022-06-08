@@ -18,12 +18,8 @@
 class TiXmlDocument;
 class TiXmlElement;
 
-namespace hemelb
+namespace hemelb::io::xml
 {
-  namespace io
-  {
-    namespace xml
-    {
       // Forward declare
       class ChildIterator;
 
@@ -32,7 +28,7 @@ namespace hemelb
         public:
           static const Element Missing();
 
-          Element(TiXmlElement* el);
+          Element(TiXmlElement const* el);
           ~Element();
 
           /**
@@ -56,8 +52,7 @@ namespace hemelb
            *   returns the child element if it was found or
            *   Element::Missing() if not
            */
-          Element GetChildOrNull(const std::string& name);
-          const Element GetChildOrNull(const std::string& name) const;
+	  Element GetChildOrNull(const std::string& name) const;
           /**
            * Gets the first child element with the specified name or throw
            * ChildError if it does not exist.
@@ -68,8 +63,7 @@ namespace hemelb
            * @return
            *   returns the child element
            */
-          Element GetChildOrThrow(const std::string& name);
-          const Element GetChildOrThrow(const std::string& name) const;
+          Element GetChildOrThrow(const std::string& name) const;
 
           /**
            * Return iterator over children with the specified name.
@@ -88,7 +82,7 @@ namespace hemelb
            * @return
            *   Next sibling or Element::Missing()
            */
-          Element NextSiblingOrNull(const std::string name);
+          Element NextSiblingOrNull(const std::string& name) const;
 
           /**
            * Return the next sibling element with the specified name, if any
@@ -100,7 +94,7 @@ namespace hemelb
            * @return
            *   Next sibling.
            */
-          Element NextSiblingOrThrow(const std::string name);
+          Element NextSiblingOrThrow(const std::string& name) const;
 
           /**
            * Return the parent element unless this is the root element.
@@ -109,7 +103,7 @@ namespace hemelb
            * @return
            *   Parent or Element::Missing()
            */
-          Element GetParentOrNull();
+          Element GetParentOrNull() const;
           /**
            * Return the parent element unless this is the root element.
            * If so then throws ParentError
@@ -117,7 +111,7 @@ namespace hemelb
            * @return
            *   Parent
            */
-          Element GetParentOrThrow();
+          Element GetParentOrThrow() const;
 
           /**
            * Get the value (as a string) contained in the specified attribute.
@@ -215,7 +209,7 @@ namespace hemelb
           operator bool() const;
 
         private:
-          TiXmlElement* el;
+          TiXmlElement const* el;
 
           /**
            * Recursive function used by GetPath
@@ -534,7 +528,5 @@ namespace hemelb
         return *ans;
       }
 
-    }
-  }
 }
-#endif /* HEMELB_CONFIGURATION_XMLABSTRACTIONLAYER_H */
+#endif  // HEMELB_CONFIGURATION_XMLABSTRACTIONLAYER_H

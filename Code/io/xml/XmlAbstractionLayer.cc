@@ -46,7 +46,7 @@ namespace hemelb
 	}
       }
 
-      Element::Element(TiXmlElement* el_) :
+      Element::Element(TiXmlElement const* el_) :
           el(el_)
       {
       }
@@ -68,28 +68,14 @@ namespace hemelb
         return el->Row();
       }
 
-      Element Element::GetChildOrNull(const std::string& name)
+      Element Element::GetChildOrNull(const std::string& name) const
       {
-        TiXmlElement* ans = el->FirstChildElement(name);
-        return Element(ans);
-      }
-      const Element Element::GetChildOrNull(const std::string& name) const
-      {
-        TiXmlElement* ans = el->FirstChildElement(name);
-        return Element(ans);
+        return Element(el->FirstChildElement(name));
       }
 
-      Element Element::GetChildOrThrow(const std::string& name)
+      Element Element::GetChildOrThrow(const std::string& name) const
       {
-        TiXmlElement* ans = el->FirstChildElement(name);
-        if (ans == nullptr)
-          throw ChildError(*this, name);
-
-        return Element(ans);
-      }
-      const Element Element::GetChildOrThrow(const std::string& name) const
-      {
-        TiXmlElement* ans = el->FirstChildElement(name);
+        auto ans = el->FirstChildElement(name);
         if (ans == nullptr)
           throw ChildError(*this, name);
 
@@ -101,18 +87,18 @@ namespace hemelb
         return ChildIterator(*this, name);
       }
 
-      Element Element::NextSiblingOrNull(const std::string name)
+      Element Element::NextSiblingOrNull(const std::string& name) const
       {
-        TiXmlElement* ans = el->NextSiblingElement(name);
+        auto ans = el->NextSiblingElement(name);
         if (ans == nullptr)
           return nullptr;
 
         return Element(ans);
       }
 
-      Element Element::NextSiblingOrThrow(const std::string name)
+      Element Element::NextSiblingOrThrow(const std::string& name) const
       {
-        TiXmlElement* ans = el->NextSiblingElement(name);
+        auto ans = el->NextSiblingElement(name);
         if (ans == nullptr)
           throw SiblingError(*this, name);
 
@@ -131,13 +117,13 @@ namespace hemelb
         return *ans;
       }
 
-      Element Element::GetParentOrNull()
+      Element Element::GetParentOrNull() const
       {
         return Element(el->Parent()->ToElement());
       }
-      Element Element::GetParentOrThrow()
+      Element Element::GetParentOrThrow() const
       {
-        TiXmlElement* parent = el->Parent()->ToElement();
+        auto parent = el->Parent()->ToElement();
         if (parent == nullptr)
           throw ParentError(*this);
         return Element(parent);
