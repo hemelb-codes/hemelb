@@ -8,7 +8,7 @@
 
 #include <vector>
 #include "geometry/LatticeData.h"
-#include "io/xml/XmlAbstractionLayer.h"
+#include "io/xml.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "net/mpi.h"
 #include "colloids/Particle.h"

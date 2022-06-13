@@ -3,7 +3,7 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 #include <stdexcept>
-#include "io/xml/XmlAbstractionLayer.h"
+#include "io/xml.h"
 #include "util/fileutils.h"
 
 #include "tinyxml.h"

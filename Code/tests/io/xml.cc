@@ -7,7 +7,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "io/xml/XmlAbstractionLayer.h"
+#include "io/xml.h"
 #include "util/Vector3D.h"
 
 #include "tests/helpers/FolderTestFixture.h"

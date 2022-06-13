@@ -11,7 +11,7 @@
 #include "net/IteratedAction.h"
 #include "geometry/LatticeData.h"
 #include "geometry/Geometry.h"
-#include "io/xml/XmlAbstractionLayer.h"
+#include "io/xml.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "colloids/ParticleSet.h"
 #include "util/Vector3D.h"

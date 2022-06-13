@@ -10,7 +10,7 @@
 #include <functional>
 #include <list>
 #include <random>
-#include "io/xml/XmlAbstractionLayer.h"
+#include "io/xml.h"
 #include "lb/iolets/InOutLet.h"
 #include "redblood/types.h"
 #include "redblood/Mesh.h"

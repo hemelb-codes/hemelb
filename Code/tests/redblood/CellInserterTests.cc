@@ -6,7 +6,7 @@
 #include <catch2/catch.hpp>
 #include <tinyxml.h>
 
-#include "io/xml/XmlAbstractionLayer.h"
+#include "io/xml.h"
 #include "redblood/FlowExtension.h"
 #include "redblood/xmlIO.h"
 #include "redblood/RBCInserter.h"

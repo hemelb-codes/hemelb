@@ -5,7 +5,7 @@
 #include "redblood/RBCConfig.h"
 
 #include "configuration/SimConfig.h"
-#include "io/xml/XmlAbstractionLayer.h"
+#include "io/xml.h"
 #include "redblood/FlowExtension.h"
 #include "redblood/Node2Node.h"
 #include "util/UnitConverter.h"

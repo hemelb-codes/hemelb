@@ -6,7 +6,7 @@
 #ifndef HEMELB_COLLOIDS_BOUNDARYCONDITIONS_H
 #define HEMELB_COLLOIDS_BOUNDARYCONDITIONS_H
 
-#include "io/xml/XmlAbstractionLayer.h"
+#include "io/xml.h"
 #include "units.h"
 #include <vector>
 #include <map>

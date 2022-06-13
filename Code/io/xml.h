@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_IO_XML_XMLABSTRACTIONLAYER_H
-#define HEMELB_IO_XML_XMLABSTRACTIONLAYER_H
+#ifndef HEMELB_IO_XML_H
+#define HEMELB_IO_XML_H
 
 #include <cstdlib>
 #include <functional>
@@ -559,4 +559,4 @@ namespace hemelb::io::xml
   }
 
 }
-#endif  // HEMELB_CONFIGURATION_XMLABSTRACTIONLAYER_H
+#endif  // HEMELB_IO_XML_H

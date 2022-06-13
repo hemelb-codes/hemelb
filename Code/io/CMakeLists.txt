@@ -20,7 +20,7 @@ add_library(hemelb_io
   writers/null/NullWriter.cc
   writers/Writer.cc
   formats/geometry.cc
-  xml/XmlAbstractionLayer.cc
+  xml.cc
   )
 
 target_link_libraries(hemelb_io PUBLIC

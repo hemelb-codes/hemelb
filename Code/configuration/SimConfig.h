@@ -16,7 +16,7 @@
 #include "lb/iolets/InOutLets.h"
 #include "extraction/GeometrySelectors.h"
 #include "extraction/PropertyOutputFile.h"
-#include "io/xml/XmlAbstractionLayer.h"
+#include "io/xml.h"
 
 namespace hemelb
 {

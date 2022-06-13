@@ -6,7 +6,7 @@
 #ifndef HEMELB_COLLOIDS_BODYFORCES_H
 #define HEMELB_COLLOIDS_BODYFORCES_H
 
-#include "io/xml/XmlAbstractionLayer.h"
+#include "io/xml.h"
 #include "units.h"
 #include <map>
 #include "colloids/Particle.h"

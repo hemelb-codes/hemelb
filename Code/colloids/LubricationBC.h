@@ -7,7 +7,7 @@
 #define HEMELB_COLLOIDS_LUBRICATIONBC_H
 
 #include "colloids/BoundaryConditions.h"
-#include "io/xml/XmlAbstractionLayer.h"
+#include "io/xml.h"
 
 namespace hemelb
 {

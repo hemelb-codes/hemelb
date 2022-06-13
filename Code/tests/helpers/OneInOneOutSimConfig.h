@@ -8,7 +8,7 @@
 
 #include <string>
 
-#include "io/xml/XmlAbstractionLayer.h"
+#include "io/xml.h"
 #include "configuration/SimConfig.h"
 
 namespace hemelb

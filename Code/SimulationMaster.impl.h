@@ -22,7 +22,7 @@
 #include "util/fileutils.h"
 #include "log/Logger.h"
 #include "lb/HFunction.h"
-#include "io/xml/XmlAbstractionLayer.h"
+#include "io/xml.h"
 #include "colloids/ColloidController.h"
 #include "net/BuildInfo.h"
 #include "net/IOCommunicator.h"
