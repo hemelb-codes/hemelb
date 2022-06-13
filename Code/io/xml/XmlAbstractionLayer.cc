@@ -104,9 +104,18 @@ namespace hemelb
 
         return Element(ans);
       }
-      const std::string* Element::GetAttributeOrNull(const std::string& name) const
+      std::string const* Element::GetAttrOrNull(std::string const& attr) const {
+	return el->Attribute(attr);
+      }
+
+      std::optional<std::string> Element::GetAttributeMaybe(const std::string& name) const
       {
-        return el->Attribute(name);
+        auto attr_p = el->Attribute(name);
+	if (attr_p == nullptr) {
+	  return std::nullopt;
+	} else {
+	  return std::make_optional(*attr_p);
+	}
       }
       const std::string& Element::GetAttributeOrThrow(const std::string& name) const
       {

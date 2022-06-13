@@ -38,6 +38,18 @@ namespace hemelb
 
       elem.GetAttributeOrThrow("value", value);
     }
+    template<typename T>
+    T GetDimensionalValue(const io::xml::Element& elem, const std::string& units)
+    {
+      const std::string& got = elem.GetAttributeOrThrow("units");
+      if (got != units)
+      {
+        throw Exception() << "Invalid units for element " << elem.GetPath() << ". Expected '"
+            << units << "', got '" << got << "'";
+      }
+
+      return elem.GetAttributeOrThrow<T>("value");
+    }
 
     template<typename T>
     void GetDimensionalValueInLatticeUnits(const io::xml::Element& elem, const std::string& units, const util::UnitConverter& converter, T& value)

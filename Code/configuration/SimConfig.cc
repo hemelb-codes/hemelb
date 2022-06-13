@@ -86,10 +86,9 @@ namespace hemelb
       if (topNode.GetName() != "hemelbsettings")
         throw Exception() << "Invalid root element: " << topNode.GetPath();
 
-      unsigned version;
-      const std::string& versionStr = topNode.GetAttributeOrThrow("version", version);
+      auto version = topNode.GetAttributeOrThrow<unsigned>("version");
       if (version != 5U)
-        throw Exception() << "Unrecognised XML version. Expected 5, got " << versionStr;
+        throw Exception() << "Unrecognised XML version. Expected 5, got " << version;
 
       DoIOForSimulation(topNode.GetChildOrThrow("simulation"));
       CreateUnitConverter();
@@ -109,19 +108,16 @@ namespace hemelb
       DoIOForVisualisation(topNode.GetChildOrThrow("visualisation"));
 
       // Optional element <properties>
-      io::xml::Element propertiesEl = topNode.GetChildOrNull("properties");
-      if (propertiesEl != io::xml::Element::Missing())
+      if (auto propertiesEl = topNode.GetChildOrNull("properties"))
         DoIOForProperties(propertiesEl);
 
       // Optional element <monitoring>
-      io::xml::Element monitoringEl = topNode.GetChildOrNull("monitoring");
-      if (monitoringEl != io::xml::Element::Missing())
+      if (auto monitoringEl = topNode.GetChildOrNull("monitoring"))
         DoIOForMonitoring(monitoringEl);
 
       // The RBC section must be parsed *after* the inlets and outlets have been
       // defined
-      auto rbcEl = topNode.GetChildOrNull("redbloodcells");
-      if (rbcEl != io::xml::Element::Missing()) {
+      if (auto rbcEl = topNode.GetChildOrNull("redbloodcells")) {
 #ifdef HEMELB_BUILD_RBC
 	rbcConf = new redblood::RBCConfig;
 	rbcConf->DoIOForRedBloodCells(topNode, *this, *unitConverter);
@@ -135,8 +131,7 @@ namespace hemelb
     {
       // Required element
       // <stresstype value="enum lb::StressTypes" />
-      unsigned tmp;
-      simEl.GetChildOrThrow("stresstype").GetAttributeOrThrow("value", tmp);
+      auto tmp = simEl.GetChildOrThrow("stresstype").GetAttributeOrThrow<unsigned>("value");
       switch (tmp)
       {
         case lb::IgnoreStress:
@@ -164,8 +159,7 @@ namespace hemelb
 
       // Optional element
       // <extra_warmup_steps value="unsigned" units="lattice" />
-      const io::xml::Element wuEl = simEl.GetChildOrNull("extra_warmup_steps");
-      if (wuEl != io::xml::Element::Missing())
+      if (auto wuEl = simEl.GetChildOrNull("extra_warmup_steps"))
       {
         GetDimensionalValue(wuEl, "lattice", warmUpSteps);
         totalTimeSteps += warmUpSteps;
@@ -183,30 +177,24 @@ namespace hemelb
 
       // Optional element
       // <fluid_density value="float" units="kg/m3" />
-      auto maybeDensityEl = simEl.GetChildOrNull("fluid_density");
-      if (maybeDensityEl) {
-	GetDimensionalValue(maybeDensityEl, "kg/m3", fluidDensityKgm3);
-      } else {
-	fluidDensityKgm3 = DEFAULT_FLUID_DENSITY_Kg_per_m3;
-      }
+      fluidDensityKgm3 = simEl.GetChildOrNull("fluid_density").and_then(
+        [](io::xml::Element const& el) {
+	  return GetDimensionalValue<PhysicalDensity>(el, "kg/m3");
+	}).value_or(DEFAULT_FLUID_DENSITY_Kg_per_m3);
 
       // Optional element
       // <fluid_viscosity value="float" units="Pa.s" />
-      auto maybeViscosityEl = simEl.GetChildOrNull("fluid_viscosity");
-      if (maybeViscosityEl) {
-	GetDimensionalValue(maybeViscosityEl, "Pa.s", fluidViscosityPas);
-      } else {
-	fluidViscosityPas = DEFAULT_FLUID_VISCOSITY_Pas;
-      }
-
+      fluidViscosityPas = simEl.GetChildOrNull("fluid_viscosity").and_then(
+        [](io::xml::Element const& el) {
+	  return GetDimensionalValue<PhysicalDynamicViscosity>(el, "Pa.s");
+	}).value_or(DEFAULT_FLUID_VISCOSITY_Pas);
+     
       // Optional element (default = 0)
       // <reference_pressure value="float" units="mmHg" />
-      auto maybeRefPresEl = simEl.GetChildOrNull("reference_pressure");
-      if (maybeRefPresEl) {
-	GetDimensionalValue(maybeRefPresEl, "mmHg", reference_pressure_mmHg);
-      } else {
-	reference_pressure_mmHg = 0;
-      }
+      reference_pressure_mmHg = simEl.GetChildOrNull("reference_pressure").and_then(
+        [](io::xml::Element const& el) {
+	  return GetDimensionalValue<PhysicalPressure>(el, "mmHg");
+	}).value_or(0);
     }
 
     void SimConfig::DoIOForGeometry(const io::xml::Element geometryEl)
@@ -409,18 +397,15 @@ namespace hemelb
     {
       auto file = extraction::PropertyOutputFile{};
 
-      if (auto ts_mode = propertyoutputEl.GetAttributeOrNull("timestep_mode")) {
-	if (*ts_mode == "multi") {
-	  file.ts_mode = extraction::multi_timestep_file{};
-	} else if (*ts_mode == "single") {
-	  file.ts_mode = extraction::single_timestep_files{};
-	} else {
-	  throw Exception()
-	    << "Invalid value of timestep_mode attribute '" << *ts_mode
-	    << "' at: " << propertyoutputEl.GetPath();
-	}
-      } else {
+      auto&& ts_mode = propertyoutputEl.GetAttributeMaybe("timestep_mode").value_or("multi");
+      if (ts_mode == "multi") {
 	file.ts_mode = extraction::multi_timestep_file{};
+      } else if (ts_mode == "single") {
+	file.ts_mode = extraction::single_timestep_files{};
+      } else {
+	throw Exception()
+	  << "Invalid value of timestep_mode attribute '" << ts_mode
+	  << "' at: " << propertyoutputEl.GetPath();
       }
 
       file.filename = propertyoutputEl.GetAttributeOrThrow("file");
@@ -502,19 +487,14 @@ namespace hemelb
       GetDimensionalValue(pointEl, "m", point);
       GetDimensionalValue(normalEl, "dimensionless", normal);
 
-      io::xml::Element radiusEl = geometryEl.GetChildOrNull("radius");
-
-      if (radiusEl == io::xml::Element::Missing())
-      {
+      auto radius = geometryEl.GetChildOrNull("radius").and_then(
+	[](io::xml::Element const& el) {
+	  return GetDimensionalValue<PhysicalDistance>(el, "m");
+	});
+      if (radius)
+        return new extraction::PlaneGeometrySelector(point.as<float>(), normal, *radius);
+      else	
         return new extraction::PlaneGeometrySelector(point.as<float>(), normal);
-      }
-      else
-      {
-        PhysicalDistance radius;
-        GetDimensionalValue(radiusEl, "m", radius);
-        return new extraction::PlaneGeometrySelector(point.as<float>(), normal, radius);
-      }
-
     }
 
     extraction::SurfacePointSelector* SimConfig::DoIOForSurfacePoint(
@@ -530,18 +510,9 @@ namespace hemelb
     extraction::OutputField SimConfig::DoIOForPropertyField(const io::xml::Element& fieldEl)
     {
       extraction::OutputField field;
-      const std::string type = fieldEl.GetAttributeOrThrow("type");
-      const std::string* name = fieldEl.GetAttributeOrNull("name");
-
+      const std::string& type = fieldEl.GetAttributeOrThrow("type");
       // Default name is identical to type.
-      if (name == nullptr)
-      {
-        field.name = type;
-      }
-      else
-      {
-        field.name = *name;
-      }
+      field.name = fieldEl.GetAttributeMaybe("name").value_or(type);
 
       // Default offset is none
       field.noffsets = 0;
@@ -621,12 +592,9 @@ namespace hemelb
     {
       // The <time> element may be present - if so, it will set the
       // initial timestep value
-      std::optional<LatticeTimeStep> t0;
-      if (auto timeEl = initialconditionsEl.GetChildOrNull("time")) {
-	LatticeTimeStep tmp;
-	GetDimensionalValue(timeEl, "lattice", tmp);
-	t0 = tmp;
-      }
+      auto t0 = initialconditionsEl.GetChildOrNull("time").and_then([](auto el) {
+	  return GetDimensionalValue<LatticeTimeStep>(el, "lattice");
+	});
 
       // Exactly one of {<pressure>, <checkpoint>} must be present
       // TODO: use something other than an if-tree
@@ -647,13 +615,9 @@ namespace hemelb
       } else {
 	if (checkpointEl) {
 	  // Only checkpoint
-	  auto cp_path = checkpointEl.GetAttributeOrThrow("file");
-	  auto off_path = checkpointEl.GetAttributeOrNull("offsets");
-	  std::optional<std::string> maybe_off_path;
-	  if (off_path != nullptr)
-	    maybe_off_path = *off_path;
-
-	  icConfig = CheckpointIC(unitConverter, t0, cp_path, maybe_off_path);
+	  icConfig = CheckpointIC(unitConverter, t0,
+				  checkpointEl.GetAttributeOrThrow("file"),
+				  checkpointEl.GetAttributeMaybe("offsets"));
 	} else {
 	  // No IC!
 	  throw Exception() << "XML <initialconditions> element contains no known initial condition type";
@@ -669,20 +633,18 @@ namespace hemelb
 
       const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
-      PhysicalPressure tempP;
       // Amplitude is a pressure DIFFERENCE (no use of REFERENCE_PRESSURE)
-      GetDimensionalValue(conditionEl.GetChildOrThrow("amplitude"), "mmHg", tempP);
-      newIolet->SetPressureAmp(unitConverter->ConvertPressureDifferenceToLatticeUnits(tempP));
+      auto p_amp = GetDimensionalValue<PhysicalPressure>(conditionEl.GetChildOrThrow("amplitude"), "mmHg");
+      newIolet->SetPressureAmp(unitConverter->ConvertPressureDifferenceToLatticeUnits(p_amp));
 
       // Mean is an absolute pressure
-      GetDimensionalValue(conditionEl.GetChildOrThrow("mean"), "mmHg", tempP);
-      newIolet->SetPressureMean(unitConverter->ConvertPressureToLatticeUnits(tempP));
+      auto p_mean = GetDimensionalValue<PhysicalPressure>(conditionEl.GetChildOrThrow("mean"), "mmHg");
+      newIolet->SetPressureMean(unitConverter->ConvertPressureToLatticeUnits(p_mean));
 
-      newIolet->SetPhase(GetDimensionalValueInLatticeUnits < Angle
-          > (conditionEl.GetChildOrThrow("phase"), "rad"));
+      auto phase = GetDimensionalValueInLatticeUnits<Angle>(conditionEl.GetChildOrThrow("phase"), "rad");
+      newIolet->SetPhase(phase);
 
-      LatticeTime period;
-      GetDimensionalValueInLatticeUnits(conditionEl.GetChildOrThrow("period"), "s", period);
+      auto period = GetDimensionalValueInLatticeUnits<LatticeTime>(conditionEl.GetChildOrThrow("period"), "s");
       newIolet->SetPeriod(period);
 
       if (warmUpSteps != 0)
@@ -815,7 +777,7 @@ namespace hemelb
     void SimConfig::DoIOForSteadyFlowConvergence(const io::xml::Element& convEl)
     {
       monitoringConfig.doConvergenceCheck = true;
-      convEl.GetAttributeOrThrow("tolerance", monitoringConfig.convergenceRelativeTolerance);
+      monitoringConfig.convergenceRelativeTolerance = convEl.GetAttributeOrThrow<double>("tolerance");
       monitoringConfig.convergenceTerminate = (convEl.GetAttributeOrThrow("terminate") == "true");
 
       if (convEl.IterChildren("criterion").AtEnd())
