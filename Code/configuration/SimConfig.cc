@@ -177,21 +177,21 @@ namespace hemelb
 
       // Optional element
       // <fluid_density value="float" units="kg/m3" />
-      fluidDensityKgm3 = simEl.GetChildOrNull("fluid_density").and_then(
+      fluidDensityKgm3 = simEl.GetChildOrNull("fluid_density").transform(
         [](io::xml::Element const& el) {
 	  return GetDimensionalValue<PhysicalDensity>(el, "kg/m3");
 	}).value_or(DEFAULT_FLUID_DENSITY_Kg_per_m3);
 
       // Optional element
       // <fluid_viscosity value="float" units="Pa.s" />
-      fluidViscosityPas = simEl.GetChildOrNull("fluid_viscosity").and_then(
+      fluidViscosityPas = simEl.GetChildOrNull("fluid_viscosity").transform(
         [](io::xml::Element const& el) {
 	  return GetDimensionalValue<PhysicalDynamicViscosity>(el, "Pa.s");
 	}).value_or(DEFAULT_FLUID_VISCOSITY_Pas);
      
       // Optional element (default = 0)
       // <reference_pressure value="float" units="mmHg" />
-      reference_pressure_mmHg = simEl.GetChildOrNull("reference_pressure").and_then(
+      reference_pressure_mmHg = simEl.GetChildOrNull("reference_pressure").transform(
         [](io::xml::Element const& el) {
 	  return GetDimensionalValue<PhysicalPressure>(el, "mmHg");
 	}).value_or(0);
@@ -487,7 +487,7 @@ namespace hemelb
       GetDimensionalValue(pointEl, "m", point);
       GetDimensionalValue(normalEl, "dimensionless", normal);
 
-      auto radius = geometryEl.GetChildOrNull("radius").and_then(
+      auto radius = geometryEl.GetChildOrNull("radius").transform(
 	[](io::xml::Element const& el) {
 	  return GetDimensionalValue<PhysicalDistance>(el, "m");
 	});
@@ -592,7 +592,7 @@ namespace hemelb
     {
       // The <time> element may be present - if so, it will set the
       // initial timestep value
-      auto t0 = initialconditionsEl.GetChildOrNull("time").and_then([](auto el) {
+      auto t0 = initialconditionsEl.GetChildOrNull("time").transform([](auto el) {
 	  return GetDimensionalValue<LatticeTimeStep>(el, "lattice");
 	});
 

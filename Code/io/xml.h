@@ -15,6 +15,7 @@
 #include <optional>
 
 #include "Exception.h"
+#include "util/traits.h"
 
 // Forward declare the TinyXML types needed.
 class TiXmlDocument;
@@ -210,9 +211,30 @@ namespace hemelb::io::xml
 
     // Returns the result of invocation of f on an Element that does
     // contain a value. Otherwise, returns std::nullopt. f must return
-    // a specialisation of std::optional.
+    // Element or a specialisation of std::optional.
     template <typename F>
     auto and_then(F&& f) const {
+      using R = std::remove_cv_t<std::remove_reference_t<std::invoke_result_t<F, const Element&>>>;
+      static_assert(std::disjunction_v<
+		      std::is_same<R, Element>,
+		      util::is_optional<R>
+		    >);
+      if (*this) {
+	return std::invoke(std::forward<F>(f), *this);
+      } else {
+	if constexpr (std::is_same_v<R, Element>) {
+	    return Missing();
+	} else {
+	  return R{};
+	}
+      }
+    }
+
+    // Returns an std::optional containing the result of invoking f on
+    // an Element that contains a value. Otherwise returns
+    // std::nullopt.
+    template <typename F>
+    auto transform(F&& f) const {
       using R = std::remove_cv_t<std::remove_reference_t<std::invoke_result_t<F, const Element&>>>;
       if (*this) {
 	return std::optional<R>{std::invoke(std::forward<F>(f), *this)};
@@ -220,6 +242,7 @@ namespace hemelb::io::xml
 	return std::optional<R>{};
       }
     }
+
 
   private:
 

@@ -62,6 +62,17 @@ namespace hemelb
       value = converter.ConvertToLatticeUnits(units, phys);
     }
 
+    template<typename T>
+    T GetDimensionalValueInLatticeUnits(const io::xml::Element& elem, const std::string& units, const util::UnitConverter& converter)
+    {
+      auto phys = GetDimensionalValue<T>(elem, units);
+
+      if (units == "lattice")
+	return phys;
+      else
+	return converter.ConvertToLatticeUnits(units, phys);
+    }
+
     // Base for initial conditions configuration
     struct ICConfigBase {
       ICConfigBase(const util::UnitConverter* units, std::optional<LatticeTimeStep> t);
