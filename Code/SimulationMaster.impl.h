@@ -442,8 +442,7 @@ namespace hemelb
       if (ioComms.OnIORank())
       {
         reporter->Image();
-        std::unique_ptr<hemelb::io::writers::Writer> writer(fileManager->XdrImageWriter(1
-            + ( (it->second - 1) % simulationState->GetTimeStep())));
+        std::unique_ptr<hemelb::io::writers::Writer> writer(fileManager->XdrImageWriter(it->second));
 
         const hemelb::vis::PixelSet<hemelb::vis::ResultPixel>* result =
             visualisationControl->GetResult(it->second);
