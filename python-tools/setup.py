@@ -58,6 +58,7 @@ setup(
             "hlb-dump-extracted-properties = hlb.converters.ExtractedPropertyTextDump:main",
             "hlb-gmy-selfconsistent = hlb.parsers.geometry.self_consistency:main",
             "hlb-gmy-countsites = hlb.parsers.geometry.count_sites:main",
+            "hlb-gmy-3to4 = hlb.converters.Gmy3to4:main",
         ],
     },
 )
