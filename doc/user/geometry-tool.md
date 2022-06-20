@@ -83,7 +83,7 @@ run this script to fix it:
 With the environment above, install should be as simple as
 
 ```
-pip install --use-feature=in-tree-build '.[gui]'
+pip install '.[gui]'
 ```
 
 At some point setuptools will not require the extra flag, but for now
