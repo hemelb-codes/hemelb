@@ -47,20 +47,11 @@ namespace hemelb
                                                        const std::string &elemname,
                                                        const std::string& units, T default_)
       {
-        if (parent == parent.Missing())
-        {
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Using internal default value for RBC parameter: %s\n",
-                                                                               elemname.c_str());
-          return std::pair<T, std::string>(default_, units);
-        }
-        auto const element = parent.GetChildOrNull(elemname);
-        if (element == element.Missing())
-        {
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Using internal default value for RBC parameter: %s\n",
-                                                                               elemname.c_str());
-          return std::pair<T, std::string>(default_, units);
-        }
-        return GetNonDimensionalValue<T>(element, units);
+	return parent.and_then([&](io::xml::Element const& el) {
+	    return el.GetChildOrNull(elemname);
+	  }).transform([&](io::xml::Element const& el) {
+	      return GetNonDimensionalValue<T>(el, units);
+	    }).value_or(std::make_pair(default_, units));
       }
 
       //! Gets value and convert to LB units. Default value should be in physical units.
@@ -97,60 +88,63 @@ namespace hemelb
           converter.ConvertPositionToLatticeUnits(value_unit.first);
       }
 
-      void readFlowExtensions(io::xml::Element const& ioletsNode,
+      std::vector<FlowExtension> readFlowExtensionsOfOneType(io::xml::Element const& ioletsNode,
                               util::UnitConverter const& converter,
-                              std::vector<FlowExtension> &results, bool mustHaveFlowExtension =
-                                  false)
+                              bool mustHaveFlowExtension = false)
       {
-        if (ioletsNode == ioletsNode.Missing())
-        {
-          return;
-        }
-        auto const name = ioletsNode.GetName().substr(0, ioletsNode.GetName().size() - 1);
-        auto ioletNode = ioletsNode.GetChildOrNull(name);
-        for (; ioletNode != ioletNode.Missing(); ioletNode = ioletNode.NextSiblingOrNull(name))
-        {
-          if (ioletNode.GetChildOrNull("flowextension") != ioletNode.Missing())
-          {
-            results.emplace_back(readFlowExtension(ioletNode, converter));
+	std::vector<FlowExtension> results;
+        if (ioletsNode) {
+	  auto const name = ioletsNode.GetName().substr(0, ioletsNode.GetName().size() - 1);
+	  for (
+	     auto ioletNode = ioletsNode.GetChildOrNull(name);
+	     ioletNode != ioletNode.Missing();
+	     ioletNode = ioletNode.NextSiblingOrNull(name)
+	     ) {
+	    if (ioletNode.GetChildOrNull("flowextension"))
+            {
+	      results.push_back(readFlowExtension(ioletNode, converter));
+            }
+            else if (mustHaveFlowExtension)
+            {
+              throw Exception() << "Could not find flow extension in iolet";
+            }
           }
-          else if (mustHaveFlowExtension)
-          {
-            throw Exception() << "Could not find flow extension in iolet";
-          }
-        }
+	}
+	return results;
       }
 
       // Read physical outlets that are somehow configured as numerical inlets in the XML parameter file
-      void readFlowExtensionsWithoutInsertElement(io::xml::Element const& ioletsNode,
+      std::vector<FlowExtension> readFlowExtensionsWithoutInsertElement(io::xml::Element const& ioletsNode,
                               util::UnitConverter const& converter,
-                              std::vector<FlowExtension> &results, bool mustHaveFlowExtension =
-                                  false)
+                              bool mustHaveFlowExtension = false)
       {
-        if (ioletsNode == ioletsNode.Missing())
+	std::vector<FlowExtension> results;
+        if (ioletsNode)
         {
-          return;
-        }
-        auto const name = ioletsNode.GetName().substr(0, ioletsNode.GetName().size() - 1);
-        auto ioletNode = ioletsNode.GetChildOrNull(name);
-        for (; ioletNode != ioletNode.Missing(); ioletNode = ioletNode.NextSiblingOrNull(name))
-        {
-          if (ioletNode.GetChildOrNull("flowextension") != ioletNode.Missing())
-          {
-            if (ioletNode.GetChildOrNull("insertcell") != ioletNode.Missing())
-            {
-              continue;
-            }
-            else
-            {
-              results.emplace_back(readFlowExtension(ioletNode, converter));
-            }
-          }
-          else if (mustHaveFlowExtension)
-          {
-            throw Exception() << "Could not find flow extension in iolet";
-          }
-        }
+	  auto const name = ioletsNode.GetName().substr(0, ioletsNode.GetName().size() - 1);
+	  for (
+	    auto ioletNode = ioletsNode.GetChildOrNull(name);
+	    ioletNode != ioletNode.Missing();
+	    ioletNode = ioletNode.NextSiblingOrNull(name)
+	       ) {
+	    if (ioletNode.GetChildOrNull("flowextension"))
+	    {
+              if (ioletNode.GetChildOrNull("insertcell"))
+	      {
+		continue;
+	      }
+	      else
+	      {
+		results.push_back(readFlowExtension(ioletNode, converter));
+	      }
+	    }
+	    else if (mustHaveFlowExtension)
+	    {
+	      throw Exception() << "Could not find flow extension in iolet";
+	    }
+	  }
+	}
+	return results;
       }
 
       //! Rotates a cell to be aligned with the flow and translates it to the start of the flow extension fade length
@@ -337,35 +331,25 @@ namespace hemelb
     std::shared_ptr<Node2NodeForce> readNode2NodeForce(io::xml::Element const& node,
 						       util::UnitConverter const & converter)
     {
-      auto result = std::make_shared<Node2NodeForce>(1e0 / converter.ConvertToLatticeUnits("Nm", 1e0), 1, 2);
-      if (node == node.Missing())
-      {
-        return result;
-      }
-      result->intensity = GetNonDimensionalValue(node,
-                                                "intensity",
-                                                "Nm",
-                                                converter,
-                                                result->intensity);
-      result->cutoff = GetNonDimensionalValue(node,
-                                             "cutoffdistance",
-                                             "lattice",
-                                             converter,
-                                             result->cutoff);
-      if (2e0 * result->cutoff > Dimensionless(Traits<>::Stencil::GetRange()))
+      auto def_intensity = 1e0 / converter.ConvertToLatticeUnits("Nm", 1e0);
+      auto intensity = GetNonDimensionalValue(node, "intensity", "Nm", converter, def_intensity);
+
+      auto cutoffdist = GetNonDimensionalValue(node, "cutoffdistance", "lattice", converter, 1.0);
+
+      // exponent doesnt have units apparently
+      auto exponent = node.and_then(
+        [](io::xml::Element const& el) {return el.GetChildOrNull("exponent");}
+      ).transform(
+	[](io::xml::Element const& el) { return el.GetAttributeOrThrow<size_t>("value"); }
+      ).value_or(2);
+
+      if (2e0 * cutoffdist > Dimensionless(Traits<>::Stencil::GetRange()))
       {
         log::Logger::Log<log::Warning, log::Singleton>("Input inconsistency: cell-cell and cell-wall interactions larger then stencil size\n"
                                                        "See issue #586.");
         throw Exception() << "Cell-cell interaction longuer that stencil size permits";
       }
-      auto const exponentNode = node != node.Missing() ?
-        node.GetChildOrNull("exponent") :
-        node.Missing();
-      if (exponentNode != node.Missing())
-      {
-        exponentNode.GetAttributeOrThrow("value", result->exponent);
-      }
-      return result;
+      return std::make_shared<Node2NodeForce>(intensity, cutoffdist, exponent);
     }
 
     //! Reads multiple templates from XML and stores in container
@@ -373,28 +357,25 @@ namespace hemelb
 							     const configuration::SimConfig& fullconfig,
                                                              util::UnitConverter const& converter)
     {
-      std::unique_ptr<TemplateCellContainer> result(new TemplateCellContainer);
-      // read flow extensions, if they exist
-      std::shared_ptr<std::vector<FlowExtension>> flowExtensions(readFlowExtensions(topNode,
-                                                                                    converter).release());
+      auto result = std::make_unique<TemplateCellContainer>();
+
+      // Read flow extensions, if they exist.
+      // Needs to be a shared pointer so FaderCell can share ownership.
+      auto flowExtensions = [&]() {
+	using VFE = std::vector<FlowExtension>;
+	std::shared_ptr<VFE> ans;
+	VFE tmp = readFlowExtensions(topNode, converter);
+	if (tmp.size()) {
+	  ans = std::make_shared<VFE>(std::move(tmp));
+	}
+	return ans;
+      }();
+
       // Then read template cells
-      auto const redbloodcellsNode = topNode.GetChildOrNull("redbloodcells");
-      if (not redbloodcellsNode)
-      {
-        return result;
-      }
-      auto const cellsNode = redbloodcellsNode.GetChildOrNull("cells");
-      if (not cellsNode)
-      {
-        return result;
-      }
-      auto cellNode = cellsNode.GetChildOrNull("cell");
+      auto cellNode = topNode.GetChildOrNull("redbloodcells").and_then([](auto&& _) { return _.GetChildOrNull("cells"); }).and_then([](auto&&_) { return _.GetChildOrNull("cell"); });
       for (; cellNode; cellNode = cellNode.NextSiblingOrNull("cell"))
       {
-        auto const name = cellNode.GetAttributeOrNull("name");
-        auto const key = name != nullptr ?
-          *name :
-          "default";
+        auto const key = cellNode.GetAttributeMaybe("name").value_or("default");
         if (result->count(key) != 0)
         {
           throw Exception() << "Multiple template mesh with same name";
@@ -411,9 +392,7 @@ namespace hemelb
         }
         result->emplace(key, std::shared_ptr<CellBase>(cell.release()));
       }
-      return result->size() > 0 ?
-        std::move(result) :
-        nullptr;
+      return result;
     }
 
     bool validateCellEdgeLengths(const CellBase& cell)
@@ -450,9 +429,7 @@ namespace hemelb
       const auto cellNode = node.GetName() == "cell" ?
         node :
         node.GetChildOrThrow("cell");
-      auto const name = cellNode.GetAttributeOrNull("name") == nullptr ?
-        "default" :
-        cellNode.GetAttributeOrThrow("name");
+      auto const name = cellNode.GetAttributeMaybe("name").value_or("default");
       auto const shape = cellNode.GetChildOrThrow("shape");
       std::string const mesh_path = fullconfig.RelPathToFullPath(
           shape.GetAttributeOrThrow("mesh_path")
@@ -460,8 +437,7 @@ namespace hemelb
       auto io = make_meshio(shape, "mesh_format");
       auto const mesh_data = io->readFile(mesh_path, true);
       auto const scale = GetNonDimensionalValue<LatticeDistance>(cellNode, "scale", "m", converter);
-      std::string const * reference_mesh_path =
-          shape.GetAttributeOrNull("reference_mesh_path");
+      std::optional<std::string> reference_mesh_path = shape.GetAttributeMaybe("reference_mesh_path");
       std::unique_ptr<Cell> cell;
       if (reference_mesh_path)
       {
@@ -482,29 +458,19 @@ namespace hemelb
       return cellbase;
     }
 
-    std::unique_ptr<std::vector<FlowExtension>> readFlowExtensions(
+    std::vector<FlowExtension> readFlowExtensions(
         io::xml::Element const& topNode, util::UnitConverter const& converter)
     {
-      if (topNode == topNode.Missing())
-      {
-        return nullptr;
-      }
-      std::vector<FlowExtension> result;
-      auto inletsNode = topNode.GetChildOrNull("inlets");
-      if (inletsNode != inletsNode.Missing())
-      {
-        readFlowExtensions(inletsNode, converter, result);
-      }
-      auto outletsNode = topNode.GetChildOrNull("outlets");
-      if (outletsNode != outletsNode.Missing())
-      {
-        readFlowExtensions(outletsNode, converter, result);
-      }
-      if (result.size() == 0)
-      {
-        return nullptr;
-      }
-      return std::unique_ptr<decltype(result)>(new decltype(result)(std::move(result)));
+      using VFE = std::vector<FlowExtension>;
+      return topNode.transform([&](io::xml::Element const& topNode) {
+	  auto do_iolets = [&](io::xml::Element const& node) {
+	    return readFlowExtensionsOfOneType(node, converter);
+	  };
+	  auto ins = topNode.GetChildOrNull("inlets").transform(do_iolets).value_or(VFE{});
+	  auto outs = topNode.GetChildOrNull("outlets").transform(do_iolets).value_or(VFE{});
+	  ins.insert(ins.end(), outs.begin(), outs.end());
+	  return ins;
+	}).value_or<VFE>({});
     }
 
     //! Finds first inlet with Cell insertion
@@ -532,7 +498,7 @@ namespace hemelb
       std::vector<std::function<void(CellInserter const&)>> results;
       while (inlet != inlet.Missing())
       {
-        results.emplace_back(std::move(readSingleRBCInserter(inlet, converter, templateCells)));
+        results.emplace_back(readSingleRBCInserter(inlet, converter, templateCells));
         inlet = findFirstInletWithCellInsertion(inlet.NextSiblingOrNull("inlet"));
       }
 
@@ -563,19 +529,21 @@ namespace hemelb
       auto const result = std::make_shared<std::vector<FlowExtension>>();
 
       auto outletsNode = topNode.GetChildOrThrow("outlets");
-      readFlowExtensions(outletsNode, converter, *result);
+      auto outs = readFlowExtensionsOfOneType(outletsNode, converter);
 
       auto inletsNode = topNode.GetChildOrThrow("inlets");
-      readFlowExtensionsWithoutInsertElement(inletsNode, converter, *result);
+      auto ins = readFlowExtensionsWithoutInsertElement(inletsNode, converter);
 
       // Then transforms them to cell outlets: should start somewhere near the end of fadelength
-      for (auto &flowExt : *result)
-      {
+      auto trans = [](FlowExtension flowExt) {
         auto length = flowExt.length - flowExt.fadeLength;
         flowExt.origin += flowExt.normal * (flowExt.length - length);
         flowExt.length = length;
         flowExt.fadeLength = length;
-      }
+	return flowExt;
+      };
+      std::transform(outs.begin(), outs.end(), std::back_inserter(*result), trans);
+      std::transform(ins.begin(), ins.end(), std::back_inserter(*result), trans);
       return result;
     }
   }

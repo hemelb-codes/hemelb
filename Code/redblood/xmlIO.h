@@ -38,7 +38,7 @@ namespace hemelb
 				       util::UnitConverter const&);
 
     //! Reads all flow extensions from XML
-    std::unique_ptr<std::vector<FlowExtension>> readFlowExtensions(
+    std::vector<FlowExtension> readFlowExtensions(
         io::xml::Element const& inletsNode, util::UnitConverter const& converter);
     //! Reads template meshes from XML
     std::unique_ptr<TemplateCellContainer> readTemplateCells(io::xml::Element const&,
