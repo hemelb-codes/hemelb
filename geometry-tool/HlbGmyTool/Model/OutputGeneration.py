@@ -262,7 +262,7 @@ class PolyDataGenerator(GeometryGenerator):
         GeometryGenerator object.
         """
         super().__init__()
-
+        self.DebugPipelineDirectory = None
         self._profile = profile
         self.generator = self.genext.PolyDataGenerator()
 
@@ -297,15 +297,12 @@ class PolyDataGenerator(GeometryGenerator):
 
         shifter.Update()
         self.ClippedSurface = shifter.GetOutput()
-        # Uncomment this an insert the output path to debug pipeline construction
-        # write = StageWriter('path/to/folder').WriteOutput
-        # i = 0
-        # for alg in getpipeline(shifter):
-        #     print(i)
-        #     i += 1
-        #     print(alg)
-        #     write(alg)
-
+        # If the attribute has been set, write all the stages of the
+        # pipeline to the folder.
+        if self.DebugPipelineDirectory is not None:
+            sw = StageWriter(self.DebugPipelineDirectory)
+            for alg in getpipeline(shifter):
+                sw.WriteOutput(alg)
 
     @abstractmethod
     def _RoundUpSites(self, nSites):
