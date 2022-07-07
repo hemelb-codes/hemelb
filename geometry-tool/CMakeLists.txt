@@ -109,7 +109,11 @@ target_link_libraries(GmyGeneration PRIVATE
   Boost::headers
   ZLIB::ZLIB
   CGAL::CGAL
-  ${VTK_LIBRARIES}
+  vtksys
+  vtkFiltersGeneral
+  vtkCommonDataModel
+  vtkIOXML
+  vtkWrappingPythonCore
 )
 
 # Newer octree based one
