@@ -4,6 +4,7 @@
 # license in the file LICENSE.
 
 add_library(hemelb_geometry OBJECT
+  Geometry.cc
   BlockTraverser.cc BlockTraverserWithVisitedBlockTracker.cc
   GeometryReader.cc needs/Needs.cc LatticeData.cc
   SiteDataBare.cc SiteData.cc

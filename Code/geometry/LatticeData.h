@@ -68,7 +68,7 @@ namespace hemelb
 
         virtual ~LatticeData();
 
-        net::IOCommunicator const & GetCommunicator() const
+        inline net::IOCommunicator const & GetCommunicator() const
         {
           return comms;
         }
