@@ -20,7 +20,7 @@ namespace hemelb
       // Class that contains information necessary to interpret
       // a HemeLB geometry file (*.gmy).
       //
-      // The file is described in Doc/dev/formats/Geometry.md
+      // The file is described in Doc/dev/formats/GmyReadResult.md
       //
       // Types and values should match those used in the file.
       struct geometry

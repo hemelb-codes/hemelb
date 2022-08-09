@@ -36,7 +36,7 @@ namespace hemelb
       auto latticeData = std::unique_ptr<FourCubeLatticeData>{FourCubeLatticeData::Create(Comms(), CubeSize + 2, 1)};
 
       auto simState = lb::SimulationState{60.0 / (70.0 * 5000.0), 1000};
-      auto propertyCache = lb::MacroscopicPropertyCache(simState, *latticeData);
+      auto propertyCache = lb::MacroscopicPropertyCache(simState, latticeData->GetDomain());
       auto unitConverter = util::UnitConverter(simState.GetTimeStepLength(),
 					       VoxelSize,
 					       PhysicalPosition::Zero(),
@@ -50,7 +50,7 @@ namespace hemelb
       // Helper to ensure all required sites are marked for extraction
       auto TestExpectedIncludedSites = [&] (const extraction::GeometrySelector& geometrySelector,
 					    const std::vector<util::Vector3D<site_t>>& includedSites) {
-	// For every point in the LatticeData
+	// For every point in the domain_type
 	dataSourceIterator.Reset();
 	while (dataSourceIterator.ReadNext()) {
 	  // Is the current site in includedSites?

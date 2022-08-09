@@ -7,7 +7,7 @@
 #define HEMELB_LB_ENTROPYTESTER_H
 
 #include "net/PhasedBroadcastRegular.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "lb/HFunction.h"
 #include "log/Logger.h"
 
@@ -20,7 +20,7 @@ namespace hemelb
     {
       public:
         EntropyTester(int* collisionTypes, unsigned int typesTested,
-                      const geometry::LatticeData * iLatDat, net::Net* net,
+                      const geometry::Domain * iLatDat, net::Net* net,
                       SimulationState* simState) :
             net::PhasedBroadcastRegular<false, 1, 1, false, true>(net, simState, SPREADFACTOR),
                 mLatDat(iLatDat)
@@ -62,7 +62,7 @@ namespace hemelb
               for (site_t i = offset;
                   i < offset + mLatDat->GetMidDomainCollisionCount(collision_type); i++)
               {
-                const geometry::Site<const geometry::LatticeData> site = mLatDat->GetSite(i);
+                const geometry::Site<const geometry::Domain> site = mLatDat->GetSite(i);
 
                 HFunction<LatticeType> HFunc(site.GetFOld<LatticeType>(), nullptr);
                 dHMax = util::NumericalFunctions::max(dHMax, HFunc.eval() - mHPreCollision[i]);
@@ -79,7 +79,7 @@ namespace hemelb
               for (site_t i = offset;
                   i < offset + mLatDat->GetDomainEdgeCollisionCount(collision_type); i++)
               {
-                const geometry::Site<const geometry::LatticeData> site = mLatDat->GetSite(i);
+                const geometry::Site<const geometry::Domain> site = mLatDat->GetSite(i);
 
                 HFunction<LatticeType> HFunc(site.GetFOld<LatticeType>(), nullptr);
                 dHMax = util::NumericalFunctions::max(dHMax, HFunc.eval() - mHPreCollision[i]);
@@ -137,7 +137,7 @@ namespace hemelb
               for (site_t i = offset;
                   i < offset + mLatDat->GetMidDomainCollisionCount(collision_type); i++)
               {
-                const geometry::Site<const geometry::LatticeData> site = mLatDat->GetSite(i);
+                const geometry::Site<const geometry::Domain> site = mLatDat->GetSite(i);
                 HFunction<LatticeType> HFunc(site.GetFOld<LatticeType>(), nullptr);
                 mHPreCollision[i] = HFunc.eval();
               }
@@ -153,7 +153,7 @@ namespace hemelb
               for (site_t i = offset;
                   i < offset + mLatDat->GetDomainEdgeCollisionCount(collision_type); i++)
               {
-                const geometry::Site<const geometry::LatticeData> site = mLatDat->GetSite(i);
+                const geometry::Site<const geometry::Domain> site = mLatDat->GetSite(i);
                 HFunction<LatticeType> HFunc(site.GetFOld<LatticeType>(), nullptr);
                 mHPreCollision[i] = HFunc.eval();
               }
@@ -208,7 +208,7 @@ namespace hemelb
          */
         static const unsigned int SPREADFACTOR = 10;
 
-        const geometry::LatticeData * mLatDat;
+        const geometry::Domain * mLatDat;
 
         /**
          * Stability value of this node and its children to propagate upwards.

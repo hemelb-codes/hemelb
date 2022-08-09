@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_GEOMETRY_GEOMETRY_H
-#define HEMELB_GEOMETRY_GEOMETRY_H
+#ifndef HEMELB_GEOMETRY_GMYREADRESULT_H
+#define HEMELB_GEOMETRY_GMYREADRESULT_H
 
 #include <vector>
 #include "units.h"
@@ -20,13 +20,13 @@ namespace hemelb
     /***
      * Model of the information in a geometry file
      */
-    class Geometry
+    class GmyReadResult
     {
       public:
         /**
          * Default constructor initialises internal variables
          */
-        Geometry(const util::Vector3D<site_t>& dimensionsInBlocks, site_t blockSize);
+        GmyReadResult(const util::Vector3D<site_t>& dimensionsInBlocks, site_t blockSize);
 
         /***
          * Returns the total count of blocks in the bounding box of the geometry.
@@ -48,7 +48,7 @@ namespace hemelb
 
         /***
          * Get the i.d. of a block, i.e. the one-d coordinate, from the three-d coordinate.
-         * @todo Use this to replace LatticeData::GetBlockIdFromBlockCoords
+         * @todo Use this to replace domain_type::GetBlockIdFromBlockCoords
          */
         inline site_t GetBlockIdFromBlockCoordinates(site_t blockI, site_t blockJ, site_t blockK) const
         {
@@ -132,4 +132,4 @@ namespace hemelb
 
   }
 }
-#endif // HEMELB_GEOMETRY_GEOMETRYREADRESULT_H
+#endif // HEMELB_GEOMETRY_GMYREADRESULT_H

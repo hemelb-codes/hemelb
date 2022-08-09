@@ -227,7 +227,7 @@ namespace hemelb
 
     { "Total",
       "Seed Decomposition",
-      "Domain Decomposition",
+      "domain_type Decomposition",
       "File Read",
       "Re Read",
       "Unzip",

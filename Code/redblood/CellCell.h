@@ -14,7 +14,7 @@
 
 #include "units.h"
 #include "Exception.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "redblood/DivideConquer.h"
 #include "redblood/Cell.h"
 #include "redblood/Node2Node.h"

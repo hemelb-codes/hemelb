@@ -52,7 +52,7 @@ namespace hemelb
 	void RequireReceive(T* pointer, unsigned int count, proc_t rank,
 			    const std::string &label = "")
 	{
-	  requiredReceipts[rank].push_back(LabelledRequest(pointer,
+	  requiredReceipts[rank].push_back(LabelledRequest<false>(pointer,
 							   count,
 							   MpiDataType<T>(),
 							   rank,
@@ -69,7 +69,7 @@ namespace hemelb
 	void RequireSend(T* pointer, unsigned int count, proc_t rank,
 			 const std::string &label = "")
 	{
-	  requiredSends[rank].push_back(LabelledRequest(pointer,
+	  requiredSends[rank].push_back(LabelledRequest<true>(pointer,
 							count,
 							MpiDataType<T>(),
 							rank,
@@ -105,8 +105,8 @@ namespace hemelb
 	void ExpectationsAllCompleted();
       private:
 
-	std::map<proc_t, BaseProcComms<LabelledRequest> > requiredReceipts;
-	std::map<proc_t, BaseProcComms<LabelledRequest> > requiredSends;
+	std::map<proc_t, BaseProcComms<LabelledRequest<false>> > requiredReceipts;
+	std::map<proc_t, BaseProcComms<LabelledRequest<true>> > requiredSends;
       };
 
     }

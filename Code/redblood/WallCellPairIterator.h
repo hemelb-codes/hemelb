@@ -13,7 +13,7 @@
 #include "redblood/DivideConquer.h"
 #include "redblood/CellCell.h"
 #include "redblood/Borders.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 
 namespace hemelb
 {

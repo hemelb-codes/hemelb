@@ -46,21 +46,21 @@ namespace hemelb
 
           JunkYangFactory(kernels::InitParams& initParams) :
               collider(initParams), bulkLinkDelegate(collider, initParams),
-                  ioletLinkDelegate(collider, initParams), THETA(0.7),
-                  latticeData(*initParams.latDat)
+                  ioletLinkDelegate(collider, initParams), THETA(0.7)/*,
+                  domainData(*initParams.latDat)*/
           {
-            for (std::vector<std::pair<site_t, site_t> >::iterator rangeIt =
-                initParams.siteRanges.begin(); rangeIt != initParams.siteRanges.end(); ++rangeIt)
+            auto& dom = *initParams.latDat;
+            for (auto&& [site_begin, site_end]: initParams.siteRanges)
             {
-              for (site_t siteIdx = rangeIt->first; siteIdx < rangeIt->second; ++siteIdx)
+              for (site_t siteIdx = site_begin; siteIdx < site_end; ++siteIdx)
               {
-                geometry::Site<const geometry::LatticeData> localSite =
-                    latticeData.GetSite(siteIdx);
+                geometry::Site<const geometry::Domain> localSite = dom.GetSite(siteIdx);
+//                    domainData.GetSite(siteIdx);
                 // Only consider walls - the initParams .siteRanges should take care of that for us, but check anyway
                 if (localSite.IsWall())
                 {
-                  ConstructVelocitySets(siteIdx);
-                  AssembleKMatrix(siteIdx);
+                  ConstructVelocitySets(siteIdx, dom);
+                  AssembleKMatrix(siteIdx, dom);
                   AssembleLMatrix(siteIdx);
                 }
               }
@@ -80,15 +80,15 @@ namespace hemelb
 
           inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
-                                         geometry::LatticeData* latticeData,
+                                         geometry::FieldData& latticeData,
                                          lb::MacroscopicPropertyCache& propertyCache)
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              assert(latticeData->GetSite(siteIndex).IsWall());
+              assert(latticeData.GetSite(siteIndex).IsWall());
               assert(lMatrices.find(siteIndex) != lMatrices.end());
 
-              geometry::Site<geometry::LatticeData> site = latticeData->GetSite(siteIndex);
+              auto&& site = latticeData.GetSite(siteIndex);
 
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site);
 
@@ -154,17 +154,17 @@ namespace hemelb
           }
 
           inline void DoPostStep(const site_t firstIndex, const site_t siteCount,
-                                 const LbmParameters* lbmParams, geometry::LatticeData* latticeData,
+                                 const LbmParameters* lbmParams, geometry::FieldData& latticeData,
                                  lb::MacroscopicPropertyCache& propertyCache)
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              assert(latticeData->GetSite(siteIndex).IsWall());
+              assert(latticeData.GetSite(siteIndex).IsWall());
               assert(lMatrices.find(siteIndex) != lMatrices.end());
               assert(luPermutationMatrices.find(siteIndex) != luPermutationMatrices.end());
 
               ublas::vector<distribn_t> rVector;
-              AssembleRVector(siteIndex, rVector);
+              AssembleRVector(siteIndex, latticeData,rVector);
 
               // assemble RHS
               ublas::vector<distribn_t> systemRHS = fPostCollisionInverseDir[siteIndex] - rVector;
@@ -182,11 +182,11 @@ namespace hemelb
                   incomingVelocityIter != incomingVelocities[siteIndex].end();
                   ++incomingVelocityIter, ++index)
               {
-                * (latticeData->GetFNew(siteIndex * LatticeType::NUMVECTORS + *incomingVelocityIter)) =
+                * (latticeData.GetFNew(siteIndex * LatticeType::NUMVECTORS + *incomingVelocityIter)) =
                     systemSolution[index];
               }
 
-              geometry::Site<geometry::LatticeData> site = latticeData->GetSite(siteIndex);
+              auto&& site = latticeData.GetSite(siteIndex);
               for (std::set<Direction>::const_iterator outgoingVelocityIter =
                   outgoingVelocities[siteIndex].begin();
                   outgoingVelocityIter != outgoingVelocities[siteIndex].end();
@@ -215,7 +215,7 @@ namespace hemelb
           const distribn_t THETA;
 
           //! Reference to the lattice object used for initialisation
-          const geometry::LatticeData& latticeData;
+          //const geometry::Domain& domainData;
 
           //! Sets of incoming velocities (those with an inverse direction crossing a wall boundary)
           std::map<site_t, std::set<Direction> > incomingVelocities;
@@ -245,10 +245,9 @@ namespace hemelb
            *
            * @param contiguousSiteIndex Contiguous site index (for this core)
            */
-          inline void ConstructVelocitySets(site_t contiguousSiteIndex)
+          inline void ConstructVelocitySets(site_t contiguousSiteIndex, geometry::Domain const& dom)
           {
-            geometry::Site<const geometry::LatticeData> site =
-                latticeData.GetSite(contiguousSiteIndex);
+            auto site = dom.GetSite(contiguousSiteIndex);
 
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; direction++)
             {
@@ -275,10 +274,10 @@ namespace hemelb
            *
            * @param contiguousSiteIndex Contiguous site index (for this core)
            */
-          inline void AssembleKMatrix(site_t contiguousSiteIndex)
+          inline void AssembleKMatrix(site_t contiguousSiteIndex, geometry::Domain const& dom)
           {
-            geometry::Site<const geometry::LatticeData> site =
-                latticeData.GetSite(contiguousSiteIndex);
+            geometry::Site<const geometry::Domain> site =
+                dom.GetSite(contiguousSiteIndex);
 
             unsigned incomingVelsSetSize = incomingVelocities[contiguousSiteIndex].size();
 
@@ -448,6 +447,7 @@ namespace hemelb
            * @param rVector r vector
            */
           inline void AssembleRVector(const site_t contiguousSiteIndex,
+                                      geometry::FieldData const& fieldData,
                                       ublas::vector<distribn_t>& rVector) //const
           {
             ublas::c_vector<distribn_t, LatticeType::NUMVECTORS> sigmaVector;
@@ -469,7 +469,7 @@ namespace hemelb
                 outgoingDirIter != outgoingVelocities[contiguousSiteIndex].end();
                 ++outgoingDirIter, ++index)
             {
-              fNew[index] = *latticeData.GetFNew(contiguousSiteIndex * LatticeType::NUMVECTORS
+              fNew[index] = *fieldData.GetFNew(contiguousSiteIndex * LatticeType::NUMVECTORS
                   + *outgoingDirIter);
             }
 

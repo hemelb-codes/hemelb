@@ -26,7 +26,7 @@ namespace hemelb
 
         void WaitPointToPoint();
         // we will *NOT* store the requests, so we must provide RequestSendImpl ourselves.
-        virtual void RequestSendImpl(void* pointer, int count, proc_t rank, MPI_Datatype type);
+        virtual void RequestSendImpl(void const* pointer, int count, proc_t rank, MPI_Datatype type);
         virtual void RequestReceiveImpl(void* pointer, int count, proc_t rank, MPI_Datatype type);
       protected:
         void ReceivePointToPoint(); //PASS

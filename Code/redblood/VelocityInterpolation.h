@@ -112,7 +112,7 @@ namespace hemelb
         // Follows approach in Timm's code
         auto const fDistribution = latticeData.GetFNew(index * LatticeType::NUMVECTORS);
 #else
-        auto const fDistribution = latticeData.GetSite(index).template GetFOld<LatticeType>();
+        auto const fDistribution = domainData.GetSite(index).template GetFOld<LatticeType>();
 #endif
         LatticeType::CalculateDensityAndMomentum(fDistribution,
                                                  density,

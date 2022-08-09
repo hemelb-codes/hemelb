@@ -27,14 +27,11 @@ namespace hemelb
       EnsurePreparedToSendReceive();
       proc_t m = 0;
 
-      for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin();
-          it != receiveProcessorComms.end(); ++it)
-      {
-
-        MPI_Irecv(it->second.front().Pointer,
+      for (auto& [pid, pc]: receiveProcessorComms) {
+        MPI_Irecv(pc.front().Pointer,
                   1,
-                  it->second.Type,
-                  it->first,
+                  pc.Type,
+                  pid,
                   10,
                   communicator,
                   &requests[m]);
@@ -55,16 +52,14 @@ namespace hemelb
         return;
       }
 
-      for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin();
-          it != sendProcessorComms.end(); ++it)
+      for (auto& [_, pc]: sendProcessorComms)
       {
-        it->second.CreateMPIType();
+        pc.CreateMPIType();
       }
 
-      for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin();
-          it != receiveProcessorComms.end(); ++it)
+      for (auto& [_, pc]: receiveProcessorComms)
       {
-        it->second.CreateMPIType();
+        pc.CreateMPIType();
       }
 
       EnsureEnoughRequests(receiveProcessorComms.size() + sendProcessorComms.size());
@@ -79,18 +74,17 @@ namespace hemelb
       EnsurePreparedToSendReceive();
       proc_t m = 0;
 
-      for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin();
-          it != sendProcessorComms.end(); ++it)
+      for (auto& [pid, pc]: sendProcessorComms)
       {
 
         int TypeSizeStorage = 0; //DTMP:byte size tracking
-        MPI_Type_size(it->second.Type, &TypeSizeStorage); //DTMP:
+        MPI_Type_size(pc.Type, &TypeSizeStorage); //DTMP:
         BytesSent += TypeSizeStorage; //DTMP:
 
-        MPI_Isend(it->second.front().Pointer,
+        MPI_Isend(pc.front().Pointer,
                   1,
-                  it->second.Type,
-                  it->first,
+                  pc.Type,
+                  pid,
                   10,
                   communicator,
                   &requests[receiveProcessorComms.size() + m]);
@@ -106,16 +100,12 @@ namespace hemelb
     {
       if (sendReceivePrepped)
       {
-        for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin();
-            it != sendProcessorComms.end(); ++it)
-        {
-          MPI_Type_free(&it->second.Type);
+        for (auto& [_, pc]: sendProcessorComms) {
+          MPI_Type_free(&pc.Type);
         }
 
-        for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin();
-            it != receiveProcessorComms.end(); ++it)
-        {
-          MPI_Type_free(&it->second.Type);
+        for (auto& [_, pc]: receiveProcessorComms) {
+          MPI_Type_free(&pc.Type);
         }
 
       }
@@ -128,17 +118,13 @@ namespace hemelb
                   requests.data(),
                   statuses.data());
 
-      for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin();
-          it != receiveProcessorComms.end(); ++it)
-      {
-        MPI_Type_free(&it->second.Type);
+      for (auto& [_, pc]: receiveProcessorComms) {
+        MPI_Type_free(&pc.Type);
       }
       receiveProcessorComms.clear();
 
-      for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin();
-          it != sendProcessorComms.end(); ++it)
-      {
-        MPI_Type_free(&it->second.Type);
+        for (auto& [_, pc]: sendProcessorComms) {
+        MPI_Type_free(&pc.Type);
       }
       sendProcessorComms.clear();
       sendReceivePrepped = false;

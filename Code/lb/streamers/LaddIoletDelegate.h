@@ -29,8 +29,8 @@ namespace hemelb
           }
 
           inline void StreamLink(const LbmParameters* lbmParams,
-                                 geometry::LatticeData* const latticeData,
-                                 const geometry::Site<geometry::LatticeData>& site,
+                                 geometry::FieldData* const latticeData,
+                                 const geometry::Site<geometry::Domain>& site,
                                  kernels::HydroVars<typename CollisionType::CKernel>& hydroVars,
                                  const Direction& ii)
           {

@@ -17,28 +17,28 @@ namespace hemelb
       public:
         StoringNet(const MpiCommunicator& comms);
 
-        virtual void RequestSendImpl(void* pointer, int count, proc_t rank, MPI_Datatype type);
-        virtual void RequestReceiveImpl(void* pointer, int count, proc_t rank, MPI_Datatype type);
+        void RequestSendImpl(void const* pointer, int count, proc_t rank, MPI_Datatype type) override;
+        void RequestReceiveImpl(void* pointer, int count, proc_t rank, MPI_Datatype type) override;
 
-        void RequestGatherVSendImpl(void* buffer, int count, proc_t toRank, MPI_Datatype type);
-        void RequestGatherReceiveImpl(void* buffer, MPI_Datatype type);
+        void RequestGatherVSendImpl(void const* buffer, int count, proc_t toRank, MPI_Datatype type) override;
+        void RequestGatherReceiveImpl(void* buffer, MPI_Datatype type) override;
 
-        void RequestGatherSendImpl(void* buffer, proc_t toRank, MPI_Datatype type);
+        void RequestGatherSendImpl(void* buffer, proc_t toRank, MPI_Datatype type) override;
         void RequestGatherVReceiveImpl(void* buffer, int * displacements, int *counts,
-                                       MPI_Datatype type);
+                                       MPI_Datatype type) override;
 
-        virtual void RequestAllToAllReceiveImpl(void * buffer, int count, MPI_Datatype type);
-        virtual void RequestAllToAllSendImpl(void * buffer, int count, MPI_Datatype type);
+        virtual void RequestAllToAllReceiveImpl(void * buffer, int count, MPI_Datatype type) override;
+        virtual void RequestAllToAllSendImpl(void * buffer, int count, MPI_Datatype type) override;
 
       protected:
         /**
          * Struct representing all that's needed to successfully communicate with another processor.
          */
 
-        std::map<proc_t, ProcComms> sendProcessorComms;
-        std::map<proc_t, ProcComms> receiveProcessorComms;
+        std::map<proc_t, ProcComms<true>> sendProcessorComms;
+        std::map<proc_t, ProcComms<false>> receiveProcessorComms;
 
-        std::map<proc_t, ProcComms> gatherVSendProcessorComms;
+        std::map<proc_t, ProcComms<true>> gatherVSendProcessorComms;
         GatherVReceiveProcComms gatherVReceiveProcessorComms;
 
         std::map<proc_t, GatherProcComms> gatherSendProcessorComms;

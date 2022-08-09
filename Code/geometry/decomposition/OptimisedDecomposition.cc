@@ -17,7 +17,7 @@ namespace hemelb
     namespace decomposition
     {
       OptimisedDecomposition::OptimisedDecomposition(
-          reporting::Timers& timers, net::MpiCommunicator& comms, const Geometry& geometry,
+          reporting::Timers& timers, net::MpiCommunicator& comms, const GmyReadResult& geometry,
           const lb::lattices::LatticeInfo& latticeInfo, const std::vector<proc_t>& procForEachBlock,
           const std::vector<site_t>& fluidSitesOnEachBlock) :
           timers(timers), comms(comms), geometry(geometry), latticeInfo(latticeInfo),

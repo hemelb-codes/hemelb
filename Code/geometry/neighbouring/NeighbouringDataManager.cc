@@ -6,7 +6,8 @@
 #include <algorithm>
 
 #include "geometry/neighbouring/NeighbouringDataManager.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
+#include "geometry/FieldData.h"
 
 #include "log/Logger.h"
 namespace hemelb
@@ -17,9 +18,9 @@ namespace hemelb
     {
 
       NeighbouringDataManager::NeighbouringDataManager(
-          const LatticeData & localLatticeData, NeighbouringLatticeData & neighbouringLatticeData,
-          net::InterfaceDelegationNet & net) :
-          localLatticeData(localLatticeData), neighbouringLatticeData(neighbouringLatticeData),
+              const FieldData& localLatticeData, NeighbouringFieldData& neighbouringLatticeData,
+              net::InterfaceDelegationNet & net) :
+              localFieldData(localLatticeData), neighbouringFieldData(neighbouringLatticeData),
               net(net), needsEachProcHasFromMe(net.Size()), needsHaveBeenShared(false)
       {
       }
@@ -39,11 +40,13 @@ namespace hemelb
 
       proc_t NeighbouringDataManager::ProcForSite(site_t site)
       {
-        return localLatticeData.ProcProvidingSiteByGlobalNoncontiguousId(site);
+        return localFieldData.GetDomain().ProcProvidingSiteByGlobalNoncontiguousId(site);
       }
 
       void NeighbouringDataManager::TransferNonFieldDependentInformation()
       {
+        auto&& neigh_dom = neighbouringFieldData.GetDomain();
+        auto&& local_dom = localFieldData.GetDomain();
         // Ordering is important here, to ensure the requests are registered in the same order
         // on the sending and receiving procs.
         // But, the needsEachProcHasFromMe is always ordered,
@@ -52,14 +55,14 @@ namespace hemelb
             localNeed != neededSites.end(); localNeed++)
         {
           proc_t source = ProcForSite(*localNeed);
-          NeighbouringSite site = neighbouringLatticeData.GetSite(*localNeed);
+          auto site = neigh_dom.GetSite(*localNeed);
 
           net.RequestReceiveR(site.GetSiteData().GetWallIntersectionData(), source);
           net.RequestReceiveR(site.GetSiteData().GetIoletIntersectionData(), source);
           net.RequestReceiveR(site.GetSiteData().GetIoletId(), source);
           net.RequestReceiveR(site.GetSiteData().GetSiteType(), source);
           net.RequestReceive(site.GetWallDistances(),
-                             localLatticeData.GetLatticeInfo().GetNumVectors() - 1,
+                             local_dom.GetLatticeInfo().GetNumVectors() - 1,
                              source);
           net.RequestReceiveR(site.GetWallNormal(), source);
         }
@@ -70,17 +73,18 @@ namespace hemelb
               needOnProcFromMe != needsEachProcHasFromMe[other].end(); needOnProcFromMe++)
           {
             site_t localContiguousId =
-                localLatticeData.GetLocalContiguousIdFromGlobalNoncontiguousId(*needOnProcFromMe);
+                local_dom.GetLocalContiguousIdFromGlobalNoncontiguousId(*needOnProcFromMe);
 
-            Site<LatticeData> site =
-                const_cast<LatticeData&>(localLatticeData).GetSite(localContiguousId);
+//            Site<Domain> site =
+//                const_cast<Domain&>(localFieldData).GetSite(localContiguousId);
+auto const site = localFieldData.GetSite(localContiguousId);
             // have to cast away the const, because no respect for const-ness for sends in MPI
             net.RequestSendR(site.GetSiteData().GetWallIntersectionData(), other);
             net.RequestSendR(site.GetSiteData().GetIoletIntersectionData(), other);
             net.RequestSendR(site.GetSiteData().GetIoletId(), other);
             net.RequestSendR(site.GetSiteData().GetSiteType(), other);
             net.RequestSend(site.GetWallDistances(),
-                            localLatticeData.GetLatticeInfo().GetNumVectors() - 1,
+                            local_dom.GetLatticeInfo().GetNumVectors() - 1,
                             other);
             net.RequestSendR(site.GetWallNormal(), other);
           }
@@ -105,13 +109,15 @@ namespace hemelb
         // on the sending and receiving procs.
         // But, the needsEachProcHasFromMe is always ordered,
         // by the same order, as the neededSites, so this should be OK.
+        auto&& local_dom = localFieldData.GetDomain();
+        auto const NV = local_dom.GetLatticeInfo().GetNumVectors();
         for (std::vector<site_t>::iterator localNeed = neededSites.begin();
             localNeed != neededSites.end(); localNeed++)
         {
           proc_t source = ProcForSite(*localNeed);
-          NeighbouringSite site = neighbouringLatticeData.GetSite(*localNeed);
-          net.RequestReceive(site.GetFOld(localLatticeData.GetLatticeInfo().GetNumVectors()),
-                             localLatticeData.GetLatticeInfo().GetNumVectors(),
+          auto site = neighbouringFieldData.GetSite(*localNeed);
+          net.RequestReceive(site.GetFOld(NV),
+                             NV,
                              source);
 
         }
@@ -122,12 +128,13 @@ namespace hemelb
               needOnProcFromMe != needsEachProcHasFromMe[other].end(); needOnProcFromMe++)
           {
             site_t localContiguousId =
-                localLatticeData.GetLocalContiguousIdFromGlobalNoncontiguousId(*needOnProcFromMe);
-            Site<LatticeData> site =
-                const_cast<LatticeData&>(localLatticeData).GetSite(localContiguousId);
+                local_dom.GetLocalContiguousIdFromGlobalNoncontiguousId(*needOnProcFromMe);
+//            Site<Domain> site =
+//                const_cast<Domain&>(localFieldData).GetSite(localContiguousId);
+            auto const site = localFieldData.GetSite(localContiguousId);
             // have to cast away the const, because no respect for const-ness for sends in MPI
-            net.RequestSend(const_cast<distribn_t*>(site.GetFOld(localLatticeData.GetLatticeInfo().GetNumVectors())),
-                            localLatticeData.GetLatticeInfo().GetNumVectors(),
+            net.RequestSend(site.GetFOld(NV),
+                            NV,
                             other);
 
           }

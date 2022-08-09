@@ -8,7 +8,7 @@
 
 #include <cmath>
 
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "lb/LbmParameters.h"
 #include "lb/kernels/BaseKernel.h"
 #include "lb/MacroscopicPropertyCache.h"
@@ -25,9 +25,9 @@ namespace hemelb
        * here defines the complete interface usable by external code.
        *  - Constructor(InitParams&)
        *  - StreamAndCollide(const site_t, const site_t, const LbmParameters*,
-       *      geometry::LatticeData*, lb::MacroscopicPropertyCache& propertyCache)
-       *  - <bool tDoRayTracing> PostStep(const site_t, const site_t, const LbmParameters*,
-       *      geometry::LatticeData*, lb::MacroscopicPropertyCache& propertyCache)
+       *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
+       *  - PostStep(const site_t, const site_t, const LbmParameters*,
+       *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
        *  - Reset(kernels::InitParams* init)
        *
        * The following must be implemented by concrete streamers (which derive from this class
@@ -35,9 +35,9 @@ namespace hemelb
        *  - typedef for CollisionType, the type of the collider operation.
        *  - Constructor(InitParams&)
        *  - DoStreamAndCollide(const site_t, const site_t, const LbmParameters*,
-       *      geometry::LatticeData*, lb::MacroscopicPropertyCache& propertyCache)
+       *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
        *  - DoPostStep(const site_t, const site_t, const LbmParameters*,
-       *      geometry::LatticeData*, lb::MacroscopicPropertyCache& propertyCache)
+       *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
        *  - DoReset(kernels::InitParams* init)
        *
        * The design is to for the streamers to be pretty dumb and for them to
@@ -54,7 +54,7 @@ namespace hemelb
         public:
           inline void StreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                        const LbmParameters* lbmParams,
-                                       geometry::LatticeData* latDat,
+                                       geometry::FieldData& latDat,
                                        lb::MacroscopicPropertyCache& propertyCache)
           {
               static_cast<StreamerImpl*>(this)->DoStreamAndCollide(firstIndex,
@@ -65,7 +65,7 @@ namespace hemelb
           }
 
           inline void PostStep(const site_t firstIndex, const site_t siteCount,
-                               const LbmParameters* lbmParams, geometry::LatticeData* latDat,
+                               const LbmParameters* lbmParams, geometry::FieldData& latDat,
                                lb::MacroscopicPropertyCache& propertyCache)
           {
               // The template parameter is required because we're using the CRTP to call a
@@ -80,7 +80,7 @@ namespace hemelb
         protected:
           template<class LatticeType>
           inline static void UpdateMinsAndMaxes(
-              const geometry::Site<geometry::LatticeData>& site,
+              const geometry::Site<geometry::Domain>& site,
               const kernels::HydroVarsBase<LatticeType>& hydroVars, const LbmParameters* lbmParams,
               lb::MacroscopicPropertyCache& propertyCache)
           {

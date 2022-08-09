@@ -43,7 +43,7 @@ namespace hemelb
             {
               for (site_t localIndex = rangeIt->first; localIndex < rangeIt->second; ++localIndex)
               {
-                geometry::Site<const geometry::LatticeData> localSite =
+                geometry::Site<const geometry::Domain> localSite =
                     initParams.latDat->GetSite(localIndex);
 
                 const LatticeVector& localSiteLocation = localSite.GetGlobalSiteCoords();
@@ -125,8 +125,8 @@ namespace hemelb
            *   Do GZS1
            */
           inline void StreamLink(const LbmParameters* lbmParams,
-                                 geometry::LatticeData* const latDat,
-                                 const geometry::Site<geometry::LatticeData>& site,
+                                 geometry::FieldData& latDat,
+                                 const geometry::Site<geometry::FieldData>& site,
                                  kernels::HydroVars<typename CollisionType::CKernel>& hydroVars,
                                  const Direction& iPrime)
           {
@@ -291,32 +291,33 @@ namespace hemelb
             // Perform collision
             collider.Collide(lbmParams, hydroVarsWall);
             // stream
-            distribn_t* fNew = latDat->GetFNew(site.GetIndex() * LatticeType::NUMVECTORS);
+            distribn_t* fNew = latDat.GetFNew(site.GetIndex() * LatticeType::NUMVECTORS);
             fNew[i] = hydroVarsWall.GetFPostCollision()[i];
 
           }
 
         private:
-          const distribn_t *GetNeighbourFOld(const geometry::Site<geometry::LatticeData>& site,
+          const distribn_t *GetNeighbourFOld(const geometry::Site<geometry::FieldData>& site,
                                              const Direction& i,
-                                             geometry::LatticeData* const latDat)
+                                             geometry::FieldData& latDat)
           {
             const distribn_t* neighbourFOld;
+            auto&& domain = latDat.GetDomain();
             // Find the neighbour's global location and which proc it's on.
             LatticeVector neighbourGlobalLocation = site.GetGlobalSiteCoords()
                 + LatticeVector(LatticeType::CX[i], LatticeType::CY[i], LatticeType::CZ[i]);
-            proc_t neighbourProcessor = latDat->GetProcIdFromGlobalCoords(neighbourGlobalLocation);
-            if (neighbourProcessor == latDat->GetLocalRank())
+            proc_t neighbourProcessor = domain.GetProcIdFromGlobalCoords(neighbourGlobalLocation);
+            if (neighbourProcessor == domain.GetLocalRank())
             {
               // If it's local, get a Site object for it.
-              geometry::Site<geometry::LatticeData> nextSiteOut =
-                  latDat->GetSite(latDat->GetContiguousSiteId(neighbourGlobalLocation));
+              geometry::Site<geometry::FieldData> nextSiteOut =
+                  latDat.GetSite(domain.GetContiguousSiteId(neighbourGlobalLocation));
               neighbourFOld = nextSiteOut.GetFOld<LatticeType>();
             }
             else
             {
-              const geometry::neighbouring::ConstNeighbouringSite neighbourSite =
-                  neighbouringLatticeData.GetSite(latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(neighbourGlobalLocation));
+              auto neighbourSite =
+                      latDat.GetNeighbouringData().GetSite(domain.GetGlobalNoncontiguousSiteIdFromGlobalCoords(neighbourGlobalLocation));
               neighbourFOld = neighbourSite.GetFOld<LatticeType>();
             }
             return neighbourFOld;
@@ -324,7 +325,7 @@ namespace hemelb
           }
           // the collision
           CollisionType collider;
-          const geometry::neighbouring::NeighbouringLatticeData& neighbouringLatticeData;
+          const geometry::neighbouring::NeighbouringDomain& neighbouringLatticeData;
           iolets::BoundaryValues* bValues;
           SimpleBounceBackDelegate<CollisionType> bbDelegate;
       };

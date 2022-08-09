@@ -6,7 +6,7 @@
 #ifndef HEMELB_GEOMETRY_DECOMPOSITION_BASICDECOMPOSITION_H
 #define HEMELB_GEOMETRY_DECOMPOSITION_BASICDECOMPOSITION_H
 
-#include "geometry/Geometry.h"
+#include "geometry/GmyReadResult.h"
 #include "lb/lattices/LatticeInfo.h"
 #include "net/MpiCommunicator.h"
 #include "units.h"
@@ -33,7 +33,7 @@ namespace hemelb
            * @param communicator
            * @param fluidSitesOnEachBlock
            */
-          BasicDecomposition(const Geometry& geometry, const lb::lattices::LatticeInfo& latticeInfo,
+          BasicDecomposition(const GmyReadResult& geometry, const lb::lattices::LatticeInfo& latticeInfo,
                              const net::MpiCommunicator& communicator,
                              const std::vector<site_t>& fluidSitesOnEachBlock);
 
@@ -80,7 +80,7 @@ namespace hemelb
            * @param fluidSitesPerBlock [in] The number of fluid sites in each block
            */
           void DivideBlocks(std::vector<proc_t>& unitForEachBlock, site_t unassignedBlocks,
-                            const Geometry& geometry, const proc_t unitCount,
+                            const GmyReadResult& geometry, const proc_t unitCount,
                             const std::vector<site_t>& fluidSitesPerBlock);
 
           /**
@@ -102,7 +102,7 @@ namespace hemelb
                       const std::vector<BlockLocation>& edgeBlocks, const proc_t currentUnit,
                       const site_t blocksPerUnit);
 
-          const Geometry& geometry; //! The geometry being decomposed.
+          const GmyReadResult& geometry; //! The geometry being decomposed.
           const lb::lattices::LatticeInfo& latticeInfo; //! The lattice to decompose for.
           const net::MpiCommunicator& communicator; //! The communicator object being decomposed over.
           const std::vector<site_t>& fluidSitesOnEachBlock; //! The number of fluid sites on each block in the geometry.

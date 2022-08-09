@@ -5,7 +5,7 @@
 #ifndef HEMELB_REDBLOOD_PARALLEL_GRAPHBASEDCOMMUNICATION_H
 #define HEMELB_REDBLOOD_PARALLEL_GRAPHBASEDCOMMUNICATION_H
 
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "redblood/types.h"
 
 namespace hemelb

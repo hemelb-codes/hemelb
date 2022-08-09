@@ -13,7 +13,7 @@
 #include "redblood/stencil.h"
 #include "redblood/VelocityInterpolation.h"
 #include "util/Iterator.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 
 namespace hemelb
 {

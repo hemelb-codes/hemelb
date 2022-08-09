@@ -42,8 +42,8 @@ namespace hemelb
           }
 
           inline void StreamLink(const LbmParameters* lbmParams,
-                                 geometry::LatticeData* const latticeData,
-                                 const geometry::Site<geometry::LatticeData>& site,
+                                 geometry::FieldData& latticeData,
+                                 const geometry::Site<geometry::FieldData>& site,
                                  kernels::HydroVars<typename CollisionType::CKernel>& hydroVars,
                                  const Direction& direction)
           {
@@ -64,16 +64,16 @@ namespace hemelb
             {
               // We have a fluid site and have all the data needed to complete this direction!
               // Implement Eq (5b) from Bouzidi et al.
-              * (latticeData->GetFNew(bbDestination)) = (hydroVars.GetFPostCollision()[direction]
+              * (latticeData.GetFNew(bbDestination)) = (hydroVars.GetFPostCollision()[direction]
                   + (2.0 * q - 1) * hydroVars.GetFPostCollision()[invDirection]) / (2.0 * q);
             }
 
           }
-          inline void PostStepLink(geometry::LatticeData* const latticeData,
-                                   const geometry::Site<geometry::LatticeData>& site,
+          inline void PostStepLink(geometry::FieldData& latticeData,
+                                   const geometry::Site<geometry::FieldData>& site,
                                    const Direction& direction)
           {
-            distribn_t* fNew = latticeData->GetFNew(site.GetIndex() * LatticeType::NUMVECTORS);
+            distribn_t* fNew = latticeData.GetFNew(site.GetIndex() * LatticeType::NUMVECTORS);
             site_t invDirection = LatticeType::INVERSEDIRECTIONS[direction];
             distribn_t q = site.GetWallDistance<LatticeType>(direction);
             // If there is no fluid site in the opposite direction, fall back to simple

@@ -3,14 +3,14 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "geometry/SiteTraverser.h"
 
 namespace hemelb
 {
   namespace geometry
   {
-    SiteTraverser::SiteTraverser(const geometry::LatticeData& iLatticeData) :
+    SiteTraverser::SiteTraverser(const geometry::Domain& iLatticeData) :
         mLatticeData(iLatticeData)
 
     {

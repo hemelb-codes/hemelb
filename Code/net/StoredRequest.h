@@ -13,29 +13,39 @@ namespace hemelb
   namespace net
   {
 
+    template <bool ptr_const>
     class SimpleRequest
     {
       public:
-        void * Pointer;
+        static constexpr bool is_ptr_const = ptr_const;
+        using ptr = std::conditional_t<ptr_const, void const*, void*>;
+        ptr Pointer;
         int Count;
         MPI_Datatype Type;
         proc_t Rank;
-        SimpleRequest(void *pointer, int count, MPI_Datatype type, proc_t rank) :
+        SimpleRequest(ptr pointer, int count, MPI_Datatype type, proc_t rank) :
             Pointer(pointer), Count(count), Type(type), Rank(rank)
         {
         }
     };
+    SimpleRequest(void*, int, MPI_Datatype, proc_t) -> SimpleRequest<false>;
+    SimpleRequest(void const*, int, MPI_Datatype, proc_t) -> SimpleRequest<true>;
 
-    class ScalarRequest : public SimpleRequest
+    template <bool ptr_const>
+    class ScalarRequest : public SimpleRequest<ptr_const>
     {
       public:
-        ScalarRequest(void *pointer, MPI_Datatype type, proc_t rank) :
-            SimpleRequest(pointer, 1, type, rank)
+        using base = SimpleRequest<ptr_const>;
+        //using SimpleRequest<ptr_const>::ptr;
+        ScalarRequest(typename base::ptr pointer, MPI_Datatype type, proc_t rank) :
+            SimpleRequest<ptr_const>(pointer, 1, type, rank)
         {
         }
     };
+    ScalarRequest(void*, MPI_Datatype, proc_t) -> ScalarRequest<false>;
+    ScalarRequest(void const*, MPI_Datatype, proc_t) -> ScalarRequest<true>;
 
-    class GatherVReceiveRequest : public SimpleRequest
+    class GatherVReceiveRequest : public SimpleRequest<false>
     {
       public:
         int * Counts;

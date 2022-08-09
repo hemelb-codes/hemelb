@@ -28,8 +28,8 @@ namespace hemelb
           }
 
           inline void StreamLink(const LbmParameters* lbmParams,
-                                 geometry::LatticeData* const latticeData,
-                                 const geometry::Site<geometry::LatticeData>& site,
+                                 geometry::FieldData& latticeData,
+                                 const geometry::Site<geometry::FieldData>& site,
                                  kernels::HydroVars<typename CollisionType::CKernel>& hydroVars,
                                  const Direction& direction)
           {
@@ -58,7 +58,7 @@ namespace hemelb
 
             Direction unstreamed = LatticeType::INVERSEDIRECTIONS[direction];
 
-            *latticeData->GetFNew(site.GetIndex() * LatticeType::NUMVECTORS + unstreamed) =
+            *latticeData.GetFNew(site.GetIndex() * LatticeType::NUMVECTORS + unstreamed) =
                 ghostHydrovars.GetFEq()[unstreamed];
           }
         protected:

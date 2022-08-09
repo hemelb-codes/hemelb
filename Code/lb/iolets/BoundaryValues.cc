@@ -17,7 +17,7 @@ namespace hemelb
     namespace iolets
     {
       BoundaryValues::BoundaryValues(geometry::SiteType ioletType,
-                                     geometry::LatticeData* latticeData,
+                                     geometry::Domain* latticeData,
                                      const std::vector<IoletPtr> &incoming_iolets,
                                      SimulationState* simulationState,
                                      const net::MpiCommunicator& comms,
@@ -69,11 +69,11 @@ namespace hemelb
       }
 
       bool BoundaryValues::IsIOletOnThisProc(geometry::SiteType ioletType,
-                                             geometry::LatticeData* latticeData, int boundaryId)
+                                             geometry::Domain* latticeData, int boundaryId)
       {
         for (site_t i = 0; i < latticeData->GetLocalFluidSiteCount(); i++)
         {
-          const geometry::Site<geometry::LatticeData> site = latticeData->GetSite(i);
+          auto&& site = latticeData->GetSite(i);
 
           if (site.GetSiteType() == ioletType && site.GetIoletId() == boundaryId)
           {

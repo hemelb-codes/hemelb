@@ -13,7 +13,7 @@ namespace hemelb
     namespace decomposition
     {
 
-      BasicDecomposition::BasicDecomposition(const Geometry& geometry,
+      BasicDecomposition::BasicDecomposition(const GmyReadResult& geometry,
                                              const lb::lattices::LatticeInfo& latticeInfo,
                                              const net::MpiCommunicator& communicator,
                                              const std::vector<site_t>& fluidSitesOnEachBlock) :
@@ -65,7 +65,7 @@ namespace hemelb
       }
 
       void BasicDecomposition::DivideBlocks(std::vector<proc_t>& unitForEachBlock,
-                                            site_t unassignedBlocks, const Geometry& geometry,
+                                            site_t unassignedBlocks, const GmyReadResult& geometry,
                                             const proc_t unitCount,
                                             const std::vector<site_t>& fluidSitesPerBlock)
       {
@@ -85,7 +85,7 @@ namespace hemelb
 
         site_t blockNumber = -1;
 
-        // Domain Decomposition.  Pick a site. Set it to the rank we are
+        // domain_type Decomposition.  Pick a site. Set it to the rank we are
         // looking at. Find its neighbours and put those on the same
         // rank, then find the next-nearest neighbours, etc. until we
         // have a completely joined region, or there are enough fluid

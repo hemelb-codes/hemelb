@@ -14,88 +14,164 @@ namespace hemelb
 {
   namespace geometry
   {
+    namespace detail {
+        // Implement a simple trait for determining if a type has an inner type "domain_type".
+        template <typename T, typename = void>
+        struct has_domain_type : std::false_type {};
+        // Specialisation for true
+        template <typename T>
+        struct has_domain_type<T, std::void_t<typename T::domain_type>> : std::true_type {};
+        // Helper
+        template <typename T>
+        inline constexpr bool has_domain_v = has_domain_type<T>::value;
 
+        template <typename SOURCE, typename X>
+        using conditionally_add_const_t = typename std::conditional<
+                std::is_const_v<SOURCE>,
+                std::add_const_t<X>,
+                std::remove_const_t<X>
+        >::type;
+
+        template <typename DS, typename = void>
+        struct SiteDataSourceTraits {
+            using data_source_type = DS;
+            static constexpr bool data_source_has_domain = false;
+
+            using domain_type = DS;
+            using field_type = void*;
+
+            static domain_type& GetDomain(DS& ds) {
+                return ds;
+            }
+            static field_type* GetField(DS& ds) {
+                return nullptr;
+            }
+        };
+
+        template <typename DS>
+        struct SiteDataSourceTraits<DS, std::void_t<typename DS::domain_type>> {
+            using data_source_type = DS;
+            static constexpr bool data_source_has_domain = true;
+
+            using domain_type = conditionally_add_const_t<DS, typename DS::domain_type>;
+            using field_type = DS;
+
+            static domain_type& GetDomain(DS &ds) {
+                return ds.GetDomain();
+            }
+
+            static field_type *GetField(DS &ds) {
+                return &ds;
+            }
+        };
+    }
+
+    // There are two types of data about a site: the geometrical
+    // information and the field information. The former comes from
+    // a domain object and the latter from a field data.
+    //
+    // Template parameter can be either of these, but obviously it
+    // will be an error to try and access field data if instantiated
+    // on a domain_type-like type.
     template<class DataSource>
     class Site
     {
-      public:
+    public:
+        using traits = detail::SiteDataSourceTraits<DataSource>;
+        using domain_type = typename traits::domain_type;
+        using field_type = typename traits::field_type;
+
+    private:
+        // Members
+        site_t index;
+        field_type* m_fieldData;
+        domain_type* m_domain;
+
+    public:
         Site(site_t localContiguousIndex, DataSource &latticeData) :
-            index(localContiguousIndex), latticeData(latticeData)
+                index{localContiguousIndex}, m_fieldData{traits::GetField(latticeData)}, m_domain{&traits::GetDomain(latticeData)}
         {
         }
 
-        inline bool IsWall() const
+        // Allow conversion from site<field> -> site<domain>
+        operator Site<domain_type>() const {
+                return Site<domain_type>{index, *m_domain};
+        }
+
+        bool IsWall() const
         {
           return GetSiteData().IsWall();
         }
 
-        inline bool IsSolid() const
+        bool IsSolid() const
         {
           return GetSiteData().IsSolid();
         }
 
-        inline unsigned GetCollisionType() const
+        unsigned GetCollisionType() const
         {
           return GetSiteData().GetCollisionType();
         }
 
-        inline SiteType GetSiteType() const
+        SiteType GetSiteType() const
         {
           return GetSiteData().GetSiteType();
         }
 
-        inline int GetIoletId() const
+        int GetIoletId() const
         {
           return GetSiteData().GetIoletId();
         }
 
-        inline bool HasWall(Direction direction) const
+        bool HasWall(Direction direction) const
         {
           return GetSiteData().HasWall(direction);
         }
 
-        inline bool HasIolet(Direction direction) const
+        bool HasIolet(Direction direction) const
         {
           return GetSiteData().HasIolet(direction);
         }
 
         template<typename LatticeType>
-        inline distribn_t GetWallDistance(Direction direction) const
+        distribn_t GetWallDistance(Direction direction) const
         {
-          return latticeData.template GetCutDistance<LatticeType>(index, direction);
+          return m_domain->template GetCutDistance<LatticeType>(index, direction);
         }
 
-        inline distribn_t* GetWallDistances()
+        auto* GetWallDistances()
         {
-          return latticeData.GetCutDistances(index);
+          return m_domain->GetCutDistances(index);
         }
 
-        inline const distribn_t* GetWallDistances() const
+        const distribn_t* GetWallDistances() const
         {
-          return latticeData.GetCutDistances(index);
+          return m_domain->GetCutDistances(index);
         }
 
-        inline const util::Vector3D<distribn_t>& GetWallNormal() const
+        util::Vector3D<distribn_t> const& GetWallNormal() const
         {
-          return latticeData.GetNormalToWall(index);
+          return m_domain->GetNormalToWall(index);
         }
-        inline util::Vector3D<distribn_t>& GetWallNormal()
+
+        // Return Vector3D<distribn_t>& may be const qualified if domain_type is const
+        auto& GetWallNormal()
         {
-          return latticeData.GetNormalToWall(index);
+          return m_domain->GetNormalToWall(index);
         }
         const LatticeForceVector& GetForce() const
         {
-          return latticeData.GetForceAtSite(index);
+          return m_fieldData->GetForceAtSite(index);
         }
         void SetForce(LatticeForceVector const &_force)
         {
-          return latticeData.SetForceAtSite(index, _force);
+          return m_fieldData->SetForceAtSite(index, _force);
         }
         void AddToForce(LatticeForceVector const &_force)
         {
-          return latticeData.AddToForceAtSite(index, _force);
+          return m_fieldData->AddToForceAtSite(index, _force);
         }
-        inline site_t GetIndex() const
+        site_t GetIndex() const
         {
           return index;
         }
@@ -109,41 +185,51 @@ namespace hemelb
          * @return
          */
         template<typename LatticeType>
-        inline site_t GetStreamedIndex(Direction direction) const
+        site_t GetStreamedIndex(Direction direction) const
         {
-          return latticeData.template GetStreamedIndex<LatticeType>(index, direction);
+          return m_domain->template GetStreamedIndex<LatticeType>(index, direction);
         }
 
         template<typename LatticeType>
-        inline const distribn_t* GetFOld() const
+        const distribn_t* GetFOld() const
         {
-          return latticeData.GetFOld(index * LatticeType::NUMVECTORS);
+          return m_fieldData->GetFOld(index * LatticeType::NUMVECTORS);
         }
 
         // Non-templated version of GetFOld, for when you haven't got a lattice type handy
-        inline const distribn_t* GetFOld(int numvectors) const
+        const distribn_t* GetFOld(int numvectors) const
         {
-          return latticeData.GetFOld(index * numvectors);
+          return m_fieldData->GetFOld(index * numvectors);
         }
 
-        inline const SiteData& GetSiteData() const
+        // Note that for const qualified field_type, dists are const too.
+        template<typename LatticeType>
+        auto* GetFOld()
         {
-          return latticeData.GetSiteData(index);
+            return m_fieldData->GetFOld(index * LatticeType::NUMVECTORS);
         }
 
-        inline SiteData& GetSiteData()
+        // Non-templated version of GetFOld, for when you haven't got a lattice type handy
+        auto* GetFOld(int numvectors)
         {
-          return latticeData.GetSiteData(index);
+            return m_fieldData->GetFOld(index * numvectors);
         }
 
-        inline const LatticeVector& GetGlobalSiteCoords() const
+        const SiteData& GetSiteData() const
         {
-          return latticeData.GetGlobalSiteCoords(index);
+          return m_domain->GetSiteData(index);
         }
 
-      protected:
-        site_t index;
-        DataSource & latticeData;
+        // Note use auto to deduce correct const/non-const of SiteDate return type.
+        auto& GetSiteData()
+        {
+          return m_domain->GetSiteData(index);
+        }
+
+        const LatticeVector& GetGlobalSiteCoords() const
+        {
+          return m_domain->GetGlobalSiteCoords(index);
+        }
     };
   }
 }

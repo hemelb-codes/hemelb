@@ -79,13 +79,11 @@ namespace hemelb
     }
     void ViaPointPointGathers::SendGatherVs()
     {
-      for (std::map<proc_t, ProcComms>::iterator send_it = gatherVSendProcessorComms.begin();
-          send_it != gatherVSendProcessorComms.end(); ++send_it)
+      for (auto& [pid, pc]: gatherVSendProcessorComms)
       {
-
-        for (ProcComms::iterator req = send_it->second.begin(); req != send_it->second.end(); req++)
+        for (auto& req: pc)
         {
-          RequestSendImpl(req->Pointer, req->Count, send_it->first, req->Type);
+          RequestSendImpl(req.Pointer, req.Count, pid, req.Type);
         }
 
       }

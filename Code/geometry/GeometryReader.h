@@ -17,7 +17,7 @@
 #include "reporting/Timers.h"
 #include "util/Vector3D.h"
 #include "units.h"
-#include "geometry/Geometry.h"
+#include "geometry/GmyReadResult.h"
 #include "geometry/needs/Needs.h"
 
 #include "net/MpiFile.h"
@@ -36,7 +36,7 @@ namespace hemelb
                        reporting::Timers &timings, const net::IOCommunicator& ioComm);
         ~GeometryReader();
 
-        Geometry LoadAndDecompose(const std::string& dataFilePath);
+        GmyReadResult LoadAndDecompose(const std::string& dataFilePath);
 
       private:
         /**
@@ -51,11 +51,11 @@ namespace hemelb
          */
         std::vector<char> ReadOnAllTasks(unsigned nBytes);
 
-        Geometry ReadPreamble();
+        GmyReadResult ReadPreamble();
 
         void ReadHeader(site_t blockCount);
 
-        void ReadInBlocksWithHalo(Geometry& geometry, const std::vector<proc_t>& unitForEachBlock,
+        void ReadInBlocksWithHalo(GmyReadResult& geometry, const std::vector<proc_t>& unitForEachBlock,
                                   const proc_t localRank);
 
         /**
@@ -65,14 +65,14 @@ namespace hemelb
          * NOTE: that the skipping-over of blocks without any fluid sites is dealt with by other
          * code.
          *
-         * @param geometry [in] Geometry object as it has been read so far
+         * @param geometry [in] GmyReadResult object as it has been read so far
          * @param unitForEachBlock [in] The initial processor assigned to each block
          * @param localRank [in] Local rank number
          * @return Vector with true for each block we should read in.
          */
         std::vector<bool> DecideWhichBlocksToReadIncludingHalo(
-            const Geometry& geometry, const std::vector<proc_t>& unitForEachBlock,
-            const proc_t localRank);
+                const GmyReadResult& geometry, const std::vector<proc_t>& unitForEachBlock,
+                const proc_t localRank);
 
         /**
          * Reads in a single block and ensures it is distributed to all cores that need it.
@@ -83,7 +83,7 @@ namespace hemelb
          * @param blockNumber [in] The id of the block we're reading.
          * @param neededOnThisRank [in] A boolean indicating whether the block is required locally.
          */
-        void ReadInBlock(MPI_Offset offsetSoFar, Geometry& geometry,
+        void ReadInBlock(MPI_Offset offsetSoFar, GmyReadResult& geometry,
                          const std::vector<proc_t>& procsWantingThisBlock, const site_t blockNumber,
                          const bool neededOnThisRank);
 
@@ -98,7 +98,7 @@ namespace hemelb
         std::vector<char> DecompressBlockData(const std::vector<char>& compressed,
                                               const unsigned int uncompressedBytes);
 
-        void ParseBlock(Geometry& geometry, const site_t block,
+        void ParseBlock(GmyReadResult& geometry, const site_t block,
                         io::writers::xdr::XdrReader& reader);
 
         /**
@@ -123,10 +123,10 @@ namespace hemelb
          * @param geometry
          * @param procForEachBlock
          */
-        void OptimiseDomainDecomposition(Geometry& geometry,
+        void OptimiseDomainDecomposition(GmyReadResult& geometry,
                                          const std::vector<proc_t>& procForEachBlock);
 
-        void ValidateGeometry(const Geometry& geometry);
+        void ValidateGeometry(const GmyReadResult& geometry);
 
         /**
          * Get the length of the header section, given the number of blocks.
@@ -136,11 +136,11 @@ namespace hemelb
          */
         site_t GetHeaderLength(site_t blockCount) const;
 
-        void RereadBlocks(Geometry& geometry, const std::vector<idx_t>& movesPerProc,
+        void RereadBlocks(GmyReadResult& geometry, const std::vector<idx_t>& movesPerProc,
                           const std::vector<idx_t>& movesList,
                           const std::vector<int>& procForEachBlock);
 
-        void ImplementMoves(Geometry& geometry, const std::vector<proc_t>& procForEachBlock,
+        void ImplementMoves(GmyReadResult& geometry, const std::vector<proc_t>& procForEachBlock,
                             const std::vector<idx_t>& movesFromEachProc,
                             const std::vector<idx_t>& movesList) const;
 

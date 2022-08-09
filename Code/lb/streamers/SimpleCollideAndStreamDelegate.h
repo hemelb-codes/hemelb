@@ -6,6 +6,7 @@
 #ifndef HEMELB_LB_STREAMERS_SIMPLECOLLIDEANDSTREAMDELEGATE_H
 #define HEMELB_LB_STREAMERS_SIMPLECOLLIDEANDSTREAMDELEGATE_H
 
+#include "geometry/FieldData.h"
 #include "lb/streamers/BaseStreamerDelegate.h"
 
 namespace hemelb
@@ -28,12 +29,12 @@ namespace hemelb
           }
 
           inline void StreamLink(const LbmParameters* lbmParams,
-                                 geometry::LatticeData* const latticeData,
-                                 const geometry::Site<geometry::LatticeData>& site,
+                                 geometry::FieldData& latticeData,
+                                 const geometry::Site<geometry::FieldData>& site,
                                  kernels::HydroVars<typename CollisionType::CKernel>& hydroVars,
                                  const Direction& direction)
           {
-            * (latticeData->GetFNew(site.GetStreamedIndex<LatticeType>(direction))) =
+            * (latticeData.GetFNew(site.GetStreamedIndex<LatticeType>(direction))) =
                 hydroVars.GetFPostCollision()[direction];
           }
 

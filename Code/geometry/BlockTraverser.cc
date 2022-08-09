@@ -4,14 +4,14 @@
 // license in the file LICENSE.
 
 #include "geometry/BlockTraverser.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "util/Vector3D.h"
 
 namespace hemelb
 {
   namespace geometry
   {
-    BlockTraverser::BlockTraverser(const geometry::LatticeData& iLatDat) :
+    BlockTraverser::BlockTraverser(const geometry::Domain& iLatDat) :
         VolumeTraverser(), mLatticeData(iLatDat)
     {
     }

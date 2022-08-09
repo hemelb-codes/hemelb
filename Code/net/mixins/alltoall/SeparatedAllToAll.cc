@@ -19,8 +19,8 @@ namespace hemelb
       assert(allToAllReceiveProcComms.size() == allToAllSendProcComms.size());
       for (unsigned int i = 0; i < allToAllReceiveProcComms.size(); i++)
       {
-        SimpleRequest & sendreq = allToAllSendProcComms[i];
-        SimpleRequest & receivereq = allToAllReceiveProcComms[i];
+        auto& sendreq = allToAllSendProcComms[i];
+        auto& receivereq = allToAllReceiveProcComms[i];
         HEMELB_MPI_CALL(MPI_Alltoall,
                         (sendreq.Pointer, sendreq.Count, sendreq.Type, receivereq.Pointer, receivereq.Count, receivereq.Type, communicator));
       }
