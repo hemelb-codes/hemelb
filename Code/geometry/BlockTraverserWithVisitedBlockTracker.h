@@ -23,7 +23,7 @@ namespace hemelb
     class BlockTraverserWithVisitedBlockTracker : public geometry::BlockTraverser
     {
       public:
-        BlockTraverserWithVisitedBlockTracker(const geometry::LatticeData& iLatDat);
+        BlockTraverserWithVisitedBlockTracker(const geometry::Domain& iLatDat);
 
         virtual ~BlockTraverserWithVisitedBlockTracker();
 

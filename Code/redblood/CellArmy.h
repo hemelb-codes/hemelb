@@ -16,7 +16,7 @@
 #include "redblood/WallCellPairIterator.h"
 #include "redblood/GridAndCell.h"
 #include "redblood/FlowExtension.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "redblood/types.h"
 #include "redblood/parallel/SpreadForces.h"
 #include "Exception.h"

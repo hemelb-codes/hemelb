@@ -22,7 +22,7 @@ namespace hemelb
 
       LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(latDat);
 
-      auto cache = std::make_unique<lb::MacroscopicPropertyCache>(*simState, *latDat);
+      auto cache = std::make_unique<lb::MacroscopicPropertyCache>(*simState, *dom);
       cache->densityCache.SetRefreshFlag();
       cache->velocityCache.SetRefreshFlag();
       LbTestsHelper::UpdatePropertyCache<LATTICE>(*latDat, *cache, *simState);
@@ -34,8 +34,8 @@ namespace hemelb
       // 
       // TODO: Consider templating FourCubeLatticeData over lattice
       // class, so both can be controlled from the test.
-      distribn_t numDirections = (distribn_t) LATTICE::NUMVECTORS;
-      distribn_t numSites = (distribn_t) latDat->GetLocalFluidSiteCount();
+      auto numDirections = distribn_t(LATTICE::NUMVECTORS);
+      auto numSites = distribn_t(dom->GetLocalFluidSiteCount());
 
       // = sum_{j=1}^{numDirections} j/10 = 12 with current configuration of FourCubeLatticeData
       distribn_t smallestDefaultDensity = numDirections * (numDirections + 1) / 20;
@@ -61,7 +61,7 @@ namespace hemelb
       };
       
       SECTION("IncompressibilityCheckerRootNode") {
-	lb::IncompressibilityChecker<net::BroadcastMockRootNode> incompChecker(latDat,
+	lb::IncompressibilityChecker<net::BroadcastMockRootNode> incompChecker(dom,
 									       net.get(),
 									       simState.get(),
 									       *cache,
@@ -102,7 +102,7 @@ namespace hemelb
       }
 
       SECTION("IncompressibilityCheckerLeafNode") {
-	lb::IncompressibilityChecker<net::BroadcastMockLeafNode> incompChecker(latDat,
+	lb::IncompressibilityChecker<net::BroadcastMockLeafNode> incompChecker(dom,
 									       net.get(),
 									       simState.get(),
 									       *cache,

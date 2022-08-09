@@ -5,8 +5,8 @@
 
 #include "colloids/ColloidController.h"
 #include "colloids/ParticleSet.h"
-#include "geometry/LatticeData.h"
-#include "geometry/Geometry.h"
+#include "geometry/Domain.h"
+#include "geometry/GmyReadResult.h"
 #include "io/xml.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "geometry/BlockTraverser.h"
@@ -31,9 +31,9 @@ namespace hemelb
     }
 
     // constructor - called by SimulationMaster::Initialise()
-    ColloidController::ColloidController(const geometry::LatticeData& latDatLBM,
+    ColloidController::ColloidController(const geometry::Domain& latDatLBM,
                                          const lb::SimulationState& simulationState,
-                                         const geometry::Geometry& gmyResult,
+                                         const geometry::GmyReadResult& gmyResult,
                                          io::xml::Document& xml,
                                          lb::MacroscopicPropertyCache& propertyCache,
                                          const hemelb::lb::LbmParameters *lbmParams,
@@ -72,8 +72,8 @@ namespace hemelb
                                     outputPath);
     }
 
-    void ColloidController::InitialiseNeighbourList(const geometry::LatticeData& latDatLBM,
-                                                    const geometry::Geometry& gmyResult,
+    void ColloidController::InitialiseNeighbourList(const geometry::Domain& latDatLBM,
+                                                    const geometry::GmyReadResult& gmyResult,
                                                     const Neighbourhood& neighbourhood)
     {
       // PLAN
@@ -162,7 +162,7 @@ namespace hemelb
             // add the targetProcessor of the neighbour site to our neighbourRanks list
             this->neighbourProcessors.push_back(neighbourRank);
 
-            // debug message so this neighbour list can be compared to the LatticeData one
+            // debug message so this neighbour list can be compared to the domain_type one
             log::Logger::Log<log::Trace, log::OnePerCore>("ColloidController: added %i as neighbour for %i because site %i in block %i is neighbour to site %i in block %i in direction (%i,%i,%i)\n",
                                                           (int) neighbourRank,
                                                           (int) (this->ioComms.Rank()),
@@ -182,8 +182,8 @@ namespace hemelb
 
     //DJH// this function should probably be in geometry::ReadResult
     bool ColloidController::GetLocalInformationForGlobalSite(
-        const geometry::Geometry& gmyResult, const util::Vector3D<site_t>& globalLocationForSite,
-        site_t* blockIdForSite, site_t* localSiteIdForSite, proc_t* ownerRankForSite)
+            const geometry::GmyReadResult& gmyResult, const util::Vector3D<site_t>& globalLocationForSite,
+            site_t* blockIdForSite, site_t* localSiteIdForSite, proc_t* ownerRankForSite)
     {
       // obtain block information (3D location vector and 1D id number) for the site
       util::Vector3D<site_t> blockLocationForSite = globalLocationForSite

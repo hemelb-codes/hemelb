@@ -8,7 +8,7 @@
 
 #include "units.h"
 #include "Exception.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "redblood/stencil.h"
 
 #include <cassert>

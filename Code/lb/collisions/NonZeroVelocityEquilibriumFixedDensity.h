@@ -29,7 +29,7 @@ namespace hemelb
           }
 
           inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars,
-                                              const geometry::Site<geometry::LatticeData>& site)
+                                              const geometry::Site<geometry::Domain>& site)
           {
             CKernel::LatticeType::CalculateDensityAndMomentum(hydroVars.f,
                                                               hydroVars.density,

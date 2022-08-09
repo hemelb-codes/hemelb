@@ -4,14 +4,15 @@
 # license in the file LICENSE.
 
 add_library(hemelb_geometry OBJECT
-  Geometry.cc
+  GmyReadResult.cc
   BlockTraverser.cc BlockTraverserWithVisitedBlockTracker.cc
-  GeometryReader.cc needs/Needs.cc LatticeData.cc
+  GeometryReader.cc needs/Needs.cc
+  Domain.cc FieldData.cc
   SiteDataBare.cc SiteData.cc
   SiteTraverser.cc VolumeTraverser.cc Block.cc
   decomposition/BasicDecomposition.cc
   decomposition/OptimisedDecomposition.cc
-  neighbouring/NeighbouringLatticeData.cc
+        neighbouring/NeighbouringDomain.cc
   neighbouring/NeighbouringDataManager.cc
   neighbouring/RequiredSiteInformation.cc
   )

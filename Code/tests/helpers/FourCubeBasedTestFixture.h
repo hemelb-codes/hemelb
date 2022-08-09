@@ -34,6 +34,7 @@ namespace hemelb
 
       protected:
 	FourCubeLatticeData* latDat;
+    FourCubeDomain* dom;
 	lb::kernels::InitParams initParams;
 	site_t numSites;
 	lb::LbmParameters* lbmParams;

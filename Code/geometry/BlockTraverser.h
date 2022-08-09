@@ -21,7 +21,7 @@ namespace hemelb
     class BlockTraverser : public VolumeTraverser
     {
       public:
-        BlockTraverser(const LatticeData& iLatDat);
+        BlockTraverser(const Domain& iLatDat);
 
         /**
          * @override Of the default destructor in VolumeTraverser.
@@ -66,7 +66,7 @@ namespace hemelb
       protected:
         bool GoToNextBlock();
 
-        const LatticeData & mLatticeData;
+        const Domain & mLatticeData;
     };
   }
 }

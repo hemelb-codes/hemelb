@@ -29,7 +29,7 @@ namespace hemelb
 
       auto inlets = std::make_unique<BoundaryValues>(
 	  geometry::INLET_TYPE,
-	  latDat,
+	  dom,
 	  simConfig->GetInlets(),
 	  simState.get(),
 	  Comms(),
@@ -68,7 +68,7 @@ namespace hemelb
 	simState.reset(new hemelb::lb::SimulationState{fileInletConfig->GetTimeStepLength(), fileInletConfig->GetTotalTimeSteps()});
 
 	inlets.reset(new BoundaryValues(hemelb::geometry::INLET_TYPE,
-					latDat,
+					dom,
 					fileInletConfig->GetInlets(),
 					simState.get(),
 					Comms(),

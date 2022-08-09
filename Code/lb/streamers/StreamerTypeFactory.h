@@ -48,12 +48,12 @@ namespace hemelb
 
           inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
-                                         geometry::LatticeData* latDat,
+                                         geometry::FieldData& latDat,
                                          lb::MacroscopicPropertyCache& propertyCache)
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
+              geometry::Site<geometry::FieldData> site = latDat.GetSite(siteIndex);
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site);
 
               ///< @todo #126 This value of tau will be updated by some kernels
@@ -87,12 +87,12 @@ namespace hemelb
 
           inline void DoPostStep(const site_t firstIndex, const site_t siteCount,
                                  const LbmParameters* lbmParameters,
-                                 geometry::LatticeData* latticeData,
+                                 geometry::FieldData& latticeData,
                                  lb::MacroscopicPropertyCache& propertyCache)
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              geometry::Site<geometry::LatticeData> site = latticeData->GetSite(siteIndex);
+              auto&& site = latticeData.GetSite(siteIndex);
               for (unsigned int direction = 0; direction < LatticeType::NUMVECTORS; direction++)
               {
                 if (site.HasWall(direction))
@@ -137,12 +137,12 @@ namespace hemelb
 
           inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
-                                         geometry::LatticeData* latDat,
+                                         geometry::FieldData& latDat,
                                          lb::MacroscopicPropertyCache& propertyCache)
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
+              geometry::Site<geometry::FieldData> site = latDat.GetSite(siteIndex);
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site);
 
               ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
@@ -174,12 +174,12 @@ namespace hemelb
 
           inline void DoPostStep(const site_t firstIndex, const site_t siteCount,
                                  const LbmParameters* lbmParameters,
-                                 geometry::LatticeData* latticeData,
+                                 geometry::FieldData& latticeData,
                                  lb::MacroscopicPropertyCache& propertyCache)
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              geometry::Site<geometry::LatticeData> site = latticeData->GetSite(siteIndex);
+              geometry::Site<geometry::FieldData> site = latticeData.GetSite(siteIndex);
               for (unsigned int direction = 0; direction < LatticeType::NUMVECTORS; direction++)
               {
                 if (site.HasIolet(direction))
@@ -225,12 +225,12 @@ namespace hemelb
 
           inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
-                                         geometry::LatticeData* latDat,
+                                         geometry::FieldData& latDat,
                                          lb::MacroscopicPropertyCache& propertyCache)
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
+              geometry::Site<geometry::FieldData> site = latDat.GetSite(siteIndex);
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site);
 
               ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
@@ -265,12 +265,12 @@ namespace hemelb
           }
 
           inline void DoPostStep(const site_t firstIndex, const site_t siteCount,
-                                 const LbmParameters* lbmParams, geometry::LatticeData* latticeData,
+                                 const LbmParameters* lbmParams, geometry::FieldData& latticeData,
                                  lb::MacroscopicPropertyCache& propertyCache)
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              geometry::Site<geometry::LatticeData> site = latticeData->GetSite(siteIndex);
+              geometry::Site<geometry::FieldData> site = latticeData.GetSite(siteIndex);
               for (unsigned int direction = 0; direction < LatticeType::NUMVECTORS; direction++)
               {
                 if (site.HasWall(direction))

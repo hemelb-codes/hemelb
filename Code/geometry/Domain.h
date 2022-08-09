@@ -3,85 +3,72 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_GEOMETRY_LATTICEDATA_H
-#define HEMELB_GEOMETRY_LATTICEDATA_H
+#ifndef HEMELB_GEOMETRY_DOMAIN_H
+#define HEMELB_GEOMETRY_DOMAIN_H
 
-#include <cstdio>
+#include <cassert>
+#include <memory>
 #include <vector>
 
-#include "net/net.h"
 #include "constants.h"
-#include "extraction/LocalDistributionInput.h"
+#include "units.h"
 #include "geometry/Block.h"
-#include "geometry/GeometryReader.h"
 #include "geometry/NeighbouringProcessor.h"
 #include "geometry/Site.h"
-#include "geometry/neighbouring/NeighbouringSite.h"
-#include "geometry/SiteData.h"
+#include "geometry/SiteDataBare.h"
+#include "lb/lattices/LatticeInfo.h"
 #include "reporting/Reportable.h"
-#include "reporting/Timers.h"
 #include "util/Vector3D.h"
-#include "log/Logger.h"
 
-namespace hemelb
-{
-  namespace unittests
-  {
-    namespace helpers
-    {
-      // Friend class to access all of LatticeData's internals in tests
-      class LatticeDataAccess;
-    }
-  }
-  namespace tests
-  {
-    namespace helpers
-    {
-      // Friend class to access all of LatticeData's internals in tests
-      class LatticeDataAccess;
-    }
-  }
-  namespace lb
-  {
-    // Ugly forward definition is currently necessary.
-    template<class TRAITS> class LBM;
-
+namespace hemelb::extraction {
+    class LocalDistributionInput;
+}
+namespace hemelb::lb {
+    template<class TRAITS> class LBM; // IWYU pragma: keep
     struct InitialConditionBase;
-  }
+}
+namespace hemelb::net {
+    class IOCommunicator;
+}
+namespace hemelb::reporting {
+    class Dict;
+}
+namespace hemelb::tests::helpers {
+    // Friend class to access all of domain_type's internals in tests
+    class LatticeDataAccess;
+}
 
-  namespace geometry
-  {
-    class LatticeData : public reporting::Reportable
+namespace hemelb::geometry
+{
+    //class FieldData;
+    class GmyReadResult;
+    namespace neighbouring {
+        class NeighbouringDomain;
+    }
+
+    // Hold geometrical and indexing type data about the domain to be simulated.
+    class Domain : public reporting::Reportable
     {
+        friend class FieldData;
         friend class extraction::LocalDistributionInput; //! Give access to the methods GetFOld and GetFNew.
         friend lb::InitialConditionBase;
-      public:
-        friend class unittests::helpers::LatticeDataAccess;
         friend class tests::helpers::LatticeDataAccess;
+
+      public:
         template<class TRAITS>
 	friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
         template<class LatticeData>
 	friend class Site; //! Let the inner classes have access to site-related data that's otherwise private.
 
-        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult,
-                    const net::IOCommunicator& comms);
+        Domain(const lb::lattices::LatticeInfo& latticeInfo, const GmyReadResult& readResult,
+               const net::IOCommunicator& comms);
 
-        virtual ~LatticeData();
+        ~Domain() override = default;
 
         inline net::IOCommunicator const & GetCommunicator() const
         {
           return comms;
         }
-        /**
-         * Swap the fOld and fNew arrays around.
-         */
-        inline void SwapOldAndNew()
-        {
-          currentDistributions.swap(nextDistributions);
-        }
-
-        void SendAndReceive(net::Net* net);
-        void CopyReceived();
 
         /**
          * Get the lattice info object for the current lattice
@@ -90,53 +77,6 @@ namespace hemelb
         inline const lb::lattices::LatticeInfo& GetLatticeInfo() const
         {
           return latticeInfo;
-        }
-
-        /**
-         * Get a site object for the given index.
-         * @param localIndex
-         * @return
-         */
-        inline Site<LatticeData> GetSite(site_t localIndex)
-        {
-          return Site<LatticeData>(localIndex, *this);
-        }
-        /**
-         * Get a site object for the given position.
-         */
-        inline Site<LatticeData> GetSite(LatticeVector const &pos)
-        {
-          return GetSite(GetContiguousSiteId(pos));
-        }
-        /**
-         * Get a site object for the given position.
-         */
-        inline Site<const LatticeData> GetSite(LatticeVector const &pos) const
-        {
-          return GetSite(GetContiguousSiteId(pos));
-        }
-        /**
-         * Get a site object for the given position.
-         */
-        inline Site<LatticeData> GetSite(site_t x, site_t y, site_t z)
-        {
-          return GetSite(LatticeVector(x, y, z));
-        }
-        /**
-         * Get a site object for the given position.
-         */
-        inline Site<const LatticeData> GetSite(site_t x, site_t y, site_t z) const
-        {
-          return GetSite(LatticeVector(x, y, z));
-        }
-        /**
-         * Get a const site object for the given index.
-         * @param localIndex
-         * @return
-         */
-        inline const Site<const LatticeData> GetSite(site_t localIndex) const
-        {
-          return Site<const LatticeData>(localIndex, *this);
         }
 
         /**
@@ -199,26 +139,6 @@ namespace hemelb
 
         bool IsValidLatticeSite(const util::Vector3D<site_t>& siteCoords) const;
 
-        /**
-         * Get a pointer into the fNew array at the given index
-         * @param distributionIndex
-         * @return
-         */
-        inline distribn_t* GetFNew(site_t distributionIndex)
-        {
-          return &nextDistributions[distributionIndex];
-        }
-
-        /**
-         * Get a pointer into the fNew array at the given index. This version of the above lets us
-         * use a const version of a LatticeData to get a const *.
-         * @param distributionIndex
-         * @return
-         */
-        inline const distribn_t* GetFNew(site_t siteNumber) const
-        {
-          return &nextDistributions[siteNumber];
-        }
 
         proc_t GetProcIdFromGlobalCoords(const util::Vector3D<site_t>& globalSiteCoords) const;
 
@@ -390,18 +310,15 @@ namespace hemelb
           return globalSiteMaxes;
         }
 
-        void Report(reporting::Dict& dictionary);
+        void Report(reporting::Dict& dictionary) override;
 
-        neighbouring::NeighbouringLatticeData &GetNeighbouringData();
-        neighbouring::NeighbouringLatticeData const &GetNeighbouringData() const;
+        neighbouring::NeighbouringDomain &GetNeighbouringData();
+        neighbouring::NeighbouringDomain const &GetNeighbouringData() const;
 
         int GetLocalRank() const;
 
-        //! Reset forces to some constant value
-        //! Could be zero. Or could be something like a constant term for gravity.
-        void ResetForces(LatticeForceVector const &force = LatticeForceVector(0, 0, 0))
-        {
-          std::fill(forceAtSite.begin(), forceAtSite.end(), force);
+        inline Site<Domain const> GetSite(site_t i) const {
+            return Site<Domain const>{i, *this};
         }
       protected:
         /**
@@ -409,12 +326,13 @@ namespace hemelb
          * class for the purpose of testing.
          * @return
          */
-        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const net::IOCommunicator& comms);
+        Domain(const lb::lattices::LatticeInfo& latticeInfo, const net::IOCommunicator& comms);
 
         void SetBasicDetails(util::Vector3D<site_t> blocks, site_t blockSize);
 
-        void ProcessReadSites(const Geometry& readResult);
+        void ProcessReadSites(const GmyReadResult& readResult);
 
+        // TODO: should these parameters be copies?
         void PopulateWithReadData(
             const std::vector<site_t> midDomainBlockNumbers[COLLISION_TYPES],
             const std::vector<site_t> midDomainSiteNumbers[COLLISION_TYPES],
@@ -425,67 +343,7 @@ namespace hemelb
             const std::vector<site_t> domainEdgeSiteNumbers[COLLISION_TYPES],
             const std::vector<SiteData> domainEdgeSiteData[COLLISION_TYPES],
             const std::vector<util::Vector3D<float> > domainEdgeWallNormals[COLLISION_TYPES],
-            const std::vector<float> domainEdgeWallDistance[COLLISION_TYPES])
-        {
-
-          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>(".");
-          // Populate the collision count arrays.
-          for (unsigned collisionType = 0; collisionType < COLLISION_TYPES; collisionType++)
-          {
-            midDomainProcCollisions[collisionType] = midDomainBlockNumbers[collisionType].size();
-            domainEdgeProcCollisions[collisionType] = domainEdgeBlockNumbers[collisionType].size();
-          }
-          // Data about local sites.
-          localFluidSites = 0;
-          // Data about contiguous local sites. First midDomain stuff, then domainEdge.
-          for (unsigned collisionType = 0; collisionType < COLLISION_TYPES; collisionType++)
-          {
-            for (unsigned indexInType = 0; indexInType < midDomainProcCollisions[collisionType];
-                indexInType++)
-            {
-              siteData.push_back(midDomainSiteData[collisionType][indexInType]);
-              wallNormalAtSite.emplace_back(midDomainWallNormals[collisionType][indexInType]);
-              for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); direction++)
-              {
-                distanceToWall.push_back(midDomainWallDistance[collisionType][indexInType
-                    * (latticeInfo.GetNumVectors() - 1) + direction - 1]);
-              }
-              site_t blockId = midDomainBlockNumbers[collisionType][indexInType];
-              site_t siteId = midDomainSiteNumbers[collisionType][indexInType];
-              blocks[blockId].SetLocalContiguousIndexForSite(siteId, localFluidSites);
-              globalSiteCoords.push_back(GetGlobalCoords(blockId, GetSiteCoordsFromSiteId(siteId)));
-              localFluidSites++;
-            }
-
-          }
-
-          for (unsigned collisionType = 0; collisionType < COLLISION_TYPES; collisionType++)
-          {
-            for (unsigned indexInType = 0; indexInType < domainEdgeProcCollisions[collisionType];
-                indexInType++)
-            {
-              siteData.push_back(domainEdgeSiteData[collisionType][indexInType]);
-              wallNormalAtSite.emplace_back(domainEdgeWallNormals[collisionType][indexInType]);
-              for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); direction++)
-              {
-                distanceToWall.push_back(domainEdgeWallDistance[collisionType][indexInType
-                    * (latticeInfo.GetNumVectors() - 1) + direction - 1]);
-              }
-              site_t blockId = domainEdgeBlockNumbers[collisionType][indexInType];
-              site_t siteId = domainEdgeSiteNumbers[collisionType][indexInType];
-              blocks[blockId].SetLocalContiguousIndexForSite(siteId, localFluidSites);
-              globalSiteCoords.push_back(GetGlobalCoords(blockId, GetSiteCoordsFromSiteId(siteId)));
-              localFluidSites++;
-            }
-
-          }
-
-          currentDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1
-              + totalSharedFs);
-          nextDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1
-              + totalSharedFs);
-
-        }
+            const std::vector<float> domainEdgeWallDistance[COLLISION_TYPES]);
 
         void CollectFluidSiteDistribution();
         void CollectGlobalSiteExtrema();
@@ -533,29 +391,6 @@ namespace hemelb
           return wallNormalAtSite[iSiteIndex];
         }
 
-        /**
-         * Get a pointer to the fOld array starting at the requested index
-         * @param distributionIndex
-         * @return
-         */
-        // Method should remain protected, intent is to access this information via Site
-        distribn_t* GetFOld(site_t distributionIndex)
-        {
-          return &currentDistributions[distributionIndex];
-        }
-
-        /**
-         * Get a pointer to the fOld array starting at the requested index. This version
-         * of the function allows us to access the fOld array in a const way from a const
-         * LatticeData
-         * @param distributionIndex
-         * @return
-         */
-        // Method should remain protected, intent is to access this information via Site
-        const distribn_t* GetFOld(site_t distributionIndex) const
-        {
-          return &currentDistributions[distributionIndex];
-        }
 
         /*
          * This returns the index of the distribution to stream to.
@@ -610,43 +445,6 @@ namespace hemelb
           return wallNormalAtSite[iSiteIndex];
         }
 
-        // Method should remain protected, intent is to access this information via Site
-        LatticeForceVector const& GetForceAtSite(site_t iSiteIndex) const
-        {
-          return forceAtSite[iSiteIndex];
-        }
-        /**
-         * Set the force vector at the given site
-         * @param iSiteIndex
-         * @param force
-         * @return
-         */
-        // Method should remain protected, intent is to set this information via Site
-        void SetForceAtSite(site_t iSiteIndex, LatticeForceVector const & force)
-        {
-          assert(iSiteIndex >= site_t(0));
-          assert(forceAtSite.size() > size_t(iSiteIndex));
-          forceAtSite[iSiteIndex] = force;
-        }
-        void AddToForceAtSite(site_t iSiteIndex, LatticeForceVector const &force)
-        {
-          assert(iSiteIndex >= site_t(0));
-          assert(forceAtSite.size() > size_t(iSiteIndex));
-          forceAtSite[iSiteIndex] += force;
-        }
-        /**
-         * Set a vertical force vector at the given site
-         * @param iSiteIndex
-         * @param force
-         * @return
-         */
-        // Method should remain protected, intent is to set this information via Site
-        void SetForceAtSite(site_t iSiteIndex, LatticeForce force)
-        {
-          assert(iSiteIndex >= site_t(0));
-          assert(forceAtSite.size() > size_t(iSiteIndex));
-          forceAtSite[iSiteIndex] = util::Vector3D<distribn_t>(0.0, 0.0, force);
-        }
 
         /**
          * Get the global site coordinates from a contiguous site id.
@@ -679,9 +477,6 @@ namespace hemelb
         site_t midDomainProcCollisions[COLLISION_TYPES]; //! Number of fluid sites with all fluid neighbours on this rank, for each collision type.
         site_t domainEdgeProcCollisions[COLLISION_TYPES]; //! Number of fluid sites with at least one fluid neighbour on another rank, for each collision type.
         site_t localFluidSites; //! The number of local fluid sites.
-        std::vector<distribn_t> currentDistributions; //! The distribution values at the start of the current time step.
-        std::vector<distribn_t> nextDistributions; //! The distribution values for the next time step.
-        std::vector<LatticeForceVector> forceAtSite; //! Holds the force vector at a fluid site
         std::vector<Block> blocks; //! Data where local fluid sites are stored contiguously.
 
         std::vector<distribn_t> distanceToWall; //! Hold the distance to the wall for each fluid site.
@@ -693,10 +488,11 @@ namespace hemelb
         util::Vector3D<site_t> globalSiteMins, globalSiteMaxes; //! The minimal and maximal coordinates of any fluid sites.
         std::vector<site_t> neighbourIndices; //! Data about neighbouring fluid sites.
         std::vector<site_t> streamingIndicesForReceivedDistributions; //! The indices to stream to for distributions received from other processors.
-        neighbouring::NeighbouringLatticeData *neighbouringData;
+        std::shared_ptr<neighbouring::NeighbouringDomain> neighbouringData;
         const net::IOCommunicator& comms;
     };
-  }
+
 }
 
-#endif /* HEMELB_GEOMETRY_LATTICEDATA_H */
+
+#endif /* HEMELB_GEOMETRY_DOMAIN_H */

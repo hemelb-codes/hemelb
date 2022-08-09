@@ -86,36 +86,36 @@ namespace hemelb
           if (velocity == true)
           {
             /* Do not include the non-iolet adjacent sites (resp. MidFluid and Wall-adjacent). */
-            long long int offset = latticeData->GetMidDomainCollisionCount(0)
-                + latticeData->GetMidDomainCollisionCount(1);
+            long long int offset = domainData->GetMidDomainCollisionCount(0)
+                                   + domainData->GetMidDomainCollisionCount(1);
 
             /* Do include iolet adjacent sites (inlet) */
-            long long int ioletsSiteCount = latticeData->GetMidDomainCollisionCount(2);
-            invertedInletBoundaryList = PopulateInvertedBoundaryList(latticeData.get(),
+            long long int ioletsSiteCount = domainData->GetMidDomainCollisionCount(2);
+            invertedInletBoundaryList = PopulateInvertedBoundaryList(domainData.get(),
                                                                      invertedInletBoundaryList,
                                                                      offset,
                                                                      ioletsSiteCount);
 
-            offset += latticeData->GetMidDomainCollisionCount(2);
+            offset += domainData->GetMidDomainCollisionCount(2);
             /* Do include iolet adjacent sites (outlet) */
-            ioletsSiteCount = latticeData->GetMidDomainCollisionCount(3);
-            invertedOutletBoundaryList = PopulateInvertedBoundaryList(latticeData.get(),
+            ioletsSiteCount = domainData->GetMidDomainCollisionCount(3);
+            invertedOutletBoundaryList = PopulateInvertedBoundaryList(domainData.get(),
                                                                       invertedOutletBoundaryList,
                                                                       offset,
                                                                       ioletsSiteCount);
 
-            offset += latticeData->GetMidDomainCollisionCount(3);
+            offset += domainData->GetMidDomainCollisionCount(3);
             /* Do include iolet adjacent sites (inlet-wall) */
-            ioletsSiteCount = latticeData->GetMidDomainCollisionCount(4);
-            invertedInletBoundaryList = PopulateInvertedBoundaryList(latticeData.get(),
+            ioletsSiteCount = domainData->GetMidDomainCollisionCount(4);
+            invertedInletBoundaryList = PopulateInvertedBoundaryList(domainData.get(),
                                                                      invertedInletBoundaryList,
                                                                      offset,
                                                                      ioletsSiteCount);
 
-            offset += latticeData->GetMidDomainCollisionCount(4);
+            offset += domainData->GetMidDomainCollisionCount(4);
             /* Do include iolet adjacent sites (outlet-wall) */
-            ioletsSiteCount = latticeData->GetMidDomainCollisionCount(5);
-            invertedOutletBoundaryList = PopulateInvertedBoundaryList(latticeData.get(),
+            ioletsSiteCount = domainData->GetMidDomainCollisionCount(5);
+            invertedOutletBoundaryList = PopulateInvertedBoundaryList(domainData.get(),
                                                                       invertedOutletBoundaryList,
                                                                       offset,
                                                                       ioletsSiteCount);
@@ -162,7 +162,7 @@ namespace hemelb
                                                                                     invertedInletBoundaryList.size(),
                                                                                     invertedInletBoundaryList[i].size());
               /*static_cast<lb::iolets::InOutLetVelocityAware*>(inletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
-               latticeData,
+               m_fieldData,
                &propertyCache,
                invertedInletBoundaryList[i]);*/
             }
@@ -185,7 +185,7 @@ namespace hemelb
                                                                                     invertedOutletBoundaryList.size(),
                                                                                     invertedOutletBoundaryList[i].size());
               /*static_cast<lb::iolets::InOutLetVelocityAware*>(outletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
-               latticeData,
+               m_fieldData,
                &propertyCache,
                invertedOutletBoundaryList[i]);*/
             }
@@ -306,16 +306,16 @@ namespace hemelb
 
         //Populate an invertedBoundaryList
         //out: iBL
-        //in: LatticeData, [Site Object]->SiteData->GetBoundaryID,
+        //in: domain_type, [Site Object]->SiteData->GetBoundaryID,
         //MPI_Gatherv if data is only this process.
         std::vector<std::vector<site_t> > PopulateInvertedBoundaryList(
-            hemelb::geometry::LatticeData* latticeData,
+            hemelb::geometry::Domain* latticeData,
             std::vector<std::vector<site_t> > invertedBoundaryList, int offset, int ioletsSiteCount)
         {
           for (int i = 0; i < ioletsSiteCount; i++)
           {
             /* 1. Obtain Boundary ID number. */
-            hemelb::geometry::SiteData s = latticeData->GetSite(offset + i).GetSiteData();
+            auto&& s = latticeData->GetSite(offset + i).GetSiteData();
             int boundaryID = s.GetIoletId();
 
             /* 2. Grow the list to an appropriate size if needed. */

@@ -9,7 +9,7 @@
 #include <memory>
 #include <iterator>
 #include "units.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "geometry/Site.h"
 
 namespace hemelb

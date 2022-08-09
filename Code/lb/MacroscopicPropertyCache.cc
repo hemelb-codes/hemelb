@@ -10,7 +10,7 @@ namespace hemelb
   namespace lb
   {
     MacroscopicPropertyCache::MacroscopicPropertyCache(const SimulationState& simState,
-                                                       const geometry::LatticeData& latticeData) :
+                                                       const geometry::Domain& latticeData) :
       densityCache(simState, latticeData.GetLocalFluidSiteCount()),
       velocityCache(simState, latticeData.GetLocalFluidSiteCount()),
       wallShearStressMagnitudeCache(simState, latticeData.GetLocalFluidSiteCount()),

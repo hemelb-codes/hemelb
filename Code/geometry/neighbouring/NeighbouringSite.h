@@ -7,7 +7,7 @@
 #define HEMELB_GEOMETRY_NEIGHBOURING_NEIGHBOURINGSITE_H
 
 #include "geometry/Site.h"
-#include "geometry/neighbouring/NeighbouringLatticeData.h"
+#include "geometry/neighbouring/NeighbouringDomain.h"
 
 namespace hemelb
 {
@@ -15,49 +15,49 @@ namespace hemelb
   {
     namespace neighbouring
     {
-      class NeighbouringLatticeData;
+      class NeighbouringDomain;
 
-      class NeighbouringSite : public Site<NeighbouringLatticeData>
-      {
-        public:
-          /**
-           * Constructor to mirror the constructor of the base class.
-           * @param localContiguousIndex
-           * @param latticeData
-           */
-          NeighbouringSite(site_t localContiguousIndex, NeighbouringLatticeData& latticeData) :
-              Site<NeighbouringLatticeData>(localContiguousIndex, latticeData)
-          {
-          }
+//      class NeighbouringSite : public Site<NeighbouringFieldData>
+//      {
+//        public:
+//          /**
+//           * Constructor to mirror the constructor of the base class.
+//           * @param localContiguousIndex
+//           * @param domainData
+//           */
+//          NeighbouringSite(site_t localContiguousIndex, NeighbouringFieldData& domainData) :
+//              Site<NeighbouringFieldData>(localContiguousIndex, domainData)
+//          {
+//          }
+//
+//          /*template<typename LatticeType>
+//          inline distribn_t* GetFOld()
+//          {
+//            return m_fieldData->GetFOld(index * LatticeType::NUMVECTORS);
+//          }
+//
+//          // Non-templated version of GetFOld, for when you haven't got a lattice type handy
+//          inline distribn_t* GetFOld(int numvectors)
+//          {
+//            return m_fieldData->GetFOld(index * numvectors);
+//          }*/
+//
+//      };
 
-          template<typename LatticeType>
-          inline distribn_t* GetFOld()
-          {
-            return latticeData.GetFOld(index * LatticeType::NUMVECTORS);
-          }
-
-          // Non-templated version of GetFOld, for when you haven't got a lattice type handy
-          inline distribn_t* GetFOld(int numvectors)
-          {
-            return latticeData.GetFOld(index * numvectors);
-          }
-
-      };
-
-      class ConstNeighbouringSite : public Site<const NeighbouringLatticeData>
-      {
-        public:
-          /**
-           * Constructor to mirror the constructor of the base class.
-           * @param localContiguousIndex
-           * @param latticeData
-           */
-          ConstNeighbouringSite(site_t localContiguousIndex,
-                                const NeighbouringLatticeData& latticeData) :
-              Site<const NeighbouringLatticeData>(localContiguousIndex, latticeData)
-          {
-          }
-      };
+//      class ConstNeighbouringSite : public Site<const NeighbouringFieldData>
+//      {
+//        public:
+//          /**
+//           * Constructor to mirror the constructor of the base class.
+//           * @param localContiguousIndex
+//           * @param domainData
+//           */
+//          ConstNeighbouringSite(site_t localContiguousIndex,
+//                                const NeighbouringFieldData& domainData) :
+//              Site<const NeighbouringFieldData>(localContiguousIndex, domainData)
+//          {
+//          }
+//      };
     }
   }
 }

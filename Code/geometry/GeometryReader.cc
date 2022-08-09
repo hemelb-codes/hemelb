@@ -76,7 +76,7 @@ namespace hemelb
     {
     }
 
-    Geometry GeometryReader::LoadAndDecompose(const std::string& dataFilePath)
+    GmyReadResult GeometryReader::LoadAndDecompose(const std::string& dataFilePath)
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Starting file read timer");
       timings[hemelb::reporting::Timers::fileRead].Start();
@@ -104,7 +104,7 @@ namespace hemelb
       file.SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
-      Geometry geometry = ReadPreamble();
+      GmyReadResult geometry = ReadPreamble();
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file header");
       ReadHeader(geometry.GetBlockCount());
@@ -184,7 +184,7 @@ namespace hemelb
     /**
      * Read in the section at the beginning of the config file.
      */
-    Geometry GeometryReader::ReadPreamble()
+    GmyReadResult GeometryReader::ReadPreamble()
     {
       std::vector<char> preambleBuffer = ReadOnAllTasks(gmy::PreambleLength);
 
@@ -236,7 +236,7 @@ namespace hemelb
       unsigned paddingValue;
       preambleReader.read(paddingValue);
 
-      return Geometry(util::Vector3D<site_t>(blocksX, blocksY, blocksZ), blockSize);
+      return GmyReadResult(util::Vector3D<site_t>(blocksX, blocksY, blocksZ), blockSize);
     }
 
     /**
@@ -271,7 +271,7 @@ namespace hemelb
     /**
      * Read in the necessary blocks from the file.
      */
-    void GeometryReader::ReadInBlocksWithHalo(Geometry& geometry,
+    void GeometryReader::ReadInBlocksWithHalo(GmyReadResult& geometry,
                                               const std::vector<proc_t>& unitForEachBlock,
                                               const proc_t localRank)
     {
@@ -341,7 +341,7 @@ namespace hemelb
       timings[hemelb::reporting::Timers::readBlocksAll].Stop();
     }
 
-    void GeometryReader::ReadInBlock(MPI_Offset offsetSoFar, Geometry& geometry,
+    void GeometryReader::ReadInBlock(MPI_Offset offsetSoFar, GmyReadResult& geometry,
                                      const std::vector<proc_t>& procsWantingThisBlock,
                                      const site_t blockNumber, const bool neededOnThisRank)
     {
@@ -465,7 +465,7 @@ namespace hemelb
       return uncompressed;
     }
 
-    void GeometryReader::ParseBlock(Geometry& geometry, const site_t block,
+    void GeometryReader::ParseBlock(GmyReadResult& geometry, const site_t block,
                                     io::writers::xdr::XdrReader& reader)
     {
       // We start by clearing the sites on the block. We read the blocks twice (once before
@@ -587,7 +587,7 @@ namespace hemelb
      * This function is only called if in geometry-validation mode.
      * @param geometry
      */
-    void GeometryReader::ValidateGeometry(const Geometry& geometry)
+    void GeometryReader::ValidateGeometry(const GmyReadResult& geometry)
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Validating the GlobalLatticeData");
 
@@ -699,7 +699,7 @@ namespace hemelb
     }
 
     std::vector<bool> GeometryReader::DecideWhichBlocksToReadIncludingHalo(
-        const Geometry& geometry, const std::vector<proc_t>& unitForEachBlock, proc_t localRank)
+            const GmyReadResult& geometry, const std::vector<proc_t>& unitForEachBlock, proc_t localRank)
     {
       std::vector<bool> shouldReadBlock(geometry.GetBlockCount(), false);
 
@@ -742,7 +742,7 @@ namespace hemelb
       return shouldReadBlock;
     }
 
-    void GeometryReader::OptimiseDomainDecomposition(Geometry& geometry,
+    void GeometryReader::OptimiseDomainDecomposition(GmyReadResult& geometry,
                                                      const std::vector<proc_t>& procForEachBlock)
     {
       decomposition::OptimisedDecomposition optimiser(timings,
@@ -777,7 +777,7 @@ namespace hemelb
       return gmy::HeaderRecordLength * blockCount;
     }
 
-    void GeometryReader::RereadBlocks(Geometry& geometry, const std::vector<idx_t>& movesPerProc,
+    void GeometryReader::RereadBlocks(GmyReadResult& geometry, const std::vector<idx_t>& movesPerProc,
                                       const std::vector<idx_t>& movesList,
                                       const std::vector<int>& procForEachBlock)
     {
@@ -812,7 +812,7 @@ namespace hemelb
       ReadInBlocksWithHalo(geometry, newProcForEachBlock, computeComms.Rank());
     }
 
-    void GeometryReader::ImplementMoves(Geometry& geometry,
+    void GeometryReader::ImplementMoves(GmyReadResult& geometry,
                                         const std::vector<proc_t>& procForEachBlock,
                                         const std::vector<idx_t>& movesFromEachProc,
                                         const std::vector<idx_t>& movesList) const

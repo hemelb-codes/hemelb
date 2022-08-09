@@ -30,12 +30,12 @@ namespace hemelb
 
     template<class TRAITS>
     LBM<TRAITS>::LBM(configuration::SimConfig *iSimulationConfig, net::Net* net,
-                     geometry::LatticeData* latDat, SimulationState* simState,
+                     geometry::FieldData* latDat, SimulationState* simState,
                      reporting::Timers &atimings,
                      geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager) :
         mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState),
             mParams(iSimulationConfig->GetTimeStepLength(), iSimulationConfig->GetVoxelSize()),
-            timings(atimings), propertyCache(*simState, *latDat),
+            timings(atimings), propertyCache(*simState, latDat->GetDomain()),
             neighbouringDataManager(neighbouringDataManager)
     {
       ReadParameters();
@@ -44,33 +44,35 @@ namespace hemelb
     template<class TRAITS>
     void LBM<TRAITS>::InitInitParamsSiteRanges(kernels::InitParams& initParams, unsigned& state)
     {
+      auto& dom = mLatDat->GetDomain();
       initParams.siteRanges.resize(2);
 
       initParams.siteRanges[0].first = 0;
-      initParams.siteRanges[1].first = mLatDat->GetMidDomainSiteCount();
+      initParams.siteRanges[1].first = dom.GetMidDomainSiteCount();
       state = 0;
       initParams.siteRanges[0].second = initParams.siteRanges[0].first
-          + mLatDat->GetMidDomainCollisionCount(state);
+          + dom.GetMidDomainCollisionCount(state);
       initParams.siteRanges[1].second = initParams.siteRanges[1].first
-          + mLatDat->GetDomainEdgeCollisionCount(state);
+          + dom.GetDomainEdgeCollisionCount(state);
 
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(state)
-          + mLatDat->GetDomainEdgeCollisionCount(state);
+      initParams.siteCount = dom.GetMidDomainCollisionCount(state)
+          + dom.GetDomainEdgeCollisionCount(state);
     }
 
     template<class TRAITS>
     void LBM<TRAITS>::AdvanceInitParamsSiteRanges(kernels::InitParams& initParams, unsigned& state)
     {
-      initParams.siteRanges[0].first += mLatDat->GetMidDomainCollisionCount(state);
-      initParams.siteRanges[1].first += mLatDat->GetDomainEdgeCollisionCount(state);
+      auto& dom = mLatDat->GetDomain();
+      initParams.siteRanges[0].first += dom.GetMidDomainCollisionCount(state);
+      initParams.siteRanges[1].first += dom.GetDomainEdgeCollisionCount(state);
       ++state;
       initParams.siteRanges[0].second = initParams.siteRanges[0].first
-          + mLatDat->GetMidDomainCollisionCount(state);
+          + dom.GetMidDomainCollisionCount(state);
       initParams.siteRanges[1].second = initParams.siteRanges[1].first
-          + mLatDat->GetDomainEdgeCollisionCount(state);
+          + dom.GetDomainEdgeCollisionCount(state);
 
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(state)
-          + mLatDat->GetDomainEdgeCollisionCount(state);
+      initParams.siteCount = dom.GetMidDomainCollisionCount(state)
+          + dom.GetDomainEdgeCollisionCount(state);
     }
 
     template<class TRAITS>
@@ -87,7 +89,7 @@ namespace hemelb
       // MidFluidCollision = new ConvergenceCheckingWrapper(new WhateverMidFluidCollision());
 
       kernels::InitParams initParams = kernels::InitParams();
-      initParams.latDat = mLatDat;
+      initParams.latDat = &mLatDat->GetDomain();
       initParams.lbmParams = &mParams;
       initParams.neighbouringDataManager = neighbouringDataManager;
 
@@ -189,27 +191,28 @@ namespace hemelb
        * end of the sites whose neighbours all lie on this rank ('midDomain'), then progress
        * through the sites of each type in turn.
        */
-      site_t offset = mLatDat->GetMidDomainSiteCount();
+      auto& dom = mLatDat->GetDomain();
+      site_t offset = dom.GetMidDomainSiteCount();
 
       log::Logger::Log<log::Debug, log::OnePerCore>("LBM - PreSend - StreamAndCollide");
-      StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetDomainEdgeCollisionCount(0));
-      offset += mLatDat->GetDomainEdgeCollisionCount(0);
+      StreamAndCollide(mMidFluidCollision, offset, dom.GetDomainEdgeCollisionCount(0));
+      offset += dom.GetDomainEdgeCollisionCount(0);
 
-      StreamAndCollide(mWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(1));
-      offset += mLatDat->GetDomainEdgeCollisionCount(1);
+      StreamAndCollide(mWallCollision, offset, dom.GetDomainEdgeCollisionCount(1));
+      offset += dom.GetDomainEdgeCollisionCount(1);
 
       mInletValues->FinishReceive();
-      StreamAndCollide(mInletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(2));
-      offset += mLatDat->GetDomainEdgeCollisionCount(2);
+      StreamAndCollide(mInletCollision, offset, dom.GetDomainEdgeCollisionCount(2));
+      offset += dom.GetDomainEdgeCollisionCount(2);
 
       mOutletValues->FinishReceive();
-      StreamAndCollide(mOutletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(3));
-      offset += mLatDat->GetDomainEdgeCollisionCount(3);
+      StreamAndCollide(mOutletCollision, offset, dom.GetDomainEdgeCollisionCount(3));
+      offset += dom.GetDomainEdgeCollisionCount(3);
 
-      StreamAndCollide(mInletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(4));
-      offset += mLatDat->GetDomainEdgeCollisionCount(4);
+      StreamAndCollide(mInletWallCollision, offset, dom.GetDomainEdgeCollisionCount(4));
+      offset += dom.GetDomainEdgeCollisionCount(4);
 
-      StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(5));
+      StreamAndCollide(mOutletWallCollision, offset, dom.GetDomainEdgeCollisionCount(5));
 
       timings[hemelb::reporting::Timers::lb_calc].Stop();
       timings[hemelb::reporting::Timers::lb].Stop();
@@ -229,25 +232,26 @@ namespace hemelb
        * In site id terms, this means starting at the first site and progressing through the
        * midDomain sites, one type at a time.
        */
+      auto& dom = mLatDat->GetDomain();
       site_t offset = 0;
 
       log::Logger::Log<log::Debug, log::OnePerCore>("LBM - PreReceive - StreamAndCollide");
-      StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetMidDomainCollisionCount(0));
-      offset += mLatDat->GetMidDomainCollisionCount(0);
+      StreamAndCollide(mMidFluidCollision, offset, dom.GetMidDomainCollisionCount(0));
+      offset += dom.GetMidDomainCollisionCount(0);
 
-      StreamAndCollide(mWallCollision, offset, mLatDat->GetMidDomainCollisionCount(1));
-      offset += mLatDat->GetMidDomainCollisionCount(1);
+      StreamAndCollide(mWallCollision, offset, dom.GetMidDomainCollisionCount(1));
+      offset += dom.GetMidDomainCollisionCount(1);
 
-      StreamAndCollide(mInletCollision, offset, mLatDat->GetMidDomainCollisionCount(2));
-      offset += mLatDat->GetMidDomainCollisionCount(2);
+      StreamAndCollide(mInletCollision, offset, dom.GetMidDomainCollisionCount(2));
+      offset += dom.GetMidDomainCollisionCount(2);
 
-      StreamAndCollide(mOutletCollision, offset, mLatDat->GetMidDomainCollisionCount(3));
-      offset += mLatDat->GetMidDomainCollisionCount(3);
+      StreamAndCollide(mOutletCollision, offset, dom.GetMidDomainCollisionCount(3));
+      offset += dom.GetMidDomainCollisionCount(3);
 
-      StreamAndCollide(mInletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(4));
-      offset += mLatDat->GetMidDomainCollisionCount(4);
+      StreamAndCollide(mInletWallCollision, offset, dom.GetMidDomainCollisionCount(4));
+      offset += dom.GetMidDomainCollisionCount(4);
 
-      StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(5));
+      StreamAndCollide(mOutletWallCollision, offset, dom.GetMidDomainCollisionCount(5));
 
       timings[hemelb::reporting::Timers::lb_calc].Stop();
       timings[hemelb::reporting::Timers::lb].Stop();
@@ -263,48 +267,49 @@ namespace hemelb
       // This is done here, after receiving the sent distributions from neighbours.
       mLatDat->CopyReceived();
 
+      auto& dom = mLatDat->GetDomain();
       // Do any cleanup steps necessary on boundary nodes
-      site_t offset = mLatDat->GetMidDomainSiteCount();
+      site_t offset = dom.GetMidDomainSiteCount();
 
       timings[hemelb::reporting::Timers::lb_calc].Start();
 
       log::Logger::Log<log::Debug, log::OnePerCore>("LBM - PostReceive - StreamAndCollide");
       //TODO yup, this is horrible. If you read this, please improve the following code.
-      PostStep(mMidFluidCollision, offset, mLatDat->GetDomainEdgeCollisionCount(0));
-      offset += mLatDat->GetDomainEdgeCollisionCount(0);
+      PostStep(mMidFluidCollision, offset, dom.GetDomainEdgeCollisionCount(0));
+      offset += dom.GetDomainEdgeCollisionCount(0);
 
-      PostStep(mWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(1));
-      offset += mLatDat->GetDomainEdgeCollisionCount(1);
+      PostStep(mWallCollision, offset, dom.GetDomainEdgeCollisionCount(1));
+      offset += dom.GetDomainEdgeCollisionCount(1);
 
-      PostStep(mInletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(2));
-      offset += mLatDat->GetDomainEdgeCollisionCount(2);
+      PostStep(mInletCollision, offset, dom.GetDomainEdgeCollisionCount(2));
+      offset += dom.GetDomainEdgeCollisionCount(2);
 
-      PostStep(mOutletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(3));
-      offset += mLatDat->GetDomainEdgeCollisionCount(3);
+      PostStep(mOutletCollision, offset, dom.GetDomainEdgeCollisionCount(3));
+      offset += dom.GetDomainEdgeCollisionCount(3);
 
-      PostStep(mInletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(4));
-      offset += mLatDat->GetDomainEdgeCollisionCount(4);
+      PostStep(mInletWallCollision, offset, dom.GetDomainEdgeCollisionCount(4));
+      offset += dom.GetDomainEdgeCollisionCount(4);
 
-      PostStep(mOutletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(5));
+      PostStep(mOutletWallCollision, offset, dom.GetDomainEdgeCollisionCount(5));
 
       offset = 0;
 
-      PostStep(mMidFluidCollision, offset, mLatDat->GetMidDomainCollisionCount(0));
-      offset += mLatDat->GetMidDomainCollisionCount(0);
+      PostStep(mMidFluidCollision, offset, dom.GetMidDomainCollisionCount(0));
+      offset += dom.GetMidDomainCollisionCount(0);
 
-      PostStep(mWallCollision, offset, mLatDat->GetMidDomainCollisionCount(1));
-      offset += mLatDat->GetMidDomainCollisionCount(1);
+      PostStep(mWallCollision, offset, dom.GetMidDomainCollisionCount(1));
+      offset += dom.GetMidDomainCollisionCount(1);
 
-      PostStep(mInletCollision, offset, mLatDat->GetMidDomainCollisionCount(2));
-      offset += mLatDat->GetMidDomainCollisionCount(2);
+      PostStep(mInletCollision, offset, dom.GetMidDomainCollisionCount(2));
+      offset += dom.GetMidDomainCollisionCount(2);
 
-      PostStep(mOutletCollision, offset, mLatDat->GetMidDomainCollisionCount(3));
-      offset += mLatDat->GetMidDomainCollisionCount(3);
+      PostStep(mOutletCollision, offset, dom.GetMidDomainCollisionCount(3));
+      offset += dom.GetMidDomainCollisionCount(3);
 
-      PostStep(mInletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(4));
-      offset += mLatDat->GetMidDomainCollisionCount(4);
+      PostStep(mInletWallCollision, offset, dom.GetMidDomainCollisionCount(4));
+      offset += dom.GetMidDomainCollisionCount(4);
 
-      PostStep(mOutletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(5));
+      PostStep(mOutletWallCollision, offset, dom.GetMidDomainCollisionCount(5));
 
       timings[hemelb::reporting::Timers::lb_calc].Stop();
       timings[hemelb::reporting::Timers::lb].Stop();

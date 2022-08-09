@@ -73,7 +73,7 @@ namespace hemelb
         virtual void WaitAllToAll()=0;
 
         // Interfaces exposing MPI_Datatype, not intended for client class use
-        virtual void RequestSendImpl(void* pointer, int count, proc_t rank, MPI_Datatype type)=0;
+        virtual void RequestSendImpl(void const* pointer, int count, proc_t rank, MPI_Datatype type)=0;
         virtual void RequestReceiveImpl(void* pointer, int count, proc_t rank, MPI_Datatype type)=0;
 
         /*
@@ -81,7 +81,7 @@ namespace hemelb
          * But, here we separate send and receive parts, since this interface may one day be used for
          * nonblocking collectives.
          */
-        virtual void RequestGatherVSendImpl(void* buffer, int count, proc_t toRank,
+        virtual void RequestGatherVSendImpl(void const* buffer, int count, proc_t toRank,
                                             MPI_Datatype type)=0;
         virtual void RequestGatherReceiveImpl(void* buffer, MPI_Datatype type)=0;
         virtual void RequestGatherSendImpl(void* buffer, proc_t toRank, MPI_Datatype type)=0;

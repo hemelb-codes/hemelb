@@ -12,7 +12,7 @@ namespace hemelb
         BaseNet(comms)
     {
     }
-    void StoringNet::RequestSendImpl(void* pointer, int count, proc_t rank, MPI_Datatype type)
+    void StoringNet::RequestSendImpl(void const* pointer, int count, proc_t rank, MPI_Datatype type)
     {
       if (count > 0)
       {
@@ -34,7 +34,7 @@ namespace hemelb
      * nonblocking collectives.
      */
 
-    void StoringNet::RequestGatherVSendImpl(void* buffer, int count, proc_t toRank,
+    void StoringNet::RequestGatherVSendImpl(void const* buffer, int count, proc_t toRank,
                                             MPI_Datatype type)
     {
       gatherVSendProcessorComms[toRank].push_back(SimpleRequest(buffer, count, type, toRank));

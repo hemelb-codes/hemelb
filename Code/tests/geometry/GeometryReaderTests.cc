@@ -8,7 +8,7 @@
 #include <catch2/catch.hpp>
 
 #include "configuration/SimConfig.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "lb/lattices/D3Q15.h"
 #include "resources/Resource.h"
 
@@ -40,6 +40,7 @@ namespace hemelb
 	LADD_FAIL();
 	auto fourCube = std::unique_ptr<FourCubeLatticeData>{FourCubeLatticeData::Create(Comms())};
 	auto readResult = reader->LoadAndDecompose(simConfig->GetDataFilePath());
+    auto&& dom = fourCube->GetDomain();
 
 	for (site_t i = 1; i < 5; i++) {
 	  for (site_t j = 1; j < 5; j++) {
@@ -48,10 +49,10 @@ namespace hemelb
 	    for (site_t k = 1; k < 5; k++) {
 	      //std::cout << i << "," << j << "," << k << " > " << std::setbase(8) << fourCube->GetSiteData(i*16+j*4+k) << " : " << globalLattice->GetSiteData(i,j,k) << std::endl;
 	      util::Vector3D<site_t> location{i, j, k};
-	      site_t siteIndex = fourCube->GetGlobalNoncontiguousSiteIdFromGlobalCoords(location);
+	      site_t siteIndex = dom.GetGlobalNoncontiguousSiteIdFromGlobalCoords(location);
 
 	      hemelb::geometry::SiteData siteData(readResult.Blocks[0].Sites[siteIndex]);
-	      REQUIRE(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetSiteData() == siteData);
+	      REQUIRE(fourCube->GetSite(dom.GetContiguousSiteId(location)).GetSiteData() == siteData);
 	      //                  CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetSiteData().GetOtherRawData(),
 	      //                                       siteData.GetOtherRawData());
 	      //
@@ -63,7 +64,7 @@ namespace hemelb
 	      if (isWallSite) {
 		/// @todo: #597 use CPPUNIT_ASSERT_EQUAL directly (having trouble with Vector3D templated over different types at the minute)
 		/// CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetWallNormal(), readResult.Blocks[0].Sites[siteIndex].wallNormal);
-		REQUIRE(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetWallNormal()
+		REQUIRE(fourCube->GetSite(dom.GetContiguousSiteId(location)).GetWallNormal()
 			== readResult.Blocks[0].Sites[siteIndex].wallNormal.as<double>());
 	      }
 	    }

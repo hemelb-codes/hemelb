@@ -37,7 +37,7 @@ namespace hemelb
 
       SECTION ("TestNonZeroVelocityEquilibriumFixedDensity") {
 	lb::iolets::BoundaryValues inletBoundary(geometry::INLET_TYPE,
-						 latDat,
+						 dom,
 						 simConfig->GetInlets(),
 						 simState.get(),
 						 Comms(),
@@ -49,8 +49,8 @@ namespace hemelb
 
 	// Test the pre-collision step, which should calculate the correct
 	// post-collisional density, velocity and equilibrium distribution.
-	geometry::Site<geometry::LatticeData> dummySite(0, *latDat);
-	latDat->SetIoletId(0, 0);
+	geometry::Site<geometry::FieldData> dummySite(0, *latDat);
+	dom->SetIoletId(0, 0);
 
 	nonZeroVFixedDensityILet.CalculatePreCollision(hydroVars, dummySite);
 
@@ -88,7 +88,7 @@ namespace hemelb
 
       SECTION("TestZeroVelocityEquilibriumFixedDensity") {
 	lb::iolets::BoundaryValues outletBoundary(geometry::OUTLET_TYPE,
-						  latDat,
+						  dom,
 						  simConfig->GetOutlets(),
 						  simState.get(),
 						  Comms(),
@@ -101,7 +101,7 @@ namespace hemelb
 	// Test the pre-collision step, which should calculate the
 	// correct post-collisional density, velocity and equilibrium
 	// distribution.
-	latDat->SetIoletId(0, 0);
+	dom->SetIoletId(0, 0);
 	zeroVFixedDensityOLet.CalculatePreCollision(hydroVars, latDat->GetSite(0));
 
 	// Calculate the expected density, velocity and f_eq.

@@ -14,7 +14,7 @@
 #include "redblood/Cell.h"
 #include "redblood/Interpolation.h"
 #include "redblood/stencil.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "Exception.h"
 
 namespace hemelb

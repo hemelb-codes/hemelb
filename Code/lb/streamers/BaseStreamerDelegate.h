@@ -6,7 +6,7 @@
 #ifndef HEMELB_LB_STREAMERS_BASESTREAMERDELEGATE_H
 #define HEMELB_LB_STREAMERS_BASESTREAMERDELEGATE_H
 
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "lb/kernels/BaseKernel.h"
 
 namespace hemelb
@@ -62,8 +62,8 @@ namespace hemelb
            * @param direction
            */
           inline void StreamLink(const LbmParameters* lbmParams,
-                                 geometry::LatticeData* const latticeData,
-                                 const geometry::Site<geometry::LatticeData>& site,
+                                 geometry::FieldData& latticeData,
+                                 const geometry::Site<geometry::Domain>& site,
                                  kernels::HydroVars<typename CollisionType::CKernel>& hydroVars,
                                  const Direction& direction)
           {
@@ -76,8 +76,8 @@ namespace hemelb
            * @param site
            * @param direction
            */
-          inline void PostStepLink(geometry::LatticeData* const latticeData,
-                                   const geometry::Site<geometry::LatticeData>& site,
+          inline void PostStepLink(geometry::FieldData& latticeData,
+                                   const geometry::Site<geometry::FieldData>& site,
                                    const Direction& direction)
           {
           }

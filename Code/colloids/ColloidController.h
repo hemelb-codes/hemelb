@@ -16,8 +16,8 @@ namespace hemelb
 {
     // Forward declarations
     namespace geometry {
-        class Geometry;
-        class LatticeData;
+        class GmyReadResult;
+        class Domain;
     }
     namespace io::xml {
         class Document;
@@ -38,9 +38,9 @@ namespace hemelb
     {
       public:
         /** constructor - currently only initialises the neighbour list */
-        ColloidController(const geometry::LatticeData& latDatLBM,
+        ColloidController(const geometry::Domain& latDatLBM,
                           const lb::SimulationState& simulationState,
-                          const geometry::Geometry& gmyResult, io::xml::Document& xml,
+                          const geometry::GmyReadResult& gmyResult, io::xml::Document& xml,
                           lb::MacroscopicPropertyCache& propertyCache,
                           const lb::LbmParameters *lbmParams, const std::string& outputPath,
                           const net::IOCommunicator& ioComms_, reporting::Timers& timers);
@@ -84,12 +84,12 @@ namespace hemelb
         /** determines the list of neighbour processors
          i.e. processors that are within the region of influence of the local domain's edge
          i.e. processors that own at least one site in the neighbourhood of a local site */
-        void InitialiseNeighbourList(const geometry::LatticeData& latDatLBM,
-                                     const geometry::Geometry& gmyResult,
+        void InitialiseNeighbourList(const geometry::Domain& latDatLBM,
+                                     const geometry::GmyReadResult& gmyResult,
                                      const Neighbourhood& neighbourhood);
 
         /** get local coordinates and the owner rank for a site from its global coordinates */
-        bool GetLocalInformationForGlobalSite(const geometry::Geometry& gmyResult,
+        bool GetLocalInformationForGlobalSite(const geometry::GmyReadResult& gmyResult,
                                               const util::Vector3D<site_t>& globalLocationForSite,
                                               site_t* blockIdForSite, site_t* localSiteIdForSite,
                                               proc_t* ownerRankForSite);

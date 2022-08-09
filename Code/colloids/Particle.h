@@ -8,7 +8,7 @@
 
 #include "net/mpi.h"
 #include "colloids/PersistedParticle.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "io/xml.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "util/Vector3D.h"
@@ -30,7 +30,7 @@ namespace hemelb
     {
       public:
         /** constructor - gets initial values from an xml configuration file */
-        Particle(const geometry::LatticeData& latDatLBM, const hemelb::lb::LbmParameters *lbmParams,
+        Particle(const geometry::Domain& latDatLBM, const hemelb::lb::LbmParameters *lbmParams,
                  io::xml::Element& xml);
 
         /** constructor - gets an invalid particle for making MPI data types */
@@ -150,16 +150,16 @@ namespace hemelb
         const Dimensionless CalculateDragCoefficient() const;
 
         /** updates the position of this particle using body forces and fluid velocity */
-        const void UpdatePosition(const geometry::LatticeData& latDatLBM);
+        const void UpdatePosition(const geometry::Domain& latDatLBM);
 
         /** calculates the effects of all body forces on this particle */
         const void CalculateBodyForces();
 
         /** calculates the effects of this particle on each lattice site */
-        const void CalculateFeedbackForces(const geometry::LatticeData& latDatLBM) const;
+        const void CalculateFeedbackForces(const geometry::Domain& latDatLBM) const;
 
         /** interpolates the fluid velocity to the location of each particle */
-        const void InterpolateFluidVelocity(const geometry::LatticeData& latDatLBM,
+        const void InterpolateFluidVelocity(const geometry::Domain& latDatLBM,
                                             const lb::MacroscopicPropertyCache& propertyCache);
 
         /** accumulate contributions to velocity from remote processes */

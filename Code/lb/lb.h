@@ -60,7 +60,7 @@ namespace hemelb
          * the partially initialized LBM in order to initialize the arguments to the second construction phase.
          */
         LBM(hemelb::configuration::SimConfig *iSimulationConfig, net::Net* net,
-            geometry::LatticeData* latDat, SimulationState* simState, reporting::Timers &atimings,
+            geometry::FieldData* latDat, SimulationState* simState, reporting::Timers &atimings,
             geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager);
         ~LBM();
 
@@ -124,7 +124,7 @@ namespace hemelb
             collision->StreamAndCollide(iFirstIndex,
                                                  iSiteCount,
                                                  &mParams,
-                                                 mLatDat,
+                                                 *mLatDat,
                                                  propertyCache);
         }
 
@@ -134,7 +134,7 @@ namespace hemelb
             collision->DoPostStep(iFirstIndex,
                                            iSiteCount,
                                            &mParams,
-                                           mLatDat,
+                                           *mLatDat,
                                            propertyCache);
 
         }
@@ -144,7 +144,7 @@ namespace hemelb
 
         configuration::SimConfig *mSimConfig;
         net::Net* mNet;
-        geometry::LatticeData* mLatDat;
+        geometry::FieldData* mLatDat;
         SimulationState* mState;
         iolets::BoundaryValues *mInletValues, *mOutletValues;
 

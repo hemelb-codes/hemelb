@@ -4,7 +4,7 @@
 // license in the file LICENSE.
 
 #include "geometry/BlockTraverserWithVisitedBlockTracker.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "util/Vector3D.h"
 
 namespace hemelb
@@ -12,7 +12,7 @@ namespace hemelb
   namespace geometry
   {
     BlockTraverserWithVisitedBlockTracker::BlockTraverserWithVisitedBlockTracker(
-        const geometry::LatticeData& iLatDat) :
+        const geometry::Domain& iLatDat) :
         BlockTraverser(iLatDat),
         //Initially no blocks have been visited
             mBlockVisited(iLatDat.GetBlockCount(), false)

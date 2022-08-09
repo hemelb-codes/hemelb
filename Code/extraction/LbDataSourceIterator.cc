@@ -10,7 +10,7 @@ namespace hemelb
   namespace extraction
   {
     LbDataSourceIterator::LbDataSourceIterator(const lb::MacroscopicPropertyCache& propertyCache,
-                                               const geometry::LatticeData& data, int rank_,
+                                               const geometry::FieldData& data, int rank_,
                                                const util::UnitConverter& converter) :
         propertyCache(propertyCache), data(data), rank(rank_), converter(converter), position(-1)
     {
@@ -21,7 +21,7 @@ namespace hemelb
     {
       ++position;
 
-      if (position >= data.GetLocalFluidSiteCount())
+      if (position >= data.GetDomain().GetLocalFluidSiteCount())
       {
         return false;
       }
@@ -79,7 +79,7 @@ namespace hemelb
     const distribn_t* LbDataSourceIterator::GetDistribution() const
     {
       auto site = data.GetSite(position);
-      return site.GetFOld(data.GetLatticeInfo().GetNumVectors());
+      return site.GetFOld(data.GetDomain().GetLatticeInfo().GetNumVectors());
     }
 
     void LbDataSourceIterator::Reset()
@@ -89,12 +89,12 @@ namespace hemelb
 
     bool LbDataSourceIterator::IsValidLatticeSite(const util::Vector3D<site_t>& location) const
     {
-      return data.IsValidLatticeSite(location);
+      return data.GetDomain().IsValidLatticeSite(location);
     }
 
     bool LbDataSourceIterator::IsAvailable(const util::Vector3D<site_t>& location) const
     {
-      return data.GetProcIdFromGlobalCoords(location) == rank;
+      return data.GetDomain().GetProcIdFromGlobalCoords(location) == rank;
     }
 
     PhysicalDistance LbDataSourceIterator::GetVoxelSize() const
@@ -109,14 +109,14 @@ namespace hemelb
 
     bool LbDataSourceIterator::IsWallSite(const util::Vector3D<site_t>& location) const
     {
-      site_t localSiteId = data.GetContiguousSiteId(location);
+      site_t localSiteId = data.GetDomain().GetContiguousSiteId(location);
 
       return data.GetSite(localSiteId).IsWall();
     }
 
     unsigned LbDataSourceIterator::GetNumVectors() const
     {
-      return data.GetLatticeInfo().GetNumVectors();
+      return data.GetDomain().GetLatticeInfo().GetNumVectors();
     }
   }
 }

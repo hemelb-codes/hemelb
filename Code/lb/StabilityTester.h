@@ -7,7 +7,8 @@
 #define HEMELB_LB_STABILITYTESTER_H
 
 #include "net/PhasedBroadcastRegular.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
+#include "geometry/FieldData.h"
 #include "configuration/MonitoringConfig.h"
 
 namespace hemelb
@@ -30,7 +31,7 @@ namespace hemelb
     class StabilityTester : public net::PhasedBroadcastRegular<>
     {
       public:
-        StabilityTester(const geometry::LatticeData * iLatDat, net::Net* net,
+        StabilityTester(std::shared_ptr<const geometry::FieldData> iLatDat, net::Net* net,
                         SimulationState* simState, reporting::Timers& timings,
                         const hemelb::configuration::MonitoringConfig* testerConfig) :
             net::PhasedBroadcastRegular<>(net, simState, SPREADFACTOR), mLatDat(iLatDat),
@@ -97,7 +98,7 @@ namespace hemelb
           {
             bool unconvergedSitePresent = false;
 
-            for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
+            for (site_t i = 0; i < mLatDat->GetDomain().GetLocalFluidSiteCount(); i++)
             {
               for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
               {
@@ -277,7 +278,7 @@ namespace hemelb
          */
         static const unsigned int SPREADFACTOR = 10;
 
-        const geometry::LatticeData * mLatDat;
+        std::shared_ptr<const geometry::FieldData> mLatDat;
 
         /**
          * Stability value of this node and its children to propagate upwards.

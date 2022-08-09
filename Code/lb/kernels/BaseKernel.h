@@ -173,7 +173,7 @@ namespace hemelb
 
           // The lattice data object. Currently only used for accessing the boundary id
           // of each site next to an inlet or an outlet.
-          const geometry::LatticeData* latDat;
+          const geometry::Domain* latDat;
 
           // The LB parameters object. Currently only used in LBGKNN to access the current
           // time step.

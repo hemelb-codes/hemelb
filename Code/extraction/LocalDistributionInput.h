@@ -25,7 +25,7 @@ namespace hemelb
   }
   namespace geometry
   {
-    class LatticeData;
+    class FieldData;
   }
   namespace extraction
   {
@@ -39,7 +39,7 @@ namespace hemelb
       // anyway.
       LocalDistributionInput(std::string dataFilePath, std::optional<std::string> const& maybeOffsetPath, const net::IOCommunicator& ioComms);
 
-      // Open the file and load our part into the LatticeData
+      // Open the file and load our part into the domain_type
       // instance.
       //
       // Time is optional, if not supplied will use the last one in
@@ -47,7 +47,7 @@ namespace hemelb
       //
       // Requires the checkpoint have been saved with exactly the same
       // domain decomposition as currently running.
-      void LoadDistribution(geometry::LatticeData* latDat, std::optional<LatticeTimeStep>& initalTime);
+      void LoadDistribution(geometry::FieldData* latDat, std::optional<LatticeTimeStep>& initalTime);
 
     private:
 

@@ -3,10 +3,10 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "geometry/Geometry.h"
+#include "geometry/GmyReadResult.h"
 
 namespace hemelb::geometry {
-    Geometry::Geometry(const util::Vector3D<site_t>& dimensionsInBlocks, site_t blockSize) :
+    GmyReadResult::GmyReadResult(const util::Vector3D<site_t>& dimensionsInBlocks, site_t blockSize) :
             dimensionsInBlocks(dimensionsInBlocks), blockSize(blockSize),
             blockCount(dimensionsInBlocks.x * dimensionsInBlocks.y * dimensionsInBlocks.z),
             sitesPerBlock(util::NumericalFunctions::IntegerPower(blockSize, 3)),
@@ -14,7 +14,7 @@ namespace hemelb::geometry {
     {
     }
 
-    site_t Geometry::FindSiteIndexInBlock(site_t fluidSiteBlock, site_t fluidSitesToPass) const
+    site_t GmyReadResult::FindSiteIndexInBlock(site_t fluidSiteBlock, site_t fluidSitesToPass) const
     {
         site_t siteIndex = 0;
         while (true)
@@ -34,7 +34,7 @@ namespace hemelb::geometry {
         return siteIndex;
     }
 
-    site_t Geometry::FindFluidSiteIndexInBlock(site_t fluidSiteBlock, site_t neighbourSiteId) const
+    site_t GmyReadResult::FindFluidSiteIndexInBlock(site_t fluidSiteBlock, site_t neighbourSiteId) const
     {
         site_t SiteId = 0;
         // Calculate the site's id over the whole geometry,
