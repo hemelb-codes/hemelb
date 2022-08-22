@@ -92,7 +92,6 @@ namespace hemelb
           latDatInitialise, //!< Time spent initialising the lattice data
           lb, //!< Time spent doing the core lattice boltzman simulation
           lb_calc, //!< Time spent doing calculations in the core lattice boltzmann simulation
-          visualisation, //!< Time spent on visualisation
           monitoring, //!< Time spent monitoring for stability, compressibility, etc.
           mpiSend, //!< Time spent sending MPI data
           mpiWait, //!< Time spent waiting for MPI
@@ -102,7 +101,6 @@ namespace hemelb
           readBlock,
           readBlocksPrelim,
           readBlocksAll,
-          steeringWait, //!< Time spent waiting for a steering client in wait on connect mode.
           moveForcingNumbers,
           moveForcingData,
           blockRequirements,
@@ -238,7 +236,6 @@ namespace hemelb
       "Lattice Data initialisation",
       "Lattice Boltzmann",
       "LB calc only",
-      "Visualisation",
       "Monitoring",
       "MPI Send",
       "MPI Wait",
@@ -248,7 +245,6 @@ namespace hemelb
       "Read IO",
       "Read Blocks prelim",
       "Read blocks all",
-      "Steering Client Wait",
       "Move Forcing Counts",
       "Move Forcing Data",
       "Block Requirements",

@@ -19,15 +19,11 @@ namespace hemelb
 
     std::unique_ptr<io::PathManager> setup(const char* confXml) {
       const int processorCount = 5;
-      const int argc = 7;
+      const int argc = 3;
       const char* argv[] = {
 	"hemelb",
 	"-in",
 	confXml,
-	"-i",
-	"1",
-	"-ss",
-	"1111",
       };
 
       auto cl = configuration::CommandLine(argc, argv);
@@ -40,7 +36,6 @@ namespace hemelb
 
 	SECTION("Create") {
 	  AssertPresent("results");
-	  AssertPresent("results/Images");
 	}
 
 	SECTION("NameInvention") {
@@ -57,7 +52,6 @@ namespace hemelb
 
 	SECTION("Create") {
 	  AssertPresent("results");
-	  AssertPresent("results/Images");
 	}
 
 	SECTION("NameInvention") {

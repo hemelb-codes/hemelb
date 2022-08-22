@@ -19,15 +19,11 @@ namespace hemelb
 
     TEST_CASE_METHOD(helpers::FolderTestFixture, "CommandLine") {
       auto configFile = resources::Resource("four_cube.xml").Path();
-      const int argc = 7;
+      const int argc = 3;
       const char* argv[] = {
 	"hemelb",
 	"-in",
-	configFile.c_str(),
-	"-i",
-	"1",
-	"-ss",
-	"1111"
+	configFile.c_str()
       };
       
         

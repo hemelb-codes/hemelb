@@ -7,4 +7,4 @@ cd $job_results
 $run_prefix
 rm -rf results
 cp $job_config_path/* .
-$run_command $install_path/bin/multiscale_hemelb -in config.xml -i $images -s $snapshots -ss $steering
+$run_command $install_path/bin/multiscale_hemelb -in config.xml -s $snapshots

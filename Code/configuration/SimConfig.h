@@ -309,7 +309,6 @@ namespace hemelb
 
         void DoIOForInitialConditions(io::xml::Element parent);
 	void DoIOForCheckpointFile(const io::xml::Element& checkpointEl);
-        void DoIOForVisualisation(const io::xml::Element& visEl);
 
         /**
          * Reads monitoring configuration from XML file

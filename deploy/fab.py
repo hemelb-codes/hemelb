@@ -499,17 +499,13 @@ def hemelb(config, **args):
     config : config directory to use to define geometry, e.g. config=cylinder
     Keyword arguments:
             cores : number of compute cores to request
-            images : number of images to take
-            steering : steering session i.d.
             wall_time : wall-time job limit
             memory : memory per node
     """
     with_config(config)
     execute(put_configs, config)
     job(dict(script='hemelb',
-            cores=4, images=10, steering=1111, wall_time='0:15:0', memory='2G'), args)
-    if args.get('steer', False):
-        execute(steer, env.name, retry=True, framerate=args.get('framerate'), orbit=args.get('orbit'))
+            cores=4, wall_time='0:15:0', memory='2G'), args)
 
 @task
 def multiscale_hemelb(config,**args):
@@ -519,18 +515,13 @@ def multiscale_hemelb(config,**args):
     config : config directory to use to define geometry, e.g. config=cylinder
     Keyword arguments:
             cores : number of compute cores to request
-            images : number of images to take
-            steering : steering session i.d.
             wall_time : wall-time job limit
             memory : memory per node
     """
     with_config(config)
     execute(put_configs,config)
     job(dict(script='multiscale_hemelb',
-            cores=4,images=10, steering=1111, wall_time='0:15:0',memory='2G'),args)
-    if args.get('steer',False):
-        execute(steer,env.name,retry=True,framerate=args.get('framerate'),orbit=args.get('orbit'))
-
+            cores=4, wall_time='0:15:0',memory='2G'),args)
 
 @task
 def resubmit(name):
@@ -547,7 +538,7 @@ def multijob(*names, **args):
     env.jobstorun = "\n".join(jobscriptpaths)
     # And then, submit it
     job(dict(script='multijob', job_name_template='multijob',
-            cores=4, images=10, steering=1111, wall_time='0:15:0', memory='2G'), args)
+            cores=4, wall_time='0:15:0', memory='2G'), args)
 
 @task
 def hemelbs(config, **args):
@@ -558,8 +549,6 @@ def hemelbs(config, **args):
     config : config directory to use to define geometry, e.g. config=cylinder
     Keyword arguments:
             cores : number of compute cores to request
-            images : number of images to take
-            steering : steering session i.d.
             wall_time : wall-time job limit
             memory : memory per node
     """
@@ -579,7 +568,7 @@ def hemelb_benchmark(config, min_cores, max_cores, **args):
         with_config(config)
         execute(put_configs, config)
         job(dict(script='hemelb',
-            cores=cores_used, images=10, steering=1111, wall_time='0:15:0', memory='2G'), args)
+            cores=cores_used, wall_time='0:15:0', memory='2G'), args)
         cores_used *= 2
 
 @task(alias='regress')
@@ -589,7 +578,7 @@ def regression_test(**args):
     execute(copy_regression_tests)
     execute(build_python_tools)
     job(dict(job_name_template='regression_${build_number}_${machine_name}', cores=3,
-            wall_time='0:20:0', memory='2G', images=0, steering=1111, script='regression'), args)
+            wall_time='0:20:0', memory='2G', script='regression'), args)
 
 def calc_nodes():
   # If we're not reserving whole nodes, then if we request less than one node's worth of cores, need to keep N<=n
@@ -811,36 +800,6 @@ def vampir(original_job, *args):
 @task
 def vampir_tunnel(node, port):
     local("ssh hector -L 30070:nid%s:%s -N" % node, port)
-
-@task
-def steer(job, orbit=False, view=False, retry=False, framerate=None):
-    with_job(job)
-    if view:
-        env.steering_client = 'steering.py'
-    else:
-        env.steering_client = 'timing_client.py'
-    if orbit:
-        env.steering_options = "--orbit"
-    else:
-        env.steering_options = ""
-    if retry:
-       env.steering_options += " --retry"
-    if framerate:
-        env.steering_options += " --MaxFramerate=%s" % framerate
-    command_template = "python $repository_path/Tools/steering/python/hemelb_steering/${steering_client} ${steering_options} ${running_node} >> $job_results/steering_results.txt"       
-    if retry:
-        while True:
-            try:
-                get_running_location()
-                run(template(command_template))
-                break
-            except:
-                print "Couldn't connect. Will retry"
-                execute(stat)
-                time.sleep(10)
-    else:
-        get_running_location()
-        run(template(command_template))
 
 
 @task

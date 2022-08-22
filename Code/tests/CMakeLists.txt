@@ -54,7 +54,6 @@ add_subdirectory(multiscale)
 add_subdirectory(net)
 add_subdirectory(reporting)
 add_subdirectory(util)
-add_subdirectory(vis)
 
 if (HEMELB_BUILD_RBC)
   add_to_resources(

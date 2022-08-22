@@ -46,7 +46,6 @@ namespace hemelb
 
           }
 
-          template<bool tDoRayTracing>
           inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::LatticeData* latDat,
@@ -79,13 +78,13 @@ namespace hemelb
               }
 
               //TODO: Necessary to specify sub-class?
-              BaseStreamer<WallStreamerTypeFactory>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+              BaseStreamer<WallStreamerTypeFactory>::UpdateMinsAndMaxes(site,
                                                                                                 hydroVars,
                                                                                                 lbmParams,
                                                                                                 propertyCache);
             }
           }
-          template<bool tDoRayTracing>
+
           inline void DoPostStep(const site_t firstIndex, const site_t siteCount,
                                  const LbmParameters* lbmParameters,
                                  geometry::LatticeData* latticeData,
@@ -136,7 +135,6 @@ namespace hemelb
 
           }
 
-          template<bool tDoRayTracing>
           inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::LatticeData* latDat,
@@ -167,13 +165,13 @@ namespace hemelb
               }
 
               //TODO: Necessary to specify sub-class?
-              BaseStreamer<IoletStreamerTypeFactory>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+              BaseStreamer<IoletStreamerTypeFactory>::template UpdateMinsAndMaxes(site,
                                                                                                  hydroVars,
                                                                                                  lbmParams,
                                                                                                  propertyCache);
             }
           }
-          template<bool tDoRayTracing>
+
           inline void DoPostStep(const site_t firstIndex, const site_t siteCount,
                                  const LbmParameters* lbmParameters,
                                  geometry::LatticeData* latticeData,
@@ -225,7 +223,6 @@ namespace hemelb
 
           }
 
-          template<bool tDoRayTracing>
           inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::LatticeData* latDat,
@@ -260,14 +257,13 @@ namespace hemelb
               }
 
               //TODO: Necessary to specify sub-class?
-              BaseStreamer<WallIoletStreamerTypeFactory>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+              BaseStreamer<WallIoletStreamerTypeFactory>::template UpdateMinsAndMaxes(site,
                                                                                                      hydroVars,
                                                                                                      lbmParams,
                                                                                                      propertyCache);
             }
           }
 
-          template<bool tDoRayTracing>
           inline void DoPostStep(const site_t firstIndex, const site_t siteCount,
                                  const LbmParameters* lbmParams, geometry::LatticeData* latticeData,
                                  lb::MacroscopicPropertyCache& propertyCache)

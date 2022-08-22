@@ -12,7 +12,7 @@ namespace hemelb
   {
 
     CommandLine::CommandLine(std::vector<std::string> const & argv):
-        inputFile("input.xml"), outputDir(""), images(10), steeringSessionId(1), debugMode(false),
+        inputFile("input.xml"), outputDir(""), debugMode(false),
       argv(argv)
     {
       // There should be an odd number of arguments since the parameters occur in pairs.
@@ -36,16 +36,6 @@ namespace hemelb
         {
           outputDir = std::string(paramValue);
         }
-        else if (std::strcmp(paramName, "-i") == 0)
-        {
-          char *dummy;
-          images = (unsigned int) (strtoul(paramValue, &dummy, 10));
-        }
-        else if (std::strcmp(paramName, "-ss") == 0)
-        {
-          char *dummy;
-          steeringSessionId = (unsigned int) (strtoul(paramValue, &dummy, 10));
-        }
         else if (std::strcmp(paramName, "-debug") == 0)
         {
           debugMode = std::strcmp(paramName, "0") == 0 ?
@@ -65,8 +55,6 @@ namespace hemelb
       ans.append("Parameter name and significance:\n");
       ans.append("-in \t Path to the configuration xml file (default is config.xml)\n");
       ans.append("-out \t Path to the output folder (default is based on input file, e.g. config_xml_results)\n");
-      ans.append("-i \t Number of images to create (default is 10)\n");
-      ans.append("-ss \t Steering session identifier (default is 1)\n");
       return ans;
     }
   }

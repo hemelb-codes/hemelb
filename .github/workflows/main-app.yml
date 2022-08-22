@@ -101,7 +101,6 @@ jobs:
         -DHEMELB_DEPENDENCIES_INSTALL_PREFIX:STRING=${{env.deps_install_prefix}}
         -DHEMELB_BUILD_RBC:BOOL=OFF
         -DMPIEXEC_MAX_NUMPROCS:STRING=4
-        -DHEMELB_STEERING_LIB:STRING=none
 
     - name: Build and install HemeLB, adding install dir to PATH
       working-directory: ${{github.workspace}}/build
@@ -136,7 +135,6 @@ jobs:
       env:
         MPIRUN_FLAGS: --oversubscribe
         NUMPROCS: 2
-        HEMELB_STEERING_LIB: none
         OFFSET_CHECK: light
       run: ./diffTest.sh
 
@@ -219,7 +217,6 @@ jobs:
         -DHEMELB_DEPENDENCIES_INSTALL_PREFIX:STRING=${{env.deps_install_prefix}}
         -DHEMELB_BUILD_RBC:BOOL=ON
         -DMPIEXEC_MAX_NUMPROCS:STRING=4
-        -DHEMELB_STEERING_LIB:STRING=none
 
     - name: Build
       working-directory: ${{github.workspace}}/build

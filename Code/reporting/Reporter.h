@@ -38,7 +38,6 @@ namespace hemelb
          * @param aState Reference to state of ongoing simulation.
          */
         Reporter(const std::string &path, const std::string &inputFile);
-        void Image(); //! Inform the reporter that an image has been saved.
 
         void AddReportable(Reportable* reportable);
 
@@ -63,7 +62,6 @@ namespace hemelb
       private:
         const std::string &path;
         void Write(const std::string &ctemplate, const std::string &as); //! Write the report to disk, (or wherever the WriterPolicy decides.)
-        unsigned int imageCount; //! Number of images written.
 	Dict dictionary;
         std::vector<Reportable*> reportableObjects;
     };

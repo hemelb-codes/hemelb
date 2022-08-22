@@ -36,7 +36,6 @@ namespace hemelb
 
           }
 
-          template<bool tDoRayTracing>
           inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::LatticeData* latDat,
@@ -60,14 +59,13 @@ namespace hemelb
                 bulkLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
               }
 
-              BaseStreamer<SimpleCollideAndStream>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+              BaseStreamer<SimpleCollideAndStream>::template UpdateMinsAndMaxes(site,
                                                                                                hydroVars,
                                                                                                lbmParams,
                                                                                                propertyCache);
             }
           }
 
-          template<bool tDoRayTracing>
           inline void DoPostStep(const site_t iFirstIndex, const site_t iSiteCount,
                                  const LbmParameters* iLbmParams, geometry::LatticeData* bLatDat,
                                  lb::MacroscopicPropertyCache& propertyCache)

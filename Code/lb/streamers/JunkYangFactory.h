@@ -6,11 +6,15 @@
 #ifndef HEMELB_LB_STREAMERS_JUNKYANGFACTORY_H
 #define HEMELB_LB_STREAMERS_JUNKYANGFACTORY_H
 
-#include "lb/kernels/BaseKernel.h"
-#include "lb/streamers/BaseStreamer.h"
+#include <set>
+
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/lu.hpp>
 #include <boost/numeric/ublas/io.hpp>
+
+#include "units.h"
+#include "lb/kernels/BaseKernel.h"
+#include "lb/streamers/BaseStreamer.h"
 
 namespace hemelb
 {
@@ -74,7 +78,6 @@ namespace hemelb
             }
           }
 
-          template<bool tDoRayTracing>
           inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::LatticeData* latticeData,
@@ -142,15 +145,14 @@ namespace hemelb
                 fOld[siteIndex](index) = site.GetFOld<LatticeType>()[*outgoingVelocityIter];
               }
 
-              BaseStreamer<JunkYangFactory>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
-                                                                                        hydroVars,
-                                                                                        lbmParams,
-                                                                                        propertyCache);
+                BaseStreamer<JunkYangFactory>::template UpdateMinsAndMaxes(site,
+                                                                           hydroVars,
+                                                                           lbmParams,
+                                                                           propertyCache);
             }
 
           }
 
-          template<bool tDoRayTracing>
           inline void DoPostStep(const site_t firstIndex, const site_t siteCount,
                                  const LbmParameters* lbmParams, geometry::LatticeData* latticeData,
                                  lb::MacroscopicPropertyCache& propertyCache)

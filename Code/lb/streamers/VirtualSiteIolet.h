@@ -136,7 +136,6 @@ namespace hemelb
            * links will be done in the post-step as we must ensure that all
            * the data is available to construct virtual sites.
            */
-          template<bool tDoRayTracing>
           inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::LatticeData* latDat,
@@ -185,14 +184,13 @@ namespace hemelb
               cachedHV.u = hydroVars.velocity;
 
               // TODO: Necessary to specify sub-class?
-              BaseStreamer<VirtualSiteIolet>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+              BaseStreamer<VirtualSiteIolet>::template UpdateMinsAndMaxes(site,
                                                                                          hydroVars,
                                                                                          lbmParams,
                                                                                          propertyCache);
             }
           }
 
-          template<bool tDoRayTracing>
           inline void DoPostStep(const site_t firstIndex, const site_t siteCount,
                                  const LbmParameters* lbmParams, geometry::LatticeData* latDat,
                                  lb::MacroscopicPropertyCache& propertyCache)

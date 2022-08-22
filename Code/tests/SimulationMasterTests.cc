@@ -17,15 +17,11 @@ namespace hemelb
   {
 
     TEST_CASE_METHOD(helpers::FolderTestFixture, "SimulationMaster") {
-      const int argc = 7;
+      const int argc = 3;
       const char* argv[] = {
 	"hemelb",
 	"-in",
 	"four_cube.xml",
-	"-i",
-	"1",
-	"-ss",
-	"1111"
       };
 
       CopyResourceToTempdir("four_cube.xml");

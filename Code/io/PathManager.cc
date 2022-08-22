@@ -24,7 +24,6 @@ namespace hemelb
 
       GuessOutputDir();
 
-      imageDirectory = outputDir + "/Images/";
       dataPath = outputDir + "/Extracted/";
       colloidFile = outputDir + "/ColloidOutput.xdr";
       rbcsPath = outputDir + "/Cells/";
@@ -35,7 +34,6 @@ namespace hemelb
           throw Exception() << "Output directory '" << outputDir << "' already exists.";
 
         hemelb::util::MakeDirAllRXW(outputDir);
-        hemelb::util::MakeDirAllRXW(imageDirectory);
         hemelb::util::MakeDirAllRXW(dataPath);
         hemelb::util::MakeDirAllRXW(rbcsPath);
         reportName = outputDir;
@@ -45,10 +43,6 @@ namespace hemelb
     const std::string & PathManager::GetInputFile() const
     {
       return inputFile;
-    }
-    const std::string & PathManager::GetImageDirectory() const
-    {
-      return imageDirectory;
     }
     const std::string & PathManager::GetColloidPath() const
     {
@@ -61,18 +55,6 @@ namespace hemelb
 
     void PathManager::EmptyOutputDirectories() const
     {
-      hemelb::util::DeleteDirContents(imageDirectory);
-    }
-
-    hemelb::io::writers::Writer * PathManager::XdrImageWriter(const long int time) const
-    {
-      char filename[255];
-      snprintf(filename, 255, "%08li.dat", time);
-#ifdef HEMELB_IMAGES_TO_NULL
-      return (new hemelb::io::writers::null::NullWriter());
-#else
-      return (new hemelb::io::writers::xdr::XdrFileWriter(imageDirectory + std::string(filename)));
-#endif
     }
 
     const std::string& PathManager::GetDataExtractionPath() const

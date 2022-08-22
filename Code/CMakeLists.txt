@@ -40,18 +40,6 @@ if(HEMELB_VALIDATE_GEOMETRY)
   add_definitions(-DHEMELB_VALIDATE_GEOMETRY)
 endif()
 
-if (NOT HEMELB_USE_STREAKLINES)
-  add_definitions(-DNO_STREAKLINES)
-endif()
-
-if (HEMELB_WAIT_ON_CONNECT)
-  add_definitions(-DHEMELB_WAIT_ON_CONNECT)
-endif()
-
-if (HEMELB_IMAGES_TO_NULL)
-  add_definitions(-DHEMELB_IMAGES_TO_NULL)
-endif()
-
 if (HEMELB_USE_SSE3)
   add_definitions(-DHEMELB_USE_SSE3)
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
@@ -173,8 +161,6 @@ set(package_subdirs
   configuration
   redblood
   extraction
-  steering
-  vis
   lb
   geometry
   debug

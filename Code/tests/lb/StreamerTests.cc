@@ -48,7 +48,7 @@ namespace hemelb
 	LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(latDat);
 
 	// Use the streaming operator on the entire lattice.
-	simpleCollideAndStream.StreamAndCollide<false> (0,
+	simpleCollideAndStream.StreamAndCollide(0,
 							latDat->GetLocalFluidSiteCount(),
 							lbmParams,
 							latDat,
@@ -95,12 +95,12 @@ namespace hemelb
 	LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(latDat);
 	lb::streamers::BouzidiFirdaousLallemand<COLLISION>::Type bfl(initParams);
 
-	bfl.StreamAndCollide<false> (0,
+	bfl.StreamAndCollide(0,
 				     latDat->GetLocalFluidSiteCount(),
 				     lbmParams,
 				     latDat,
 				     *propertyCache);
-	bfl.PostStep<false> (0,
+	bfl.PostStep(0,
 			     latDat->GetLocalFluidSiteCount(),
 			     lbmParams,
 			     latDat,
@@ -239,7 +239,7 @@ namespace hemelb
 	// Mid-Fluid sites use simple collide and stream
 	lb::streamers::SimpleCollideAndStream<COLLISION > simpleCollideAndStream(initParams);
 
-	simpleCollideAndStream.StreamAndCollide<false> (offset,
+	simpleCollideAndStream.StreamAndCollide(offset,
 							latDat->GetMidDomainCollisionCount(0),
 							lbmParams,
 							latDat,
@@ -249,7 +249,7 @@ namespace hemelb
 	// Wall sites use simple bounce back
 	lb::streamers::SimpleBounceBack<COLLISION>::Type simpleBounceBack(initParams);
 
-	simpleBounceBack.StreamAndCollide<false> (offset,
+	simpleBounceBack.StreamAndCollide(offset,
 						  latDat->GetMidDomainCollisionCount(1),
 						  lbmParams,
 						  latDat,
@@ -257,7 +257,7 @@ namespace hemelb
 	offset += latDat->GetMidDomainCollisionCount(1);
 
 	// Consider inlet/outlets and their walls as mid-fluid sites
-	simpleCollideAndStream.StreamAndCollide<false> (offset,
+	simpleCollideAndStream.StreamAndCollide(offset,
 							latDat->GetLocalFluidSiteCount()
 							- offset,
 							lbmParams,
@@ -365,7 +365,7 @@ namespace hemelb
 				      assignedWallDistance);
 
 	  // Perform the collision and streaming.
-	  guoZhengShi.StreamAndCollide<false> (chosenSite, 1, lbmParams, latDat, *propertyCache);
+	  guoZhengShi.StreamAndCollide(chosenSite, 1, lbmParams, latDat, *propertyCache);
 
 	  // Calculate the distributions at the chosen site up to post-collision.
 	  distribn_t streamerFOld[NUMVECTORS];
@@ -520,7 +520,7 @@ namespace hemelb
 	// Mid-Fluid sites use simple collide and stream
 	lb::streamers::SimpleCollideAndStream<COLLISION> simpleCollideAndStream(initParams);
 
-	simpleCollideAndStream.StreamAndCollide<false> (offset,
+	simpleCollideAndStream.StreamAndCollide(offset,
 							latDat->GetMidDomainCollisionCount(0),
 							lbmParams,
 							latDat,
@@ -533,13 +533,13 @@ namespace hemelb
 								  + latDat->GetMidDomainCollisionCount(1)));
 	lb::streamers::JunkYang<COLLISION>::Type junkYang(initParams);
 
-	junkYang.StreamAndCollide<false> (offset,
+	junkYang.StreamAndCollide(offset,
 					  latDat->GetMidDomainCollisionCount(1),
 					  lbmParams,
 					  latDat,
 					  *propertyCache);
 
-	junkYang.PostStep<false> (offset,
+	junkYang.PostStep(offset,
 				  latDat->GetMidDomainCollisionCount(1),
 				  lbmParams,
 				  latDat,
@@ -548,7 +548,7 @@ namespace hemelb
 	offset += latDat->GetMidDomainCollisionCount(1);
 
 	// Consider inlet/outlets and their walls as mid-fluid sites
-	simpleCollideAndStream.StreamAndCollide<false> (offset,
+	simpleCollideAndStream.StreamAndCollide(offset,
 							latDat->GetLocalFluidSiteCount()
 							- offset,
 							lbmParams,
@@ -662,7 +662,7 @@ namespace hemelb
 	  latDat->SetIoletId(chosenSite, chosenBoundaryId);
 
 	  // Perform the collision and streaming.
-	  ioletCollider.StreamAndCollide<false> (chosenSite,
+	  ioletCollider.StreamAndCollide(chosenSite,
 						 1,
 						 lbmParams,
 						 latDat,
@@ -766,7 +766,7 @@ namespace hemelb
 	  latDat->SetIoletId(chosenSite, chosenBoundaryId);
 
 	  // Perform the collision and streaming.
-	  ioletCollider.StreamAndCollide<false> (chosenSite,
+	  ioletCollider.StreamAndCollide(chosenSite,
 						 1,
 						 lbmParams,
 						 latDat,

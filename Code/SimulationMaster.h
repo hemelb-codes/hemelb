@@ -12,8 +12,6 @@
 #include "lb/lb.hpp"
 #include "lb/StabilityTester.h"
 #include "net/net.h"
-#include "steering/ImageSendComponent.h"
-#include "steering/SteeringComponent.h"
 #include "lb/EntropyTester.h"
 #include "lb/iolets/BoundaryValues.h"
 #include "util/UnitConverter.h"
@@ -92,8 +90,6 @@ namespace hemelb
       unsigned int OutputPeriod(unsigned int frequency);
       void HandleActors();
       void OnUnstableSimulation();
-      void WriteLocalImages();
-      void GenerateNetworkImages();
       /**
        * Updates the property caches record of which properties need to be calculated
        * and cached on this iteration.
@@ -109,14 +105,6 @@ namespace hemelb
       hemelb::reporting::Timers timings;
       std::shared_ptr<hemelb::reporting::Reporter> reporter;
       hemelb::reporting::BuildInfo build_info;
-      typedef std::multimap<unsigned long, unsigned long> MapType;
-
-      MapType writtenImagesCompleted;
-      MapType networkImagesCompleted;
-
-      std::shared_ptr<hemelb::steering::Network> network;
-      std::shared_ptr<hemelb::steering::ImageSendComponent> imageSendCpt;
-      std::shared_ptr<hemelb::steering::SteeringComponent> steeringCpt;
 
       std::shared_ptr<hemelb::lb::SimulationState> simulationState;
 
@@ -134,16 +122,12 @@ namespace hemelb
 
       const hemelb::util::UnitConverter* unitConverter;
 
-      std::shared_ptr<hemelb::vis::Control> visualisationControl;
       std::shared_ptr<hemelb::extraction::IterableDataSource> propertyDataSource;
       std::shared_ptr<hemelb::extraction::PropertyActor> propertyExtractor;
 
       std::shared_ptr<hemelb::net::phased::StepManager> stepManager;
       std::shared_ptr<hemelb::net::phased::NetConcern> netConcern;
 
-      unsigned int imagesPerSimulation;
-      int steeringSessionId;
-      unsigned int imagesPeriod;
       static const hemelb::LatticeTimeStep FORCE_FLUSH_PERIOD = 1000;
   };
 }

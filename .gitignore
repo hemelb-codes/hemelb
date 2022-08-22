@@ -29,21 +29,6 @@ dependencies/distributions
 dependencies/parmetis-prefix
 dependencies/cppunit-prefix
 dependencies/tinyxml-prefix
-Tools/visim/visim
-Tools/setuptool/*.gdb
-Tools/steering/javagui/dependencies
-Tools/setuptool/HemeLbSetupTool/Model/_Generation.so
-Tools/setuptool/HemeLbSetupTool/Model/Generation.py 
-Tools/setuptool/HemeLbSetupTool/Model/Generation/Wrap.cpp
-Tools/steering/javagui/dependencies/jogamp/
-Tools/visclients/hs_err*.log
-Tools/visclients/dependencies/jogamp
-Tools/derek
-Tools/hemeTools/parsers/geometry/BaseSite.c
-Tools/hemeTools/parsers/geometry/BaseSite.h
-Tools/hemeTools/parsers/geometry/BaseSite.so
-Tools/hemeTools/utils/xdr.c
-Tools/hemeTools/utils/xdr.so
 revision_info.txt
 hemelb-prefix/src/hemelb-stamp/hemelb-urlinfo.txt
 .*.sw[p, o, n]

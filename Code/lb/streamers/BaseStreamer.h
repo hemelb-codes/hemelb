@@ -9,7 +9,6 @@
 #include <cmath>
 
 #include "geometry/LatticeData.h"
-#include "vis/Control.h"
 #include "lb/LbmParameters.h"
 #include "lb/kernels/BaseKernel.h"
 #include "lb/MacroscopicPropertyCache.h"
@@ -25,20 +24,20 @@ namespace hemelb
        * BaseStreamer: inheritable base class for the streaming operator. The public interface
        * here defines the complete interface usable by external code.
        *  - Constructor(InitParams&)
-       *  - <bool tDoRayTracing> StreamAndCollide(const site_t, const site_t, const LbmParameters*,
-       *      geometry::LatticeData*, hemelb::vis::Control*)
+       *  - StreamAndCollide(const site_t, const site_t, const LbmParameters*,
+       *      geometry::LatticeData*, lb::MacroscopicPropertyCache& propertyCache)
        *  - <bool tDoRayTracing> PostStep(const site_t, const site_t, const LbmParameters*,
-       *      geometry::LatticeData*, hemelb::vis::Control*)
+       *      geometry::LatticeData*, lb::MacroscopicPropertyCache& propertyCache)
        *  - Reset(kernels::InitParams* init)
        *
        * The following must be implemented by concrete streamers (which derive from this class
        * using the CRTP).
        *  - typedef for CollisionType, the type of the collider operation.
        *  - Constructor(InitParams&)
-       *  - <bool tDoRayTracing> DoStreamAndCollide(const site_t, const site_t, const LbmParameters*,
-       *      geometry::LatticeData*, hemelb::vis::Control*)
-       *  - <bool tDoRayTracing> DoPostStep(const site_t, const site_t, const LbmParameters*,
-       *      geometry::LatticeData*, hemelb::vis::Control*)
+       *  - DoStreamAndCollide(const site_t, const site_t, const LbmParameters*,
+       *      geometry::LatticeData*, lb::MacroscopicPropertyCache& propertyCache)
+       *  - DoPostStep(const site_t, const site_t, const LbmParameters*,
+       *      geometry::LatticeData*, lb::MacroscopicPropertyCache& propertyCache)
        *  - DoReset(kernels::InitParams* init)
        *
        * The design is to for the streamers to be pretty dumb and for them to
@@ -53,35 +52,33 @@ namespace hemelb
       class BaseStreamer
       {
         public:
-          template<bool tDoRayTracing>
           inline void StreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                        const LbmParameters* lbmParams,
                                        geometry::LatticeData* latDat,
                                        lb::MacroscopicPropertyCache& propertyCache)
           {
-            static_cast<StreamerImpl*>(this)->template DoStreamAndCollide<tDoRayTracing>(firstIndex,
-                                                                                         siteCount,
-                                                                                         lbmParams,
-                                                                                         latDat,
-                                                                                         propertyCache);
+              static_cast<StreamerImpl*>(this)->DoStreamAndCollide(firstIndex,
+                                                                            siteCount,
+                                                                            lbmParams,
+                                                                            latDat,
+                                                                            propertyCache);
           }
 
-          template<bool tDoRayTracing>
           inline void PostStep(const site_t firstIndex, const site_t siteCount,
                                const LbmParameters* lbmParams, geometry::LatticeData* latDat,
                                lb::MacroscopicPropertyCache& propertyCache)
           {
-            // The template parameter is required because we're using the CRTP to call a
-            // metaprogrammed method of the implementation class.
-            static_cast<StreamerImpl*>(this)->template DoPostStep<tDoRayTracing>(firstIndex,
-                                                                                 siteCount,
-                                                                                 lbmParams,
-                                                                                 latDat,
-                                                                                 propertyCache);
+              // The template parameter is required because we're using the CRTP to call a
+              // metaprogrammed method of the implementation class.
+              static_cast<StreamerImpl*>(this)->DoPostStep(firstIndex,
+                                                                    siteCount,
+                                                                    lbmParams,
+                                                                    latDat,
+                                                                    propertyCache);
           }
 
         protected:
-          template<bool tDoRayTracing, class LatticeType>
+          template<class LatticeType>
           inline static void UpdateMinsAndMaxes(
               const geometry::Site<geometry::LatticeData>& site,
               const kernels::HydroVarsBase<LatticeType>& hydroVars, const LbmParameters* lbmParams,

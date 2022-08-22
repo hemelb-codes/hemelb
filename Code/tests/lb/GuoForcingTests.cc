@@ -351,7 +351,7 @@ namespace hemelb
 	using lb::streamers::SimpleCollideAndStream;
 	using lb::collisions::Normal;
 	SimpleCollideAndStream<Normal<Kernel> > streamer(initParams);
-	streamer.StreamAndCollide<false>(site.GetIndex(), 1, lbmParams, latDat, *propertyCache);
+	streamer.StreamAndCollide(site.GetIndex(), 1, lbmParams, latDat, *propertyCache);
 
 	// Now check streaming worked correctly
 	for (size_t i(0); i < LatticeType::NUMVECTORS; ++i) {
@@ -381,7 +381,7 @@ namespace hemelb
 	using lb::streamers::SimpleBounceBack;
 	using lb::collisions::Normal;
 	SimpleBounceBack<Normal<Kernel> >::Type streamer(initParams);
-	streamer.StreamAndCollide<false>(site.GetIndex(), 1, lbmParams, latDat, *propertyCache);
+	streamer.StreamAndCollide(site.GetIndex(), 1, lbmParams, latDat, *propertyCache);
 
 	distribn_t const * const actual = helpers::GetFNew<LatticeType>(latDat, position);
 	bool paranoia(false);

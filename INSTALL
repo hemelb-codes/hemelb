@@ -30,7 +30,7 @@ HemeLB provides three entry points to the CMake system.
 # Master build file
      * Resides at the top level of the HemeLB checkout
      * Optionally builds all HemeLB components
-          (TODO - only builds hemelb and unittests at the moment, we should add steering client and setuptools to this)
+          (NOTE - only builds hemelb and unittests)
      * Will download and build HemeLB dependencies as necessary
      * (Invokes Code and Dependencies builds.)
 # Code build file
@@ -56,7 +56,6 @@ Options for Code, or master build:
 	USE_MULTIMACHINE: Use support for multi-level parallelism.
 	HEMELB_BUILD_UNITTESTS: Should the unit-tests be built?
 	HEMELB_LOG_LEVEL: Log level, can be debug, info, or warning.
-	HEMELB_STEERING_LIB: Library for HemeLB steering, can be basic or none.
 	
 Options for dependencies, or master build:
 	CPPUNIT_TARBALL, TINYXML_TARBALL, PARMETIS_TARBALL: URL to download or path to find dependency tarchive.

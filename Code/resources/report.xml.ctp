@@ -10,8 +10,6 @@
 	{{#BUILD}}
 	<build>
 		<revision>{{REVISION}}</revision>
-		<steering>{{STEERING}}</steering>
-		<streaklines>{{STREAKLINES}}</streaklines>
 		<type>{{TYPE}}</type>
 		<optimisation>{{OPTIMISATION}}</optimisation>
                 <use_sse3>{{USE_SSE3}}</use_sse3>
@@ -48,7 +46,6 @@
 		{{/PROCESSOR}}
 	</geometry>
 	<results>
-		<images>{{IMAGES}}</images>
 		<steps>
 			<total>{{STEPS}}</total>
 		</steps>

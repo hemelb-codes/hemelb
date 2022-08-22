@@ -21,10 +21,7 @@ pass_option(HEMELB HEMELB_BUILD_DEBUGGER "Build the built in debugger" ON)
 # mark_as_advanced(HEMELB_DEBUGGER_IMPLEMENTATION)
 pass_option(HEMELB HEMELB_VALIDATE_GEOMETRY "Validate geometry" OFF)
 pass_option(HEMELB HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
-pass_option(HEMELB HEMELB_USE_STREAKLINES "Calculate streakline images" OFF)
 pass_option(HEMELB HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
-pass_option(HEMELB HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
-pass_option(HEMELB HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
 pass_option(HEMELB HEMELB_USE_SSE3 "Use SSE3 intrinsics" ON)
 pass_option(HEMELB HEMELB_USE_VELOCITY_WEIGHTS_FILE "Use Velocity weights file" OFF)
 pass_option(HEMELB UBUNTU_BUG_WORKAROUND "Work around the faulty HAVE_ISNAN value in Ubuntu 16.04." OFF)
@@ -48,8 +45,6 @@ pass_cachevar(HEMELB HEMELB_READING_GROUP_SIZE 5
 pass_cachevar_choice(HEMELB HEMELB_LOG_LEVEL Info
   STRING "Log level"
   Critical Error Warning Info Debug Trace)
-pass_cachevar(HEMELB HEMELB_STEERING_LIB basic
-  STRING "Steering library, choose 'basic' or 'none'" )
 
 pass_cachevar(HEMELB HEMELB_OPTIMISATION "-O3"
   STRING "Optimisation level (can be blank or -O1 to -O4)")

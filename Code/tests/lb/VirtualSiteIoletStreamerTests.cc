@@ -351,28 +351,28 @@ namespace hemelb
 	site_t offset = 0;
 	offset += latDat->GetMidDomainCollisionCount(0);
 	offset += latDat->GetMidDomainCollisionCount(1);
-	inletStreamer.DoStreamAndCollide<false> (offset,
+	inletStreamer.DoStreamAndCollide(offset,
 						 latDat->GetMidDomainCollisionCount(2),
 						 lbmParams,
 						 static_cast<geometry::LatticeData*> (latDat),
 						 propertyCache);
 	offset += latDat->GetMidDomainCollisionCount(2);
 
-	outletStreamer.StreamAndCollide<false> (offset,
+	outletStreamer.StreamAndCollide(offset,
 						latDat->GetMidDomainCollisionCount(3),
 						lbmParams,
 						latDat,
 						propertyCache);
 	offset += latDat->GetMidDomainCollisionCount(3);
 
-	inletStreamer.StreamAndCollide<false> (offset,
+	inletStreamer.StreamAndCollide(offset,
 					       latDat->GetMidDomainCollisionCount(4),
 					       lbmParams,
 					       latDat,
 					       propertyCache);
 	offset += latDat->GetMidDomainCollisionCount(4);
 
-	outletStreamer.StreamAndCollide<false> (offset,
+	outletStreamer.StreamAndCollide(offset,
 						latDat->GetMidDomainCollisionCount(5),
 						lbmParams,
 						latDat,
@@ -386,28 +386,28 @@ namespace hemelb
 	offset = 0;
 	offset += latDat->GetMidDomainCollisionCount(0);
 	offset += latDat->GetMidDomainCollisionCount(1);
-	inletStreamer.DoPostStep<false> (offset,
+	inletStreamer.DoPostStep(offset,
 					 latDat->GetMidDomainCollisionCount(2),
 					 lbmParams,
 					 static_cast<geometry::LatticeData*> (latDat),
 					 propertyCache);
 	offset += latDat->GetMidDomainCollisionCount(2);
 
-	outletStreamer.DoPostStep<false> (offset,
+	outletStreamer.DoPostStep(offset,
 					  latDat->GetMidDomainCollisionCount(3),
 					  lbmParams,
 					  latDat,
 					  propertyCache);
 	offset += latDat->GetMidDomainCollisionCount(3);
 
-	inletStreamer.DoPostStep<false> (offset,
+	inletStreamer.DoPostStep(offset,
 					 latDat->GetMidDomainCollisionCount(4),
 					 lbmParams,
 					 latDat,
 					 propertyCache);
 	offset += latDat->GetMidDomainCollisionCount(4);
 
-	outletStreamer.DoPostStep<false> (offset,
+	outletStreamer.DoPostStep(offset,
 					  latDat->GetMidDomainCollisionCount(5),
 					  lbmParams,
 					  latDat,

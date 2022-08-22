@@ -195,14 +195,10 @@ namespace hemelb
       	LADD_FAIL();
       	int argc;
       	const char* argv[7];
-      	argc = 7;
+      	argc = 3;
       	argv[0] = "hemelb";
       	argv[2] = "four_cube_multiscale.xml";
       	argv[1] = "-in";
-      	argv[3] = "-i";
-      	argv[4] = "1";
-      	argv[5] = "-ss";
-      	argv[6] = "1111";
       	CopyResourceToTempdir("four_cube_multiscale.xml");
       	CopyResourceToTempdir("four_cube.gmy");
       	configuration::CommandLine options(argc, argv);
