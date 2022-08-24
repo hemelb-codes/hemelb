@@ -129,10 +129,11 @@ jobs:
           path: fail-${{ matrix.python-version }}.tar.gz
 
       - name: Get hemelb-tests repo
-        uses: actions/checkout@v2
+        uses: ./.github/actions/get-tests-repo
         with:
-          repository: hemelb-codes/hemelb-tests
           path: hemelb-tests
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Smoketest the update tool
         working-directory: hemelb-tests/diffTest

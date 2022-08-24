@@ -120,15 +120,16 @@ jobs:
         name: fluid-only-failed-build-tree
         path: build
 
+    - name: Get hemelb-tests repo
+      uses: ./.github/actions/get-tests-repo
+      with:
+        path: hemelb-tests
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+
     - name: Install python tools (required by diff test)
       working-directory: python-tools
       run: pip install .
-
-    - name: Get hemelb-tests repo
-      uses: actions/checkout@v2
-      with:
-        repository: hemelb-codes/hemelb-tests
-        path: hemelb-tests
 
     - name: Run the simple regression test
       working-directory: hemelb-tests/diffTest

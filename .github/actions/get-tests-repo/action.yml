@@ -1,0 +1,46 @@
+name: 'Get the tests repo'
+description: |
+  Checkout the hemelb-tests repo.
+  Make sure to set GITHUB_TOKEN in environment!
+
+inputs:
+  path:
+    description: 'Relative path under $GITHUB_WORKSPACE to place the repository'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - id: ref_name
+      shell: bash
+      run: |
+        if [ $GITHUB_EVENT_NAME = "pull_request" ]; then
+          branch=$GITHUB_HEAD_REF
+        else
+          branch=$GITHUB_REF_NAME
+        fi
+        echo "::set-output name=value::$branch"
+
+    - uses: octokit/request-action@v2.x
+      id: check_branch_exists
+      with:
+        route: GET /repos/{org}/{repo}/branches/{branch}
+        org: hemelb-codes
+        repo: hemelb-tests
+        branch: ${{ steps.ref_name.outputs.value }}
+
+    - id: branch
+      shell: bash
+      run: |
+        if [ ${{ steps.check_branch_exists.outputs.status }} = 200 ]; then
+          ans=${{ steps.ref_name.outputs.value }}
+        else
+          ans=main
+        fi
+        echo "::set-output name=value::$ans"
+
+    - uses: actions/checkout@v2
+      with:
+        repository: hemelb-codes/hemelb-tests
+        ref: ${{ steps.branch.outputs.value }}
+        path: ${{ inputs.path }}        
