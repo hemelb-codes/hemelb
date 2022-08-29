@@ -52,15 +52,11 @@ namespace hemelb
       DeleteXMLInput("large_cylinder_rbc.xml", { "inlets", "inlet", "flowextension" });
       DeleteXMLInput("large_cylinder_rbc.xml", { "outlets", "outlet", "flowextension" });
 
-      constexpr int argc = 7;
+      constexpr int argc = 3;
       char const * argv[argc] = {
 	"hemelb",
 	"-in",
 	"large_cylinder_rbc.xml",
-	"-i",
-	"0",
-	"-ss",
-	"1111"
       };
       hemelb::configuration::CommandLine options(argc, argv);
 

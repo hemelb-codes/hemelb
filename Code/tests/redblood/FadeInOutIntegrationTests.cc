@@ -45,7 +45,7 @@ namespace hemelb
 
       constexpr int argc = 7;
       char const * argv[argc] = {
-	"hemelb", "-in", "large_cylinder_rbc.xml", "-i", "0", "-ss", "1111"
+	"hemelb", "-in", "large_cylinder_rbc.xml",
       };
 
       auto options = hemelb::configuration::CommandLine{argc, argv};

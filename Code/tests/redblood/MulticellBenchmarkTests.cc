@@ -69,10 +69,6 @@ namespace hemelb
 	argv[0] = "hemelb";
 	argv[1] = "-in";
 	argv[2] = "large_cylinder_rbc.xml";
-	argv[3] = "-i";
-	argv[4] = "0";
-	argv[5] = "-ss";
-	argv[6] = "1111";
 	options = std::make_shared<hemelb::configuration::CommandLine>(argc, argv);
 
 	master = std::make_shared<MasterSim>(*options, Comms());
@@ -132,8 +128,8 @@ namespace hemelb
     private:
       std::shared_ptr<MasterSim> master;
       std::shared_ptr<hemelb::configuration::CommandLine> options;
-      int const argc = 7;
-      char const * argv[7];
+      int const argc = 3;
+      char const * argv[3];
       redblood::VTKMeshIO vtk_io = {};
     };
 

@@ -85,10 +85,6 @@ namespace hemelb
       options = std::make_shared<CommandLine>(CommandLine { "hemelb",
 	    "-in",
 	    "large_cylinder.xml",
-	    "-i",
-	    "1",
-	    "-ss",
-	    "1111",
 	    "-out",
 	    result });
     }

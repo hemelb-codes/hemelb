@@ -83,10 +83,6 @@ namespace hemelb
       options = std::make_shared<configuration::CommandLine>(configuration::CommandLine { "hemelb",
 	    "-in",
 	    "cyl_l100_r5.xml",
-	    "-i",
-	    "1",
-	    "-ss",
-	    "1111",
 	    "-out",
 	    result });
     }

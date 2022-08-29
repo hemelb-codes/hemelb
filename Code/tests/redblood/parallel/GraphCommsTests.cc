@@ -66,10 +66,7 @@ namespace hemelb
 	std::make_shared<configuration::CommandLine>(configuration::CommandLine { "hemelb",
 	      "-in",
 	      "large_cylinder_rbc.xml",
-	      "-i",
-	      "1",
-	      "-ss",
-	      "1111" });
+    });
     }
 
     void GraphCommsTests::testLexicographicalOrderingOfVectors() {

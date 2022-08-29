@@ -53,16 +53,12 @@ namespace hemelb
 	}
 
 	SECTION("testMPWideApplication") {
-	  int argc;
-	  const char* argv[7];
-	  argc = 7;
-	  argv[0] = "hemelb";
-	  argv[2] = "four_cube_multiscale.xml";
-	  argv[1] = "-in";
-	  argv[3] = "-i";
-	  argv[4] = "1";
-	  argv[5] = "-ss";
-	  argv[6] = "1111";
+	  int constexpr argc = 3;
+	  const char* argv[argc] = {
+	    "hemelb",
+	    "-in",
+	    "four_cube_multiscale.xml",
+	  };
 
 	  CopyResourceToTempdir("four_cube_multiscale.xml");
 	  CopyResourceToTempdir("four_cube.gmy");

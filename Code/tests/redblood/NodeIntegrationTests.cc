@@ -28,19 +28,12 @@ namespace hemelb
     template <typename STENCIL>
     class NodeIntegrationTestsFixture : public helpers::FolderTestFixture {
     protected:
-      int const argc = 7;
-      char const * argv[7];
-      std::string const resource = "large_cylinder_rbc.xml";
+      static const char* xml_name;
+      static constexpr int argc = 3;
+      static const char* argv[argc];
 
     public:
       NodeIntegrationTestsFixture() {
-	argv[0] = "hemelb";
-	argv[1] = "-in";
-	argv[2] = resource.c_str();
-	argv[3] = "-i";
-	argv[4] = "1";
-	argv[5] = "-ss";
-	argv[6] = "1111";
 	this->CopyResourceToTempdir("red_blood_cell.txt");
 	CopyResourceToTempdir("large_cylinder.gmy");
       }
@@ -50,21 +43,21 @@ namespace hemelb
       std::shared_ptr<SimulationMaster<TRAITS>> simulationMaster(size_t steps,
 								 Dimensionless cell,
 								 Dimensionless wall) const {
-        CopyResourceToTempdir(resource);
+        CopyResourceToTempdir(xml_name);
         if (util::DoesDirectoryExist("results"))
         {
           system("rm -rf results");
         }
-        DeleteXMLInput(resource, { "inlets", "inlet", "insertcell" });
-        DeleteXMLInput(resource, { "inlets", "inlet", "flowextension" });
-        DeleteXMLInput(resource, { "outlets", "outlet", "flowextension" });
-        DeleteXMLInput(resource, { "properties", "propertyoutput" });
-        ModifyXMLInput(resource, { "inlets", "inlet", "condition", "mean", "value" }, 0);
-        ModifyXMLInput(resource, { "simulation", "steps", "value" }, steps);
-        ModifyXMLInput(resource, { "redbloodcells", "cell2Cell", "intensity", "value" }, cell);
-        ModifyXMLInput(resource, { "redbloodcells", "cell2Cell", "cutoff", "value" }, 2);
-        ModifyXMLInput(resource, { "redbloodcells", "cell2Wall", "intensity", "value" }, wall);
-        ModifyXMLInput(resource, { "redbloodcells", "cell2Wall", "cutoff", "value" }, 2);
+        DeleteXMLInput(xml_name, { "inlets", "inlet", "insertcell" });
+        DeleteXMLInput(xml_name, { "inlets", "inlet", "flowextension" });
+        DeleteXMLInput(xml_name, { "outlets", "outlet", "flowextension" });
+        DeleteXMLInput(xml_name, { "properties", "propertyoutput" });
+        ModifyXMLInput(xml_name, { "inlets", "inlet", "condition", "mean", "value" }, 0);
+        ModifyXMLInput(xml_name, { "simulation", "steps", "value" }, steps);
+        ModifyXMLInput(xml_name, { "redbloodcells", "cell2Cell", "intensity", "value" }, cell);
+        ModifyXMLInput(xml_name, { "redbloodcells", "cell2Cell", "cutoff", "value" }, 2);
+        ModifyXMLInput(xml_name, { "redbloodcells", "cell2Wall", "intensity", "value" }, wall);
+        ModifyXMLInput(xml_name, { "redbloodcells", "cell2Wall", "cutoff", "value" }, 2);
         auto options = std::make_shared<configuration::CommandLine>(argc, argv);
         auto const master = std::make_shared<SimulationMaster<TRAITS>>(*options, Comms());
         helpers::LatticeDataAccess(&master->GetLatticeData()).ZeroOutForces();
@@ -106,6 +99,12 @@ namespace hemelb
 	  secondCell->GetVertices().front()
         };
       }
+    };
+    template <typename STENCIL>
+    const char* NodeIntegrationTestsFixture<STENCIL>::xml_name = "large_cylinder_rbc.xml";
+    template <typename STENCIL>
+    const char* NodeIntegrationTestsFixture<STENCIL>::argv[NodeIntegrationTestsFixture<STENCIL>::argc] = {
+            "hemelb", "-in", xml_name
     };
 
     TEMPLATE_TEST_CASE_METHOD(NodeIntegrationTestsFixture,

@@ -33,15 +33,11 @@ namespace hemelb
       CopyResourceToTempdir("fedosov1c.gmy");
       CopyResourceToTempdir("rbc_ico_720.msh");
       CopyResourceToTempdir("rbc_ico_1280.msh");
-      int const argc = 7;
+      int const argc = 3;
       char const * argv[7];
       argv[0] = "hemelb";
       argv[1] = "-in";
       argv[2] = "fedosov1c.xml";
-      argv[3] = "-i";
-      argv[4] = "0";
-      argv[5] = "-ss";
-      argv[6] = "1111";
 
       configuration::CommandLine options(argc, argv);
       auto master = std::make_shared<MasterSim>(options, Comms());

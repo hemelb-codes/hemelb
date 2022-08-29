@@ -51,9 +51,9 @@ namespace hemelb
       DeleteXMLInput("large_cylinder_rbc.xml", { "outlets", "outlet", "flowextension" });
       DeleteXMLInput("large_cylinder_rbc.xml", { "redbloodcells", "cells" });
 
-      int constexpr argc = 7;
+      int constexpr argc = 3;
       char const * argv[argc] = {
-        "hemelb", "-in", "large_cylinder_rbc.xml", "-i", "0", "-ss", "1111"
+        "hemelb", "-in", "large_cylinder_rbc.xml",
       };
       auto options = std::make_shared<configuration::CommandLine>(argc, argv);
       auto master = std::make_shared<MasterSim>(*options, Comms());

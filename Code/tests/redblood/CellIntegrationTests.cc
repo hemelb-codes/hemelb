@@ -28,14 +28,6 @@ namespace hemelb
 
     public:
       CellIntegrationTests() : FolderTestFixture(), timings(Comms()) {
-	argv[0] = "hemelb";
-	argv[1] = "-in";
-	argv[2] = "large_cylinder.xml";
-	argv[3] = "-i";
-	argv[4] = "1";
-	argv[5] = "-ss";
-	argv[6] = "1111";
-
 	CopyResourceToTempdir("red_blood_cell.txt");
 	TiXmlDocument doc(resources::Resource("large_cylinder.xml").Path());
 	CopyResourceToTempdir("large_cylinder.xml");
@@ -136,9 +128,10 @@ namespace hemelb
       CellContainer cells;
       std::shared_ptr<TemplateCellContainer> templates;
       reporting::Timers timings;
-      int const argc = 7;
-      char const * argv[7];
+      static constexpr int argc = 3;
+      static char const* const argv[argc];
     };
+    char const* const CellIntegrationTests::argv[]  = {"hemelb", "-in", "large_cylinder.xml"};
 
     METHOD_AS_TEST_CASE(CellIntegrationTests::testCellOutOfBounds,
 			"No errors when interpolation/spreading hits nodes out of bounds",
