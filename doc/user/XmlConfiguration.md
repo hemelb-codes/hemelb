@@ -93,17 +93,6 @@ The `<geometry>` element is required. It has one, required, child element:
 ## Outlets
 As for "inlets" but with `s/inlet/outlet/`
 
-## Visualisation
-Required element `<visualisation>` to configure the vis. Subelements:
-* Required: `<centre value="(x,y,z)" units="m" />`
-* Required: `<orientation>`
-  * Required: `<latitude value="45.0" units="deg" />`
-  * Required: `<longitude value="45.0" units="deg" />`
-* Required: `<display brightness="0.03" zoom="1.0" />`
-* Required: `<range>`
-  * Required: `<maxstress value="0.1" units="Pa" />`
-  * Required: `<maxvelocity value="0.1" units="m/s" />`
-  
 ## Initial Conditions
 `<initialconditions>` - describe initial conditions. Child elements:
 
