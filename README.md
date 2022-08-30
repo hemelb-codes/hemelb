@@ -1,5 +1,9 @@
 # HemeLB: Haemodynamic simulation with lattice Boltzmann
 
+![Main code status](https://github.com/hemelb-codes/hemelb/actions/workflows/main-app.yml/badge.svg)
+![Python tools status](https://github.com/hemelb-codes/hemelb/actions/workflows/py-hemetools.yml/badge.svg) 
+![Geometry tool status](https://github.com/hemelb-codes/hemelb/actions/workflows/gmy-tool.yml/badge.svg)
+
 HemeLB uses the lattice Boltzmann method to simulate fluid flow in
 complex geometries, such as a blood vessel network.
 
