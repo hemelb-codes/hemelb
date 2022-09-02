@@ -23,6 +23,7 @@ runs:
 
     - uses: octokit/request-action@v2.x
       id: check_branch_exists
+      continue-on-error: true
       with:
         route: GET /repos/{org}/{repo}/branches/{branch}
         org: hemelb-codes
