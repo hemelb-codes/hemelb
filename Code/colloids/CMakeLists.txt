@@ -28,3 +28,4 @@ target_link_libraries(hemelb_colloids
   hemelb_colloidsForces
   hemelb_colloidsBCs
   )
+target_compile_definitions(hemelb_colloids PUBLIC HEMELB_BUILD_COLLOIDS)

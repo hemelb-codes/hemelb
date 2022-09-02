@@ -7,20 +7,32 @@
 #define HEMELB_COLLOIDS_COLLOIDCONTROLLER_H
 
 #include <vector>
-#include "net/net.h"
 #include "net/IteratedAction.h"
-#include "geometry/LatticeData.h"
-#include "geometry/Geometry.h"
-#include "io/xml.h"
-#include "lb/MacroscopicPropertyCache.h"
-#include "colloids/ParticleSet.h"
+#include "reporting/Timers.h"
 #include "util/Vector3D.h"
 #include "units.h"
 
 namespace hemelb
 {
+    // Forward declarations
+    namespace geometry {
+        class Geometry;
+        class LatticeData;
+    }
+    namespace io::xml {
+        class Document;
+    }
+    namespace lb {
+        class LbmParameters;
+        class MacroscopicPropertyCache;
+        class SimulationState;
+    }
+    namespace net {
+        class IOCommunicator;
+    }
   namespace colloids
   {
+      class ParticleSet;
     /** provides the control interface between colloid simulation and the rest of the system */
     class ColloidController : public net::IteratedAction
     {
@@ -30,7 +42,7 @@ namespace hemelb
                           const lb::SimulationState& simulationState,
                           const geometry::Geometry& gmyResult, io::xml::Document& xml,
                           lb::MacroscopicPropertyCache& propertyCache,
-                          const hemelb::lb::LbmParameters *lbmParams, const std::string& outputPath,
+                          const lb::LbmParameters *lbmParams, const std::string& outputPath,
                           const net::IOCommunicator& ioComms_, reporting::Timers& timers);
 
         /** destructor - releases resources allocated by this class */

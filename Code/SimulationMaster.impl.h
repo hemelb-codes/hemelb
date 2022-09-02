@@ -23,11 +23,14 @@
 #include "log/Logger.h"
 #include "lb/HFunction.h"
 #include "io/xml.h"
-#include "colloids/ColloidController.h"
 #include "net/BuildInfo.h"
 #include "net/IOCommunicator.h"
 #include "colloids/BodyForces.h"
 #include "colloids/BoundaryConditions.h"
+
+#ifdef HEMELB_BUILD_COLLOIDS
+#  include "colloids/ColloidController.h"
+#endif
 
 #ifdef HEMELB_BUILD_RBC
 #  include "redblood/CellController.h"
@@ -47,7 +50,7 @@ namespace hemelb
   template<class TRAITS>
   SimulationMaster<TRAITS>::SimulationMaster(hemelb::configuration::CommandLine & options,
                                              const hemelb::net::IOCommunicator& ioComm) :
-      ioComms(ioComm.Duplicate()), timings(ioComms), build_info(), cellController(nullptr),
+      ioComms(ioComm.Duplicate()), timings(ioComms), build_info(),
           communicationNet(ioComms)
   {
     timings[hemelb::reporting::Timers::total].Start();
@@ -149,10 +152,9 @@ namespace hemelb
                                                   timings,
                                                   neighbouringDataManager.get());
 
-    hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
-
     if (simConfig->HasColloidSection())
     {
+#ifdef HEMELB_BUILD_COLLOIDS
       timings[hemelb::reporting::Timers::colloidInitialisation].Start();
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Loading Colloid config.");
       std::string colloidConfigPath = simConfig->GetColloidConfigPath();
@@ -170,13 +172,16 @@ namespace hemelb
                                                                 *simulationState,
                                                                 readGeometryData,
                                                                 xml,
-                                                                propertyCache,
+                                                                latticeBoltzmannModel->GetPropertyCache(),
                                                                 latticeBoltzmannModel->GetLbmParams(),
                                                                 fileManager->GetColloidPath(),
                                                                 ioComms,
                                                                 timings);
+      timings[hemelb::reporting::Timers::colloidInitialisation].Stop();
+#else
+        throw Exception() << "Config contains <colloids> tag when built with HEMELB_BUILD_COLLOIDS=OFF";
+#endif
     }
-    timings[hemelb::reporting::Timers::colloidInitialisation].Stop();
 
     if (simConfig->HasRBCSection())
     {
@@ -455,9 +460,13 @@ namespace hemelb
       simulationState->SetIsTerminating(true);
     }
 
-    if ( (simulationState->GetTimeStep() % 500 == 0) && colloidController)
-      colloidController->OutputInformation(simulationState->GetTimeStep());
-
+#ifdef HEMELB_BUILD_COLLOIDS
+    if (simulationState->GetTimeStep() % 500 == 0) {
+        if (auto c = std::dynamic_pointer_cast<colloids::ColloidController>(colloidController)) {
+            c->OutputInformation(simulationState->GetTimeStep());
+        }
+    }
+#endif
     if (simulationState->GetTimeStep() % FORCE_FLUSH_PERIOD == 0 && IsCurrentProcTheIOProc())
     {
       fflush(nullptr);

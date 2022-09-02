@@ -168,9 +168,12 @@ set(package_subdirs
   log
   net
   io
-  colloids
   reporting
   )
+
+if (HEMELB_BUILD_COLLOIDS)
+  list(APPEND package_subdirs colloids)
+endif()
 
 foreach(subdir ${package_subdirs})
   set(lib "hemelb_${subdir}")

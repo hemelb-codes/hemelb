@@ -21,7 +21,6 @@
 #include "reporting/Timers.h"
 #include "reporting/BuildInfo.h"
 #include "lb/IncompressibilityChecker.hpp"
-#include "colloids/ColloidController.h"
 #include "net/phased/StepManager.h"
 #include "net/phased/NetConcern.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
@@ -117,7 +116,7 @@ namespace hemelb
         incompressibilityChecker;
 
       std::shared_ptr<hemelb::net::IteratedAction> cellController;
-      std::shared_ptr<hemelb::colloids::ColloidController> colloidController;
+      std::shared_ptr<hemelb::net::IteratedAction> colloidController;
       hemelb::net::Net communicationNet;
 
       const hemelb::util::UnitConverter* unitConverter;

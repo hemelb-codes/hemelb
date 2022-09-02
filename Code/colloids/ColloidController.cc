@@ -4,6 +4,11 @@
 // license in the file LICENSE.
 
 #include "colloids/ColloidController.h"
+#include "colloids/ParticleSet.h"
+#include "geometry/LatticeData.h"
+#include "geometry/Geometry.h"
+#include "io/xml.h"
+#include "lb/MacroscopicPropertyCache.h"
 #include "geometry/BlockTraverser.h"
 #include "geometry/SiteTraverser.h"
 #include "log/Logger.h"
