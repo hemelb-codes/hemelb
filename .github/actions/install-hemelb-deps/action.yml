@@ -1,0 +1,62 @@
+name: 'Install the various HemeLB dependencies'
+
+inputs:
+  name:
+    description: 'Name of the build type, used for caching'
+    required: true
+
+  extra_apt:
+    description: 'Any extra apt packages to install (ie for RBC mode)'
+    required: false
+    default: ''
+
+  extra_cmake:
+    description: 'Any extra flags to pass to cmake'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Apt update
+      shell: bash
+      run: sudo apt-get update
+
+    - name: Install Ubuntu-provided dependencies
+      shell: bash
+      run: >-
+        sudo
+        apt-get install -y
+        libopenmpi-dev
+        libtinyxml-dev
+        libparmetis-dev
+        libboost-dev
+        libctemplate-dev
+        ${{ inputs.extra_apt }}
+
+    - uses: actions/cache@v2
+      id: deps-cache
+      with:
+        path: ${{ env.deps_install_prefix }}
+        key: deps-${{ inputs.name }}-${{ runner.os }}-${{ hashFiles('dependencies') }}
+
+    - name: "Deps: make build dir"
+      shell: bash
+      if: steps.deps-cache.outputs.cache-hit != 'true'
+      run: mkdir -p ${{ github.workspace }}/deps-build ${{ env.deps_install_prefix }}
+
+    - name: Deps configure
+      shell: bash
+      if: steps.deps-cache.outputs.cache-hit != 'true'
+      run: >-
+        cmake
+        -S ${{ github.workspace }}/dependencies
+        -B ${{ github.workspace }}/deps-build
+        ${{ inputs.extra_cmake }}
+        -DHEMELB_DEPENDENCIES_INSTALL_PREFIX:STRING=${{ env.deps_install_prefix }}
+
+    - name: Deps install
+      shell: bash
+      if: steps.deps-cache.outputs.cache-hit != 'true'
+      working-directory: ${{ github.workspace }}/deps-build
+      run: cmake --build .
