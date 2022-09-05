@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_TESTS_NET_LABELLEDREQUEST_H
-#define HEMELB_TESTS_NET_LABELLEDREQUEST_H
+#ifndef HEMELB_TESTS_HELPERS_LABELLEDREQUEST_H
+#define HEMELB_TESTS_HELPERS_LABELLEDREQUEST_H
 
 #include <string>
 

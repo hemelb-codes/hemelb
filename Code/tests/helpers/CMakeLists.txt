@@ -3,15 +3,17 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-add_library(test-helpers
+add_library(test-helpers OBJECT
   FolderTestFixture.cc
   FourCubeBasedTestFixture.cc
   FourCubeLatticeData.cc
   HasCommsTestFixture.cc
+  LabelledRequest.cc
   LatticeDataAccess.cc
   MockNetHelper.cc
   OneInOneOutSimConfig.cc
   RandomSourceTests.cc
+  RecordingNet.cc
 )
 
 target_link_libraries(test-helpers

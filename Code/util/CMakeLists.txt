@@ -3,4 +3,5 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-add_library(hemelb_util fileutils.cc UnitConverter.cc utilityFunctions.cc Vector3D.cc Vector3DHemeLb.cc Matrix3D.cc Bessel.cc)
+add_library(hemelb_util OBJECT
+  fileutils.cc UnitConverter.cc utilityFunctions.cc Vector3D.cc Vector3DHemeLb.cc Matrix3D.cc Bessel.cc)

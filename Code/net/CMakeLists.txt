@@ -3,7 +3,7 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-add_library(hemelb_net
+add_library(hemelb_net OBJECT
   MpiDataType.cc MpiEnvironment.cc MpiError.cc
   MpiCommunicator.cc MpiGroup.cc MpiFile.cc
   IteratedAction.cc BaseNet.cc 

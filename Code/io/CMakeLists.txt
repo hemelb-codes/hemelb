@@ -10,7 +10,7 @@ if(NOT HAVE_XDRUINTXX_T)
   add_definitions(-Dxdr_uint64_t=xdr_u_int64_t)
 endif()
 
-add_library(hemelb_io
+add_library(hemelb_io OBJECT
   PathManager.cc 
   writers/ascii/AsciiFileWriter.cc writers/ascii/AsciiStreamWriter.cc
   writers/xdr/XdrVectorWriter.cc

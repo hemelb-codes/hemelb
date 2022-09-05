@@ -5,7 +5,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "tests/net/RecordingNet.h"
+#include "tests/helpers/RecordingNet.h"
 
 namespace hemelb
 {

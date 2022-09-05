@@ -25,5 +25,6 @@ configure_file (
   "${PROJECT_BINARY_DIR}/debug/PlatformDebugger.h"
   )
 
-add_library(hemelb_debug Debugger.cc none/NullDebugger.cc ${debugger_implementation})
+add_library(hemelb_debug OBJECT
+  Debugger.cc none/NullDebugger.cc ${debugger_implementation})
 #No debugging for now - pending platform dependence

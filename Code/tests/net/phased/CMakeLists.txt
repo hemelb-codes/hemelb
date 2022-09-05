@@ -2,9 +2,9 @@
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
-target_sources(hemelb-tests PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/ConcernTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/MockConcern.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/MockIteratedAction.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/StepManagerTests.cc
+add_test_lib(test_phased
+  ConcernTests.cc
+  MockConcern.cc
+  MockIteratedAction.cc
+  StepManagerTests.cc
 )

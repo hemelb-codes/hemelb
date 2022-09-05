@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_TESTS_NET_RECORDINGNET_H
-#define HEMELB_TESTS_NET_RECORDINGNET_H
+#ifndef HEMELB_TESTS_HELPERS_RECORDINGNET_H
+#define HEMELB_TESTS_HELPERS_RECORDINGNET_H
 #include <map>
 #include <cstdlib>
 #include <iostream>
@@ -12,7 +12,7 @@
 #include "constants.h"
 #include "net/mpi.h"
 #include "net/net.h"
-#include "tests/net/LabelledRequest.h"
+#include "tests/helpers/LabelledRequest.h"
 
 namespace hemelb
 {

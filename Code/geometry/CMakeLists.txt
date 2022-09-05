@@ -3,7 +3,7 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-add_library(hemelb_geometry
+add_library(hemelb_geometry OBJECT
   BlockTraverser.cc BlockTraverserWithVisitedBlockTracker.cc
   GeometryReader.cc needs/Needs.cc LatticeData.cc
   SiteDataBare.cc SiteData.cc

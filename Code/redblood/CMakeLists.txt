@@ -39,7 +39,7 @@ if (HEMELB_BUILD_RBC)
   "${PROJECT_BINARY_DIR}/redblood/MeshIdType.h"
   )
 
-  add_library(hemelb_redblood
+  add_library(hemelb_redblood OBJECT
     RBCConfig.cc
     Mesh.cc MeshIO.cc
     CellBase.cc Cell.cc CellEnergy.cc Facet.cc
@@ -59,7 +59,7 @@ if (HEMELB_BUILD_RBC)
     Boost::boost)
 else()
   # Build minimal interface
-  add_library(hemelb_redblood
+  add_library(hemelb_redblood OBJECT
     RBCConfig.cc
     FlowExtension.cc
     )

@@ -5,7 +5,7 @@
 
 find_hemelb_dependency(MPWide REQUIRED)
 
-add_library(hemelb_multiscale
+add_library(hemelb_multiscale OBJECT
   mpwide/MPWideIntercommunicator.cc
   )
 target_link_libraries(hemelb_multiscale PUBLIC MPWide::MPWide)

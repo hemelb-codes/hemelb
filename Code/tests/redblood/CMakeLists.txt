@@ -2,64 +2,67 @@
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
-target_sources(hemelb-tests PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/Fixtures.cc
+add_test_lib(test_redblood
+  Fixtures.cc
 
-  ${CMAKE_CURRENT_SOURCE_DIR}/BendingTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/BordersTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/CellArmyTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/CellIOTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/CellInserterTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/CellCellInteractionTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/CellCellInteractionWithGridTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/CellForceSpreadTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/CellTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/CellVelocityInterpolTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/DivideConquerTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/EnergyTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/FacetTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/FaderCellTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/FlowExtensionTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/GradientKernTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/GradientTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/InterpolationTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/LoadDeformedCellTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/LoadingTimmMeshTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/Node2NodeTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/NodeIntegrationTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/RedBloodMeshDataIOTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/RedBloodMeshTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/RedBloodMeshVTKDataIOTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/StencilTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/TopologyTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/VertexBagTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/WallCellPairIteratorTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/WallNodeDnCTests.cc
+  BendingTests.cc
+  BordersTests.cc
+  CellArmyTests.cc
+  CellIOTests.cc
+  CellInserterTests.cc
+  CellCellInteractionTests.cc
+  CellCellInteractionWithGridTests.cc
+  CellForceSpreadTests.cc
+  CellTests.cc
+  CellVelocityInterpolTests.cc
+  DivideConquerTests.cc
+  EnergyTests.cc
+  FacetTests.cc
+  FaderCellTests.cc
+  FlowExtensionTests.cc
+  GradientKernTests.cc
+  GradientTests.cc
+  InterpolationTests.cc
+  LoadDeformedCellTests.cc
+  LoadingTimmMeshTests.cc
+  Node2NodeTests.cc
+  NodeIntegrationTests.cc
+  RedBloodMeshDataIOTests.cc
+  RedBloodMeshTests.cc
+  RedBloodMeshVTKDataIOTests.cc
+  StencilTests.cc
+  TopologyTests.cc
+  VertexBagTests.cc
+  WallCellPairIteratorTests.cc
+  WallNodeDnCTests.cc
 
-  ${CMAKE_CURRENT_SOURCE_DIR}/buffer/BufferTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/buffer/ColumnsTests.cc
+  buffer/BufferTests.cc
+  buffer/ColumnsTests.cc
 
-  ${CMAKE_CURRENT_SOURCE_DIR}/parallel/NodeParallelizationTests.cc
+  parallel/NodeParallelizationTests.cc
 
   # Longer-running integration tests
-  ${CMAKE_CURRENT_SOURCE_DIR}/CellIntegrationTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/FadeInOutIntegrationTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/SadCellTest.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/SadCellIntegrationTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/MulticellBenchmarkTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/FedosovValidationTests.cc
+  CellIntegrationTests.cc
+  FadeInOutIntegrationTests.cc
+  SadCellTest.cc
+  SadCellIntegrationTests.cc
+  MulticellBenchmarkTests.cc
+  FedosovValidationTests.cc
 )
 
-target_sources(mpi_redblood_tests PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/Fixtures.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/parallel/ParallelFixtures.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/parallel/ParallelFixtureTests.cc
+target_link_libraries(test_redblood PRIVATE VTK::CommonCore)
 
-  ${CMAKE_CURRENT_SOURCE_DIR}/parallel/CellParallelizationTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/parallel/MPISpreadForcesTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/parallel/MPIIntegrateVelocities.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/parallel/MPILockStepTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/parallel/GraphCommsTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/parallel/RBCInserterWithPerturbationParallelTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/parallel/MPIParallelIntegrationTests.cc
+add_test_lib(test_mpi_redblood
+  Fixtures.cc
+  parallel/ParallelFixtures.cc
+  parallel/ParallelFixtureTests.cc
+
+  parallel/CellParallelizationTests.cc
+  parallel/MPISpreadForcesTests.cc
+  parallel/MPIIntegrateVelocities.cc
+  parallel/MPILockStepTests.cc
+  parallel/GraphCommsTests.cc
+  parallel/RBCInserterWithPerturbationParallelTests.cc
+  parallel/MPIParallelIntegrationTests.cc
 )
+target_link_libraries(test_mpi_redblood PRIVATE VTK::CommonCore)

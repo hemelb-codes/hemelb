@@ -3,7 +3,7 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-add_library(hemelb_reporting Reporter.cc Timers.cc Dict.cc)
+add_library(hemelb_reporting OBJECT Reporter.cc Timers.cc Dict.cc)
 target_link_libraries(hemelb_reporting PRIVATE CTemplate::CTemplate)
 
 configure_file (

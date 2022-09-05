@@ -3,7 +3,7 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "tests/net/LabelledRequest.h"
+#include "tests/helpers/LabelledRequest.h"
 
 #include <cstring>
 #include <iostream>

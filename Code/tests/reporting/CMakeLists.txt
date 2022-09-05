@@ -2,8 +2,9 @@
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
-target_sources(hemelb-tests PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/Mocks.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/ReporterTests.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/TimerTests.cc
+add_test_lib(test_reporting
+  Mocks.cc
+  ReporterTests.cc
+  TimerTests.cc
 )
+target_link_libraries(test_reporting PRIVATE CTemplate::CTemplate)

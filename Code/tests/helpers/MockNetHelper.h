@@ -8,7 +8,7 @@
 
 #include "net/MpiCommunicator.h"
 
-#include "tests/net/NetMock.h"
+#include "tests/helpers/NetMock.h"
 
 namespace hemelb
 {
