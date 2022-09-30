@@ -14,6 +14,7 @@
 #include "util/Vector3D.h"
 #include "io/writers/Writer.h"
 
+namespace hemelb::lb { class LbmParameters; }
 namespace hemelb
 {
   namespace colloids

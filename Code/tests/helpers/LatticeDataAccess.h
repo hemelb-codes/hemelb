@@ -10,6 +10,7 @@
 #include <functional>
 #include "geometry/Domain.h"
 #include "geometry/FieldData.h"
+#include "lb/lattices/D3Q15.h"
 
 namespace hemelb
 {

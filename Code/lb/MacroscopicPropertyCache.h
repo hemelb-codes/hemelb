@@ -11,6 +11,7 @@
 #include "lb/SimulationState.h"
 #include "units.h"
 #include "util/RefreshableCache.hpp"
+#include "util/Matrix3D.h"
 
 namespace hemelb
 {

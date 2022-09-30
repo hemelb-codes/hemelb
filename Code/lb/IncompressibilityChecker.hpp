@@ -7,6 +7,7 @@
 #define HEMELB_LB_INCOMPRESSIBILITYCHECKER_HPP
 
 #include "lb/IncompressibilityChecker.h"
+#include "reporting/Timers.h"
 
 namespace hemelb
 {

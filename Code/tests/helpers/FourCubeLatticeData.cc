@@ -8,8 +8,10 @@
 #include <cstdlib>
 #include "units.h"
 #include "geometry/Domain.h"
+#include "geometry/GmyReadResult.h"
 #include "io/formats/geometry.h"
 #include "util/Vector3D.h"
+#include "lb/lattices/D3Q15.h"
 
 namespace hemelb
 {

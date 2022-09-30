@@ -6,6 +6,8 @@
 #ifndef HEMELB_LB_INITIALCONDITION_HPP
 #define HEMELB_LB_INITIALCONDITION_HPP
 
+#include "lb/InitialCondition.h"
+#include "extraction/LocalDistributionInput.h"
 
 namespace hemelb {
   namespace lb {

@@ -8,6 +8,7 @@
 
 #include "lb/kernels/BaseKernel.h"
 #include "lb/HFunction.h"
+#include "lb/LbmParameters.h"
 #include "util/utilityFunctions.h"
 
 namespace hemelb

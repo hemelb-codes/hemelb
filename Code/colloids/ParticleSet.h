@@ -7,13 +7,15 @@
 #define HEMELB_COLLOIDS_PARTICLESET_H
 
 #include <vector>
+
+#include "units.h"
+#include "colloids/Particle.h"
 #include "geometry/Domain.h"
 #include "io/xml.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "net/mpi.h"
-#include "colloids/Particle.h"
+#include "net/net.h"
 #include "net/IOCommunicator.h"
-#include "units.h"
 
 namespace hemelb
 {

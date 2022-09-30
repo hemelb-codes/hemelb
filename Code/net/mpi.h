@@ -12,5 +12,6 @@
 #include "net/MpiCommunicator.h"
 #include "net/MpiGroup.h"
 #include "net/MpiError.h"
+#include "net/MpiFile.h"
 
 #endif // HEMELB_NET_MPI_H

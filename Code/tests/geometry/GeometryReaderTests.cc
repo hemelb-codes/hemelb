@@ -9,7 +9,9 @@
 
 #include "configuration/SimConfig.h"
 #include "geometry/Domain.h"
+#include "geometry/GeometryReader.h"
 #include "lb/lattices/D3Q15.h"
+#include "reporting/Timers.h"
 #include "resources/Resource.h"
 
 #include "tests/helpers/FourCubeLatticeData.h"

@@ -5,11 +5,9 @@
 
 #include <random>
 #include <numeric>
-#include <iostream>
-
 #include <catch2/catch.hpp>
 
-#include "lb/lattices/D3Q15.h"
+#include "lb/lattices/D3Q19.h"
 #include "lb/lattices/Lattice.h"
 #include "lb/streamers/Streamers.h"
 #include "lb/kernels/GuoForcingLBGK.h"

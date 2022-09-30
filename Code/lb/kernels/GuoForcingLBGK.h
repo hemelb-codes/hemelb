@@ -11,6 +11,7 @@
 #include "lb/HFunction.h"
 #include "util/utilityFunctions.h"
 #include "lb/kernels/BaseKernel.h"
+#include "lb/LbmParameters.h"
 
 namespace hemelb
 {

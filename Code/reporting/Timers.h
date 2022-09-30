@@ -10,6 +10,8 @@
 #include "reporting/Reportable.h"
 #include "util/utilityFunctions.h"
 #include "reporting/Policies.h"
+#include "reporting/timers_fwd.h"
+
 namespace hemelb
 {
   namespace reporting
@@ -218,8 +220,8 @@ namespace hemelb
         std::vector<double> mins; //! Min across processes
         std::vector<double> means; //! Average across processes
     };
-    typedef TimerBase<HemeLBClockPolicy> Timer;
-    typedef TimersBase<HemeLBClockPolicy, MPICommsPolicy> Timers;
+    using Timer = TimerBase<HemeLBClockPolicy>;
+    using Timers = TimersBase<HemeLBClockPolicy, MPICommsPolicy>;
 
     template<class ClockPolicy, class CommsPolicy>
     const std::string TimersBase<ClockPolicy, CommsPolicy>::timerNames[TimersBase<ClockPolicy,
