@@ -7,9 +7,6 @@ on:
       - Code/**
       - dependencies/**
   pull_request:
-    paths:
-      - Code/**
-      - dependencies/**
   schedule:
     # Run every Monday 0700 UTC
     - cron: '0 7 * * 1'

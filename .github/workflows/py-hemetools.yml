@@ -9,9 +9,6 @@ on:
       - 'python-tools/**'
 
   pull_request:
-    paths:
-      - '.github/workflows/py-*'
-      - 'python-tools/**'
 
   schedule:
     # Run every Monday 0700 UTC

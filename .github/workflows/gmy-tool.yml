@@ -16,9 +16,6 @@ on:
       - Code/io/writers/Writer.cc
 
   pull_request:
-    paths:
-      - '.github/workflows/gmy-*'
-      - 'geometry-tool/**'
 
   schedule:
     # Run every Monday 0700 UTC
