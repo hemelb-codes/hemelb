@@ -66,7 +66,7 @@ namespace hemelb
     }
 
     MpiCommunicator::MpiCommunicator(int localRankInCommunicator, int communicatorSize) :
-        commPtr(), localRankInCommunicator(localRankInCommunicator), communicatorSize(communicatorSize)
+        commPtr(), communicatorSize(communicatorSize), localRankInCommunicator(localRankInCommunicator)
     {
     }
 

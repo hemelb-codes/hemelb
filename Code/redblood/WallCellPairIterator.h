@@ -34,7 +34,7 @@ namespace hemelb
     //! the location of the associated fluid site) as well as how close the node is to neighboring
     //! boxes.
     template<class LATTICE>
-    DivideConquer<WallNode> createWallNodeDnC(geometry::LatticeData const&latticeData,
+    DivideConquer<WallNode> createWallNodeDnC(geometry::Domain const&domain,
                                               LatticeDistance boxSize,
                                               LatticeDistance interactionDistance);
     //! \brief Creates divide and conquer box of wall nodes
@@ -162,14 +162,14 @@ namespace hemelb
     };
 
     template<class LATTICE>
-    DivideConquer<WallNode> createWallNodeDnC(geometry::LatticeData const&latticeData,
+    DivideConquer<WallNode> createWallNodeDnC(geometry::Domain const&domain,
                                               LatticeDistance boxSize,
                                               LatticeDistance interactionDistance)
     {
       DivideConquer<WallNode> result(boxSize);
-      for (site_t i(0); i < latticeData.GetLocalFluidSiteCount(); ++i)
+      for (site_t i(0); i < domain.GetLocalFluidSiteCount(); ++i)
       {
-        auto const site = latticeData.GetSite(i);
+        auto const site = domain.GetSite(i);
         if (not site.IsWall())
         {
           continue;
@@ -250,10 +250,11 @@ namespace hemelb
     void addCell2WallInteractions(DivideConquerCells const &cellDnC,
                                   DivideConquer<WallNode> const &wallDnC,
                                   Node2NodeForce const &functional,
-                                  geometry::LatticeData &latticeData);
+                                  geometry::FieldData &latticeData);
   }
 }
 
+// TODO: remove this UB!!
 namespace std
 {
   //! Overload so we can work with for-range loop
@@ -278,7 +279,7 @@ namespace hemelb
     void addCell2WallInteractions(DivideConquerCells const &cellDnC,
                                   DivideConquer<WallNode> const &wallDnC,
                                   Node2NodeForce const &functional,
-                                  geometry::LatticeData &latticeData)
+                                  geometry::FieldData &latticeData)
     {
       for (WallCellPairIterator iter { cellDnC,
                                        wallDnC,

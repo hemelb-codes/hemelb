@@ -60,7 +60,7 @@ namespace hemelb
         ModifyXMLInput(xml_name, { "redbloodcells", "cell2Wall", "cutoff", "value" }, 2);
         auto options = std::make_shared<configuration::CommandLine>(argc, argv);
         auto const master = std::make_shared<SimulationMaster<TRAITS>>(*options, Comms());
-        helpers::LatticeDataAccess(&master->GetLatticeData()).ZeroOutForces();
+        helpers::LatticeDataAccess(&master->GetFieldData()).ZeroOutForces();
         return master;
       }
 

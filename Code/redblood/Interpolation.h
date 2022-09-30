@@ -86,9 +86,9 @@ namespace hemelb
         }
 
         //! computes local index
-        site_t ContiguousSiteId(geometry::LatticeData const &latDat) const
+        site_t ContiguousSiteId(geometry::Domain const &d) const
         {
-          return latDat.GetContiguousSiteId(current);
+          return d.GetContiguousSiteId(current);
         }
 
       protected:

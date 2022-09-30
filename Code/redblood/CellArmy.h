@@ -11,17 +11,19 @@
 #include <memory>
 #include <iomanip>
 
+#include <boost/uuid/uuid_io.hpp>
+
+#include "Exception.h"
+#include "geometry/Domain.h"
 #include "redblood/Cell.h"
 #include "redblood/CellCell.h"
 #include "redblood/WallCellPairIterator.h"
 #include "redblood/GridAndCell.h"
 #include "redblood/FlowExtension.h"
-#include "geometry/Domain.h"
 #include "redblood/types.h"
 #include "redblood/parallel/SpreadForces.h"
-#include "Exception.h"
 #include "redblood/parallel/IntegrateVelocities.h"
-#include <boost/uuid/uuid_io.hpp>
+#include "reporting/Timers.h"
 
 namespace hemelb
 {
@@ -38,24 +40,24 @@ namespace hemelb
         //! Type of callback for listening to changes to cells
         typedef std::function<void(const CellContainer &)> CellChangeListener;
 
-        CellArmy(geometry::LatticeData &latDat, CellContainer const &cells,
+        CellArmy(geometry::FieldData &latDat, CellContainer const &cells,
                  std::shared_ptr<TemplateCellContainer> cellTemplates,
                  hemelb::reporting::Timers &timings, LatticeDistance boxsize = 10.0,
                  Node2NodeForce const &cell2Cell = { 0e0, 1e0, 2 },
                  Node2NodeForce const &cell2Wall = { 0e0, 1e0, 2 },
                  net::MpiCommunicator const &worldCommunicator = net::MpiCommunicator::World()) :
-            latticeData(latDat), cells(cells), cellDnC(cells, boxsize, cell2Cell.cutoff + 1e-6),
-                wallDnC(createWallNodeDnC<Lattice>(latDat, boxsize, cell2Wall.cutoff + 1e-6)),
+            fieldData(latDat), cells(cells), cellDnC(cells, boxsize, cell2Cell.cutoff + 1e-6),
+                wallDnC(createWallNodeDnC<Lattice>(latDat.GetDomain(), boxsize, cell2Wall.cutoff + 1e-6)),
                 cell2Cell(cell2Cell), cell2Wall(cell2Wall),
                 cellTemplates(cellTemplates), timings(timings),
                 neighbourDependenciesGraph(parallel::CreateGraphComm(worldCommunicator,
-                                                                     latDat,
+                                                                     latDat.GetDomain(),
                                                                      cellTemplates,
                                                                      timings)),
                 exchangeCells(neighbourDependenciesGraph),
                 velocityIntegrator(neighbourDependenciesGraph),
                 forceSpreader(neighbourDependenciesGraph),
-                globalCoordsToProcMap(parallel::ComputeGlobalCoordsToProcMap(neighbourDependenciesGraph, latticeData)),
+                globalCoordsToProcMap(parallel::ComputeGlobalCoordsToProcMap(neighbourDependenciesGraph, fieldData.GetDomain())),
                 nodeDistributions(parallel::nodeDistributions(globalCoordsToProcMap, cells))
         {
         }
@@ -166,7 +168,7 @@ namespace hemelb
 
       protected:
         //! All lattice information and then some
-        geometry::LatticeData &latticeData;
+        geometry::FieldData &fieldData;
         //! Contains all cells
         CellContainer cells;
         //! Cells lent to this process
@@ -218,9 +220,9 @@ namespace hemelb
         auto owner = nodeDistributions.at(cell->GetTag()).DominantAffectedProc();
         if (owner == -1)
         {
-          throw Exception() << "Process " << latticeData.GetCommunicator().Rank()
-              << " cannot determine the owner of cell " << cell->GetTag()
-              << " with barycenter " << cell->GetBarycenter();
+          throw Exception() << "Process " << fieldData.GetDomain().GetCommunicator().Rank()
+                            << " cannot determine the owner of cell " << cell->GetTag()
+                            << " with barycenter " << cell->GetBarycenter();
         }
         return owner;
       };
@@ -236,8 +238,8 @@ namespace hemelb
       // Actually perform velocity integration
       timings[hemelb::reporting::Timers::computeAndPostVelocities].Start();
       velocityIntegrator.PostMessageLength(std::get<2>(distCells));
-      velocityIntegrator.ComputeLocalVelocitiesAndUpdatePositions<TRAITS>(latticeData, cells);
-      velocityIntegrator.PostVelocities<TRAITS>(latticeData, std::get<2>(distCells));
+      velocityIntegrator.ComputeLocalVelocitiesAndUpdatePositions<TRAITS>(fieldData, cells);
+      velocityIntegrator.PostVelocities<TRAITS>(fieldData, std::get<2>(distCells));
       timings[hemelb::reporting::Timers::computeAndPostVelocities].Stop();
 
       timings[hemelb::reporting::Timers::receiveVelocitiesAndUpdate].Start();
@@ -280,23 +282,23 @@ namespace hemelb
     void CellArmy<TRAITS>::Cell2FluidInteractions()
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Cell -> fluid interations");
-      latticeData.ResetForces();
+      fieldData.ResetForces();
 
       timings[hemelb::reporting::Timers::computeAndPostForces].Start();
       forceSpreader.PostMessageLength(nodeDistributions, cells);
       forceSpreader.ComputeForces(cells);
       forceSpreader.PostForcesAndNodes(nodeDistributions, cells);
-      forceSpreader.SpreadLocalForces<TRAITS>(latticeData, cells);
+      forceSpreader.SpreadLocalForces<TRAITS>(fieldData, cells);
       timings[hemelb::reporting::Timers::computeAndPostForces].Stop();
 
       timings[hemelb::reporting::Timers::receiveForcesAndUpdate].Start();
-      forceSpreader.SpreadNonLocalForces<TRAITS>(latticeData);
+      forceSpreader.SpreadNonLocalForces<TRAITS>(fieldData);
       timings[hemelb::reporting::Timers::receiveForcesAndUpdate].Stop();
 
       //! @todo Any changes required for these lines when running in parallel?
       timings[hemelb::reporting::Timers::updateCellAndWallInteractions].Start();
-      addCell2CellInteractions<Stencil>(cellDnC, cell2Cell, latticeData);
-      addCell2WallInteractions<Stencil>(cellDnC, wallDnC, cell2Wall, latticeData);
+      addCell2CellInteractions<Stencil>(cellDnC, cell2Cell, fieldData);
+      addCell2WallInteractions<Stencil>(cellDnC, wallDnC, cell2Wall, fieldData);
       timings[hemelb::reporting::Timers::updateCellAndWallInteractions].Stop();
     }
 

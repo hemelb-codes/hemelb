@@ -92,7 +92,7 @@ namespace hemelb
 	REQUIRE(std::dynamic_pointer_cast<FakeCell>( (*std::next(cells.begin())))->nbcalls
 		== 1);
 
-	for (site_t i(0); i < latDat->GetLocalFluidSiteCount(); ++i) {
+	for (site_t i(0); i < latDat->GetDomain().GetLocalFluidSiteCount(); ++i) {
 	  REQUIRE(latDat->GetSite(i).GetForce() == ApproxVector<LatticeForce>(0.0));
 	}
 

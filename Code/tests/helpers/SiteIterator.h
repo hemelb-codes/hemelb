@@ -20,56 +20,57 @@ namespace hemelb
     class site_iterator
     {
       public:
-        typedef hemelb::geometry::Site<geometry::LatticeData const> value_type;
-        typedef value_type const& reference;
-        typedef std::unique_ptr<value_type> pointer;
-        typedef std::ptrdiff_t difference_type;
-        typedef std::input_iterator_tag iterator_category;
+        using value_type = hemelb::geometry::Site<geometry::FieldData const>;
+        using reference = value_type const& ;
+        using pointer = std::unique_ptr<value_type>;
+        using difference_type = std::ptrdiff_t;
+        using iterator_category = std::input_iterator_tag;
 
-        site_iterator(geometry::LatticeData const& source, site_t current)
-          : current(current), source(source)
+        site_iterator(geometry::FieldData const& source, site_t current)
+          : m_current(current), m_source(&source)
         {
         }
 
         value_type operator*() const
         {
-          return source.GetSite(current);
+          return m_source->GetSite(m_current);
         }
         site_iterator & operator++()
         {
-          ++current;
+          ++m_current;
           return *this;
         }
         site_iterator operator++(int)
         {
-          auto const result = site_iterator(source, current);
-          ++current;
+          auto const result = site_iterator(*m_source, m_current);
+          ++m_current;
           return result;
         }
-        bool operator!=(site_iterator const &other) const
+        friend bool operator!=(site_iterator const &lhs, site_iterator const &rhs)
         {
-          assert(&source == &other.source);
-          return current != other.current;
+          assert(lhs.m_source == rhs.m_source);
+          return lhs.m_current != rhs.m_current;
         }
 
       protected:
         //! Current site
-        site_t current;
+        site_t m_current;
         //! Reference to data source
-        geometry::LatticeData const & source;
+        geometry::FieldData const* m_source;
     };
   }
 }
 
+// TODO: remove UB!
 namespace std
 {
-  inline hemelb::tests::site_iterator begin(hemelb::geometry::LatticeData const& latDat)
+  inline hemelb::tests::site_iterator begin(hemelb::geometry::FieldData const& latDat)
   {
     return {latDat, hemelb::site_t(0)};
   }
-  inline hemelb::tests::site_iterator end(hemelb::geometry::LatticeData const& latDat)
+  inline hemelb::tests::site_iterator end(hemelb::geometry::FieldData const& latDat)
   {
-    return {latDat, latDat.GetTotalFluidSites()};
+    return {latDat, latDat.GetDomain().GetTotalFluidSites()};
   }
 }
 

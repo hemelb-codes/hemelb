@@ -136,9 +136,8 @@ namespace hemelb
                                          MeshData::Vertices const& incoming) const
       {
         auto incoming_node = incoming.cbegin();
-        for (auto const proc : affectedProcs)
-        {
-          for (auto const index : proc.second)
+        for (auto const& [proc, vertexIds]: affectedProcs) {
+          for (auto const index : vertexIds)
           {
             assert(incoming_node != incoming.end());
             consolidated[index] += *incoming_node;
@@ -150,16 +149,15 @@ namespace hemelb
       void NodeCharacterizer::SpreadTo(std::vector<size_t> & sizes, MeshData::Vertices & outgoing,
                                        MeshData::Vertices const &vertices) const
       {
-        for (auto const proc : affectedProcs)
-        {
-          sizes.push_back(proc.second.size());
-          for (auto const index : proc.second)
-          {
-            assert(index < vertices.size());
-            outgoing.push_back(vertices[index]);
+          for (auto const& [proc, vertexIds]: affectedProcs) {
+              sizes.push_back(vertexIds.size());
+              for (auto const index : vertexIds) {
+                  assert(index < vertices.size());
+                  outgoing.push_back(vertices[index]);
+              }
           }
-        }
       }
+
     } // parallel
   } // redblood
 } // hemelb
