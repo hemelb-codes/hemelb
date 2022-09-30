@@ -5,7 +5,6 @@
 
 #include <vector>
 #include "redblood/WallCellPairIterator.h"
-#include "log/Logger.h"
 
 namespace hemelb
 {

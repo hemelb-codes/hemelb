@@ -25,19 +25,21 @@ namespace hemelb
       LatticeDistance const halo = interactionDistance + 1e-6;
       using Lattice = lb::lattices::D3Q15;
       std::unique_ptr<tests::FourCubeLatticeData> latticeData{FourCubeLatticeData::Create(Comms(), 27 + 2)};
+      auto& dom = latticeData->GetDomain();
+
       for (auto const site : std::cref(*latticeData)) {
 	if (not site.IsWall()) {
 	  continue;
 	}
 	for (Direction d(0); d < Lattice::NUMVECTORS; ++d) {
 	  if (site.HasWall(d)) {
-	    latticeData->SetBoundaryDistance(site.GetIndex(), d, 0.5);
+	    dom.SetBoundaryDistance(site.GetIndex(), d, 0.5);
 	  }
 	}
       }
 
       SECTION("testOneCellNode") {
-	auto const wallDnC = createWallNodeDnC<Lattice>(*latticeData, cutoff, halo);
+	auto const wallDnC = createWallNodeDnC<Lattice>(dom, cutoff, halo);
 	auto const cell = std::make_shared<Cell>(tetrahedron());
 	*cell *= 3;
 	*cell += LatticePosition{100};
@@ -73,7 +75,7 @@ namespace hemelb
       }
 
       SECTION("testTwoCellNodes") {
-	auto const wallDnC = createWallNodeDnC<Lattice>(*latticeData, cutoff, halo);
+	auto const wallDnC = createWallNodeDnC<Lattice>(dom, cutoff, halo);
 	auto const cell = std::make_shared<Cell>(tetrahedron());
 	*cell *= 3;
 	*cell += LatticePosition{100};
@@ -94,7 +96,7 @@ namespace hemelb
 
       SECTION("testHaloAndNeighboringBoxes") {
 	auto testHaloAndNeighboringBoxes = [&](Dimensionless where, std::ptrdiff_t howMany) {
-	  auto const wallDnC = createWallNodeDnC<Lattice>(*latticeData, cutoff, halo);
+	  auto const wallDnC = createWallNodeDnC<Lattice>(dom, cutoff, halo);
 	  auto const cell = std::make_shared<Cell>(tetrahedron());
 	  *cell *= 3;
 	  *cell += LatticePosition{100};
@@ -120,7 +122,7 @@ namespace hemelb
       }
 
       auto testAllWallNodesFound = [&](Dimensionless where) {
-	auto const wallDnC = createWallNodeDnC<Lattice>(*latticeData, cutoff, halo);
+	auto const wallDnC = createWallNodeDnC<Lattice>(dom, cutoff, halo);
 	auto const cell = std::make_shared<Cell>(tetrahedron());
 	*cell *= 3;
 	*cell += LatticePosition{100};
@@ -184,7 +186,7 @@ namespace hemelb
 	for (size_t i(0); i <= N; ++i) {
 	  //testInteractionPassedOnToFluid<STENCIL>();
 	  Dimensionless where = Dimensionless(i) / Dimensionless(2 * N) + 3.0;
-	  auto const wallDnC = createWallNodeDnC<Lattice>(*latticeData, cutoff, halo);
+	  auto const wallDnC = createWallNodeDnC<Lattice>(dom, cutoff, halo);
 	  auto const cell = std::make_shared<Cell>(tetrahedron());
 	  LatticePosition const node(0.6, where * cutoff, where * cutoff);
 	  *cell *= 3;
@@ -193,13 +195,13 @@ namespace hemelb
 	  DivideConquerCells const cellDnC( { cell }, cutoff, interactionDistance);
 
 	  // Set forces to zero
-	  helpers::ZeroOutForces(static_cast<geometry::LatticeData*>(latticeData.get()));
+	  helpers::ZeroOutForces(latticeData.get());
 
 	  // Finds pairs, computes interaction, spread forces to lattice
 	  addCell2WallInteractions<STENCIL>(DivideConquerCells( { cell }, cutoff, halo),
 					    wallDnC,
 					    Node2NodeForce(1.0, interactionDistance),
-					    *static_cast<geometry::LatticeData*>(latticeData.get()));
+					    *latticeData);
 
 	  for (auto const site : std::cref(*latticeData)) {
 	    auto const d = LatticePosition(site.GetGlobalSiteCoords()) - node;

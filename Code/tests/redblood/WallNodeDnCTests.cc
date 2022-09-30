@@ -24,21 +24,22 @@ namespace hemelb
       using Lattice = lb::lattices::D3Q15;
 
       std::unique_ptr<tests::FourCubeLatticeData> latticeData(FourCubeLatticeData::Create(Comms(), 27 + 2));
+      auto& dom = latticeData->GetDomain();
 
-      for (site_t i(0); i < latticeData->GetLocalFluidSiteCount(); ++i) {
+      for (site_t i(0); i < dom.GetLocalFluidSiteCount(); ++i) {
 	auto const site = latticeData->GetSite(i);
 	if (not site.IsWall()) {
 	  continue;
 	}
 	for (Direction d(0); d < Lattice::NUMVECTORS; ++d) {
 	  if (site.HasWall(d)) {
-	    latticeData->SetBoundaryDistance(i, d, 0.5);
+	    dom.SetBoundaryDistance(i, d, 0.5);
 	  }
 	}
       }
 
       SECTION("testWallNodeDnC") {
-	auto const dnc = createWallNodeDnC<Lattice>(*latticeData, cutoff, halo);
+	auto const dnc = createWallNodeDnC<Lattice>(dom, cutoff, halo);
 
 	// Checking the middle of the world first: No wall nodes
 	auto const center = dnc.equal_range(LatticePosition(13, 13, 13));

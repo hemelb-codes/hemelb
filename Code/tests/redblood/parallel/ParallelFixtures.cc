@@ -14,15 +14,15 @@ namespace hemelb
     //! \brief gathers mid-domain and egde positions from all procs
     //! \details If there are insufficient number of edges, mid-domains are used instead.
     //! erase removes the components from the first process.
-    std::vector<LatticeVector> GatherSpecialPositions(geometry::LatticeData const & latDat,
+    std::vector<LatticeVector> GatherSpecialPositions(geometry::Domain const & domain,
 						      size_t mid, size_t edges,
 						      net::MpiCommunicator const &c)
     {
       std::random_device rd;
       std::mt19937 g(rd());
 
-      int const nMids = latDat.GetMidDomainCollisionCount(0);
-      int const nEdges = latDat.GetDomainEdgeCollisionCount(0);
+      int const nMids = domain.GetMidDomainCollisionCount(0);
+      int const nEdges = domain.GetDomainEdgeCollisionCount(0);
       std::vector<LatticeVector> positions(c.Size() * (mid + edges));
       std::vector<int> shuf(nMids);
       std::iota(shuf.begin(), shuf.end(), 0);
@@ -31,7 +31,7 @@ namespace hemelb
       edges = std::min(edges, static_cast<size_t>(nEdges));
       for (size_t i(0); i < mid; ++i)
         {
-          auto const site = latDat.GetSite(shuf[i]);
+          auto const site = domain.GetSite(shuf[i]);
           positions[c.Rank() * (mid + edges) + i] = site.GetGlobalSiteCoords();
         }
       shuf.resize(nEdges);
@@ -39,7 +39,7 @@ namespace hemelb
       std::shuffle(shuf.begin(), shuf.end(), g);
       for (size_t i(0); i < edges; ++i)
         {
-          auto const site = latDat.GetSite(latDat.GetMidDomainSiteCount() + shuf[i]);
+          auto const site = domain.GetSite(domain.GetMidDomainSiteCount() + shuf[i]);
           positions[c.Rank() * (mid + edges) + i + mid] = site.GetGlobalSiteCoords();
         }
 
@@ -81,11 +81,11 @@ namespace hemelb
 
     //! Creates list of cells for each set of positions from each process
     std::vector<hemelb::redblood::CellContainer::value_type> CreateCellsFromSpecialPositions(
-											     geometry::LatticeData const & latDat, size_t mid, size_t edges,
+											     geometry::Domain const & domain, size_t mid, size_t edges,
 											     net::MpiCommunicator const &c, size_t nCells)
     {
       using hemelb::redblood::CellContainer;
-      auto const positions = GatherSpecialPositions(latDat, mid * nCells, edges * nCells, c);
+      auto const positions = GatherSpecialPositions(domain, mid * nCells, edges * nCells, c);
       std::vector<CellContainer::value_type> cells;
       for (auto i_first = positions.begin(); i_first != positions.end(); i_first += mid + edges)
         {

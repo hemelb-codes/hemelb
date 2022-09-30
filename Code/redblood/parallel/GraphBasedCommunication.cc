@@ -3,6 +3,9 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 #include "redblood/parallel/GraphBasedCommunication.h"
+
+#include "net/MpiCommunicator.h"
+#include "reporting/Timers.h"
 #include "util/Iterator.h"
 
 namespace hemelb
@@ -12,17 +15,17 @@ namespace hemelb
     namespace parallel
     {
         GlobalCoordsToProcMap ComputeGlobalCoordsToProcMap(net::MpiCommunicator const &comm,
-                                                           const geometry::LatticeData &latDat)
+                                                           const geometry::Domain& domain)
         {
           GlobalCoordsToProcMap coordsToProcMap;
 
           // Populate map with coordinates of locally owned lattice sites first
           std::vector<LatticeVector> locallyOwnedSites;
-          locallyOwnedSites.reserve(latDat.GetLocalFluidSiteCount());
+          locallyOwnedSites.reserve(domain.GetLocalFluidSiteCount());
           auto myRank = comm.Rank();
-          for (site_t localSiteId = 0; localSiteId < latDat.GetLocalFluidSiteCount(); ++localSiteId)
+          for (site_t localSiteId = 0; localSiteId < domain.GetLocalFluidSiteCount(); ++localSiteId)
           {
-            auto const& globalSiteCoords = latDat.GetSite(localSiteId).GetGlobalSiteCoords();
+            auto const& globalSiteCoords = domain.GetSite(localSiteId).GetGlobalSiteCoords();
             locallyOwnedSites.push_back(globalSiteCoords);
             coordsToProcMap[globalSiteCoords] = myRank;
           }
@@ -70,17 +73,17 @@ namespace hemelb
 
         //! \brief Compute neighbourhood based on checking the minimum distance between every pair of subdomains and declaring them neighbours if this is shorter than the RBCs effective size.
         std::vector<std::vector<int>> ComputeProcessorNeighbourhood(net::MpiCommunicator const &comm,
-                                                                    geometry::LatticeData &latDat,
+                                                                    geometry::Domain &domain,
                                                                     LatticeDistance cellsEffectiveSize)
         {
           std::vector<LatticeVector> serialisedLocalCoords;
-          serialisedLocalCoords.reserve(latDat.GetDomainEdgeCollisionCount(0));
+          serialisedLocalCoords.reserve(domain.GetDomainEdgeCollisionCount(0));
 
-          for (auto siteIndex = latDat.GetMidDomainSiteCount();
-              siteIndex < latDat.GetMidDomainSiteCount() + latDat.GetDomainEdgeCollisionCount(0);
+          for (auto siteIndex = domain.GetMidDomainSiteCount();
+               siteIndex < domain.GetMidDomainSiteCount() + domain.GetDomainEdgeCollisionCount(0);
               ++siteIndex)
           {
-            serialisedLocalCoords.push_back(latDat.GetSite(siteIndex).GetGlobalSiteCoords());
+            serialisedLocalCoords.push_back(domain.GetSite(siteIndex).GetGlobalSiteCoords());
           }
 
           /// @\todo refactor into a method net::MpiCommunicator::AllGatherv
@@ -165,14 +168,14 @@ namespace hemelb
 
         //! \brief Generates a graph communicator describing the data dependencies for interpolation and spreading
         net::MpiCommunicator CreateGraphComm(net::MpiCommunicator const &comm,
-                                             geometry::LatticeData &latDat,
+                                             geometry::Domain &domain,
                                              std::shared_ptr<TemplateCellContainer> cellTemplates,
                                              hemelb::reporting::Timers &timings)
         {
           timings[hemelb::reporting::Timers::graphComm].Start();
           auto graphComm =
               comm.Graph(ComputeProcessorNeighbourhood(comm,
-                                                       latDat,
+                                                       domain,
                                                        ComputeCellsEffectiveSize(cellTemplates)));
           timings[hemelb::reporting::Timers::graphComm].Stop();
 

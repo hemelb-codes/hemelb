@@ -277,8 +277,8 @@ namespace hemelb
       //     {
       //       FourCubeBasedTestFixture::setUp();
 
-      LatticeVector const min(latDat->GetGlobalSiteMins());
-      LatticeVector const max(latDat->GetGlobalSiteMaxes());
+      LatticeVector const min(dom->GetGlobalSiteMins());
+      LatticeVector const max(dom->GetGlobalSiteMaxes());
 
       for (int dists = 0; dists < 2; ++dists) {
 	for (site_t i = min[0]; i <= max[0]; ++i)
@@ -290,7 +290,7 @@ namespace hemelb
 	      fold[2] = i;
 	      fold[4] = j;
 	      fold[6] = k;
-	      site_t const local = latDat->GetContiguousSiteId(LatticeVector(i, j, k));
+	      site_t const local = dom->GetContiguousSiteId(LatticeVector(i, j, k));
 	      latDat->SetFOld<D3Q15>(local, fold);
 	    }
 	latDat->SwapOldAndNew();
@@ -308,12 +308,12 @@ namespace hemelb
 
 	//KERNEL kernel(initParams);
 	VelocityFromLatticeData<KERNEL> velocityFunctor(*latDat);
-	size_t const N(latDat->GetMidDomainCollisionCount(0));
+	size_t const N(dom->GetMidDomainCollisionCount(0));
 
 	REQUIRE(N > 0);
 
 	for (size_t index(0); index < N; ++index) {
-	  geometry::Site<geometry::LatticeData const> const site(index, *latDat);
+	  geometry::Site<geometry::FieldData const> const site(index, *latDat);
 
 	  // Value to test
 	  LatticeVelocity const actual = velocityFunctor(index);
@@ -349,7 +349,7 @@ namespace hemelb
 	velocityFromLatticeDataTester(kernel, false);
       }
       SECTION("VelocityDataFromLatticeWithForces") {
-	size_t const N = latDat->GetMidDomainCollisionCount(0);
+	size_t const N = dom->GetMidDomainCollisionCount(0);
 
 	for (size_t i = 0; i < N; ++i)
 	  latDat->GetSite(i).SetForce(LatticeForceVector(i, 2 * i, double(i * i) * 0.0001));

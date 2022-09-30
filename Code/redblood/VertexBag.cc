@@ -13,13 +13,13 @@ namespace hemelb
     namespace detail
     {
 
-      proc_t get_proc(geometry::LatticeData const &latDat, LatticeVector const &pos)
+      proc_t get_proc(geometry::Domain const &domain, LatticeVector const &pos)
       {
         proc_t procid;
         site_t siteid;
-        return latDat.GetContiguousSiteId(pos, procid, siteid) ?
-          procid :
-          std::numeric_limits<proc_t>::max();
+        return domain.GetContiguousSiteId(pos, procid, siteid) ?
+               procid :
+               std::numeric_limits<proc_t>::max();
       }
 
     }
@@ -47,12 +47,12 @@ namespace hemelb
 
     template<class STENCIL>
     std::map<size_t, std::shared_ptr<VertexBag>> splitVertices(
-        std::shared_ptr<CellBase const> cell, geometry::LatticeData const &latticeData,
+        std::shared_ptr<CellBase const> cell, geometry::Domain const &domain,
         proc_t selfRegion)
     {
-      auto proc_getter = [&latticeData](LatticeVector const &position)
+      auto proc_getter = [&domain](LatticeVector const &position)
       {
-        return detail::get_proc(latticeData, position);
+        return detail::get_proc(domain, position);
       };
       return splitVertices<STENCIL>(proc_getter, cell, selfRegion);
     }

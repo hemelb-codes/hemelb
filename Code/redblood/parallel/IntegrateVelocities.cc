@@ -19,11 +19,11 @@ namespace hemelb
         std::fill(sendNodeCount.GetSendBuffer().begin(), sendNodeCount.GetSendBuffer().end(), 0);
 
         auto const neighbors = sendNodeCount.GetCommunicator().GetNeighbors();
-        for (auto const lentCells : lent)
+        for (auto& [neighRank, lentCells]: lent)
         {
-          for (auto const &cell : lentCells.second)
+          for (auto const &cell : lentCells)
           {
-            auto const i_index = std::find(neighbors.begin(), neighbors.end(), lentCells.first);
+            auto const i_index = std::find(neighbors.begin(), neighbors.end(), neighRank);
             assert(i_index != neighbors.end());
             sendNodeCount.GetSendBuffer()[i_index - neighbors.begin()] += cell->GetNumberOfNodes();
           }

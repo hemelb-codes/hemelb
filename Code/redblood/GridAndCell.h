@@ -24,7 +24,7 @@ namespace hemelb
 
     //! Displacement of the cell nodes interpolated from lattice velocities
     template<class KERNEL, class STENCIL>
-    void velocitiesOnMesh(std::shared_ptr<CellBase const> cell, geometry::LatticeData const &latDat,
+    void velocitiesOnMesh(std::shared_ptr<CellBase const> cell, geometry::FieldData const &latDat,
                           std::vector<LatticePosition> &displacements)
     {
       displacements.resize(cell->GetNumberOfNodes());
@@ -49,7 +49,7 @@ namespace hemelb
     template<class LATTICE, class STENCIL>
     Dimensionless forcesOnGrid(std::shared_ptr<CellBase const> cell,
                                std::vector<LatticeForceVector> &forces,
-                               geometry::LatticeData &latticeData)
+                               geometry::FieldData &latticeData)
     {
       forces.resize(cell->GetNumberOfNodes());
       std::fill(forces.begin(), forces.end(), LatticeForceVector(0, 0, 0));
@@ -67,7 +67,7 @@ namespace hemelb
     //! Returns the energy (excluding node-wall interaction)
     template<class LATTICE, class STENCIL>
     Dimensionless forcesOnGrid(std::shared_ptr<CellBase const> cell,
-                               geometry::LatticeData &latticeData)
+                               geometry::FieldData &latticeData)
     {
       std::vector<LatticeForceVector> forces(cell->GetNumberOfNodes(), {0.0, 0.0, 0.0});
       return forcesOnGrid<LATTICE, STENCIL>(cell, forces, latticeData);

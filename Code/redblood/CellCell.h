@@ -415,7 +415,7 @@ namespace hemelb
     {
       //! Spread force from given vertices to lattice-sites
       template<class STENCIL>
-      void spreadForce(LatticePosition const &vertex, geometry::LatticeData &latticeData,
+      void spreadForce(LatticePosition const &vertex, geometry::FieldData &latticeData,
                        LatticeForceVector const &force)
       {
         proc_t procid;
@@ -424,7 +424,7 @@ namespace hemelb
 
         for (; spreader; ++spreader)
         {
-          if (latticeData.GetContiguousSiteId(*spreader, procid, siteid))
+          if (latticeData.GetDomain().GetContiguousSiteId(*spreader, procid, siteid))
           {
             latticeData.GetSite(siteid).AddToForce(force * spreader.weight());
           }
@@ -438,7 +438,7 @@ namespace hemelb
     //! the lattice.
     template<class STENCIL>
     void addCell2CellInteractions(DivideConquerCells const &dnc, Node2NodeForce const &functional,
-                                  geometry::LatticeData &latticeData)
+                                  geometry::FieldData &latticeData)
     {
       auto range = dnc.pair_begin(functional.cutoff);
 

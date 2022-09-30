@@ -100,8 +100,9 @@ namespace hemelb
       auto const color = world.Rank() == 0;
       auto const split = world.Split(color);
       auto master = CreateMasterSim<STENCIL>(split);
-      auto &latDat = master->GetLatticeData();
-      helpers::ZeroOutForces(latDat);
+      auto& fieldData = master->GetFieldData();
+      auto& dom = fieldData.GetDomain();
+      helpers::ZeroOutForces(fieldData);
 
       // Setup same distribution for all instances
       for (Direction i = 0; i < Traits::Lattice::NUMVECTORS; ++i) {
@@ -109,11 +110,11 @@ namespace hemelb
 	  double const fac = (1e0 + static_cast<double>(i) * 0.1);
 	  return x.Dot(x) * fac - x.Dot(LatticePosition(1, 1, 1));
 	};
-	helpers::setUpDistribution<typename Traits::Lattice>(&latDat, i, func);
+	helpers::setUpDistribution<typename Traits::Lattice>(&fieldData, i, func);
       }
 
       // Figure out positions to use for cell nodes
-      auto const cells = CreateCellsFromSpecialPositions(latDat, mid, edges, world, nCells);
+      auto const cells = CreateCellsFromSpecialPositions(dom, mid, edges, world, nCells);
       auto const checkMoves = cells[0]->GetVertices()[0];
       auto owned =
 	split.Size() != 1 ?
@@ -121,7 +122,7 @@ namespace hemelb
 			+ (1 + split.Rank()) * nCells } :
       CellContainer { cells.begin(), cells.end() };
       auto const& graphComm = CreateDumbGraphComm(split);
-      auto const distributions = hemelb::redblood::parallel::nodeDistributions(hemelb::redblood::parallel::ComputeGlobalCoordsToProcMap(graphComm, latDat), owned);
+      auto const distributions = hemelb::redblood::parallel::nodeDistributions(hemelb::redblood::parallel::ComputeGlobalCoordsToProcMap(graphComm, dom), owned);
 
       // Goes through "ExchangeCells" to figure out who owns/lends what.
       // Ownership is pre-determined here: first nCells got to 0, second nCells to 2, etc...
@@ -147,8 +148,8 @@ namespace hemelb
       // Actually perform velocity integration
       hemelb::redblood::parallel::IntegrateVelocities integrator(graphComm);
       integrator.PostMessageLength(lentCells);
-      integrator.ComputeLocalVelocitiesAndUpdatePositions<Traits>(latDat, owned);
-      integrator.PostVelocities<Traits>(latDat, lentCells);
+      integrator.ComputeLocalVelocitiesAndUpdatePositions<Traits>(fieldData, owned);
+      integrator.PostVelocities<Traits>(fieldData, lentCells);
       integrator.UpdatePositionsNonLocal(distributions, owned);
 
       if (world.Rank() == 0) {

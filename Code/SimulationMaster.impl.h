@@ -190,7 +190,7 @@ namespace hemelb
       auto rbcConfig = simConfig->GetRBCConfig();
       hemelb::redblood::CellContainer cells;
       typedef hemelb::redblood::CellController<Traits> Controller;
-      auto const controller = std::make_shared<Controller>(*m_fieldData,
+      auto const controller = std::make_shared<Controller>(*fieldData,
                                                            cells,
                                                            rbcConfig->GetRBCMeshes(),
                                                            timings,

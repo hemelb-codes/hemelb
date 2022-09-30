@@ -58,10 +58,10 @@ namespace hemelb
         stepManager->RegisterIteratedActorSteps(concern, phase);
       }
       //! Access to lattice data for debugging
-      hemelb::geometry::Domain & GetLatticeData()
+      hemelb::geometry::FieldData& GetFieldData()
       {
-        assert(domainData);
-        return *domainData;
+        assert(fieldData);
+        return *fieldData;
       }
       std::shared_ptr<hemelb::net::IteratedAction> GetCellController() {
         return cellController;

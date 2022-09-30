@@ -88,18 +88,19 @@ namespace hemelb
       auto master = CreateMasterSim<Stencil>(world);
       REQUIRE(master);
 
-      auto &latDat = master->GetLatticeData();
-      helpers::ZeroOutForces(latDat);
+      auto& fd = master->GetFieldData();
+      auto& dom = fd.GetDomain();
+      helpers::ZeroOutForces(fd);
       auto const nmid = 20;
       auto const nedges = 20;
-      auto const positions = GatherSpecialPositions(latDat, nmid, nedges, world);
+      auto const positions = GatherSpecialPositions(dom, nmid, nedges, world);
 
       auto graphComm =
 	world.Graph(hemelb::redblood::parallel::ComputeProcessorNeighbourhood(world,
-									      latDat,
+                                                                          dom,
 									      2e-6 / master->GetSimConfig()->GetVoxelSize()));
 
-      auto const& globalCoordsToProcMap = hemelb::redblood::parallel::ComputeGlobalCoordsToProcMap(graphComm, latDat);
+      auto const& globalCoordsToProcMap = hemelb::redblood::parallel::ComputeGlobalCoordsToProcMap(graphComm, dom);
 
       for(std::size_t i(0); i < positions.size(); ++i)
         {

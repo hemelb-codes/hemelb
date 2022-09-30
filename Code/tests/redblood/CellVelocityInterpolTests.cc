@@ -61,7 +61,7 @@ namespace hemelb
 				   LatticeVector(22, 8, 15) };
 
       for (size_t i = 0; i < N; ++i) {
-	size_t const index = latDat->GetContiguousSiteId(a[i]);
+	size_t const index = dom->GetContiguousSiteId(a[i]);
 	LatticePosition const pos(a[i][0], a[i][1], a[i][2]);
 	REQUIRE(linear(pos) == approx(latDat->GetSite(index).GetFOld<D3Q15>()[0]));
 	REQUIRE(linear_inv(pos) == approx(latDat->GetSite(index).GetFOld<D3Q15>()[1]));
