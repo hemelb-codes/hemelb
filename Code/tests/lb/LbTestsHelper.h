@@ -15,6 +15,7 @@
 #include "lb/HFunction.h"
 #include "lb/kernels/BaseKernel.h"
 #include "lb/MacroscopicPropertyCache.h"
+#include "lb/lattices/D3Q15.h"
 
 #include "tests/helpers/ApproxVector.h"
 #include "tests/helpers/FourCubeLatticeData.h"

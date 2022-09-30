@@ -6,6 +6,7 @@
 #include "colloids/Particle.h"
 #include "colloids/BodyForces.h"
 #include "geometry/Domain.h"
+#include "lb/LbmParameters.h"
 #include "log/Logger.h"
 #include "units.h"
 

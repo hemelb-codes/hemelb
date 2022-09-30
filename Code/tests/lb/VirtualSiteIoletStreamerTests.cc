@@ -11,6 +11,7 @@
 
 #include "lb/kernels/Kernels.h"
 #include "lb/streamers/Streamers.h"
+#include "lb/lattices/D3Q15.h"
 #include "lb/iolets/InOutLets.h"
 #include "geometry/SiteData.h"
 #include "util/utilityFunctions.h"

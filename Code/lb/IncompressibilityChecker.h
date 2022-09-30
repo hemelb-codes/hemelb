@@ -10,7 +10,9 @@
 #include "lb/MacroscopicPropertyCache.h"
 #include "net/PhasedBroadcastRegular.h"
 #include "reporting/Reportable.h"
+#include "reporting/timers_fwd.h"
 #include <cfloat>
+
 
 namespace hemelb
 {

@@ -4,6 +4,7 @@
 // license in the file LICENSE.
 
 #include "extraction/PropertyActor.h"
+#include "reporting/Timers.h"
 
 namespace hemelb
 {

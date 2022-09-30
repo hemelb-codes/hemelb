@@ -5,6 +5,7 @@
 
 #include "geometry/neighbouring/NeighbouringDomain.h"
 #include "geometry/neighbouring/NeighbouringSite.h"
+#include "lb/lattices/D3Q15.h"
 #include "tests/helpers/FourCubeBasedTestFixture.h"
 #include "tests/helpers/EqualitySiteData.h"
 

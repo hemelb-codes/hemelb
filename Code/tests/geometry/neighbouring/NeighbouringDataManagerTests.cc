@@ -9,6 +9,7 @@
 #include "net/phased/StepManager.h"
 #include "net/phased/NetConcern.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
+#include "lb/lattices/D3Q15.h"
 
 #include "tests/helpers/FourCubeBasedTestFixture.h"
 #include "tests/helpers/MockNetHelper.h"

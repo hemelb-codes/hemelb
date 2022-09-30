@@ -10,6 +10,7 @@
 #include "geometry/Domain.h"
 #include "geometry/FieldData.h"
 #include "configuration/MonitoringConfig.h"
+#include "reporting/Timers.h"
 
 namespace hemelb
 {

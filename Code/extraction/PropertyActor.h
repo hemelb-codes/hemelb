@@ -11,6 +11,7 @@
 #include "lb/MacroscopicPropertyCache.h"
 #include "lb/SimulationState.h"
 #include "net/IteratedAction.h"
+#include "reporting/timers_fwd.h"
 
 namespace hemelb
 {

@@ -7,6 +7,7 @@
 #define HEMELB_LB_STREAMERS_VIRTUALSITEIOLET_H
 
 #include <map>
+#include <fstream>
 
 #include <boost/container/flat_map.hpp>
 
