@@ -4,7 +4,6 @@
 // license in the file LICENSE.
 
 #include "net/MpiGroup.h"
-#include "net/MpiConstness.h"
 
 namespace hemelb
 {
@@ -45,7 +44,7 @@ namespace hemelb
     {
       MPI_Group ans;
       HEMELB_MPI_CALL(MPI_Group_excl,
-                      (*groupPtr, ranksToExclude.size(), MpiConstCast(&ranksToExclude.front()), &ans))
+                      (*groupPtr, ranksToExclude.size(), ranksToExclude.data(), &ans))
       return MpiGroup(ans, true);
     }
 
@@ -53,7 +52,7 @@ namespace hemelb
     {
       MPI_Group ans;
       HEMELB_MPI_CALL(MPI_Group_incl,
-                      (*groupPtr, ranksToInclude.size(), MpiConstCast(&ranksToInclude.front()), &ans))
+                      (*groupPtr, ranksToInclude.size(), ranksToInclude.data(), &ans))
       return MpiGroup(ans, true);
     }
 

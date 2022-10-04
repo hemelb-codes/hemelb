@@ -104,7 +104,7 @@ namespace hemelb
 
           std::vector<LatticeVector> allSerialisedCoords(totalSize);
           HEMELB_MPI_CALL(MPI_Allgatherv,
-                          ( net::MpiConstCast(&serialisedLocalCoords[0]), serialisedLocalCoords.size(), net::MpiDataType<LatticeVector>(), &allSerialisedCoords[0], net::MpiConstCast(&allSerialisedCoordSizes[0]), net::MpiConstCast(&allSerialisedCoordDisplacements[0]), net::MpiDataType<LatticeVector>(), comm ));
+                          ( serialisedLocalCoords.data(), serialisedLocalCoords.size(), net::MpiDataType<LatticeVector>(), allSerialisedCoords.data(), allSerialisedCoordSizes.data(), allSerialisedCoordDisplacements.data(), net::MpiDataType<LatticeVector>(), comm ));
 
           std::vector<std::vector<LatticeVector>> coordsPerProc(numProcs);
           for (decltype(numProcs) procIndex = 0; procIndex < numProcs; ++procIndex)

@@ -151,7 +151,7 @@ namespace hemelb
       }
       hemelb::redblood::MeshData::Vertices parallel_vertices(num_vertices);
       HEMELB_MPI_CALL(MPI_Allreduce,
-		      (net::MpiConstCast(&vertices_location_reduction[0]), &parallel_vertices[0], 3*vertices_location_reduction.size(), net::MpiDataType<LatticeDistance>(), MPI_SUM, net::MpiCommunicator::World()));
+		      (vertices_location_reduction.data(), parallel_vertices.data(), 3*vertices_location_reduction.size(), net::MpiDataType<LatticeDistance>(), MPI_SUM, net::MpiCommunicator::World()));
 
       // Compare locations in sequential and parallel runs
       auto approx = ApproxVector<LatticePosition>(0.0).Margin(1e-12);
