@@ -34,18 +34,16 @@ namespace hemelb
           auto const& neighbouringProcs = comm.GetNeighbors();
           if (neighbouringProcs.size() > 0)
           {
-            std::vector<std::vector<LatticeVector>> neighSites = comm.AllNeighGatherV(locallyOwnedSites);
+            auto neighSites = comm.AllNeighGatherV(locallyOwnedSites);
             assert(neighSites.size() == comm.GetNeighborsCount());
 
             // Finish populating map with knowledge comming from neighbours
-            for (auto const& neighbour : hemelb::util::enumerate(neighbouringProcs))
-            {
-              for (auto const& globalCoord : neighSites[neighbour.index])
-              {
-                // lattice sites are uniquely owned, so no chance of coordinates being repeated across processes
-                assert(coordsToProcMap.count(globalCoord) == 0);
-                coordsToProcMap[globalCoord] = neighbour.value;
-              }
+            for (auto&& [i, p]: util::enumerate(neighbouringProcs)) {
+                for (auto const& globalCoord: neighSites[i]) {
+                    // lattice sites are uniquely owned, so no chance of coordinates being repeated across processes
+                    assert(coordsToProcMap.count(globalCoord) == 0);
+                    coordsToProcMap[globalCoord] = p;
+                }
             }
           }
 
@@ -86,36 +84,7 @@ namespace hemelb
             serialisedLocalCoords.push_back(domain.GetSite(siteIndex).GetGlobalSiteCoords());
           }
 
-          /// @\todo refactor into a method net::MpiCommunicator::AllGatherv
-          int numProcs = comm.Size();
-          std::vector<int> allSerialisedCoordSizes = comm.AllGather((int) serialisedLocalCoords.size());
-          std::vector<int> allSerialisedCoordDisplacements(numProcs + 1);
-
-          site_t totalSize = std::accumulate(allSerialisedCoordSizes.begin(),
-                                             allSerialisedCoordSizes.end(),
-                                             0);
-
-          allSerialisedCoordDisplacements[0] = 0;
-          for (int j = 0; j < numProcs; ++j)
-          {
-            allSerialisedCoordDisplacements[j + 1] = allSerialisedCoordDisplacements[j]
-                + allSerialisedCoordSizes[j];
-          }
-
-          std::vector<LatticeVector> allSerialisedCoords(totalSize);
-          HEMELB_MPI_CALL(MPI_Allgatherv,
-                          ( serialisedLocalCoords.data(), serialisedLocalCoords.size(), net::MpiDataType<LatticeVector>(), allSerialisedCoords.data(), allSerialisedCoordSizes.data(), allSerialisedCoordDisplacements.data(), net::MpiDataType<LatticeVector>(), comm ));
-
-          std::vector<std::vector<LatticeVector>> coordsPerProc(numProcs);
-          for (decltype(numProcs) procIndex = 0; procIndex < numProcs; ++procIndex)
-          {
-            for (auto indexAllCoords = allSerialisedCoordDisplacements[procIndex];
-                 indexAllCoords < allSerialisedCoordDisplacements[procIndex + 1]; ++indexAllCoords)
-            {
-              coordsPerProc[procIndex].push_back(allSerialisedCoords[indexAllCoords]);
-            }
-          }
-          /// end of refactoring
+          auto coordsPerProc = comm.AllGatherV(serialisedLocalCoords);
 
           auto cellsEffectiveSizeSq = cellsEffectiveSize * cellsEffectiveSize;
           auto areProcsNeighbours =
@@ -138,10 +107,11 @@ namespace hemelb
                 return distanceSqBetweenSubdomainEdges < cellsEffectiveSizeSq;
               };
 
+          auto const numProcs = comm.Size();
           std::vector<std::vector<int>> vertices(numProcs);
-          for (int procA(0); procA < numProcs; ++procA)
+          for (int procA = 0; procA < numProcs; ++procA)
           {
-            for (int procB(procA+1); procB < numProcs; ++procB)
+            for (int procB = procA + 1; procB < numProcs; ++procB)
             {
               if (areProcsNeighbours(procA, procB))
               {
