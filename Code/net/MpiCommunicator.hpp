@@ -167,6 +167,17 @@ namespace hemelb
       return ans;
     }
 
+    template <typename T>
+    displaced_data<T> MpiCommunicator::AllGatherV(const std::vector<T>& local_data) const {
+        std::vector<int> per_rank_sizes = AllGather((int) local_data.size());
+        auto ans = displaced_data<T>{per_rank_sizes};
+        HEMELB_MPI_CALL(MPI_Allgatherv,
+                        (local_data.data(), local_data.size(), MpiDataType<T>(),
+                         ans.data.data(), per_rank_sizes.data(), ans.displacements.data(), MpiDataType<T>(),
+                         *this)
+        );
+        return ans;
+      }
     template<typename T>
     std::vector<T> MpiCommunicator::AllNeighGather(const T& val) const
     {
@@ -179,40 +190,16 @@ namespace hemelb
     }
 
     template<typename T>
-    std::vector<std::vector<T>> MpiCommunicator::AllNeighGatherV(const std::vector<T>& val) const
+    displaced_data<T> MpiCommunicator::AllNeighGatherV(const std::vector<T>& val) const
     {
-      int numProcs = GetNeighborsCount();
       std::vector<int> valSizes = AllNeighGather((int) val.size());
-      std::vector<int> valDisplacements(numProcs + 1);
-
-      // TODO: that's a scan
-      int totalSize = std::accumulate(valSizes.begin(),
-                                      valSizes.end(),
-                                      0);
-
-      valDisplacements[0] = 0;
-      for (int j = 0; j < numProcs; ++j)
-      {
-        valDisplacements[j + 1] = valDisplacements[j] + valSizes[j];
-      }
-
-      std::vector<T> allVal(totalSize);
-      HEMELB_MPI_CALL(MPI_Neighbor_allgatherv,
-                      ( val.data(), val.size(), MpiDataType<T>(),
-                              allVal.data(), valSizes.data(), valDisplacements.data(), MpiDataType<T>(),
-                                      *this ));
-
-      std::vector<std::vector<T>> ans(numProcs);
-      for (int procIndex = 0; procIndex < numProcs; ++procIndex)
-      {
-        ans[procIndex].reserve(valDisplacements[procIndex + 1] - valDisplacements[procIndex]);
-        for (auto indexAllCoords = valDisplacements[procIndex];
-             indexAllCoords < valDisplacements[procIndex + 1]; ++indexAllCoords)
-        {
-          ans[procIndex].push_back(allVal[indexAllCoords]);
-        }
-      }
-
+      auto ans = displaced_data<T>{valSizes};
+      HEMELB_MPI_CALL(
+              MPI_Neighbor_allgatherv,
+              (val.data(), val.size(), MpiDataType<T>(),
+               ans.data.data(), valSizes.data(), ans.displacements.data(), MpiDataType<T>(),
+               *this)
+      );
       return ans;
     }
 
