@@ -56,9 +56,7 @@ namespace hemelb
 	// This file has 684 out of 720 faces oriented inwards
 	std::string filename = resources::Resource("rbc_ico_720.vtp").Path();
 
-	std::shared_ptr<MeshData> meshData;
-	vtkSmartPointer<vtkPolyData> polyData;
-	std::tie(meshData, polyData) = io.readUnoriented(redblood::VTKMeshIO::Mode::file, filename);
+	auto [meshData, polyData] = io.readUnoriented(redblood::VTKMeshIO::Storage::file, filename);
 
 	auto numSwaps = orientFacets(*meshData, *polyData);
 
@@ -70,9 +68,7 @@ namespace hemelb
 	// This file has all 720 faces oriented inwards
 	std::string filename = resources::Resource("992Particles_rank3_26_t992.vtp").Path();
 
-	std::shared_ptr<MeshData> meshData;
-	vtkSmartPointer<vtkPolyData> polyData;
-	std::tie(meshData, polyData) = io.readUnoriented(redblood::VTKMeshIO::Mode::file, filename);
+	auto [meshData, polyData] = io.readUnoriented(redblood::VTKMeshIO::Storage::file, filename);
 
 	auto numSwaps = orientFacets(*meshData, *polyData);
 
