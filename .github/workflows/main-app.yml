@@ -29,7 +29,7 @@ jobs:
   basic-checks:
     name: Basic code quality checks
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
 
@@ -41,7 +41,7 @@ jobs:
 
   fluid_only_build:
     name: Build in fluid-only mode
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v2
@@ -123,7 +123,7 @@ jobs:
 
   rbc_build:
     name: Build in RBC mode
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v2
