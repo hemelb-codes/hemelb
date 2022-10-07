@@ -30,7 +30,6 @@ runs:
         libopenmpi-dev
         libtinyxml-dev
         libparmetis-dev
-        libboost-dev
         libctemplate-dev
         ${{ inputs.extra_apt }}
 
