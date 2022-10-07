@@ -18,10 +18,16 @@
 #include "log/Logger.h"
 #include "util/fileutils.h"
 
-namespace hemelb
+namespace hemelb::util
 {
-  namespace util
-  {
+    // Define a suitable type for the system we're on
+    // (scandir has slightly different definitions on different
+    // architectures)
+#ifdef LINUX_SCANDIR
+    using direct_t = const struct direct;
+#else
+    using direct_t = struct direct;
+#endif
 
     // Returns true if the file with the given name exists for reading,
     // false otherwise.
@@ -262,5 +268,4 @@ namespace hemelb
       return baseDir + inPath;
     }
 
-  }
 }

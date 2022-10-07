@@ -76,10 +76,6 @@ endif()
 include(build_environment)
 include(platform_checks)
 
-if(LINUX_SCANDIR)
-  add_definitions(-DLINUX_SCANDIR)
-endif()
-
 include(mpi)
 include(HemeLbDependency)
 

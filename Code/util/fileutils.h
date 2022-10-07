@@ -9,18 +9,9 @@
 #include <dirent.h>
 #include <string>
 
-// Define a suitable type for the system we're on
-// (scandir has slightly different definitions on different
-// architectures)
-namespace hemelb
+
+namespace hemelb::util
 {
-  namespace util
-  {
-#ifdef LINUX_SCANDIR
-    typedef const struct direct direct_t;
-#else // LINUX_SCANDIR
-    typedef struct direct direct_t;
-#endif // LINUX_SCANDIR
     // Copy a file from the source path destination path to the destination
     // path.
     bool FileCopy(const char* iOriginalPath, const char* iNewPath);
@@ -56,6 +47,6 @@ namespace hemelb
     void ChangeDirectory(const std::string &target);
     void GetCurrentDir(char * result, int bufflength);
     std::string GetCurrentDir();
-  }
+
 }
 #endif // HEMELB_UTIL_FILEUTILS_H
