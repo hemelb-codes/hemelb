@@ -25,7 +25,6 @@ pass_option(HEMELB HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on de
 pass_option(HEMELB HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
 pass_option(HEMELB HEMELB_USE_SSE3 "Use SSE3 intrinsics" ON)
 pass_option(HEMELB HEMELB_USE_VELOCITY_WEIGHTS_FILE "Use Velocity weights file" OFF)
-pass_option(HEMELB UBUNTU_BUG_WORKAROUND "Work around the faulty HAVE_ISNAN value in Ubuntu 16.04." OFF)
 pass_option(HEMELB HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
 
 if (HEMELB_BUILD_RBC)
