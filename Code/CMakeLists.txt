@@ -76,10 +76,6 @@ endif()
 include(build_environment)
 include(platform_checks)
 
-if(HAVE_RUSAGE)
-  add_definitions(-DHAVE_RUSAGE)
-endif()
-
 if(LINUX_SCANDIR)
   add_definitions(-DLINUX_SCANDIR)
 endif()
