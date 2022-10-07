@@ -7,10 +7,8 @@
 #define HEMELB_REPORTING_BUILDINFO_H_IN
 #include "reporting/Reportable.h"
 
-namespace hemelb
+namespace hemelb::reporting
 {
-  namespace reporting
-  {
     static const std::string mercurial_revision_number="@HEMELB_REVISION_NUMBER@";
     static const std::string build_type="@CMAKE_BUILD_TYPE@";
     static const std::string optimisation="@HEMELB_OPTIMISATION@";
@@ -29,31 +27,9 @@ namespace hemelb
     static const std::string alltoall_impl="@HEMELB_ALLTOALL_IMPLEMENTATION@";
     static const std::string separate_concerns="@HEMELB_SEPARATE_CONCERNS@";
     static const std::string stencil="@HEMELB_STENCIL@";
-  
-    
     class BuildInfo : public Reportable {
-      void Report(Dict& dictionary){
-        Dict build = dictionary.AddSectionDictionary("BUILD");
-        build.SetValue("REVISION", mercurial_revision_number);
-        build.SetValue("TYPE", build_type);
-        build.SetValue("OPTIMISATION", optimisation);
-        build.SetValue("USE_SSE3", use_sse3);
-        build.SetValue("TIME", build_time);
-        build.SetValue("READING_GROUP_SIZE", reading_group_size);
-        build.SetValue("LATTICE_TYPE", lattice_type);
-        build.SetValue("KERNEL_TYPE", kernel_type);
-        build.SetValue("WALL_BOUNDARY_CONDITION", wall_boundary_condition);
-        build.SetValue("INLET_BOUNDARY_CONDITION", inlet_boundary_condition);
-        build.SetValue("OUTLET_BOUNDARY_CONDITION", outlet_boundary_condition);
-        build.SetValue("WALL_INLET_BOUNDARY_CONDITION", wall_inlet_boundary_condition);
-        build.SetValue("WALL_OUTLET_BOUNDARY_CONDITION", wall_outlet_boundary_condition);
-        build.SetValue("SEPARATE_CONCERNS",separate_concerns);
-        build.SetValue("ALLTOALL_IMPLEMENTATION",alltoall_impl);
-        build.SetValue("GATHERS_IMPLEMENTATION",gathers_impl);
-        build.SetValue("POINTPOINT_IMPLEMENTATION",point_point_impl);
-        build.SetValue("STENCIL", stencil);
-      }
+    public:
+        void Report(Dict& dictionary) override;
     };
-  }
 }
 #endif // HEMELB_REPORTING_BUILDINFO_H_IN
