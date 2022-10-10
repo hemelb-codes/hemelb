@@ -10,7 +10,7 @@
 #include "net/MpiEnvironment.h"
 #include "net/IOCommunicator.h"
 #include "log/Logger.h"
-#include "debug/Debugger.h"
+#include "debug.h"
 
 #include "tests/helpers/HasCommsTestFixture.h"
 
@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
   hemelb::net::MpiCommunicator commWorld = hemelb::net::MpiCommunicator::World();
 
   // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
-  hemelb::debug::Debugger::Init(debug, argv[0], commWorld);
+  hemelb::debug::Init(debug, argv[0], commWorld);
 
   // Initialise the global IOCommunicator.
   hemelb::net::IOCommunicator testCommunicator(commWorld);

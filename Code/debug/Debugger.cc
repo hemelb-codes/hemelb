@@ -7,10 +7,17 @@
 #include "debug/PlatformDebugger.h"
 #include "debug/none/NullDebugger.h"
 
-namespace hemelb
+namespace hemelb::debug
 {
-  namespace debug
-  {
+    void Break() {
+        Debugger::Get()->BreakHere();
+    }
+
+    void Init(bool active, const char * const executable,
+              const net::MpiCommunicator& comm)
+    {
+        Debugger::Init(active, executable, comm);
+    }
 
     Debugger* Debugger::Init(bool active, const char * const executable,
                              const net::MpiCommunicator& comm)
@@ -31,7 +38,7 @@ namespace hemelb
       return Debugger::singleton;
     }
 
-    Debugger* Debugger::Get(void)
+    Debugger* Debugger::Get()
     {
       // Get the single instance.
       return Debugger::singleton;
@@ -40,15 +47,9 @@ namespace hemelb
     // Init static members
     Debugger* Debugger::singleton = nullptr;
 
-    Debugger::Debugger(const char* const executable, const net::MpiCommunicator& comm) :
-        mExecutable(executable), mCommunicator(comm)
+    Debugger::Debugger(const char* const executable, net::MpiCommunicator comm) :
+        mExecutable(executable), mCommunicator(std::move(comm))
     {
     }
 
-    // Dtor
-    Debugger::~Debugger()
-    {
-    }
-
-  } // namespace debug
-} // namespace hemelb
+} // namespace
