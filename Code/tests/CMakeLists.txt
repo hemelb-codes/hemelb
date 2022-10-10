@@ -25,6 +25,7 @@ function(add_test_executable target)
     target_link_libraries(${target} PRIVATE VTK::CommonCore)
   endif()
 
+  codesign(${target})
   install(TARGETS ${target} RUNTIME DESTINATION bin)
 endfunction()
 
