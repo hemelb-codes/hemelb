@@ -75,7 +75,7 @@ endif()
 
 include(build_environment)
 include(platform_checks)
-
+include(codesign)
 include(mpi)
 include(HemeLbDependency)
 
@@ -137,6 +137,7 @@ if (HEMELB_USE_DEBUGGER)
 endif()
 
 add_executable(${HEMELB_EXECUTABLE} main.cc)
+codesign(${HEMELB_EXECUTABLE})
 
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
@@ -190,7 +191,8 @@ if (HEMELB_BUILD_MULTISCALE)
   endif()
   
   add_executable(multiscale_hemelb mainMultiscale.cc)
-  
+  codesign(multiscale_hemelb)
+
   include_directories(${PROJECT_SOURCE_DIR})
 
   add_subdirectory(multiscale)
