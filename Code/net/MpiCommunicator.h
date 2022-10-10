@@ -15,10 +15,8 @@
 
 #include "net/MpiError.h"
 
-namespace hemelb
+namespace hemelb::net
 {
-  namespace net
-  {
     class MpiGroup;
 
     // This type hold the data that results from operations like
@@ -62,6 +60,12 @@ namespace hemelb
         }
     };
 
+    // Holds an MPI communicator and exposes communication functions
+    // via members. It will own the underlying MPI_Comm (i.e. it will
+    // call MPI_Comm_free) if created from another MpiCommunicator
+    // instance. Normal value semantics, so copyable and movable.
+    // Note that copying does not duplicate the communicator, it just
+    // increments the reference count.
     class MpiCommunicator
     {
       public:
@@ -73,21 +77,6 @@ namespace hemelb
          * @param communicator
          */
         MpiCommunicator();
-
-        /**
-         * Copy Constructor
-         */
-        MpiCommunicator(MpiCommunicator const & comm);
-
-        /**
-         * Move Constructor
-         */
-        MpiCommunicator(MpiCommunicator && comm);
-
-        /**
-         * Class has virtual methods so should have virtual d'tor.
-         */
-        virtual ~MpiCommunicator();
 
         /**
          * Returns the local rank on the communicator
@@ -115,11 +104,6 @@ namespace hemelb
          * @return New communicator.
          */
         MpiCommunicator Create(const MpiGroup& grp) const;
-
-        //! Copy assignment
-        void operator=(MpiCommunicator const &comm);
-        //! Move assignment
-        void operator=(MpiCommunicator &&comm);
 
         /**
          * Allow implicit casts to MPI_Comm
@@ -281,7 +265,7 @@ namespace hemelb
 
     bool operator==(const MpiCommunicator& comm1, const MpiCommunicator& comm2);
     bool operator!=(const MpiCommunicator& comm1, const MpiCommunicator& comm2);
-  }
+
 }
 
 #include "net/MpiCommunicator.hpp"
