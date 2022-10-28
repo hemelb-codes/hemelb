@@ -3,10 +3,10 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 #include <stdexcept>
-#include "io/xml.h"
-#include "util/fileutils.h"
 
 #include "tinyxml.h"
+
+#include "io/xml.h"
 
 namespace hemelb
 {
@@ -21,8 +21,7 @@ namespace hemelb
 
       Document::Document(const std::string& path) : Document()
       {
-        util::check_file(path.c_str());
-	LoadFile(path);
+          LoadFile(path);
       }
 
       Document::~Document()

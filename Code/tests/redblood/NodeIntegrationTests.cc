@@ -8,7 +8,6 @@
 
 #include <catch2/catch.hpp>
 
-#include "util/fileutils.h"
 #include "Traits.h"
 #include "SimulationMaster.h"
 #include "redblood/Cell.h"
@@ -44,9 +43,9 @@ namespace hemelb
 								 Dimensionless cell,
 								 Dimensionless wall) const {
         CopyResourceToTempdir(xml_name);
-        if (util::DoesDirectoryExist("results"))
+        if (std::filesystem::exists("results"))
         {
-          system("rm -rf results");
+            std::filesystem::remove_all("results");
         }
         DeleteXMLInput(xml_name, { "inlets", "inlet", "insertcell" });
         DeleteXMLInput(xml_name, { "inlets", "inlet", "flowextension" });

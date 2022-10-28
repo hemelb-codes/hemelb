@@ -6,8 +6,8 @@
 #ifndef HEMELB_IO_PATHMANAGER_H
 #define HEMELB_IO_PATHMANAGER_H
 
+#include <filesystem>
 #include <string>
-#include "util/fileutils.h"
 #include "log/Logger.h"
 
 namespace hemelb
@@ -31,6 +31,7 @@ namespace hemelb
      */
     class PathManager
     {
+      using path = std::filesystem::path;
       public:
         /**
          * During construction, the path manager will guess an appropriate path from the input file path given at the command line,
@@ -46,17 +47,17 @@ namespace hemelb
          * A local or full path to the input xml configuration file.
          * @return A local or full path to the input xml configuration file.
          */
-        const std::string & GetInputFile() const;
+        [[nodiscard]] const path& GetInputFile() const;
         /**
          * Gets the path to the file where colloid output should be written
          * @return
          */
-        const std::string & GetColloidPath() const;
+        [[nodiscard]] const path& GetColloidPath() const;
         /**
          * Path to where a run report file should be created.
          * @return Reference to path to where a run report file should be created.
          */
-        const std::string & GetReportPath() const;
+        [[nodiscard]] const path& GetReportPath() const;
         /**
          * Save the current configuration as a configuration xml file to the output folder.
          * @param simConfig The input configuration instance, constructed from the input xml file.
@@ -73,26 +74,24 @@ namespace hemelb
          * Return the path that property extraction output should go to.
          * @return
          */
-        const std::string& GetDataExtractionPath() const;
+        [[nodiscard]] const path& GetDataExtractionPath() const;
 
         /**
          * Create a subdirectory inside the RBC output directory and return its path
          * @param subdirectoryName Name of the subdirectory to be created
          * @return Path to the newly created subdirectory
          */
-        const std::string GetRBCOutputPathWithSubdir(std::string subdirectoryName) const;
+        [[nodiscard]] path GetRBCOutputPathWithSubdir(std::string const& subdirectoryName) const;
 
       private:
-        void GuessOutputDir(); //! String processing to generate an appropriate outptu folder name.
-        std::string outputDir;
-        std::string inputFile;
-        std::string colloidFile;
-        std::string configLeafName;
-        std::string reportName;
-        std::string dataPath;
+        //void GuessOutputDir(); //! String processing to generate an appropriate outptu folder name.
+        path outputDir;
+        path inputFile;
+        path colloidFile;
+        path extractionDir;
         const configuration::CommandLine &options;
         bool doIo; //! Am I the input/output node?
-        std::string rbcsPath; //! Path for RBC output
+        path rbcDir; //! Path for RBC output
     };
   }
 }

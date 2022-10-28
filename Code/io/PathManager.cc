@@ -8,58 +8,53 @@
 #include "Exception.h"
 #include "configuration/CommandLine.h"
 #include "io/writers/null/NullWriter.h"
-#include "io/writers/xdr/XdrFileWriter.h"
 
-namespace hemelb
+namespace fs = std::filesystem;
+namespace hemelb::io
 {
-  namespace io
-  {
+
     PathManager::PathManager(const configuration::CommandLine & commandLine, const bool & io,
                              const int & processorCount) :
-        options(commandLine), doIo(io)
+            options(commandLine), doIo(io)
     {
+        inputFile = fs::absolute(options.GetInputFile());
+        outputDir = fs::absolute(options.GetOutputDir());
 
-      inputFile = options.GetInputFile();
-      outputDir = options.GetOutputDir();
+        extractionDir = outputDir / "Extracted";
+        colloidFile = outputDir / "ColloidOutput.xdr";
+        rbcDir = outputDir / "Cells";
 
-      GuessOutputDir();
+        if (doIo)
+        {
+            if (fs::exists(outputDir))
+                throw Exception() << "Output directory '" << outputDir << "' already exists.";
 
-      dataPath = outputDir + "/Extracted/";
-      colloidFile = outputDir + "/ColloidOutput.xdr";
-      rbcsPath = outputDir + "/Cells/";
-
-      if (doIo)
-      {
-        if (hemelb::util::DoesDirectoryExist(outputDir.c_str()))
-          throw Exception() << "Output directory '" << outputDir << "' already exists.";
-
-        hemelb::util::MakeDirAllRXW(outputDir);
-        hemelb::util::MakeDirAllRXW(dataPath);
-        hemelb::util::MakeDirAllRXW(rbcsPath);
-        reportName = outputDir;
-      }
+            fs::create_directory(outputDir);
+            fs::create_directory(extractionDir);
+            fs::create_directory(rbcDir);
+        }
     }
 
-    const std::string & PathManager::GetInputFile() const
+    const fs::path& PathManager::GetInputFile() const
     {
       return inputFile;
     }
-    const std::string & PathManager::GetColloidPath() const
+    const fs::path& PathManager::GetColloidPath() const
     {
       return colloidFile;
     }
-    const std::string & PathManager::GetReportPath() const
+    const fs::path& PathManager::GetReportPath() const
     {
-      return reportName;
+      return outputDir;
     }
 
     void PathManager::EmptyOutputDirectories() const
     {
     }
 
-    const std::string& PathManager::GetDataExtractionPath() const
+    const fs::path& PathManager::GetDataExtractionPath() const
     {
-      return dataPath;
+      return extractionDir;
     }
 
     void PathManager::SaveConfiguration(configuration::SimConfig * const simConfig) const
@@ -70,50 +65,26 @@ namespace hemelb
       }
     }
 
-    void PathManager::GuessOutputDir()
+    fs::path PathManager::GetRBCOutputPathWithSubdir(std::string const& subdirectoryName) const
     {
-      unsigned long lLastForwardSlash = inputFile.rfind('/');
-      if (lLastForwardSlash == std::string::npos)
-      {
-        // input file supplied is in current folder
-        configLeafName = inputFile;
-        if (outputDir.length() == 0)
-        {
-          // no output dir given, defaulting to local.
-          outputDir = "./results";
-        }
-      }
-      else
-      {
-        // input file supplied is a path to the input file
-        configLeafName = inputFile.substr(lLastForwardSlash);
-        if (outputDir.length() == 0)
-        {
-          // no output dir given, defaulting to location of input file.
-          // note substr is end-exclusive and start-inclusive
-          outputDir = inputFile.substr(0, lLastForwardSlash + 1) + "results";
-        }
-      }
-    }
-
-    const std::string PathManager::GetRBCOutputPathWithSubdir(std::string subdirectoryName) const
-    {
-      std::string rbcSubdir = rbcsPath + subdirectoryName + "/";
+      auto rbcSubdir = rbcDir / subdirectoryName;
 
       if (doIo)
       {
-        if (hemelb::util::DoesDirectoryExist(rbcSubdir.c_str()))
+        if (fs::exists(rbcSubdir))
           throw Exception() << "Output directory '" << rbcSubdir << "' already exists.";
 
-        bool created = hemelb::util::MakeDirAllRXW(rbcSubdir);
-        if (!created)
+        std::error_code ec;
+        if (!fs::create_directory(rbcSubdir, rbcDir, ec))
+        if (ec)
         {
-          throw Exception() << "Output directory '" << rbcSubdir << "' could not be created.";
+          throw Exception() << "Output directory '" << rbcSubdir << "' could not be created because: "
+                            << ec.message();
         }
       }
 
       return rbcSubdir;
     }
-  }
+
 }
 

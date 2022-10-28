@@ -4,58 +4,74 @@
 // license in the file LICENSE.
 
 #include "configuration/CommandLine.h"
-#include <cstring>
-#include <cstdlib>
-namespace hemelb
+
+namespace hemelb::configuration
 {
-  namespace configuration
-  {
+    CommandLine::CommandLine(int aargc, const char * const aargv[])
+            : CommandLine(std::vector<std::string>(aargv, aargv + aargc))
+    {
+    }
+
+    CommandLine::CommandLine(std::initializer_list<char const*> init)
+            : CommandLine(std::vector<std::string>(init.begin(), init.end()))
+    {
+    }
 
     CommandLine::CommandLine(std::vector<std::string> const & argv):
-        inputFile("input.xml"), outputDir(""), debugMode(false),
-      argv(argv)
+            argv(argv)
     {
       // There should be an odd number of arguments since the parameters occur in pairs.
       if ( (argv.size() % 2) == 0)
       {
-        throw OptionError()
-            << "There should be an odd number of arguments since the parameters occur in pairs.";
+        throw (OptionError()
+            << "There should be an odd number of arguments since the parameters occur in pairs.");
       }
 
       // All arguments are parsed in pairs, one is a "-<paramName>" type, and one
       // is the <parametervalue>.
       for (size_t ii = 1; ii < argv.size(); ii += 2)
       {
-        auto paramName = argv[ii].c_str();
-        auto paramValue = argv[ii + 1].c_str();
-        if (std::strcmp(paramName, "-in") == 0)
+        auto& paramName = argv[ii];
+        auto& paramValue = argv[ii + 1];
+        if (paramName == "-in")
         {
-          inputFile = std::string(paramValue);
+          inputFile = paramValue;
         }
-        else if (std::strcmp(paramName, "-out") == 0)
+        else if (paramName == "-out")
         {
-          outputDir = std::string(paramValue);
+          outputDir = paramValue;
         }
-        else if (std::strcmp(paramName, "-debug") == 0)
+        else if (paramName == "-debug")
         {
-          debugMode = std::strcmp(paramName, "0") == 0 ?
-            false :
-            true;
+            if (paramValue == "0") {
+                debugMode = false;
+            } else if (paramValue == "1") {
+                debugMode = true;
+            } else {
+                throw (OptionError() << "Invalid flag value for -debug");
+            }
         }
         else
         {
           throw OptionError() << "Unknown option: " << paramName;
         }
       }
+
+      if (inputFile.empty())
+          throw OptionError() << "input file not supplied";
+
+      if (outputDir.empty())
+          outputDir = inputFile.parent_path() / "results";
+
     }
 
     std::string CommandLine::GetUsage()
     {
-      std::string ans("Correct usage: hemelb [-<Parameter Name> <Parameter Value>]* \n");
-      ans.append("Parameter name and significance:\n");
-      ans.append("-in \t Path to the configuration xml file (default is config.xml)\n");
-      ans.append("-out \t Path to the output folder (default is based on input file, e.g. config_xml_results)\n");
-      return ans;
+        return "Correct usage: hemelb [-<Parameter Name> <Parameter Value>]* \n"
+               "Parameter name and significance:\n"
+               "\t-in\tPath to the configuration xml file (required)\n"
+               "\t-out\tPath to the output folder (default is 'results' in same directory as the input file)\n"
+               "\t-debug\tFlag (0 or 1) to enable the hemelb debugger (default: 0)\n";
     }
-  }
+
 }

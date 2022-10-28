@@ -12,7 +12,6 @@
 #include "configuration/SimConfig.h"
 #include "reporting/BuildInfo.h"
 #include "log/Logger.h"
-#include "util/fileutils.h"
 #include "lb/InitialCondition.h"
 #include "redblood/FlowExtension.h"
 #include "redblood/RBCConfig.h"
@@ -53,7 +52,7 @@ namespace hemelb
 
     void SimConfig::Init()
     {
-      if (!util::file_exists(xmlFilePath.c_str()))
+      if (!std::filesystem::exists(xmlFilePath))
       {
         throw Exception() << "Config file '" << xmlFilePath << "' does not exist";
       }
@@ -75,8 +74,9 @@ namespace hemelb
     }
 
     // Turn an input XML-relative path into a full path
-    std::string SimConfig::RelPathToFullPath(const std::string& path) const {
-      return util::NormalizePathRelativeToPath(path, xmlFilePath);
+    std::filesystem::path SimConfig::RelPathToFullPath(const std::string& path) const {
+        auto xml_dir = xmlFilePath.parent_path();
+        return std::filesystem::absolute(xml_dir / path);
     }
 
     void SimConfig::DoIO(io::xml::Element topNode)
@@ -389,7 +389,7 @@ namespace hemelb
 
       file.filename = propertyoutputEl.GetAttributeOrThrow("file");
       if (std::holds_alternative<extraction::single_timestep_files>(file.ts_mode)) {
-	auto const& p = file.filename;
+	auto const& p = file.filename.native();
 	// Path must contain exactly one printf conversion specifier
 	// for an integer.
 	auto const errmsg = "For single timestep output files, "

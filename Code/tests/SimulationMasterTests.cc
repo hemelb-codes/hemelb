@@ -11,6 +11,7 @@
 #include "tests/helpers/FolderTestFixture.h"
 #include "tests/helpers/LaddFail.h"
 
+namespace fs = std::filesystem;
 namespace hemelb
 {
   namespace tests
@@ -34,13 +35,16 @@ namespace hemelb
 	// TODO: This test is fatal if run with LADDIOLET. See ticket #605.
 	LADD_FAIL();
 	master->RunSimulation();
-	AssertPresent("results/report.txt");
-	AssertPresent("results/report.xml");
-	AssertPresent("results/Extracted/wholegeometryvelocityandstress.dat");
-	AssertPresent("results/Extracted/centrelinepressure.dat");
-	AssertPresent("results/Extracted/centrelineshearrate.dat");
-	AssertPresent("results/Extracted/surfaceshearstress.dat");
-	AssertPresent("results/Extracted/surfacetraction.dat");
+    for (auto&& p: {"results/report.txt",
+                    "results/report.xml",
+                    "results/Extracted/wholegeometryvelocityandstress.dat",
+                    "results/Extracted/centrelinepressure.dat",
+                    "results/Extracted/centrelineshearrate.dat",
+                    "results/Extracted/surfaceshearstress.dat",
+                    "results/Extracted/surfacetraction.dat"}) {
+        INFO(p);
+        REQUIRE(fs::exists(p));
+    }
       }
     }
 

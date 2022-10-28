@@ -12,54 +12,44 @@
 
 #include "tests/helpers/FolderTestFixture.h"
 
-namespace hemelb
+namespace fs = std::filesystem;
+
+namespace hemelb::tests
 {
-  namespace tests
-  {
 
     std::unique_ptr<io::PathManager> setup(const char* confXml) {
-      const int processorCount = 5;
-      const int argc = 3;
-      const char* argv[] = {
-	"hemelb",
-	"-in",
-	confXml,
-      };
+        const int processorCount = 5;
+        const int argc = 3;
+        const char* argv[] = {
+                "hemelb",
+                "-in",
+                confXml,
+        };
 
-      auto cl = configuration::CommandLine(argc, argv);
-      return std::make_unique<io::PathManager>(cl, true, processorCount);
+        auto cl = configuration::CommandLine(argc, argv);
+        return std::make_unique<io::PathManager>(cl, true, processorCount);
     }
 
     TEST_CASE_METHOD(helpers::FolderTestFixture, "PathManager") {
-      SECTION("Local config XML path") {
-	auto fileManager = setup("config.xml");
+        SECTION("Local config XML path") {
+            auto fileManager = setup("config.xml");
 
-	SECTION("Create") {
-	  AssertPresent("results");
-	}
+            REQUIRE(fs::exists("results"));
 
-	SECTION("NameInvention") {
-	  REQUIRE(std::string("./results") == fileManager->GetReportPath());
-	}
+            REQUIRE(fs::absolute("results") == fileManager->GetReportPath());
 
-      }
+        }
 
-      SECTION("Abs path to config XML") {
-	const std::string targetConfig = GetTempdir() + "/config.xml"; // note this resource doesn't exist -- not a problem
-	ReturnToOrigin(); // even if we're not in current dir, explicit path should cause the results to be created in the tmpdir
-	auto fileManager = setup(targetConfig.c_str());
-	MoveToTempdir(); // go back to the tempdir and check the files were created in the right place
+        SECTION("Abs path to config XML") {
+            auto const targetConfig = GetTempdir() / "config.xml"; // note this resource doesn't exist -- not a problem
+            ReturnToOrigin(); // even if we're not in current dir, explicit path should cause the results to be created in the tmpdir
+            auto fileManager = setup(targetConfig.c_str());
+            MoveToTempdir(); // go back to the tempdir and check the files were created in the right place
 
-	SECTION("Create") {
-	  AssertPresent("results");
-	}
-
-	SECTION("NameInvention") {
-	  REQUIRE(GetTempdir() + "/results" == fileManager->GetReportPath());
-	}
-      }
+            REQUIRE(fs::exists("results"));
+            REQUIRE(GetTempdir() / "results" == fileManager->GetReportPath());
+        }
 
     }
 
-  }
 }
