@@ -121,10 +121,6 @@ namespace hemelb
         void Save(std::string path); // TODO this method should be able to be CONST
         // but because it uses DoIo, which uses one function signature for both reading and writing, it cannot be.
 
-        const util::Vector3D<float> & GetVisualisationCentre() const
-        {
-          return visualisationCentre;
-        }
         const std::vector<IoletPtr> & GetInlets() const
         {
           return inlets;
@@ -136,30 +132,6 @@ namespace hemelb
         lb::StressTypes GetStressType() const
         {
           return stressType;
-        }
-        float GetVisualisationLongitude() const
-        {
-          return visualisationLongitude;
-        }
-        float GetVisualisationLatitude() const
-        {
-          return visualisationLatitude;
-        }
-        float GetVisualisationZoom() const
-        {
-          return visualisationZoom;
-        }
-        float GetVisualisationBrightness() const
-        {
-          return visualisationBrightness;
-        }
-        float GetMaximumVelocity() const
-        {
-          return maxVelocity;
-        }
-        float GetMaximumStress() const
-        {
-          return maxStress;
         }
         const path& GetDataFilePath() const
         {
@@ -337,13 +309,6 @@ namespace hemelb
         io::xml::Document* rawXmlDoc;
         path dataFilePath;
 
-        util::Vector3D<float> visualisationCentre;
-        float visualisationLongitude;
-        float visualisationLatitude;
-        float visualisationZoom;
-        float visualisationBrightness;
-        float maxVelocity;
-        float maxStress;
         lb::StressTypes stressType;
         std::vector<extraction::PropertyOutputFile> propertyOutputs;
         std::string colloidConfigPath;
