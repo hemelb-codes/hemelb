@@ -7,49 +7,47 @@
 #define HEMELB_RESOURCES_RESOURCE_H
 
 #include <iostream>
+#include <filesystem>
 
-#include "util/fileutils.h"
 #include "resources/path_parameters.h"
 
-namespace hemelb
+namespace hemelb::resources
 {
-  namespace resources
-  {
     /***
      * Define how to find resources paths for tests which use resources
      */
     class Resource
     {
-      public:
-        Resource(const std::string &aResourceName) :
-            resourceName(aResourceName)
+    public:
+        inline explicit Resource(const std::string &aResourceName) :
+                resourceName(aResourceName)
         {
         }
-        std::string Path() const
+        [[nodiscard]] inline std::filesystem::path Path() const
         {
-          if (util::file_exists(BuildPath().c_str()))
-          {
-            return BuildPath();
-          }
-          if (util::file_exists(InstallPath().c_str()))
-          {
-            return InstallPath();
-          }
-          std::cerr << "Resource " << resourceName << " not found either at: " << BuildPath()
-              << " or: " << InstallPath() << std::endl;
-          return "";
+            namespace fs = std::filesystem;
+            if (fs::exists(BuildPath()))
+            {
+                return BuildPath();
+            }
+            if (fs::exists(InstallPath()))
+            {
+                return InstallPath();
+            }
+            std::cerr << "Resource " << resourceName << " not found either at: " << BuildPath()
+                      << " or: " << InstallPath() << std::endl;
+            return "";
         }
-        std::string BuildPath() const
+        [[nodiscard]] inline std::string BuildPath() const
         {
-          return build_resource_path + "/" + resourceName;
+            return build_resource_path / resourceName;
         }
-        std::string InstallPath() const
+        [[nodiscard]] inline std::string InstallPath() const
         {
-          return install_resource_path + "/" + resourceName;
+            return install_resource_path / resourceName;
         }
-      private:
+    private:
         std::string resourceName;
     };
-  }
 }
-#endif // ONCE
+#endif

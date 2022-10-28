@@ -73,6 +73,10 @@ namespace hemelb
       CopyResourceToTempdir(testFile);
       auto xmlDoc = std::make_unique<xml::Document>(testFile);
 
+      SECTION("Test opening a missing file errors") {
+          xml::Document xml;
+          CHECK_THROWS_AS(xml.LoadFile("this_file_does_not.exist"), xml::ParseError);
+      }
       SECTION("TestRead") {
 	xml::Element html = xmlDoc->GetRoot();
 

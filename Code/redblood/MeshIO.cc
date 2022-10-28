@@ -5,6 +5,8 @@
 
 #include "redblood/MeshIO.h"
 
+#include <filesystem>
+
 #include <vtkCellData.h>
 #include <vtkDoubleArray.h>
 #include <vtkPointData.h>
@@ -17,7 +19,6 @@
 #include "redblood/CellBase.h"
 #include "redblood/CellEnergy.h"
 #include "redblood/VTKError.h"
-#include "util/fileutils.h"
 #include "util/Iterator.h"
 
 namespace hemelb {
@@ -195,7 +196,7 @@ namespace hemelb {
     auto KruegerMeshIO::read(Storage mode, std::string const &filename_or_data, bool fixFacetOrientation) const -> MeshPtr {
       switch (mode) {
       case Storage::file:
-	if (!util::file_exists(filename_or_data.c_str()))
+	if (!std::filesystem::exists(filename_or_data.c_str()))
 	  throw Exception() << "Red-blood-cell mesh file '" << filename_or_data << "' does not exist";
 	
 	log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from %s",

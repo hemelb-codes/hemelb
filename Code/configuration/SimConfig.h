@@ -102,6 +102,8 @@ namespace hemelb
     class SimConfig
     {
       public:
+        using path = std::filesystem::path;
+
         using IoletPtr = util::clone_ptr<lb::iolets::InOutLet>;
 
         static SimConfig* New(const std::string& path);
@@ -114,7 +116,7 @@ namespace hemelb
         virtual ~SimConfig();
 
         // Turn an input XML-relative path into a full path
-        std::string RelPathToFullPath(const std::string& path) const;
+        path RelPathToFullPath(const std::string& path) const;
 
         void Save(std::string path); // TODO this method should be able to be CONST
         // but because it uses DoIo, which uses one function signature for both reading and writing, it cannot be.
@@ -159,7 +161,7 @@ namespace hemelb
         {
           return maxStress;
         }
-        const std::string& GetDataFilePath() const
+        const path& GetDataFilePath() const
         {
           return dataFilePath;
         }
@@ -331,9 +333,9 @@ namespace hemelb
          */
         void DoIOForConvergenceCriterion(const io::xml::Element& criterionEl);
 
-        std::string xmlFilePath;
+        path xmlFilePath;
         io::xml::Document* rawXmlDoc;
-        std::string dataFilePath;
+        path dataFilePath;
 
         util::Vector3D<float> visualisationCentre;
         float visualisationLongitude;

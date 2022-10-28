@@ -76,7 +76,7 @@ namespace hemelb
 	// empty output_file_pattern is OK
       } else if (std::holds_alternative<single_timestep_files>(outputSpec.ts_mode)) {
 	// Get views of the whole path
-	std::string_view p = outputSpec.filename;
+	std::string_view p = outputSpec.filename.native();
 	auto i_pcd = p.find("%d", 0, 2);
 	// The part before %d
 	auto beginning = p.substr(0, i_pcd);

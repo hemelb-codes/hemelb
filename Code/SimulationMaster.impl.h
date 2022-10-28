@@ -19,7 +19,6 @@
 #include "util/utilityFunctions.h"
 #include "geometry/GeometryReader.h"
 #include "geometry/Domain.h"
-#include "util/fileutils.h"
 #include "log/Logger.h"
 #include "lb/HFunction.h"
 #include "io/xml.h"
@@ -308,8 +307,8 @@ namespace hemelb
       for (unsigned outputNumber = 0; outputNumber < simConfig->PropertyOutputCount();
           ++outputNumber)
       {
-        simConfig->GetPropertyOutput(outputNumber).filename = fileManager->GetDataExtractionPath()
-            + simConfig->GetPropertyOutput(outputNumber).filename;
+        simConfig->GetPropertyOutput(outputNumber).filename =
+                fileManager->GetDataExtractionPath() / simConfig->GetPropertyOutput(outputNumber).filename;
       }
 
       propertyExtractor =
