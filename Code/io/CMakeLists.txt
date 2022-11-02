@@ -11,6 +11,7 @@ if(NOT HAVE_XDRUINTXX_T)
 endif()
 
 add_library(hemelb_io OBJECT
+  FILE.cc
   PathManager.cc 
   writers/AsciiFileWriter.cc writers/AsciiStreamWriter.cc
   readers/XdrFileReader.cc

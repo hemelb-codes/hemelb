@@ -8,6 +8,7 @@
 
 #include <catch2/catch.hpp>
 
+#include "io/FILE.h"
 #include "io/formats/extraction.h"
 #include "io/readers/XdrMemReader.h"
 #include "extraction/PropertyOutputFile.h"
@@ -28,24 +29,13 @@ namespace hemelb
       // Power of 2 for simple binary
       constexpr double REFERENCE_PRESSURE_mmHg = 8.0;
 
-      auto closer = [](FILE* f) {
-	if (f)
-	  std::fclose(f);
-      };
-      
-      using closing_file_ptr = std::unique_ptr<FILE, decltype(closer)>;
-
-      closing_file_ptr open_as_closing(const char* fn, const char* mode) {
-	return closing_file_ptr{std::fopen(fn, mode), closer};
-      }
-
       constexpr double epsilon = 1e-5;
       template <typename T>
       Approx apprx(T&& x) {
 	return Approx(std::forward<T>(x)).epsilon(epsilon);
       }
 
-      void CheckDataWriting(DummyDataSource* datasource, uint64_t timestep, FILE* file) {
+      void CheckDataWriting(DummyDataSource* datasource, uint64_t timestep, io::FILE& file) {
 	// The file should have an entry for each lattice point, consisting
 	// of 3D grid coords, pressure (with an offset of 80) and 3D velocity.
 	// This gives 3*4 + 4 + 3*4 = 28 bytes per site.
@@ -60,7 +50,7 @@ namespace hemelb
 
 	// Attempt to read one extra byte, to make sure we aren't under-reading
 	auto contentsBuffer = std::make_unique<char[]>(expectedSize);
-	size_t nRead = std::fread(contentsBuffer.get(), 1, expectedSize + 1, file);
+	size_t nRead = file.read(contentsBuffer.get(), 1, expectedSize + 1);
 
 	REQUIRE(expectedSize == nRead);
 
@@ -159,16 +149,15 @@ namespace hemelb
 	// Create the writer object; this should write the headers.
 	auto propertyWriter = std::make_unique<extraction::LocalPropertyOutput>(*simpleDataSource, simpleOutFile, Comms());
 	// Open the file
-	auto writtenFile = open_as_closing(simpleOutFile.filename.c_str(), "r");
+	auto writtenFile = io::FILE::open(simpleOutFile.filename, "r");
 	
 	// Assert that the file is there
-	REQUIRE(writtenFile != nullptr);
+	//REQUIRE(writtenFile != nullptr);
 
 	// Read the main header.
-	size_t nRead = std::fread(writtenMainHeader,
+	size_t nRead = writtenFile.read(writtenMainHeader,
 				  1,
-				  io::formats::extraction::MainHeaderLength,
-				  writtenFile.get());
+				  io::formats::extraction::MainHeaderLength);
 	// Check we read enough
 	REQUIRE(size_t{io::formats::extraction::MainHeaderLength} == nRead);
 
@@ -195,7 +184,7 @@ namespace hemelb
 	}
 
 	// Read the field header.
-	nRead = std::fread(writtenFieldHeader, 1, fieldHeaderLength, writtenFile.get());
+	nRead = writtenFile.read(writtenFieldHeader, 1, fieldHeaderLength);
 
 	// Check we read enough
 	REQUIRE(fieldHeaderLength == nRead);
@@ -229,7 +218,7 @@ namespace hemelb
 	// Write it
 	propertyWriter->Write(0, 9999);
 
-	CheckDataWriting(simpleDataSource.get(), 0, writtenFile.get());
+	CheckDataWriting(simpleDataSource.get(), 0, writtenFile);
 
 	// Get some new data
 	simpleDataSource->FillFields();
@@ -241,9 +230,9 @@ namespace hemelb
 	// The previous call to CheckDataWriting() sets the EOF indicator in writtenFile,
 	// the previous call to Write() ought to unset it but it isn't working properly in
 	// my current version of libc.
-	std::clearerr(writtenFile.get());
+	writtenFile.clearerr();
 
-	CheckDataWriting(simpleDataSource.get(), 100, writtenFile.get());
+	CheckDataWriting(simpleDataSource.get(), 100, writtenFile);
       }
 
 

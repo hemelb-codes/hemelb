@@ -7,24 +7,24 @@
 #define HEMELB_IO_READERS_XDRFILEREADER_H
 
 #include <cstdio>
+#include <filesystem>
 #include <memory>
 #include <vector>
 #include "io/readers/XdrReader.h"
+#include "io/FILE.h"
 
 namespace hemelb::io
 {
-
   // Deserialise from a file given by path.
   class XdrFileReader : public XdrReader {
   public:
-    XdrFileReader(const std::string& fn);
+    XdrFileReader(const std::filesystem::path& fn);
     ~XdrFileReader() override = default;
     unsigned GetPosition() override;
   protected:
     const char* get_bytes(size_t n) override;
   private:
-    using deleter_func_t = void(*)(std::FILE*);
-    std::unique_ptr<std::FILE, deleter_func_t> fh;
+    FILE fh;
     // Buffer for holding read data
     std::vector<char> buf;
   };

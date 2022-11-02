@@ -9,30 +9,21 @@
 
 namespace hemelb::io
 {
-  namespace {
-    void fclose_deleter(std::FILE* fh) {
-      std::fclose(fh);
-    }
-
-  }
-
   // Constructor to create an Xdr object based on a file.
-  XdrFileReader::XdrFileReader(const std::string& fn) :
-    fh{std::fopen(fn.c_str(), "r"), fclose_deleter} {
-    if (!fh) {
-      throw Exception() << "Error opening file '" << fn << "' with reason: " << std::strerror(errno);
-    }
+  XdrFileReader::XdrFileReader(const std::filesystem::path& fn) :
+    fh{FILE::open(fn, "r")} {
   }
 
   unsigned XdrFileReader::GetPosition() {
-    return std::ftell(fh.get());
+    return fh.tell();
   }
 
   const char* XdrFileReader::get_bytes(size_t n) {
     buf.clear();
     buf.resize(n);
-    auto nread = std::fread(buf.data(), 1, n, fh.get());
-    assert(nread == n);
+    auto nread = fh.read(buf.data(), 1, n);
+    if (nread != n)
+        throw Exception() << "Could not read " << n << " bytes, instead got " << nread;
     return buf.data();
   }
 
