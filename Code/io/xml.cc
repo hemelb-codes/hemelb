@@ -19,13 +19,12 @@ namespace hemelb
         xmlDoc = std::make_unique<::TiXmlDocument>();
       }
 
-      Document::Document(const std::string& path) : Document()
+      Document::Document(const std::filesystem::path& path) : Document()
       {
           LoadFile(path);
       }
 
-      Document::~Document()
-      {
+      Document::~Document() {
       }
 
       Element Document::GetRoot()
@@ -33,10 +32,10 @@ namespace hemelb
         return Element(xmlDoc->RootElement());
       }
 
-      void Document::LoadFile(const std::string& path) {
-	if (!xmlDoc->LoadFile(path)) {
-	  throw ParseError(xmlDoc.get());
-	}
+      void Document::LoadFile(const std::filesystem::path& path) {
+          if (!xmlDoc->LoadFile(path.c_str())) {
+              throw ParseError(xmlDoc.get());
+          }
       }
 
       void Document::LoadString(const std::string& data) {
@@ -50,9 +49,9 @@ namespace hemelb
       {
       }
 
-      Element::~Element()
-      {
+      Element::~Element() {
       }
+
       const Element Element::Missing()
       {
         return Element(nullptr);

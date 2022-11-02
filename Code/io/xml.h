@@ -13,6 +13,7 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <filesystem>
 
 #include "Exception.h"
 #include "util/traits.h"
@@ -366,14 +367,14 @@ namespace hemelb::io::xml
      * @param $path
      *   the path to the XML file to be read by this object
      */
-    Document(const std::string& path);
+    Document(const std::filesystem::path& path);
 
     /** destructor - needed to avoid polluting all users of this with TinyXML */
     ~Document();
     Element GetRoot();
 
     // Load some XML from a file
-    void LoadFile(const std::string& path);
+    void LoadFile(const std::filesystem::path& path);
 
     // Load some XML from a string
     void LoadString(const std::string& path);
