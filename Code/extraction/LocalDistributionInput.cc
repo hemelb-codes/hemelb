@@ -5,17 +5,16 @@
 #include "extraction/LocalDistributionInput.h"
 
 #include "extraction/OutputField.h"
-#include "extraction/LocalPropertyOutput.h"
 #include "geometry/FieldData.h"
 #include "io/formats/formats.h"
 #include "io/formats/extraction.h"
 #include "io/formats/offset.h"
-#include "io/writers/xdr/XdrFileReader.h"
+#include "io/readers/XdrFileReader.h"
+#include "io/readers/XdrMemReader.h"
 #include "log/Logger.h"
 
 namespace hemelb::extraction {
   namespace fmt = hemelb::io::formats;
-  namespace xdr = hemelb::io::writers::xdr;
 
   LocalDistributionInput::LocalDistributionInput(std::string dataFilePath,
 						 std::optional<std::string> const& maybeOffsetPath,
@@ -67,7 +66,7 @@ namespace hemelb::extraction {
 	uint64_t ans;
 	std::vector<char> tsbuf(8);
 	inputFile.ReadAt(localStart + iTS*allCoresWriteLength, tsbuf);
-	xdr::XdrMemReader dataReader(tsbuf);
+	io::XdrMemReader dataReader(tsbuf);
 	dataReader.read(ans);
 	return ans;
       };
@@ -110,7 +109,7 @@ namespace hemelb::extraction {
 
       std::vector<char> dataBuffer(readLength);
       inputFile.ReadAt(timeStart + localStart, dataBuffer);
-      xdr::XdrMemReader dataReader(dataBuffer);
+      io::XdrMemReader dataReader(dataBuffer);
 
       // Read the timestep
       if (comms.OnIORank()) {
@@ -169,7 +168,7 @@ namespace hemelb::extraction {
       if (comms.OnIORank()) {
 	auto preambleBuf = std::vector<char>(fmt::extraction::MainHeaderLength);
 	inputFile.Read(preambleBuf);
-	auto preambleReader = xdr::XdrMemReader(preambleBuf);
+	auto preambleReader = io::XdrMemReader(preambleBuf);
 
 	// Read the magic numbers.
 	uint32_t hlbMagicNumber, extMagicNumber, version;
@@ -229,7 +228,7 @@ namespace hemelb::extraction {
 
 	auto fieldHeaderBuf = std::vector<char>(lengthOfFieldHeader);
 	inputFile.Read(fieldHeaderBuf);
-	auto fieldHeaderReader = xdr::XdrMemReader(fieldHeaderBuf);
+	auto fieldHeaderReader = io::XdrMemReader(fieldHeaderBuf);
 
 	fieldHeaderReader.read(distField.name);
 	fieldHeaderReader.read(distField.numberOfElements);
@@ -258,7 +257,7 @@ namespace hemelb::extraction {
 
       // Only actually read on IO rank
       if (comms.OnIORank()) {
-	xdr::XdrFileReader offsetReader(offsetFileName);
+	io::XdrFileReader offsetReader(offsetFileName);
 	uint32_t hlbMagicNumber, offMagicNumber, version, nRanks;
 	offsetReader.read(hlbMagicNumber);
 	offsetReader.read(offMagicNumber);

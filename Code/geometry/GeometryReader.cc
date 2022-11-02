@@ -5,16 +5,14 @@
 
 #include <cmath>
 #include <list>
-#include <map>
 #include <algorithm>
 #include <zlib.h>
 
 #include "io/formats/geometry.h"
-#include "io/writers/xdr/XdrMemReader.h"
+#include "io/readers/XdrMemReader.h"
 #include "geometry/decomposition/BasicDecomposition.h"
 #include "geometry/decomposition/OptimisedDecomposition.h"
 #include "geometry/GeometryReader.h"
-#include "lb/lattices/D3Q27.h"
 #include "net/net.h"
 #include "net/IOCommunicator.h"
 #include "log/Logger.h"
@@ -189,7 +187,7 @@ namespace hemelb
       std::vector<char> preambleBuffer = ReadOnAllTasks(gmy::PreambleLength);
 
       // Create an Xdr translator based on the read-in data.
-      auto preambleReader = io::writers::xdr::XdrMemReader(preambleBuffer.data(),
+      auto preambleReader = io::XdrMemReader(preambleBuffer.data(),
 							   gmy::PreambleLength);
 
       uint32_t hlbMagicNumber, gmyMagicNumber, version;
@@ -251,7 +249,7 @@ namespace hemelb
       std::vector<char> headerBuffer = ReadOnAllTasks(headerByteCount);
 
       // Create a Xdr translation object to translate from binary
-      auto preambleReader = hemelb::io::writers::xdr::XdrMemReader(headerBuffer.data(),
+      auto preambleReader = hemelb::io::XdrMemReader(headerBuffer.data(),
 								   headerByteCount);
 
       // Read in all the data.
@@ -394,7 +392,7 @@ namespace hemelb
         // Create an Xdr interpreter.
         std::vector<char> blockData = DecompressBlockData(compressedBlockData,
                                                           bytesPerUncompressedBlock[blockNumber]);
-        io::writers::xdr::XdrMemReader lReader(&blockData.front(), blockData.size());
+        io::XdrMemReader lReader(&blockData.front(), blockData.size());
 
         ParseBlock(geometry, blockNumber, lReader);
 
@@ -466,7 +464,7 @@ namespace hemelb
     }
 
     void GeometryReader::ParseBlock(GmyReadResult& geometry, const site_t block,
-                                    io::writers::xdr::XdrReader& reader)
+                                    io::XdrReader& reader)
     {
       // We start by clearing the sites on the block. We read the blocks twice (once before
       // optimisation and once after), so there can be sites on the block from the previous read.
@@ -479,7 +477,7 @@ namespace hemelb
       }
     }
 
-    GeometrySite GeometryReader::ParseSite(io::writers::xdr::XdrReader& reader)
+    GeometrySite GeometryReader::ParseSite(io::XdrReader& reader)
     {
       // Read the site type
       unsigned readSiteType;

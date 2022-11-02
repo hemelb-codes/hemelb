@@ -5,17 +5,22 @@
 
 #include <iostream>
 
-#include "io/writers/null/NullWriter.h"
+#include "io/writers/NullWriter.h"
 
-namespace hemelb
+namespace hemelb::io
 {
-  namespace io
-  {
-    namespace writers
+    unsigned int NullWriter::getCurrentStreamPosition() const
     {
-      namespace null
-      {
-
+        return 0;
+    }
+    void NullWriter::writeFieldSeparator()
+    {
+        //PASS, DO NOTHING
+    }
+    void NullWriter::writeRecordSeparator()
+    {
+        // PASS, DO NOTHING
+    }
         void NullWriter::_write(int16_t const & value)
         {
           this->_write<int16_t>(value);
@@ -54,8 +59,4 @@ namespace hemelb
           this->_write<std::string>(value);
         }
 
-      } // namespace ascii
-
-    } // namespace writers
-  }
 }

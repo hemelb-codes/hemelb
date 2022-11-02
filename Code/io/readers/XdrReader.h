@@ -3,16 +3,16 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_IO_WRITERS_XDR_XDRREADER_H
-#define HEMELB_IO_WRITERS_XDR_XDRREADER_H
+#ifndef HEMELB_IO_READERS_XDRREADER_H
+#define HEMELB_IO_READERS_XDRREADER_H
 
 #include <cstdint>
 #include <string>
 
 #include "Exception.h"
-#include "io/writers/xdr/XdrSerialisation.h"
+#include "io/XdrSerialisation.h"
 
-namespace hemelb::io::writers::xdr
+namespace hemelb::io
 {
   // Base class to read XDR data. This does the XDR related
   // stuff. Derived classes must implement GetPosition and get_bytes
@@ -21,8 +21,7 @@ namespace hemelb::io::writers::xdr
   {
   public:
     // Virtual destructor.
-    virtual ~XdrReader() {
-    }
+    virtual ~XdrReader() = default;
 
     // Main function for reading the next bit of the stream.
     //
@@ -30,9 +29,9 @@ namespace hemelb::io::writers::xdr
     // indicates success with return value.
     template<class T>
     bool read(T& val) {
-      constexpr auto n = detail::xdr_serialised_size<T>();
+      constexpr auto n = xdr::xdr_serialised_size<T>();
       auto buf = get_bytes(n);
-      detail::xdr_deserialise(val, buf);
+      xdr::xdr_deserialise(val, buf);
       return true;
     }
 
@@ -68,4 +67,4 @@ namespace hemelb::io::writers::xdr
 
 }
 
-#endif // HEMELB_IO_WRITERS_XDR_XDRREADER_H
+#endif // HEMELB_IO_READERS_XDRREADER_H

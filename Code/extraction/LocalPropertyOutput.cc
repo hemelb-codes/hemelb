@@ -8,8 +8,8 @@
 #include "io/formats/formats.h"
 #include "io/formats/extraction.h"
 #include "io/formats/offset.h"
-#include "io/writers/xdr/XdrMemWriter.h"
-#include "io/writers/xdr/XdrVectorWriter.h"
+#include "io/writers/XdrMemWriter.h"
+#include "io/writers/XdrVectorWriter.h"
 #include "net/IOCommunicator.h"
 #include "constants.h"
 #include "units.h"
@@ -22,22 +22,22 @@ namespace hemelb
     {
       // Declare recursive helper
       template <typename... Ts>
-      io::writers::Writer& encode(io::writers::Writer& enc, Ts... args);
+      io::Writer& encode(io::Writer& enc, Ts... args);
       // Terminating case - one arg
       template <typename T>
-      io::writers::Writer& encode(io::writers::Writer& enc, T arg) {
+      io::Writer& encode(io::Writer& enc, T arg) {
 	return enc << arg;
       }
       // Recursive case - N + 1 args
       template <typename T, typename... Ts>
-      io::writers::Writer& encode(io::writers::Writer& enc, T arg, Ts... args) {
+      io::Writer& encode(io::Writer& enc, T arg, Ts... args) {
 	return encode(enc << arg, args...);
       }
 
       // XDR encode some values and return the result buffer
       template <typename... Ts>
       std::vector<char> quick_encode(Ts... args) {
-	io::writers::xdr::XdrVectorWriter encoder;
+	io::XdrVectorWriter encoder;
 	encode(encoder, args...);
 	auto ans = encoder.GetBuf();
 	return ans;
@@ -181,7 +181,7 @@ namespace hemelb
 
       unsigned const field_header_len = CalcFieldHeaderLength(outputSpec.fields);
       unsigned const total_header_len = io::formats::extraction::MainHeaderLength + field_header_len;
-      io::writers::xdr::XdrVectorWriter headerWriter;
+      io::XdrVectorWriter headerWriter;
 
       // Encoder for ONLY the main header (note shorter length)
       headerWriter << std::uint32_t(io::formats::HemeLbMagicNumber)

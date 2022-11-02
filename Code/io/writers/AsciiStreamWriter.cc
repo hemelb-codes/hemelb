@@ -5,16 +5,10 @@
 
 #include <iostream>
 
-#include "io/writers/ascii/AsciiStreamWriter.h"
+#include "io/writers/AsciiStreamWriter.h"
 
-namespace hemelb
+namespace hemelb::io
 {
-  namespace io
-  {
-    namespace writers
-    {
-      namespace ascii
-      {
 
         // Method to get the current position in the stream.
         unsigned int AsciiStreamWriter::getCurrentStreamPosition() const
@@ -70,8 +64,4 @@ namespace hemelb
           this->_write<std::string>(value);
         }
 
-      } // namespace ascii
-
-    } // namespace writers
-  }
 }

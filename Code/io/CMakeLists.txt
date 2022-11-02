@@ -12,12 +12,14 @@ endif()
 
 add_library(hemelb_io OBJECT
   PathManager.cc 
-  writers/ascii/AsciiFileWriter.cc writers/ascii/AsciiStreamWriter.cc
-  writers/xdr/XdrVectorWriter.cc
-  writers/xdr/XdrFileReader.cc writers/xdr/XdrFileWriter.cc
-  writers/xdr/XdrMemReader.cc writers/xdr/XdrMemWriter.cc
-  writers/xdr/XdrWriter.cc
-  writers/null/NullWriter.cc
+  writers/AsciiFileWriter.cc writers/AsciiStreamWriter.cc
+  readers/XdrFileReader.cc
+  readers/XdrMemReader.cc
+  writers/XdrWriter.cc
+  writers/XdrMemWriter.cc
+  writers/XdrFileWriter.cc
+  writers/XdrVectorWriter.cc
+  writers/NullWriter.cc
   writers/Writer.cc
   formats/geometry.cc
   xml.cc

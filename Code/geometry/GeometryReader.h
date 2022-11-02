@@ -9,7 +9,7 @@
 #include <vector>
 #include <string>
 
-#include "io/writers/xdr/XdrReader.h"
+#include "io/readers/XdrReader.h"
 #include "lb/lattices/LatticeInfo.h"
 #include "lb/LbmParameters.h"
 #include "net/mpi.h"
@@ -99,14 +99,14 @@ namespace hemelb
                                               const unsigned int uncompressedBytes);
 
         void ParseBlock(GmyReadResult& geometry, const site_t block,
-                        io::writers::xdr::XdrReader& reader);
+                        io::XdrReader& reader);
 
         /**
          * Parse the next site from the XDR reader. Note that we return by copy here.
          * @param reader
          * @return
          */
-        GeometrySite ParseSite(io::writers::xdr::XdrReader& reader);
+        GeometrySite ParseSite(io::XdrReader& reader);
 
         /**
          * Calculates the number of the rank used to read in a given block.

@@ -6,7 +6,6 @@
 #ifndef HEMELB_LB_LB_HPP
 #define HEMELB_LB_LB_HPP
 
-#include "io/writers/xdr/XdrMemWriter.h"
 #include "lb/lb.h"
 #include "lb/InitialCondition.h"
 #include "lb/InitialCondition.hpp"

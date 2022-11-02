@@ -141,7 +141,7 @@ namespace hemelb
 
         /** for serialisation into output file */
         const void WriteToStream(const LatticeTimeStep currentTimestep,
-                                 io::writers::Writer& writer);
+                                 io::Writer& writer);
 
         /** obtains the fluid viscosity at the position of this particle */
         // TODO: currently returns BLOOD_VISCOSITY_Pa_s, which has the wrong units

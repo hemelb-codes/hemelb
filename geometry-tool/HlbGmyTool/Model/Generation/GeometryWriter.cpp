@@ -9,8 +9,8 @@
 
 #include "io/formats/formats.h"
 #include "io/formats/geometry.h"
-#include "io/writers/xdr/XdrFileWriter.h"
-#include "io/writers/xdr/XdrMemWriter.h"
+#include "io/writers/XdrFileWriter.h"
+#include "io/writers/XdrMemWriter.h"
 
 using hemelb::io::formats::geometry;
 
@@ -26,7 +26,7 @@ GeometryWriter::GeometryWriter(const std::string& OutputGeometryFile,
   }
 
   {
-    hemelb::io::writers::xdr::XdrFileWriter encoder(this->OutputGeometryFile);
+    hemelb::io::XdrFileWriter encoder(this->OutputGeometryFile);
 
     // Write the preamble
 
@@ -74,7 +74,7 @@ GeometryWriter::GeometryWriter(const std::string& OutputGeometryFile,
     // Setup the encoder for the header
     this->headerBufferLength = this->bodyStart - this->headerStart;
     this->headerBuffer = new char[this->headerBufferLength];
-    this->headerEncoder = new hemelb::io::writers::xdr::XdrMemWriter(
+    this->headerEncoder = new hemelb::io::XdrMemWriter(
         this->headerBuffer, this->headerBufferLength);
   }
   // "encoder" declared in the block above will now have been destructed,

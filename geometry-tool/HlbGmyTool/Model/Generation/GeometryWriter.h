@@ -11,8 +11,8 @@
 
 #include "Index.h"
 
-#include "io/writers/xdr/XdrWriter.h"
-using hemelb::io::writers::xdr::XdrWriter;
+#include "io/writers/XdrWriter.h"
+using hemelb::io::XdrWriter;
 
 class BlockWriter;
 class BufferPool;

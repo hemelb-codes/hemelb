@@ -4,9 +4,9 @@
 // license in the file LICENSE.
 
 #include <cassert>
-#include "io/writers/xdr/XdrMemReader.h"
+#include "io/readers/XdrMemReader.h"
 
-namespace hemelb::io::writers::xdr
+namespace hemelb::io
 {
   // Constructor to create an Xdr object based on a memory buffer
   XdrMemReader::XdrMemReader(const char* buf, unsigned int dataLength)

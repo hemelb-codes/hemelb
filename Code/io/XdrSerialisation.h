@@ -3,21 +3,16 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_IO_WRITERS_XDR_XDRSERIALISATION_H
-#define HEMELB_IO_WRITERS_XDR_XDRSERIALISATION_H
+#ifndef HEMELB_IO_XDRSERIALISATION_H
+#define HEMELB_IO_XDRSERIALISATION_H
+
+#include <type_traits>
+#include <iterator>
 
 #include <arpa/inet.h>
 
-namespace hemelb
-{
-  namespace io
-  {
-    namespace writers
-    {
-      namespace xdr
-      {
-	namespace detail {
-	  // Implementation details!
+namespace hemelb::io::xdr {
+	  // Really implementation details of the XDR coding
 
 	  // Return the XDR representation size of a type
 	  template <typename T>
@@ -205,10 +200,6 @@ namespace hemelb
 	    boi_traits_nonaddable<I>
 	    >::type;
 
-	} // namespace detail
-      }
-    }
-  }
 }
 
 #endif

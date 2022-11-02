@@ -3,15 +3,15 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_IO_WRITERS_XDR_XDRFILEREADER_H
-#define HEMELB_IO_WRITERS_XDR_XDRFILEREADER_H
+#ifndef HEMELB_IO_READERS_XDRFILEREADER_H
+#define HEMELB_IO_READERS_XDRFILEREADER_H
 
 #include <cstdio>
 #include <memory>
 #include <vector>
-#include "io/writers/xdr/XdrReader.h"
+#include "io/readers/XdrReader.h"
 
-namespace hemelb::io::writers::xdr
+namespace hemelb::io
 {
 
   // Deserialise from a file given by path.
@@ -31,4 +31,4 @@ namespace hemelb::io::writers::xdr
 
 }
 
-#endif  // HEMELB_IO_WRITERS_XDR_XDRFILEREADER_H
+#endif  // HEMELB_IO_READERS_XDRFILEREADER_H

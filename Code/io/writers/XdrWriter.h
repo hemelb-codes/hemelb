@@ -3,28 +3,23 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_IO_WRITERS_XDR_XDRWRITER_H
-#define HEMELB_IO_WRITERS_XDR_XDRWRITER_H
+#ifndef HEMELB_IO_WRITERS_XDRWRITER_H
+#define HEMELB_IO_WRITERS_XDRWRITER_H
 
 #include <cassert>
 
 #include "io/writers/Writer.h"
-#include "io/writers/xdr/XdrSerialisation.h"
+#include "io/XdrSerialisation.h"
 
-namespace hemelb
+namespace hemelb::io
 {
-  namespace io
-  {
-    namespace writers
-    {
-      namespace xdr
-      {
+
 	// Base XDR writer - mainly to give a common base class for
 	// the generic ones.
 	class XdrWriter : public Writer {
 	protected:
-	  virtual void writeFieldSeparator();
-	  virtual void writeRecordSeparator();
+	  void writeFieldSeparator() override;
+	  void writeRecordSeparator() override;
 	};
 
 	// Main XDR writer class template
@@ -39,7 +34,7 @@ namespace hemelb
 	//
 	// Resource - a resource we might potentially use to store data
 	template<typename ByteOutputIterator,
-		 typename Resource = detail::Null>
+		 typename Resource = xdr::Null>
 	class XdrMetaWriter : public XdrWriter
 	{
 	protected:
@@ -51,7 +46,7 @@ namespace hemelb
 
 	  // Some of the following could be an empty struct depending
 	  // on the traits for the iterator
-	  using boi_traits = detail::boi_traits<ByteOutputIterator>;
+	  using boi_traits = xdr::boi_traits<ByteOutputIterator>;
 	  typename boi_traits::counter_type bytes_written;
 	  typename boi_traits::start_type start;
 	  typename boi_traits::end_type end;
@@ -81,7 +76,7 @@ namespace hemelb
 	  // constructible have two nice easy constructors.
 	  //
 	  // We have an iterator that supports indefinite insertion
-	  XdrMetaWriter(ByteOutputIterator start_) :
+	  explicit XdrMetaWriter(ByteOutputIterator start_) :
 	    current(start_),
 	    bytes_written(0),
 	    start(start_),
@@ -95,46 +90,45 @@ namespace hemelb
 	    start(start_),
 	    end(end_)
 	  {
-	    static_assert(detail::is_rai<ByteOutputIterator>::value,
+	    static_assert(xdr::is_rai<ByteOutputIterator>::value,
 			  "Can't use this constructor for non-RandomAccessIterators!");
 	  }
 
-	  virtual ~XdrMetaWriter() {
-	  }
+	  ~XdrMetaWriter() override  = default;
 
-	  virtual unsigned int getCurrentStreamPosition() const {
+	  unsigned int getCurrentStreamPosition() const override {
 	    return boi_traits::get_position(bytes_written, start, current);
 	  }
 	protected:
 	  // Methods to simply write (no separators) which are virtual and
 	  // hence must be overriden.
-	  virtual void _write(int16_t const& intToWrite) {
+	  void _write(int16_t const& intToWrite) override {
 	    write(intToWrite);
 	  }
-	  virtual void _write(uint16_t const& uIntToWrite) {
+	  void _write(uint16_t const& uIntToWrite) override {
 	    write(uIntToWrite);
 	  }
-	  virtual void _write(int32_t const& intToWrite) {
+	  void _write(int32_t const& intToWrite) override {
 	    write(intToWrite);
 	  }
-	  virtual void _write(uint32_t const& uIntToWrite) {
+	  void _write(uint32_t const& uIntToWrite) override {
 	    write(uIntToWrite);
 	  }
-	  virtual void _write(int64_t const& intToWrite) {
+	  void _write(int64_t const& intToWrite) override {
 	    write(intToWrite);
 	  }
-	  virtual void _write(uint64_t const& uIntToWrite) {
+	  void _write(uint64_t const& uIntToWrite) override {
 	    write(uIntToWrite);
 	  }
 
-	  virtual void _write(double const& doubleToWrite) {
+	  void _write(double const& doubleToWrite) override {
 	    write(doubleToWrite);
 	  }
-	  virtual void _write(float const& floatToWrite) {
+	  void _write(float const& floatToWrite) override {
 	    write(floatToWrite);
 	  }
 
-	  virtual void _write(const std::string& stringToWrite) {
+	  void _write(const std::string& stringToWrite) override {
 	    // The standard defines a string of n (numbered 0 through
 	    // n-1) ASCII bytes to be the number n encoded as an
 	    // unsigned integer (as described above), and followed by
@@ -156,30 +150,26 @@ namespace hemelb
 
 	  template <typename T>
 	  void write(T const& valToWrite) {
-	    constexpr auto buf_size = detail::xdr_serialised_size<T>();
+	    constexpr auto buf_size = xdr::xdr_serialised_size<T>();
 	    // If we have an end then we must have space to store the serialised value
 	    assert(boi_traits::check_space(end, current, buf_size));
 
 	    char buf[buf_size];
-	    detail::xdr_serialise(valToWrite, buf);
+	    xdr::xdr_serialise(valToWrite, buf);
 	    current = std::copy(buf, buf + buf_size, current);
 	    bytes_written += buf_size;
 	  }
 	};
 
-      } // namespace xdr
-    } // namespace writers
-
     template <typename ItT>
-    writers::xdr::XdrMetaWriter<ItT> MakeXdrWriter(ItT start) {
-      return writers::xdr::XdrMetaWriter<ItT>(start);
+    XdrMetaWriter<ItT> MakeXdrWriter(ItT start) {
+      return XdrMetaWriter<ItT>(start);
     }
     template <typename ItT>
-    writers::xdr::XdrMetaWriter<ItT> MakeXdrWriter(ItT start, ItT end) {
-      return writers::xdr::XdrMetaWriter<ItT>(start, end);
+    XdrMetaWriter<ItT> MakeXdrWriter(ItT start, ItT end) {
+      return XdrMetaWriter<ItT>(start, end);
     }
 
-  }
 }
 
-#endif //HEMELB_IO_WRITERS_XDR_XDRWRITER_H
+#endif //HEMELB_IO_WRITERS_XDRWRITER_H

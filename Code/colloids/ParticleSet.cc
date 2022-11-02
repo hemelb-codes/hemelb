@@ -8,7 +8,7 @@
 #include "colloids/BoundaryConditions.h"
 #include <algorithm>
 #include "log/Logger.h"
-#include "io/writers/xdr/XdrMemWriter.h"
+#include "io/writers/XdrMemWriter.h"
 #include "io/formats/formats.h"
 #include "io/formats/colloids.h"
 
@@ -56,7 +56,7 @@ namespace hemelb
       {
         // Write out the header information from core 0
         buffer.resize(io::formats::colloids::MagicLength);
-        io::writers::xdr::XdrMemWriter writer(&buffer[0], io::formats::colloids::MagicLength);
+        io::XdrMemWriter writer(&buffer[0], io::formats::colloids::MagicLength);
         writer << (uint32_t) io::formats::HemeLbMagicNumber;
         writer << (uint32_t) io::formats::colloids::MagicNumber;
         writer << (uint32_t) io::formats::colloids::VersionNumber;
@@ -115,7 +115,7 @@ namespace hemelb
       }
 
       // Create an XDR writer and write all the particles for this processor.
-      io::writers::xdr::XdrMemWriter writer(&buffer.front(), maxSize);
+      io::XdrMemWriter writer(&buffer.front(), maxSize);
 
       for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end();
           iter++)
@@ -124,7 +124,7 @@ namespace hemelb
         if (particle.GetOwnerRank() == localRank)
         {
           particle.OutputInformation();
-          particle.WriteToStream(timestep, * ((io::writers::Writer*) &writer));
+          particle.WriteToStream(timestep, * ((io::Writer*) &writer));
         }
       }
 

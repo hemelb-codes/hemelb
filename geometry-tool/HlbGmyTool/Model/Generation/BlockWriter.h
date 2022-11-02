@@ -8,7 +8,7 @@
 
 #include <stddef.h>
 #include <string>
-#include "io/writers/xdr/XdrMemWriter.h"
+#include "io/writers/XdrMemWriter.h"
 
 class GeometryWriter;
 class BufferPool;
@@ -39,7 +39,7 @@ class BlockWriter {
 
  protected:
   char* buffer;
-  hemelb::io::writers::xdr::XdrMemWriter* writer;
+  hemelb::io::XdrMemWriter* writer;
   BufferPool* bufferPool;
   unsigned int nFluidSites;
   unsigned int CompressedBlockLength;

@@ -9,13 +9,8 @@
 #include <cstdint>
 #include <string>
 
-namespace hemelb
+namespace hemelb::io
 {
-  namespace io
-  {
-    namespace writers
-    {
-
       class Writer
       {
         public:
@@ -40,9 +35,9 @@ namespace hemelb
           // Function to get the current position of writing in the stream.
           virtual unsigned int getCurrentStreamPosition() const = 0;
 
-          virtual ~Writer() =0;
+          virtual ~Writer() = default;
         protected:
-          Writer();
+          Writer() = default;
 
           // Functions for formatting control
           virtual void writeFieldSeparator() = 0;
@@ -63,15 +58,6 @@ namespace hemelb
           virtual void _write(const std::string& floatToWrite) = 0;
       };
 
-    /*template <>
-     inline Writer& Writer::operator<< <enum Writer::Separator> (enum Writer::Separator const & value) {
-     writeRecordSeparator();
-     return *this;
-     }*/
-
-    } // namespace writer
-
-  }
 }
 
 #endif // HEMELB_IO_WRITERS_WRITER_H

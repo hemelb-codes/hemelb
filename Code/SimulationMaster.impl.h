@@ -15,7 +15,7 @@
 #include "configuration/SimConfig.h"
 #include "extraction/PropertyActor.h"
 #include "extraction/LbDataSourceIterator.h"
-#include "io/writers/xdr/XdrFileWriter.h"
+#include "io/writers/XdrFileWriter.h"
 #include "util/utilityFunctions.h"
 #include "geometry/GeometryReader.h"
 #include "geometry/Domain.h"

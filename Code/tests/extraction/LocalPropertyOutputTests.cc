@@ -9,7 +9,7 @@
 #include <catch2/catch.hpp>
 
 #include "io/formats/extraction.h"
-#include "io/writers/xdr/XdrMemReader.h"
+#include "io/readers/XdrMemReader.h"
 #include "extraction/PropertyOutputFile.h"
 #include "extraction/OutputField.h"
 #include "extraction/WholeGeometrySelector.h"
@@ -65,7 +65,7 @@ namespace hemelb
 	REQUIRE(expectedSize == nRead);
 
 	// Create an XDR buffer reader to process the file for comparison
-	io::writers::xdr::XdrMemReader reader(contentsBuffer.get(), expectedSize);
+	io::XdrMemReader reader(contentsBuffer.get(), expectedSize);
 
 	// The timestep should be correct
 	uint64_t readTimestep;

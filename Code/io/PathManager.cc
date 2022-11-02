@@ -7,7 +7,6 @@
 
 #include "Exception.h"
 #include "configuration/CommandLine.h"
-#include "io/writers/null/NullWriter.h"
 
 namespace fs = std::filesystem;
 namespace hemelb::io

@@ -3,17 +3,10 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "io/writers/xdr/XdrVectorWriter.h"
+#include "io/writers/XdrVectorWriter.h"
 
-namespace hemelb
+namespace hemelb::io
 {
-  namespace io
-  {
-    namespace writers
-    {
-      namespace xdr
-      {
-
 	// Use the magic protected constructor.
 	// First function obj makes a std::vector<char>
 	// Second one creates a std::back_insert_iterator from it
@@ -36,7 +29,4 @@ namespace hemelb
 	  return res;
 	}
 
-      }
-    }
-  }
 }

@@ -3,16 +3,10 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "io/writers/xdr/XdrWriter.h"
+#include "io/writers/XdrWriter.h"
 
-namespace hemelb
+namespace hemelb::io
 {
-  namespace io
-  {
-    namespace writers
-    {
-      namespace xdr
-      {
 
         // No field/record separators in XDR files
         void XdrWriter::writeFieldSeparator()
@@ -22,7 +16,4 @@ namespace hemelb
         {
         }
 
-      }
-    }
-  }
 }

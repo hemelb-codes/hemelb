@@ -3,15 +3,14 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "io/writers/Writer.h"
+#include "io/writers/XdrMemWriter.h"
 
 namespace hemelb::io
 {
 
-      Writer& Writer::operator<<(enum Writer::Separator const & value)
-      {
-        writeRecordSeparator();
-        return *this;
-      }
+    XdrMemWriter::XdrMemWriter(char* dataBuffer, unsigned int dataLength) :
+            XdrMetaWriter<char*>(dataBuffer, dataBuffer + dataLength)
+    {
+    }
 
 }

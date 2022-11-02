@@ -5,9 +5,9 @@
 #include <cassert>
 #include <cstring>
 
-#include "io/writers/xdr/XdrFileReader.h"
+#include "io/readers/XdrFileReader.h"
 
-namespace hemelb::io::writers::xdr
+namespace hemelb::io
 {
   namespace {
     void fclose_deleter(std::FILE* fh) {

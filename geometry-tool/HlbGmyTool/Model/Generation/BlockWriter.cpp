@@ -29,8 +29,8 @@ void BlockWriter::Reset() {
   this->buffer = this->bufferPool->New();
 
   delete this->writer;
-  this->writer = new hemelb::io::writers::xdr::XdrMemWriter(
-      this->buffer, this->bufferPool->GetSize());
+  this->writer =
+      new hemelb::io::XdrMemWriter(this->buffer, this->bufferPool->GetSize());
 }
 
 BlockWriter::~BlockWriter() {

@@ -56,9 +56,9 @@ set(hemelb_cpps
   geometry/SiteDataBare.cc
   lb/lattices/D3Q27.cc
   io/formats/geometry.cc
-  io/writers/xdr/XdrFileWriter.cc
-  io/writers/xdr/XdrMemWriter.cc
-  io/writers/xdr/XdrWriter.cc
+  io/writers/XdrFileWriter.cc
+  io/writers/XdrMemWriter.cc
+  io/writers/XdrWriter.cc
   io/writers/Writer.cc
 )
 list(TRANSFORM hemelb_cpps PREPEND "${HEMELB_CODE_DIR}/")
