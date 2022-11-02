@@ -48,10 +48,6 @@ namespace hemelb::io
       return outputDir;
     }
 
-    void PathManager::EmptyOutputDirectories() const
-    {
-    }
-
     const fs::path& PathManager::GetDataExtractionPath() const
     {
       return extractionDir;

@@ -63,12 +63,6 @@ namespace hemelb
          * @param simConfig The input configuration instance, constructed from the input xml file.
          */
         void SaveConfiguration(configuration::SimConfig * const simConfig) const;
-        /**
-         * Delete the output data.
-         * This deletes config files, and the report.
-         * It is used if the simulation needs to reset.
-         */
-        void EmptyOutputDirectories() const;
 
         /**
          * Return the path that property extraction output should go to.
@@ -84,7 +78,6 @@ namespace hemelb
         [[nodiscard]] path GetRBCOutputPathWithSubdir(std::string const& subdirectoryName) const;
 
       private:
-        //void GuessOutputDir(); //! String processing to generate an appropriate outptu folder name.
         path outputDir;
         path inputFile;
         path colloidFile;
