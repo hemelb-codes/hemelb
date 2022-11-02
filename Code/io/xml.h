@@ -273,9 +273,13 @@ namespace hemelb::io::xml
   /**
    * Want to model the ForwardIterator concept
    */
-  class ChildIterator : public std::iterator<std::forward_iterator_tag, Element>
+  class ChildIterator
   {
   public:
+      using value_type = Element;
+      using reference = Element&;
+      using pointer = Element*;
+      using iterator_category = std::forward_iterator_tag;
     /**
      * Default constructor
      */
@@ -293,12 +297,6 @@ namespace hemelb::io::xml
      * @param other
      */
     ChildIterator(const ChildIterator& other);
-
-    // Default is fine
-    // /**
-    //  * Destructor.
-    //  */
-    // ~ChildIterator();
 
     /**
      * Copy assignment
