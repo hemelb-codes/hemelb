@@ -31,7 +31,7 @@ namespace hemelb
 							       Comms());
       CopyResourceToTempdir("four_cube.xml");
       CopyResourceToTempdir("four_cube.gmy");
-      auto simConfig = std::unique_ptr<configuration::SimConfig>{configuration::SimConfig::New("four_cube.xml")};
+      auto simConfig = configuration::SimConfig::New("four_cube.xml");
 
       SECTION("TestRead") {
 	LADD_FAIL();

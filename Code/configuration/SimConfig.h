@@ -106,10 +106,10 @@ namespace hemelb
 
         using IoletPtr = util::clone_ptr<lb::iolets::InOutLet>;
 
-        static SimConfig* New(const std::string& path);
+        static std::unique_ptr<SimConfig> New(const path& p);
 
       protected:
-	SimConfig(const std::string& path);
+	SimConfig(const path& p);
         void Init();
 
       public:
@@ -169,9 +169,9 @@ namespace hemelb
         {
           return propertyOutputs;
         }
-        const std::string GetColloidConfigPath() const
+        path const& GetColloidConfigPath() const
         {
-          return colloidConfigPath;
+          return xmlFilePath;
         }
         /**
          * True if the XML file has a section specifying colloids.
@@ -306,16 +306,15 @@ namespace hemelb
         void DoIOForConvergenceCriterion(const io::xml::Element& criterionEl);
 
         path xmlFilePath;
-        io::xml::Document* rawXmlDoc;
+        std::unique_ptr<io::xml::Document> rawXmlDoc;
         path dataFilePath;
 
         lb::StressTypes stressType;
         std::vector<extraction::PropertyOutputFile> propertyOutputs;
-        std::string colloidConfigPath;
         /**
          * True if the file has a colloids section.
          */
-        bool hasColloidSection;
+        bool hasColloidSection = false;
 
         MonitoringConfig monitoringConfig; ///< Configuration of various checks/tests
 
@@ -333,13 +332,13 @@ namespace hemelb
         std::vector<IoletPtr> outlets;
         PhysicalTime timeStepSeconds;
         unsigned long totalTimeSteps;
-        unsigned long warmUpSteps;
+        unsigned long warmUpSteps = 0;
         PhysicalDistance voxelSizeMetres;
         PhysicalPosition geometryOriginMetres;
 	PhysicalDensity fluidDensityKgm3;
 	PhysicalDynamicViscosity fluidViscosityPas;
 	PhysicalPressure reference_pressure_mmHg;
-        util::UnitConverter* unitConverter;
+        util::UnitConverter* unitConverter = nullptr;
         ICConfig icConfig;
       private:
     };

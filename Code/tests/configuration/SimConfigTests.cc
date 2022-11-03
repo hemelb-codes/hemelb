@@ -36,7 +36,7 @@ namespace hemelb
       SECTION("0_2_0_Read") {
 	LADD_FAIL();
 	// smoke test the configuration as having loaded OK
-	auto config = std::unique_ptr<SimConfig>(SimConfig::New(resources::Resource("config0_2_0.xml").Path()));
+	auto config = SimConfig::New(resources::Resource("config0_2_0.xml").Path());
 	REQUIRE(3000lu == config->GetTotalTimeSteps());
 	REQUIRE(0.0001 == config->GetTimeStepLength());
 	auto inlet = util::clone_dynamic_cast<lb::iolets::InOutLetCosine>(config->GetInlets()[0]);

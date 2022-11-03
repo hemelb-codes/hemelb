@@ -57,7 +57,7 @@ namespace hemelb
     fileManager = std::make_shared<hemelb::io::PathManager>(options,
                                                             IsCurrentProcTheIOProc(),
                                                             GetProcessorCount());
-    simConfig.reset(hemelb::configuration::SimConfig::New(fileManager->GetInputFile()));
+    simConfig = hemelb::configuration::SimConfig::New(fileManager->GetInputFile());
     unitConverter = &simConfig->GetUnitConverter();
     monitoringConfig = simConfig->GetMonitoringConfiguration();
 

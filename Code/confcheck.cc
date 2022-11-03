@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
   // When #755 is closed, remove MPI
   hemelb::net::MpiEnvironment mpi(argc, argv);
   try {
-    auto conf = std::unique_ptr<SimConfig>{SimConfig::New(xml_path)};
+    auto conf = SimConfig::New(xml_path);
     return 0;
   } catch (std::exception& e) {
     std::cerr << "Error reading HemeLB configuration XML file: "

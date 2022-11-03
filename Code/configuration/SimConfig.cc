@@ -36,17 +36,16 @@ namespace hemelb
     }
 
 
-    SimConfig* SimConfig::New(const std::string& path)
+    std::unique_ptr<SimConfig> SimConfig::New(const path& path)
     {
-      SimConfig* ans = new SimConfig(path);
+      auto ans = std::unique_ptr<SimConfig>{new SimConfig{path}};
       ans->Init();
       return ans;
     }
 
 
-    SimConfig::SimConfig(const std::string& path) :
-        xmlFilePath(path), rawXmlDoc(nullptr), hasColloidSection(false), warmUpSteps(0),
-            unitConverter(nullptr)
+    SimConfig::SimConfig(const path& path) :
+        xmlFilePath(path)
     {
     }
 
@@ -56,16 +55,12 @@ namespace hemelb
       {
         throw Exception() << "Config file '" << xmlFilePath << "' does not exist";
       }
-      rawXmlDoc = new io::xml::Document(xmlFilePath);
-      colloidConfigPath = xmlFilePath;
+      rawXmlDoc = std::make_unique<io::xml::Document>(xmlFilePath);
       DoIO(rawXmlDoc->GetRoot());
     }
 
     SimConfig::~SimConfig()
     {
-      delete rawXmlDoc;
-      rawXmlDoc = nullptr;
-
       delete unitConverter;
       unitConverter = nullptr;
 

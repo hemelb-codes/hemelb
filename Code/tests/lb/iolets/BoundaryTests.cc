@@ -62,7 +62,7 @@ namespace hemelb
 	CopyResourceToTempdir("iolet.txt");
 	MoveToTempdir();
 
-	auto fileInletConfig = std::unique_ptr<configuration::SimConfig>{configuration::SimConfig::New(Resource("config_file_inlet.xml").Path())};
+	auto fileInletConfig = configuration::SimConfig::New(Resource("config_file_inlet.xml").Path());
 
 	// Reloading simState to ensure the time step size from config_file_inlet.xml is indeed used in HemeLB.
 	simState.reset(new hemelb::lb::SimulationState{fileInletConfig->GetTimeStepLength(), fileInletConfig->GetTotalTimeSteps()});
