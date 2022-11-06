@@ -8,7 +8,7 @@ namespace hemelb::reporting {
 
     void BuildInfo::Report(Dict &dictionary) {
         Dict build = dictionary.AddSectionDictionary("BUILD");
-        build.SetValue("REVISION", mercurial_revision_number);
+        build.SetValue("REVISION", git_revision_number);
         build.SetValue("TYPE", build_type);
         build.SetValue("OPTIMISATION", optimisation);
         build.SetValue("USE_SSE3", use_sse3);
