@@ -9,8 +9,6 @@
 
 namespace hemelb::reporting
 {
-  namespace reporting
-  {
     static const std::string git_revision_number="@HEMELB_REVISION_NUMBER@";
     static const std::string build_type="@CMAKE_BUILD_TYPE@";
     static const std::string optimisation="@HEMELB_OPTIMISATION@";
