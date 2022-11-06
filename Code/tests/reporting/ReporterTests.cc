@@ -114,7 +114,7 @@ namespace hemelb
 	AssertTemplate("", "{{#UNSTABLE}} unstable{{/UNSTABLE}}");
 	AssertTemplate("R0S64 R1S1000 R2S2000 R3S3000 R4S4000 ",
 		       "{{#PROCESSOR}}R{{RANK}}S{{SITES}} {{/PROCESSOR}}");
-	AssertTemplate(hemelb::reporting::mercurial_revision_number, "{{#BUILD}}{{REVISION}}{{/BUILD}}");
+	AssertTemplate(hemelb::reporting::git_revision_number, "{{#BUILD}}{{REVISION}}{{/BUILD}}");
 	AssertTemplate(hemelb::reporting::build_time, "{{#BUILD}}{{TIME}}{{/BUILD}}");
 	AssertValue("0.000100", "TIME_STEP_LENGTH");
 	AssertValue("1000", "TOTAL_TIME_STEPS");
