@@ -7,7 +7,7 @@
 #define HEMELB_EXTRACTION_LBDATASOURCEITERATOR_H
 
 #include "extraction/IterableDataSource.h"
-#include "geometry/LatticeData.h"
+#include "geometry/FieldData.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "util/UnitConverter.h"
 
@@ -18,6 +18,7 @@ namespace hemelb
     class LbDataSourceIterator : public IterableDataSource
     {
       public:
+
         /**
          * Constructs an iterator using the LBM as a source.
          * @param propertyCache
@@ -25,7 +26,7 @@ namespace hemelb
          * @return
          */
         LbDataSourceIterator(const lb::MacroscopicPropertyCache& propertyCache,
-                             const geometry::LatticeData& data, int rank,
+                             const geometry::FieldData& data, int rank,
                              const util::UnitConverter& converter);
 
         /**
@@ -152,7 +153,7 @@ namespace hemelb
         /**
          * The object containing information about the lattice.
          */
-        const geometry::LatticeData& data;
+        const geometry::FieldData& data;
         /**
          * The rank of the current process in the LB communicator.
          */

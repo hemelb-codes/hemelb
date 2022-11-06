@@ -37,7 +37,7 @@ namespace hemelb {
       using PointScalarData = std::vector<ScalarField>;
 
       // Where are we writing to?
-      enum class Mode {file, string};
+      enum class Storage {file, string};
 
       virtual ~MeshIO() = default;
 
@@ -79,12 +79,12 @@ namespace hemelb {
 
     private:
       // Derived class implement these to actually do the serialisation.
-      virtual MeshPtr read(Mode,
-			   std::string const& filename_or_data,
-			   bool fixFacetOrientation) const = 0;
-      virtual std::string write(Mode m, std::string const& filename,
-				MeshData::Vertices const &, MeshData::Facets const &,
-				util::UnitConverter const& c, PointScalarData const& data) const = 0;
+      virtual MeshPtr read(Storage,
+                           std::string const& filename_or_data,
+                           bool fixFacetOrientation) const = 0;
+      virtual std::string write(Storage m, std::string const& filename,
+                                MeshData::Vertices const &, MeshData::Facets const &,
+                                util::UnitConverter const& c, PointScalarData const& data) const = 0;
     };
 
     // Format is from T. Krueger's thesis
@@ -92,15 +92,15 @@ namespace hemelb {
     public:
       ~KruegerMeshIO() = default;
 
-      MeshPtr read(Mode,
-		   std::string const &filename_or_data,
-		   bool fixFacetOrientation) const override;
+      MeshPtr read(Storage,
+                   std::string const &filename_or_data,
+                   bool fixFacetOrientation) const override;
 
-      std::string write(Mode m,
-			std::string const &filename,
-			MeshData::Vertices const &, MeshData::Facets const &,
-			util::UnitConverter const& c,
-			PointScalarData const& data) const override;
+      std::string write(Storage m,
+                        std::string const &filename,
+                        MeshData::Vertices const &, MeshData::Facets const &,
+                        util::UnitConverter const& c,
+                        PointScalarData const& data) const override;
     };
 
     // VTK XML PolyData format
@@ -108,19 +108,19 @@ namespace hemelb {
     public:
       using PolyDataPtr = vtkSmartPointer<vtkPolyData>;
       // Helper member function, exposed to allow testing of the fix orientations
-      std::tuple<MeshPtr, PolyDataPtr> readUnoriented(Mode, std::string const &) const;
+      std::tuple<MeshPtr, PolyDataPtr> readUnoriented(Storage, std::string const &) const;
 
       ~VTKMeshIO() = default;
 
-      MeshPtr read(Mode,
-		   std::string const &filename_or_data,
-		   bool fixFacetOrientation) const override;
+      MeshPtr read(Storage,
+                   std::string const &filename_or_data,
+                   bool fixFacetOrientation) const override;
 
-      std::string write(Mode m,
-			std::string const &filename,
-			MeshData::Vertices const &, MeshData::Facets const &,
-			util::UnitConverter const& c,
-			PointScalarData const& data) const override;
+      std::string write(Storage m,
+                        std::string const &filename,
+                        MeshData::Vertices const &, MeshData::Facets const &,
+                        util::UnitConverter const& c,
+                        PointScalarData const& data) const override;
 
     };
 

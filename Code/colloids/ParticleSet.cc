@@ -38,7 +38,7 @@ namespace hemelb
         }
     };
 
-    ParticleSet::ParticleSet(const geometry::LatticeData& latDatLBM,
+    ParticleSet::ParticleSet(const geometry::Domain& latDatLBM,
                              io::xml::Element& particlesElem,
                              lb::MacroscopicPropertyCache& propertyCache,
                              const hemelb::lb::LbmParameters *lbmParams,

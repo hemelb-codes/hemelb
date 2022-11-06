@@ -8,7 +8,6 @@
 
 #include <catch2/catch.hpp>
 
-#include "util/fileutils.h"
 #include "Traits.h"
 #include "SimulationMaster.h"
 #include "redblood/Cell.h"
@@ -44,9 +43,9 @@ namespace hemelb
 								 Dimensionless cell,
 								 Dimensionless wall) const {
         CopyResourceToTempdir(xml_name);
-        if (util::DoesDirectoryExist("results"))
+        if (std::filesystem::exists("results"))
         {
-          system("rm -rf results");
+            std::filesystem::remove_all("results");
         }
         DeleteXMLInput(xml_name, { "inlets", "inlet", "insertcell" });
         DeleteXMLInput(xml_name, { "inlets", "inlet", "flowextension" });
@@ -60,7 +59,7 @@ namespace hemelb
         ModifyXMLInput(xml_name, { "redbloodcells", "cell2Wall", "cutoff", "value" }, 2);
         auto options = std::make_shared<configuration::CommandLine>(argc, argv);
         auto const master = std::make_shared<SimulationMaster<TRAITS>>(*options, Comms());
-        helpers::LatticeDataAccess(&master->GetLatticeData()).ZeroOutForces();
+        helpers::LatticeDataAccess(&master->GetFieldData()).ZeroOutForces();
         return master;
       }
 

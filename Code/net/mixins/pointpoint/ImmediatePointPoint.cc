@@ -10,7 +10,7 @@ namespace hemelb
 {
   namespace net
   {
-    void ImmediatePointPoint::RequestSendImpl(void* pointer, int count, proc_t rank,
+    void ImmediatePointPoint::RequestSendImpl(void const* pointer, int count, proc_t rank,
                                               MPI_Datatype type)
     {
       HEMELB_MPI_CALL(MPI_Ssend, (pointer, count, type, rank, 10, communicator));

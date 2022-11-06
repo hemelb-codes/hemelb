@@ -18,14 +18,20 @@ namespace hemelb
   {
     namespace net
     {
-      class LabelledRequest : public hemelb::net::SimpleRequest {
+        template <bool is_const>
+    class LabelledRequest : public hemelb::net::SimpleRequest<is_const> {
       public:
+        using Base = hemelb::net::SimpleRequest<is_const>;
 	const std::string Label;
-	LabelledRequest(void *pointer, int count, MPI_Datatype type, proc_t rank, const std::string &label);
-	virtual bool EnvelopeIdentical(const SimpleRequest & other);
-	virtual bool PayloadIdentical(const SimpleRequest & other);
-	virtual void Unpack(SimpleRequest & other);
+	LabelledRequest(typename Base::ptr pointer, int count, MPI_Datatype type, proc_t rank, const std::string &label);
+	bool EnvelopeIdentical(const Base& other);
+	bool PayloadIdentical(const Base & other);
+	void Unpack(Base& other);
       };
+
+        // Declare that we will explicitly instantiate
+        extern template class LabelledRequest<true>;
+        extern template class LabelledRequest<false>;
     }
   }
 }

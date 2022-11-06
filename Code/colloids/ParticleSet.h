@@ -7,13 +7,15 @@
 #define HEMELB_COLLOIDS_PARTICLESET_H
 
 #include <vector>
-#include "geometry/LatticeData.h"
+
+#include "units.h"
+#include "colloids/Particle.h"
+#include "geometry/Domain.h"
 #include "io/xml.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "net/mpi.h"
-#include "colloids/Particle.h"
+#include "net/net.h"
 #include "net/IOCommunicator.h"
-#include "units.h"
 
 namespace hemelb
 {
@@ -24,7 +26,7 @@ namespace hemelb
     {
       public:
         /** constructor - gets local particle information from xml config file */
-        ParticleSet(const geometry::LatticeData& latDatLBM, io::xml::Element& xml,
+        ParticleSet(const geometry::Domain& latDatLBM, io::xml::Element& xml,
                     lb::MacroscopicPropertyCache& propertyCache,
                     const hemelb::lb::LbmParameters *lbmParams,
                     std::vector<proc_t>& neighbourProcessors, const net::IOCommunicator& ioComms_,
@@ -81,7 +83,7 @@ namespace hemelb
         std::map<unsigned long, util::Vector3D<double> > velocityMap;
 
         /** contains useful geometry manipulation functions */
-        const geometry::LatticeData& latDatLBM;
+        const geometry::Domain& latDatLBM;
 
         /**
          * primary mechanism for interacting with the LB simulation

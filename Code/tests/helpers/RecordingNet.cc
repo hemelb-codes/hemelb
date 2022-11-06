@@ -27,30 +27,28 @@ namespace hemelb
        */
       void RecordingNet::ReceivePointToPoint()
       {
-	for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin();
-	     it != receiveProcessorComms.end(); ++it)
-	  {
-	    for (ProcComms::iterator message = it->second.begin(); message != it->second.end();
-		 message++)
+          for (auto& [pid, pc]: receiveProcessorComms)
+    	  {
+              for (auto& message: pc)
               {
 
-                if (requiredReceipts[message->Rank].size() == 0)
+                if (requiredReceipts[message.Rank].size() == 0)
 		  {
 		    // It should not be the case, that a request is made, but there is no recorded assertion in the list of recorded assertions.
 		    // i.e., we've popped off all the recorded requests, and there are none left to match the request we just received.
-		    REQUIRE(requiredReceipts[message->Rank].size() != 0);
+		    REQUIRE(requiredReceipts[message.Rank].size() != 0);
 		    return;
 		  }
 
-                REQUIRE(requiredReceipts[message->Rank].front().EnvelopeIdentical(*message));
-                requiredReceipts[message->Rank].front().Unpack(*message);
+                REQUIRE(requiredReceipts[message.Rank].front().EnvelopeIdentical(message));
+                requiredReceipts[message.Rank].front().Unpack(message);
 
                 // This assertion just checks that "Unpack" has done it's job.
                 // It shouldn't fail due to problems in tested code
                 // Would only fail due to memory screwups or bad code in this class's Unpack method.
-                REQUIRE(requiredReceipts[message->Rank].front().PayloadIdentical(*message));
+                REQUIRE(requiredReceipts[message.Rank].front().PayloadIdentical(message));
 
-                requiredReceipts[message->Rank].pop_front();
+                requiredReceipts[message.Rank].pop_front();
               }
 
 	  }
@@ -65,22 +63,19 @@ namespace hemelb
        */
       void RecordingNet::SendPointToPoint()
       {
-
-	for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin();
-	     it != sendProcessorComms.end(); ++it)
-	  {
-	    for (ProcComms::iterator message = it->second.begin(); message != it->second.end();
-		 message++)
+          for (auto& [pid, pc]: sendProcessorComms)
+          {
+              for (auto& message: pc)
               {
 
-                if (requiredSends[message->Rank].size() == 0)
+                if (requiredSends[message.Rank].size() == 0)
 		  {
-		    REQUIRE(requiredSends[message->Rank].size() != 0);
+		    REQUIRE(requiredSends[message.Rank].size() != 0);
 		    return;
 		  }
-                REQUIRE(requiredSends[message->Rank].front().EnvelopeIdentical(*message));
-                REQUIRE(requiredSends[message->Rank].front().PayloadIdentical(*message));
-                requiredSends[message->Rank].pop_front();
+                REQUIRE(requiredSends[message.Rank].front().EnvelopeIdentical(message));
+                REQUIRE(requiredSends[message.Rank].front().PayloadIdentical(message));
+                requiredSends[message.Rank].pop_front();
               }
 
 	  }
@@ -100,17 +95,14 @@ namespace hemelb
        */
       void RecordingNet::ExpectationsAllCompleted()
       {
-	for (std::map<proc_t, BaseProcComms<LabelledRequest> >::iterator receipts_from_core =
-	       requiredReceipts.begin(); receipts_from_core != requiredReceipts.end();
-	     receipts_from_core++)
-	  {
-	    REQUIRE(0 == receipts_from_core->second.size());
-	  }
-	for (std::map<proc_t, BaseProcComms<LabelledRequest> >::iterator sends_to_core =
-	       requiredSends.begin(); sends_to_core != requiredSends.end(); sends_to_core++)
-	  {
-	    REQUIRE(0 == sends_to_core->second.size());
-	  }
+          for (auto& [_, from_pc]: requiredReceipts)
+          {
+              REQUIRE(0 == from_pc.size());
+          }
+          for (auto& [_, to_pc]: requiredSends)
+          {
+              REQUIRE(0 == to_pc.size());
+          }
       }
 
     }

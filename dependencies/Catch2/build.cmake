@@ -4,13 +4,13 @@
 # license in the file LICENSE.
 include_guard()
 
-find_file(CATCH2_TARBALL v2.13.0.tar.gz 
+find_file(CATCH2_TARBALL v2.13.9.tar.gz
   DOC "Path to download Catch2 (can be url http://)"
   PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
   )
 if(NOT CATCH2_TARBALL)
   message("No Catch2 source found, will download.")
-  set(CATCH2_TARBALL https://github.com/catchorg/Catch2/archive/v2.13.0.tar.gz
+  set(CATCH2_TARBALL https://github.com/catchorg/Catch2/archive/refs/tags/v2.13.9.tar.gz
     CACHE STRING "Path to download Catch2 (can be local file://)" FORCE)
 endif()
 ExternalProject_Add(

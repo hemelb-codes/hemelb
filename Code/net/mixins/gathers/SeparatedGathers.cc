@@ -71,12 +71,8 @@ namespace hemelb
 
     void SeparatedGathers::WaitGatherVs()
     {
-
-      for (std::map<proc_t, ProcComms>::iterator send_it = gatherVSendProcessorComms.begin();
-          send_it != gatherVSendProcessorComms.end(); ++send_it)
-      {
-
-        if (send_it->first == communicator.Rank())
+      for (auto& [pid, pc]: gatherVSendProcessorComms) {
+        if (pid == communicator.Rank())
         {
           int gather_index = 0;
 
@@ -86,7 +82,7 @@ namespace hemelb
             /***
              * Again, as for WaitGather, we assume that send/receive requests were placed in parallel ordering...
              */
-            SimpleRequest toself = send_it->second[gather_index];
+            SimpleRequest toself = pc[gather_index];
 
             HEMELB_MPI_CALL(MPI_Gatherv,
                             ( toself.Pointer, toself.Count, toself.Type, receive_it->Pointer, receive_it->Counts, receive_it->Displacements, receive_it->Type, communicator.Rank(), communicator));
@@ -96,11 +92,10 @@ namespace hemelb
         else
         {
 
-          for (ProcComms::iterator req = send_it->second.begin(); req != send_it->second.end();
-              req++)
+          for (auto& req: pc)
           {
             HEMELB_MPI_CALL(MPI_Gatherv,
-                            ( req->Pointer, req->Count, req->Type, nullptr, nullptr, nullptr, req->Type, send_it->first, communicator));
+                            ( req.Pointer, req.Count, req.Type, nullptr, nullptr, nullptr, req.Type, pid, communicator));
           }
 
         }

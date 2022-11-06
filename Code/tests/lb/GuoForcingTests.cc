@@ -5,11 +5,9 @@
 
 #include <random>
 #include <numeric>
-#include <iostream>
-
 #include <catch2/catch.hpp>
 
-#include "lb/lattices/D3Q15.h"
+#include "lb/lattices/D3Q19.h"
 #include "lb/lattices/Lattice.h"
 #include "lb/streamers/Streamers.h"
 #include "lb/kernels/GuoForcingLBGK.h"
@@ -37,18 +35,18 @@ namespace hemelb
       GuoForcingTests() : fourcube{}
       {
 	// Set forces equal to site index
-	size_t const nFluidSites(latDat->GetLocalFluidSiteCount());
+	size_t const nFluidSites = dom->GetLocalFluidSiteCount();
 	for (size_t site(0); site < nFluidSites; ++site) {
 	  latDat->GetSite(site).SetForce(GetMeAForce(site));
 	}
-	propertyCache = std::make_unique<lb::MacroscopicPropertyCache>(*simState, *latDat);
+	propertyCache = std::make_unique<lb::MacroscopicPropertyCache>(*simState, *dom);
       }
 
       // Tests the correct force is assigned to HydroVars, and that the right
       // specialization is used as well.
       void testHydroVarsGetForce()
       {
-	size_t const nFluidSites(latDat->GetLocalFluidSiteCount());
+	size_t const nFluidSites = dom->GetLocalFluidSiteCount();
 	for (size_t i(1); i < nFluidSites; i <<= 1) {
 	  // REQUIRE(helpers::is_zero(HydroVars(latDat->GetSite(i)).force - GetMeAForce(i)));
 	  REQUIRE(HydroVars(latDat->GetSite(i)).force == apprx_vec(GetMeAForce(i)));
@@ -337,7 +335,7 @@ namespace hemelb
 	// Lattice with a single non-zero distribution in the middle
 	// Same for forces
 	LatticeVector const position(2, 2, 2);
-	geometry::Site<geometry::LatticeData> const site(latDat->GetSite(position));
+	auto&& site = latDat->GetSite(position);
 	helpers::allZeroButOne<LatticeType>(latDat, position);
 
 	// Get collided distributions at this site
@@ -351,7 +349,7 @@ namespace hemelb
 	using lb::streamers::SimpleCollideAndStream;
 	using lb::collisions::Normal;
 	SimpleCollideAndStream<Normal<Kernel> > streamer(initParams);
-	streamer.StreamAndCollide(site.GetIndex(), 1, lbmParams, latDat, *propertyCache);
+	streamer.StreamAndCollide(site.GetIndex(), 1, lbmParams, *latDat, *propertyCache);
 
 	// Now check streaming worked correctly
 	for (size_t i(0); i < LatticeType::NUMVECTORS; ++i) {
@@ -367,7 +365,7 @@ namespace hemelb
 	// Lattice with a single non-zero distribution in the middle
 	// Same for forces
 	LatticeVector const position(1, 1, 1);
-	geometry::Site<geometry::LatticeData> const site(latDat->GetSite(position));
+	auto&& site = latDat->GetSite(position);
 	helpers::allZeroButOne<LatticeType>(latDat, position);
 
 	// Get collided distributions at this site
@@ -381,7 +379,7 @@ namespace hemelb
 	using lb::streamers::SimpleBounceBack;
 	using lb::collisions::Normal;
 	SimpleBounceBack<Normal<Kernel> >::Type streamer(initParams);
-	streamer.StreamAndCollide(site.GetIndex(), 1, lbmParams, latDat, *propertyCache);
+	streamer.StreamAndCollide(site.GetIndex(), 1, lbmParams, *latDat, *propertyCache);
 
 	distribn_t const * const actual = helpers::GetFNew<LatticeType>(latDat, position);
 	bool paranoia(false);

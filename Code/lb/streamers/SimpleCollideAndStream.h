@@ -38,12 +38,12 @@ namespace hemelb
 
           inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
-                                         geometry::LatticeData* latDat,
+                                         geometry::FieldData& latDat,
                                          lb::MacroscopicPropertyCache& propertyCache)
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
+              geometry::Site<geometry::FieldData> site = latDat.GetSite(siteIndex);
 
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site);
 
@@ -67,7 +67,7 @@ namespace hemelb
           }
 
           inline void DoPostStep(const site_t iFirstIndex, const site_t iSiteCount,
-                                 const LbmParameters* iLbmParams, geometry::LatticeData* bLatDat,
+                                 const LbmParameters* iLbmParams, geometry::FieldData& bLatDat,
                                  lb::MacroscopicPropertyCache& propertyCache)
           {
 

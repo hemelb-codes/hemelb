@@ -9,7 +9,7 @@
 #include "constants.h"
 #include "lb/LbmParameters.h"
 #include "lb/kernels/BaseKernel.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 
 namespace hemelb
 {
@@ -43,7 +43,7 @@ namespace hemelb
           typedef KernelImpl CKernel;
 
           inline void CalculatePreCollision(kernels::HydroVars<KernelImpl>& hydroVars,
-                                            const geometry::Site<geometry::LatticeData>& site)
+                                            const geometry::Site<geometry::FieldData>& site)
           {
             static_cast<CollisionImpl*>(this)->DoCalculatePreCollision(hydroVars, site);
           }

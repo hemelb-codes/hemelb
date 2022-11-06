@@ -6,12 +6,14 @@
 #include "reporting/Reporter.h"
 #include "ctemplate/template.h"
 
+namespace fs = std::filesystem;
+
 namespace hemelb
 {
   namespace reporting
   {
-    Reporter::Reporter(const std::string &apath, const std::string &inputFile) :
-        path(apath), dictionary("Reporting dictionary")
+    Reporter::Reporter(const fs::path& rd, const std::string &inputFile) :
+        report_dir(rd), dictionary("Reporting dictionary")
     {
       dictionary.SetValue("CONFIG", inputFile);
     }
@@ -21,16 +23,15 @@ namespace hemelb
       reportableObjects.push_back(reportable);
     }
 
-    void Reporter::Write(const std::string &ctemplate, const std::string &as)
+    void Reporter::Write(const fs::path& ctemplate, const std::string &as)
     {
       std::string output;
-      ctemplate::ExpandTemplate(ctemplate, ctemplate::STRIP_BLANK_LINES, dictionary.GetRaw(), &output);
-      std::string to = path + "/" + as;
-      std::fstream file(to.c_str(), std::ios_base::out);
+      ctemplate::ExpandTemplate(ctemplate.string(), ctemplate::STRIP_BLANK_LINES, dictionary.GetRaw(), &output);
+      auto to = report_dir / as;
+      std::fstream file(to, std::ios_base::out);
       file << output << std::flush;
       file.close();
     }
-    ;
 
     void Reporter::FillDictionary()
     {

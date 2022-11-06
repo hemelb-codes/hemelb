@@ -6,18 +6,66 @@
 #ifndef HEMELB_NET_MPICOMMUNICATOR_H
 #define HEMELB_NET_MPICOMMUNICATOR_H
 
-#include <vector>
-#include <map>
-#include "net/MpiError.h"
-#include <memory>
 #include <cassert>
+#include <map>
+#include <memory>
+#include <numeric>
+#include <span>
+#include <vector>
 
-namespace hemelb
+#include "net/MpiError.h"
+
+namespace hemelb::net
 {
-  namespace net
-  {
     class MpiGroup;
 
+    // This type hold the data that results from operations like
+    // Allgatherv. The data is stored contiguously in the `data`
+    // vector and the displacements (an array of int, as required
+    // by MPI) in `displacements`. This has a size of the number
+    // of participating processes, plus one.
+    //
+    // This type presents an interface similar to an array of
+    // arrays: specifically, indexing returns a span over the
+    // corresponding process's data.
+    template <typename T>
+    struct displaced_data {
+        std::vector<int> displacements;
+        std::vector<T> data;
+
+        // Default is empty.
+        displaced_data() = default;
+        // Construct from a vector of sizes, computing the displacements.
+        displaced_data(std::vector<int> const& sizes) {
+            auto const N = sizes.size();
+            displacements.resize(N);
+            displacements[0] = 0;
+            std::inclusive_scan(sizes.begin(),
+                                sizes.end(),
+                                displacements.begin() + 1);
+            data.resize(displacements[N]);
+        }
+
+        // Size should be the number of participating processes from the collective.
+        std::size_t size() const {
+            return displacements.size() - 1;
+        }
+
+        // Return a span over the data belonging to the given process.
+        std::span<T> operator[](int i) {
+            assert(i >= 0 && i < displacements.size());
+            auto start = displacements[i];
+            auto count = displacements[i+1] - start;
+            return std::span<T>{data.data() + start, unsigned(count)};
+        }
+    };
+
+    // Holds an MPI communicator and exposes communication functions
+    // via members. It will own the underlying MPI_Comm (i.e. it will
+    // call MPI_Comm_free) if created from another MpiCommunicator
+    // instance. Normal value semantics, so copyable and movable.
+    // Note that copying does not duplicate the communicator, it just
+    // increments the reference count.
     class MpiCommunicator
     {
       public:
@@ -29,21 +77,6 @@ namespace hemelb
          * @param communicator
          */
         MpiCommunicator();
-
-        /**
-         * Copy Constructor
-         */
-        MpiCommunicator(MpiCommunicator const & comm);
-
-        /**
-         * Move Constructor
-         */
-        MpiCommunicator(MpiCommunicator && comm);
-
-        /**
-         * Class has virtual methods so should have virtual d'tor.
-         */
-        virtual ~MpiCommunicator();
 
         /**
          * Returns the local rank on the communicator
@@ -71,11 +104,6 @@ namespace hemelb
          * @return New communicator.
          */
         MpiCommunicator Create(const MpiGroup& grp) const;
-
-        //! Copy assignment
-        void operator=(MpiCommunicator const &comm);
-        //! Move assignment
-        void operator=(MpiCommunicator &&comm);
 
         /**
          * Allow implicit casts to MPI_Comm
@@ -147,6 +175,9 @@ namespace hemelb
         template <typename T>
         std::vector<T> AllGather(const T& val) const;
 
+        template <typename T>
+        displaced_data<T> AllGatherV(const std::vector<T>& vals) const;
+
         /**
          * Performs an all gather operation of fixed size among the neighbours defined in a MPI graph communicator
          * @param val local contribution to all gather operation
@@ -161,7 +192,7 @@ namespace hemelb
          * @return vector of vectors with contributions from each neighbour. Use GetNeighbors() to map zero-based indices of outermost vector to MPI ranks
          */
         template<typename T>
-        std::vector<std::vector<T>> AllNeighGatherV(const std::vector<T>& val) const;
+        displaced_data<T> AllNeighGatherV(const std::vector<T>& val) const;
 
         template<typename T>
         std::vector<T> AllToAll(const std::vector<T>& vals) const;
@@ -234,7 +265,7 @@ namespace hemelb
 
     bool operator==(const MpiCommunicator& comm1, const MpiCommunicator& comm2);
     bool operator!=(const MpiCommunicator& comm1, const MpiCommunicator& comm2);
-  }
+
 }
 
 #include "net/MpiCommunicator.hpp"

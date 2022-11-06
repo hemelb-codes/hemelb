@@ -6,8 +6,8 @@
 #ifndef HEMELB_GEOMETRY_NEIGHBOURING_NEIGHBOURINGDATAMANAGER_H
 #define HEMELB_GEOMETRY_NEIGHBOURING_NEIGHBOURINGDATAMANAGER_H
 
-#include "geometry/LatticeData.h"
-#include "geometry/neighbouring/NeighbouringLatticeData.h"
+#include "geometry/Domain.h"
+#include "geometry/neighbouring/NeighbouringDomain.h"
 #include "geometry/neighbouring/RequiredSiteInformation.h"
 #include "net/net.h"
 #include "net/IteratedAction.h"
@@ -18,7 +18,8 @@ namespace hemelb
 {
   namespace geometry
   {
-    class LatticeData;
+    class Domain;
+    class FieldData;
 
     namespace neighbouring
     {
@@ -26,8 +27,8 @@ namespace hemelb
       class NeighbouringDataManager : public net::IteratedAction
       {
         public:
-          NeighbouringDataManager(const LatticeData & localLatticeData,
-                                  NeighbouringLatticeData & neighbouringLatticeData,
+          NeighbouringDataManager(const FieldData& localLatticeData,
+                                  NeighbouringFieldData& neighbouringFieldData,
                                   net::InterfaceDelegationNet & net);
           // Initially, the required site information will not be used -- we just transfer everything.
           // This considerably simplifies matters.
@@ -50,8 +51,8 @@ namespace hemelb
         protected:
           void RequestComms();
         private:
-          const LatticeData & localLatticeData;
-          NeighbouringLatticeData & neighbouringLatticeData;
+          const FieldData& localFieldData;
+          NeighbouringFieldData& neighbouringFieldData;
           net::InterfaceDelegationNet & net;
 
           std::vector<site_t> neededSites;

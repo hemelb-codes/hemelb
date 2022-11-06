@@ -9,6 +9,7 @@
 #include "net/phased/StepManager.h"
 #include "net/phased/NetConcern.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
+#include "lb/lattices/D3Q15.h"
 
 #include "tests/helpers/FourCubeBasedTestFixture.h"
 #include "tests/helpers/MockNetHelper.h"
@@ -34,15 +35,15 @@ namespace hemelb
 	//
 	// The client code has a duty to determine the global index
 	// for the site, which it can do, using
-	// LatticeData::GetGlobalNoncontiguousSiteIdFromGlobalCoords
-	// and LatticeData::GetGlobalCoords. For our four cube test
+	// domain_type::GetGlobalNoncontiguousSiteIdFromGlobalCoords
+	// and domain_type::GetGlobalCoords. For our four cube test
 	// case, we only have one proc, of course, so we pretend to
 	// require a site from our own proc via this mechanism just to
 	// verify it.
 
 	util::Vector3D<site_t> exampleBlockLocalCoord(1, 2, 3);
 	util::Vector3D<site_t> exampleBlockCoord(0, 0, 0);
-	util::Vector3D<site_t> globalCoord = latDat->GetGlobalCoords(exampleBlockCoord,
+	util::Vector3D<site_t> globalCoord = dom->GetGlobalCoords(exampleBlockCoord,
 								     exampleBlockLocalCoord);
 	
 	// to illustrate a typical use, we now add a displacement to
@@ -50,7 +51,7 @@ namespace hemelb
 	// example would take it off-proc
 	util::Vector3D<site_t> desiredGlobalCoord = globalCoord + util::Vector3D<site_t>{1,0,0};
 	// desiredGC = (2,2,3) => id = (2*block + 2) * block + 3
-	site_t desiredId = latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(desiredGlobalCoord);
+	site_t desiredId = dom->GetGlobalNoncontiguousSiteIdFromGlobalCoords(desiredGlobalCoord);
 	REQUIRE(87 == desiredId);
 
 	manager.RegisterNeededSite(desiredId);
@@ -105,8 +106,8 @@ namespace hemelb
 	netMock.ExpectationsAllCompleted();
 
 	// Now, transfer the data about that site.
-	auto exampleSite = latDat->GetSite(latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(43));
-	// It should arrive in the NeighbouringDataManager, from the values sent from the localLatticeData
+	auto exampleSite = latDat->GetSite(dom->GetLocalContiguousIdFromGlobalNoncontiguousId(43));
+	// It should arrive in the NeighbouringDataManager, from the values sent from the localFieldData
 
 	// We should send/receive the site data
 	auto expectedData = exampleSite.GetSiteData();
@@ -145,7 +146,7 @@ namespace hemelb
 	netMock.RequireReceive(&exampleSite.GetWallNormal(), 1, 0, "NormalFromSelf");
 	manager.TransferNonFieldDependentInformation();
 	netMock.ExpectationsAllCompleted();
-	NeighbouringSite transferredSite = data.GetSite(43);
+	auto&& transferredSite = data.GetSite(43);
 	REQUIRE(exampleSite.GetSiteData() == transferredSite.GetSiteData());
 	for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1; direction++) {
 	  REQUIRE(exampleSite.GetWallDistances()[direction] == transferredSite.GetWallDistances()[direction]);
@@ -155,8 +156,8 @@ namespace hemelb
 
       SECTION("TestShareFieldDataOneProc") {
 	site_t targetGlobalOneDIdx = 43;
-	LatticeVector targetGlobalThreeDIdx = latDat->GetSiteCoordsFromSiteId(targetGlobalOneDIdx);
-	site_t targetLocalIdx = latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(targetGlobalOneDIdx);
+	LatticeVector targetGlobalThreeDIdx = dom->GetSiteCoordsFromSiteId(targetGlobalOneDIdx);
+	site_t targetLocalIdx = dom->GetLocalContiguousIdFromGlobalNoncontiguousId(targetGlobalOneDIdx);
 
 	for (unsigned int direction = 0; direction < 3; direction++)
 	  REQUIRE(1 == targetGlobalThreeDIdx[direction]);
@@ -183,7 +184,7 @@ namespace hemelb
 	// Now, transfer the data about that site.
 	auto exampleSite = latDat->GetSite(targetLocalIdx);
 
-	// It should arrive in the NeighbouringDataManager, from the values sent from the localLatticeData
+	// It should arrive in the NeighbouringDataManager, from the values sent from the localFieldData
 
 	netMock.RequireSend(const_cast<distribn_t*> (exampleSite.GetFOld<lb::lattices::D3Q15> ()),
 			    lb::lattices::D3Q15::NUMVECTORS,
@@ -199,7 +200,7 @@ namespace hemelb
 	manager.TransferFieldDependentInformation();
 	netMock.ExpectationsAllCompleted();
 
-	NeighbouringSite transferredSite = data.GetSite(targetGlobalOneDIdx);
+	auto&& transferredSite = data.GetSite(targetGlobalOneDIdx);
 	for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++) {
 	  REQUIRE(receivedFOld[direction] == transferredSite.GetFOld<lb::lattices::D3Q15> ()[direction]);
 	}
@@ -207,7 +208,7 @@ namespace hemelb
 
       SECTION("TestShareFieldDataOneProcViaIterableAction") {
 	site_t targetGlobalOneDIdx = 43;
-	site_t targetLocalIdx = latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(targetGlobalOneDIdx);
+	site_t targetLocalIdx = dom->GetLocalContiguousIdFromGlobalNoncontiguousId(targetGlobalOneDIdx);
 
 	// begin by setting up mocks for the required site
 	std::vector<int> countOfNeedsToZeroFromZero;
@@ -230,7 +231,7 @@ namespace hemelb
 
 	// Now, transfer the data about that site.
 	auto exampleSite = latDat->GetSite(targetLocalIdx);
-	// It should arrive in the NeighbouringDataManager, from the values sent from the localLatticeData
+	// It should arrive in the NeighbouringDataManager, from the values sent from the localFieldData
 
 	netMock.RequireSend(const_cast<distribn_t*> (exampleSite.GetFOld<lb::lattices::D3Q15> ()),
 			    lb::lattices::D3Q15::NUMVECTORS,
@@ -249,7 +250,7 @@ namespace hemelb
 	stepManager.CallActions();
 	netMock.ExpectationsAllCompleted();
 
-	NeighbouringSite transferredSite = data.GetSite(targetGlobalOneDIdx);
+	auto&& transferredSite = data.GetSite(targetGlobalOneDIdx);
 	for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++) {
 	  REQUIRE(receivedFOld[direction] == transferredSite.GetFOld<lb::lattices::D3Q15> ()[direction]);
 	}

@@ -14,7 +14,7 @@
 #include "redblood/Cell.h"
 #include "redblood/Interpolation.h"
 #include "redblood/stencil.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "Exception.h"
 
 namespace hemelb
@@ -66,17 +66,17 @@ namespace hemelb
     //! \return map where the key refers to the region, and the value holds the vertices for that
     //!         region.
     //! \param[in] cell for which to split vertices
-    //! \param[in] latticeData holds information about geometry and regions over which to split
+    //! \param[in] domain holds information about geometry and regions over which to split
     //! \param[in] selfRegion does not store information about this region. Generally, will refer to
     //!             current processor. By default, a value so large, that if it refers to an actual
     //!             region, you've got other problems.
     std::map<size_t, std::shared_ptr<VertexBag>> splitVertices(
-        std::shared_ptr<CellBase const> cell, geometry::LatticeData const &latticeData,
+        std::shared_ptr<CellBase const> cell, geometry::Domain const &domain,
         proc_t selfRegion = std::numeric_limits<proc_t>::max(), redblood::stencil::types stencil =
             redblood::stencil::types::FOUR_POINT);
 
     namespace detail {
-      proc_t get_proc(geometry::LatticeData const &latDat, LatticeVector const &pos);
+      proc_t get_proc(geometry::Domain const &domain, LatticeVector const &pos);
 
       //! Set of procs affected by this position
       //! \param[in] latDat will tell us which site belongs to which proc

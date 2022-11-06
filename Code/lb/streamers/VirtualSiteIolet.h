@@ -7,6 +7,7 @@
 #define HEMELB_LB_STREAMERS_VIRTUALSITEIOLET_H
 
 #include <map>
+#include <fstream>
 
 #include <boost/container/flat_map.hpp>
 
@@ -40,7 +41,7 @@ namespace hemelb
           SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
           SimpleBounceBackDelegate<CollisionType> wallLinkDelegate;
           iolets::BoundaryValues* bValues;
-          const geometry::neighbouring::NeighbouringLatticeData& neighbouringLatticeData;
+          const geometry::neighbouring::NeighbouringDomain& neighbouringLatticeData;
 
           // These will store a map from localIdx => (iolet, vsite, direction) triples
           struct IoletVSiteDirection
@@ -79,7 +80,7 @@ namespace hemelb
             {
               for (site_t siteIdx = rangeIt->first; siteIdx < rangeIt->second; ++siteIdx)
               {
-                geometry::Site<const geometry::LatticeData> site =
+                geometry::Site<const geometry::Domain> site =
                     initParams.latDat->GetSite(siteIdx);
 
                 if (site.GetSiteType() != bValues->GetIoletType())
@@ -138,12 +139,13 @@ namespace hemelb
            */
           inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
-                                         geometry::LatticeData* latDat,
+                                         geometry::FieldData& latDat,
                                          lb::MacroscopicPropertyCache& propertyCache)
           {
+            auto&& dom = latDat.GetDomain();
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
+              auto&& site = latDat.GetSite(siteIndex);
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site);
 
               ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
@@ -176,8 +178,7 @@ namespace hemelb
 
               // Get the extra data for this iolet
               VSExtra<LatticeType>* extra = GetExtra(iolet);
-              site_t globalIdx =
-                  latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(site.GetGlobalSiteCoords());
+              site_t globalIdx = dom.GetGlobalNoncontiguousSiteIdFromGlobalCoords(site.GetGlobalSiteCoords());
               RSHV& cachedHV = extra->hydroVarsCache[globalIdx];
               cachedHV.t = bValues->GetTimeStep();
               cachedHV.rho = hydroVars.density;
@@ -192,7 +193,7 @@ namespace hemelb
           }
 
           inline void DoPostStep(const site_t firstIndex, const site_t siteCount,
-                                 const LbmParameters* lbmParams, geometry::LatticeData* latDat,
+                                 const LbmParameters* lbmParams, geometry::FieldData* latDat,
                                  lb::MacroscopicPropertyCache& propertyCache)
           {
             const LatticeTimeStep t = bValues->GetTimeStep();
@@ -215,14 +216,14 @@ namespace hemelb
               // Stream this direction
               Direction i = vSiteIt->second.direction;
               * (latDat->GetFNew(siteIdx * LatticeType::NUMVECTORS + i)) = vSite->hv.fPostColl[i];
-              //* (latticeData->GetFNew(GetBBIndex(site.GetIndex(), direction))) = hydroVars.GetFPostCollision()[direction];
+              //* (m_fieldData->GetFNew(GetBBIndex(site.GetIndex(), direction))) = hydroVars.GetFPostCollision()[direction];
               //return (siteIndex * LatticeType::NUMVECTORS) + LatticeType::INVERSEDIRECTIONS[direction];
             }
           }
 
           static void DumpTables(const VirtualSiteIolet* ioletStreamer,
                                  const VirtualSiteIolet* ioletWallStreamer,
-                                 const geometry::LatticeData* latDat)
+                                 const geometry::Domain* latDat)
           {
             InOutLet* iolet = ioletStreamer->bValues->GetLocalIolet(0);
             VSExtra<LatticeType>* extra = GetExtra(iolet);
@@ -267,7 +268,7 @@ namespace hemelb
                 ++entry)
             {
               site_t local = entry->first;
-              geometry::Site<const geometry::LatticeData> site = latDat->GetSite(local);
+              geometry::Site<const geometry::Domain> site = latDat->GetSite(local);
               LatticeVector pos = site.GetGlobalSiteCoords();
               site_t global = latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(pos);
               outletMap << local << " " << global << " " << pos.x << " " << pos.y << " " << pos.z
@@ -282,7 +283,7 @@ namespace hemelb
                 entry != ioletWallStreamer->vsByLocalIdx.end(); ++entry)
             {
               site_t local = entry->first;
-              geometry::Site<const geometry::LatticeData> site = latDat->GetSite(local);
+              geometry::Site<const geometry::Domain> site = latDat->GetSite(local);
               LatticeVector pos = site.GetGlobalSiteCoords();
               site_t global = latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(pos);
               outletWallMap << local << " " << global << " " << pos.x << " " << pos.y << " "
@@ -305,7 +306,7 @@ namespace hemelb
             return ans;
           }
 
-          void CalculateVirtualSiteDistributions(const geometry::LatticeData& latDat,
+          void CalculateVirtualSiteDistributions(const geometry::FieldData& latDat,
                                                  const InOutLet& iolet, RSHV::Map& hydroVarsCache,
                                                  VSiteType& vSite, const LatticeTimeStep t)
           {
@@ -340,7 +341,7 @@ namespace hemelb
            * @param t
            * @return
            */
-          LatticeDensity CalculateVirtualSiteDensity(const geometry::LatticeData& latDat,
+          LatticeDensity CalculateVirtualSiteDensity(const geometry::FieldData& latDat,
                                                      const InOutLet& iolet,
                                                      RSHV::Map& hydroVarsCache,
                                                      const VSiteType& vSite,
@@ -374,7 +375,7 @@ namespace hemelb
            * @param t
            * @return
            */
-          LatticeVelocity CalculateVirtualSiteVelocity(const geometry::LatticeData& latDat,
+          LatticeVelocity CalculateVirtualSiteVelocity(const geometry::FieldData& latDat,
                                                        const InOutLet& iolet,
                                                        RSHV::Map& hydroVarsCache,
                                                        const VSiteType& vSite,
@@ -439,7 +440,7 @@ namespace hemelb
 
           }
 
-          RSHV& GetHV(const geometry::LatticeData& latDat, RSHV::Map& hydroVarsCache,
+          RSHV& GetHV(const geometry::FieldData& latDat, RSHV::Map& hydroVarsCache,
                       const site_t globalIdx, const LatticeTimeStep t)
           {
             RSHV& ans = hydroVarsCache.at(globalIdx);
@@ -451,7 +452,7 @@ namespace hemelb
             if (ans.t == t)
               return ans;
 
-            geometry::neighbouring::ConstNeighbouringSite neigh =
+            auto neigh =
                 latDat.GetNeighbouringData().GetSite(globalIdx);
             const distribn_t* fOld = neigh.GetFOld<LatticeType>();
             LatticeType::CalculateDensityAndMomentum(fOld, ans.rho, ans.u.x, ans.u.y, ans.u.z);

@@ -36,16 +36,6 @@ namespace hemelb
     {
     }
 
-    MpiCommunicator::MpiCommunicator(MpiCommunicator const & comm) :
-        commPtr(comm.commPtr), communicatorSize(comm.communicatorSize), localRankInCommunicator(comm.localRankInCommunicator)
-    {
-    }
-
-    MpiCommunicator::MpiCommunicator(MpiCommunicator && comm) :
-        commPtr(std::move(comm.commPtr)), communicatorSize(comm.communicatorSize), localRankInCommunicator(comm.localRankInCommunicator)
-    {
-    }
-
     MpiCommunicator::MpiCommunicator(MPI_Comm communicator, bool owner) :
         commPtr(), communicatorSize(-1), localRankInCommunicator(-1)
     {
@@ -58,7 +48,7 @@ namespace hemelb
       }
       else
       {
-        commPtr.reset(new MPI_Comm(communicator));
+        commPtr = std::make_shared<MPI_Comm>(communicator);
       }
 
       HEMELB_MPI_CALL(MPI_Comm_size, (communicator, &communicatorSize));
@@ -66,26 +56,8 @@ namespace hemelb
     }
 
     MpiCommunicator::MpiCommunicator(int localRankInCommunicator, int communicatorSize) :
-        commPtr(), localRankInCommunicator(localRankInCommunicator), communicatorSize(communicatorSize)
+        commPtr(), communicatorSize(communicatorSize), localRankInCommunicator(localRankInCommunicator)
     {
-    }
-
-    MpiCommunicator::~MpiCommunicator()
-    {
-    }
-
-    void MpiCommunicator::operator =(MpiCommunicator const &comm)
-    {
-      commPtr = comm.commPtr;
-      communicatorSize = comm.communicatorSize;
-      localRankInCommunicator = comm.localRankInCommunicator;
-    }
-
-    void MpiCommunicator::operator =(MpiCommunicator &&comm)
-    {
-      commPtr = std::move(comm.commPtr);
-      communicatorSize = comm.communicatorSize;
-      localRankInCommunicator = comm.localRankInCommunicator;
     }
 
     bool operator==(const MpiCommunicator& comm1, const MpiCommunicator& comm2)
@@ -146,7 +118,7 @@ namespace hemelb
       flat_edges.reserve(1);
       for (auto const & edge_per_proc : edges)
       {
-        for (auto const & edge : edge_per_proc)
+        for (auto&& edge : edge_per_proc)
         {
           assert(edge < Size());
           flat_edges.push_back(edge);

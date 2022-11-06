@@ -5,7 +5,8 @@
 
 #include "colloids/Particle.h"
 #include "colloids/BodyForces.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
+#include "lb/LbmParameters.h"
 #include "log/Logger.h"
 #include "units.h"
 
@@ -13,7 +14,7 @@ namespace hemelb
 {
   namespace colloids
   {
-    Particle::Particle(const geometry::LatticeData& latDatLBM,
+    Particle::Particle(const geometry::Domain& latDatLBM,
                        const hemelb::lb::LbmParameters *lbmParams, io::xml::Element& xml) :
         PersistedParticle(xml), lbmParams(lbmParams)
     {
@@ -96,7 +97,7 @@ namespace hemelb
       //writer << velocity.x << velocity.y << velocity.z;
     }
 
-    const void Particle::UpdatePosition(const geometry::LatticeData& latDatLBM)
+    const void Particle::UpdatePosition(const geometry::Domain& latDatLBM)
     {
       // first, update the position: newPosition = oldPosition + velocity + bodyForces * drag
       // then,  update the owner rank for the particle based on its new position
@@ -198,7 +199,7 @@ namespace hemelb
       return delta;
     }
 
-    const void Particle::CalculateFeedbackForces(const geometry::LatticeData& latDatLBM) const
+    const void Particle::CalculateFeedbackForces(const geometry::Domain& latDatLBM) const
     //lb::MacroscopicPropertyCache& propertyCache) const
     {
       /** CalculateFeedbackForces
@@ -302,7 +303,7 @@ namespace hemelb
                                                     bodyForces.z);
     }
 
-    const void Particle::InterpolateFluidVelocity(const geometry::LatticeData& latDatLBM,
+    const void Particle::InterpolateFluidVelocity(const geometry::Domain& latDatLBM,
                                                   const lb::MacroscopicPropertyCache& propertyCache)
     {
       /** InterpolateFluidVelocity

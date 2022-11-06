@@ -12,7 +12,7 @@ namespace hemelb
     namespace helpers
     {
 
-      LatticeDataAccess::LatticeDataAccess(geometry::LatticeData * const latDat) :
+      LatticeDataAccess::LatticeDataAccess(geometry::FieldData * const latDat) :
 	latDat(latDat)
       {
       }
@@ -24,36 +24,23 @@ namespace hemelb
 
       void LatticeDataAccess::SetMinWallDistance(PhysicalDistance _mindist)
       {
-        typedef std::vector<distribn_t>::iterator iterator;
-        iterator i_first = latDat->distanceToWall.begin();
-        iterator const i_end = latDat->distanceToWall.end();
-        for (; i_first != i_end; ++i_first)
-          if (*i_first > 0e0 and *i_first < _mindist)
-            *i_first = _mindist;
+          for (auto& dist: domain->distanceToWall) {
+              if (dist > 0e0)
+                  dist = _mindist;
+          }
       }
 
       void LatticeDataAccess::SetWallDistance(PhysicalDistance _mindist)
       {
-        typedef std::vector<distribn_t>::iterator iterator;
-        iterator i_first = latDat->distanceToWall.begin();
-        iterator const i_end = latDat->distanceToWall.end();
-        for (; i_first != i_end; ++i_first)
-          if (*i_first > 0e0)
-            *i_first = _mindist;
+        for (auto& dist: domain->distanceToWall) {
+            if (dist > 0e0)
+                dist = _mindist;
+        }
       }
 
-      distribn_t const * GetFNew(geometry::LatticeData *latDat, site_t const &index)
+      distribn_t const * GetFNew(geometry::FieldData *latDat, site_t const &index)
       {
         return LatticeDataAccess(latDat).GetFNew(index);
-      }
-
-      void SetMinWallDistance(geometry::LatticeData * const latDat, PhysicalDistance _mindist)
-      {
-        LatticeDataAccess(latDat).SetMinWallDistance(_mindist);
-      }
-      void SetWallDistance(geometry::LatticeData * const latDat, PhysicalDistance _mindist)
-      {
-        LatticeDataAccess(latDat).SetWallDistance(_mindist);
       }
 
     }

@@ -8,7 +8,7 @@
 
 #include <vector>
 #include <map>
-#include "geometry/Geometry.h"
+#include "geometry/GmyReadResult.h"
 #include "lb/lattices/LatticeInfo.h"
 #include "geometry/ParmetisForward.h"
 #include "reporting/Timers.h"
@@ -26,7 +26,7 @@ namespace hemelb
       {
         public:
           OptimisedDecomposition(reporting::Timers& timers, net::MpiCommunicator& comms,
-                                 const Geometry& geometry,
+                                 const GmyReadResult& geometry,
                                  const lb::lattices::LatticeInfo& latticeInfo,
                                  const std::vector<proc_t>& procForEachBlock,
                                  const std::vector<site_t>& fluidSitesPerBlock);
@@ -207,7 +207,7 @@ namespace hemelb
 
           reporting::Timers& timers; //! Timers for reporting.
           net::MpiCommunicator& comms; //! Communicator
-          const Geometry& geometry; //! The geometry being optimised.
+          const GmyReadResult& geometry; //! The geometry being optimised.
           const lb::lattices::LatticeInfo& latticeInfo; //! The lattice info to optimise for.
           const std::vector<proc_t>& procForEachBlock; //! The processor assigned to each block at the moment
           const std::vector<site_t>& fluidSitesPerBlock; //! The number of fluid sites on each block.

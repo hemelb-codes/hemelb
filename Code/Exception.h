@@ -27,10 +27,8 @@ namespace hemelb
       /**
        * ctor
        */
-      Exception()
-      {
-      }
-      ;
+      Exception() = default;
+
       /**
        * Copy ctor required -- note that it appends the old content of the
        * stream to the message of the new one and gives the new one an empty
@@ -38,23 +36,21 @@ namespace hemelb
        *
        * @param that
        */
-      Exception(const Exception& that)
+      Exception(const Exception& that) noexcept : mWhat(that.mStream.str())
       {
-        mWhat += that.mStream.str();
       }
 
       /**
        * Return combined error string.
        * @return
        */
-      virtual const char *what() const noexcept
+      inline const char *what() const noexcept override
       {
-        if (mStream.str().size())
-        {
-          mWhat += mStream.str();
-          mStream.str("");
-        }
-        return mWhat.c_str();
+          // TODO: clang's libc++ doesn't support std::ostringstream::view (P0804), so have to alloc to get the data :(
+          std::ostringstream tmp;
+          std::swap(tmp, mStream);
+          mWhat += tmp.str();
+          return mWhat.c_str();
       }
 
       /**
@@ -71,7 +67,7 @@ namespace hemelb
 
     private:
       // Note that these are mutable
-      mutable std::stringstream mStream;
+      mutable std::ostringstream mStream;
       mutable std::string mWhat;
   };
 }

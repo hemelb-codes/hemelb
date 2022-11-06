@@ -17,7 +17,7 @@ namespace hemelb
     //! \brief gathers mid-domain and egde positions from all procs
     //! \details If there are insufficient number of edges, mid-domains are used instead.
     //! erase removes the components from the first process.
-    std::vector<LatticeVector> GatherSpecialPositions(geometry::LatticeData const & latDat,
+    std::vector<LatticeVector> GatherSpecialPositions(geometry::Domain const & domain,
 						      size_t mid, size_t edges,
 						      net::MpiCommunicator const &c);
 
@@ -61,7 +61,7 @@ namespace hemelb
 
     //! Creates list of cells for each set of positions from each process
     std::vector<hemelb::redblood::CellContainer::value_type> CreateCellsFromSpecialPositions(
-											     geometry::LatticeData const & latDat, size_t mid, size_t edges,
+											     geometry::Domain const & domain, size_t mid, size_t edges,
 											     net::MpiCommunicator const &c, size_t nCells);
 
     net::MpiCommunicator CreateDumbGraphComm(net::MpiCommunicator const &comm);

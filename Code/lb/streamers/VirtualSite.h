@@ -143,7 +143,7 @@ namespace hemelb
                 {
                   site_t neighLocalIdx =
                       initParams.latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(neighGlobalIdx);
-                  const geometry::Site<const geometry::LatticeData> neigh =
+                  const geometry::Site<const geometry::Domain> neigh =
                       initParams.latDat->GetSite(neighLocalIdx);
                   unsigned inverse = lattice.GetInverseIndex(i);
                   if (!neigh.HasIolet(inverse))
@@ -191,7 +191,7 @@ namespace hemelb
                 // I.e along the direction opposite to i
                 site_t neighLocalIdx =
                     initParams.latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(neighGlobalIdx);
-                const geometry::Site<const geometry::LatticeData> neigh =
+                const geometry::Site<const geometry::Domain> neigh =
                     initParams.latDat->GetSite(neighLocalIdx);
                 AddQ(neigh.GetWallDistance<LatticeType>(lattice.GetInverseIndex(i)));
 

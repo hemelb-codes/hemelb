@@ -13,7 +13,7 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" "${HEMELB_DEPENDENCI
 list(REMOVE_DUPLICATES CMAKE_MODULE_PATH)
 
 # Set the language standard strictly.
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -75,25 +75,7 @@ endif()
 
 include(build_environment)
 include(platform_checks)
-
-if(NOT UBUNTU_BUG_WORKAROUND)
-  if(HAVE_ISNAN)
-    add_definitions(-DHAVE_ISNAN)
-  endif()
-endif()
-
-if(HAVE_STD_ISNAN)
-  add_definitions(-DHAVE_STD_ISNAN)
-endif()
-
-if(HAVE_RUSAGE)
-  add_definitions(-DHAVE_RUSAGE)
-endif()
-
-if(LINUX_SCANDIR)
-  add_definitions(-DLINUX_SCANDIR)
-endif()
-
+include(codesign)
 include(mpi)
 include(HemeLbDependency)
 
@@ -155,6 +137,7 @@ if (HEMELB_USE_DEBUGGER)
 endif()
 
 add_executable(${HEMELB_EXECUTABLE} main.cc)
+codesign(${HEMELB_EXECUTABLE})
 
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
@@ -208,7 +191,8 @@ if (HEMELB_BUILD_MULTISCALE)
   endif()
   
   add_executable(multiscale_hemelb mainMultiscale.cc)
-  
+  codesign(multiscale_hemelb)
+
   include_directories(${PROJECT_SOURCE_DIR})
 
   add_subdirectory(multiscale)

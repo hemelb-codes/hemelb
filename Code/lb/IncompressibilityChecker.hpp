@@ -7,6 +7,7 @@
 #define HEMELB_LB_INCOMPRESSIBILITYCHECKER_HPP
 
 #include "lb/IncompressibilityChecker.h"
+#include "reporting/Timers.h"
 
 namespace hemelb
 {
@@ -101,9 +102,9 @@ namespace hemelb
 
     template<class BroadcastPolicy>
     IncompressibilityChecker<BroadcastPolicy>::IncompressibilityChecker(
-        const geometry::LatticeData * latticeData, net::Net* net, SimulationState* simState,
-        lb::MacroscopicPropertyCache& propertyCache, reporting::Timers& timings,
-        distribn_t maximumRelativeDensityDifferenceAllowed) :
+            const geometry::Domain * latticeData, net::Net* net, SimulationState* simState,
+            lb::MacroscopicPropertyCache& propertyCache, reporting::Timers& timings,
+            distribn_t maximumRelativeDensityDifferenceAllowed) :
         BroadcastPolicy(net, simState, SPREADFACTOR), mLatDat(latticeData),
             propertyCache(propertyCache), mSimState(simState), timings(timings),
             maximumRelativeDensityDifferenceAllowed(maximumRelativeDensityDifferenceAllowed),

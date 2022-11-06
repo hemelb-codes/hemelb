@@ -25,17 +25,15 @@ namespace hemelb
       EnsurePreparedToSendReceive();
       proc_t m = 0;
 
-      for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin();
-          it != receiveProcessorComms.end(); ++it)
+      for (auto& [pid, pc]: receiveProcessorComms)
       {
-        for (ProcComms::iterator request = it->second.begin(); request != it->second.end();
-            request++)
+        for (auto& req: pc)
         {
 
-          MPI_Irecv(request->Pointer,
-                    request->Count,
-                    request->Type,
-                    it->first,
+          MPI_Irecv(req.Pointer,
+                    req.Count,
+                    req.Type,
+                    pid,
                     10,
                     communicator,
                     &requests[m]);
@@ -55,16 +53,14 @@ namespace hemelb
 
       count_sends = 0;
       count_receives = 0;
-      for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin();
-          it != sendProcessorComms.end(); ++it)
+      for (auto& [_, pc]: sendProcessorComms)
       {
-        count_sends += it->second.size();
+        count_sends += pc.size();
       }
 
-      for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin();
-          it != receiveProcessorComms.end(); ++it)
+      for (auto& [_, pc]: receiveProcessorComms)
       {
-        count_receives += it->second.size();
+        count_receives += pc.size();
       }
 
       EnsureEnoughRequests(count_sends + count_receives);
@@ -79,16 +75,14 @@ namespace hemelb
       EnsurePreparedToSendReceive();
       proc_t m = 0;
 
-      for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin();
-          it != sendProcessorComms.end(); ++it)
+      for (auto& [pid, pc]: sendProcessorComms)
       {
-        for (ProcComms::iterator request = it->second.begin(); request != it->second.end();
-            request++)
+        for (auto& req: pc)
         {
-          MPI_Isend(request->Pointer,
-                    request->Count,
-                    request->Type,
-                    it->first,
+          MPI_Isend(req.Pointer,
+                    req.Count,
+                    req.Type,
+                    pid,
                     10,
                     communicator,
                     &requests[count_receives + m]);

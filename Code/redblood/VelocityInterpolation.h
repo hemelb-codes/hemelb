@@ -10,6 +10,7 @@
 
 #include "units.h"
 #include "Exception.h"
+#include "geometry/FieldData.h"
 #include "redblood/Interpolation.h"
 #include "redblood/stencil.h"
 #include "lb/kernels/GuoForcingLBGK.h"
@@ -29,7 +30,7 @@ namespace hemelb
     //! \param[in] stencil: stencil to use for interpolation
     //! \tparam KERNEL: Needed to compute velocity
     template<class KERNEL>
-    LatticeVelocity interpolateVelocity(geometry::LatticeData const &latDat,
+    LatticeVelocity interpolateVelocity(geometry::FieldData const &latDat,
                                         LatticePosition const &center);
 
     namespace details
@@ -48,14 +49,14 @@ namespace hemelb
       template<class KERNEL>
       struct VelocityFromLatticeData
       {
-          VelocityFromLatticeData(geometry::LatticeData const &latDat) :
+          VelocityFromLatticeData(geometry::FieldData const &latDat) :
               latticeData(latDat)
           {
           }
           // Computes velocity for given KERNEL and LatticeData
           LatticeVelocity operator()(LatticeVector const &indices) const
           {
-            return operator()(latticeData.GetContiguousSiteId(indices));
+            return operator()(latticeData.GetDomain().GetContiguousSiteId(indices));
           }
           LatticeVelocity operator()(size_t index) const
           {
@@ -68,7 +69,7 @@ namespace hemelb
           //! Implementation without forces correction
           LatticeVelocity computeVelocity(site_t index, boost::mpl::false_ const &) const;
           //! Lattice data that holds the grid of population and forces
-          geometry::LatticeData const &latticeData;
+          geometry::FieldData const &latticeData;
       };
 
       template<class KERNEL>
@@ -78,7 +79,7 @@ namespace hemelb
         typedef typename KERNEL::LatticeType LatticeType;
         LatticeVelocity result;
         distribn_t density;
-        geometry::Site<geometry::LatticeData const> site(latticeData.GetSite(index));
+        auto site = latticeData.GetSite(index);
         LatticeForceVector const &force(site.GetForce());
 #ifdef HEMELB_USE_KRUEGER_ORDERING
         // Use distribution functions at the beginning of the previous timestep (stored in
@@ -112,7 +113,7 @@ namespace hemelb
         // Follows approach in Timm's code
         auto const fDistribution = latticeData.GetFNew(index * LatticeType::NUMVECTORS);
 #else
-        auto const fDistribution = latticeData.GetSite(index).template GetFOld<LatticeType>();
+        auto const fDistribution = domainData.GetSite(index).template GetFOld<LatticeType>();
 #endif
         LatticeType::CalculateDensityAndMomentum(fDistribution,
                                                  density,
@@ -124,7 +125,7 @@ namespace hemelb
     }
 
     template<class KERNEL, class STENCIL>
-    LatticeVelocity interpolateVelocity(geometry::LatticeData const &latDat,
+    LatticeVelocity interpolateVelocity(geometry::FieldData const &latDat,
                                         LatticePosition const &center)
     {
       auto iterator = interpolationIterator<STENCIL>(center);
@@ -137,7 +138,7 @@ namespace hemelb
       {
         proc_t procid;
         site_t siteid;
-        if (latDat.GetContiguousSiteId(*iterator, procid, siteid))
+        if (latDat.GetDomain().GetContiguousSiteId(*iterator, procid, siteid))
         {
           result += gridfunc(siteid) * iterator.weight();
         }

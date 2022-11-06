@@ -15,13 +15,9 @@ add_library(hemelb_net OBJECT
   mixins/gathers/ViaPointPointGathers.cc
   mixins/alltoall/SeparatedAllToAll.cc
   mixins/alltoall/ViaPointPointAllToAll.cc
-  mixins/StoringNet.cc ProcComms.cc
+  mixins/StoringNet.cc
   phased/StepManager.cc)
 configure_file (
   "${PROJECT_SOURCE_DIR}/net/BuildInfo.h.in"
   "${PROJECT_BINARY_DIR}/net/BuildInfo.h"
-  )
-configure_file (
-  "${PROJECT_SOURCE_DIR}/net/MpiConstness.h.in"
-  "${PROJECT_BINARY_DIR}/net/MpiConstness.h"
   )

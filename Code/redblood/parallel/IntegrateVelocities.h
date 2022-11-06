@@ -51,14 +51,14 @@ namespace hemelb
           //! the velocities from other procs are not integrated until UpdatePositionsNonLocal.
           //! \note Can be called at anytime.
           template<class TRAITS = Traits<>>
-          void ComputeLocalVelocitiesAndUpdatePositions(geometry::LatticeData const &latDat,
+          void ComputeLocalVelocitiesAndUpdatePositions(geometry::FieldData const &latDat,
                                                         CellContainer &owned);
           //! \brief Post non-local velocities
           //! \param[in] distributions tells us for each proc the list of nodes it requires
           //! \param[in] cells a container of cells owned and managed by this process
           //! \note Must be called after PostMessageLength and before UpdatePositionsLocal
           template<class TRAITS = Traits<>>
-          void PostVelocities(geometry::LatticeData const &latDat, LentCells const &lent);
+          void PostVelocities(geometry::FieldData const &latDat, LentCells const &lent);
           //! \brief Gathers velocities from other procs and upates positions
           //! \note Must be called after PostVelocities
           void UpdatePositionsNonLocal(NodeDistributions const& distributions,
@@ -73,7 +73,7 @@ namespace hemelb
 
       template<class TRAITS>
       void IntegrateVelocities::ComputeLocalVelocitiesAndUpdatePositions(
-          geometry::LatticeData const &latticeData, CellContainer &owned)
+          geometry::FieldData const &latticeData, CellContainer &owned)
       {
         typedef typename TRAITS::Kernel Kernel;
         typedef typename TRAITS::Stencil Stencil;
@@ -88,7 +88,7 @@ namespace hemelb
       }
 
       template<class TRAITS>
-      void IntegrateVelocities::PostVelocities(geometry::LatticeData const &latDat,
+      void IntegrateVelocities::PostVelocities(geometry::FieldData const &latDat,
                                                LentCells const &lent)
       {
         typedef typename TRAITS::Kernel Kernel;
@@ -100,10 +100,9 @@ namespace hemelb
           offsets[neighbor] = 0;
         }
         std::vector<LatticeVelocity> velocities;
-        for (auto const lentCells : lent)
+        for (auto& [neighbor, lentCells]: lent)
         {
-          auto const neighbor = lentCells.first;
-          for (auto const &cell : lentCells.second)
+          for (auto const &cell : lentCells)
           {
             assert(offsets.count(neighbor) == 1);
             auto const offset = offsets[neighbor];

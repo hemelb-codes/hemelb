@@ -13,7 +13,7 @@
 #include "redblood/stencil.h"
 #include "redblood/Interpolation.h"
 #include "redblood/VelocityInterpolation.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "Traits.h"
 #include "redblood/parallel/GraphBasedCommunication.h"
 

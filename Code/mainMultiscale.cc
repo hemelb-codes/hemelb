@@ -7,7 +7,7 @@
 #include <MPWide.h>
 
 #include "configuration/CommandLine.h"
-#include "debug/Debugger.h"
+#include "debug.h"
 #include "multiscale/MultiscaleSimulationMaster.h"
 #include "multiscale/mpwide/MPWideIntercommunicator.h"
 
@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
       // Parse command line
       hemelb::configuration::CommandLine options = hemelb::configuration::CommandLine(argc, argv);
       // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
-      hemelb::debug::Debugger::Init(options.GetDebug(), argv[0], commWorld);
+      hemelb::debug::Init(options.GetDebug(), argv[0], commWorld);
 
       // Prepare some multiscale/MPWide stuff
 

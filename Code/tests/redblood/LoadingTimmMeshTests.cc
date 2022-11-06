@@ -27,7 +27,7 @@ namespace hemelb
 
     std::shared_ptr<MeshData> readMeshFromFileNoFix(const std::string filename) {
       auto fullPath = resources::Resource(filename).Path();
-      REQUIRE(util::file_exists(fullPath.c_str()));
+      REQUIRE(std::filesystem::exists(fullPath));
       return redblood::KruegerMeshIO{}.readFile(fullPath, false);
     }
     

@@ -7,9 +7,11 @@
 
 #include <cstdlib>
 #include "units.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
+#include "geometry/GmyReadResult.h"
 #include "io/formats/geometry.h"
 #include "util/Vector3D.h"
+#include "lb/lattices/D3Q15.h"
 
 namespace hemelb
 {
@@ -48,10 +50,10 @@ namespace hemelb
      *
      * @return
      */
-    FourCubeLatticeData* FourCubeLatticeData::Create(const net::IOCommunicator& comm, site_t sitesPerBlockUnit, proc_t rankCount)
+    std::shared_ptr<geometry::Domain> FourCubeDomain::Create(const net::IOCommunicator& comm, site_t sitesPerBlockUnit, proc_t rankCount)
     {
-      hemelb::geometry::Geometry readResult(util::Vector3D<site_t>::Ones(),
-					    sitesPerBlockUnit);
+      hemelb::geometry::GmyReadResult readResult(util::Vector3D<site_t>::Ones(),
+                                                 sitesPerBlockUnit);
 // VoxelSize                                               0.01,
 // Origin                                               util::Vector3D<PhysicalDistance>::Zero());
       site_t sitesAlongCube = sitesPerBlockUnit - 2;
@@ -140,53 +142,53 @@ namespace hemelb
 	}
       }
 
-      FourCubeLatticeData* returnable = new FourCubeLatticeData(readResult, comm);
-      
+      auto domain = std::make_shared<FourCubeDomain>(lb::lattices::D3Q15::GetLatticeInfo(),
+                                                   readResult,
+                                                   comm);
+
       // First, fiddle with the fluid site count, for tests that require this set.
-      returnable->fluidSitesOnEachProcessor.resize(rankCount);
-      returnable->fluidSitesOnEachProcessor[0] = sitesAlongCube * sitesAlongCube
+      domain->fluidSitesOnEachProcessor.resize(rankCount);
+        domain->fluidSitesOnEachProcessor[0] = sitesAlongCube * sitesAlongCube
 	* sitesAlongCube;
       for (proc_t rank = 1; rank < rankCount; ++rank) {
-	returnable->fluidSitesOnEachProcessor[rank] = rank * 1000;
+          domain->fluidSitesOnEachProcessor[rank] = rank * 1000;
       }
-
-      return returnable;
+        return domain;
     }
 
-    void FourCubeLatticeData::SetHasWall(site_t site, Direction direction)
+    void FourCubeDomain::SetHasWall(site_t site, Direction direction)
     {
       TestSiteData mutableSiteData(siteData[site]);
       mutableSiteData.SetHasWall(direction);
       siteData[site] = geometry::SiteData(mutableSiteData);
     }
 
-    void FourCubeLatticeData::SetHasIolet(site_t site, Direction direction)
+    void FourCubeDomain::SetHasIolet(site_t site, Direction direction)
     {
       TestSiteData mutableSiteData(siteData[site]);
       mutableSiteData.SetHasIolet(direction);
       siteData[site] = geometry::SiteData(mutableSiteData);
     }
 
-    void FourCubeLatticeData::SetIoletId(site_t site, int id)
+    void FourCubeDomain::SetIoletId(site_t site, int id)
     {
       TestSiteData mutableSiteData(siteData[site]);
       mutableSiteData.SetIoletId(id);
       siteData[site] = geometry::SiteData(mutableSiteData);
     }
 
-    void FourCubeLatticeData::SetBoundaryDistance(site_t site, Direction direction, distribn_t distance)
+    void FourCubeDomain::SetBoundaryDistance(site_t site, Direction direction, distribn_t distance)
     {
       distanceToWall[ (lb::lattices::D3Q15::NUMVECTORS - 1) * site + direction - 1] = distance;
     }
 
-    void FourCubeLatticeData::SetBoundaryNormal(site_t site, util::Vector3D<distribn_t> boundaryNormal)
+    void FourCubeDomain::SetBoundaryNormal(site_t site, util::Vector3D<distribn_t> boundaryNormal)
     {
       wallNormalAtSite[site] = boundaryNormal;
     }
 
-    FourCubeLatticeData::FourCubeLatticeData(hemelb::geometry::Geometry& readResult, const net::IOCommunicator& comms) :
-      hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), readResult, comms)
-    {
+    FourCubeLatticeData* FourCubeLatticeData::Create(const net::IOCommunicator& comm, site_t sitesPerBlockUnit, proc_t rankCount) {
+      return new FourCubeLatticeData{FourCubeDomain::Create(comm, sitesPerBlockUnit, rankCount)};
     }
   }
 }

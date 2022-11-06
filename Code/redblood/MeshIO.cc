@@ -5,6 +5,8 @@
 
 #include "redblood/MeshIO.h"
 
+#include <filesystem>
+
 #include <vtkCellData.h>
 #include <vtkDoubleArray.h>
 #include <vtkPointData.h>
@@ -17,16 +19,16 @@
 #include "redblood/CellBase.h"
 #include "redblood/CellEnergy.h"
 #include "redblood/VTKError.h"
-#include "util/fileutils.h"
+#include "util/Iterator.h"
 
 namespace hemelb {
   namespace redblood {
 
     auto MeshIO::readFile(std::string const &filename, bool fixFacetOrientation) const -> MeshPtr {
-      return read(Mode::file, filename, fixFacetOrientation);
+      return read(Storage::file, filename, fixFacetOrientation);
     }
     auto MeshIO::readString(std::string const &data, bool fixFacetOrientation) const -> MeshPtr {
-      return read(Mode::string, data, fixFacetOrientation);
+      return read(Storage::string, data, fixFacetOrientation);
     }
 
     void MeshIO::writeFile(std::string const &filename,
@@ -37,7 +39,7 @@ namespace hemelb {
     void MeshIO::writeFile(std::string const &filename,
 			   MeshData::Vertices const& vertices, MeshData::Facets const& facets,
 			   util::UnitConverter const& c, PointScalarData const& data) const {
-      write(Mode::file, filename, vertices, facets, c, data);
+      write(Storage::file, filename, vertices, facets, c, data);
     }
 
     std::string MeshIO::writeString(MeshData const& mesh, util::UnitConverter const& c, PointScalarData const& data) const {
@@ -45,7 +47,7 @@ namespace hemelb {
     }
 
     std::string MeshIO::writeString(MeshData::Vertices const& vertices, MeshData::Facets const& facets, util::UnitConverter const& c, PointScalarData const& data) const {
-      return write(Mode::string, std::string{}, vertices, facets, c, data);
+      return write(Storage::string, std::string{}, vertices, facets, c, data);
     }
 
     void MeshIO::writeFile(std::string const& filename, CellBase const& cell, util::UnitConverter const& c) const {
@@ -191,17 +193,17 @@ namespace hemelb {
       return result;
     }
 
-    auto KruegerMeshIO::read(Mode mode, std::string const &filename_or_data, bool fixFacetOrientation) const -> MeshPtr {
+    auto KruegerMeshIO::read(Storage mode, std::string const &filename_or_data, bool fixFacetOrientation) const -> MeshPtr {
       switch (mode) {
-      case Mode::file:
-	if (!util::file_exists(filename_or_data.c_str()))
+      case Storage::file:
+	if (!std::filesystem::exists(filename_or_data.c_str()))
 	  throw Exception() << "Red-blood-cell mesh file '" << filename_or_data << "' does not exist";
 	
 	log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from %s",
 						     filename_or_data.c_str());
 	// Open file if it exists
 	return read_krueger_mesh(std::ifstream{filename_or_data}, fixFacetOrientation);
-      case Mode::string:
+      case Storage::string:
 	return read_krueger_mesh(std::istringstream{filename_or_data}, fixFacetOrientation);
       }
     }
@@ -233,9 +235,9 @@ namespace hemelb {
       stream << "$EndElement\n";
     }
 
-    std::string KruegerMeshIO::write(Mode m, std::string const& filename,
-				     MeshData::Vertices const& vertices, MeshData::Facets const& facets,
-				     util::UnitConverter const& c, PointScalarData const& data) const {
+    std::string KruegerMeshIO::write(Storage m, std::string const& filename,
+                                     MeshData::Vertices const& vertices, MeshData::Facets const& facets,
+                                     util::UnitConverter const& c, PointScalarData const& data) const {
       if (data.size()) {
 	std::string msg{"Krueger mesh IO does not support point data. Omitting fields:"};
 	for (auto&& pair: data) {
@@ -245,7 +247,7 @@ namespace hemelb {
       }
 
       switch (m) {
-      case Mode::file:
+      case Storage::file:
 	{
 	  log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
 						       filename.c_str());
@@ -254,7 +256,7 @@ namespace hemelb {
 	  write_krueger_mesh(file, vertices, facets, c);
 	  return {};
 	}
-      case Mode::string:
+      case Storage::string:
 	{
 	  std::ostringstream ss;
 	  write_krueger_mesh(ss, vertices, facets, c);
@@ -268,17 +270,17 @@ namespace hemelb {
     // VTK format
     // 
 
-    auto VTKMeshIO::readUnoriented(Mode mode, std::string const &filename_or_data) const -> std::tuple<MeshPtr, PolyDataPtr>
+    auto VTKMeshIO::readUnoriented(Storage mode, std::string const &filename_or_data) const -> std::tuple<MeshPtr, PolyDataPtr>
     {
       // Read in VTK polydata object
       auto reader = ErrThrower<vtkXMLPolyDataReader>::New();
       switch (mode) {
-      case Mode::file:
+      case Storage::file:
 	log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from VTK polydata file");
 	reader->ReadFromInputStringOff();
 	reader->SetFileName(filename_or_data.c_str());
 	break;
-      case Mode::string:
+      case Storage::string:
 	log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from VTK polydata string");
 	reader->ReadFromInputStringOn();
 	reader->SetInputString(filename_or_data);
@@ -336,7 +338,7 @@ namespace hemelb {
       return std::make_tuple(result, polydata);
     }
 
-    auto VTKMeshIO::read(Mode mode, std::string const &filename_or_data, bool fixFacetOrientation) const -> MeshPtr {
+    auto VTKMeshIO::read(Storage mode, std::string const &filename_or_data, bool fixFacetOrientation) const -> MeshPtr {
       MeshIO::MeshPtr meshData;
       VTKMeshIO::PolyDataPtr polyData;
       std::tie(meshData, polyData) = readUnoriented(mode, filename_or_data);
@@ -349,19 +351,18 @@ namespace hemelb {
       return meshData;
     }
 
-    std::string VTKMeshIO::write(Mode m, std::string const &filename,
-				 MeshData::Vertices const& vertices, MeshData::Facets const& facets,
-				 util::UnitConverter const& c, PointScalarData const& pt_scalar_fields) const {
+    std::string VTKMeshIO::write(Storage m, std::string const &filename,
+                                 MeshData::Vertices const& vertices, MeshData::Facets const& facets,
+                                 util::UnitConverter const& c, PointScalarData const& pt_scalar_fields) const {
       // Build the vtkPolyData
       auto pd = vtkSmartPointer<vtkPolyData>::New();
       
       // First, the points/vertices
       auto points = vtkSmartPointer<vtkPoints>::New();
       points->SetNumberOfPoints(vertices.size());
-      vtkIdType i = 0;
-      for (auto&& v_lat: vertices) {
-	auto const v = c.ConvertPositionToPhysicalUnits(v_lat);
-	points->SetPoint(i, v.x, v.y, v.z);
+      for (auto&& [i, v_lat]: util::enumerate(vertices)) {
+          auto const v = c.ConvertPositionToPhysicalUnits(v_lat);
+          points->SetPoint(i, v.x, v.y, v.z);
       }
       pd->SetPoints(points);
 
@@ -395,7 +396,7 @@ namespace hemelb {
       // Based on the type of write, configure the writer, run it and
       // return any output string.
       switch (m) {
-      case Mode::file:
+      case Storage::file:
 	log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
 						     filename.c_str());
 	writer->WriteToOutputStringOff();
@@ -403,7 +404,7 @@ namespace hemelb {
 	writer->Write();
 	return {};
 
-      case Mode::string:
+      case Storage::string:
 	writer->WriteToOutputStringOn();
 	writer->Write();
 	return writer->GetOutputString();

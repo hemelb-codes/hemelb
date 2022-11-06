@@ -18,6 +18,7 @@ namespace hemelb
       {
 	// +2 for the halo of empty valid locations around the cube
 	latDat = FourCubeLatticeData::Create(Comms(), cubesize + 2);
+    dom = &latDat->GetDomain();
 	simConfig = new OneInOneOutSimConfig(path);
 	simState = std::make_unique<lb::SimulationState>(simConfig->GetTimeStepLength(),
 							 simConfig->GetTotalTimeSteps());
@@ -25,7 +26,7 @@ namespace hemelb
 					  simConfig->GetVoxelSize());
 	unitConverter = &simConfig->GetUnitConverter();
 
-	initParams.latDat = latDat;
+	initParams.latDat = &latDat->GetDomain();
 	initParams.siteCount = initParams.latDat->GetLocalFluidSiteCount();
 	initParams.lbmParams = lbmParams;
 	numSites = initParams.latDat->GetLocalFluidSiteCount();

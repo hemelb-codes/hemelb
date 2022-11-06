@@ -4,4 +4,4 @@
 # license in the file LICENSE.
 include_guard()
 
-find_package(Boost 1.54 ${DEPS_FIND_MODE_Boost})
+find_package(Boost 1.75 ${DEPS_FIND_MODE_Boost})

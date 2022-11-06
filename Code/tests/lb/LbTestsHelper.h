@@ -15,6 +15,7 @@
 #include "lb/HFunction.h"
 #include "lb/kernels/BaseKernel.h"
 #include "lb/MacroscopicPropertyCache.h"
+#include "lb/lattices/D3Q15.h"
 
 #include "tests/helpers/ApproxVector.h"
 #include "tests/helpers/FourCubeLatticeData.h"
@@ -167,7 +168,8 @@ namespace hemelb
       template<typename LatticeType>
       void InitialiseAnisotropicTestData(FourCubeLatticeData* latticeData)
       {
-	for (site_t site = 0; site < latticeData->GetLocalFluidSiteCount(); ++site)
+          auto&& dom = latticeData->GetDomain();
+	for (site_t site = 0; site < dom.GetLocalFluidSiteCount(); ++site)
 	  {
 	    distribn_t fOld[LatticeType::NUMVECTORS];
 	    InitialiseAnisotropicTestData<LatticeType> (site, (distribn_t*)fOld);
@@ -185,11 +187,12 @@ namespace hemelb
            * @param simState
            */
           template<typename Lattice>
-          void UpdatePropertyCache(geometry::LatticeData& latDat,
+          void UpdatePropertyCache(geometry::FieldData& latDat,
                                           lb::MacroscopicPropertyCache& cache,
                                           lb::SimulationState& simState)
           {
-            for (site_t site = 0; site < latDat.GetLocalFluidSiteCount(); ++site)
+              const auto N = latDat.GetDomain().GetLocalFluidSiteCount();
+            for (site_t site = 0; site < N; ++site)
             {
               distribn_t density, feq[Lattice::NUMVECTORS];
               util::Vector3D<distribn_t> momentum;
@@ -219,7 +222,7 @@ namespace hemelb
           }
 
           /**
-           * For every site in latticeData and every link crossing a boundary, set the distance to the
+           * For every site in m_fieldData and every link crossing a boundary, set the distance to the
            * boundary to be wallDistance lattice length units
            *
            * @param latticeData Lattice object
@@ -230,15 +233,16 @@ namespace hemelb
           {
             assert(wallDistance >= 0);
             assert(wallDistance < 1);
+            auto&& dom = latticeData.GetDomain();
 
-            for (site_t siteIndex = 0; siteIndex < latticeData.GetTotalFluidSites(); siteIndex++)
+            for (site_t siteIndex = 0; siteIndex < dom.GetTotalFluidSites(); siteIndex++)
             {
               for (Direction direction = 1; direction < Lattice::NUMVECTORS; direction++)
               {
                 // -1 means that the a given link does not cross any boundary
                 if (latticeData.GetSite(siteIndex).template GetWallDistance<Lattice> (direction) != (distribn_t) -1)
                 {
-                  latticeData.SetBoundaryDistance(siteIndex, direction, wallDistance);
+                  dom.SetBoundaryDistance(siteIndex, direction, wallDistance);
                 }
               }
             }

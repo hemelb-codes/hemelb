@@ -58,10 +58,10 @@ namespace hemelb
         stepManager->RegisterIteratedActorSteps(concern, phase);
       }
       //! Access to lattice data for debugging
-      hemelb::geometry::LatticeData & GetLatticeData()
+      hemelb::geometry::FieldData& GetFieldData()
       {
-        assert(latticeData);
-        return *latticeData;
+        assert(fieldData);
+        return *fieldData;
       }
       std::shared_ptr<hemelb::net::IteratedAction> GetCellController() {
         return cellController;
@@ -76,7 +76,8 @@ namespace hemelb
       /* The next quantities are protected because they are used by MultiscaleSimulationMaster */
       // Set the lattice type via a build parameter
       typedef typename Traits::Lattice latticeType;
-      std::shared_ptr<hemelb::geometry::LatticeData> latticeData;
+      std::shared_ptr<hemelb::geometry::Domain> domainData;
+      std::shared_ptr<hemelb::geometry::FieldData> fieldData;
       std::shared_ptr<hemelb::lb::LBM<Traits>> latticeBoltzmannModel;
       std::shared_ptr<hemelb::geometry::neighbouring::NeighbouringDataManager>
         neighbouringDataManager;

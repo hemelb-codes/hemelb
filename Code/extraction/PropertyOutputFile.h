@@ -6,7 +6,7 @@
 #ifndef HEMELB_EXTRACTION_PROPERTYOUTPUTFILE_H
 #define HEMELB_EXTRACTION_PROPERTYOUTPUTFILE_H
 
-#include <string>
+#include <filesystem>
 #include <variant>
 #include <vector>
 
@@ -26,7 +26,7 @@ namespace hemelb::extraction
 
   struct PropertyOutputFile
   {
-    std::string filename;
+    std::filesystem::path filename;
     unsigned long frequency;
     util::clone_ptr<GeometrySelector> geometry;
     std::vector<OutputField> fields;

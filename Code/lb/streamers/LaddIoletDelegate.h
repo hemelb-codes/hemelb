@@ -29,8 +29,8 @@ namespace hemelb
           }
 
           inline void StreamLink(const LbmParameters* lbmParams,
-                                 geometry::LatticeData* const latticeData,
-                                 const geometry::Site<geometry::LatticeData>& site,
+                                 geometry::FieldData& latticeData,
+                                 const geometry::Site<geometry::Domain>& site,
                                  kernels::HydroVars<typename CollisionType::CKernel>& hydroVars,
                                  const Direction& ii)
           {
@@ -66,7 +66,7 @@ namespace hemelb
                 * (wallMom.x * LatticeType::CX[ii] + wallMom.y * LatticeType::CY[ii]
                     + wallMom.z * LatticeType::CZ[ii]) / Cs2;
 
-            * (latticeData->GetFNew(SimpleBounceBackDelegate<CollisionImpl>::GetBBIndex(site.GetIndex(),
+            * (latticeData.GetFNew(SimpleBounceBackDelegate<CollisionImpl>::GetBBIndex(site.GetIndex(),
                                                                                         ii))) =
                 hydroVars.GetFPostCollision()[ii] - correction;
           }

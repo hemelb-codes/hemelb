@@ -8,7 +8,7 @@
 
 #include "units.h"
 #include "Exception.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "redblood/stencil.h"
 
 #include <cassert>
@@ -86,9 +86,9 @@ namespace hemelb
         }
 
         //! computes local index
-        site_t ContiguousSiteId(geometry::LatticeData const &latDat) const
+        site_t ContiguousSiteId(geometry::Domain const &d) const
         {
-          return latDat.GetContiguousSiteId(current);
+          return d.GetContiguousSiteId(current);
         }
 
       protected:

@@ -11,6 +11,7 @@
 
 #include "lb/kernels/Kernels.h"
 #include "lb/streamers/Streamers.h"
+#include "lb/lattices/D3Q15.h"
 #include "lb/iolets/InOutLets.h"
 #include "geometry/SiteData.h"
 #include "util/utilityFunctions.h"
@@ -103,7 +104,7 @@ namespace hemelb
 	     hvPtr != extra->hydroVarsCache.end(); ++hvPtr) {
 	  site_t siteGlobalIdx = hvPtr->first;
 	  LatticeVector sitePos;
-	  latDat->GetGlobalCoordsFromGlobalNoncontiguousSiteId(siteGlobalIdx, sitePos);
+	  dom->GetGlobalCoordsFromGlobalNoncontiguousSiteId(siteGlobalIdx, sitePos);
 	  RSHV& hv = hvPtr->second;
 	  REQUIRE(expectedT == hv.t);
 	  REQUIRE(apprx(GetDensity(sitePos)) == hv.rho);
@@ -117,7 +118,7 @@ namespace hemelb
 				   LatticePosition expectedIoletPos)
       {
 	site_t expectedGlobalIdx =
-	  latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(expectedPt);
+	  dom->GetGlobalNoncontiguousSiteIdFromGlobalCoords(expectedPt);
 	RSHV::Map::iterator hvPtr = extra.hydroVarsCache.find(expectedGlobalIdx);
 	
 	REQUIRE(hvPtr != extra.hydroVarsCache.end());
@@ -130,8 +131,8 @@ namespace hemelb
 	  for (unsigned j = 1; j <= 4; ++j) {
 	    for (unsigned k = 1; k <= 4; ++k) {
 	      LatticeVector pos(i, j, k);
-	      site_t siteIdx = latDat->GetContiguousSiteId(pos);
-	      //geometry::Site < geometry::LatticeData > site = latDat->GetSite(siteIdx);
+	      site_t siteIdx = dom->GetContiguousSiteId(pos);
+	      //geometry::Site < geometry::domain_type > site = latDat->GetSite(siteIdx);
 	      distribn_t* fOld = latDat->GetFNew(siteIdx * Lattice::NUMVECTORS);
 	      LatticeDensity rho = GetDensity(pos);
 	      LatticeVelocity u = GetVelocity(pos);
@@ -143,10 +144,10 @@ namespace hemelb
 	latDat->SwapOldAndNew();
       };
 
-      auto propertyCache = lb::MacroscopicPropertyCache(*simState, *latDat);
+      auto propertyCache = lb::MacroscopicPropertyCache(*simState, *dom);
 
       auto inletBoundary = lb::iolets::BoundaryValues(geometry::INLET_TYPE,
-						      latDat,
+						      dom,
 						      simConfig->GetInlets(),
 						      simState.get(),
 						      Comms(),
@@ -165,21 +166,21 @@ namespace hemelb
       // Same for the cut distances of outlet sites.
       for (unsigned i = 1; i <= 4; ++i) {
 	for (unsigned j = 1; j <= 4; ++j) {
-	  site_t siteId = latDat->GetContiguousSiteId(LatticeVector(i, j, 1));
-	  geometry::Site < geometry::LatticeData > site = latDat->GetSite(siteId);
+	  site_t siteId = dom->GetContiguousSiteId(LatticeVector(i, j, 1));
+	  geometry::Site < geometry::Domain > site = latDat->GetSite(siteId);
 	  for (Direction p = 0; p < Info().GetNumVectors(); ++p) {
 	    if (Info().GetVector(p).z < 0.) {
 	      // Sanity check
 	      REQUIRE(site.HasIolet(p));
 	      // Set the cut distance to half way
-	      latDat->SetBoundaryDistance(siteId, p, 0.5);
+	      dom->SetBoundaryDistance(siteId, p, 0.5);
 	    }
 	  }
 	}
       }
 
       auto outletBoundary = lb::iolets::BoundaryValues(geometry::OUTLET_TYPE,
-						       latDat,
+						       dom,
 						       simConfig->GetOutlets(),
 						       simState.get(),
 						       Comms(),
@@ -197,14 +198,14 @@ namespace hemelb
       // Same for the cut distances of outlet sites.
       for (unsigned i = 1; i <= 4; ++i) {
 	for (unsigned j = 1; j <= 4; ++j) {
-	  site_t siteId = latDat->GetContiguousSiteId(LatticeVector(i, j, 4));
-	  geometry::Site < geometry::LatticeData > site = latDat->GetSite(siteId);
+	  site_t siteId = dom->GetContiguousSiteId(LatticeVector(i, j, 4));
+	  geometry::Site < geometry::Domain > site = latDat->GetSite(siteId);
 	  for (Direction p = 0; p < Info().GetNumVectors(); ++p) {
 	    if (Info().GetVector(p).z > 0.) {
 	      // Sanity check
 	      REQUIRE(site.HasIolet(p));
 	      // Set the cut distance to half way
-	      latDat->SetBoundaryDistance(siteId, p, 0.5);
+	      dom->SetBoundaryDistance(siteId, p, 0.5);
 	    }
 	  }
 	}
@@ -296,14 +297,14 @@ namespace hemelb
 	initParams.boundaryObject = &outletBoundary;
 	// Set up the ranges to cover Mid 3 (pure outlet) and Mid 5 (outlet/wall)
 	initParams.siteRanges.resize(2);
-	initParams.siteRanges[0].first = latDat->GetMidDomainCollisionCount(0)
-	  + latDat->GetMidDomainCollisionCount(1) + latDat->GetMidDomainCollisionCount(2);
+	initParams.siteRanges[0].first = dom->GetMidDomainCollisionCount(0)
+	  + dom->GetMidDomainCollisionCount(1) + dom->GetMidDomainCollisionCount(2);
 	initParams.siteRanges[0].second = initParams.siteRanges[0].first
-	  + latDat->GetMidDomainCollisionCount(3);
+	  + dom->GetMidDomainCollisionCount(3);
 	initParams.siteRanges[1].first = initParams.siteRanges[0].second
-	  + latDat->GetMidDomainCollisionCount(4);
+	  + dom->GetMidDomainCollisionCount(4);
 	initParams.siteRanges[1].second = initParams.siteRanges[1].first
-	  + latDat->GetMidDomainCollisionCount(5);
+	  + dom->GetMidDomainCollisionCount(5);
 	lb::streamers::VirtualSiteIolet<Collision> outletStreamer(initParams);
 
 	// All the sites at the outlet plane (x, y, 3) should be in the cache.
@@ -314,9 +315,9 @@ namespace hemelb
 	for (unsigned i = 1; i <= 4; ++i) {
 	  for (unsigned j = 1; j <= 4; ++j) {
 	    LatticeVector pos(i, j, 4);
-	    site_t globalIdx = latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(pos);
+	    site_t globalIdx = dom->GetGlobalNoncontiguousSiteIdFromGlobalCoords(pos);
 	    //                site_t localIdx = latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(globalIdx);
-	    //                geometry::Site < geometry::LatticeData > site = latDat->GetSite(localIdx);
+	    //                geometry::Site < geometry::domain_type > site = latDat->GetSite(localIdx);
 
 	    RSHV::Map::iterator hvPtr = extra->hydroVarsCache.find(globalIdx);
 	    REQUIRE(hvPtr != extra->hydroVarsCache.end());
@@ -328,7 +329,7 @@ namespace hemelb
 	     hvPtr != extra->hydroVarsCache.end(); ++hvPtr) {
 	  site_t globalIdx = hvPtr->first;
 	  LatticeVector pos;
-	  latDat->GetGlobalCoordsFromGlobalNoncontiguousSiteId(globalIdx, pos);
+	  dom->GetGlobalCoordsFromGlobalNoncontiguousSiteId(globalIdx, pos);
 	  REQUIRE(hemelb::util::NumericalFunctions::IsInRange<LatticeCoordinate>(pos.x,
 										 1,
 										 4));
@@ -349,33 +350,33 @@ namespace hemelb
 
 	// Stream and collide
 	site_t offset = 0;
-	offset += latDat->GetMidDomainCollisionCount(0);
-	offset += latDat->GetMidDomainCollisionCount(1);
+	offset += dom->GetMidDomainCollisionCount(0);
+	offset += dom->GetMidDomainCollisionCount(1);
 	inletStreamer.DoStreamAndCollide(offset,
-						 latDat->GetMidDomainCollisionCount(2),
+						 dom->GetMidDomainCollisionCount(2),
 						 lbmParams,
-						 static_cast<geometry::LatticeData*> (latDat),
+						 *latDat ,
 						 propertyCache);
-	offset += latDat->GetMidDomainCollisionCount(2);
+	offset += dom->GetMidDomainCollisionCount(2);
 
 	outletStreamer.StreamAndCollide(offset,
-						latDat->GetMidDomainCollisionCount(3),
+						dom->GetMidDomainCollisionCount(3),
 						lbmParams,
-						latDat,
+						*latDat,
 						propertyCache);
-	offset += latDat->GetMidDomainCollisionCount(3);
+	offset += dom->GetMidDomainCollisionCount(3);
 
 	inletStreamer.StreamAndCollide(offset,
-					       latDat->GetMidDomainCollisionCount(4),
+					       dom->GetMidDomainCollisionCount(4),
 					       lbmParams,
-					       latDat,
+					       *latDat,
 					       propertyCache);
-	offset += latDat->GetMidDomainCollisionCount(4);
+	offset += dom->GetMidDomainCollisionCount(4);
 
 	outletStreamer.StreamAndCollide(offset,
-						latDat->GetMidDomainCollisionCount(5),
+						dom->GetMidDomainCollisionCount(5),
 						lbmParams,
-						latDat,
+						*latDat,
 						propertyCache);
 
 	// Now every entry in the RSHV cache should have been updated
@@ -384,31 +385,31 @@ namespace hemelb
 
 	// Stream and collide
 	offset = 0;
-	offset += latDat->GetMidDomainCollisionCount(0);
-	offset += latDat->GetMidDomainCollisionCount(1);
+	offset += dom->GetMidDomainCollisionCount(0);
+	offset += dom->GetMidDomainCollisionCount(1);
 	inletStreamer.DoPostStep(offset,
-					 latDat->GetMidDomainCollisionCount(2),
-					 lbmParams,
-					 static_cast<geometry::LatticeData*> (latDat),
-					 propertyCache);
-	offset += latDat->GetMidDomainCollisionCount(2);
-
-	outletStreamer.DoPostStep(offset,
-					  latDat->GetMidDomainCollisionCount(3),
-					  lbmParams,
-					  latDat,
-					  propertyCache);
-	offset += latDat->GetMidDomainCollisionCount(3);
-
-	inletStreamer.DoPostStep(offset,
-					 latDat->GetMidDomainCollisionCount(4),
+					 dom->GetMidDomainCollisionCount(2),
 					 lbmParams,
 					 latDat,
 					 propertyCache);
-	offset += latDat->GetMidDomainCollisionCount(4);
+	offset += dom->GetMidDomainCollisionCount(2);
 
 	outletStreamer.DoPostStep(offset,
-					  latDat->GetMidDomainCollisionCount(5),
+					  dom->GetMidDomainCollisionCount(3),
+					  lbmParams,
+					  latDat,
+					  propertyCache);
+	offset += dom->GetMidDomainCollisionCount(3);
+
+	inletStreamer.DoPostStep(offset,
+					 dom->GetMidDomainCollisionCount(4),
+					 lbmParams,
+					 latDat,
+					 propertyCache);
+	offset += dom->GetMidDomainCollisionCount(4);
+
+	outletStreamer.DoPostStep(offset,
+					  dom->GetMidDomainCollisionCount(5),
 					  lbmParams,
 					  latDat,
 					  propertyCache);
@@ -426,7 +427,7 @@ namespace hemelb
 	  REQUIRE(apprx(LatticeDensity(1.045)) == vSite.hv.rho);
 
 	  LatticeVector pos;
-	  latDat->GetGlobalCoordsFromGlobalNoncontiguousSiteId(vSiteGlobalIdx, pos);
+	  dom->GetGlobalCoordsFromGlobalNoncontiguousSiteId(vSiteGlobalIdx, pos);
 
 	  if (vSite.neighbourGlobalIds.size() > 3)
 	    REQUIRE(apprx(GetVelocity(pos).z) ==  vSite.hv.u.z);
@@ -444,7 +445,7 @@ namespace hemelb
 	  REQUIRE(apprx(LatticeDensity(0.995)) == vSite.hv.rho);
 
 	  LatticeVector pos;
-	  latDat->GetGlobalCoordsFromGlobalNoncontiguousSiteId(vSiteGlobalIdx, pos);
+	  dom->GetGlobalCoordsFromGlobalNoncontiguousSiteId(vSiteGlobalIdx, pos);
 
 	  if (vSite.neighbourGlobalIds.size() > 3)
 	    REQUIRE(apprx(GetVelocity(pos).z) == vSite.hv.u.z);

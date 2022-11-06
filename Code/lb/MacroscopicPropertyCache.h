@@ -7,16 +7,17 @@
 #define HEMELB_LB_MACROSCOPICPROPERTYCACHE_H
 
 #include <vector>
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "lb/SimulationState.h"
 #include "units.h"
 #include "util/RefreshableCache.hpp"
+#include "util/Matrix3D.h"
 
 namespace hemelb
 {
   namespace geometry
   {
-    class LatticeData;
+    class Domain;
   }
   namespace lb
   {
@@ -30,7 +31,7 @@ namespace hemelb
          * @return
          */
         MacroscopicPropertyCache(const SimulationState& simState,
-                                 const geometry::LatticeData& latticeData);
+                                 const geometry::Domain& latticeData);
 
         /**
          * Reset the list of cache types required to be none of them.

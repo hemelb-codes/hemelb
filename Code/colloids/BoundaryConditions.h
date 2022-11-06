@@ -11,7 +11,7 @@
 #include <vector>
 #include <map>
 #include "colloids/Particle.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 
 namespace hemelb
 {
@@ -51,7 +51,7 @@ namespace hemelb
     {
       public:
         /** factory method - gets initial values from xml configuration file */
-        static const void InitBoundaryConditions(const geometry::LatticeData* const latticeData,
+        static const void InitBoundaryConditions(const geometry::Domain* const latticeData,
                                                  io::xml::Document& xml);
 
         static const void AddBoundaryCondition(const std::string name,
@@ -76,7 +76,7 @@ namespace hemelb
         static std::vector<BoundaryCondition*> boundaryConditionsInlet;
         static std::vector<BoundaryCondition*> boundaryConditionsOutlet;
 
-        const static geometry::LatticeData* latticeData;
+        const static geometry::Domain* latticeData;
     };
   }
 }

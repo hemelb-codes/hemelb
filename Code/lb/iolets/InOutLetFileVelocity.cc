@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <fstream>
 #include "log/Logger.h"
-#include "util/fileutils.h"
 #include "util/utilityFunctions.h"
 #include "util/utilityStructs.h"
 #include "configuration/SimConfig.h"
@@ -38,8 +37,10 @@ namespace hemelb
 
         double timeTemp, valueTemp;
 
-        util::check_file(velocityFilePath.c_str());
-        std::ifstream datafile(velocityFilePath.c_str());
+        if (!std::filesystem::exists(velocityFilePath))
+            throw Exception() << "File does not exist: " << velocityFilePath;
+
+        std::ifstream datafile(velocityFilePath);
         log::Logger::Log<log::Debug, log::OnePerCore>("Reading iolet values from file:");
         while (datafile.good())
         {
@@ -293,11 +294,12 @@ namespace hemelb
         if(useWeightsFromFile) {
           //if the new velocity approximation is enabled, then we want to create a lookup table here.
           const std::string in_name = velocityFilePath + ".weights.txt";
-          util::check_file(in_name.c_str());
+          if (!std::filesystem::exists(in_name))
+              throw Exception() << "File does not exist: " << in_name;
 
           /* Load and read file. */
           std::fstream myfile;
-          myfile.open(in_name.c_str(), std::ios_base::in);
+          myfile.open(in_name, std::ios_base::in);
           log::Logger::Log<log::Warning, log::OnePerCore>("Loading weights file: %s",
                                                         in_name.c_str());
 

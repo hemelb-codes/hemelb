@@ -5,8 +5,10 @@
 #ifndef HEMELB_REDBLOOD_PARALLEL_GRAPHBASEDCOMMUNICATION_H
 #define HEMELB_REDBLOOD_PARALLEL_GRAPHBASEDCOMMUNICATION_H
 
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "redblood/types.h"
+#include "reporting/timers_fwd.h"
+namespace hemelb::net { class MpiCommunicator; }
 
 namespace hemelb
 {
@@ -43,18 +45,18 @@ namespace hemelb
        * Computes a map that allows looking up the process owning certain lattice sites (by global lattice coordinate).
        * The map is restricted to the local lattices sites and those owned by the neighbours defined in the input graph MPI communicator.
        * @param comm graph MPI communicator
-       * @param latDat object with distributed information about the lattice
+       * @param domain object with distributed information about the lattice
        * @return map between lattice coordinates and process owning that lattice (restricted to graph neighbours)
        */
       GlobalCoordsToProcMap ComputeGlobalCoordsToProcMap(net::MpiCommunicator const &comm,
-                                                         const geometry::LatticeData &latDat);
+                                                         const geometry::Domain &domain);
 
       //! \brief All processes are considered neighbours with each other. This is the most conservative and inefficient implementation of the method possible.
       std::vector<std::vector<int>> ComputeProcessorNeighbourhood(net::MpiCommunicator const &comm);
 
       //! \brief Compute neighbourhood based on checking the minimum distance between every pair of subdomains and declaring them neighbours if this is shorter than the RBCs effective size.
       std::vector<std::vector<int>> ComputeProcessorNeighbourhood(net::MpiCommunicator const &comm,
-                                                                  geometry::LatticeData &latDat,
+                                                                  geometry::Domain &domain,
                                                                   LatticeDistance cellsEffectiveSize);
 
       // In order to compute the graph neighbourhood we assume that cells elongate maximum MAXIMUM_SIZE_TO_RADIUS_RATIO times the radius
@@ -64,7 +66,7 @@ namespace hemelb
 
       //! \brief Generates a graph communicator describing the data dependencies for interpolation and spreading
       net::MpiCommunicator CreateGraphComm(net::MpiCommunicator const &comm,
-                                           geometry::LatticeData &latDat,
+                                           geometry::Domain &domain,
                                            std::shared_ptr<TemplateCellContainer> cellTemplates,
                                            hemelb::reporting::Timers &timings);
     }

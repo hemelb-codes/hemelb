@@ -57,11 +57,11 @@ namespace hemelb
           //! \brief Spreads local forces
           //! \tparam TRAITS defines TRAITS::Stencil needed to actually do the spreading.
           template<class TRAITS = Traits<>>
-          void SpreadLocalForces(geometry::LatticeData & latticeData,
+          void SpreadLocalForces(geometry::FieldData & latticeData,
                                  CellContainer const &owned) const;
           //! \brief Receive and spread forces from other procs
           template<class TRAITS = Traits<>>
-          void SpreadNonLocalForces(geometry::LatticeData & latticeData);
+          void SpreadNonLocalForces(geometry::FieldData & latticeData);
 
         protected:
           //! Sends total number of shared nodes
@@ -101,12 +101,12 @@ namespace hemelb
       }
 
       template<class TRAITS>
-      void SpreadForces::SpreadLocalForces(geometry::LatticeData & latticeData,
+      void SpreadForces::SpreadLocalForces(geometry::FieldData & latticeData,
                                            CellContainer const &owned) const
       {
         namespace hrd = hemelb::redblood::details;
         typedef typename TRAITS::Stencil Stencil;
-        for (auto const cell : owned)
+        for (auto& cell : owned)
         {
           assert(cellForces.count(cell->GetTag()) == 1);
           auto const& forces = cellForces.find(cell->GetTag())->second;
@@ -116,7 +116,7 @@ namespace hemelb
       }
 
       template<class TRAITS>
-      void SpreadForces::SpreadNonLocalForces(geometry::LatticeData &latticeData)
+      void SpreadForces::SpreadNonLocalForces(geometry::FieldData &latticeData)
       {
         namespace hrd = hemelb::redblood::details;
         typedef typename TRAITS::Stencil Stencil;

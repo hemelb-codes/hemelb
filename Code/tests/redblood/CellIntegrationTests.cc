@@ -47,7 +47,7 @@ namespace hemelb
 
 	//timings = std::make_unique<reporting::Timers>(Comms());
 	master = std::make_shared<MasterSim>(*options, Comms());
-	helpers::LatticeDataAccess(&master->GetLatticeData()).ZeroOutForces();
+	helpers::LatticeDataAccess(&master->GetFieldData()).ZeroOutForces();
       }
 
       ~CellIntegrationTests() {
@@ -57,9 +57,11 @@ namespace hemelb
       // No errors when interpolation/spreading hits nodes out of bounds
       void testCellOutOfBounds()
       {
-	(*cells.begin())->operator+=(master->GetLatticeData().GetGlobalSiteMins() * 2.0);
+          auto& fd = master->GetFieldData();
+          auto& dom = fd.GetDomain();
+	(*cells.begin())->operator+=(dom.GetGlobalSiteMins() * 2.0);
 	auto controller = std::make_shared<CellControll>(
-							 master->GetLatticeData(),
+							 fd,
 							 cells,
 							 templates,
 							 timings
@@ -74,13 +76,14 @@ namespace hemelb
       void testIntegration()
       {
 	// setup cell position
-	auto const &latticeData = master->GetLatticeData();
-	auto const mid = LatticePosition(latticeData.GetGlobalSiteMaxes()
-					 + latticeData.GetGlobalSiteMins()) * 0.5;
+	auto& fieldData = master->GetFieldData();
+    auto& dom = fieldData.GetDomain();
+	auto const mid = LatticePosition(dom.GetGlobalSiteMaxes()
+                                     + dom.GetGlobalSiteMins()) * 0.5;
 	(**cells.begin()) += mid - (*cells.begin())->GetBarycenter();
 	(**cells.begin()) += LatticePosition(0, 0, 8 - mid.z);
 	(**cells.begin()) *= 5.0;
-	auto controller = std::make_shared<CellControll>(master->GetLatticeData(), cells, templates, timings);
+	auto controller = std::make_shared<CellControll>(fieldData, cells, templates, timings);
 	auto const barycenter = (*cells.begin())->GetBarycenter();
 
 	// run
@@ -97,7 +100,7 @@ namespace hemelb
 	// node node position is guessed at from geometry. This
 	// truncates.
 	auto const nodepos = LatticeVector{mid + LatticePosition(0, 0, 8 - 5 - mid.z)};
-	auto const force = latticeData.GetSite(nodepos).GetForce();
+	auto const force = fieldData.GetSite(nodepos).GetForce();
 	REQUIRE(std::abs(force.z) > 1e-4);
 
 	AssertPresent("results/report.txt");
@@ -111,7 +114,7 @@ namespace hemelb
 	CellContainer empty;
 	auto empty_tmpl = std::make_shared<TemplateCellContainer>();
 	auto controller = std::make_shared<CellControll>(
-							 master->GetLatticeData(),
+							 master->GetFieldData(),
 							 empty, empty_tmpl, timings);
 
 	// run

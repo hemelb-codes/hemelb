@@ -23,13 +23,13 @@ namespace hemelb
         }
 
         template<class T>
-        void RequestSendV(std::vector<T> &payload, proc_t toRank)
+        void RequestSendV(std::vector<T> const& payload, proc_t toRank)
         {
           RequestSend(payload.data(), payload.size(), toRank);
         }
 
         template<class T>
-        void RequestSendR(T& value, proc_t toRank)
+        void RequestSendR(T const& value, proc_t toRank)
         {
           RequestSend(&value, 1, toRank);
         }
@@ -127,7 +127,8 @@ namespace hemelb
         template<class T>
         void RequestSend(T* pointer, int count, proc_t rank)
         {
-          RequestSendImpl(pointer, count, rank, MpiDataType<T>());
+          using non_const_t = std::remove_const_t<T>;
+          RequestSendImpl(pointer, count, rank, MpiDataType<non_const_t>());
         }
 
         template<class T>

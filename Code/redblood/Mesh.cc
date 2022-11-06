@@ -16,7 +16,6 @@
 
 #include "redblood/Mesh.h"
 #include "redblood/Facet.h"
-#include "util/fileutils.h"
 #include "util/Iterator.h"
 #include "log/Logger.h"
 #include "Exception.h"

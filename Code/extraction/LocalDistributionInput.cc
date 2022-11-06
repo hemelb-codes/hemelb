@@ -6,7 +6,7 @@
 
 #include "extraction/OutputField.h"
 #include "extraction/LocalPropertyOutput.h"
-#include "geometry/LatticeData.h"
+#include "geometry/FieldData.h"
 #include "io/formats/formats.h"
 #include "io/formats/extraction.h"
 #include "io/formats/offset.h"
@@ -35,9 +35,10 @@ namespace hemelb::extraction {
     uint64_t constexpr totalXtrHeaderLength = fmt::extraction::MainHeaderLength + expectedFieldHeaderLength;
   }
 
-  void LocalDistributionInput::LoadDistribution(geometry::LatticeData* latDat, std::optional<LatticeTimeStep>& targetTime)
+  void LocalDistributionInput::LoadDistribution(geometry::FieldData* latDat, std::optional<LatticeTimeStep>& targetTime)
   {
-      const auto NUMVECTORS = latDat->GetLatticeInfo().GetNumVectors();
+      auto&& dom = latDat->GetDomain();
+      const auto NUMVECTORS = dom.GetLatticeInfo().GetNumVectors();
 
       // We could supply hints regarding how the file should be read
       // but we are not doing so yet.
@@ -133,7 +134,7 @@ namespace hemelb::extraction {
 	  // of HemeLB, for the grid coordinate read from the
 	  // checkpoint file.
 	  proc_t rank; site_t index;
-	  if (!latDat->GetContiguousSiteId(grid, rank, index)) {
+	  if (!dom.GetContiguousSiteId(grid, rank, index)) {
 	    // function returns a 'valid' flag
 	    throw Exception() << "Cannot get valid site from extracted site coordinate";
 	  }
@@ -157,9 +158,9 @@ namespace hemelb::extraction {
 	}
       }
 
-      if (iSite != latDat->GetLocalFluidSiteCount())
+      if (iSite != dom.GetLocalFluidSiteCount())
 	throw Exception() << "Read " << iSite
-			  << " sites but expected " << latDat->GetLocalFluidSiteCount();
+			  << " sites but expected " << dom.GetLocalFluidSiteCount();
     }
 
     void LocalDistributionInput::ReadExtractionHeaders(net::MpiFile& inputFile, const unsigned NUMVECTORS) {

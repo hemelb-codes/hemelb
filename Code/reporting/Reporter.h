@@ -7,19 +7,17 @@
 #define HEMELB_REPORTING_REPORTER_H
 
 #include <string>
+#include <filesystem>
 #include <vector>
 #include "configuration/SimConfig.h"
 #include "configuration/CommandLine.h"
 #include "log/Logger.h"
-#include "util/fileutils.h"
 #include "reporting/Policies.h"
 #include "reporting/Reportable.h"
 #include "resources/Resource.h"
 
-namespace hemelb
+namespace hemelb::reporting
 {
-  namespace reporting
-  {
     /**
      * Report generator class.
      * Class defining the creation of a report, intended for long-term archiving, describing what happened during a HemeLB run.
@@ -37,35 +35,35 @@ namespace hemelb
          * @param timers Reference to list of timers used to measure performance.
          * @param aState Reference to state of ongoing simulation.
          */
-        Reporter(const std::string &path, const std::string &inputFile);
+        Reporter(const std::filesystem::path& report_dir, const std::string &inputFile);
 
         void AddReportable(Reportable* reportable);
 
-        void WriteXML()
+        inline void WriteXML()
         {
           Write(resources::Resource("report.xml.ctp").Path(), "report.xml");
         }
-        void WriteTxt()
+        inline void WriteTxt()
         {
           Write(resources::Resource("report.txt.ctp").Path(), "report.txt");
         }
         void FillDictionary();
-        void Write()
+        inline void Write()
         {
           WriteXML();
           WriteTxt();
         }
-        const Dict& GetDictionary() const
+        inline const Dict& GetDictionary() const
         {
           return dictionary;
         }
       private:
-        const std::string &path;
-        void Write(const std::string &ctemplate, const std::string &as); //! Write the report to disk, (or wherever the WriterPolicy decides.)
-	Dict dictionary;
+        std::filesystem::path report_dir;
+        void Write(const std::filesystem::path& ctemplate, const std::string &as); //! Write the report to disk, (or wherever the WriterPolicy decides.)
+        Dict dictionary;
         std::vector<Reportable*> reportableObjects;
     };
-  }
+
 }
 
 #endif // HEMELB_REPORTING_REPORTER_H

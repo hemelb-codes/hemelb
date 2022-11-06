@@ -9,7 +9,7 @@
 #include <optional>
 #include <variant>
 
-#include "geometry/LatticeData.h"
+#include "geometry/FieldData.h"
 #include "configuration/SimConfig.h"
 
 namespace hemelb::lb {
@@ -23,11 +23,11 @@ namespace hemelb::lb {
       void SetTime(SimulationState* sim) const;
 
     protected:
-      // Allow access for derived classes (this is a friend of LatticeData)
-      inline distribn_t* GetFOld(geometry::LatticeData* ld, site_t i) const {
+      // Allow access for derived classes (this is a friend of domain_type)
+      inline distribn_t* GetFOld(geometry::FieldData* ld, site_t i) const {
 	return ld->GetFOld(i);
       }
-      inline distribn_t* GetFNew(geometry::LatticeData* ld, site_t i) const {
+      inline distribn_t* GetFNew(geometry::FieldData* ld, site_t i) const {
 	return ld->GetFNew(i);
       }
 
@@ -43,7 +43,7 @@ namespace hemelb::lb {
 				  distribn_t mx = 0.0, distribn_t my = 0.0, distribn_t mz = 0.0);
       
       template<class LatticeType>
-      void SetFs(geometry::LatticeData* latDat, const net::IOCommunicator& ioComms) const;
+      void SetFs(geometry::FieldData* latDat, const net::IOCommunicator& ioComms) const;
       
     private:
       distribn_t density;
@@ -56,7 +56,7 @@ namespace hemelb::lb {
       CheckpointInitialCondition(std::optional<LatticeTimeStep> t0, const std::string& cp, std::optional<std::string> const& maybeOff);
       
       template<class LatticeType>
-      void SetFs(geometry::LatticeData* latDat, const net::IOCommunicator& ioComms) const;
+      void SetFs(geometry::FieldData* latDat, const net::IOCommunicator& ioComms) const;
 
     private:
       std::string cpFile;
@@ -75,7 +75,7 @@ namespace hemelb::lb {
       
       void SetTime(SimulationState* sim) const;
       template<class LatticeType>
-      void SetFs(geometry::LatticeData* latDat, const net::IOCommunicator& ioComms) const;
+      void SetFs(geometry::FieldData* latDat, const net::IOCommunicator& ioComms) const;
     private:
       
       //ICVar ic;

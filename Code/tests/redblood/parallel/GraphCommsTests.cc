@@ -137,14 +137,14 @@ namespace hemelb
       // Setup simulation with cylinder
       auto master = CreateMasterSim(comms);
       REQUIRE(master);
-      auto &latticeData = master->GetLatticeData();
+      auto &latticeData = master->GetFieldData();
 
       // Compute neighbourhoods (cylinder is 4.8e-5 long, a cell
       // effective size of 2e-6 won't let cells span across more than
       // two subdomains)
       auto neighbourhoods =
 	ComputeProcessorNeighbourhood(comms,
-				      latticeData,
+				      latticeData.GetDomain(),
 				      2e-6 / master->GetSimConfig()->GetVoxelSize());
 
       // Parmetis divides the cylinder in four consecutive cylindrical
@@ -197,11 +197,11 @@ namespace hemelb
       // Setup simulation with cylinder
       auto master = CreateMasterSim(comms);
       REQUIRE(master);
-      auto &latticeData = master->GetLatticeData();
+      auto &domain = master->GetFieldData().GetDomain();
       auto graphComm = comms.Graph(hemelb::redblood::parallel::ComputeProcessorNeighbourhood(comms,
-											     latticeData,
+                                                                                             domain,
 											     2e-6 / master->GetSimConfig()->GetVoxelSize()));
-      auto const& globalCoordsToProcMap = hemelb::redblood::parallel::ComputeGlobalCoordsToProcMap(graphComm, latticeData);
+      auto const& globalCoordsToProcMap = hemelb::redblood::parallel::ComputeGlobalCoordsToProcMap(graphComm, domain);
 
       // The first lattice site for each rank is
       std::vector<LatticeVector> lattice_coords;

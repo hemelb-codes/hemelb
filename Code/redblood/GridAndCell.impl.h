@@ -37,7 +37,7 @@ namespace details
   class SpreadForces
   {
     public:
-      SpreadForces(std::vector<LatticePosition> const &forces, geometry::LatticeData &latticeData) :
+      SpreadForces(std::vector<LatticePosition> const &forces, geometry::FieldData &latticeData) :
           latticeData(latticeData), i_force(forces.begin())
       {
       }
@@ -47,16 +47,16 @@ namespace details
         proc_t procid;
         site_t siteid;
 
-        if (latticeData.GetContiguousSiteId(site, procid, siteid))
+        if (latticeData.GetDomain().GetContiguousSiteId(site, procid, siteid))
         {
-          assert (procid == latticeData.GetCommunicator().Rank());
+          assert (procid == latticeData.GetDomain().GetCommunicator().Rank());
           auto siteOb = latticeData.GetSite(site);
           siteOb.AddToForce(* (i_force + vertex) * weight);
         }
       }
 
     protected:
-      geometry::LatticeData &latticeData;
+      geometry::FieldData &latticeData;
       std::vector<LatticeForceVector>::const_iterator const i_force;
   };
 

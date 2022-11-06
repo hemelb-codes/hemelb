@@ -33,7 +33,7 @@ namespace hemelb
       using KERNEL = lb::kernels::LBGK<LATTICE>;
       using COLLISION = lb::collisions::Normal<KERNEL>;
       constexpr auto NUMVECTORS = LATTICE::NUMVECTORS;
-      auto propertyCache = std::make_unique<lb::MacroscopicPropertyCache>(*simState, *latDat);
+      auto propertyCache = std::make_unique<lb::MacroscopicPropertyCache>(*simState, *dom);
       auto normalCollision = std::make_unique<COLLISION>(initParams);
       auto apprx = [&](double x) {
 	return Approx(x).margin(allowedError);
@@ -49,13 +49,13 @@ namespace hemelb
 
 	// Use the streaming operator on the entire lattice.
 	simpleCollideAndStream.StreamAndCollide(0,
-							latDat->GetLocalFluidSiteCount(),
+							dom->GetLocalFluidSiteCount(),
 							lbmParams,
-							latDat,
+							*latDat,
 							*propertyCache);
 
 	// Now, go over each lattice site and check each value in f_new is correct.
-	for (site_t streamedToSite = 0; streamedToSite < latDat->GetLocalFluidSiteCount(); ++streamedToSite) {
+	for (site_t streamedToSite = 0; streamedToSite < dom->GetLocalFluidSiteCount(); ++streamedToSite) {
 	  auto streamedSite = latDat->GetSite(streamedToSite);
 
 	  distribn_t* streamedToFNew = latDat->GetFNew(NUMVECTORS * streamedToSite);
@@ -65,7 +65,7 @@ namespace hemelb
 	    site_t streamerIndex = streamedSite.GetStreamedIndex<LATTICE>(LATTICE::INVERSEDIRECTIONS[streamedDirection]);
 
 	    // If this site streamed somewhere sensible, it must have been streamed to.
-	    if (streamerIndex >= 0 && streamerIndex < (NUMVECTORS * latDat->GetLocalFluidSiteCount())) {
+	    if (streamerIndex >= 0 && streamerIndex < (NUMVECTORS * dom->GetLocalFluidSiteCount())) {
 	      site_t streamerSiteId = streamerIndex / NUMVECTORS;
 
 	      // Calculate streamerFOld at this site.
@@ -96,18 +96,18 @@ namespace hemelb
 	lb::streamers::BouzidiFirdaousLallemand<COLLISION>::Type bfl(initParams);
 
 	bfl.StreamAndCollide(0,
-				     latDat->GetLocalFluidSiteCount(),
+				     dom->GetLocalFluidSiteCount(),
 				     lbmParams,
-				     latDat,
+				     *latDat,
 				     *propertyCache);
 	bfl.PostStep(0,
-			     latDat->GetLocalFluidSiteCount(),
+			     dom->GetLocalFluidSiteCount(),
 			     lbmParams,
-			     latDat,
+			     *latDat,
 			     *propertyCache);
 
 	// Now, go over each lattice site and check each value in f_new is correct.
-	for (site_t streamedToSite = 0; streamedToSite < latDat->GetLocalFluidSiteCount(); ++streamedToSite) {
+	for (site_t streamedToSite = 0; streamedToSite < dom->GetLocalFluidSiteCount(); ++streamedToSite) {
 	    const auto streamedSite = latDat->GetSite(streamedToSite);
 
 	    distribn_t* streamedToFNew = latDat->GetFNew(NUMVECTORS * streamedToSite);
@@ -121,7 +121,7 @@ namespace hemelb
 
 	      // If this site streamed somewhere sensible, it must
 	      // have been streamed to.
-	      if (streamerIndex >= 0 && streamerIndex < (NUMVECTORS * latDat->GetLocalFluidSiteCount())) {
+	      if (streamerIndex >= 0 && streamerIndex < (NUMVECTORS * dom->GetLocalFluidSiteCount())) {
 		site_t streamerSiteId = streamerIndex / NUMVECTORS;
 
 		// Calculate streamerFOld at this site.
@@ -179,7 +179,7 @@ namespace hemelb
 		site_t awayFromWallIndex = streamedSite.GetStreamedIndex<LATTICE> (streamedDirection) / NUMVECTORS;
 
 		// If there's a valid index in that direction, use BFL
-		if (awayFromWallIndex >= 0 && awayFromWallIndex  < latDat->GetLocalFluidSiteCount()) {
+		if (awayFromWallIndex >= 0 && awayFromWallIndex  < dom->GetLocalFluidSiteCount()) {
 		  const auto awayFromWallSite = latDat->GetSite(awayFromWallIndex);
 
 		  // (initialise it to f_old).
@@ -227,12 +227,12 @@ namespace hemelb
 	// and that each site's function is distinguishable.
 	LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(latDat);
 
-	site_t firstWallSite = latDat->GetMidDomainCollisionCount(0);
-	site_t wallSitesCount = latDat->GetMidDomainCollisionCount(1);
+	site_t firstWallSite = dom->GetMidDomainCollisionCount(0);
+	site_t wallSitesCount = dom->GetMidDomainCollisionCount(1);
 
 	// Check that the lattice has the expected number of sites
 	// labeled as pure wall (otherwise this test is void)
-	REQUIRE(site_t(24) == latDat->GetMidDomainCollisionCount(1));
+	REQUIRE(site_t(24) == dom->GetMidDomainCollisionCount(1));
 
 	site_t offset = 0;
 
@@ -240,33 +240,33 @@ namespace hemelb
 	lb::streamers::SimpleCollideAndStream<COLLISION > simpleCollideAndStream(initParams);
 
 	simpleCollideAndStream.StreamAndCollide(offset,
-							latDat->GetMidDomainCollisionCount(0),
+							dom->GetMidDomainCollisionCount(0),
 							lbmParams,
-							latDat,
+							*latDat,
 							*propertyCache);
-	offset += latDat->GetMidDomainCollisionCount(0);
+	offset += dom->GetMidDomainCollisionCount(0);
 
 	// Wall sites use simple bounce back
 	lb::streamers::SimpleBounceBack<COLLISION>::Type simpleBounceBack(initParams);
 
 	simpleBounceBack.StreamAndCollide(offset,
-						  latDat->GetMidDomainCollisionCount(1),
+						  dom->GetMidDomainCollisionCount(1),
 						  lbmParams,
-						  latDat,
+						  *latDat,
 						  *propertyCache);
-	offset += latDat->GetMidDomainCollisionCount(1);
+	offset += dom->GetMidDomainCollisionCount(1);
 
 	// Consider inlet/outlets and their walls as mid-fluid sites
 	simpleCollideAndStream.StreamAndCollide(offset,
-							latDat->GetLocalFluidSiteCount()
+							dom->GetLocalFluidSiteCount()
 							- offset,
 							lbmParams,
-							latDat,
+							*latDat,
 							*propertyCache);
-	offset += latDat->GetLocalFluidSiteCount() - offset;
+	offset += dom->GetLocalFluidSiteCount() - offset;
 
 	// Sanity check
-	REQUIRE(offset == latDat->GetLocalFluidSiteCount());
+	REQUIRE(offset == dom->GetLocalFluidSiteCount());
 
 	// Loop over the wall sites and check whether they got
 	// properly streamed on or bounced back depending on where
@@ -285,7 +285,7 @@ namespace hemelb
 	    site_t streamerIndex = streamedSite.GetStreamedIndex<LATTICE> (oppDirection);
 
 	    // Is streamerIndex a valid index?
-	    if (streamerIndex >= 0 && streamerIndex < (NUMVECTORS * latDat->GetLocalFluidSiteCount())) {
+	    if (streamerIndex >= 0 && streamerIndex < (NUMVECTORS * dom->GetLocalFluidSiteCount())) {
 	      // The streamer index is a valid index in the domain,
 	      // therefore stream and collide has happened
 	      site_t streamerSiteId = streamerIndex / NUMVECTORS;
@@ -353,19 +353,19 @@ namespace hemelb
 	  const Direction chosenDoubleWallDirection2 = 8;
 
 	  // Enforce that there's a boundary in the wall direction.
-	  latDat->SetHasWall(chosenSite, chosenWallDirection);
-	  latDat->SetHasWall(chosenSite, chosenDoubleWallDirection1);
-	  latDat->SetHasWall(chosenSite, chosenDoubleWallDirection2);
-	  latDat->SetBoundaryDistance(chosenSite, chosenWallDirection, assignedWallDistance);
-	  latDat->SetBoundaryDistance(chosenSite,
+	  dom->SetHasWall(chosenSite, chosenWallDirection);
+	  dom->SetHasWall(chosenSite, chosenDoubleWallDirection1);
+	  dom->SetHasWall(chosenSite, chosenDoubleWallDirection2);
+	  dom->SetBoundaryDistance(chosenSite, chosenWallDirection, assignedWallDistance);
+	  dom->SetBoundaryDistance(chosenSite,
 				      chosenDoubleWallDirection1,
 				      assignedWallDistance);
-	  latDat->SetBoundaryDistance(chosenSite,
+	  dom->SetBoundaryDistance(chosenSite,
 				      chosenDoubleWallDirection2,
 				      assignedWallDistance);
 
 	  // Perform the collision and streaming.
-	  guoZhengShi.StreamAndCollide(chosenSite, 1, lbmParams, latDat, *propertyCache);
+	  guoZhengShi.StreamAndCollide(chosenSite, 1, lbmParams, *latDat, *propertyCache);
 
 	  // Calculate the distributions at the chosen site up to post-collision.
 	  distribn_t streamerFOld[NUMVECTORS];
@@ -508,8 +508,8 @@ namespace hemelb
 	// behave like Simple Bounce Back
 	LbTestsHelper::SetWallAndIoletDistances<LATTICE>(*latDat, 0.5);
 
-	site_t firstWallSite = latDat->GetMidDomainCollisionCount(0);
-	site_t wallSitesCount = latDat->GetMidDomainCollisionCount(1) - firstWallSite;
+	site_t firstWallSite = dom->GetMidDomainCollisionCount(0);
+	site_t wallSitesCount = dom->GetMidDomainCollisionCount(1) - firstWallSite;
 
 	// Check that the lattice has sites labeled as wall (otherwise
 	// this test is void)
@@ -521,43 +521,43 @@ namespace hemelb
 	lb::streamers::SimpleCollideAndStream<COLLISION> simpleCollideAndStream(initParams);
 
 	simpleCollideAndStream.StreamAndCollide(offset,
-							latDat->GetMidDomainCollisionCount(0),
+							dom->GetMidDomainCollisionCount(0),
 							lbmParams,
-							latDat,
+							*latDat,
 							*propertyCache);
-	offset += latDat->GetMidDomainCollisionCount(0);
+	offset += dom->GetMidDomainCollisionCount(0);
 
 	// Wall sites use Junk and Yang
 	initParams.siteRanges.push_back(std::pair<site_t, site_t>(offset,
 								  offset
-								  + latDat->GetMidDomainCollisionCount(1)));
+								  + dom->GetMidDomainCollisionCount(1)));
 	lb::streamers::JunkYang<COLLISION>::Type junkYang(initParams);
 
 	junkYang.StreamAndCollide(offset,
-					  latDat->GetMidDomainCollisionCount(1),
+					  dom->GetMidDomainCollisionCount(1),
 					  lbmParams,
-					  latDat,
+					  *latDat,
 					  *propertyCache);
 
 	junkYang.PostStep(offset,
-				  latDat->GetMidDomainCollisionCount(1),
+				  dom->GetMidDomainCollisionCount(1),
 				  lbmParams,
-				  latDat,
+				  *latDat,
 				  *propertyCache);
 
-	offset += latDat->GetMidDomainCollisionCount(1);
+	offset += dom->GetMidDomainCollisionCount(1);
 
 	// Consider inlet/outlets and their walls as mid-fluid sites
 	simpleCollideAndStream.StreamAndCollide(offset,
-							latDat->GetLocalFluidSiteCount()
+							dom->GetLocalFluidSiteCount()
 							- offset,
 							lbmParams,
-							latDat,
+							*latDat,
 							*propertyCache);
-	offset += latDat->GetLocalFluidSiteCount() - offset;
+	offset += dom->GetLocalFluidSiteCount() - offset;
 
 	// Sanity check
-	REQUIRE(offset == latDat->GetLocalFluidSiteCount());
+	REQUIRE(offset == dom->GetLocalFluidSiteCount());
 
 	// Loop over the wall sites and check whether they got
 	// properly streamed on or bounced back depending on where
@@ -578,7 +578,7 @@ namespace hemelb
 
 	    // Is streamerIndex a valid index?
 	    if (streamerIndex >= 0 &&
-		streamerIndex < (NUMVECTORS * latDat->GetLocalFluidSiteCount())) {
+		streamerIndex < (NUMVECTORS * dom->GetLocalFluidSiteCount())) {
 	      // The streamer index is a valid index in the domain,
 	      // therefore stream and collide has happened
 	      site_t streamerSiteId = streamerIndex / NUMVECTORS;
@@ -628,7 +628,7 @@ namespace hemelb
 
       SECTION("NashZerothOrderPressureIolet") {
 	lb::iolets::BoundaryValues inletBoundary(geometry::INLET_TYPE,
-						 latDat,
+						 dom,
 						 simConfig->GetInlets(),
 						 simState.get(),
 						 Comms(),
@@ -656,16 +656,16 @@ namespace hemelb
 	  const auto ioletNormal = inletBoundary.GetLocalIolet(chosenBoundaryId)->GetNormal();
 
 	  // Enforce that there's a boundary in the iolet direction.
-	  latDat->SetHasIolet(chosenSite, chosenIoletDirection);
-	  latDat->SetBoundaryDistance(chosenSite, chosenIoletDirection, assignedWallDistance);
-	  latDat->SetBoundaryNormal(chosenSite, ioletNormal);
-	  latDat->SetIoletId(chosenSite, chosenBoundaryId);
+	  dom->SetHasIolet(chosenSite, chosenIoletDirection);
+	  dom->SetBoundaryDistance(chosenSite, chosenIoletDirection, assignedWallDistance);
+	  dom->SetBoundaryNormal(chosenSite, ioletNormal);
+	  dom->SetIoletId(chosenSite, chosenBoundaryId);
 
 	  // Perform the collision and streaming.
 	  ioletCollider.StreamAndCollide(chosenSite,
 						 1,
 						 lbmParams,
-						 latDat,
+						 *latDat,
 						 *propertyCache);
 
 	  // Check each streamed direction.
@@ -688,7 +688,7 @@ namespace hemelb
 	    // with for the test)?
 	    if (!streamer.HasIolet(streamedDirection)
 		&& streamedIndex >= 0
-		&& streamedIndex < (NUMVECTORS * latDat->GetLocalFluidSiteCount())) {
+		&& streamedIndex < (NUMVECTORS * dom->GetLocalFluidSiteCount())) {
 	      distribn_t streamedToFNew = *latDat->GetFNew(streamedIndex);
 
 	      // F_new should be equal to the value that was streamed
@@ -730,7 +730,7 @@ namespace hemelb
 
       SECTION("NashZerothOrderPressureBB") {
 	lb::iolets::BoundaryValues inletBoundary(geometry::INLET_TYPE,
-						 latDat,
+						 dom,
 						 simConfig->GetInlets(),
 						 simState.get(),
 						 Comms(),
@@ -751,7 +751,7 @@ namespace hemelb
 	  // Make some fairly arbitrary choices early on.
 	  const site_t chosenSite = 0;
 	  const int chosenBoundaryId = 0;
-	  const geometry::Site<geometry::LatticeData>& streamer = latDat->GetSite(chosenSite);
+	  auto&& streamer = latDat->GetSite(chosenSite);
 
 	  const Direction chosenWallDirection = 11;
 	  const Direction chosenUnstreamedDirection = 5;
@@ -759,17 +759,17 @@ namespace hemelb
 	  const auto ioletNormal = inletBoundary.GetLocalIolet(chosenBoundaryId)->GetNormal();
 
 	  // Enforce that there's a boundary in the iolet direction.
-	  latDat->SetHasIolet(chosenSite, chosenIoletDirection);
-	  latDat->SetHasWall(chosenSite, chosenWallDirection);
-	  latDat->SetBoundaryDistance(chosenSite, chosenIoletDirection, assignedIoletDistance);
-	  latDat->SetBoundaryNormal(chosenSite, ioletNormal);
-	  latDat->SetIoletId(chosenSite, chosenBoundaryId);
+	  dom->SetHasIolet(chosenSite, chosenIoletDirection);
+	  dom->SetHasWall(chosenSite, chosenWallDirection);
+	  dom->SetBoundaryDistance(chosenSite, chosenIoletDirection, assignedIoletDistance);
+	  dom->SetBoundaryNormal(chosenSite, ioletNormal);
+	  dom->SetIoletId(chosenSite, chosenBoundaryId);
 
 	  // Perform the collision and streaming.
 	  ioletCollider.StreamAndCollide(chosenSite,
 						 1,
 						 lbmParams,
-						 latDat,
+						 *latDat,
 						 *propertyCache);
 
 	  // Check each streamed direction.
@@ -794,7 +794,7 @@ namespace hemelb
 	    if (!streamer.HasIolet(streamedDirection)
 		&& !streamer.HasWall(streamedDirection)
 		&& streamedIndex >= 0
-		&& streamedIndex < (NUMVECTORS * latDat->GetLocalFluidSiteCount())) {
+		&& streamedIndex < (NUMVECTORS * dom->GetLocalFluidSiteCount())) {
 	      distribn_t streamedToFNew = *latDat->GetFNew(streamedIndex);
 
 	      // F_new should be equal to the value that was streamed

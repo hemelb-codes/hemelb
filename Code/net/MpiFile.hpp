@@ -29,13 +29,13 @@ namespace hemelb
     void MpiFile::Write(const std::vector<T>& buffer, MPI_Status* stat)
     {
       HEMELB_MPI_CALL(MPI_File_write,
-                      (*filePtr, MpiConstCast(&buffer[0]), buffer.size(), MpiDataType<T>(), stat));
+                      (*filePtr, buffer.data(), buffer.size(), MpiDataType<T>(), stat));
     }
     template<typename T>
     void MpiFile::WriteAt(MPI_Offset offset, const std::vector<T>& buffer, MPI_Status* stat)
     {
       HEMELB_MPI_CALL(MPI_File_write_at,
-                      (*filePtr, offset, MpiConstCast(&buffer[0]), buffer.size(), MpiDataType<T>(), stat));
+                      (*filePtr, offset, buffer.data(), buffer.size(), MpiDataType<T>(), stat));
 
     }
 

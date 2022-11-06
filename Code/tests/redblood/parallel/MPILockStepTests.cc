@@ -114,12 +114,13 @@ namespace hemelb
 
     void checkNonZeroForceSites(
           net::MpiCommunicator const &world,
-          geometry::LatticeData const &latDat,
+          geometry::FieldData const &latDat,
           std::size_t &nbtests,
           hemelb::redblood::CellContainer const &cells) {
+      auto& dom = latDat.GetDomain();
       std::vector<LatticeVector> positions;
       std::vector<LatticeForceVector> forces;
-      for(site_t i(0); i < latDat.GetLocalFluidSiteCount(); ++i) {
+      for(site_t i(0); i < dom.GetLocalFluidSiteCount(); ++i) {
 	auto const site = latDat.GetSite(i);
 	if(site.GetForce().GetMagnitude() > 1e-12) {
 	  positions.push_back(site.GetGlobalSiteCoords());
@@ -188,7 +189,7 @@ namespace hemelb
       controller->AddCellChangeListener(
 					std::bind(
 						  checkNonZeroForceSites,
-						  std::cref(world), std::cref(master->GetLatticeData()), std::ref(nbtests),
+						  std::cref(world), std::cref(master->GetFieldData()), std::ref(nbtests),
 						  std::placeholders::_1
 						  )
 					);

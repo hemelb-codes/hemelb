@@ -9,7 +9,7 @@
 #include "net/IOCommunicator.h"
 #include "net/IteratedAction.h"
 #include "lb/iolets/InOutLet.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "lb/iolets/BoundaryCommunicator.h"
 #include "util/clone_ptr.h"
 
@@ -24,7 +24,7 @@ namespace hemelb
       {
 	using IoletPtr = util::clone_ptr<iolets::InOutLet>;
         public:
-          BoundaryValues(geometry::SiteType ioletType, geometry::LatticeData* latticeData,
+          BoundaryValues(geometry::SiteType ioletType, geometry::Domain* latticeData,
                          const std::vector<IoletPtr>& iolets,
                          SimulationState* simulationState, const net::MpiCommunicator& comms,
                          const util::UnitConverter& units);
@@ -62,7 +62,7 @@ namespace hemelb
           }
 
         private:
-          bool IsIOletOnThisProc(geometry::SiteType ioletType, geometry::LatticeData* latticeData,
+          bool IsIOletOnThisProc(geometry::SiteType ioletType, geometry::Domain* latticeData,
                                  int boundaryId);
           std::vector<int> GatherProcList(bool hasBoundary);
           void HandleComms(iolets::InOutLet* iolet);

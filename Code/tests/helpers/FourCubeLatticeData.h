@@ -8,7 +8,8 @@
 
 #include <cstdlib>
 #include "units.h"
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
+#include "geometry/FieldData.h"
 #include "io/formats/geometry.h"
 #include "util/Vector3D.h"
 
@@ -26,24 +27,29 @@ namespace hemelb
       void SetIoletId(int boundaryId);
     };
 
-    class FourCubeLatticeData : public geometry::LatticeData
+    class FourCubeDomain : public geometry::Domain {
+    private:
+        using geometry::Domain::Domain;
+    public:
+        // The create function makes a 4 x 4 x 4 cube of sites from (0,0,0) to (3,3,3).
+        // The plane (x,y,0) is an inlet (boundary 0).
+        // The plane (x,y,3) is an outlet (boundary 1).
+        // The planes (0,y,z), (3,y,z), (x,0,z) and (x,3,z) are all walls.
+        static std::shared_ptr<geometry::Domain> Create(const net::IOCommunicator& comm, site_t sitesPerBlockUnit =6, proc_t rankCount =1);
+
+        // Not used in setting up the four cube, but used in other tests
+        // to poke changes into the four cube for those tests.
+        void SetHasWall(site_t site, Direction direction);
+        void SetHasIolet(site_t site, Direction direction);
+        void SetIoletId(site_t site, int id);
+        void SetBoundaryDistance(site_t site, Direction direction, distribn_t distance);
+        void SetBoundaryNormal(site_t site, util::Vector3D<distribn_t> boundaryNormal);
+    };
+
+    class FourCubeLatticeData : public geometry::FieldData
     {
       public:
-
-      // The create function makes a 4 x 4 x 4 cube of sites from (0,0,0) to (3,3,3).
-      // The plane (x,y,0) is an inlet (boundary 0).
-      // The plane (x,y,3) is an outlet (boundary 1).
-      // The planes (0,y,z), (3,y,z), (x,0,z) and (x,3,z) are all walls.
-      static FourCubeLatticeData* Create(const net::IOCommunicator& comm, site_t sitesPerBlockUnit = 6, proc_t rankCount = 1);
-
-      // Not used in setting up the four cube, but used in other tests
-      // to poke changes into the four cube for those tests.
-      void SetHasWall(site_t site, Direction direction);
-      void SetHasIolet(site_t site, Direction direction);
-      void SetIoletId(site_t site, int id);
-      void SetBoundaryDistance(site_t site, Direction direction, distribn_t distance);
-      void SetBoundaryNormal(site_t site, util::Vector3D<distribn_t> boundaryNormal);
-
+        static FourCubeLatticeData* Create(const net::IOCommunicator& comm, site_t sitesPerBlockUnit =6, proc_t rankCount =1);
       // Used in unit tests for setting the fOld array, in a way that isn't possible in the main
       // part of the codebase.
       // @param site
@@ -56,8 +62,9 @@ namespace hemelb
           }
         }
 
-      protected:
-      FourCubeLatticeData(hemelb::geometry::Geometry& readResult, const net::IOCommunicator& comms);
+        inline FourCubeDomain& GetDomain() {
+            return *static_cast<FourCubeDomain*>(m_domain.get());
+        }
     };
   }
 }

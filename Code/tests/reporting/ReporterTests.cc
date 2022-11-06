@@ -43,7 +43,8 @@ namespace hemelb
       IncompressibilityCheckerMock *incompChecker;
 
       net::Net *net;
-      hemelb::tests::FourCubeLatticeData* latticeData;
+      FourCubeLatticeData* latticeData;
+      FourCubeDomain* domain; // non-owning ptr
       reporting::BuildInfo *buildInfo;
 
       mockTimers = new TimersMock(Comms());
@@ -52,17 +53,18 @@ namespace hemelb
       state = new hemelb::lb::SimulationState(0.0001, 1000);
       net = new net::Net(Comms());
       latticeData = FourCubeLatticeData::Create(Comms(), 6, 5); // The 5 here is to match the topology size in the MPICommsMock
+      domain = &latticeData->GetDomain();
       LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(latticeData);
       latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
-      cache = new lb::MacroscopicPropertyCache(*state, *latticeData);
+      cache = new lb::MacroscopicPropertyCache(*state, *domain);
       cache->densityCache.SetRefreshFlag();
       LbTestsHelper::UpdatePropertyCache<lb::lattices::D3Q15>(*latticeData, *cache, *state);
-      incompChecker = new IncompressibilityCheckerMock(latticeData, net, state, *cache, *realTimers, 10.0);
+      incompChecker = new IncompressibilityCheckerMock(domain, net, state, *cache, *realTimers, 10.0);
       reporter = new Reporter("mock_path", "exampleinputfile");
       reporter->AddReportable(incompChecker);
       reporter->AddReportable(mockTimers);
       reporter->AddReportable(state);
-      reporter->AddReportable(latticeData);
+      reporter->AddReportable(domain);
       reporter->AddReportable(buildInfo);
 
       auto AssertTemplate = [&](const std::string &expectation, const std::string &ttemplate) {

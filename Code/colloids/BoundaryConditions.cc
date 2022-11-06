@@ -17,10 +17,10 @@ namespace hemelb
     std::vector<BoundaryCondition*> BoundaryConditions::boundaryConditionsInlet;
     std::vector<BoundaryCondition*> BoundaryConditions::boundaryConditionsOutlet;
 
-    const geometry::LatticeData* BoundaryConditions::latticeData;
+    const geometry::Domain* BoundaryConditions::latticeData;
 
     const void BoundaryConditions::InitBoundaryConditions(
-        const geometry::LatticeData* const latticeData, io::xml::Document& xml)
+            const geometry::Domain* const latticeData, io::xml::Document& xml)
     {
       BoundaryConditions::latticeData = latticeData;
 
@@ -97,7 +97,7 @@ namespace hemelb
 
       const lb::lattices::LatticeInfo latticeInfo =
           BoundaryConditions::latticeData->GetLatticeInfo();
-      const geometry::Site<const geometry::LatticeData> site =
+      const geometry::Site<const geometry::Domain> site =
           latticeData->GetSite(localContiguousId);
       const geometry::SiteData siteData = site.GetSiteData();
       const geometry::SiteType siteType = siteData.GetSiteType();

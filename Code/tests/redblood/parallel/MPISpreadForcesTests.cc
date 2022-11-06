@@ -99,33 +99,34 @@ namespace hemelb
       auto const color = world.Rank() == 0;
       auto const split = world.Split(color);
       auto master = CreateMasterSim<STENCIL>(split);
-      auto &latDat = master->GetLatticeData();
-      helpers::ZeroOutForces(latDat);
+      auto& fieldData = master->GetFieldData();
+      auto& dom = fieldData.GetDomain();
+      helpers::ZeroOutForces(fieldData);
 
       // Figure out positions to use for cell nodes
-      auto const cells = CreateCellsFromSpecialPositions(latDat, mid, edges, world, nCells);
+      auto const cells = CreateCellsFromSpecialPositions(dom, mid, edges, world, nCells);
       auto const owned =
 	split.Size() != 1 ?
 	CellContainer { cells.begin() + split.Rank() * nCells, cells.begin()
 			+ (1 + split.Rank()) * nCells } :
       CellContainer { cells.begin(), cells.end() };
       auto const& graphComm = CreateDumbGraphComm(split);
-      auto const distributions = nodeDistributions(hemelb::redblood::parallel::ComputeGlobalCoordsToProcMap(graphComm, latDat), owned);
+      auto const distributions = nodeDistributions(hemelb::redblood::parallel::ComputeGlobalCoordsToProcMap(graphComm, dom), owned);
 
       hemelb::redblood::parallel::SpreadForces mpi_spreader(graphComm);
       mpi_spreader.PostMessageLength(distributions, owned);
       mpi_spreader.ComputeForces(owned);
       mpi_spreader.PostForcesAndNodes(distributions, owned);
-      mpi_spreader.SpreadLocalForces<typename MasterSim<STENCIL>::Traits>(latDat, owned);
-      mpi_spreader.SpreadNonLocalForces<typename MasterSim<STENCIL>::Traits>(latDat);
+      mpi_spreader.SpreadLocalForces<typename MasterSim<STENCIL>::Traits>(fieldData, owned);
+      mpi_spreader.SpreadNonLocalForces<typename MasterSim<STENCIL>::Traits>(fieldData);
 
       std::vector<LatticeVector> indices;
       std::vector<LatticeForceVector> forces;
       if (color)
         {
-          for (site_t i(0); i < latDat.GetLocalFluidSiteCount(); ++i)
+          for (site_t i = 0; i < dom.GetLocalFluidSiteCount(); ++i)
 	    {
-	      auto const site = latDat.GetSite(i);
+	      auto const site = fieldData.GetSite(i);
 	      if (site.GetForce().GetMagnitudeSquared() > 1e-8)
 		{
 		  indices.push_back(site.GetGlobalSiteCoords());
@@ -143,10 +144,10 @@ namespace hemelb
         {
           for (auto coords : indices)
 	    {
-	      auto const id = latDat.GetProcIdFromGlobalCoords(coords);
+	      auto const id = dom.GetProcIdFromGlobalCoords(coords);
 	      if (id == split.Rank())
 		{
-		  auto const site = latDat.GetSite(coords);
+		  auto const site = fieldData.GetSite(coords);
 		  forces.push_back(-site.GetForce());
 		}
 	      else

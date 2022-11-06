@@ -12,7 +12,7 @@ namespace hemelb
 {
   namespace geometry
   {
-    class LatticeData;
+    class Domain;
 
     /**
      * SiteTraverser is used to traverse the sites in a speficied block
@@ -21,7 +21,7 @@ namespace hemelb
     class SiteTraverser : public VolumeTraverser
     {
       public:
-        SiteTraverser(const LatticeData & iLatticeDat);
+        SiteTraverser(const Domain & iLatticeDat);
 
         virtual ~SiteTraverser();
 
@@ -35,7 +35,7 @@ namespace hemelb
         //Returns the block size in number of sites
         site_t GetBlockSize() const;
 
-        const LatticeData & mLatticeData;
+        const Domain & mLatticeData;
     };
 
   }

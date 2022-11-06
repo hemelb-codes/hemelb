@@ -126,7 +126,7 @@ namespace hemelb
       CellContainer::value_type ColumnCellDrop::operator()()
       {
         ++iterator;
-        std::shared_ptr<CellBase> result(std::move(templateCell->clone()));
+        std::shared_ptr<CellBase> result(templateCell->clone());
         *result += *iterator;
         return result;
       }

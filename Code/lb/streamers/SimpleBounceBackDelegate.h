@@ -34,13 +34,13 @@ namespace hemelb
           }
 
           inline void StreamLink(const LbmParameters* lbmParams,
-                                 geometry::LatticeData* const latticeData,
-                                 const geometry::Site<geometry::LatticeData>& site,
+                                 geometry::FieldData& latticeData,
+                                 const geometry::Site<geometry::Domain>& site,
                                  kernels::HydroVars<typename CollisionType::CKernel>& hydroVars,
                                  const Direction& direction)
           {
             // Propagate the outgoing post-collisional f into the opposite direction.
-            * (latticeData->GetFNew(GetBBIndex(site.GetIndex(), direction))) =
+            * (latticeData.GetFNew(GetBBIndex(site.GetIndex(), direction))) =
                 hydroVars.GetFPostCollision()[direction];
           }
 

@@ -22,18 +22,44 @@ namespace hemelb
         MPI_Datatype Type;
     };
 
-    class ProcComms : public BaseProcComms<SimpleRequest>
+    template <bool is_const>
+    class ProcComms : public BaseProcComms<SimpleRequest<is_const>>
     {
       public:
-        void CreateMPIType();
+        void CreateMPIType() {
+            std::vector<MPI_Aint> displacements(this->size());
+            std::vector<int> lengths;
+            std::vector<MPI_Datatype> types;
+
+            int location = 0;
+
+            MPI_Aint offset;
+            MPI_Get_address(this->front().Pointer, &offset);
+
+            for (auto& req: *this) {
+                MPI_Get_address(req.Pointer, &displacements[location]);
+                displacements[location] -= offset;
+
+                ++location;
+                lengths.push_back(req.Count);
+                types.push_back(req.Type);
+            }
+            // Create the type and commit it.
+            MPI_Type_create_struct(this->size(),
+                                   &lengths.front(),
+                                   &displacements.front(),
+                                   &types.front(),
+                                   &this->Type);
+            MPI_Type_commit(&this->Type);
+        }
     };
 
-    class GatherProcComms : public BaseProcComms<ScalarRequest>
+    class GatherProcComms : public BaseProcComms<ScalarRequest<false>>
     {
 
     };
 
-    class AllToAllProcComms : public BaseProcComms<SimpleRequest>
+    class AllToAllProcComms : public BaseProcComms<SimpleRequest<false>>
     // Rank of request is not used - is all-to-all
     {
 

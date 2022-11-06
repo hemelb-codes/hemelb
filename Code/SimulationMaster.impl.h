@@ -18,8 +18,7 @@
 #include "io/writers/xdr/XdrFileWriter.h"
 #include "util/utilityFunctions.h"
 #include "geometry/GeometryReader.h"
-#include "geometry/LatticeData.h"
-#include "util/fileutils.h"
+#include "geometry/Domain.h"
 #include "log/Logger.h"
 #include "lb/HFunction.h"
 #include "io/xml.h"
@@ -74,7 +73,7 @@ namespace hemelb
         reporter->AddReportable(incompressibilityChecker.get());
       }
       reporter->AddReportable(&timings);
-      reporter->AddReportable(latticeData.get());
+      reporter->AddReportable(domainData.get());
       reporter->AddReportable(simulationState.get());
     }
   }
@@ -120,7 +119,7 @@ namespace hemelb
     simulationState = std::make_shared<hemelb::lb::SimulationState>(simConfig->GetTimeStepLength(),
                                                                     simConfig->GetTotalTimeSteps());
 
-    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising LatticeData.");
+    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising domain_type.");
 
     timings[hemelb::reporting::Timers::latDatInitialise].Start();
     // Use a reader to read in the file.
@@ -129,25 +128,26 @@ namespace hemelb
     hemelb::geometry::GeometryReader reader(latticeType::GetLatticeInfo(),
                                             timings,
                                             ioComms);
-    hemelb::geometry::Geometry readGeometryData =
+    hemelb::geometry::GmyReadResult readGeometryData =
         reader.LoadAndDecompose(simConfig->GetDataFilePath());
 
     // Create a new lattice based on that info and return it.
-    latticeData = std::make_shared<hemelb::geometry::LatticeData>(latticeType::GetLatticeInfo(),
-                                                                  readGeometryData,
-                                                                  ioComms);
+    domainData = std::make_shared<hemelb::geometry::Domain>(latticeType::GetLatticeInfo(),
+                                                            readGeometryData,
+                                                            ioComms);
+    fieldData = std::make_shared<hemelb::geometry::FieldData>(domainData);
 
     timings[hemelb::reporting::Timers::latDatInitialise].Stop();
 
     neighbouringDataManager = std::make_shared<
-        hemelb::geometry::neighbouring::NeighbouringDataManager>(*latticeData,
-                                                                 latticeData->GetNeighbouringData(),
+        hemelb::geometry::neighbouring::NeighbouringDataManager>(*fieldData,
+                                                                 fieldData->GetNeighbouringData(),
                                                                  communicationNet);
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising LBM.");
     latticeBoltzmannModel =
         std::make_shared<hemelb::lb::LBM<Traits>>(simConfig.get(),
                                                   &communicationNet,
-                                                  latticeData.get(),
+                                                  fieldData.get(),
                                                   simulationState.get(),
                                                   timings,
                                                   neighbouringDataManager.get());
@@ -164,11 +164,11 @@ namespace hemelb
       hemelb::colloids::BodyForces::InitBodyForces(xml);
 
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Boundary Conditions.");
-      hemelb::colloids::BoundaryConditions::InitBoundaryConditions(latticeData.get(), xml);
+      hemelb::colloids::BoundaryConditions::InitBoundaryConditions(domainData.get(), xml);
 
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising Colloids.");
       colloidController =
-          std::make_shared<hemelb::colloids::ColloidController>(*latticeData,
+          std::make_shared<hemelb::colloids::ColloidController>(*domainData,
                                                                 *simulationState,
                                                                 readGeometryData,
                                                                 xml,
@@ -189,7 +189,7 @@ namespace hemelb
       auto rbcConfig = simConfig->GetRBCConfig();
       hemelb::redblood::CellContainer cells;
       typedef hemelb::redblood::CellController<Traits> Controller;
-      auto const controller = std::make_shared<Controller>(*latticeData,
+      auto const controller = std::make_shared<Controller>(*fieldData,
                                                            cells,
                                                            rbcConfig->GetRBCMeshes(),
                                                            timings,
@@ -257,7 +257,7 @@ namespace hemelb
     }
 
     stabilityTester =
-        std::make_shared<hemelb::lb::StabilityTester<latticeType>>(latticeData.get(),
+        std::make_shared<hemelb::lb::StabilityTester<latticeType>>(fieldData,
                                                                    &communicationNet,
                                                                    simulationState.get(),
                                                                    timings,
@@ -266,7 +266,7 @@ namespace hemelb
     {
       incompressibilityChecker =
           std::make_shared<
-              hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<>>>(latticeData.get(),
+              hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<>>>(domainData.get(),
                                                                                            &communicationNet,
                                                                                            simulationState.get(),
                                                                                            latticeBoltzmannModel->GetPropertyCache(),
@@ -274,7 +274,7 @@ namespace hemelb
     }
 
     inletValues = std::make_shared<hemelb::lb::iolets::BoundaryValues>(hemelb::geometry::INLET_TYPE,
-                                                                       latticeData.get(),
+                                                                       domainData.get(),
                                                                        simConfig->GetInlets(),
                                                                        simulationState.get(),
                                                                        ioComms,
@@ -282,7 +282,7 @@ namespace hemelb
 
     outletValues =
         std::make_shared<hemelb::lb::iolets::BoundaryValues>(hemelb::geometry::OUTLET_TYPE,
-                                                             latticeData.get(),
+                                                             domainData.get(),
                                                              simConfig->GetOutlets(),
                                                              simulationState.get(),
                                                              ioComms,
@@ -297,7 +297,7 @@ namespace hemelb
 
     propertyDataSource =
         std::make_shared<hemelb::extraction::LbDataSourceIterator>(latticeBoltzmannModel->GetPropertyCache(),
-                                                                   *latticeData,
+                                                                   *fieldData,
                                                                    ioComms.Rank(),
                                                                    *unitConverter);
 
@@ -307,8 +307,8 @@ namespace hemelb
       for (unsigned outputNumber = 0; outputNumber < simConfig->PropertyOutputCount();
           ++outputNumber)
       {
-        simConfig->GetPropertyOutput(outputNumber).filename = fileManager->GetDataExtractionPath()
-            + simConfig->GetPropertyOutput(outputNumber).filename;
+        simConfig->GetPropertyOutput(outputNumber).filename =
+                fileManager->GetDataExtractionPath() / simConfig->GetPropertyOutput(outputNumber).filename;
       }
 
       propertyExtractor =
@@ -472,7 +472,7 @@ namespace hemelb
       fflush(nullptr);
     }
 
-    latticeData->SwapOldAndNew();
+    fieldData->SwapOldAndNew();
     simulationState->Increment();
   }
 

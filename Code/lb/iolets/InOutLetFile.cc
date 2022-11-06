@@ -8,7 +8,6 @@
 
 #include "lb/iolets/InOutLetFile.h"
 #include "log/Logger.h"
-#include "util/fileutils.h"
 #include "util/utilityFunctions.h"
 #include "util/utilityStructs.h"
 #include "configuration/SimConfig.h"
@@ -48,8 +47,10 @@ namespace hemelb
 
         double timeTemp, valueTemp;
 
-        util::check_file(pressureFilePath.c_str());
-        std::ifstream datafile(pressureFilePath.c_str());
+        if (!std::filesystem::exists(pressureFilePath))
+            throw Exception() << "File does not exist: " << pressureFilePath;
+
+        std::ifstream datafile(pressureFilePath);
         log::Logger::Log<log::Debug, log::OnePerCore>("Reading iolet values from file:");
         while (datafile.good())
         {

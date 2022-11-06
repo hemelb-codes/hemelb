@@ -6,18 +6,20 @@
 #ifndef HEMELB_LB_INCOMPRESSIBILITYCHECKER_H
 #define HEMELB_LB_INCOMPRESSIBILITYCHECKER_H
 
-#include "geometry/LatticeData.h"
+#include "geometry/Domain.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "net/PhasedBroadcastRegular.h"
 #include "reporting/Reportable.h"
+#include "reporting/timers_fwd.h"
 #include <cfloat>
+
 
 namespace hemelb
 {
   namespace lb
   {
     /**
-     * Domain reference density used to compute relative differences.
+     * domain_type reference density used to compute relative differences.
      *
      * @todo #23 This value should not be hardcoded here but read from UnitConverter
      */
@@ -121,7 +123,7 @@ namespace hemelb
          * @param simState simulation state
          * @param maximumRelativeDensityDifferenceAllowed maximum density difference allowed in the domain (relative to reference density, default 5%)
          */
-        IncompressibilityChecker(const geometry::LatticeData * latticeData, net::Net* net,
+        IncompressibilityChecker(const geometry::Domain * latticeData, net::Net* net,
                                  SimulationState* simState,
                                  lb::MacroscopicPropertyCache& propertyCache,
                                  reporting::Timers& timings,
@@ -226,7 +228,7 @@ namespace hemelb
         static const unsigned int SPREADFACTOR = 10u;
 
         /** Pointer to lattice data object. */
-        const geometry::LatticeData * mLatDat;
+        const geometry::Domain * mLatDat;
 
         /** Cache of macroscopic properties (including density). */
         lb::MacroscopicPropertyCache& propertyCache;

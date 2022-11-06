@@ -4,4 +4,8 @@
 # license in the file LICENSE.
 
 add_library(hemelb_util OBJECT
-  fileutils.cc UnitConverter.cc utilityFunctions.cc Vector3D.cc Vector3DHemeLb.cc Matrix3D.cc Bessel.cc)
+  UnitConverter.cc utilityFunctions.cc Vector3D.cc Vector3DHemeLb.cc Matrix3D.cc Bessel.cc)
+
+if(LINUX_SCANDIR)
+    target_compile_definitions(hemelb_util PRIVATE LINUX_SCANDIR)
+endif()
