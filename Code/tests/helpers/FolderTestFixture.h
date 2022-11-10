@@ -9,12 +9,15 @@
 #include <string>
 #include <filesystem>
 #include <fstream>
-#include <tinyxml.h>
 
 #include "tests/helpers/HasCommsTestFixture.h"
 
+class TiXmlDocument;
 namespace hemelb::tests::helpers
 {
+    void ModifyXMLInput(TiXmlDocument &document, std::vector<std::string> const& elements,
+                        std::string const& _value);
+
     //! \brief Modify XML document
     //! \details HemeLB parameters cannot be modified programmatically, so we have to jump
     //! these hoops to test it.
@@ -26,23 +29,11 @@ namespace hemelb::tests::helpers
     void ModifyXMLInput(TiXmlDocument &document, std::vector<std::string> const& elements,
                         T const &_value)
     {
-        std::string const& attribute = elements.back();
-        // Point to the *actual last elem*
-        auto end = --elements.end();
-        auto child = document.FirstChildElement("hemelbsettings");
-        for (auto iter = elements.begin(); iter != end; ++iter) {
-            auto& name = *iter;
-            auto next_child = child->FirstChildElement(name);
-            if(next_child  == nullptr) {
-                next_child = new TiXmlElement(name);
-                child->LinkEndChild(next_child);
-            }
-            child = next_child;
-        }
         std::ostringstream attr_value;
         attr_value << _value;
-        child->SetAttribute(attribute, attr_value.str());
+	ModifyXMLInput(document, elements, attr_value.str());
     }
+
     //! \brief Modify XML document by deleting an element if it exists
     //! \details HemeLB parameters cannot be modified programmatically, so we have to jump
     //! these hoops to test it.
@@ -75,18 +66,15 @@ namespace hemelb::tests::helpers
         //! \param[in] elements: hierarchy of elements + attribute (last item)
         //!   Should not include "hemelbsettings"
         //! \param[in] value: Value to set the attribute to
+        void ModifyXMLInput(std::string const &resource, std::vector<std::string> const& elements,
+                            std::string const &_value) const;
         template<class T>
         void ModifyXMLInput(std::string const &resource, std::vector<std::string> const& elements,
                             T const &_value) const
         {
-            auto const filename = tempPath / resource;
-            TiXmlDocument document(filename.c_str());
-            document.LoadFile();
-            helpers::ModifyXMLInput(document, elements, _value);
-            std::ofstream output(filename);
-            [&](std::ostream& o, TiXmlDocument const& doc) {
-                o << doc;
-            } (output, document);
+            std::ostringstream attr_value;
+            attr_value << _value;
+            ModifyXMLInput(resource, elements, attr_value.str());
         }
 
         [[nodiscard]] path ConstructTempPath() const;

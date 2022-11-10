@@ -4,6 +4,7 @@
 // license in the file LICENSE.
 
 #include <catch2/catch.hpp>
+#include <tinyxml.h>
 
 #include <algorithm>
 #include <random>

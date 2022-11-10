@@ -4,7 +4,6 @@
 # license in the file LICENSE.
 
 find_hemelb_dependency(Catch2 REQUIRED)
-add_subdirectory(helpers)
 
 # Sources files in ARGN
 function(add_test_executable target)
@@ -14,8 +13,6 @@ function(add_test_executable target)
   # FlowExtensionTests directly uses tinyxml
   target_link_libraries(${target} PRIVATE
     Catch2::Catch2
-    # CTemplate::CTemplate
-    # TinyXML::TinyXML
     ${heme_libraries}
     ${MPI_LIBRARIES}
     test-helpers
@@ -49,6 +46,8 @@ if (HEMELB_BUILD_MULTISCALE)
 endif()
 
 add_test_executable(hemelb-tests main.cc SimulationMasterTests.cc)
+
+add_subdirectory(helpers)
 
 macro(add_to_tests dirname)
   add_subdirectory(${dirname})

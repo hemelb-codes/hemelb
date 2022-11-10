@@ -6,6 +6,7 @@
 #include <cstdio>
 
 #include <catch2/catch.hpp>
+#include <tinyxml.h>
 
 #include "Traits.h"
 #include "SimulationMaster.h"

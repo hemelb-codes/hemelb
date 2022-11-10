@@ -13,6 +13,7 @@
 #include <unistd.h>
 
 #include <catch2/catch.hpp>
+#include <tinyxml.h>
 
 #include "resources/Resource.h"
 #include "util/utilityFunctions.h"
@@ -21,6 +22,25 @@ namespace fs = std::filesystem;
 
 namespace hemelb::tests::helpers
 {
+    void ModifyXMLInput(TiXmlDocument &document, std::vector<std::string> const& elements,
+                        std::string const& _value)
+    {
+        std::string const& attribute = elements.back();
+        // Point to the *actual last elem*
+        auto end = --elements.end();
+        auto child = document.FirstChildElement("hemelbsettings");
+        for (auto iter = elements.begin(); iter != end; ++iter) {
+            auto& name = *iter;
+            auto next_child = child->FirstChildElement(name);
+            if(next_child  == nullptr) {
+                next_child = new TiXmlElement(name);
+                child->LinkEndChild(next_child);
+            }
+            child = next_child;
+        }
+        child->SetAttribute(attribute, _value);
+    }
+
     //! \brief Modify XML document by deleting an element if it exists
     //! \details HemeLB parameters cannot be modified programmatically, so we have to jump
     //! these hoops to test it.
@@ -98,6 +118,19 @@ namespace hemelb::tests::helpers
         bool ok = fs::copy_file(resources::Resource(resource).Path(),
                                 tempPath / resource);
         REQUIRE(ok);
+    }
+
+    void FolderTestFixture::ModifyXMLInput(std::string const &resource, std::vector<std::string> const& elements,
+                                           std::string const &_value) const
+    {
+        auto const filename = tempPath / resource;
+        TiXmlDocument document(filename.c_str());
+        document.LoadFile();
+        helpers::ModifyXMLInput(document, elements, _value);
+        std::ofstream output(filename);
+        [&](std::ostream& o, TiXmlDocument const& doc) {
+            o << doc;
+        } (output, document);
     }
 
     void FolderTestFixture::DeleteXMLInput(std::string const &resource, std::vector<std::string> const& elements) const

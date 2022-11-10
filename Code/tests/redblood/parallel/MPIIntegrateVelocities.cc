@@ -7,6 +7,7 @@
 #include <random>
 
 #include <catch2/catch.hpp>
+#include <tinyxml.h>
 
 #include "redblood/parallel/IntegrateVelocities.h"
 #include "redblood/parallel/CellParallelization.h"

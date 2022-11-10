@@ -2,8 +2,7 @@
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
-
-add_library(test-helpers OBJECT
+add_test_lib(test-helpers
   FolderTestFixture.cc
   FourCubeBasedTestFixture.cc
   FourCubeLatticeData.cc
@@ -15,9 +14,4 @@ add_library(test-helpers OBJECT
   RandomSourceTests.cc
   RecordingNet.cc
 )
-
-target_link_libraries(test-helpers
-  PRIVATE
-  Catch2::Catch2
-  TinyXML::TinyXML
-)
+target_link_libraries(test-helpers PRIVATE TinyXML::TinyXML)

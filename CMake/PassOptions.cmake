@@ -47,7 +47,7 @@ endfunction()
 # Declare a variable to be forwarded from super build to code build
 #
 function(pass_var GROUP NAME)
-  set(_${GROUP}_FWDVARS "${_${GROUP}_FWDVARS};${NAME}")
+  set(_${GROUP}_FWDVARS "${_${GROUP}_FWDVARS};${NAME}" PARENT_SCOPE)
 endfunction()
 
 #

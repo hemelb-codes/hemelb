@@ -2,14 +2,21 @@
 # the HemeLB team and/or their institutions, as detailed in the
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
+
+add_test_lib(test_rbc_xml
+  CellInserterTests.cc
+  CellIOTests.cc
+  FlowExtensionTests.cc
+  CellIntegrationTests.cc
+)
+target_link_libraries(test_rbc_xml PRIVATE TinyXML::TinyXML)
+
 add_test_lib(test_redblood
   Fixtures.cc
 
   BendingTests.cc
   BordersTests.cc
   CellArmyTests.cc
-  CellIOTests.cc
-  CellInserterTests.cc
   CellCellInteractionTests.cc
   CellCellInteractionWithGridTests.cc
   CellForceSpreadTests.cc
@@ -19,7 +26,6 @@ add_test_lib(test_redblood
   EnergyTests.cc
   FacetTests.cc
   FaderCellTests.cc
-  FlowExtensionTests.cc
   GradientKernTests.cc
   GradientTests.cc
   InterpolationTests.cc
@@ -42,7 +48,6 @@ add_test_lib(test_redblood
   parallel/NodeParallelizationTests.cc
 
   # Longer-running integration tests
-  CellIntegrationTests.cc
   FadeInOutIntegrationTests.cc
   SadCellTest.cc
   SadCellIntegrationTests.cc
@@ -50,7 +55,13 @@ add_test_lib(test_redblood
   FedosovValidationTests.cc
 )
 
-target_link_libraries(test_redblood PRIVATE VTK::CommonCore)
+target_link_libraries(test_redblood PRIVATE VTK::CommonCore test_rbc_xml)
+
+add_test_lib(test_mpi_rbc_xml
+  parallel/MPISpreadForcesTests.cc
+  parallel/MPIIntegrateVelocities.cc
+)
+target_link_libraries(test_mpi_rbc_xml PRIVATE TinyXML::TinyXML)
 
 add_test_lib(test_mpi_redblood
   Fixtures.cc
@@ -58,11 +69,9 @@ add_test_lib(test_mpi_redblood
   parallel/ParallelFixtureTests.cc
 
   parallel/CellParallelizationTests.cc
-  parallel/MPISpreadForcesTests.cc
-  parallel/MPIIntegrateVelocities.cc
   parallel/MPILockStepTests.cc
   parallel/GraphCommsTests.cc
   parallel/RBCInserterWithPerturbationParallelTests.cc
   parallel/MPIParallelIntegrationTests.cc
 )
-target_link_libraries(test_mpi_redblood PRIVATE VTK::CommonCore)
+target_link_libraries(test_mpi_redblood PRIVATE VTK::CommonCore test_mpi_rbc_xml)
