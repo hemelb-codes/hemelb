@@ -55,7 +55,7 @@ namespace hemelb
       HEMELB_MPI_CALL(MPI_Comm_rank, (communicator, &localRankInCommunicator));
     }
 
-    MpiCommunicator::MpiCommunicator(int localRankInCommunicator, int communicatorSize) :
+    MpiCommunicator::MpiCommunicator(mock_ctor_tag, int localRankInCommunicator, int communicatorSize) :
         commPtr(), communicatorSize(communicatorSize), localRankInCommunicator(localRankInCommunicator)
     {
     }

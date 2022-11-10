@@ -247,12 +247,13 @@ namespace hemelb::net
          */
         MpiCommunicator(MPI_Comm communicator, bool willOwn);
 
+        struct mock_ctor_tag {};
         /**
          * Constructor used during testing to mock a communicator configuration
          * @param localRankInCommunicator hypothetical local rank in communicator
          * @param communicatorSize hypothetical number of MPI processes in communicator
          */
-        MpiCommunicator(int localRankInCommunicator, int communicatorSize);
+        MpiCommunicator(mock_ctor_tag, int localRankInCommunicator, int communicatorSize);
 
         std::shared_ptr<MPI_Comm> commPtr;
 

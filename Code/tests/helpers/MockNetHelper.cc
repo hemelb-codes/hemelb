@@ -13,7 +13,7 @@ namespace hemelb
     {
 
       MockMpiCommunicator::MockMpiCommunicator(int rank_, int size_) :
-	MpiCommunicator(rank_, size_)
+	MpiCommunicator(MpiCommunicator::mock_ctor_tag{}, rank_, size_)
       {
       }
 
