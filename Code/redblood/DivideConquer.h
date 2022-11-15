@@ -55,8 +55,8 @@ namespace hemelb
           //! Base type for Divide and Conquer class
           typedef std::multimap<key_type, T, CompareKeys> type;
       };
-      static_assert(std::is_pod<DnCBase<int>>::value, "Can be a struct");
-      static_assert(std::is_pod<DnCBase<int>::CompareKeys>::value, "Can be a struct");
+      static_assert(std::is_trivial_v<DnCBase<int>> && std::is_standard_layout_v<DnCBase<int>>, "Can be a struct");
+      static_assert(std::is_trivial_v<DnCBase<int>::CompareKeys> && std::is_standard_layout_v<DnCBase<int>::CompareKeys>, "Can be a struct");
     }
 
     //! \brief Multimap for divide and conquer algorithms

@@ -41,10 +41,10 @@ namespace hemelb
         //! Facet container
         Facets facets;
     };
-    static_assert(std::is_standard_layout<MeshData>::value, "Needed for MPI data type");
+    static_assert(std::is_standard_layout_v<MeshData>, "Needed for MPI data type");
     static_assert(
-        std::is_move_constructible<MeshData>::value
-        and std::is_copy_constructible<MeshData>::value,
+        std::is_move_constructible_v<MeshData>
+        and std::is_copy_constructible_v<MeshData>,
         "Explicit type characteristics"
     );
 
@@ -80,15 +80,15 @@ namespace hemelb
         }
     };
     static_assert(
-        std::is_default_constructible<MeshTopology>::value
-        and (not std::is_nothrow_default_constructible<MeshTopology>::value)
-        and std::is_move_constructible<MeshTopology>::value
-        and std::is_nothrow_move_constructible<MeshTopology>::value
-        and std::is_copy_constructible<MeshTopology>::value
-        and std::is_copy_assignable<MeshTopology>::value
-        and (not std::is_nothrow_copy_assignable<MeshTopology>::value)
-        and std::is_standard_layout<MeshTopology>::value
-        and (not std::is_pod<MeshTopology>::value),
+        std::is_default_constructible_v<MeshTopology>
+        and (not std::is_nothrow_default_constructible_v<MeshTopology>)
+        and std::is_move_constructible_v<MeshTopology>
+        and std::is_nothrow_move_constructible_v<MeshTopology>
+        and std::is_copy_constructible_v<MeshTopology>
+        and std::is_copy_assignable_v<MeshTopology>
+        and (not std::is_nothrow_copy_assignable_v<MeshTopology>)
+        and std::is_standard_layout_v<MeshTopology>
+        and (not std::is_trivial_v<MeshTopology>),
         "Explicit type characteristics"
     );
 
@@ -218,15 +218,15 @@ namespace hemelb
         std::shared_ptr<MeshTopology> topology;
     };
     static_assert(
-        (not std::is_default_constructible<Mesh>::value)
-        and (not std::is_nothrow_default_constructible<Mesh>::value)
-        and std::is_move_constructible<Mesh>::value
-        and (not std::is_nothrow_move_constructible<Mesh>::value)
-        and std::is_copy_constructible<Mesh>::value
-        and std::is_copy_assignable<Mesh>::value
-        and std::is_nothrow_copy_assignable<Mesh>::value
-        and std::is_standard_layout<Mesh>::value
-        and (not std::is_pod<Mesh>::value),
+        (not std::is_default_constructible_v<Mesh>)
+        and (not std::is_nothrow_default_constructible_v<Mesh>)
+        and std::is_move_constructible_v<Mesh>
+        and (not std::is_nothrow_move_constructible_v<Mesh>)
+        and std::is_copy_constructible_v<Mesh>
+        and std::is_copy_assignable_v<Mesh>
+        and std::is_nothrow_copy_assignable_v<Mesh>
+        and std::is_standard_layout_v<Mesh>
+        and (not std::is_trivial_v<Mesh>),
         "Explicit type characteristics"
     );
 

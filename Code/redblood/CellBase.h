@@ -181,15 +181,15 @@ namespace hemelb
         }
     };
     static_assert(
-        (not std::is_default_constructible<CellBase>::value)
-        and (not std::is_nothrow_default_constructible<CellBase>::value)
-        and (not std::is_move_constructible<CellBase>::value)
-        and (not std::is_nothrow_move_constructible<CellBase>::value)
-        and (not std::is_copy_constructible<CellBase>::value)
-        and std::is_copy_assignable<CellBase>::value
-        and std::is_nothrow_copy_assignable<CellBase>::value
-        and (not std::is_standard_layout<CellBase>::value)
-        and (not std::is_pod<CellBase>::value),
+        (not std::is_default_constructible_v<CellBase>)
+        and (not std::is_nothrow_default_constructible_v<CellBase>)
+        and (not std::is_move_constructible_v<CellBase>)
+        and (not std::is_nothrow_move_constructible_v<CellBase>)
+        and (not std::is_copy_constructible_v<CellBase>)
+        and std::is_copy_assignable_v<CellBase>
+        and std::is_nothrow_copy_assignable_v<CellBase>
+        and (not std::is_standard_layout_v<CellBase>)
+        and (not std::is_trivial_v<CellBase>),
         "Explicit type characteristics"
     );
 

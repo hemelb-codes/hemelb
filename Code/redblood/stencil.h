@@ -107,7 +107,7 @@ namespace hemelb
       return RANGE;                                          \
     }                                                        \
   };                                                         \
-  static_assert(std::is_pod<NAME>::value, "Can be a struct")
+  static_assert(std::is_trivial_v<NAME> && std::is_standard_layout_v<NAME>, "Can be a struct")
       HEMELB_STENCIL_MACRO(FourPoint, fourPoint, 4);
       HEMELB_STENCIL_MACRO(CosineApprox, cosineApprox, 4);
       HEMELB_STENCIL_MACRO(ThreePoint, threePoint, 3);

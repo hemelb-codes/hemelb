@@ -124,25 +124,25 @@ namespace hemelb
         std::unique_ptr<CellBase> cloneImpl() const override;
     };
     static_assert(
-        (not std::is_default_constructible<Cell>::value)
-        and (not std::is_nothrow_default_constructible<Cell>::value)
-        and std::is_move_constructible<Cell>::value
-        and (not std::is_nothrow_move_constructible<Cell>::value)
-        and std::is_copy_constructible<Cell>::value
-        and std::is_copy_assignable<Cell>::value
-        and std::is_nothrow_copy_assignable<Cell>::value
-        and (not std::is_standard_layout<Cell>::value)
-        and (not std::is_pod<Cell>::value)
+        (not std::is_default_constructible_v<Cell>)
+        and (not std::is_nothrow_default_constructible_v<Cell>)
+        and std::is_move_constructible_v<Cell>
+        and (not std::is_nothrow_move_constructible_v<Cell>)
+        and std::is_copy_constructible_v<Cell>
+        and std::is_copy_assignable_v<Cell>
+        and std::is_nothrow_copy_assignable_v<Cell>
+        and (not std::is_standard_layout_v<Cell>)
+        and (not std::is_trivial_v<Cell>)
 
-        and std::is_default_constructible<Cell::Moduli>::value
-        and (not std::is_nothrow_default_constructible<Cell::Moduli>::value)
-        and std::is_move_constructible<Cell::Moduli>::value
-        and std::is_nothrow_move_constructible<Cell::Moduli>::value
-        and std::is_copy_constructible<Cell::Moduli>::value
-        and std::is_copy_assignable<Cell::Moduli>::value
-        and std::is_nothrow_copy_assignable<Cell::Moduli>::value
-        and std::is_standard_layout<Cell::Moduli>::value
-        and (not std::is_pod<Cell::Moduli>::value),
+        and std::is_default_constructible_v<Cell::Moduli>
+        and (not std::is_nothrow_default_constructible_v<Cell::Moduli>)
+        and std::is_move_constructible_v<Cell::Moduli>
+        and std::is_nothrow_move_constructible_v<Cell::Moduli>
+        and std::is_copy_constructible_v<Cell::Moduli>
+        and std::is_copy_assignable_v<Cell::Moduli>
+        and std::is_nothrow_copy_assignable_v<Cell::Moduli>
+        and std::is_standard_layout_v<Cell::Moduli>
+        and (not std::is_trivial_v<Cell::Moduli>),
         "Explicit type characteristics"
     );
 
