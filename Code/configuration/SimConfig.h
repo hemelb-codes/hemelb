@@ -18,14 +18,12 @@
 #include "extraction/PropertyOutputFile.h"
 #include "io/xml.h"
 
-namespace hemelb
-{
-  namespace redblood {
+namespace hemelb::redblood {
     class RBCConfig;
-  }
+}
 
-  namespace configuration
-  {
+namespace hemelb::configuration
+{
     template<typename T>
     void GetDimensionalValue(const io::xml::Element& elem, const std::string& units, T& value)
     {
@@ -75,23 +73,21 @@ namespace hemelb
 
     // Base for initial conditions configuration
     struct ICConfigBase {
-      ICConfigBase(const util::UnitConverter* units, std::optional<LatticeTimeStep> t);
-
-      const util::UnitConverter* unitConverter;
+      ICConfigBase(std::optional<LatticeTimeStep> t);
       std::optional<LatticeTimeStep> t0;
     };
 
     // Uniform equilibrium IC
     struct EquilibriumIC : ICConfigBase {
-      EquilibriumIC(const util::UnitConverter* units, std::optional<LatticeTimeStep> t, PhysicalPressure p);
-      EquilibriumIC(const util::UnitConverter* units, std::optional<LatticeTimeStep> t, PhysicalPressure p, const PhysicalVelocity& v);
+      EquilibriumIC(std::optional<LatticeTimeStep> t, PhysicalPressure p);
+      EquilibriumIC(std::optional<LatticeTimeStep> t, PhysicalPressure p, const PhysicalVelocity& v);
       PhysicalPressure p_mmHg;
       PhysicalVelocity v_ms;
     };
 
     // Read from checkpoint IC
     struct CheckpointIC : ICConfigBase {
-      CheckpointIC(const util::UnitConverter* units, std::optional<LatticeTimeStep> t, const std::string& cp, std::optional<std::string> const & maybeOff);
+      CheckpointIC(std::optional<LatticeTimeStep> t, const std::string& cp, std::optional<std::string> const & maybeOff);
       std::string cpFile;
       std::optional<std::string> maybeOffFile;
     };
@@ -99,39 +95,125 @@ namespace hemelb
     // Variant including null state
     using ICConfig = std::variant<std::monostate, EquilibriumIC, CheckpointIC>;
 
+    struct TimeInfo {
+        std::uint64_t total_steps;
+        std::uint64_t warmup_steps;
+        PhysicalTime step_s;
+    };
+
+    struct SpaceInfo {
+        PhysicalDistance step_m;
+        PhysicalPosition geometry_origin_m;
+    };
+
+    struct FluidInfo {
+        PhysicalDensity density_kgm3;
+        PhysicalDynamicViscosity viscosity_Pas;
+        PhysicalPressure reference_pressure_mmHg;
+    };
+
+    struct GlobalSimInfo {
+        lb::StressTypes stress_type;
+        TimeInfo time;
+        SpaceInfo space;
+        FluidInfo fluid;
+    };
+
+    struct FlowExtensionConfig {
+        PhysicalDistance length_m;
+        PhysicalDistance radius_m;
+        PhysicalDistance fadelength_m;
+        util::Vector3D<double> normal;
+        PhysicalPosition origin_m;
+    };
+
+    struct IoletConfigBase {
+        PhysicalPosition position;
+        util::Vector3D<double> normal;
+        std::optional<std::uint64_t> warmup_steps;
+        std::optional<FlowExtensionConfig> flow_extension;
+    };
+
+    // Consider removing
+    struct PressureIoletConfig : IoletConfigBase {
+    };
+
+    struct CosinePressureIoletConfig : PressureIoletConfig {
+        // Note pressure difference
+        PhysicalPressure amp_mmHg;
+        // Note absolute pressure
+        PhysicalPressure mean_mmHg;
+        Angle phase_rad;
+        PhysicalTime period_s;
+    };
+
+    struct FilePressureIoletConfig : PressureIoletConfig {
+        std::filesystem::path file_path;
+    };
+
+    struct MultiscalePressureIoletConfig : PressureIoletConfig {
+        PhysicalPressure pressure_reference_mmHg;
+        PhysicalVelocity velocity_reference_ms;
+        std::string label;
+    };
+
+    struct VelocityIoletConfig : IoletConfigBase {
+    };
+
+    struct ParabolicVelocityIoletConfig : VelocityIoletConfig {
+        PhysicalDistance radius_m;
+        PhysicalSpeed max_speed_ms;
+    };
+
+    struct WomersleyVelocityIoletConfig : VelocityIoletConfig {
+        PhysicalDistance radius_m;
+        PhysicalPressureGradient pgrad_amp_mmHgm;
+        PhysicalTime period_s;
+        double womersley;
+    };
+
+    struct FileVelocityIoletConfig : VelocityIoletConfig {
+        std::filesystem::path file_path;
+        PhysicalDistance radius_m;
+    };
+
+    using IoletConfig = std::variant<std::monostate,
+            CosinePressureIoletConfig, FilePressureIoletConfig, MultiscalePressureIoletConfig,
+            ParabolicVelocityIoletConfig, WomersleyVelocityIoletConfig, FileVelocityIoletConfig
+    >;
+
     class SimConfig
     {
+        friend class SimBuilder;
       public:
         using path = std::filesystem::path;
-
-        using IoletPtr = util::clone_ptr<lb::iolets::InOutLet>;
 
         static std::unique_ptr<SimConfig> New(const path& p);
 
       protected:
-	SimConfig(const path& p);
+    	explicit SimConfig(const path& p);
         void Init();
 
       public:
         virtual ~SimConfig();
 
         // Turn an input XML-relative path into a full path
-        path RelPathToFullPath(const std::string& path) const;
+        [[nodiscard]] path RelPathToFullPath(const std::string& path) const;
 
         void Save(std::string path); // TODO this method should be able to be CONST
         // but because it uses DoIo, which uses one function signature for both reading and writing, it cannot be.
 
-        const std::vector<IoletPtr> & GetInlets() const
+        const std::vector<IoletConfig> & GetInlets() const
         {
           return inlets;
         }
-        const std::vector<IoletPtr> & GetOutlets() const
+        const std::vector<IoletConfig> & GetOutlets() const
         {
           return outlets;
         }
         lb::StressTypes GetStressType() const
         {
-          return stressType;
+          return sim_info.stress_type;
         }
         const path& GetDataFilePath() const
         {
@@ -139,23 +221,23 @@ namespace hemelb
         }
         LatticeTimeStep GetTotalTimeSteps() const
         {
-          return totalTimeSteps;
+          return sim_info.time.total_steps;
         }
         LatticeTimeStep GetWarmUpSteps() const
         {
-          return warmUpSteps;
+          return sim_info.time.warmup_steps;
         }
         PhysicalTime GetTimeStepLength() const
         {
-          return timeStepSeconds;
+          return sim_info.time.step_s;
         }
         PhysicalDistance GetVoxelSize() const
         {
-          return voxelSizeMetres;
+          return sim_info.space.step_m;
         }
         PhysicalPosition GetGeometryOrigin() const
         {
-          return geometryOriginMetres;
+          return sim_info.space.geometry_origin_m;
         }
         unsigned int PropertyOutputCount() const
         {
@@ -181,16 +263,14 @@ namespace hemelb
 
         // Get the initial condtion config
         inline const ICConfig& GetInitialCondition() const {
-	  return icConfig;
+	  return initial_condition;
 	}
-
-        const util::UnitConverter& GetUnitConverter() const;
 
         /**
          * Return the configuration of various checks/test
          * @return monitoring configuration
          */
-        const MonitoringConfig* GetMonitoringConfiguration() const;
+        const MonitoringConfig& GetMonitoringConfiguration() const;
 
         /**
          * True if the XML file has a section specifying red blood cells.
@@ -205,10 +285,6 @@ namespace hemelb
 	  return rbcConf;
 	}
       protected:
-        /**
-         * Create the unit converter - virtual so that mocks can override it.
-         */
-        virtual void CreateUnitConverter();
 
         /**
          * Check that the iolet is OK for the CMake configuration.
@@ -216,43 +292,26 @@ namespace hemelb
          * @param requiredBC
          */
         virtual void CheckIoletMatchesCMake(const io::xml::Element& ioletEl,
-                                            const std::string& requiredBC);
-
-        template<typename T>
-        void GetDimensionalValueInLatticeUnits(const io::xml::Element& elem,
-                                               const std::string& units, T& value)
-        {
-          GetDimensionalValue(elem, units, value);
-          value = unitConverter->ConvertToLatticeUnits(units, value);
-        }
-
-        template<typename T>
-        T GetDimensionalValueInLatticeUnits(const io::xml::Element& elem, const std::string& units)
-        {
-          T ans;
-          GetDimensionalValueInLatticeUnits(elem, units, ans);
-          return ans;
-        }
+                                            const std::string& requiredBC) const;
 
       private:
         void DoIO(const io::xml::Element xmlNode);
         void DoIOForSimulation(const io::xml::Element simEl);
         void DoIOForGeometry(const io::xml::Element geometryEl);
 
-        std::vector<IoletPtr> DoIOForInOutlets(const io::xml::Element xmlNode);
-        void DoIOForFlowExtension(lb::iolets::InOutLet *, const io::xml::Element &);
+        std::vector<IoletConfig> DoIOForInOutlets(const io::xml::Element xmlNode) const;
 
-        void DoIOForBaseInOutlet(const io::xml::Element& ioletEl, lb::iolets::InOutLet* value);
+        void DoIOForBaseInOutlet(const io::xml::Element& ioletEl, IoletConfigBase& value) const;
 
-        IoletPtr DoIOForPressureInOutlet(const io::xml::Element& ioletEl);
-        IoletPtr DoIOForCosinePressureInOutlet(const io::xml::Element& ioletEl);
-        IoletPtr DoIOForFilePressureInOutlet(const io::xml::Element& ioletEl);
-        IoletPtr DoIOForMultiscalePressureInOutlet(
-            const io::xml::Element& ioletEl);
+        IoletConfig DoIOForPressureInOutlet(const io::xml::Element& ioletEl) const;
+        IoletConfig DoIOForCosinePressureInOutlet(const io::xml::Element& ioletEl) const;
+        IoletConfig DoIOForFilePressureInOutlet(const io::xml::Element& ioletEl) const;
+        IoletConfig DoIOForMultiscalePressureInOutlet(
+            const io::xml::Element& ioletEl) const;
 
-        IoletPtr DoIOForVelocityInOutlet(const io::xml::Element& ioletEl);
-        IoletPtr DoIOForParabolicVelocityInOutlet(
-            const io::xml::Element& ioletEl);
+        IoletConfig DoIOForVelocityInOutlet(const io::xml::Element& ioletEl) const;
+        IoletConfig DoIOForParabolicVelocityInOutlet(
+            const io::xml::Element& ioletEl) const;
         /**
          * Reads a Womersley velocity iolet definition from the XML config file and returns
          * an InOutLetWomersleyVelocity object
@@ -260,7 +319,7 @@ namespace hemelb
          * @param ioletEl in memory representation of <inlet> or <outlet> xml element
          * @return InOutLetWomersleyVelocity object
          */
-        IoletPtr DoIOForWomersleyVelocityInOutlet(const io::xml::Element& ioletEl);
+        IoletConfig DoIOForWomersleyVelocityInOutlet(const io::xml::Element& ioletEl) const;
 
         /**
          * Reads a file velocity iolet definition from the XML config file and returns
@@ -269,7 +328,7 @@ namespace hemelb
          * @param ioletEl in memory representation of <inlet> or <outlet> xml element
          * @return InOutLetFileVelocity object
          */
-        IoletPtr DoIOForFileVelocityInOutlet(const io::xml::Element& ioletEl);
+        IoletConfig DoIOForFileVelocityInOutlet(const io::xml::Element& ioletEl) const;
 
         void DoIOForProperties(const io::xml::Element& xmlNode);
         void DoIOForProperty(io::xml::Element xmlNode, bool isLoading);
@@ -306,10 +365,8 @@ namespace hemelb
         void DoIOForConvergenceCriterion(const io::xml::Element& criterionEl);
 
         path xmlFilePath;
-        std::unique_ptr<io::xml::Document> rawXmlDoc;
         path dataFilePath;
 
-        lb::StressTypes stressType;
         std::vector<extraction::PropertyOutputFile> propertyOutputs;
         /**
          * True if the file has a colloids section.
@@ -326,23 +383,14 @@ namespace hemelb
         redblood::RBCConfig* rbcConf = nullptr;
 
       protected:
+        GlobalSimInfo sim_info;
+        ICConfig initial_condition;
         // These have to contain pointers because there are multiple derived types that might be
         // instantiated.
-        std::vector<IoletPtr> inlets;
-        std::vector<IoletPtr> outlets;
-        PhysicalTime timeStepSeconds;
-        unsigned long totalTimeSteps;
-        unsigned long warmUpSteps = 0;
-        PhysicalDistance voxelSizeMetres;
-        PhysicalPosition geometryOriginMetres;
-	PhysicalDensity fluidDensityKgm3;
-	PhysicalDynamicViscosity fluidViscosityPas;
-	PhysicalPressure reference_pressure_mmHg;
-        util::UnitConverter* unitConverter = nullptr;
-        ICConfig icConfig;
+        std::vector<IoletConfig> inlets;
+        std::vector<IoletConfig> outlets;
       private:
     };
-  }
 }
 
 #endif /* HEMELB_CONFIGURATION_SIMCONFIG_H */

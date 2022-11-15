@@ -52,7 +52,7 @@ namespace hemelb
 				     hydroVars,
 				     allowedError);
 	// Do the collision and test the result.
-	kernel.DoCollide(lbmParams, hydroVars);
+	kernel.DoCollide(&lbmParams, hydroVars);
 
 	// Get the expected post-collision densities.
 	DISTS expectedPostCollision;
@@ -74,8 +74,8 @@ namespace hemelb
     void CollisionTester<lb::kernels::EntropicAnsumali<lb::lattices::D3Q15>>::make_fpostcol(const distribn_t* feq, DISTS& fpc) const {
       LbTestsHelper::CalculateEntropicCollision<LATTICE>(f_original,
 							 feq,
-							 lbmParams->GetTau(),
-							 lbmParams->GetBeta(),
+							 lbmParams.GetTau(),
+							 lbmParams.GetBeta(),
 							 fpc);
     }
 
@@ -89,8 +89,8 @@ namespace hemelb
     void CollisionTester<lb::kernels::EntropicChik<lb::lattices::D3Q15>>::make_fpostcol(const distribn_t* feq, DISTS& fpc) const {
       LbTestsHelper::CalculateEntropicCollision<LATTICE>(f_original,
 							 feq,
-							 lbmParams->GetTau(),
-							 lbmParams->GetBeta(),
+							 lbmParams.GetTau(),
+							 lbmParams.GetBeta(),
 							 fpc);
     }
 
@@ -104,7 +104,7 @@ namespace hemelb
     void CollisionTester<lb::kernels::LBGK<lb::lattices::D3Q15>>::make_fpostcol(const distribn_t* feq, DISTS& fpc) const {
       LbTestsHelper::CalculateLBGKCollision<lb::lattices::D3Q15>(f_original,
 								 feq,
-								 lbmParams->GetOmega(),
+								 lbmParams.GetOmega(),
 								 fpc);
     }
 
@@ -262,8 +262,8 @@ namespace hemelb
 	// Test part 3: Collision depends on the local relaxation time
 	// 
 	// Do the collision and test the result.
-	lbgknn0.DoCollide(lbmParams, hydroVars0[set]);
-	lbgknn1.DoCollide(lbmParams, hydroVars1[set]);
+	lbgknn0.DoCollide(&lbmParams, hydroVars0[set]);
+	lbgknn1.DoCollide(&lbmParams, hydroVars1[set]);
 
 	// Get the expected post-collision densities.
 	DISTS expectedPostCollision0;
@@ -307,7 +307,7 @@ namespace hemelb
 	// Simulate LBGK by relaxing all the MRT modes to equilibrium
 	// with the same time constant.
 	std::vector<distribn_t> relaxationParameters;
-	distribn_t oneOverTau = 1.0 / lbmParams->GetTau();
+	distribn_t oneOverTau = 1.0 / lbmParams.GetTau();
 	relaxationParameters.resize(BASIS::NUM_KINETIC_MOMENTS, oneOverTau);
 	mrtLbgkEquivalentKernel.SetMrtRelaxationParameters(relaxationParameters);
 
@@ -337,13 +337,13 @@ namespace hemelb
 				     allowedError);
 
 	// Do the MRT collision.
-	mrtLbgkEquivalentKernel.DoCollide(lbmParams, hydroVars0);
+	mrtLbgkEquivalentKernel.DoCollide(&lbmParams, hydroVars0);
 
 	// Get the expected post-collision velocity distributions with LBGK.
 	DISTS expectedPostCollision0;
 	LbTestsHelper::CalculateLBGKCollision<LATTICE>(f_original,
 						       hydroVars0.GetFEq().f,
-						       lbmParams->GetOmega(),
+						       lbmParams.GetOmega(),
 						       expectedPostCollision0);
 
 	// Compare.

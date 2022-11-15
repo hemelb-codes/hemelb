@@ -20,7 +20,7 @@ namespace hemelb
     TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<>, "IncompressibilityCheckerTests") {
       using LATTICE = lb::lattices::D3Q15;
 
-      LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(latDat);
+      LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(*latDat);
 
       auto cache = std::make_unique<lb::MacroscopicPropertyCache>(*simState, *dom);
       cache->densityCache.SetRefreshFlag();

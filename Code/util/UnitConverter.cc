@@ -45,6 +45,14 @@ namespace hemelb
       return pressure_diff * latticePressure / mmHg_TO_PASCAL;
     }
 
+    LatticePressureGradient UnitConverter::ConvertPressureGradientToLatticeUnits(PhysicalPressureGradient pg) const {
+        return pg * mmHg_TO_PASCAL * latticeDistance / latticePressure;
+    }
+
+    PhysicalPressureGradient UnitConverter::ConvertPressureGradientToPhysicalUnits(LatticePressureGradient pg) const {
+        return pg * latticePressure / (latticeDistance * mmHg_TO_PASCAL);
+    }
+
     PhysicalReciprocalTime UnitConverter::ConvertShearRateToPhysicalUnits(
         LatticeReciprocalTime shearRate) const
     {

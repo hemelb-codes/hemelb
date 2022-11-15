@@ -20,12 +20,8 @@
 #include "tests/helpers/ApproxVector.h"
 #include "tests/helpers/FourCubeLatticeData.h"
 
-namespace hemelb
+namespace hemelb::tests::LbTestsHelper
 {
-  namespace tests
-  {
-    namespace LbTestsHelper
-    {
       using Vec = util::Vector3D<distribn_t>;
 
       template<typename Lattice>
@@ -166,15 +162,15 @@ namespace hemelb
       }
 
       template<typename LatticeType>
-      void InitialiseAnisotropicTestData(FourCubeLatticeData* latticeData)
+      void InitialiseAnisotropicTestData(FourCubeLatticeData& latticeData)
       {
-          auto&& dom = latticeData->GetDomain();
-	for (site_t site = 0; site < dom.GetLocalFluidSiteCount(); ++site)
-	  {
-	    distribn_t fOld[LatticeType::NUMVECTORS];
-	    InitialiseAnisotropicTestData<LatticeType> (site, (distribn_t*)fOld);
-	    latticeData->SetFOld<LatticeType>(site, fOld);
-	  }
+          auto&& dom = latticeData.GetDomain();
+          for (site_t site = 0; site < dom.GetLocalFluidSiteCount(); ++site)
+          {
+              distribn_t fOld[LatticeType::NUMVECTORS];
+              InitialiseAnisotropicTestData<LatticeType> (site, (distribn_t*)fOld);
+              latticeData.SetFOld<LatticeType>(site, fOld);
+          }
       }
 
 
@@ -248,8 +244,6 @@ namespace hemelb
             }
           }
 
-    }
-  }
 }
 
 #endif // ONCE

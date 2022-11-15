@@ -6,6 +6,9 @@
 #ifndef HEMELB_LB_IOLETS_INOUTLETFILE_H
 #define HEMELB_LB_IOLETS_INOUTLETFILE_H
 
+#include <filesystem>
+#include <utility>
+
 #include "lb/iolets/InOutLet.h"
 
 namespace hemelb
@@ -30,40 +33,38 @@ namespace hemelb
           InOutLetFile();
           virtual ~InOutLetFile() override = default;
           InOutLet* clone() const override;
-          void Reset(SimulationState &state) override
-          {
-            CalculateTable(state.GetTotalTimeSteps(), state.GetTimeStepLength());
-          }
+          void Reset(SimulationState& state) override;
 
-          const std::string& GetFilePath()
+          inline const std::filesystem::path& GetFilePath()
           {
             return pressureFilePath;
           }
-          void SetFilePath(const std::string& path)
+          inline void SetFilePath(const std::string& path)
           {
             pressureFilePath = path;
           }
 
-          LatticeDensity GetDensityMin() const override
+          inline LatticeDensity GetDensityMin() const override
           {
             return densityMin;
           }
-          LatticeDensity GetDensityMax() const override
+          inline LatticeDensity GetDensityMax() const override
           {
             return densityMax;
           }
-          LatticeDensity GetDensity(LatticeTimeStep timeStep) const override
+          inline LatticeDensity GetDensity(LatticeTimeStep timeStep) const override
           {
             return densityTable[timeStep];
           }
           void Initialise(const util::UnitConverter* unitConverter) override;
+
         private:
-          void CalculateTable(LatticeTimeStep totalTimeSteps, PhysicalTime timeStepLength);
           std::vector<LatticeDensity> densityTable;
           LatticeDensity densityMin;
           LatticeDensity densityMax;
-          std::string pressureFilePath;
-          const util::UnitConverter* units;
+          std::filesystem::path pressureFilePath;
+          using DataPair = std::pair<LatticeTime, LatticeDensity>;
+          std::vector<DataPair> file_data_lat;
       };
 
     }

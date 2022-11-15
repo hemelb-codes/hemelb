@@ -11,10 +11,8 @@
 #include <vector>
 #include <cassert>
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
     enum StressTypes
     {
       VonMises = 0,
@@ -24,22 +22,46 @@ namespace hemelb
 
     class LbmParameters
     {
+        inline void CalcDerivedParams() {
+            tau = 0.5 + (timeStep * eta / fluidDensity) / (Cs2 * voxelSize * voxelSize);
+            omega = -1.0 / tau;
+            stressParameter = (1.0 - 1.0 / (2.0 * tau)) / std::sqrt(2.0);
+            beta = -1.0 / (2.0 * tau);
+        }
       public:
-        inline LbmParameters(PhysicalTime timeStepSeconds,
-		    PhysicalDistance voxelSizeMetres,
-		    PhysicalDensity fluidDensityKgm3 = DEFAULT_FLUID_DENSITY_Kg_per_m3,
-		    PhysicalDynamicViscosity newtonianViscosityPas = DEFAULT_FLUID_VISCOSITY_Pas) :
-	  timeStep(timeStepSeconds),
-	  voxelSize(voxelSizeMetres),
-	  fluidDensity(fluidDensityKgm3),
-	  eta(newtonianViscosityPas),
-	  tau(0.5 + (timeStep * eta / fluidDensity) / (Cs2 * voxelSize * voxelSize)),
-	  omega(-1.0 / tau),
-	  stressParameter((1.0 - 1.0 / (2.0 * tau)) / std::sqrt(2.0)),
-	  beta(-1.0 / (2.0 * tau))
+        inline LbmParameters()
         {
+            CalcDerivedParams();
         }
 
+        inline LbmParameters(PhysicalTime timeStepSeconds,
+                             PhysicalDistance voxelSizeMetres) :
+                timeStep(timeStepSeconds),
+                voxelSize(voxelSizeMetres)
+        {
+            CalcDerivedParams();
+        }
+        inline LbmParameters(PhysicalTime timeStepSeconds,
+                             PhysicalDistance voxelSizeMetres,
+                             PhysicalDensity fluidDensityKgm3
+        ) :
+                timeStep(timeStepSeconds),
+                voxelSize(voxelSizeMetres),
+                fluidDensity(fluidDensityKgm3)
+        {
+            CalcDerivedParams();
+        }
+        inline LbmParameters(PhysicalTime timeStepSeconds,
+                             PhysicalDistance voxelSizeMetres,
+                             PhysicalDensity fluidDensityKgm3,
+                             PhysicalDynamicViscosity newtonianViscosityPas) :
+                timeStep(timeStepSeconds),
+                voxelSize(voxelSizeMetres),
+                fluidDensity(fluidDensityKgm3),
+                eta(newtonianViscosityPas)
+        {
+            CalcDerivedParams();
+        }
         inline const PhysicalTime& GetTimeStep() const
         {
           return timeStep;
@@ -83,16 +105,16 @@ namespace hemelb
         StressTypes StressType;
 
       private:
-        PhysicalTime timeStep; // seconds
-        PhysicalDistance voxelSize; // metres
-        PhysicalDensity fluidDensity; // kg m^-3
-        PhysicalDynamicViscosity eta; // Newtonian viscosity of fluid in Pa s
+        PhysicalTime timeStep = 1; // seconds
+        PhysicalDistance voxelSize = 1; // metres
+        PhysicalDensity fluidDensity = DEFAULT_FLUID_DENSITY_Kg_per_m3; // kg m^-3
+        PhysicalDynamicViscosity eta = DEFAULT_FLUID_VISCOSITY_Pas; // Newtonian viscosity of fluid in Pa s
         distribn_t tau;
         distribn_t omega;
         distribn_t stressParameter;
         distribn_t beta; ///< Viscous dissipation in ELBM
     };
-  }
+
 }
 
 #endif //HEMELB_LB_LBMPARAMETERS_H

@@ -10,10 +10,10 @@
 #include "net/IteratedAction.h"
 #include "net/IOCommunicator.h"
 #include "lb/SimulationState.h"
+#include "lb/InitialCondition.h"
 #include "lb/iolets/BoundaryValues.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "util/UnitConverter.h"
-#include "configuration/SimConfig.h"
 #include "reporting/Timers.h"
 #include "lb/BuildSystemInterface.h"
 #include "Traits.h"
@@ -59,7 +59,7 @@ namespace hemelb
          * Must have Initialise(...) called also. Constructor separated due to need to access
          * the partially initialized LBM in order to initialize the arguments to the second construction phase.
          */
-        LBM(hemelb::configuration::SimConfig *iSimulationConfig, net::Net* net,
+        LBM(LbmParameters params, net::Net* net,
             geometry::FieldData* latDat, SimulationState* simState, reporting::Timers &atimings,
             geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager);
         ~LBM();
@@ -72,14 +72,6 @@ namespace hemelb
 
         site_t TotalFluidSiteCount() const;
         void SetTotalFluidSiteCount(site_t);
-        int InletCount() const
-        {
-          return inletCount;
-        }
-        int OutletCount() const
-        {
-          return outletCount;
-        }
 
         /**
          * Second constructor.
@@ -89,7 +81,7 @@ namespace hemelb
                         iolets::BoundaryValues* iOutletValues,
                         const util::UnitConverter* iUnits);
 
-        void SetInitialConditions(const net::IOCommunicator& ioComms);
+        void SetInitialConditions(lb::InitialCondition const& ic_conf, const net::IOCommunicator& ioComms);
 
         hemelb::lb::LbmParameters *GetLbmParams();
         lb::MacroscopicPropertyCache& GetPropertyCache();
@@ -139,10 +131,6 @@ namespace hemelb
 
         }
 
-        unsigned int inletCount;
-        unsigned int outletCount;
-
-        configuration::SimConfig *mSimConfig;
         net::Net* mNet;
         geometry::FieldData* mLatDat;
         SimulationState* mState;

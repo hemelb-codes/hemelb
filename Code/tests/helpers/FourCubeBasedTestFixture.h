@@ -22,38 +22,41 @@
 
 namespace hemelb
 {
-  namespace tests
-  {
-    namespace helpers
-    {
-      class FourCubeBasedTestFixtureBase : public FolderTestFixture {
-
-      public:
-	FourCubeBasedTestFixtureBase(int cubesize);
-	~FourCubeBasedTestFixtureBase();
-
-      protected:
-	FourCubeLatticeData* latDat;
-    FourCubeDomain* dom;
-	lb::kernels::InitParams initParams;
-	site_t numSites;
-	lb::LbmParameters* lbmParams;
-	configuration::SimConfig* simConfig;
-	std::unique_ptr<lb::SimulationState> simState;
-	const util::UnitConverter* unitConverter;
-	int cubeSize;
-	int cubeSizeWithHalo;
-      private:
-	std::string path;
-      };
-
-      template <int CUBESIZE = 4>
-      class FourCubeBasedTestFixture : public FourCubeBasedTestFixtureBase {
-      public:
-	FourCubeBasedTestFixture() : FourCubeBasedTestFixtureBase(CUBESIZE) {
-	}
-      };
+    namespace configuration {
+        class SimBuilder;
     }
-  }
+    namespace tests::helpers
+    {
+
+        class FourCubeBasedTestFixtureBase : public FolderTestFixture {
+
+        public:
+            FourCubeBasedTestFixtureBase(int cubesize);
+            ~FourCubeBasedTestFixtureBase();
+
+        protected:
+            lb::iolets::BoundaryValues BuildIolets(geometry::SiteType tp) const;
+            lb::iolets::BoundaryValues BuildIolets(geometry::SiteType tp, std::vector<configuration::IoletConfig> const& conf) const;
+            std::unique_ptr<FourCubeLatticeData> latDat;
+            // Non-owning ptr (owned by latDat)
+            FourCubeDomain* dom;
+            lb::kernels::InitParams initParams;
+            site_t numSites;
+            lb::LbmParameters lbmParams;
+            std::unique_ptr<configuration::SimConfig> simConfig;
+            std::unique_ptr<configuration::SimBuilder> simBuilder;
+            std::unique_ptr<lb::SimulationState> simState;
+            const util::UnitConverter* unitConverter = nullptr;
+            int cubeSize;
+            int cubeSizeWithHalo;
+        };
+
+        template <int CUBESIZE = 4>
+        class FourCubeBasedTestFixture : public FourCubeBasedTestFixtureBase {
+        public:
+            FourCubeBasedTestFixture() : FourCubeBasedTestFixtureBase(CUBESIZE) {
+            }
+        };
+    }
 }
-#endif // ONCE
+#endif

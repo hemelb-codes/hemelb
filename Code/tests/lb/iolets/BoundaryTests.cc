@@ -8,86 +8,76 @@
 #include "tests/helpers/FourCubeBasedTestFixture.h"
 #include "resources/Resource.h"
 #include "lb/iolets/BoundaryValues.h"
+#include "configuration/SimConfig.h"
 #include "tests/helpers/LaddFail.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace hemelb::lb::iolets;
     using namespace resources;
 
     // Class asserting behaviour of boundary-collection objects and
     // the boundaries (in- and out- lets) within them.
     TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<>, "BoundaryTests") {
-      auto pressureToDensity = [&](double pressure) -> double {
-	double inverseVelocity = simConfig->GetTimeStepLength() / simConfig->GetVoxelSize();
-	return 1
-	  + pressure * mmHg_TO_PASCAL * inverseVelocity * inverseVelocity
-	  / (Cs2 * lbmParams->GetFluidDensity());
-      };
+        auto pressureToDensity = [&](double pressure) -> double {
+            double inverseVelocity = simConfig->GetTimeStepLength() / simConfig->GetVoxelSize();
+            return 1
+                   + pressure * mmHg_TO_PASCAL * inverseVelocity * inverseVelocity
+                     / (Cs2 * lbmParams.GetFluidDensity());
+        };
 
-      auto inlets = std::make_unique<BoundaryValues>(
-	  geometry::INLET_TYPE,
-	  dom,
-	  simConfig->GetInlets(),
-	  simState.get(),
-	  Comms(),
-	  *unitConverter);
+        auto inlets = BuildIolets(geometry::INLET_TYPE);
 
-      SECTION("TestConstruct") {
-	double targetStartDensity = unitConverter->ConvertPressureToLatticeUnits(80.0 - 1.0) / Cs2;
+        SECTION("TestConstruct") {
+            double targetStartDensity = unitConverter->ConvertPressureToLatticeUnits(80.0 - 1.0) / Cs2;
 
-	REQUIRE(Approx(targetStartDensity) == inlets->GetBoundaryDensity(0));
-      }
+            REQUIRE(Approx(targetStartDensity) == inlets.GetBoundaryDensity(0));
+        }
 
-      SECTION("TestUpdate") {
-	REQUIRE(Approx(pressureToDensity(80.0 - 1.0)) == inlets->GetBoundaryDensity(0));
+        SECTION("TestUpdate") {
+            REQUIRE(Approx(pressureToDensity(80.0 - 1.0)) == inlets.GetBoundaryDensity(0));
 
-	while (simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 20) {
-	  simState->Increment();
-	}
+            while (simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 20) {
+                simState->Increment();
+            }
 
-	REQUIRE(Approx(pressureToDensity(80.0 + 1.0)) == inlets->GetBoundaryDensity(0));
-	
-	while (simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 10) {
-	  simState->Increment();
-	}
+            REQUIRE(Approx(pressureToDensity(80.0 + 1.0)) == inlets.GetBoundaryDensity(0));
 
-	REQUIRE(Approx(pressureToDensity(80.0 - 1.0)) == inlets->GetBoundaryDensity(0));
-      }
+            while (simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 10) {
+                simState->Increment();
+            }
 
-      SECTION("TestUpdateFile") {
-	LADD_FAIL();
-	CopyResourceToTempdir("iolet.txt");
-	MoveToTempdir();
+            REQUIRE(Approx(pressureToDensity(80.0 - 1.0)) == inlets.GetBoundaryDensity(0));
+        }
 
-	auto fileInletConfig = configuration::SimConfig::New(Resource("config_file_inlet.xml").Path());
+        SECTION("TestUpdateFile") {
+            LADD_FAIL();
+            CopyResourceToTempdir("iolet.txt");
+            MoveToTempdir();
 
-	// Reloading simState to ensure the time step size from config_file_inlet.xml is indeed used in HemeLB.
-	simState.reset(new hemelb::lb::SimulationState{fileInletConfig->GetTimeStepLength(), fileInletConfig->GetTotalTimeSteps()});
+            auto fileInletConfig = configuration::SimConfig::New(Resource("config_file_inlet.xml").Path());
 
-	inlets.reset(new BoundaryValues(hemelb::geometry::INLET_TYPE,
-					dom,
-					fileInletConfig->GetInlets(),
-					simState.get(),
-					Comms(),
-					*unitConverter));
+            // Reloading simState to ensure the time step size from config_file_inlet.xml is indeed used in HemeLB.
+            simState = std::make_unique<lb::SimulationState>(
+                    fileInletConfig->GetTimeStepLength(),
+                    fileInletConfig->GetTotalTimeSteps()
+            );
 
-	REQUIRE(Approx(pressureToDensity(78.0)) == inlets->GetBoundaryDensity(0));
+            inlets = BuildIolets(geometry::INLET_TYPE, fileInletConfig->GetInlets());
 
-	while (simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 2) {
-	  simState->Increment();
-	}
+            REQUIRE(Approx(pressureToDensity(78.0)) == inlets.GetBoundaryDensity(0));
 
-	REQUIRE(Approx(pressureToDensity(82.0)) == inlets->GetBoundaryDensity(0));
+            while (simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 2) {
+                simState->Increment();
+            }
 
-	while (simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps()) {
-	  simState->Increment();
-	}
+            REQUIRE(Approx(pressureToDensity(82.0)) == inlets.GetBoundaryDensity(0));
 
-	REQUIRE(Approx(pressureToDensity(78.0)) == inlets->GetBoundaryDensity(0));
-      }
+            while (simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps()) {
+                simState->Increment();
+            }
+
+            REQUIRE(Approx(pressureToDensity(78.0)) == inlets.GetBoundaryDensity(0));
+        }
     }
-  }
 }

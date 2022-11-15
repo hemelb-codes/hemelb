@@ -12,10 +12,8 @@
 #include "util/Matrix3D.h"
 #include "Exception.h"
 
-namespace hemelb
+namespace hemelb::util
 {
-  namespace util
-  {
 
     class UnitConverter
     {
@@ -25,8 +23,11 @@ namespace hemelb
 		      PhysicalDensity fluidDensity, PhysicalPressure reference_pressure);
 
         LatticePressure ConvertPressureToLatticeUnits(PhysicalPressure pressure) const;
-        LatticeStress ConvertPressureDifferenceToLatticeUnits(PhysicalStress pressure_grad) const;
+        LatticePressure ConvertPressureDifferenceToLatticeUnits(PhysicalStress pressure_diff) const;
         PhysicalPressure ConvertPressureToPhysicalUnits(LatticePressure pressure) const;
+
+        LatticePressureGradient ConvertPressureGradientToLatticeUnits(PhysicalPressureGradient pg) const;
+        PhysicalPressureGradient ConvertPressureGradientToPhysicalUnits(LatticePressureGradient pg) const;
 
         LatticeDistance ConvertDistanceToLatticeUnits(const PhysicalDistance& x) const;
         PhysicalDistance ConvertDistanceToPhysicalUnits(const LatticeDistance& x) const;
@@ -143,7 +144,7 @@ namespace hemelb
         }
 
         template<typename T>
-        T ConvertToLatticeUnits(const std::string& units, const T& value) const
+        T ConvertToLatticeUnits(std::string_view units, const T& value) const
         {
           double scale_factor;
 
@@ -217,17 +218,16 @@ namespace hemelb
         PhysicalPressure latticePressure;
         PhysicalPressure reference_pressure_mmHg;
 
-      template <typename T>
-      struct scalar_type {
-	using type = T;
-      };
-      template <typename T>
-      struct scalar_type<Vector3D<T>> {
-	using type = T;
-      };
+        template <typename T>
+        struct scalar_type {
+            using type = T;
+        };
+        template <typename T>
+        struct scalar_type<Vector3D<T>> {
+            using type = T;
+        };
     };
 
-  }
 }
 
 #endif /* HEMELB_UTIL_UNITCONVERTER_H */

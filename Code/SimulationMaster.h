@@ -8,7 +8,6 @@
 #include <memory>
 
 #include "lb/lattices/Lattices.h"
-#include "extraction/PropertyActor.h"
 #include "lb/lb.hpp"
 #include "lb/StabilityTester.h"
 #include "net/net.h"
@@ -28,14 +27,18 @@
 
 namespace hemelb
 {
-  template<class TRAITS = Traits<>>
+    namespace configuration { class SimBuilder; }
+    namespace extraction { class PropertyActor; }
+
+    template<class TRAITS = Traits<>>
   class SimulationMaster
   {
+      friend class configuration::SimBuilder;
     public:
-      typedef TRAITS Traits;
+      using Traits = TRAITS;
 
-      SimulationMaster(hemelb::configuration::CommandLine &options,
-                       const hemelb::net::IOCommunicator& ioComms);
+      SimulationMaster(configuration::CommandLine &options,
+                       const net::IOCommunicator& ioComms);
       virtual ~SimulationMaster();
 
       void Abort();
@@ -45,11 +48,11 @@ namespace hemelb
       int GetProcessorCount();
 
       void RunSimulation();
-      std::shared_ptr<hemelb::lb::SimulationState const> GetState() const
+      lb::SimulationState const& GetState() const
       {
-        return simulationState;
+        return *simulationState;
       }
-      hemelb::util::UnitConverter const & GetUnitConverter() const;
+      util::UnitConverter const & GetUnitConverter() const;
       void Finalise();
 #     ifdef HEMELB_DOING_UNITTESTS
       //! Makes it easy to add cell controller without messy input files
@@ -58,31 +61,31 @@ namespace hemelb
         stepManager->RegisterIteratedActorSteps(concern, phase);
       }
       //! Access to lattice data for debugging
-      hemelb::geometry::FieldData& GetFieldData()
+      geometry::FieldData& GetFieldData()
       {
         assert(fieldData);
         return *fieldData;
       }
-      std::shared_ptr<hemelb::net::IteratedAction> GetCellController() {
+      std::shared_ptr<net::IteratedAction> GetCellController() {
         return cellController;
       }
 #     endif
     protected:
 
-      std::shared_ptr<hemelb::lb::iolets::BoundaryValues> inletValues;
-      std::shared_ptr<hemelb::lb::iolets::BoundaryValues> outletValues;
+      std::shared_ptr<lb::iolets::BoundaryValues> inletValues;
+      std::shared_ptr<lb::iolets::BoundaryValues> outletValues;
       virtual void DoTimeStep();
 
       /* The next quantities are protected because they are used by MultiscaleSimulationMaster */
       // Set the lattice type via a build parameter
-      typedef typename Traits::Lattice latticeType;
-      std::shared_ptr<hemelb::geometry::Domain> domainData;
-      std::shared_ptr<hemelb::geometry::FieldData> fieldData;
-      std::shared_ptr<hemelb::lb::LBM<Traits>> latticeBoltzmannModel;
-      std::shared_ptr<hemelb::geometry::neighbouring::NeighbouringDataManager>
+      using latticeType = typename Traits::Lattice;
+      std::shared_ptr<geometry::Domain> domainData;
+      std::shared_ptr<geometry::FieldData> fieldData;
+      std::shared_ptr<lb::LBM<Traits>> latticeBoltzmannModel;
+      std::shared_ptr<geometry::neighbouring::NeighbouringDataManager>
         neighbouringDataManager;
-      const hemelb::net::IOCommunicator ioComms;
-      std::shared_ptr<hemelb::configuration::SimConfig> simConfig;
+      net::IOCommunicator ioComms;
+      std::shared_ptr<configuration::SimConfig> simConfig;
 
     private:
       void Initialise();
@@ -101,34 +104,33 @@ namespace hemelb
        */
       void LogStabilityReport();
 
-      std::shared_ptr<hemelb::io::PathManager> fileManager;
-      hemelb::reporting::Timers timings;
-      std::shared_ptr<hemelb::reporting::Reporter> reporter;
-      hemelb::reporting::BuildInfo build_info;
+      std::shared_ptr<io::PathManager> fileManager;
+      reporting::Timers timings;
+      std::shared_ptr<reporting::Reporter> reporter;
+      reporting::BuildInfo build_info;
 
-      std::shared_ptr<hemelb::lb::SimulationState> simulationState;
+      std::optional<lb::SimulationState> simulationState;
 
       /** Struct containing the configuration of various checkers/testers */
-      const hemelb::configuration::MonitoringConfig* monitoringConfig;
-      std::shared_ptr<hemelb::lb::StabilityTester<latticeType>> stabilityTester;
-      std::shared_ptr<hemelb::lb::EntropyTester<latticeType>> entropyTester;
+      std::shared_ptr<lb::StabilityTester<latticeType>> stabilityTester;
+      std::shared_ptr<lb::EntropyTester<latticeType>> entropyTester;
       /** Actor in charge of checking the maximum density difference across the domain */
-      std::shared_ptr<hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<> >>
+      std::shared_ptr<lb::IncompressibilityChecker<net::PhasedBroadcastRegular<> >>
         incompressibilityChecker;
 
-      std::shared_ptr<hemelb::net::IteratedAction> cellController;
-      std::shared_ptr<hemelb::net::IteratedAction> colloidController;
-      hemelb::net::Net communicationNet;
+      std::shared_ptr<net::IteratedAction> cellController;
+      std::shared_ptr<net::IteratedAction> colloidController;
+      net::Net communicationNet;
 
-      const hemelb::util::UnitConverter* unitConverter;
+      std::optional<util::UnitConverter> unitConverter;
 
-      std::shared_ptr<hemelb::extraction::IterableDataSource> propertyDataSource;
-      std::shared_ptr<hemelb::extraction::PropertyActor> propertyExtractor;
+      std::shared_ptr<extraction::IterableDataSource> propertyDataSource;
+      std::shared_ptr<extraction::PropertyActor> propertyExtractor;
 
-      std::shared_ptr<hemelb::net::phased::StepManager> stepManager;
-      std::shared_ptr<hemelb::net::phased::NetConcern> netConcern;
+      std::shared_ptr<net::phased::StepManager> stepManager;
+      std::shared_ptr<net::phased::NetConcern> netConcern;
 
-      static const hemelb::LatticeTimeStep FORCE_FLUSH_PERIOD = 1000;
+      static constexpr LatticeTimeStep FORCE_FLUSH_PERIOD = 1000;
   };
 }
 

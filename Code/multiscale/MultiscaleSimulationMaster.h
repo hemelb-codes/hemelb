@@ -213,11 +213,11 @@ namespace hemelb
 
         void DoTimeStep()
         {
-          bool advance = intercomms.DoMultiscale(GetState()->GetTime());
+          bool advance = intercomms.DoMultiscale(GetState().GetTime());
           hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("At time step %i, should advance %i, time %f",
-                                                                              GetState()->GetTimeStep(),
+                                                                              GetState().GetTimeStep(),
                                                                               static_cast<int>(advance),
-                                                                              GetState()->GetTime());
+                                                                              GetState().GetTime());
 
           if (advance)
           {
@@ -252,14 +252,14 @@ namespace hemelb
             {
               hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Inlet[%i]: Measured Density is %f. Pressure is %f.",
                                                                                     i,
-                                                                                    inletValues->GetLocalIolet(i)->GetDensity(GetState()->GetTimeStep()),
+                                                                                    inletValues->GetLocalIolet(i)->GetDensity(GetState().GetTimeStep()),
                                                                                     inletValues->GetLocalIolet(i)->GetPressureMax());
             }
             for (unsigned int i = 0; i < outletValues->GetLocalIoletCount(); i++)
             {
               hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Outlet[%i]: Measured Density is %f. Pressure is %f.",
                                                                                     i,
-                                                                                    outletValues->GetLocalIolet(i)->GetDensity(GetState()->GetTimeStep()),
+                                                                                    outletValues->GetLocalIolet(i)->GetDensity(GetState().GetTimeStep()),
                                                                                     outletValues->GetLocalIolet(i)->GetPressureMax());
             }
 
@@ -268,7 +268,7 @@ namespace hemelb
             //for (int i = 0; i < 100; i++)
             //{
             hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Step: HemeLB advanced to time %f.",
-                                                                                 GetState()->GetTime());
+                                                                                 GetState().GetTime());
             SimulationMaster::DoTimeStep();
             //}
           }

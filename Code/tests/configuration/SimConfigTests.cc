@@ -39,16 +39,18 @@ namespace hemelb
 	auto config = SimConfig::New(resources::Resource("config0_2_0.xml").Path());
 	REQUIRE(3000lu == config->GetTotalTimeSteps());
 	REQUIRE(0.0001 == config->GetTimeStepLength());
-	auto inlet = util::clone_dynamic_cast<lb::iolets::InOutLetCosine>(config->GetInlets()[0]);
+    auto inlet = std::get_if<configuration::CosinePressureIoletConfig>(&config->GetInlets()[0]);
+	//auto inlet = util::clone_dynamic_cast<lb::iolets::InOutLetCosine>(config->GetInlets()[0]);
+
 	REQUIRE(inlet != nullptr);
-	REQUIRE(Approx(6000.0) == inlet->GetPeriod());
+	REQUIRE(Approx(0.6) == inlet->period_s);
 
 	// Check that in the absence of the <monitoring> XML element things get initiliased properly
-	const hemelb::configuration::MonitoringConfig* monConfig = config->GetMonitoringConfiguration();
-	REQUIRE(!monConfig->doConvergenceCheck);
-	REQUIRE(!monConfig->doIncompressibilityCheck);
-	REQUIRE(!monConfig->convergenceTerminate);
-	REQUIRE(Approx(0.0) == monConfig->convergenceRelativeTolerance);
+	auto& monConfig = config->GetMonitoringConfiguration();
+	REQUIRE(!monConfig.doConvergenceCheck);
+	REQUIRE(!monConfig.doIncompressibilityCheck);
+	REQUIRE(!monConfig.convergenceTerminate);
+	REQUIRE(Approx(0.0) == monConfig.convergenceRelativeTolerance);
       }
 
       SECTION("0_2_1_Read") {
@@ -57,17 +59,17 @@ namespace hemelb
 	auto config = std::unique_ptr<SimConfig>(SimConfig::New(resources::Resource("config.xml").Path()));
 	REQUIRE(3000lu == config->GetTotalTimeSteps());
 	REQUIRE(0.0001 == config->GetTimeStepLength());
-	auto inlet = util::clone_dynamic_cast<lb::iolets::InOutLetCosine>(config->GetInlets()[0]);
+	auto inlet = std::get_if<configuration::CosinePressureIoletConfig>(&config->GetInlets()[0]);
 	REQUIRE(inlet != nullptr);
-	REQUIRE(Approx(6000.0) == inlet->GetPeriod());
+	REQUIRE(Approx(0.6) == inlet->period_s);
 
-	const hemelb::configuration::MonitoringConfig* monConfig = config->GetMonitoringConfiguration();
-	REQUIRE(monConfig->doConvergenceCheck);
-	REQUIRE(monConfig->doIncompressibilityCheck);
-	REQUIRE(monConfig->convergenceTerminate);
-	REQUIRE(1e-9 == monConfig->convergenceRelativeTolerance);
-	REQUIRE(std::holds_alternative<extraction::source::Velocity>(monConfig->convergenceVariable));
-	REQUIRE(0.01 == monConfig->convergenceReferenceValue); // 1 m/s * (delta_t / delta_x) = 0.01
+	auto& monConfig = config->GetMonitoringConfiguration();
+	REQUIRE(monConfig.doConvergenceCheck);
+	REQUIRE(monConfig.doIncompressibilityCheck);
+	REQUIRE(monConfig.convergenceTerminate);
+	REQUIRE(1e-9 == monConfig.convergenceRelativeTolerance);
+	REQUIRE(std::holds_alternative<extraction::source::Velocity>(monConfig.convergenceVariable));
+	REQUIRE(1 == monConfig.convergenceReferenceValue); // 1 m/s
       }
       
       SECTION("XMLFileContent") {

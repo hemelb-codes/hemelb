@@ -59,27 +59,6 @@ namespace hemelb {
 
     // See InitialCondtions.hpp for setting Fs (distributions)
 
-    // Visitor for factory function
-    struct ICMaker {
-      using result_type = InitialCondition;
-      
-      template <typename T>
-      InitialCondition operator()(T) const {
-	throw Exception() << "Trying to make an InitialCondition from unknown type of config";
-      }
 
-      InitialCondition operator()(const configuration::EquilibriumIC& cfg) const {
-	auto rho = cfg.unitConverter->ConvertPressureToLatticeUnits(cfg.p_mmHg) / Cs2;
-	return EquilibriumInitialCondition{cfg.t0, rho};
-      }
-      InitialCondition operator()(const configuration::CheckpointIC& cfg) const {
-	return CheckpointInitialCondition{cfg.t0, cfg.cpFile, cfg.maybeOffFile};
-      }
-    };
-    
-    // Factory function just delegates to visitor
-    InitialCondition InitialCondition::FromConfig(const configuration::ICConfig& conf) {
-      return std::visit(ICMaker{}, conf);
-    }
   }
 }

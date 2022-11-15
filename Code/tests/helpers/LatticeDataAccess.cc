@@ -5,44 +5,38 @@
 
 #include "tests/helpers/LatticeDataAccess.h"
 
-namespace hemelb
+namespace hemelb::tests::helpers
 {
-  namespace tests
-  {
-    namespace helpers
+
+    LatticeDataAccess::LatticeDataAccess(geometry::FieldData * const latDat) :
+            latDat(latDat)
     {
+    }
 
-      LatticeDataAccess::LatticeDataAccess(geometry::FieldData * const latDat) :
-	latDat(latDat)
-      {
-      }
+    distribn_t const * LatticeDataAccess::GetFNew(site_t index) const
+    {
+        return latDat->GetFNew(index);
+    }
 
-      distribn_t const * LatticeDataAccess::GetFNew(site_t index) const
-      {
-	return latDat->GetFNew(index);
-      }
-
-      void LatticeDataAccess::SetMinWallDistance(PhysicalDistance _mindist)
-      {
-          for (auto& dist: domain->distanceToWall) {
-              if (dist > 0e0)
-                  dist = _mindist;
-          }
-      }
-
-      void LatticeDataAccess::SetWallDistance(PhysicalDistance _mindist)
-      {
+    void LatticeDataAccess::SetMinWallDistance(PhysicalDistance _mindist)
+    {
         for (auto& dist: domain->distanceToWall) {
             if (dist > 0e0)
                 dist = _mindist;
         }
-      }
-
-      distribn_t const * GetFNew(geometry::FieldData *latDat, site_t const &index)
-      {
-        return LatticeDataAccess(latDat).GetFNew(index);
-      }
-
     }
-  }
+
+    void LatticeDataAccess::SetWallDistance(PhysicalDistance _mindist)
+    {
+        for (auto& dist: domain->distanceToWall) {
+            if (dist > 0e0)
+                dist = _mindist;
+        }
+    }
+
+    distribn_t const * GetFNew(geometry::FieldData& latDat, site_t const &index)
+    {
+        return LatticeDataAccess(&latDat).GetFNew(index);
+    }
+
 }

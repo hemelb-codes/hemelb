@@ -13,74 +13,65 @@
 #include "lb/iolets/BoundaryCommunicator.h"
 #include "util/clone_ptr.h"
 
-namespace hemelb
+namespace hemelb::lb::iolets
 {
-  namespace lb
-  {
-    namespace iolets
+
+    class BoundaryValues : public net::IteratedAction
     {
+        using IoletPtr = util::clone_ptr<iolets::InOutLet>;
+    public:
+        BoundaryValues(geometry::SiteType ioletType, geometry::Domain* latticeData,
+                       const std::vector<IoletPtr>& iolets,
+                       SimulationState* simulationState, const net::MpiCommunicator& comms,
+                       const util::UnitConverter& units);
 
-      class BoundaryValues : public net::IteratedAction
-      {
-	using IoletPtr = util::clone_ptr<iolets::InOutLet>;
-        public:
-          BoundaryValues(geometry::SiteType ioletType, geometry::Domain* latticeData,
-                         const std::vector<IoletPtr>& iolets,
-                         SimulationState* simulationState, const net::MpiCommunicator& comms,
-                         const util::UnitConverter& units);
+        void RequestComms() override;
+        void EndIteration() override;
+        void Reset();
 
-          void RequestComms();
-          void EndIteration();
-          void Reset();
+        void FinishReceive();
 
-          void FinishReceive();
+        LatticeDensity GetBoundaryDensity(const int index);
 
-          LatticeDensity GetBoundaryDensity(const int index);
+        LatticeDensity GetDensityMin(int boundaryId);
+        LatticeDensity GetDensityMax(int boundaryId);
 
-          LatticeDensity GetDensityMin(int boundaryId);
-          LatticeDensity GetDensityMax(int boundaryId);
+        static proc_t GetBCProcRank();
 
-          static proc_t GetBCProcRank();
-
-	  // Borrow the pointer to an Iolet - this object still owns
-	  // the value.
-          iolets::InOutLet* GetLocalIolet(unsigned int index)
-          {
+        // Borrow the pointer to an Iolet - this object still owns
+        // the value.
+        iolets::InOutLet* GetLocalIolet(unsigned int index)
+        {
             return iolets[localIoletIDs[index]].get();
-          }
-          unsigned int GetLocalIoletCount()
-          {
+        }
+        unsigned int GetLocalIoletCount() const
+        {
             return localIoletCount;
-          }
-          inline unsigned int GetTimeStep() const
-          {
+        }
+        inline unsigned int GetTimeStep() const
+        {
             return state->GetTimeStep();
-          }
-          inline geometry::SiteType GetIoletType() const
-          {
+        }
+        inline geometry::SiteType GetIoletType() const
+        {
             return ioletType;
-          }
+        }
 
-        private:
-          bool IsIOletOnThisProc(geometry::SiteType ioletType, geometry::Domain* latticeData,
-                                 int boundaryId);
-          std::vector<int> GatherProcList(bool hasBoundary);
-          void HandleComms(iolets::InOutLet* iolet);
-          geometry::SiteType ioletType;
-          int totalIoletCount;
-          // Number of IOlets and vector of their indices for communication purposes
-          int localIoletCount;
-          std::vector<int> localIoletIDs;
-          // Has to be a vector of pointers for InOutLet polymorphism
-          std::vector<IoletPtr> iolets;
-
-          SimulationState* state;
-          const util::UnitConverter& unitConverter;
-          BoundaryCommunicator bcComms;
-      }
-      ;
-    }
-  }
+    private:
+        bool IsIoletOnThisProc(geometry::SiteType ioletType, geometry::Domain* latticeData,
+                               int boundaryId);
+        std::vector<int> GatherProcList(bool hasBoundary);
+        void HandleComms(iolets::InOutLet* iolet);
+        geometry::SiteType ioletType;
+        int totalIoletCount;
+        // Number of iolets and vector of their indices for communication purposes
+        int localIoletCount;
+        std::vector<int> localIoletIDs;
+        // Has to be a vector of pointers for InOutLet polymorphism
+        std::vector<IoletPtr> iolets;
+        SimulationState* state;
+        BoundaryCommunicator bcComms;
+    };
 }
 
-#endif /* HEMELB_LB_IOLETS_BOUNDARYVALUES_H */
+#endif // HEMELB_LB_IOLETS_BOUNDARYVALUES_H

@@ -5,47 +5,36 @@
 
 #include "tests/helpers/OneInOneOutSimConfig.h"
 
-namespace hemelb
+namespace hemelb::tests::helpers
 {
-  namespace tests
-  {
-    namespace helpers
+    OneInOneOutSimConfig::OneInOneOutSimConfig()
+            : configuration::SimConfig(std::filesystem::path())
     {
-      OneInOneOutSimConfig::OneInOneOutSimConfig(const std::string& path) : configuration::SimConfig(path) {
-	totalTimeSteps = 10000;
-	timeStepSeconds = 60.0 / (70.0 * 1000.0);
-	voxelSizeMetres = 0.01;
-	geometryOriginMetres = util::Vector3D<PhysicalDistance>::Zero();
+        sim_info.time = {10000, 0, 60.0 / (70.0 * 1000.0)};
+        sim_info.space = {0.01, util::Vector3D<PhysicalDistance>::Zero()};
+        sim_info.fluid = {DEFAULT_FLUID_DENSITY_Kg_per_m3, DEFAULT_FLUID_VISCOSITY_Pas, 80.0};
 
-	unitConverter = new util::UnitConverter(timeStepSeconds,
-						voxelSizeMetres,
-						geometryOriginMetres,
-						DEFAULT_FLUID_DENSITY_Kg_per_m3,
-						0.0);
+        configuration::CosinePressureIoletConfig inlet;
+        inlet.amp_mmHg = 1.0;
+        inlet.mean_mmHg = 80.0;
+        inlet.phase_rad = PI;
+        inlet.period_s = 60.0 / 70.0;
+        inlet.normal = util::Vector3D<Dimensionless>(-3, 4, -9);
+        inlets.push_back(inlet);
 
-	auto inlet = util::make_clone_ptr<lb::iolets::InOutLetCosine>();
-	inlet->SetPressureAmp(unitConverter->ConvertPressureDifferenceToLatticeUnits(1.0));
-	inlet->SetPressureMean(unitConverter->ConvertPressureToLatticeUnits(80.0));
-	inlet->SetPhase(PI);
-	inlet->SetPeriod(unitConverter->ConvertTimeToLatticeUnits(60.0 / 70.0));
-	inlet->SetNormal(util::Vector3D<Dimensionless>(-3, 4, -9));
-
-	inlets.push_back(inlet);
-
-	auto outlet = util::make_clone_ptr<lb::iolets::InOutLetCosine>();
-	outlet->SetPressureAmp(unitConverter->ConvertPressureDifferenceToLatticeUnits(0.0));
-	outlet->SetPressureMean(unitConverter->ConvertPressureToLatticeUnits(80.0));
-	outlet->SetPhase(0.0);
-	outlet->SetNormal(util::Vector3D<Dimensionless>(2, -1, 4));
-
-	outlets.push_back(outlet);
-
-      }
-
-      void OneInOneOutSimConfig::CheckIoletMatchesCMake(const io::xml::Element& ioletEl,
-							const std::string& requiredBC)
-      {
-      }
+        configuration::CosinePressureIoletConfig outlet;
+        //auto outlet = util::make_clone_ptr<lb::iolets::InOutLetCosine>();
+        outlet.amp_mmHg = 0.0;
+        outlet.mean_mmHg = 80.0;
+        outlet.phase_rad = 0.0;
+        outlet.period_s = 60.0 / 70.0;
+        outlet.normal = util::Vector3D<Dimensionless>(2, -1, 4);
+        outlets.push_back(outlet);
     }
-  }
+
+    void OneInOneOutSimConfig::CheckIoletMatchesCMake(const io::xml::Element& ioletEl,
+                                                      const std::string& requiredBC) const
+    {
+    }
+
 }

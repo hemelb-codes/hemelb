@@ -4,40 +4,53 @@
 // license in the file LICENSE.
 
 #include "tests/helpers/FourCubeBasedTestFixture.h"
+
 #include "tests/helpers/OneInOneOutSimConfig.h"
+#include "configuration/SimConfig.h"
+#include "configuration/SimBuilder.h"
 
-
-namespace hemelb
+namespace hemelb::tests::helpers
 {
-  namespace tests
-  {
-    namespace helpers
+    FourCubeBasedTestFixtureBase::FourCubeBasedTestFixtureBase(int cubesize)
+            : initParams(), cubeSize(cubesize), cubeSizeWithHalo(cubesize + 2)
     {
-      FourCubeBasedTestFixtureBase::FourCubeBasedTestFixtureBase(int cubesize) :
-	initParams(), cubeSize(cubesize), cubeSizeWithHalo(cubesize + 2)
-      {
-	// +2 for the halo of empty valid locations around the cube
-	latDat = FourCubeLatticeData::Create(Comms(), cubesize + 2);
-    dom = &latDat->GetDomain();
-	simConfig = new OneInOneOutSimConfig(path);
-	simState = std::make_unique<lb::SimulationState>(simConfig->GetTimeStepLength(),
-							 simConfig->GetTotalTimeSteps());
-	lbmParams = new lb::LbmParameters(simState->GetTimeStepLength(),
-					  simConfig->GetVoxelSize());
-	unitConverter = &simConfig->GetUnitConverter();
+        // +2 for the halo of empty valid locations around the cube
+        latDat.reset(FourCubeLatticeData::Create(Comms(), cubesize + 2));
+        dom = &latDat->GetDomain();
+        simConfig = std::make_unique<OneInOneOutSimConfig>();
+        simBuilder = std::make_unique<configuration::SimBuilder>(*simConfig);
 
-	initParams.latDat = &latDat->GetDomain();
-	initParams.siteCount = initParams.latDat->GetLocalFluidSiteCount();
-	initParams.lbmParams = lbmParams;
-	numSites = initParams.latDat->GetLocalFluidSiteCount();
-      }
+        simState = std::make_unique<lb::SimulationState>(simBuilder->BuildSimulationState());
+        lbmParams = lb::LbmParameters(simState->GetTimeStepLength(),
+                                      simConfig->GetVoxelSize());
+        unitConverter = &simBuilder->GetUnitConverter();
 
-      FourCubeBasedTestFixtureBase::~FourCubeBasedTestFixtureBase() {
-	delete latDat;
-	delete lbmParams;
-	delete simConfig;
-      }
-
+        initParams.latDat = &latDat->GetDomain();
+        initParams.siteCount = initParams.latDat->GetLocalFluidSiteCount();
+        initParams.lbmParams = &lbmParams;
+        numSites = initParams.latDat->GetLocalFluidSiteCount();
     }
-  }
+
+    FourCubeBasedTestFixtureBase::~FourCubeBasedTestFixtureBase() {}
+
+    lb::iolets::BoundaryValues FourCubeBasedTestFixtureBase::BuildIolets(
+            geometry::SiteType tp,
+            std::vector<configuration::IoletConfig> const& conf
+    ) const {
+        return lb::iolets::BoundaryValues(tp,
+                                          dom,
+                                          simBuilder->BuildIolets(conf),
+                                          simState.get(),
+                                          Comms(),
+                                          *unitConverter);
+    }
+
+    lb::iolets::BoundaryValues FourCubeBasedTestFixtureBase::BuildIolets(
+            geometry::SiteType tp
+    ) const {
+        REQUIRE((tp == geometry::INLET_TYPE || tp == geometry::OUTLET_TYPE));
+        auto conf = (tp == geometry::INLET_TYPE) ? simConfig->GetInlets() : simConfig->GetOutlets();
+        return BuildIolets(tp, conf);
+    }
+
 }

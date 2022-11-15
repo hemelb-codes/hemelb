@@ -58,11 +58,6 @@ namespace hemelb
          * @return Reference to path to where a run report file should be created.
          */
         [[nodiscard]] const path& GetReportPath() const;
-        /**
-         * Save the current configuration as a configuration xml file to the output folder.
-         * @param simConfig The input configuration instance, constructed from the input xml file.
-         */
-        void SaveConfiguration(configuration::SimConfig * const simConfig) const;
 
         /**
          * Return the path that property extraction output should go to.

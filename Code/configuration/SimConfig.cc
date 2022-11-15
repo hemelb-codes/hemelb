@@ -4,35 +4,30 @@
 // license in the file LICENSE.
 
 #include <string>
-#include <iostream>
-#include <sstream>
 #include <unistd.h>
 #include <cstdlib>
 
 #include "configuration/SimConfig.h"
 #include "reporting/BuildInfo.h"
-#include "log/Logger.h"
 #include "lb/InitialCondition.h"
 #include "redblood/FlowExtension.h"
 #include "redblood/RBCConfig.h"
 
-namespace hemelb
+namespace hemelb::configuration
 {
-  namespace configuration
-  {
     // Base IC
-    ICConfigBase::ICConfigBase(const util::UnitConverter* units, std::optional<LatticeTimeStep> t) : unitConverter(units), t0(t) {
+    ICConfigBase::ICConfigBase(std::optional<LatticeTimeStep> t) : t0(t) {
     }
 
     // Uniform equilibrium IC
-    EquilibriumIC::EquilibriumIC(const util::UnitConverter* units, std::optional<LatticeTimeStep> t, PhysicalPressure p) : ICConfigBase(units, t), p_mmHg(p), v_ms(0.0) {
+    EquilibriumIC::EquilibriumIC(std::optional<LatticeTimeStep> t, PhysicalPressure p) : ICConfigBase(t), p_mmHg(p), v_ms(0.0) {
     }
 
-    EquilibriumIC::EquilibriumIC(const util::UnitConverter* units, std::optional<LatticeTimeStep> t, PhysicalPressure p, const PhysicalVelocity& v) : ICConfigBase(units, t), p_mmHg(p), v_ms(v) {
+    EquilibriumIC::EquilibriumIC(std::optional<LatticeTimeStep> t, PhysicalPressure p, const PhysicalVelocity& v) : ICConfigBase(t), p_mmHg(p), v_ms(v) {
     }
 
     // checkpoint IC
-    CheckpointIC::CheckpointIC(const util::UnitConverter* units, std::optional<LatticeTimeStep> t, const std::string& cp, std::optional<std::string> const& maybeOff) : ICConfigBase(units, t), cpFile(cp), maybeOffFile(maybeOff) {
+    CheckpointIC::CheckpointIC(std::optional<LatticeTimeStep> t, const std::string& cp, std::optional<std::string> const& maybeOff) : ICConfigBase(t), cpFile(cp), maybeOffFile(maybeOff) {
     }
 
 
@@ -55,15 +50,12 @@ namespace hemelb
       {
         throw Exception() << "Config file '" << xmlFilePath << "' does not exist";
       }
-      rawXmlDoc = std::make_unique<io::xml::Document>(xmlFilePath);
-      DoIO(rawXmlDoc->GetRoot());
+      auto rawXmlDoc = io::xml::Document(xmlFilePath);
+      DoIO(rawXmlDoc.GetRoot());
     }
 
     SimConfig::~SimConfig()
     {
-      delete unitConverter;
-      unitConverter = nullptr;
-
       delete rbcConf;
       rbcConf = nullptr;
     }
@@ -86,7 +78,6 @@ namespace hemelb
         throw Exception() << "Unrecognised XML version. Expected 5, got " << version;
 
       DoIOForSimulation(topNode.GetChildOrThrow("simulation"));
-      CreateUnitConverter();
 
       DoIOForGeometry(topNode.GetChildOrThrow("geometry"));
 
@@ -122,72 +113,71 @@ namespace hemelb
 
     void SimConfig::DoIOForSimulation(const io::xml::Element simEl)
     {
-      // Required element
-      // <stresstype value="enum lb::StressTypes" />
-      auto tmp = simEl.GetChildOrThrow("stresstype").GetAttributeOrThrow<unsigned>("value");
-      switch (tmp)
-      {
-        case lb::IgnoreStress:
-          stressType = lb::IgnoreStress;
-          break;
-        case lb::ShearStress:
-          stressType = lb::IgnoreStress;
-          break;
-        case lb::VonMises:
-          stressType = lb::IgnoreStress;
-          break;
-        default:
-          throw Exception() << "Invalid stresstype: " << tmp;
-      }
+        // Required element
+        // <stresstype value="enum lb::StressTypes" />
+        sim_info.stress_type = [](unsigned v) {
+            switch (v) {
+                case lb::IgnoreStress:
+                    return lb::IgnoreStress;
+                case lb::ShearStress:
+                    return lb::IgnoreStress;
+                case lb::VonMises:
+                    return lb::IgnoreStress;
+                default:
+                    throw Exception() << "Invalid stresstype: " << v;
+            }
+        }(simEl.GetChildOrThrow("stresstype").GetAttributeOrThrow<unsigned>("value"));
 
-      // Required element
-      // <steps value="unsigned" units="lattice />
-      const io::xml::Element stepsEl = simEl.GetChildOrThrow("steps");
-      GetDimensionalValue(stepsEl, "lattice", totalTimeSteps);
+        // Required element
+        // <steps value="unsigned" units="lattice />
+        const io::xml::Element stepsEl = simEl.GetChildOrThrow("steps");
+        GetDimensionalValue(stepsEl, "lattice", sim_info.time.total_steps);
 
-      // Required element
-      // <step_length value="float" units="s" />
-      const io::xml::Element tsEl = simEl.GetChildOrThrow("step_length");
-      GetDimensionalValue(tsEl, "s", timeStepSeconds);
+        // Required element
+        // <step_length value="float" units="s" />
+        const io::xml::Element tsEl = simEl.GetChildOrThrow("step_length");
+        GetDimensionalValue(tsEl, "s", sim_info.time.step_s);
 
-      // Optional element
-      // <extra_warmup_steps value="unsigned" units="lattice" />
-      if (auto wuEl = simEl.GetChildOrNull("extra_warmup_steps"))
-      {
-        GetDimensionalValue(wuEl, "lattice", warmUpSteps);
-        totalTimeSteps += warmUpSteps;
-      }
+        // Optional element
+        // <extra_warmup_steps value="unsigned" units="lattice" />
+        if (auto wuEl = simEl.GetChildOrNull("extra_warmup_steps"))
+        {
+            GetDimensionalValue(wuEl, "lattice", sim_info.time.warmup_steps);
+            sim_info.time.total_steps += sim_info.time.warmup_steps;
+        } else {
+            sim_info.time.warmup_steps = 0;
+        }
 
-      // Required element
-      // <voxel_size value="float" units="m" />
-      const io::xml::Element vsEl = simEl.GetChildOrThrow("voxel_size");
-      GetDimensionalValue(vsEl, "m", voxelSizeMetres);
+        // Required element
+        // <voxel_size value="float" units="m" />
+        const io::xml::Element vsEl = simEl.GetChildOrThrow("voxel_size");
+        GetDimensionalValue(vsEl, "m", sim_info.space.step_m);
 
-      // Required element
-      // <origin value="(x,y,z)" units="m" />
-      const io::xml::Element originEl = simEl.GetChildOrThrow("origin");
-      GetDimensionalValue(originEl, "m", geometryOriginMetres);
+        // Required element
+        // <origin value="(x,y,z)" units="m" />
+        const io::xml::Element originEl = simEl.GetChildOrThrow("origin");
+        GetDimensionalValue(originEl, "m", sim_info.space.geometry_origin_m);
 
-      // Optional element
-      // <fluid_density value="float" units="kg/m3" />
-      fluidDensityKgm3 = simEl.GetChildOrNull("fluid_density").transform(
-        [](io::xml::Element const& el) {
-	  return GetDimensionalValue<PhysicalDensity>(el, "kg/m3");
-	}).value_or(DEFAULT_FLUID_DENSITY_Kg_per_m3);
+        // Optional element
+        // <fluid_density value="float" units="kg/m3" />
+        sim_info.fluid.density_kgm3 = simEl.GetChildOrNull("fluid_density").transform(
+                [](io::xml::Element const& el) {
+                    return GetDimensionalValue<PhysicalDensity>(el, "kg/m3");
+                }).value_or(DEFAULT_FLUID_DENSITY_Kg_per_m3);
 
-      // Optional element
-      // <fluid_viscosity value="float" units="Pa.s" />
-      fluidViscosityPas = simEl.GetChildOrNull("fluid_viscosity").transform(
-        [](io::xml::Element const& el) {
-	  return GetDimensionalValue<PhysicalDynamicViscosity>(el, "Pa.s");
-	}).value_or(DEFAULT_FLUID_VISCOSITY_Pas);
-     
-      // Optional element (default = 0)
-      // <reference_pressure value="float" units="mmHg" />
-      reference_pressure_mmHg = simEl.GetChildOrNull("reference_pressure").transform(
-        [](io::xml::Element const& el) {
-	  return GetDimensionalValue<PhysicalPressure>(el, "mmHg");
-	}).value_or(0);
+        // Optional element
+        // <fluid_viscosity value="float" units="Pa.s" />
+        sim_info.fluid.viscosity_Pas = simEl.GetChildOrNull("fluid_viscosity").transform(
+                [](io::xml::Element const& el) {
+                    return GetDimensionalValue<PhysicalDynamicViscosity>(el, "Pa.s");
+                }).value_or(DEFAULT_FLUID_VISCOSITY_Pas);
+
+        // Optional element (default = 0)
+        // <reference_pressure value="float" units="mmHg" />
+        sim_info.fluid.reference_pressure_mmHg = simEl.GetChildOrNull("reference_pressure").transform(
+                [](io::xml::Element const& el) {
+                    return GetDimensionalValue<PhysicalPressure>(el, "mmHg");
+                }).value_or(0);
     }
 
     void SimConfig::DoIOForGeometry(const io::xml::Element geometryEl)
@@ -199,15 +189,6 @@ namespace hemelb
       dataFilePath = RelPathToFullPath(geometryEl.GetChildOrThrow("datafile").GetAttributeOrThrow("path"));
     }
 
-    void SimConfig::CreateUnitConverter()
-    {
-      unitConverter = new util::UnitConverter(timeStepSeconds,
-                                              voxelSizeMetres,
-                                              geometryOriginMetres,
-					      fluidDensityKgm3,
-					      reference_pressure_mmHg);
-    }
-
     /**
      * Helper function to ensure that the iolet being created matches the compiled
      * iolet BC.
@@ -215,7 +196,7 @@ namespace hemelb
      * @param requiredBC
      */
     void SimConfig::CheckIoletMatchesCMake(const io::xml::Element& ioletEl,
-                                           const std::string& requiredBC)
+                                           const std::string& requiredBC) const
     {
       // Check that HEMELB_*LET_BOUNDARY is consistent with this
       const std::string& ioletTypeName = ioletEl.GetName();
@@ -238,12 +219,12 @@ namespace hemelb
       }
     }
 
-    auto SimConfig::DoIOForInOutlets(const io::xml::Element ioletsEl) -> std::vector<IoletPtr>
+    auto SimConfig::DoIOForInOutlets(const io::xml::Element ioletsEl) const -> std::vector<IoletConfig>
     {
       const std::string& nodeName = ioletsEl.GetName();
 
       const std::string childNodeName = nodeName.substr(0, nodeName.size() - 1);
-      std::vector<IoletPtr> ioletList;
+      std::vector<IoletConfig> ioletList;
       for (io::xml::Element currentIoletNode = ioletsEl.GetChildOrNull(childNodeName);
           currentIoletNode != io::xml::Element::Missing();
           currentIoletNode = currentIoletNode.NextSiblingOrNull(childNodeName))
@@ -252,7 +233,7 @@ namespace hemelb
         io::xml::Element conditionEl = currentIoletNode.GetChildOrThrow("condition");
         const std::string& conditionType = conditionEl.GetAttributeOrThrow("type");
 
-        IoletPtr newIolet;
+        IoletConfig newIolet;
 
         if (conditionType == "pressure")
         {
@@ -267,22 +248,12 @@ namespace hemelb
           throw Exception() << "Invalid boundary condition type '" << conditionType << "' in "
               << conditionEl.GetPath();
         }
-        DoIOForFlowExtension(newIolet.get(), currentIoletNode);
         ioletList.push_back(std::move(newIolet));
       }
       return ioletList;
     }
 
-    void SimConfig::DoIOForFlowExtension(lb::iolets::InOutLet * iolet,
-                                         const io::xml::Element & ioletNode)
-    {
-      if (ioletNode.GetChildOrNull("flowextension") == io::xml::Element::Missing())
-        return;
-      auto const flowExtension = redblood::readFlowExtension(ioletNode, GetUnitConverter());
-      iolet->SetFlowExtension(std::make_shared<hemelb::redblood::FlowExtension>(flowExtension));
-    }
-
-    auto SimConfig::DoIOForPressureInOutlet(const io::xml::Element& ioletEl) -> IoletPtr
+    auto SimConfig::DoIOForPressureInOutlet(const io::xml::Element& ioletEl) const -> IoletConfig
     {
       CheckIoletMatchesCMake(ioletEl, "NASHZEROTHORDERPRESSUREIOLET");
       io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
@@ -307,7 +278,7 @@ namespace hemelb
       }
     }
 
-    auto SimConfig::DoIOForVelocityInOutlet(const io::xml::Element& ioletEl) -> IoletPtr
+    auto SimConfig::DoIOForVelocityInOutlet(const io::xml::Element& ioletEl) const -> IoletConfig
     {
       CheckIoletMatchesCMake(ioletEl, "LADDIOLET");
       io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
@@ -501,7 +472,7 @@ namespace hemelb
         field.src = extraction::source::Pressure{};
 	// Pressure has an offset of the reference pressure
 	field.noffsets = 1;
-	field.offset = {reference_pressure_mmHg};
+	field.offset = {sim_info.fluid.reference_pressure_mmHg};
       }
       else if (type == "velocity")
       {
@@ -548,192 +519,174 @@ namespace hemelb
     }
 
     void SimConfig::DoIOForBaseInOutlet(const io::xml::Element& ioletEl,
-                                        lb::iolets::InOutLet* value)
+                                        IoletConfigBase& value) const
     {
-      io::xml::Element positionEl = ioletEl.GetChildOrThrow("position");
-      io::xml::Element normalEl = ioletEl.GetChildOrThrow("normal");
+        io::xml::Element positionEl = ioletEl.GetChildOrThrow("position");
+        io::xml::Element normalEl = ioletEl.GetChildOrThrow("normal");
 
-      PhysicalPosition pos;
-      GetDimensionalValue(positionEl, "m", pos);
-      value->SetPosition(unitConverter->ConvertPositionToLatticeUnits(pos));
+        GetDimensionalValue(positionEl, "m", value.position);
+        GetDimensionalValue(normalEl, "dimensionless", value.normal);
 
-      util::Vector3D<double> norm;
-      GetDimensionalValue(normalEl, "dimensionless", norm);
-      value->SetNormal(norm);
+        if (sim_info.time.warmup_steps) {
+            value.warmup_steps = sim_info.time.warmup_steps;
+        }
+
+        // Optional element <flowextension>
+        if (auto const flowXML = ioletEl.GetChildOrNull("flowextension")) {
+            FlowExtensionConfig result;
+            GetDimensionalValue(flowXML.GetChildOrThrow("length"), "m", result.length_m);
+            GetDimensionalValue(flowXML.GetChildOrThrow("radius"), "m", result.radius_m);
+
+            // Optional element - default is length of flowext
+            // <fadelength value="float" units="m" />
+            result.fadelength_m = flowXML.GetChildOrNull("fluid_density").transform(
+                    [](io::xml::Element const &el) {
+                        return GetDimensionalValue<PhysicalDistance>(el, "m");
+                    }).value_or(result.length_m);
+
+            // Infer normal and position from inlet
+            // However, normals point in *opposite* direction, and, as a result, origin are at opposite
+            // end of the cylinder
+            GetDimensionalValue(ioletEl.GetChildOrThrow("normal"), "dimensionless", result.normal);
+            result.normal *= -1;
+            result.normal.Normalise();
+
+            result.origin_m =
+                    GetDimensionalValue<PhysicalPosition>(ioletEl.GetChildOrThrow("position"), "m")
+                    - result.normal * result.length_m;
+            value.flow_extension = result;
+        }
     }
 
     void SimConfig::DoIOForInitialConditions(io::xml::Element initialconditionsEl)
     {
-      // The <time> element may be present - if so, it will set the
-      // initial timestep value
-      auto t0 = initialconditionsEl.GetChildOrNull("time").transform([](auto el) {
-	  return GetDimensionalValue<LatticeTimeStep>(el, "lattice");
-	});
+        // The <time> element may be present - if so, it will set the
+        // initial timestep value
+        auto t0 = initialconditionsEl.GetChildOrNull("time").transform([](auto el) {
+            return GetDimensionalValue<LatticeTimeStep>(el, "lattice");
+        });
 
-      // Exactly one of {<pressure>, <checkpoint>} must be present
-      // TODO: use something other than an if-tree
-      auto pressureEl = initialconditionsEl.GetChildOrNull("pressure");
-      auto checkpointEl = initialconditionsEl.GetChildOrNull("checkpoint");
-      if (pressureEl) {
-	if (checkpointEl) {
-	  // Both are present - this is an error
-	  throw Exception()
-	    << "XML contains both <pressure> and <checkpoint> sub elements of <initialconditions>";
-	} else {
-	  // Only pressure
-	  io::xml::Element uniformEl = pressureEl.GetChildOrThrow("uniform");
-	  PhysicalPressure p0_mmHg;
-	  GetDimensionalValue(uniformEl, "mmHg", p0_mmHg);
-	  icConfig = EquilibriumIC(unitConverter, t0, p0_mmHg);
-	}
-      } else {
-	if (checkpointEl) {
-	  // Only checkpoint
-	  icConfig = CheckpointIC(unitConverter, t0,
-				  checkpointEl.GetAttributeOrThrow("file"),
-				  checkpointEl.GetAttributeMaybe("offsets"));
-	} else {
-	  // No IC!
-	  throw Exception() << "XML <initialconditions> element contains no known initial condition type";
-	}
-      }
+        // Exactly one of {<pressure>, <checkpoint>} must be present
+        // TODO: use something other than an if-tree
+        auto pressureEl = initialconditionsEl.GetChildOrNull("pressure");
+        auto checkpointEl = initialconditionsEl.GetChildOrNull("checkpoint");
+        if (pressureEl) {
+            if (checkpointEl) {
+                // Both are present - this is an error
+                throw Exception()
+                        << "XML contains both <pressure> and <checkpoint> sub elements of <initialconditions>";
+            } else {
+                // Only pressure
+                io::xml::Element uniformEl = pressureEl.GetChildOrThrow("uniform");
+                PhysicalPressure p0_mmHg;
+                GetDimensionalValue(uniformEl, "mmHg", p0_mmHg);
+                initial_condition = EquilibriumIC(t0, p0_mmHg);
+            }
+        } else {
+            if (checkpointEl) {
+                // Only checkpoint
+                initial_condition = CheckpointIC(t0,
+                                                 checkpointEl.GetAttributeOrThrow("file"),
+                                                 checkpointEl.GetAttributeMaybe("offsets"));
+            } else {
+                // No IC!
+                throw Exception() << "XML <initialconditions> element contains no known initial condition type";
+            }
+        }
     }
 
     auto SimConfig::DoIOForCosinePressureInOutlet(
-        const io::xml::Element& ioletEl) -> IoletPtr
+        const io::xml::Element& ioletEl) const -> IoletConfig
     {
-      auto newIolet = util::make_clone_ptr<lb::iolets::InOutLetCosine>();
-      DoIOForBaseInOutlet(ioletEl, newIolet.get());
+      //auto newIolet = util::make_clone_ptr<lb::iolets::InOutLetCosine>();
+      CosinePressureIoletConfig newIolet;
+      DoIOForBaseInOutlet(ioletEl, newIolet);
 
       const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
-      // Amplitude is a pressure DIFFERENCE (no use of REFERENCE_PRESSURE)
-      auto p_amp = GetDimensionalValue<PhysicalPressure>(conditionEl.GetChildOrThrow("amplitude"), "mmHg");
-      newIolet->SetPressureAmp(unitConverter->ConvertPressureDifferenceToLatticeUnits(p_amp));
-
-      // Mean is an absolute pressure
-      auto p_mean = GetDimensionalValue<PhysicalPressure>(conditionEl.GetChildOrThrow("mean"), "mmHg");
-      newIolet->SetPressureMean(unitConverter->ConvertPressureToLatticeUnits(p_mean));
-
-      auto phase = GetDimensionalValueInLatticeUnits<Angle>(conditionEl.GetChildOrThrow("phase"), "rad");
-      newIolet->SetPhase(phase);
-
-      auto period = GetDimensionalValueInLatticeUnits<LatticeTime>(conditionEl.GetChildOrThrow("period"), "s");
-      newIolet->SetPeriod(period);
-
-      if (warmUpSteps != 0)
-      {
-        newIolet->SetWarmup(warmUpSteps);
-      }
+      newIolet.amp_mmHg = GetDimensionalValue<PhysicalPressure>(conditionEl.GetChildOrThrow("amplitude"), "mmHg");
+      newIolet.mean_mmHg = GetDimensionalValue<PhysicalPressure>(conditionEl.GetChildOrThrow("mean"), "mmHg");
+      newIolet.phase_rad = GetDimensionalValue<Angle>(conditionEl.GetChildOrThrow("phase"), "rad");
+      newIolet.period_s = GetDimensionalValue<LatticeTime>(conditionEl.GetChildOrThrow("period"), "s");
       return newIolet;
     }
 
     auto SimConfig::DoIOForFilePressureInOutlet(
-        const io::xml::Element& ioletEl) -> IoletPtr
+        const io::xml::Element& ioletEl) const -> IoletConfig
     {
-      auto newIolet = util::make_clone_ptr<lb::iolets::InOutLetFile>();
-      DoIOForBaseInOutlet(ioletEl, newIolet.get());
+      FilePressureIoletConfig newIolet;
+      DoIOForBaseInOutlet(ioletEl, newIolet);
 
-      const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
-      const io::xml::Element pathEl = conditionEl.GetChildOrThrow("path");
-      newIolet->SetFilePath(pathEl.GetAttributeOrThrow("value"));
+      const io::xml::Element pathEl = ioletEl.GetChildOrThrow("condition").GetChildOrThrow("path");
+      newIolet.file_path = RelPathToFullPath(pathEl.GetAttributeOrThrow("value"));
 
       return newIolet;
     }
 
     auto SimConfig::DoIOForMultiscalePressureInOutlet(
-        const io::xml::Element& ioletEl) -> IoletPtr
+        const io::xml::Element& ioletEl) const -> IoletConfig
     {
-      auto newIolet = util::make_clone_ptr<lb::iolets::InOutLetMultiscale>();
-      DoIOForBaseInOutlet(ioletEl, newIolet.get());
+      MultiscalePressureIoletConfig newIolet;
+      DoIOForBaseInOutlet(ioletEl, newIolet);
 
       const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
       const io::xml::Element pressureEl = conditionEl.GetChildOrThrow("pressure");
-      GetDimensionalValue(pressureEl, "mmHg", newIolet->GetPressureReference());
+      GetDimensionalValue(pressureEl, "mmHg", newIolet.pressure_reference_mmHg);
 
       const io::xml::Element velocityEl = conditionEl.GetChildOrThrow("velocity");
-      GetDimensionalValue(velocityEl, "m/s", newIolet->GetVelocityReference());
+      GetDimensionalValue(velocityEl, "m/s", newIolet.velocity_reference_ms);
 
-      newIolet->GetLabel() = conditionEl.GetChildOrThrow("label").GetAttributeOrThrow("value");
+      newIolet.label = conditionEl.GetChildOrThrow("label").GetAttributeOrThrow("value");
       return newIolet;
     }
 
     auto SimConfig::DoIOForParabolicVelocityInOutlet(
-        const io::xml::Element& ioletEl) -> IoletPtr
+        const io::xml::Element& ioletEl) const -> IoletConfig
     {
-      auto newIolet = util::make_clone_ptr<lb::iolets::InOutLetParabolicVelocity>();
-      DoIOForBaseInOutlet(ioletEl, newIolet.get());
+        ParabolicVelocityIoletConfig newIolet;
+        DoIOForBaseInOutlet(ioletEl, newIolet);
 
-      const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+        const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
-      const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
-      newIolet->SetRadius(GetDimensionalValueInLatticeUnits < LatticeDistance > (radiusEl, "m"));
-
-      const io::xml::Element maximumEl = conditionEl.GetChildOrThrow("maximum");
-      newIolet->SetMaxSpeed(GetDimensionalValueInLatticeUnits < PhysicalSpeed > (maximumEl, "m/s"));
-
-      if (warmUpSteps != 0)
-      {
-        newIolet->SetWarmup(warmUpSteps);
-      }
-
-      return newIolet;
+        GetDimensionalValue(conditionEl.GetChildOrThrow("radius"), "m", newIolet.radius_m);
+        GetDimensionalValue(conditionEl.GetChildOrThrow("maximum"), "m/s", newIolet.max_speed_ms);
+        return newIolet;
     }
 
     auto SimConfig::DoIOForWomersleyVelocityInOutlet(
-        const io::xml::Element& ioletEl) -> IoletPtr
+        const io::xml::Element& ioletEl) const -> IoletConfig
     {
-      auto newIolet = util::make_clone_ptr<lb::iolets::InOutLetWomersleyVelocity>();
-      DoIOForBaseInOutlet(ioletEl, newIolet.get());
+        WomersleyVelocityIoletConfig newIolet;
+        DoIOForBaseInOutlet(ioletEl, newIolet);
 
-      const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+        const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
-      const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
-      newIolet->SetRadius(GetDimensionalValueInLatticeUnits < LatticeDistance > (radiusEl, "m"));
-
-      const io::xml::Element pgAmpEl = conditionEl.GetChildOrThrow("pressure_gradient_amplitude");
-      newIolet->SetPressureGradientAmplitude(GetDimensionalValueInLatticeUnits
-          < LatticePressureGradient > (pgAmpEl, "mmHg/m"));
-
-      const io::xml::Element periodEl = conditionEl.GetChildOrThrow("period");
-      newIolet->SetPeriod(GetDimensionalValueInLatticeUnits < LatticeTime > (periodEl, "s"));
-
-      const io::xml::Element womNumEl = conditionEl.GetChildOrThrow("womersley_number");
-      newIolet->SetWomersleyNumber(GetDimensionalValueInLatticeUnits < Dimensionless
-          > (womNumEl, "dimensionless"));
-
-      return newIolet;
+        GetDimensionalValue(conditionEl.GetChildOrThrow("radius"), "m", newIolet.radius_m);
+        GetDimensionalValue(conditionEl.GetChildOrThrow("pressure_gradient_amplitude"),
+                            "mmHg/m", newIolet.pgrad_amp_mmHgm);
+        GetDimensionalValue(conditionEl.GetChildOrThrow("period"), "s", newIolet.period_s);
+        GetDimensionalValue(conditionEl.GetChildOrThrow("womersley_number"), "dimensionless", newIolet.womersley);
+        return newIolet;
     }
 
     auto SimConfig::DoIOForFileVelocityInOutlet(
-        const io::xml::Element& ioletEl) -> IoletPtr
+            const io::xml::Element& ioletEl) const -> IoletConfig
     {
-      auto newIolet = util::make_clone_ptr<lb::iolets::InOutLetFileVelocity>();
-      DoIOForBaseInOutlet(ioletEl, newIolet.get());
+        FileVelocityIoletConfig newIolet;
+        DoIOForBaseInOutlet(ioletEl, newIolet);
 
-      const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+        const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
-      std::string velocityFilePath = RelPathToFullPath(conditionEl.GetChildOrThrow("path").GetAttributeOrThrow("value"));
-      newIolet->SetFilePath(velocityFilePath);
+        newIolet.file_path = RelPathToFullPath(conditionEl.GetChildOrThrow("path").GetAttributeOrThrow("value"));
+        GetDimensionalValue(conditionEl.GetChildOrThrow("radius"), "m", newIolet.radius_m);
 
-      const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
-      newIolet->SetRadius(GetDimensionalValueInLatticeUnits < LatticeDistance > (radiusEl, "m"));
-
-      return newIolet;
+        return newIolet;
     }
 
     bool SimConfig::HasColloidSection() const
     {
       return hasColloidSection;
-    }
-
-    const util::UnitConverter& SimConfig::GetUnitConverter() const
-    {
-      if (unitConverter == nullptr)
-        throw Exception() << "Invalid UnitConverter (nullptr)";
-
-      return *unitConverter;
     }
 
     void SimConfig::DoIOForMonitoring(const io::xml::Element& monEl)
@@ -778,13 +731,12 @@ namespace hemelb
             << criterionEl.GetPath();
       }
       monitoringConfig.convergenceVariable = extraction::source::Velocity{};
-      monitoringConfig.convergenceReferenceValue = GetDimensionalValueInLatticeUnits < LatticeSpeed
-          > (criterionEl, "m/s");
+      monitoringConfig.convergenceReferenceValue = GetDimensionalValue<PhysicalSpeed>(criterionEl, "m/s");
     }
 
-    const MonitoringConfig* SimConfig::GetMonitoringConfiguration() const
+    const MonitoringConfig& SimConfig::GetMonitoringConfiguration() const
     {
-      return &monitoringConfig;
+      return monitoringConfig;
     }
-  }
+
 }

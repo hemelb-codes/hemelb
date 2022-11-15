@@ -28,16 +28,15 @@ namespace hemelb
     }
 
     template<class TRAITS>
-    LBM<TRAITS>::LBM(configuration::SimConfig *iSimulationConfig, net::Net* net,
+    LBM<TRAITS>::LBM(LbmParameters iParams, net::Net* net,
                      geometry::FieldData* latDat, SimulationState* simState,
                      reporting::Timers &atimings,
                      geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager) :
-        mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState),
-            mParams(iSimulationConfig->GetTimeStepLength(), iSimulationConfig->GetVoxelSize()),
+        mNet(net), mLatDat(latDat), mState(simState),
+            mParams(std::move(iParams)),
             timings(atimings), propertyCache(*simState, latDat->GetDomain()),
             neighbouringDataManager(neighbouringDataManager)
     {
-      ReadParameters();
     }
 
     template<class TRAITS>
@@ -157,9 +156,8 @@ namespace hemelb
     }
 
     template<class TRAITS>
-    void LBM<TRAITS>::SetInitialConditions(const net::IOCommunicator& ioComms)
+    void LBM<TRAITS>::SetInitialConditions(lb::InitialCondition const& icond, const net::IOCommunicator& ioComms)
     {
-      auto icond = InitialCondition::FromConfig(mSimConfig->GetInitialCondition());
       icond.SetFs<LatticeType>(mLatDat, ioComms);
       icond.SetTime(mState);
     }
@@ -331,15 +329,6 @@ namespace hemelb
       delete mOutletWallCollision;
     }
 
-    template<class TRAITS>
-    void LBM<TRAITS>::ReadParameters()
-    {
-      auto&& inlets = mSimConfig->GetInlets();
-      auto&& outlets = mSimConfig->GetOutlets();
-      inletCount = inlets.size();
-      outletCount = outlets.size();
-      mParams.StressType = mSimConfig->GetStressType();
-    }
   }
 }
 

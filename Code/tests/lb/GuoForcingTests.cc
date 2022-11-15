@@ -316,15 +316,15 @@ namespace hemelb
 	}
 
 	hydroVars.velocity = LatticeVelocity(1, 2, 3);
-	ForceDistribution(hydroVars.velocity, lbmParams->GetTau(), hydroVars.force, Fi);
+	ForceDistribution(hydroVars.velocity, lbmParams.GetTau(), hydroVars.force, Fi);
 
 	Kernel kernel(initParams);
-	kernel.DoCollide(lbmParams, hydroVars);
+	kernel.DoCollide(&lbmParams, hydroVars);
 	for (size_t i = 0; i < LatticeType::NUMVECTORS; ++i) {
 	  REQUIRE(
 		  hydroVars.GetFPostCollision()[i] ==
 		  apprx(f[i] +
-			hydroVars.GetFNeq()[i] * lbmParams->GetOmega() +
+			hydroVars.GetFNeq()[i] * lbmParams.GetOmega() +
 			Fi[i])
 		  );
 	}
@@ -336,7 +336,7 @@ namespace hemelb
 	// Same for forces
 	LatticeVector const position(2, 2, 2);
 	auto&& site = latDat->GetSite(position);
-	helpers::allZeroButOne<LatticeType>(latDat, position);
+	helpers::allZeroButOne<LatticeType>(*latDat, position);
 
 	// Get collided distributions at this site
 	// Will compare zero and non-zero forces, to make sure they are different
@@ -349,12 +349,12 @@ namespace hemelb
 	using lb::streamers::SimpleCollideAndStream;
 	using lb::collisions::Normal;
 	SimpleCollideAndStream<Normal<Kernel> > streamer(initParams);
-	streamer.StreamAndCollide(site.GetIndex(), 1, lbmParams, *latDat, *propertyCache);
+	streamer.StreamAndCollide(site.GetIndex(), 1, &lbmParams, *latDat, *propertyCache);
 
 	// Now check streaming worked correctly
 	for (size_t i(0); i < LatticeType::NUMVECTORS; ++i) {
 	  auto const index = site.GetStreamedIndex<LatticeType>(i);
-	  REQUIRE(withForce[i] == apprx(*helpers::GetFNew(latDat, index)));
+	  REQUIRE(withForce[i] == apprx(*helpers::GetFNew(*latDat, index)));
 	  // And that forces from streaming site were used
 	  REQUIRE(withForce[i] != apprx(withoutForce[i]));
 	}
@@ -366,7 +366,7 @@ namespace hemelb
 	// Same for forces
 	LatticeVector const position(1, 1, 1);
 	auto&& site = latDat->GetSite(position);
-	helpers::allZeroButOne<LatticeType>(latDat, position);
+	helpers::allZeroButOne<LatticeType>(*latDat, position);
 
 	// Get collided distributions at this site
 	// Will compare zero and non-zero forces, to make sure they are different
@@ -379,9 +379,9 @@ namespace hemelb
 	using lb::streamers::SimpleBounceBack;
 	using lb::collisions::Normal;
 	SimpleBounceBack<Normal<Kernel> >::Type streamer(initParams);
-	streamer.StreamAndCollide(site.GetIndex(), 1, lbmParams, *latDat, *propertyCache);
+	streamer.StreamAndCollide(site.GetIndex(), 1, &lbmParams, *latDat, *propertyCache);
 
-	distribn_t const * const actual = helpers::GetFNew<LatticeType>(latDat, position);
+	distribn_t const * const actual = helpers::GetFNew<LatticeType>(*latDat, position);
 	bool paranoia(false);
 	for (size_t i(0); i < LatticeType::NUMVECTORS; ++i) {
 	  if (not site.HasWall(i))
@@ -426,7 +426,7 @@ namespace hemelb
           Kernel kernel(initParams);
           // Index is never used ... so give a fake value
           kernel.DoCalculateDensityMomentumFeq(hydroVars, 999999);
-          kernel.DoCollide(lbmParams, hydroVars);
+          kernel.DoCollide(&lbmParams, hydroVars);
 
           std::copy(hydroVars.GetFPostCollision().f,
                     hydroVars.GetFPostCollision().f + LatticeType::NUMVECTORS,

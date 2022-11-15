@@ -77,6 +77,11 @@ namespace hemelb
           return contents;
         }
 
+        SharedValue& operator=(Payload const& val)
+        {
+            SetPayload(val);
+            return *this;
+        }
       private:
         Payload contents;
         template<class U>

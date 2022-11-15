@@ -36,12 +36,7 @@ namespace hemelb
       lb::kernels::HydroVars<lb::kernels::LBGK<lb::lattices::D3Q15> > hydroVars(fOld);
 
       SECTION ("TestNonZeroVelocityEquilibriumFixedDensity") {
-	lb::iolets::BoundaryValues inletBoundary(geometry::INLET_TYPE,
-						 dom,
-						 simConfig->GetInlets(),
-						 simState.get(),
-						 Comms(),
-						 *unitConverter);
+	lb::iolets::BoundaryValues inletBoundary = BuildIolets(geometry::INLET_TYPE);
 	initParams.boundaryObject = &inletBoundary;
 
 	lb::collisions::NonZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK<lb::lattices::D3Q15> >
@@ -79,7 +74,7 @@ namespace hemelb
 
 	// Next, compare the collision function itself. The result should be the equilibrium
 	// distribution.
-	nonZeroVFixedDensityILet.Collide(lbmParams, hydroVars);
+	nonZeroVFixedDensityILet.Collide(&lbmParams, hydroVars);
 
 	for (unsigned int ii = 0; ii < lb::lattices::D3Q15::NUMVECTORS; ++ii) {
 	  REQUIRE(apprx(expectedFeq[ii]) == hydroVars.GetFPostCollision()[ii]);
@@ -87,12 +82,7 @@ namespace hemelb
       }
 
       SECTION("TestZeroVelocityEquilibriumFixedDensity") {
-	lb::iolets::BoundaryValues outletBoundary(geometry::OUTLET_TYPE,
-						  dom,
-						  simConfig->GetOutlets(),
-						  simState.get(),
-						  Comms(),
-						  *unitConverter);
+	lb::iolets::BoundaryValues outletBoundary = BuildIolets(geometry::OUTLET_TYPE);
 	initParams.boundaryObject = &outletBoundary;
 
 	lb::collisions::ZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK<lb::lattices::D3Q15> >
@@ -122,7 +112,7 @@ namespace hemelb
 
 	// Next, compare the collision function itself. The result
 	// should be the equilibrium distribution.
-	zeroVFixedDensityOLet.Collide(lbmParams, hydroVars);
+	zeroVFixedDensityOLet.Collide(&lbmParams, hydroVars);
 
 	for (unsigned int ii = 0; ii < lb::lattices::D3Q15::NUMVECTORS; ++ii)
 	{
@@ -160,7 +150,7 @@ namespace hemelb
 
 	// Next, compare the collision function itself. The result
 	// should be the equilibrium distribution.
-	zeroVEqm.Collide(lbmParams, hydroVars);
+	zeroVEqm.Collide(&lbmParams, hydroVars);
 
 	for (unsigned int ii = 0; ii < lb::lattices::D3Q15::NUMVECTORS; ++ii)
 	{
@@ -200,8 +190,8 @@ namespace hemelb
 	lb::kernels::HydroVars<lb::kernels::LBGK<lb::lattices::D3Q15> > hydroVarsCopy(hydroVars);
 
 	lb::kernels::LBGK<lb::lattices::D3Q15> lbgk(initParams);
-	lbgk.Collide(lbmParams, hydroVars);
-	normal.Collide(lbmParams, hydroVarsCopy);
+	lbgk.Collide(&lbmParams, hydroVars);
+	normal.Collide(&lbmParams, hydroVarsCopy);
 
 	for (unsigned int ii = 0; ii < lb::lattices::D3Q15::NUMVECTORS; ++ii) {
 	  REQUIRE(hydroVars.GetFPostCollision()[ii] == apprx(hydroVarsCopy.GetFPostCollision()[ii]));

@@ -52,14 +52,6 @@ namespace hemelb::io
       return extractionDir;
     }
 
-    void PathManager::SaveConfiguration(configuration::SimConfig * const simConfig) const
-    {
-      if (doIo)
-      {
-        //simConfig->Save(outputDir + "/" + configLeafName);
-      }
-    }
-
     fs::path PathManager::GetRBCOutputPathWithSubdir(std::string const& subdirectoryName) const
     {
       auto rbcSubdir = rbcDir / subdirectoryName;

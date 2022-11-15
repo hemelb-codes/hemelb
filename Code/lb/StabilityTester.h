@@ -34,11 +34,15 @@ namespace hemelb
       public:
         StabilityTester(std::shared_ptr<const geometry::FieldData> iLatDat, net::Net* net,
                         SimulationState* simState, reporting::Timers& timings,
-                        const hemelb::configuration::MonitoringConfig* testerConfig) :
+                        const hemelb::configuration::MonitoringConfig& testerConfig) :
             net::PhasedBroadcastRegular<>(net, simState, SPREADFACTOR), mLatDat(iLatDat),
                 mSimState(simState), timings(timings), testerConfig(testerConfig)
         {
           Reset();
+        }
+
+        bool ShouldTerminateWhenConverged() const {
+            return testerConfig.convergenceTerminate;
         }
 
         /**
@@ -118,13 +122,13 @@ namespace hemelb
                 break;
               }
 
-              if (testerConfig->doConvergenceCheck)
+              if (testerConfig.doConvergenceCheck)
               {
                 distribn_t relativeDifference =
                     ComputeRelativeDifference(mLatDat->GetFNew(i * LatticeType::NUMVECTORS),
                                               mLatDat->GetSite(i).GetFOld<LatticeType>());
 
-                if (relativeDifference > testerConfig->convergenceRelativeTolerance)
+                if (relativeDifference > testerConfig.convergenceRelativeTolerance)
                 {
                   // The simulation is stable but hasn't converged in the whole domain yet.
                   unconvergedSitePresent = true;
@@ -137,7 +141,7 @@ namespace hemelb
               case UndefinedStability:
               case Stable:
               case StableAndConverged:
-                mUpwardsStability = (testerConfig->doConvergenceCheck && !unconvergedSitePresent) ?
+                mUpwardsStability = (testerConfig.doConvergenceCheck && !unconvergedSitePresent) ?
                   StableAndConverged :
                   Stable;
                 break;
@@ -183,7 +187,7 @@ namespace hemelb
           distribn_t absoluteError;
           distribn_t referenceValue;
 
-	  if (std::holds_alternative<extraction::source::Velocity>(testerConfig->convergenceVariable))
+	  if (std::holds_alternative<extraction::source::Velocity>(testerConfig.convergenceVariable))
 	  {
 	    distribn_t diff_vel_x = newMomentumX / newDensity - oldMomentumX / oldDensity;
 	    distribn_t diff_vel_y = newMomentumY / newDensity - oldMomentumY / oldDensity;
@@ -191,7 +195,7 @@ namespace hemelb
 
 	    absoluteError = sqrt(diff_vel_x * diff_vel_x + diff_vel_y * diff_vel_y
                   + diff_vel_z * diff_vel_z);
-	    referenceValue = testerConfig->convergenceReferenceValue;
+	    referenceValue = testerConfig.convergenceReferenceValue;
 	  } else {
               throw Exception() << "Convergence check based on requested variable currently not available";
 	  }
@@ -228,7 +232,7 @@ namespace hemelb
             }
 
             // If the simulation wasn't found to be unstable and we need to check for convergence, do it now.
-            if ( (mUpwardsStability != Unstable) && testerConfig->doConvergenceCheck)
+            if ( (mUpwardsStability != Unstable) && testerConfig.doConvergenceCheck)
             {
               bool anyStableNotConverged = false;
               bool anyConverged = false;
@@ -302,7 +306,7 @@ namespace hemelb
         reporting::Timers& timings;
 
         /** Object containing the user-provided configuration for this class */
-        const hemelb::configuration::MonitoringConfig* testerConfig;
+        hemelb::configuration::MonitoringConfig testerConfig;
     };
   }
 }

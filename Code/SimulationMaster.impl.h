@@ -13,11 +13,11 @@
 #include <boost/uuid/uuid_io.hpp>
 
 #include "configuration/SimConfig.h"
+#include "configuration/SimBuilder.h"
 #include "extraction/PropertyActor.h"
 #include "extraction/LbDataSourceIterator.h"
 #include "io/writers/XdrFileWriter.h"
 #include "util/utilityFunctions.h"
-#include "geometry/GeometryReader.h"
 #include "geometry/Domain.h"
 #include "log/Logger.h"
 #include "lb/HFunction.h"
@@ -40,43 +40,32 @@
 
 namespace hemelb
 {
-  /**
-   * Constructor for the SimulationMaster class
-   *
-   * Initialises member variables including the network topology
-   * object.
-   */
-  template<class TRAITS>
-  SimulationMaster<TRAITS>::SimulationMaster(hemelb::configuration::CommandLine & options,
-                                             const hemelb::net::IOCommunicator& ioComm) :
-      ioComms(ioComm.Duplicate()), timings(ioComms), build_info(),
-          communicationNet(ioComms)
-  {
-    timings[hemelb::reporting::Timers::total].Start();
-
-    fileManager = std::make_shared<hemelb::io::PathManager>(options,
-                                                            IsCurrentProcTheIOProc(),
-                                                            GetProcessorCount());
-    simConfig = hemelb::configuration::SimConfig::New(fileManager->GetInputFile());
-    unitConverter = &simConfig->GetUnitConverter();
-    monitoringConfig = simConfig->GetMonitoringConfiguration();
-
-    fileManager->SaveConfiguration(simConfig.get());
-    Initialise();
-    if (IsCurrentProcTheIOProc())
+    /**
+     * Constructor for the SimulationMaster class
+     *
+     * Initialises member variables including the network topology
+     * object.
+     */
+    template<class TRAITS>
+    SimulationMaster<TRAITS>::SimulationMaster(configuration::CommandLine & options,
+                                               const net::IOCommunicator& ioComm) :
+            ioComms(ioComm.Duplicate()), timings(ioComms), build_info(),
+            communicationNet(ioComms)
     {
-      reporter = std::make_shared<hemelb::reporting::Reporter>(fileManager->GetReportPath(),
-                                                               fileManager->GetInputFile());
-      reporter->AddReportable(&build_info);
-      if (monitoringConfig->doIncompressibilityCheck)
-      {
-        reporter->AddReportable(incompressibilityChecker.get());
-      }
-      reporter->AddReportable(&timings);
-      reporter->AddReportable(domainData.get());
-      reporter->AddReportable(simulationState.get());
+        // Start the main timer!
+        timings[reporting::Timers::total].Start();
+
+        fileManager = std::make_shared<io::PathManager>(options,
+                                                                IsCurrentProcTheIOProc(),
+                                                                GetProcessorCount());
+        log::Logger::Log<log::Info, log::Singleton>("Reading configuration from %s", fileManager->GetInputFile().c_str());
+        // Convert XML to configuration
+        simConfig = configuration::SimConfig::New(fileManager->GetInputFile());
+        // Use it to initialise self
+        auto builder = configuration::SimBuilder(*simConfig);
+        log::Logger::Log<log::Info, log::Singleton>("Beginning Initialisation.");
+        builder(*this);
     }
-  }
 
   /**
    * Destructor for the SimulationMaster class.
@@ -114,245 +103,6 @@ namespace hemelb
   void SimulationMaster<TRAITS>::Initialise()
   {
 
-    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Beginning Initialisation.");
-
-    simulationState = std::make_shared<hemelb::lb::SimulationState>(simConfig->GetTimeStepLength(),
-                                                                    simConfig->GetTotalTimeSteps());
-
-    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising domain_type.");
-
-    timings[hemelb::reporting::Timers::latDatInitialise].Start();
-    // Use a reader to read in the file.
-    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Loading file and decomposing geometry.");
-
-    hemelb::geometry::GeometryReader reader(latticeType::GetLatticeInfo(),
-                                            timings,
-                                            ioComms);
-    hemelb::geometry::GmyReadResult readGeometryData =
-        reader.LoadAndDecompose(simConfig->GetDataFilePath());
-
-    // Create a new lattice based on that info and return it.
-    domainData = std::make_shared<hemelb::geometry::Domain>(latticeType::GetLatticeInfo(),
-                                                            readGeometryData,
-                                                            ioComms);
-    fieldData = std::make_shared<hemelb::geometry::FieldData>(domainData);
-
-    timings[hemelb::reporting::Timers::latDatInitialise].Stop();
-
-    neighbouringDataManager = std::make_shared<
-        hemelb::geometry::neighbouring::NeighbouringDataManager>(*fieldData,
-                                                                 fieldData->GetNeighbouringData(),
-                                                                 communicationNet);
-    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising LBM.");
-    latticeBoltzmannModel =
-        std::make_shared<hemelb::lb::LBM<Traits>>(simConfig.get(),
-                                                  &communicationNet,
-                                                  fieldData.get(),
-                                                  simulationState.get(),
-                                                  timings,
-                                                  neighbouringDataManager.get());
-
-    if (simConfig->HasColloidSection())
-    {
-#ifdef HEMELB_BUILD_COLLOIDS
-      timings[hemelb::reporting::Timers::colloidInitialisation].Start();
-      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Loading Colloid config.");
-      std::string colloidConfigPath = simConfig->GetColloidConfigPath();
-      hemelb::io::xml::Document xml(colloidConfigPath);
-
-      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Body Forces.");
-      hemelb::colloids::BodyForces::InitBodyForces(xml);
-
-      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Boundary Conditions.");
-      hemelb::colloids::BoundaryConditions::InitBoundaryConditions(domainData.get(), xml);
-
-      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising Colloids.");
-      colloidController =
-          std::make_shared<hemelb::colloids::ColloidController>(*domainData,
-                                                                *simulationState,
-                                                                readGeometryData,
-                                                                xml,
-                                                                latticeBoltzmannModel->GetPropertyCache(),
-                                                                latticeBoltzmannModel->GetLbmParams(),
-                                                                fileManager->GetColloidPath(),
-                                                                ioComms,
-                                                                timings);
-      timings[hemelb::reporting::Timers::colloidInitialisation].Stop();
-#else
-        throw Exception() << "Config contains <colloids> tag when built with HEMELB_BUILD_COLLOIDS=OFF";
-#endif
-    }
-
-    if (simConfig->HasRBCSection())
-    {
-#ifdef HEMELB_BUILD_RBC
-      auto rbcConfig = simConfig->GetRBCConfig();
-      hemelb::redblood::CellContainer cells;
-      typedef hemelb::redblood::CellController<Traits> Controller;
-      auto const controller = std::make_shared<Controller>(*fieldData,
-                                                           cells,
-                                                           rbcConfig->GetRBCMeshes(),
-                                                           timings,
-                                                           rbcConfig->GetBoxSize(),
-                                                           rbcConfig->GetCell2Cell(),
-                                                           rbcConfig->GetCell2Wall(),
-                                                           ioComms);
-      controller->SetCellInsertion(rbcConfig->GetInserter());
-      controller->SetOutlets(*rbcConfig->GetRBCOutlets());
-      cellController = std::static_pointer_cast<hemelb::net::IteratedAction>(controller);
-
-      auto output_callback =
-          [this](const hemelb::redblood::CellContainer & cells)
-          {
-	    auto rbcConfig = simConfig->GetRBCConfig();
-            auto timestep = simulationState->Get0IndexedTimeStep();
-            if ((timestep % rbcConfig->GetRBCOutputPeriod()) == 0)
-            {
-              log::Logger::Log<log::Info, log::OnePerCore>("printstep %d, num cells %d", timestep, cells.size());
-
-              // Create output directory for current writing step. Requires syncing to
-              // ensure no process goes ahead before directory is created.
-              std::string rbcOutputDir;
-              try
-              {
-                rbcOutputDir = fileManager->GetRBCOutputPathWithSubdir(std::to_string(timestep));
-              }
-              catch(Exception& e)
-              {
-                std::stringstream message;
-                message << e.what() << std::endl
-                        << "Error " << errno << ": " << std::strerror(errno);
-                log::Logger::Log<log::Critical, log::OnePerCore>(message.str());
-                ioComms.Abort(-1);
-                exit(-1);
-              }
-              ioComms.Barrier();
-
-              for (auto cell : cells)
-              {
-                std::stringstream filename;
-                filename << rbcOutputDir << cell->GetTag() << "_t_" << timestep << ".vtp";
-
-                std::shared_ptr<redblood::CellBase> cell_base;
-                auto fader_cell_cast = std::dynamic_pointer_cast<redblood::FaderCell>(cell);
-                if(fader_cell_cast)
-                {
-                  cell_base = fader_cell_cast->GetWrapeeCell();
-                }
-                else
-                {
-                  cell_base = cell;
-                }
-                auto cell_cast = std::dynamic_pointer_cast<redblood::Cell>(cell_base);
-                assert(cell_cast);
-		auto meshio = redblood::VTKMeshIO{};
-		meshio.writeFile(filename.str(), *cell_cast, *unitConverter);
-              }
-            }
-          };
-      controller->AddCellChangeListener(output_callback);
-#else
-      throw hemelb::Exception() << "Trying to create red blood cell controller with HEMELB_BUILD_RBC=OFF";
-#endif
-    }
-
-    stabilityTester =
-        std::make_shared<hemelb::lb::StabilityTester<latticeType>>(fieldData,
-                                                                   &communicationNet,
-                                                                   simulationState.get(),
-                                                                   timings,
-                                                                   monitoringConfig);
-    if (monitoringConfig->doIncompressibilityCheck)
-    {
-      incompressibilityChecker =
-          std::make_shared<
-              hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<>>>(domainData.get(),
-                                                                                           &communicationNet,
-                                                                                           simulationState.get(),
-                                                                                           latticeBoltzmannModel->GetPropertyCache(),
-                                                                                           timings);
-    }
-
-    inletValues = std::make_shared<hemelb::lb::iolets::BoundaryValues>(hemelb::geometry::INLET_TYPE,
-                                                                       domainData.get(),
-                                                                       simConfig->GetInlets(),
-                                                                       simulationState.get(),
-                                                                       ioComms,
-                                                                       *unitConverter);
-
-    outletValues =
-        std::make_shared<hemelb::lb::iolets::BoundaryValues>(hemelb::geometry::OUTLET_TYPE,
-                                                             domainData.get(),
-                                                             simConfig->GetOutlets(),
-                                                             simulationState.get(),
-                                                             ioComms,
-                                                             *unitConverter);
-
-    latticeBoltzmannModel->Initialise(inletValues.get(),
-                                      outletValues.get(),
-                                      unitConverter);
-    latticeBoltzmannModel->SetInitialConditions(ioComms);
-    neighbouringDataManager->ShareNeeds();
-    neighbouringDataManager->TransferNonFieldDependentInformation();
-
-    propertyDataSource =
-        std::make_shared<hemelb::extraction::LbDataSourceIterator>(latticeBoltzmannModel->GetPropertyCache(),
-                                                                   *fieldData,
-                                                                   ioComms.Rank(),
-                                                                   *unitConverter);
-
-    if (simConfig->PropertyOutputCount() > 0)
-    {
-
-      for (unsigned outputNumber = 0; outputNumber < simConfig->PropertyOutputCount();
-          ++outputNumber)
-      {
-        simConfig->GetPropertyOutput(outputNumber).filename =
-                fileManager->GetDataExtractionPath() / simConfig->GetPropertyOutput(outputNumber).filename;
-      }
-
-      propertyExtractor =
-          std::make_shared<hemelb::extraction::PropertyActor>(*simulationState,
-                                                              simConfig->GetPropertyOutputs(),
-                                                              *propertyDataSource,
-                                                              timings,
-                                                              ioComms);
-    }
-
-    stepManager =
-        std::make_shared<hemelb::net::phased::StepManager>(2,
-                                                           &timings,
-                                                           hemelb::net::separate_communications);
-    netConcern = std::make_shared<hemelb::net::phased::NetConcern>(communicationNet);
-    stepManager->RegisterIteratedActorSteps(*neighbouringDataManager.get(), 0);
-    if (colloidController)
-    {
-      stepManager->RegisterIteratedActorSteps(*colloidController, 1);
-    }
-    if (cellController)
-    {
-      stepManager->RegisterIteratedActorSteps(*cellController, 1);
-    }
-    stepManager->RegisterIteratedActorSteps(*latticeBoltzmannModel, 1);
-
-    stepManager->RegisterIteratedActorSteps(*inletValues, 1);
-    stepManager->RegisterIteratedActorSteps(*outletValues, 1);
-    stepManager->RegisterIteratedActorSteps(*stabilityTester, 1);
-    if (entropyTester)
-    {
-      stepManager->RegisterIteratedActorSteps(*entropyTester, 1);
-    }
-
-    if (monitoringConfig->doIncompressibilityCheck)
-    {
-      stepManager->RegisterIteratedActorSteps(*incompressibilityChecker, 1);
-    }
-    if (propertyExtractor)
-    {
-      stepManager->RegisterIteratedActorSteps(*propertyExtractor, 1);
-    }
-
-    stepManager->RegisterCommsForAllPhases(*netConcern);
   }
 
   template<class TRAITS>
@@ -363,7 +113,7 @@ namespace hemelb
       return 1000000000;
     }
     unsigned long roundedPeriod = simulationState->GetTotalTimeSteps() / frequency;
-    return hemelb::util::NumericalFunctions::max(1U, (unsigned int) roundedPeriod);
+    return util::NumericalFunctions::max(1U, (unsigned int) roundedPeriod);
   }
 
   template<class TRAITS>
@@ -376,7 +126,7 @@ namespace hemelb
   void SimulationMaster<TRAITS>::OnUnstableSimulation()
   {
     LogStabilityReport();
-    hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Aborting: time step length: %f\n",
+    log::Logger::Log<log::Warning, log::Singleton>("Aborting: time step length: %f\n",
                                                                            simulationState->GetTimeStepLength());
     Finalise();
     Abort();
@@ -388,8 +138,8 @@ namespace hemelb
   template<class TRAITS>
   void SimulationMaster<TRAITS>::RunSimulation()
   {
-    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Beginning to run simulation.");
-    timings[hemelb::reporting::Timers::simulation].Start();
+    log::Logger::Log<log::Info, log::Singleton>("Beginning to run simulation.");
+    timings[reporting::Timers::simulation].Start();
 
     while (simulationState->GetTimeStep() <= simulationState->GetTotalTimeSteps())
     {
@@ -400,14 +150,14 @@ namespace hemelb
       }
     }
 
-    timings[hemelb::reporting::Timers::simulation].Stop();
+    timings[reporting::Timers::simulation].Stop();
     Finalise();
   }
 
   template<class TRAITS>
   void SimulationMaster<TRAITS>::Finalise()
   {
-    timings[hemelb::reporting::Timers::total].Stop();
+    timings[reporting::Timers::total].Stop();
     timings.Reduce();
     if (IsCurrentProcTheIOProc())
     {
@@ -415,11 +165,11 @@ namespace hemelb
       reporter->Write();
     }
     // DTMP: Logging output on communication as debug output for now.
-    hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("sync points: %lld, bytes sent: %lld",
+    log::Logger::Log<log::Debug, log::OnePerCore>("sync points: %lld, bytes sent: %lld",
                                                                           communicationNet.SyncPointsCounted,
                                                                           communicationNet.BytesSent);
 
-    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Finish running simulation.");
+    log::Logger::Log<log::Info, log::Singleton>("Finish running simulation.");
   }
 
   template<class TRAITS>
@@ -437,7 +187,7 @@ namespace hemelb
 
     if (simulationState->GetTimeStep() % 100 == 0)
     {
-      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i",
+      log::Logger::Log<log::Info, log::Singleton>("time step %i",
                                                                           simulationState->GetTimeStep());
       LogStabilityReport();
     }
@@ -446,15 +196,15 @@ namespace hemelb
 
     HandleActors();
 
-    if (simulationState->GetStability() == hemelb::lb::Unstable)
+    if (simulationState->GetStability() == lb::Unstable)
     {
       OnUnstableSimulation();
     }
 
     // If the user requested to terminate converged steady flow simulations, mark
     // simulation to be finished at the end of the current timestep.
-    if ( (simulationState->GetStability() == hemelb::lb::StableAndConverged)
-        && monitoringConfig->convergenceTerminate)
+    if ( (simulationState->GetStability() == lb::StableAndConverged)
+        && stabilityTester->ShouldTerminateWhenConverged())
     {
       LogStabilityReport();
       simulationState->SetIsTerminating(true);
@@ -480,11 +230,11 @@ namespace hemelb
   void SimulationMaster<TRAITS>::RecalculatePropertyRequirements()
   {
     // Get the property cache & reset its list of properties to get.
-    hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
+    lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
 
     propertyCache.ResetRequirements();
 
-    if (monitoringConfig->doIncompressibilityCheck)
+    if (incompressibilityChecker)
     {
       propertyCache.densityCache.SetRefreshFlag();
       propertyCache.velocityCache.SetRefreshFlag();
@@ -505,8 +255,8 @@ namespace hemelb
   {
     // This gives us something to work from when we have an error - we get the rank
     // that calls abort, and we get a stack-trace from the exception having been thrown.
-    hemelb::log::Logger::Log<hemelb::log::Critical, hemelb::log::OnePerCore>("Aborting");
-    hemelb::net::MpiEnvironment::Abort(1);
+    log::Logger::Log<log::Critical, log::OnePerCore>("Aborting");
+    net::MpiEnvironment::Abort(1);
 
     exit(1);
   }
@@ -514,29 +264,28 @@ namespace hemelb
   template<class TRAITS>
   void SimulationMaster<TRAITS>::LogStabilityReport()
   {
-    if (monitoringConfig->doIncompressibilityCheck
-        && incompressibilityChecker->AreDensitiesAvailable())
+    if (incompressibilityChecker && incompressibilityChecker->AreDensitiesAvailable())
     {
-      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i, tau %.6f, max_relative_press_diff %.3f, Ma %.3f, max_vel_phys %e",
+      log::Logger::Log<log::Info, log::Singleton>("time step %i, tau %.6f, max_relative_press_diff %.3f, Ma %.3f, max_vel_phys %e",
                                                                           simulationState->GetTimeStep(),
                                                                           latticeBoltzmannModel->GetLbmParams()->GetTau(),
                                                                           incompressibilityChecker->GetMaxRelativeDensityDifference(),
                                                                           incompressibilityChecker->GetGlobalLargestVelocityMagnitude()
-                                                                              / hemelb::Cs,
+                                                                              / Cs,
                                                                           unitConverter->ConvertVelocityToPhysicalUnits(incompressibilityChecker->GetGlobalLargestVelocityMagnitude()));
     }
 
-    if (simulationState->GetStability() == hemelb::lb::StableAndConverged)
+    if (simulationState->GetStability() == lb::StableAndConverged)
     {
-      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i, steady flow simulation converged.",
+      log::Logger::Log<log::Info, log::Singleton>("time step %i, steady flow simulation converged.",
                                                                           simulationState->GetTimeStep());
     }
   }
 
   template<class TRAITS>
-  const hemelb::util::UnitConverter& SimulationMaster<TRAITS>::GetUnitConverter() const
+  const util::UnitConverter& SimulationMaster<TRAITS>::GetUnitConverter() const
   {
-    return *unitConverter;
+    return unitConverter.value();
   }
 }
 

@@ -9,6 +9,7 @@
 
 #include <catch2/catch.hpp>
 
+#include "configuration/SimConfig.h"
 #include "lb/kernels/Kernels.h"
 #include "lb/streamers/Streamers.h"
 #include "lb/lattices/D3Q15.h"
@@ -146,12 +147,7 @@ namespace hemelb
 
       auto propertyCache = lb::MacroscopicPropertyCache(*simState, *dom);
 
-      auto inletBoundary = lb::iolets::BoundaryValues(geometry::INLET_TYPE,
-						      dom,
-						      simConfig->GetInlets(),
-						      simState.get(),
-						      Comms(),
-						      *unitConverter);
+      auto inletBoundary = BuildIolets(geometry::INLET_TYPE);
       InOutLetCosine* inlet = GetIolet(inletBoundary);
       // We have to make the outlet sane and consistent with the geometry now.
       inlet->SetNormal(util::Vector3D<Dimensionless>(0, 0, 1));
@@ -179,12 +175,7 @@ namespace hemelb
 	}
       }
 
-      auto outletBoundary = lb::iolets::BoundaryValues(geometry::OUTLET_TYPE,
-						       dom,
-						       simConfig->GetOutlets(),
-						       simState.get(),
-						       Comms(),
-						       *unitConverter);
+      auto outletBoundary = BuildIolets(geometry::OUTLET_TYPE);
 
       InOutLetCosine* outlet = GetIolet(outletBoundary);
       // We have to make the outlet sane and consistent with the geometry now.
@@ -354,28 +345,28 @@ namespace hemelb
 	offset += dom->GetMidDomainCollisionCount(1);
 	inletStreamer.DoStreamAndCollide(offset,
 						 dom->GetMidDomainCollisionCount(2),
-						 lbmParams,
+						 &lbmParams,
 						 *latDat ,
 						 propertyCache);
 	offset += dom->GetMidDomainCollisionCount(2);
 
 	outletStreamer.StreamAndCollide(offset,
 						dom->GetMidDomainCollisionCount(3),
-						lbmParams,
+						&lbmParams,
 						*latDat,
 						propertyCache);
 	offset += dom->GetMidDomainCollisionCount(3);
 
 	inletStreamer.StreamAndCollide(offset,
 					       dom->GetMidDomainCollisionCount(4),
-					       lbmParams,
+					       &lbmParams,
 					       *latDat,
 					       propertyCache);
 	offset += dom->GetMidDomainCollisionCount(4);
 
 	outletStreamer.StreamAndCollide(offset,
 						dom->GetMidDomainCollisionCount(5),
-						lbmParams,
+						&lbmParams,
 						*latDat,
 						propertyCache);
 
@@ -389,29 +380,29 @@ namespace hemelb
 	offset += dom->GetMidDomainCollisionCount(1);
 	inletStreamer.DoPostStep(offset,
 					 dom->GetMidDomainCollisionCount(2),
-					 lbmParams,
-					 latDat,
+					 &lbmParams,
+					 latDat.get(),
 					 propertyCache);
 	offset += dom->GetMidDomainCollisionCount(2);
 
 	outletStreamer.DoPostStep(offset,
 					  dom->GetMidDomainCollisionCount(3),
-					  lbmParams,
-					  latDat,
+					  &lbmParams,
+					  latDat.get(),
 					  propertyCache);
 	offset += dom->GetMidDomainCollisionCount(3);
 
 	inletStreamer.DoPostStep(offset,
 					 dom->GetMidDomainCollisionCount(4),
-					 lbmParams,
-					 latDat,
+					 &lbmParams,
+					 latDat.get(),
 					 propertyCache);
 	offset += dom->GetMidDomainCollisionCount(4);
 
 	outletStreamer.DoPostStep(offset,
 					  dom->GetMidDomainCollisionCount(5),
-					  lbmParams,
-					  latDat,
+					  &lbmParams,
+					  latDat.get(),
 					  propertyCache);
 
 	// Check that all the vsites have sensible hydro values
