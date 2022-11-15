@@ -47,20 +47,20 @@ def mk_specialisation_int(signed: bool, nbits: int) -> str:
     p = xdrlib.Packer()
     if nbits == 32:
         if signed:
-            typename = "int32_t"
+            typename = "std::int32_t"
             pack = p.pack_int
             suffix = ""
         else:
-            typename = "uint32_t"
+            typename = "std::uint32_t"
             pack = p.pack_uint
             suffix = "U"
     elif nbits == 64:
         if signed:
-            typename = "int64_t"
+            typename = "std::int64_t"
             pack = p.pack_hyper
             suffix = "L"
         else:
-            typename = "uint64_t"
+            typename = "std::uint64_t"
             pack = p.pack_uhyper
             suffix = "UL"
     else:
@@ -156,6 +156,7 @@ namespace hemelb
 #include "tests/io/xdr_test_data.h"
 
 #include <cstdint>
+#include <cstring>
 #include <string>
 
 namespace hemelb
@@ -164,11 +165,15 @@ namespace hemelb
   {
 
     namespace {
-      float binflt(uint32_t x) {
-        return *reinterpret_cast<float*>(&x);
+      float binflt(std::uint32_t x) {
+        float ans;
+        std::memcpy(&ans, &x, 4);
+        return ans;
       }
-      double bindbl(uint64_t x) {
-        return *reinterpret_cast<double*>(&x);
+      double bindbl(std::uint64_t x) {
+        double ans;
+        std::memcpy(&ans, &x, 8);
+        return ans;
       }
     }
     $specialisations

@@ -62,15 +62,6 @@ namespace hemelb
     }
 
     TEST_CASE("XdrReader works for strings") {
-      using UPC = std::unique_ptr<char[]>;
-      auto make_ones = [](size_t n) -> UPC {
-	// Fill with binary ones to trigger failure if we're not
-	// writing enough zeros
-	auto ans = UPC(new char[n]);
-	std::fill(ans.get(), ans.get() + n, ~'\0');
-	return ans;
-      };
-
       // XDR strings are serialised as length, data (0-padded to a word)
       auto coded_length = [](const std::string& s) {
 	return s.size() ? 4U * (2U + (s.size() - 1U) / 4U) : 4U;
