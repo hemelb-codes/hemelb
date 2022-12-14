@@ -237,8 +237,7 @@ namespace hemelb
               LatticeVector pos;
               latDat->GetGlobalCoordsFromGlobalNoncontiguousSiteId(global, pos);
               site_t local = latDat->GetContiguousSiteId(pos);
-              hvCache << local << " " << global << " " << pos.x << " " << pos.y << " " << pos.z
-                  << std::endl;
+              hvCache << local << " " << global << " " << pos << std::endl;
             }
             hvCache.close();
 
@@ -252,7 +251,7 @@ namespace hemelb
               const VSiteType& vs = vsIt->second;
 
               latDat->GetGlobalCoordsFromGlobalNoncontiguousSiteId(global, pos);
-              vSites << global << " " << pos.x << " " << pos.y << " " << pos.z << " " << &vs;
+              vSites << global << " " << pos << " " << &vs;
               for (unsigned i = 0; i < vs.neighbourGlobalIds.size(); ++i)
               {
                 vSites << " " << vs.neighbourGlobalIds[i];
@@ -271,7 +270,7 @@ namespace hemelb
               geometry::Site<const geometry::Domain> site = latDat->GetSite(local);
               LatticeVector pos = site.GetGlobalSiteCoords();
               site_t global = latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(pos);
-              outletMap << local << " " << global << " " << pos.x << " " << pos.y << " " << pos.z
+              outletMap << local << " " << global << " " << pos
                   << " " << entry->second.vsite << " " << entry->second.direction << std::endl;
             }
             outletMap.close();
@@ -286,8 +285,7 @@ namespace hemelb
               geometry::Site<const geometry::Domain> site = latDat->GetSite(local);
               LatticeVector pos = site.GetGlobalSiteCoords();
               site_t global = latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(pos);
-              outletWallMap << local << " " << global << " " << pos.x << " " << pos.y << " "
-                  << pos.z << " " << entry->second.vsite << " " << entry->second.direction
+              outletWallMap << local << " " << global << " " << pos << " " << entry->second.vsite << " " << entry->second.direction
                   << std::endl;
             }
           }
@@ -320,9 +318,7 @@ namespace hemelb
               // then stream that, but will just use the equilibrium for now.
               // distribn_t fEq[LatticeType::NUMVECTORS];
               LatticeType::CalculateFeq(vSite.hv.rho,
-                                        vSite.hv.u.x,
-                                        vSite.hv.u.y,
-                                        vSite.hv.u.z,
+                                        vSite.hv.u,
                                         vSite.hv.fPostColl);
             }
           }
@@ -417,14 +413,14 @@ namespace hemelb
             for (unsigned i = 0; i < vSite.neighbourGlobalIds.size(); ++i)
             {
               RSHV& hv = GetHV(latDat, hydroVarsCache, vSite.neighbourGlobalIds[i], t);
-              LatticeSpeed uNorm = hv.u.Dot(iolet.GetNormal());
-              sums[0] += hv.posIolet.x * uNorm;
-              sums[1] += hv.posIolet.y * uNorm;
+              LatticeSpeed uNorm = Dot(hv.u, iolet.GetNormal());
+              sums[0] += hv.posIolet.x() * uNorm;
+              sums[1] += hv.posIolet.y() * uNorm;
               sums[2] += uNorm;
             }
 
             // {A, B, C}
-            distribn_t coeffs[3] = { 0, 0, 0 };
+            util::Vector3D<distribn_t> coeffs = { 0, 0, 0 };
 
             // Do the matrix multiply to get the fitted coefficients.
             for (unsigned i = 0; i < 3; ++i)
@@ -432,8 +428,9 @@ namespace hemelb
                 coeffs[i] += vSite.velocityMatrixInv[i][j] * sums[j];
 
             // Compute the magnitude of the velocity.
-            LatticeSpeed ansNorm = coeffs[0] * vSite.hv.posIolet.x + coeffs[1] * vSite.hv.posIolet.y
-                + coeffs[2];
+            LatticeSpeed ansNorm = Dot(coeffs, vSite.hv.posIolet);
+//                    coeffs[0] * vSite.hv.posIolet.x + coeffs[1] * vSite.hv.posIolet.y
+//                + coeffs[2];
 
             // multiply by the iolet normal and we're done!
             return iolet.GetNormal() * ansNorm;
@@ -455,7 +452,7 @@ namespace hemelb
             auto neigh =
                 latDat.GetNeighbouringData().GetSite(globalIdx);
             const distribn_t* fOld = neigh.GetFOld<LatticeType>();
-            LatticeType::CalculateDensityAndMomentum(fOld, ans.rho, ans.u.x, ans.u.y, ans.u.z);
+            LatticeType::CalculateDensityAndMomentum(fOld, ans.rho, ans.u.x(), ans.u.y(), ans.u.z());
             if (LatticeType::IsLatticeCompressible())
             {
               ans.u /= ans.rho;

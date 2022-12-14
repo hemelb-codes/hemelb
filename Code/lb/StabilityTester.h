@@ -12,10 +12,8 @@
 #include "configuration/MonitoringConfig.h"
 #include "reporting/Timers.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
     /**
      * Class to repeatedly assess the stability of the simulation, using the PhasedBroadcast
      * interface.
@@ -31,14 +29,14 @@ namespace hemelb
     template<class LatticeType>
     class StabilityTester : public net::PhasedBroadcastRegular<>
     {
-      public:
+    public:
         StabilityTester(std::shared_ptr<const geometry::FieldData> iLatDat, net::Net* net,
                         SimulationState* simState, reporting::Timers& timings,
                         const hemelb::configuration::MonitoringConfig& testerConfig) :
-            net::PhasedBroadcastRegular<>(net, simState, SPREADFACTOR), mLatDat(iLatDat),
+                net::PhasedBroadcastRegular<>(net, simState, SPREADFACTOR), mLatDat(std::move(iLatDat)),
                 mSimState(simState), timings(timings), testerConfig(testerConfig)
         {
-          Reset();
+            Reset();
         }
 
         bool ShouldTerminateWhenConverged() const {
@@ -50,40 +48,37 @@ namespace hemelb
          */
         void Reset()
         {
-          mUpwardsStability = UndefinedStability;
-          mDownwardsStability = UndefinedStability;
+            mUpwardsStability = UndefinedStability;
+            mDownwardsStability = UndefinedStability;
 
-          mSimState->SetStability(UndefinedStability);
+            mSimState->SetStability(UndefinedStability);
 
-          for (unsigned int ii = 0; ii < SPREADFACTOR; ii++)
-          {
-            mChildrensStability[ii] = UndefinedStability;
-          }
+            std::fill(mChildrensStability.begin(), mChildrensStability.end(), UndefinedStability);
         }
 
-      protected:
+    protected:
         /**
          * Override the methods from the base class to propagate data from the root, and
          * to send data about this node and its childrens' stabilities up towards the root.
          */
-        void ProgressFromChildren(unsigned long splayNumber)
+        void ProgressFromChildren(unsigned long splayNumber) override
         {
-          ReceiveFromChildren<int>(mChildrensStability, 1);
+            ReceiveFromChildren<int>(mChildrensStability.data(), 1);
         }
 
-        void ProgressFromParent(unsigned long splayNumber)
+        void ProgressFromParent(unsigned long splayNumber) override
         {
-          ReceiveFromParent<int>(&mDownwardsStability, 1);
+            ReceiveFromParent<int>(&mDownwardsStability, 1);
         }
 
-        void ProgressToChildren(unsigned long splayNumber)
+        void ProgressToChildren(unsigned long splayNumber) override
         {
-          SendToChildren<int>(&mDownwardsStability, 1);
+            SendToChildren<int>(&mDownwardsStability, 1);
         }
 
-        void ProgressToParent(unsigned long splayNumber)
+        void ProgressToParent(unsigned long splayNumber) override
         {
-          SendToParent<int>(&mUpwardsStability, 1);
+            SendToParent<int>(&mUpwardsStability, 1);
         }
 
         /**
@@ -93,7 +88,7 @@ namespace hemelb
          *
          * @param splayNumber
          */
-        void PostSendToParent(unsigned long splayNumber)
+        void PostSendToParent(unsigned long splayNumber) override
         {
           timings[hemelb::reporting::Timers::monitoring].Start();
 
@@ -164,50 +159,33 @@ namespace hemelb
         inline double ComputeRelativeDifference(const distribn_t* fNew,
                                                 const distribn_t* fOld) const
         {
-          distribn_t newDensity;
-          distribn_t newMomentumX;
-          distribn_t newMomentumY;
-          distribn_t newMomentumZ;
-          LatticeType::CalculateDensityAndMomentum(fNew,
-                                                   newDensity,
-                                                   newMomentumX,
-                                                   newMomentumY,
-                                                   newMomentumZ);
+            distribn_t newDensity;
+            LatticeMomentum newMomentum;
+            LatticeType::CalculateDensityAndMomentum(fNew,
+                                                     newDensity,
+                                                     newMomentum);
 
-          distribn_t oldDensity;
-          distribn_t oldMomentumX;
-          distribn_t oldMomentumY;
-          distribn_t oldMomentumZ;
-          LatticeType::CalculateDensityAndMomentum(fOld,
-                                                   oldDensity,
-                                                   oldMomentumX,
-                                                   oldMomentumY,
-                                                   oldMomentumZ);
+            distribn_t oldDensity;
+            LatticeMomentum oldMomentum;
+            LatticeType::CalculateDensityAndMomentum(fOld,
+                                                     oldDensity,
+                                                     oldMomentum);
 
-          distribn_t absoluteError;
-          distribn_t referenceValue;
-
-	  if (std::holds_alternative<extraction::source::Velocity>(testerConfig.convergenceVariable))
-	  {
-	    distribn_t diff_vel_x = newMomentumX / newDensity - oldMomentumX / oldDensity;
-	    distribn_t diff_vel_y = newMomentumY / newDensity - oldMomentumY / oldDensity;
-	    distribn_t diff_vel_z = newMomentumZ / newDensity - oldMomentumZ / oldDensity;
-
-	    absoluteError = sqrt(diff_vel_x * diff_vel_x + diff_vel_y * diff_vel_y
-                  + diff_vel_z * diff_vel_z);
-	    referenceValue = testerConfig.convergenceReferenceValue;
-	  } else {
-              throw Exception() << "Convergence check based on requested variable currently not available";
-	  }
-
-          return absoluteError / referenceValue;
+            if (std::holds_alternative<extraction::source::Velocity>(testerConfig.convergenceVariable))
+            {
+                auto diff_vel = newMomentum / newDensity - oldMomentum / oldDensity;
+                auto absoluteError = diff_vel.GetMagnitude();
+                return absoluteError / testerConfig.convergenceReferenceValue;
+            } else {
+                throw Exception() << "Convergence check based on requested variable currently not available";
+            }
         }
 
         /**
          * Take the combined stability information (an int, with a value of hemelb::lb::Unstable
          * if any child node is unstable) and start passing it back down the tree.
          */
-        void TopNodeAction()
+        void TopNodeAction() override
         {
           mDownwardsStability = mUpwardsStability;
         }
@@ -215,41 +193,34 @@ namespace hemelb
         /**
          * Override the method from the base class to use the data from child nodes.
          */
-        void PostReceiveFromChildren(unsigned long splayNumber)
+        void PostReceiveFromChildren(unsigned long splayNumber) override
         {
           timings[hemelb::reporting::Timers::monitoring].Start();
 
           // No need to test children's stability if this node is already unstable.
           if (mUpwardsStability != Unstable)
           {
-            for (int ii = 0; ii < (int) SPREADFACTOR; ii++)
-            {
-              if (mChildrensStability[ii] == Unstable)
-              {
-                mUpwardsStability = Unstable;
-                break;
+              if (std::any_of(
+                      mChildrensStability.begin(), mChildrensStability.end(),
+                      [](int _) {
+                          return _ == Unstable;
+                      }
+              )) {
+                  mUpwardsStability = Unstable;
               }
-            }
 
             // If the simulation wasn't found to be unstable and we need to check for convergence, do it now.
             if ( (mUpwardsStability != Unstable) && testerConfig.doConvergenceCheck)
             {
-              bool anyStableNotConverged = false;
-              bool anyConverged = false;
-
-              // mChildrensStability will contain UndefinedStability for non-existent children
-              for (int ii = 0; ii < (int) SPREADFACTOR; ii++)
-              {
-                if (mChildrensStability[ii] == StableAndConverged)
-                {
-                  anyConverged = true;
-                }
-
-                if (mChildrensStability[ii] == Stable)
-                {
-                  anyStableNotConverged = true;
-                }
-              }
+                // mChildrensStability will contain UndefinedStability for non-existent children
+                bool anyConverged = std::any_of(
+                        mChildrensStability.begin(), mChildrensStability.end(),
+                        [](int _) { return _ == StableAndConverged; }
+                );
+                bool anyStableNotConverged = std::any_of(
+                        mChildrensStability.begin(), mChildrensStability.end(),
+                        [](int _) { return _ == Stable; }
+                );
 
               // With the current configuration the root node of the tree won't own any fluid sites. Its
               // state only depends on children nodes not on local state.
@@ -272,7 +243,7 @@ namespace hemelb
         /**
          * Apply the stability value sent by the root node to the simulation logic.
          */
-        void Effect()
+        void Effect() override
         {
           mSimState->SetStability((Stability) mDownwardsStability);
         }
@@ -281,7 +252,7 @@ namespace hemelb
         /**
          * Slightly arbitrary spread factor for the tree.
          */
-        static const unsigned int SPREADFACTOR = 10;
+        static constexpr unsigned SPREADFACTOR = 10;
 
         std::shared_ptr<const geometry::FieldData> mLatDat;
 
@@ -296,7 +267,7 @@ namespace hemelb
         /**
          * Array for storing the passed-up stability values from child nodes.
          */
-        int mChildrensStability[SPREADFACTOR];
+        std::array<int, SPREADFACTOR> mChildrensStability;
         /**
          * Pointer to the simulation state used in the rest of the simulation.
          */
@@ -308,7 +279,6 @@ namespace hemelb
         /** Object containing the user-provided configuration for this class */
         hemelb::configuration::MonitoringConfig testerConfig;
     };
-  }
 }
 
 #endif /* HEMELB_LB_STABILITYTESTER_H */

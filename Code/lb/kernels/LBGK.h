@@ -35,12 +35,8 @@ namespace hemelb
           {
             LatticeType::CalculateDensityMomentumFEq(hydroVars.f,
                                                      hydroVars.density,
-                                                     hydroVars.momentum.x,
-                                                     hydroVars.momentum.y,
-                                                     hydroVars.momentum.z,
-                                                     hydroVars.velocity.x,
-                                                     hydroVars.velocity.y,
-                                                     hydroVars.velocity.z,
+                                                     hydroVars.momentum,
+                                                     hydroVars.velocity,
                                                      hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
@@ -52,9 +48,7 @@ namespace hemelb
           inline void DoCalculateFeq(HydroVars<LBGK>& hydroVars, site_t index)
           {
             LatticeType::CalculateFeq(hydroVars.density,
-                                      hydroVars.momentum.x,
-                                      hydroVars.momentum.y,
-                                      hydroVars.momentum.z,
+                                      hydroVars.momentum,
                                       hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)

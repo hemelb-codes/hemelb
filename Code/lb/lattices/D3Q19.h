@@ -8,37 +8,44 @@
 
 #include "lb/lattices/Lattice.h"
 
-namespace hemelb
+namespace hemelb::lb::lattices
 {
-  namespace lb
-  {
-    namespace lattices
-    {
-      class D3Q19 : public Lattice<D3Q19>
-      {
-        public:
-          // The number of discrete velocity vectors
-          static const Direction NUMVECTORS = 19;
+    using D3Q19 = Lattice<
+            19,
+            std::array<util::Vector3D<int>, 19>{
+                    {
+                            {0, 0, 0},
+                            {1, 0, 0},
+                            {-1, 0, 0},
+                            {0, 1, 0},
+                            {0, -1, 0},
+                            {0, 0, 1},
+                            {0, 0, -1},
+                            {1, 1, 0},
+                            {-1, -1, 0},
+                            {1, -1, 0},
+                            {-1, 1, 0},
+                            {1, 0, 1},
+                            {-1, 0, -1},
+                            {1, 0, -1},
+                            {-1, 0, 1},
+                            {0, 1, 1},
+                            {0, -1, -1},
+                            {0, 1, -1},
+                            {0, -1, 1},
+                    }
+            },
+            std::array<distribn_t, 19>{
+                    1.0 / 3.0, 1.0 / 18.0, 1.0 / 18.0, 1.0 / 18.0, 1.0
+                                                                   / 18.0,
+                    1.0 / 18.0, 1.0 / 18.0, 1.0 / 36.0, 1.0 / 36.0, 1.0
+                                                                    / 36.0,
+                    1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0
+                                                                    / 36.0,
+                    1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0
+            }
+    >;
 
-          // The x, y and z components of each of the discrete velocity vectors
-          static const int CX[NUMVECTORS];
-          static const int CY[NUMVECTORS];
-          static const int CZ[NUMVECTORS];
-
-          // the same in double (in order to prevent int->double conversions), and aligned to 16B
-          static const distribn_t CXD[NUMVECTORS] __attribute__((aligned(16)));
-          static const distribn_t CYD[NUMVECTORS] __attribute__((aligned(16)));
-          static const distribn_t CZD[NUMVECTORS] __attribute__((aligned(16)));
-
-          static const int* discreteVelocityVectors[3];
-
-          static const double EQMWEIGHTS[NUMVECTORS] __attribute__((aligned(16)));
-
-          // The index of the inverse direction of each discrete velocity vector
-          static const Direction INVERSEDIRECTIONS[NUMVECTORS];
-      };
-    }
-  }
 }
 
 #endif

@@ -18,18 +18,68 @@
 #include "util/Vector3D.h"
 #include "util/Matrix3D.h"
 
-namespace hemelb
+namespace hemelb::lb::lattices
 {
-  namespace lb
-  {
-    namespace lattices
+    namespace detail {
+        template <typename T, typename U = T, std::size_t N>
+        consteval std::array<T, N> get_component(std::array<util::Vector3D<U>, N> const& aov, int dir) {
+            std::array<T, N> ans;
+            for (std::size_t i = 0; i < N; ++i) {
+                ans[i] = aov[i][dir];
+            }
+            return ans;
+        }
+
+        template <std::size_t N>
+        constexpr std::array<Direction, N> compute_inverses(std::array<util::Vector3D<int>, N> const& vecs)
+        {
+            std::array<Direction, N> ans;
+            // Fill with an error value to check
+            auto ERR = std::numeric_limits<Direction>::max();
+            std::fill(ans.begin(), ans.end(), ERR);
+
+            for (std::size_t i = 0; i < N; ++i) {
+                for (std::size_t j = i; j < N; ++j) {
+                    if (vecs[i] == -vecs[j]) {
+                        ans[i] = j;
+                        ans[j] = i;
+                    }
+                }
+            }
+            for (auto& x: ans) {
+                if (x == ERR)
+                    throw "Error computing inverses";
+            }
+            return ans;
+        }
+    }
+
+    template<std::size_t Q, std::array<util::Vector3D<int>, Q> V, std::array<distribn_t, Q> W>
+    class Lattice
     {
-      template<class DmQn>
-      class Lattice
-      {
-        public:
+    public:
+        static constexpr Direction NUMVECTORS = Q;
+
+        static constexpr std::array<util::Vector3D<int>, Q> VECTORS = V;
+        static constexpr std::array<int, Q> CX = detail::get_component<int>(V, 0);
+        static constexpr std::array<int, Q> CY = detail::get_component<int>(V, 1);
+        static constexpr std::array<int, Q> CZ = detail::get_component<int>(V, 2);
+
+        alignas(16) static constexpr std::array<util::Vector3D<distribn_t>, Q> CD = V;
+        alignas(16) static constexpr std::array<distribn_t, Q> CXD = detail::get_component<distribn_t>(V, 0);
+        alignas(16) static constexpr std::array<distribn_t, Q> CYD = detail::get_component<distribn_t>(V, 1);
+        alignas(16) static constexpr std::array<distribn_t, Q> CZD = detail::get_component<distribn_t>(V, 2);
+
+        alignas(16) static constexpr std::array<distribn_t, Q> EQMWEIGHTS = W;
+        // The index of the inverse direction of each discrete velocity vector
+        static constexpr std::array<Direction, Q> INVERSEDIRECTIONS = detail::compute_inverses(V);
 
 #ifdef HEMELB_USE_SSE3
+        inline static void CalculateDensityAndMomentum(const distribn_t f[],
+                                                       distribn_t &density,
+                                                       util::Vector3D<distribn_t>& momentum) {
+            CalculateDensityAndMomentum(f, density, momentum.x(), momentum.y(), momentum.z());
+        }
           /**
            * Calculates density and momentum using SSE3 intrinsics.
            * If the lattice has an odd number of vectors (directions), 
@@ -56,17 +106,17 @@ namespace hemelb
             __m128d momentum_y_SSE2;
             __m128d momentum_z_SSE2;
 
-            // set the loop boundary to the highest even number  =< DmQn::NUMVECTORS
-            Direction numVect2 = ((DmQn::NUMVECTORS >> 1) << 1);
+            // set the loop boundary to the highest even number  =< NUMVECTORS
+            Direction numVect2 = ((NUMVECTORS >> 1) << 1);
 
             // process the 15/19/27th element first
-            if (DmQn::NUMVECTORS != numVect2)
+            if (NUMVECTORS != numVect2)
             {
               // the first double is set to the result of the last element, the second double to zero
-              density_SSE2 = _mm_set_pd(f[DmQn::NUMVECTORS - 1], 0.0);
-              momentum_x_SSE2 = _mm_set_pd(DmQn::CXD[DmQn::NUMVECTORS - 1] * f[DmQn::NUMVECTORS - 1], 0.0);
-              momentum_y_SSE2 = _mm_set_pd(DmQn::CYD[DmQn::NUMVECTORS - 1] * f[DmQn::NUMVECTORS - 1], 0.0);
-              momentum_z_SSE2 = _mm_set_pd(DmQn::CZD[DmQn::NUMVECTORS - 1] * f[DmQn::NUMVECTORS - 1], 0.0);
+              density_SSE2 = _mm_set_pd(f[NUMVECTORS - 1], 0.0);
+              momentum_x_SSE2 = _mm_set_pd(CXD[NUMVECTORS - 1] * f[NUMVECTORS - 1], 0.0);
+              momentum_y_SSE2 = _mm_set_pd(CYD[NUMVECTORS - 1] * f[NUMVECTORS - 1], 0.0);
+              momentum_z_SSE2 = _mm_set_pd(CZD[NUMVECTORS - 1] * f[NUMVECTORS - 1], 0.0);
             }
             else
             {
@@ -84,9 +134,9 @@ namespace hemelb
               // f is not aligned, loadu has to be used,
               // CXD, CYD, CZD are supposed to be 16B aligned
               const __m128d f_SSE2 = _mm_loadu_pd(&f[direction]);
-              const __m128d CX_SSE2 = _mm_load_pd(&DmQn::CXD[direction]);
-              const __m128d CY_SSE2 = _mm_load_pd(&DmQn::CYD[direction]);
-              const __m128d CZ_SSE2 = _mm_load_pd(&DmQn::CZD[direction]);
+              const __m128d CX_SSE2 = _mm_load_pd(&CXD[direction]);
+              const __m128d CY_SSE2 = _mm_load_pd(&CYD[direction]);
+              const __m128d CZ_SSE2 = _mm_load_pd(&CZD[direction]);
 
               // density += f[i]
               density_SSE2 = _mm_add_pd(density_SSE2, f_SSE2);
@@ -106,30 +156,41 @@ namespace hemelb
           }
 
 #else
-
-          /**
-           * Calculates density and momentum, the original non-SSE version
-           * @param f
-           * @param density
-           * @param momentum_x
-           * @param momentum_y
-           * @param momentum_z
-           */
-          inline static void CalculateDensityAndMomentum(const distribn_t f[], distribn_t &density,
-                                                         distribn_t &momentum_x,
-                                                         distribn_t &momentum_y,
-                                                         distribn_t &momentum_z)
-          {
-            density = momentum_x = momentum_y = momentum_z = 0.0;
-
-            for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
+        inline static void CalculateDensityAndMomentum(const distribn_t f[],
+                                                       distribn_t &density,
+                                                       LatticeMomentum& momentum) {
+            density = 0.0;
+            momentum = {0.0, 0.0, 0.0};
+            for (Direction i = 0; i < NUMVECTORS; ++i)
             {
-              density += f[direction];
-              momentum_x += DmQn::CX[direction] * f[direction];
-              momentum_y += DmQn::CY[direction] * f[direction];
-              momentum_z += DmQn::CZ[direction] * f[direction];
+              density += f[i];
+              momentum += VECTORS[i] * f[i];
             }
-          }
+        }
+
+//          /**
+//           * Calculates density and momentum, the original non-SSE version
+//           * @param f
+//           * @param density
+//           * @param momentum_x
+//           * @param momentum_y
+//           * @param momentum_z
+//           */
+//          inline static void CalculateDensityAndMomentum(const distribn_t f[], distribn_t &density,
+//                                                         distribn_t &momentum_x,
+//                                                         distribn_t &momentum_y,
+//                                                         distribn_t &momentum_z)
+//          {
+//            density = momentum_x = momentum_y = momentum_z = 0.0;
+//
+//            for (Direction direction = 0; direction < NUMVECTORS; ++direction)
+//            {
+//              density += f[direction];
+//              momentum_x += CX[direction] * f[direction];
+//              momentum_y += CY[direction] * f[direction];
+//              momentum_z += CZ[direction] * f[direction];
+//            }
+//          }
 
 #endif                   
 
@@ -145,23 +206,22 @@ namespace hemelb
            * @param force_z
            */
           inline static void CalculateDensityAndMomentum(const distribn_t f[],
-                                                         const LatticeForce &force_x,
-                                                         const LatticeForce &force_y,
-                                                         const LatticeForce &force_z,
+                                                         const LatticeForceVector& force,
                                                          distribn_t &density,
-                                                         distribn_t &momentum_x,
-                                                         distribn_t &momentum_y,
-                                                         distribn_t &momentum_z)
+                                                         LatticeMomentum& momentum)
           {
-            CalculateDensityAndMomentum(f, density, momentum_x, momentum_y, momentum_z);
+            CalculateDensityAndMomentum(f, density, momentum);
             // Assumes Delta t is equal to one
-            momentum_x += 0.5 * force_x;
-            momentum_y += 0.5 * force_y;
-            momentum_z += 0.5 * force_z;
+            momentum += 0.5 * force;
           }
 
 #ifdef HEMELB_USE_SSE3
-          /**           
+        inline static void CalculateFeq(const distribn_t density, const LatticeMomentum& momentum,
+                                        distribn_t f_eq[]) {
+            CalculateFeq(density, momentum.x(), momentum.y(), momentum.z(), f_eq);
+        }
+
+          /**
            * Calculates Feq using SSE3 intrinsics.
            * If the lattice has an odd number of vectors (directions), 
            * the last element is processed using scalar arithmetics
@@ -200,15 +260,15 @@ namespace hemelb
             const __m128d three_SSE2 = _mm_set1_pd(3.);
 
             // sse loop (the loop is virtually twice unrolled)
-            Direction numVect2 = ((DmQn::NUMVECTORS >> 1) << 1);
+            Direction numVect2 = ((NUMVECTORS >> 1) << 1);
             for (Direction i = 0; i < numVect2; i+=2)
             {
-              // mom_dot_ei = DmQn::CX[i] * momentum_x + DmQn::CY[i] * momentum_y + DmQn::CZ[i] * momentum_z;
-              const __m128d CXD_momentum_x_SSE2 = _mm_mul_pd(_mm_load_pd(&DmQn::CXD[i]),momentum_x_SSE2);
-              const __m128d CYD_momentum_y_SSE2 = _mm_mul_pd(_mm_load_pd(&DmQn::CYD[i]),momentum_y_SSE2);
-              const __m128d CZD_momentum_z_SSE2 = _mm_mul_pd(_mm_load_pd(&DmQn::CZD[i]),momentum_z_SSE2);
+              // mom_dot_ei = CX[i] * momentum_x + CY[i] * momentum_y + CZ[i] * momentum_z;
+              const __m128d CXD_momentum_x_SSE2 = _mm_mul_pd(_mm_load_pd(&CXD[i]),momentum_x_SSE2);
+              const __m128d CYD_momentum_y_SSE2 = _mm_mul_pd(_mm_load_pd(&CYD[i]),momentum_y_SSE2);
+              const __m128d CZD_momentum_z_SSE2 = _mm_mul_pd(_mm_load_pd(&CZD[i]),momentum_z_SSE2);
 
-              const __m128d EQMWEIGHTS_SSE2 = _mm_load_pd(&DmQn::EQMWEIGHTS[i]);
+              const __m128d EQMWEIGHTS_SSE2 = _mm_load_pd(&EQMWEIGHTS[i]);
 
               const __m128d mom_dot_ei_SSE2 = _mm_add_pd(
                   _mm_add_pd(CXD_momentum_x_SSE2, CYD_momentum_y_SSE2),
@@ -237,21 +297,36 @@ namespace hemelb
             }
 
             // do the odd element (15/19/27) 
-            if (DmQn::NUMVECTORS != numVect2)// constants are reduced
+            if (NUMVECTORS != numVect2)// constants are reduced
             {
 
-              const distribn_t mom_dot_ei = DmQn::CX[DmQn::NUMVECTORS-1] * momentum_x
-              + DmQn::CY[DmQn::NUMVECTORS-1] * momentum_y + DmQn::CZ[DmQn::NUMVECTORS-1] * momentum_z;
+              const distribn_t mom_dot_ei = CXD[NUMVECTORS-1] * momentum_x
+              + CYD[NUMVECTORS-1] * momentum_y + CZD[NUMVECTORS-1] * momentum_z;
 
-              f_eq[DmQn::NUMVECTORS-1] = DmQn::EQMWEIGHTS[DmQn::NUMVECTORS - 1]
+              f_eq[NUMVECTORS-1] = EQMWEIGHTS[NUMVECTORS - 1]
               * (density - threeHalvesOfMomentumMagnitudeSquared * density_1
                   + nineHalvesOfDensity_1 * (mom_dot_ei * mom_dot_ei)
                   + 3. * mom_dot_ei);
 
             }
           }
-#else                    
+#else
 
+        inline static void CalculateFeq(const distribn_t density, const LatticeMomentum& momentum,
+                                        distribn_t f_eq[])
+        {
+            const distribn_t density_1 = 1. / density;
+            const distribn_t mom_mag_sq = momentum.GetMagnitudeSquared();
+
+            for (Direction i = 0; i < NUMVECTORS; ++i)
+            {
+                const distribn_t mom_dot_ei = momentum.Dot(VECTORS[i]);
+
+                f_eq[i] = EQMWEIGHTS[i]
+                          * (density - (3. / 2.) * mom_mag_sq * density_1
+                             + (9. / 2.) * density_1 * mom_dot_ei * mom_dot_ei + 3. * mom_dot_ei);
+            }
+        }
           /**
            * Calculate Feq, the orginal version
            * @param density
@@ -268,12 +343,12 @@ namespace hemelb
             const distribn_t momentumMagnitudeSquared = momentum_x * momentum_x
                 + momentum_y * momentum_y + momentum_z * momentum_z;
 
-            for (Direction i = 0; i < DmQn::NUMVECTORS; ++i)
+            for (Direction i = 0; i < NUMVECTORS; ++i)
             {
-              const distribn_t mom_dot_ei = DmQn::CX[i] * momentum_x + DmQn::CY[i] * momentum_y
-                  + DmQn::CZ[i] * momentum_z;
+              const distribn_t mom_dot_ei = CX[i] * momentum_x + CY[i] * momentum_y
+                  + CZ[i] * momentum_z;
 
-              f_eq[i] = DmQn::EQMWEIGHTS[i]
+              f_eq[i] = EQMWEIGHTS[i]
                   * (density - (3. / 2.) * momentumMagnitudeSquared * density_1
                       + (9. / 2.) * density_1 * mom_dot_ei * mom_dot_ei + 3. * mom_dot_ei);
             }
@@ -281,6 +356,17 @@ namespace hemelb
 #endif
 
 #ifdef HEMELB_USE_SSE3
+
+        inline static void CalculateForceDistribution(const distribn_t &tau,
+                                                      const LatticeVelocity& velocity,
+                                                      const LatticeForceVector& force,
+                                                      distribn_t forceDist[])
+        {
+            CalculateForceDistribution(tau,
+                                       velocity.x(), velocity.y(), velocity.z(),
+                                       force.x(), force.y(), force.z(),
+                                       forceDist);
+        }
 
           /**
            * Calculate Force using SSE3 intrinsics.
@@ -320,14 +406,14 @@ namespace hemelb
             const __m128d r3 = _mm_set1_pd(invCs2);
             const __m128d r9 = _mm_set1_pd(invCs4);
 
-            const Direction numSSEvectors = (DmQn::NUMVECTORS >> 1) << 1;
+            const Direction numSSEvectors = (NUMVECTORS >> 1) << 1;
             Direction i = 0;
             for (i = 0; i < numSSEvectors; i+=2)
             {
-              const __m128d cx = _mm_load_pd(&DmQn::CXD[i]);
-              const __m128d cy = _mm_load_pd(&DmQn::CYD[i]);
-              const __m128d cz = _mm_load_pd(&DmQn::CZD[i]);
-              const __m128d w  = _mm_load_pd(&DmQn::EQMWEIGHTS[i]);
+              const __m128d cx = _mm_load_pd(&CXD[i]);
+              const __m128d cy = _mm_load_pd(&CYD[i]);
+              const __m128d cz = _mm_load_pd(&CZD[i]);
+              const __m128d w  = _mm_load_pd(&EQMWEIGHTS[i]);
 
               const __m128d velocity_spd = _mm_add_pd(
                   _mm_add_pd(_mm_mul_pd(vx, cx), _mm_mul_pd(vy, cy)),
@@ -343,13 +429,13 @@ namespace hemelb
               _mm_storeu_pd(&forceDist[i], fd);
             }
 
-            for (;i < DmQn::NUMVECTORS; ++i)
+            for (;i < NUMVECTORS; ++i)
             {
-              const distribn_t vScalarProductDirection = velocity_x * DmQn::CX[i]
-                  + velocity_y * DmQn::CY[i] + velocity_z * DmQn::CZ[i];
-              const distribn_t FScalarProductDirection = force_x * DmQn::CX[i] + force_y * DmQn::CY[i]
-                  + force_z * DmQn::CZ[i];
-              forceDist[i] = prefactor * DmQn::EQMWEIGHTS[i]
+              const distribn_t vScalarProductDirection = velocity_x * CX[i]
+                  + velocity_y * CY[i] + velocity_z * CZ[i];
+              const distribn_t FScalarProductDirection = force_x * CX[i] + force_y * CY[i]
+                  + force_z * CZ[i];
+              forceDist[i] = prefactor * EQMWEIGHTS[i]
                   * ( invCs2 * (FScalarProductDirection - vScalarProductF)
                       + invCs4 * (FScalarProductDirection * vScalarProductDirection));
             }
@@ -380,13 +466,13 @@ namespace hemelb
             distribn_t vScalarProductF = velocity_x * force_x + velocity_y * force_y
                 + velocity_z * force_z;
 
-            for (Direction i = 0; i < DmQn::NUMVECTORS; ++i)
+            for (Direction i = 0; i < NUMVECTORS; ++i)
             {
-              distribn_t vScalarProductDirection = velocity_x * DmQn::CX[i]
-                  + velocity_y * DmQn::CY[i] + velocity_z * DmQn::CZ[i];
-              distribn_t FScalarProductDirection = force_x * DmQn::CX[i] + force_y * DmQn::CY[i]
-                  + force_z * DmQn::CZ[i];
-              forceDist[i] = prefactor * DmQn::EQMWEIGHTS[i]
+              distribn_t vScalarProductDirection = velocity_x * CX[i]
+                  + velocity_y * CY[i] + velocity_z * CZ[i];
+              distribn_t FScalarProductDirection = force_x * CX[i] + force_y * CY[i]
+                  + force_z * CZ[i];
+              forceDist[i] = prefactor * EQMWEIGHTS[i]
                   * ( invCs2 * (FScalarProductDirection - vScalarProductF)
                       + invCs4 * (FScalarProductDirection * vScalarProductDirection));
             }
@@ -398,20 +484,13 @@ namespace hemelb
           // and momentum_z are actually density * velocity, because we are using the
           // compressible model.
           inline static void CalculateDensityMomentumFEq(const distribn_t f[], distribn_t &density,
-                                                         distribn_t &momentum_x,
-                                                         distribn_t &momentum_y,
-                                                         distribn_t &momentum_z,
-                                                         distribn_t &velocity_x,
-                                                         distribn_t &velocity_y,
-                                                         distribn_t &velocity_z, distribn_t f_eq[])
+                                                         util::Vector3D<distribn_t>& momentum,
+                                                         LatticeVelocity& velocity,
+                                                         distribn_t f_eq[])
           {
-            CalculateDensityAndMomentum(f, density, momentum_x, momentum_y, momentum_z);
-
-            velocity_x = momentum_x / density;
-            velocity_y = momentum_y / density;
-            velocity_z = momentum_z / density;
-
-            CalculateFeq(density, momentum_x, momentum_y, momentum_z, f_eq);
+            CalculateDensityAndMomentum(f, density, momentum);
+            velocity = momentum / density;
+            CalculateFeq(density, momentum, f_eq);
           }
 
           // Calculate density, momentum and the equilibrium distribution
@@ -419,31 +498,20 @@ namespace hemelb
           // and momentum_z are actually density * velocity, because we are using the
           // compressible model.
           inline static void CalculateDensityMomentumFEq(const distribn_t f[],
-                                                         const LatticeForce &force_x,
-                                                         const LatticeForce &force_y,
-                                                         const LatticeForce &force_z,
+                                                         const LatticeForceVector& force,
                                                          distribn_t &density,
-                                                         distribn_t &momentum_x,
-                                                         distribn_t &momentum_y,
-                                                         distribn_t &momentum_z,
-                                                         distribn_t &velocity_x,
-                                                         distribn_t &velocity_y,
-                                                         distribn_t &velocity_z, distribn_t f_eq[])
+                                                         LatticeMomentum& momentum,
+                                                         LatticeVelocity& velocity,
+                                                         distribn_t f_eq[])
           {
             CalculateDensityAndMomentum(f,
-                                        force_x,
-                                        force_y,
-                                        force_z,
+                                        force,
                                         density,
-                                        momentum_x,
-                                        momentum_y,
-                                        momentum_z);
+                                        momentum);
 
-            velocity_x = momentum_x / density;
-            velocity_y = momentum_y / density;
-            velocity_z = momentum_z / density;
+            velocity = momentum / density;
 
-            CalculateFeq(density, momentum_x, momentum_y, momentum_z, f_eq);
+            CalculateFeq(density, momentum, f_eq);
           }
 
           // von Mises stress computation given the non-equilibrium distribution functions.
@@ -467,21 +535,21 @@ namespace hemelb
             distribn_t sigma_xz = 0.0;
             distribn_t sigma_yz = 0.0;
 
-            for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
+            for (Direction direction = 0; direction < NUMVECTORS; ++direction)
             {
               sigma_xx_yy += f[direction]
-                  * (DmQn::CX[direction] * DmQn::CX[direction]
-                      - DmQn::CY[direction] * DmQn::CY[direction]);
+                  * (CX[direction] * CX[direction]
+                      - CY[direction] * CY[direction]);
               sigma_yy_zz += f[direction]
-                  * (DmQn::CY[direction] * DmQn::CY[direction]
-                      - DmQn::CZ[direction] * DmQn::CZ[direction]);
+                  * (CY[direction] * CY[direction]
+                      - CZ[direction] * CZ[direction]);
               sigma_xx_zz += f[direction]
-                  * (DmQn::CX[direction] * DmQn::CX[direction]
-                      - DmQn::CZ[direction] * DmQn::CZ[direction]);
+                  * (CX[direction] * CX[direction]
+                      - CZ[direction] * CZ[direction]);
 
-              sigma_xy += f[direction] * DmQn::CX[direction] * DmQn::CY[direction];
-              sigma_xz += f[direction] * DmQn::CX[direction] * DmQn::CZ[direction];
-              sigma_yz += f[direction] * DmQn::CY[direction] * DmQn::CZ[direction];
+              sigma_xy += f[direction] * CX[direction] * CY[direction];
+              sigma_xz += f[direction] * CX[direction] * CZ[direction];
+              sigma_yz += f[direction] * CY[direction] * CZ[direction];
             }
 
             distribn_t a = sigma_xx_yy * sigma_xx_yy + sigma_yy_zz * sigma_yy_zz
@@ -537,7 +605,7 @@ namespace hemelb
             util::Vector3D<LatticeStress> traction;
             CalculateTractionOnAPoint(density, tau, fNonEquilibrium, wallNormal, traction);
 
-            LatticeStress magnitudeNormalProjectionTraction = traction.Dot(wallNormal);
+            LatticeStress magnitudeNormalProjectionTraction = Dot(traction, wallNormal);
 
             tractionTangentialComponent = traction - wallNormal * magnitudeNormalProjectionTraction;
           }
@@ -625,7 +693,7 @@ namespace hemelb
               normal_stress += stress_vector[i] * nor[i];
             }
             // shear_stress^2 + normal_stress^2 = stress_vector^2
-            stress = sqrt(square_stress_vector - normal_stress * normal_stress);
+            stress = std::sqrt(square_stress_vector - normal_stress * normal_stress);
           }
 
           /**
@@ -647,10 +715,10 @@ namespace hemelb
               for (int jj = 0; jj <= ii; ++jj)
               {
                 ret[ii][jj] = 0.0;
-                for (unsigned int l = 0; l < DmQn::NUMVECTORS; ++l)
+                for (unsigned int l = 0; l < NUMVECTORS; ++l)
                 {
-                  ret[ii][jj] += f[l] * DmQn::discreteVelocityVectors[ii][l]
-                      * DmQn::discreteVelocityVectors[jj][l];
+                  ret[ii][jj] += f[l] * VECTORS[l][ii]
+                      * VECTORS[l][jj];
                 }
               }
             }
@@ -697,27 +765,23 @@ namespace hemelb
           // Originally Ansumali, S., Karlin, I. V., and Ottinger, H.C. (2003) Minimal entropic kinetic models
           // for hydrodynamics. Europhys. Lett. 63(6), 798–804
           inline static void CalculateEntropicFeqAnsumali(const distribn_t &density,
-                                                          const distribn_t &momentum_x,
-                                                          const distribn_t &momentum_y,
-                                                          const distribn_t &momentum_z,
+                                                          const LatticeMomentum& momentum,
                                                           distribn_t f_eq[])
           {
             // Get velocity
-            util::Vector3D<distribn_t> velocity = util::Vector3D<distribn_t>(momentum_x,
-                                                                             momentum_y,
-                                                                             momentum_z) / density;
+            LatticeVelocity velocity = momentum / density;
 
             // Combining some terms for use in evaluating the next few terms
             // B_i = sqrt(1 + 3 * u_i^2)
             util::Vector3D<distribn_t> B = util::Vector3D<distribn_t>(sqrt(1.0
-                                                                          + 3.0 * velocity.x
-                                                                              * velocity.x),
+                                                                          + 3.0 * velocity.x()
+                                                                              * velocity.x()),
                                                                       sqrt(1.0
-                                                                          + 3.0 * velocity.y
-                                                                              * velocity.y),
+                                                                          + 3.0 * velocity.y()
+                                                                              * velocity.y()),
                                                                       sqrt(1.0
-                                                                          + 3.0 * velocity.z
-                                                                              * velocity.z));
+                                                                          + 3.0 * velocity.z()
+                                                                              * velocity.z()));
 
             // The formula contains the product term1_i*(term2_i)^e_ia
             // term1_i is 2 - B_i
@@ -728,12 +792,12 @@ namespace hemelb
                 (velocity * 2.0 + B).PointwiseDivision(util::Vector3D<distribn_t>::Ones()
                     - velocity);
 
-            for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
+            for (Direction direction = 0; direction < NUMVECTORS; ++direction)
             {
-              f_eq[direction] = density * DmQn::EQMWEIGHTS[direction] * term1.x * term1.y * term1.z
-                  * util::NumericalFunctions::IntegerPower(term2.x, DmQn::CX[direction])
-                  * util::NumericalFunctions::IntegerPower(term2.y, DmQn::CY[direction])
-                  * util::NumericalFunctions::IntegerPower(term2.z, DmQn::CZ[direction]);
+              f_eq[direction] = density * EQMWEIGHTS[direction] * term1.x() * term1.y() * term1.z()
+                  * util::NumericalFunctions::IntegerPower(term2.x(), CX[direction])
+                  * util::NumericalFunctions::IntegerPower(term2.y(), CY[direction])
+                  * util::NumericalFunctions::IntegerPower(term2.z(), CZ[direction]);
             }
           }
 
@@ -747,16 +811,11 @@ namespace hemelb
            * @param f_eq
            */
           inline static void CalculateEntropicFeqChik(const distribn_t &density,
-                                                      const distribn_t &momentum_x,
-                                                      const distribn_t &momentum_y,
-                                                      const distribn_t &momentum_z,
+                                                      const LatticeMomentum& momentum,
                                                       distribn_t f_eq[])
           {
             // Get velocity and the vector with velocity components squared.
-            util::Vector3D<distribn_t> velocity = util::Vector3D<distribn_t>(momentum_x,
-                                                                             momentum_y,
-                                                                             momentum_z)
-                / (density);
+            LatticeVelocity velocity = momentum / density;
             util::Vector3D<distribn_t> velocitySquared = velocity.PointwiseMultiplication(velocity);
             util::Vector3D<distribn_t> velocityFour =
                 velocitySquared.PointwiseMultiplication(velocitySquared);
@@ -776,18 +835,18 @@ namespace hemelb
             // Add in the (6) term.
             chi += 27.0
                 * ( (-velocityMagnitudeSix)
-                    + 2.0 * (velocitySquared.y + velocitySquared.z)
-                        * (velocityMagnitudeSquared * velocitySquared.x
-                            + velocitySquared.y * velocitySquared.z)
-                    + 20. * velocitySquared.x * velocitySquared.y * velocitySquared.z) / 16.0;
+                    + 2.0 * (velocitySquared.y() + velocitySquared.z())
+                        * (velocityMagnitudeSquared * velocitySquared.x()
+                            + velocitySquared.y() * velocitySquared.z())
+                    + 20. * velocitySquared.x() * velocitySquared.y() * velocitySquared.z()) / 16.0;
 
             // Add in the (8) term.
             chi += 81.0 * velocityMagnitudeEight / 128.0
                 + 81.0
-                    * (velocityEight.x + velocityEight.y + velocityEight.z
-                        - (36.0 * velocitySquared.x * velocitySquared.y * velocitySquared.z
-                            * velocityMagnitudeSquared + velocityFour.x * velocityFour.y
-                            + velocityFour.x * velocityFour.z + velocityFour.y * velocityFour.z))
+                    * (velocityEight.x() + velocityEight.y() + velocityEight.z()
+                        - (36.0 * velocitySquared.x() * velocitySquared.y() * velocitySquared.z()
+                            * velocityMagnitudeSquared + velocityFour.x() * velocityFour.y()
+                            + velocityFour.x() * velocityFour.z() + velocityFour.y() * velocityFour.z()))
                     / 32.0;
 
             // Multiple whole expression by the density.
@@ -798,33 +857,33 @@ namespace hemelb
                 + velocitySquared.PointwiseMultiplication(velocity) * 9.0 / 2.0
                 + velocityFour * 27.0 / 8.0;
 
-            zeta.x += CalculateHighOrdersOfZeta<0, 1, 2>(velocity, velocityMagnitudeSquared);
-            zeta.y += CalculateHighOrdersOfZeta<1, 2, 0>(velocity, velocityMagnitudeSquared);
-            zeta.z += CalculateHighOrdersOfZeta<2, 0, 1>(velocity, velocityMagnitudeSquared);
+            zeta.x() += CalculateHighOrdersOfZeta<0, 1, 2>(velocity, velocityMagnitudeSquared);
+            zeta.y() += CalculateHighOrdersOfZeta<1, 2, 0>(velocity, velocityMagnitudeSquared);
+            zeta.z() += CalculateHighOrdersOfZeta<2, 0, 1>(velocity, velocityMagnitudeSquared);
 
-            for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
+            for (Direction direction = 0; direction < NUMVECTORS; ++direction)
             {
-              f_eq[direction] = DmQn::EQMWEIGHTS[direction] * chi
-                  * util::NumericalFunctions::IntegerPower(zeta.x, DmQn::CX[direction])
-                  * util::NumericalFunctions::IntegerPower(zeta.y, DmQn::CY[direction])
-                  * util::NumericalFunctions::IntegerPower(zeta.z, DmQn::CZ[direction]);
+              f_eq[direction] = EQMWEIGHTS[direction] * chi
+                  * util::NumericalFunctions::IntegerPower(zeta.x(), CX[direction])
+                  * util::NumericalFunctions::IntegerPower(zeta.y(), CY[direction])
+                  * util::NumericalFunctions::IntegerPower(zeta.z(), CZ[direction]);
             }
           }
 
 	inline static const LatticeInfo& GetLatticeInfo()
           {
 	    static const LatticeInfo singletonInfo = []() {
-	      util::Vector3D<int> vectors[DmQn::NUMVECTORS];
-              Direction inverseVectorIndices[DmQn::NUMVECTORS];
+	      util::Vector3D<int> vectors[NUMVECTORS];
+              Direction inverseVectorIndices[NUMVECTORS];
 
-              for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
+              for (Direction direction = 0; direction < NUMVECTORS; ++direction)
               {
-                vectors[direction] = util::Vector3D<int>(DmQn::CX[direction],
-                                                         DmQn::CY[direction],
-                                                         DmQn::CZ[direction]);
-                inverseVectorIndices[direction] = DmQn::INVERSEDIRECTIONS[direction];
+                vectors[direction] = util::Vector3D<int>(CX[direction],
+                                                         CY[direction],
+                                                         CZ[direction]);
+                inverseVectorIndices[direction] = INVERSEDIRECTIONS[direction];
               }
-	      return LatticeInfo(DmQn::NUMVECTORS, vectors, inverseVectorIndices);
+	      return LatticeInfo(NUMVECTORS, vectors, inverseVectorIndices);
 	    } ();
 
             return singletonInfo;
@@ -844,11 +903,11 @@ namespace hemelb
           {
             distribn_t strain_rate_tensor_i_j = 0.0;
 
-            for (Direction vec_index = 0; vec_index < DmQn::NUMVECTORS; vec_index++)
+            for (Direction vec_index = 0; vec_index < NUMVECTORS; vec_index++)
             {
               strain_rate_tensor_i_j += iFNeq[vec_index]
-                  * (DmQn::discreteVelocityVectors[iRow][vec_index]
-                      * DmQn::discreteVelocityVectors[iColumn][vec_index]);
+                  * (VECTORS[vec_index][iRow]
+                      * VECTORS[vec_index][iColumn]);
             }
 
             strain_rate_tensor_i_j *= -1.0 / (2.0 * iTau * iDensity * Cs2);
@@ -896,8 +955,6 @@ namespace hemelb
             return zetaHighOrders;
           }
       };
-    }
-  }
 }
 
 #endif

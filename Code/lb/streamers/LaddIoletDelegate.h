@@ -8,32 +8,28 @@
 
 #include "lb/streamers/SimpleBounceBackDelegate.h"
 
-namespace hemelb
+namespace hemelb::lb::streamers
 {
-  namespace lb
-  {
-    namespace streamers
+
+    template<typename CollisionImpl>
+    class LaddIoletDelegate : public SimpleBounceBackDelegate<CollisionImpl>
     {
+    public:
+        using CollisionType = CollisionImpl;
+        using LatticeType = typename CollisionType::CKernel::LatticeType;
 
-      template<typename CollisionImpl>
-      class LaddIoletDelegate : public SimpleBounceBackDelegate<CollisionImpl>
-      {
-        public:
-          typedef CollisionImpl CollisionType;
-          typedef typename CollisionType::CKernel::LatticeType LatticeType;
+        LaddIoletDelegate(CollisionType& delegatorCollider, kernels::InitParams& initParams) :
+                SimpleBounceBackDelegate<CollisionType>(delegatorCollider, initParams),
+                bValues(initParams.boundaryObject)
+        {
+        }
 
-          LaddIoletDelegate(CollisionType& delegatorCollider, kernels::InitParams& initParams) :
-              SimpleBounceBackDelegate<CollisionType>(delegatorCollider, initParams),
-                  bValues(initParams.boundaryObject)
-          {
-          }
-
-          inline void StreamLink(const LbmParameters* lbmParams,
-                                 geometry::FieldData& latticeData,
-                                 const geometry::Site<geometry::Domain>& site,
-                                 kernels::HydroVars<typename CollisionType::CKernel>& hydroVars,
-                                 const Direction& ii)
-          {
+        inline void StreamLink(const LbmParameters* lbmParams,
+                               geometry::FieldData& latticeData,
+                               const geometry::Site<geometry::Domain>& site,
+                               kernels::HydroVars<typename CollisionType::CKernel>& hydroVars,
+                               const Direction& ii)
+        {
             // Translating from Ladd, J. Fluid Mech. "Numerical simulations
             // of particulate suspensions via a discretized Boltzmann
             // equation. Part 1. Theoretical foundation", 1994
@@ -46,36 +42,31 @@ namespace hemelb
 
             int boundaryId = site.GetIoletId();
             iolets::InOutLetVelocity* iolet =
-                dynamic_cast<iolets::InOutLetVelocity*>(bValues->GetLocalIolet(boundaryId));
+                    dynamic_cast<iolets::InOutLetVelocity*>(bValues->GetLocalIolet(boundaryId));
             LatticePosition sitePos(site.GetGlobalSiteCoords());
 
             LatticePosition halfWay(sitePos);
-            halfWay.x += 0.5 * LatticeType::CX[ii];
-            halfWay.y += 0.5 * LatticeType::CY[ii];
-            halfWay.z += 0.5 * LatticeType::CZ[ii];
+            halfWay += 0.5 * LatticeType::VECTORS[ii];
 
             LatticeVelocity wallMom(iolet->GetVelocity(halfWay, bValues->GetTimeStep()));
             //TODO: Add site.GetGlobalSiteCoords() as a first argument?
 
             if (CollisionType::CKernel::LatticeType::IsLatticeCompressible())
             {
-              wallMom *= hydroVars.density;
+                wallMom *= hydroVars.density;
             }
 
             distribn_t correction = 2. * LatticeType::EQMWEIGHTS[ii]
-                * (wallMom.x * LatticeType::CX[ii] + wallMom.y * LatticeType::CY[ii]
-                    + wallMom.z * LatticeType::CZ[ii]) / Cs2;
+                                    * Dot(wallMom, LatticeType::VECTORS[ii]) / Cs2;
 
             * (latticeData.GetFNew(SimpleBounceBackDelegate<CollisionImpl>::GetBBIndex(site.GetIndex(),
-                                                                                        ii))) =
-                hydroVars.GetFPostCollision()[ii] - correction;
-          }
-        private:
-          iolets::BoundaryValues* bValues;
-      };
+                                                                                       ii))) =
+                    hydroVars.GetFPostCollision()[ii] - correction;
+        }
+    private:
+        iolets::BoundaryValues* bValues;
+    };
 
-    }
-  }
 }
 
 #endif /* HEMELB_LB_STREAMERS_LADDIOLETDELEGATE_H */

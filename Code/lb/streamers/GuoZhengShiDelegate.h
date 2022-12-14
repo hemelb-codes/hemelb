@@ -52,9 +52,9 @@ namespace hemelb
                 if (!localSite.IsWall())
                 {
                   hemelb::log::Logger::Log<hemelb::log::Error, hemelb::log::OnePerCore>("GZS streamer initialised with non wall site [%d, %d, %d]",
-                                                                                        localSiteLocation.x,
-                                                                                        localSiteLocation.y,
-                                                                                        localSiteLocation.z);
+                                                                                        localSiteLocation.x(),
+                                                                                        localSiteLocation.y(),
+                                                                                        localSiteLocation.z());
                   continue;
                 }
 
@@ -84,9 +84,9 @@ namespace hemelb
                   if (neighbourSiteHomeProc == SITE_OR_BLOCK_SOLID)
                   {
                     hemelb::log::Logger::Log<hemelb::log::Error, hemelb::log::OnePerCore>("Inconsistent cut links/neighbour status for site [%d, %d, %d]",
-                                                                                          localSiteLocation.x,
-                                                                                          localSiteLocation.y,
-                                                                                          localSiteLocation.z);
+                                                                                          localSiteLocation.x(),
+                                                                                          localSiteLocation.y(),
+                                                                                          localSiteLocation.z());
                     continue;
                   }
                   // If it's on this task, we don't need to request its data.
@@ -184,9 +184,7 @@ namespace hemelb
                   LatticePosition sitePos(site.GetGlobalSiteCoords());
 
                   LatticePosition neighPos(sitePos);
-                  neighPos.x += LatticeType::CX[i];
-                  neighPos.y += LatticeType::CY[i];
-                  neighPos.z += LatticeType::CZ[i];
+                  neighPos += LatticeType::VECTORS[i];
 
                   LatticeVelocity neighbourVelocity(iolet->GetVelocity(neighPos,
                                                                        bValues->GetTimeStep()));
@@ -232,12 +230,8 @@ namespace hemelb
                     // is because it is immediately divided by density when the function returns.
                     LatticeType::CalculateDensityMomentumFEq(neighbourFOld,
                                                              neighbourDensity,
-                                                             neighbourMomentum.x,
-                                                             neighbourMomentum.y,
-                                                             neighbourMomentum.z,
-                                                             neighbourVelocity.x,
-                                                             neighbourVelocity.y,
-                                                             neighbourVelocity.z,
+                                                             neighbourMomentum,
+                                                             neighbourVelocity,
                                                              neighbourFEq);
                   }
                   // Obtain a second estimate, this time ignoring the fluid site closest to
@@ -278,9 +272,7 @@ namespace hemelb
 
             // Calculate equilibrium values
             LatticeType::CalculateFeq(hydroVarsWall.density,
-                                      hydroVarsWall.momentum.x,
-                                      hydroVarsWall.momentum.y,
-                                      hydroVarsWall.momentum.z,
+                                      hydroVarsWall.momentum,
                                       hydroVarsWall.GetFEqPtr());
 
             // For the wall site, construct f_old  = f_eq + f_neq

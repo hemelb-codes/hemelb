@@ -64,13 +64,9 @@ namespace hemelb
             hydroVars.index = index;
             LatticeType::CalculateDensityAndMomentum(hydroVars.f,
                                                      hydroVars.density,
-                                                     hydroVars.momentum.x,
-                                                     hydroVars.momentum.y,
-                                                     hydroVars.momentum.z);
+                                                     hydroVars.momentum);
             LatticeType::CalculateEntropicFeqChik(hydroVars.density,
-                                                  hydroVars.momentum.x,
-                                                  hydroVars.momentum.y,
-                                                  hydroVars.momentum.z,
+                                                  hydroVars.momentum,
                                                   hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
@@ -89,9 +85,7 @@ namespace hemelb
           {
             hydroVars.index = index;
             LatticeType::CalculateEntropicFeqChik(hydroVars.density,
-                                                  hydroVars.momentum.x,
-                                                  hydroVars.momentum.y,
-                                                  hydroVars.momentum.z,
+                                                  hydroVars.momentum,
                                                   hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)

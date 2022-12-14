@@ -129,14 +129,10 @@ namespace hemelb
 
       LatticeType::CalculateFeq(targetDensity, targetH[0], targetH[1], targetH[2], equilibriumF);
       LatticeType::CalculateEntropicFeqAnsumali(targetDensity,
-						targetH[0],
-						targetH[1],
-						targetH[2],
+						targetH,
 						equilibriumEntropicFAnsumali);
       LatticeType::CalculateEntropicFeqChik(targetDensity,
-					    targetH[0],
-					    targetH[1],
-					    targetH[2],
+					    targetH,
 					    equilibriumEntropicFChikatamarla);
 
       LbTestsHelper::CalculateLBGKEqmF<LatticeType>(targetDensity,
@@ -208,7 +204,7 @@ namespace hemelb
 
 	  for (Direction index = 0; index < 3; index++)
 	    {
-	      REQUIRE(velocityVector[index] == LatticeType::discreteVelocityVectors[index][direction]);
+	      REQUIRE(velocityVector[index] == LatticeType::VECTORS[direction][index]);
 	    }
 	}
 

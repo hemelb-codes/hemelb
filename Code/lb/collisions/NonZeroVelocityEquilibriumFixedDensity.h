@@ -33,9 +33,7 @@ namespace hemelb
           {
             CKernel::LatticeType::CalculateDensityAndMomentum(hydroVars.f,
                                                               hydroVars.density,
-                                                              hydroVars.momentum.x,
-                                                              hydroVars.momentum.y,
-                                                              hydroVars.momentum.z);
+                                                              hydroVars.momentum);
 
             // Externally impose a density. Keep a record of the old one so we can scale the
             // momentum vector.

@@ -15,10 +15,8 @@
 #include "tests/helpers/FourCubeBasedTestFixture.h"
 #include "tests/lb/LbTestsHelper.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     constexpr distribn_t allowedError = 1e-10;
 
     // StreamerTests
@@ -428,9 +426,7 @@ namespace hemelb
 		// Compute the wall equilibrium dist
 		distribn_t fEqm[NUMVECTORS];
 		LATTICE::CalculateFeq(streamerHydroVars.density,
-				      momentumWall.x,
-				      momentumWall.y,
-				      momentumWall.z,
+				      momentumWall,
 				      fEqm);
 		// Perform collision on the wall f's
 		distribn_t prediction = fEqm[streamedDirection] + (1.0 + lbmParams.GetOmega()) * fNeqWall;
@@ -465,9 +461,7 @@ namespace hemelb
 		// Compute the wall equilibrium dist
 		distribn_t fEqm[NUMVECTORS];
 		LATTICE::CalculateFeq(streamerHydroVars.density,
-				      momentumWall.x,
-				      momentumWall.y,
-				      momentumWall.z,
+				      momentumWall,
 				      fEqm);
 
 		// Perform collision on the wall f's
@@ -706,7 +700,7 @@ namespace hemelb
 		
 	      // The velocity of the ghost site is the component of
 	      // the fluid site's velocity along the iolet normal.
-	      auto ghostSiteVelocity = ioletNormal * (streamerHydroVars.momentum / streamerHydroVars.density).Dot(ioletNormal);
+	      auto ghostSiteVelocity = ioletNormal * Dot(streamerHydroVars.momentum, ioletNormal)/ streamerHydroVars.density;
 
 	      auto ghostSiteMomentum = ghostSiteVelocity * ghostSiteDensity;
 
@@ -817,7 +811,7 @@ namespace hemelb
 
 	      // The velocity of the ghost site is the component of
 	      // the fluid site's velocity along the iolet normal.
-	      auto ghostSiteVelocity = ioletNormal * (streamerHydroVars.momentum / streamerHydroVars.density).Dot(ioletNormal);
+	      auto ghostSiteVelocity = ioletNormal * Dot(streamerHydroVars.momentum, ioletNormal)/ streamerHydroVars.density;
 
 	      auto ghostSiteMomentum = ghostSiteVelocity * ghostSiteDensity;
 
@@ -834,5 +828,4 @@ namespace hemelb
 	}
       }
     }
-  }
 }

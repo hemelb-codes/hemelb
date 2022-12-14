@@ -13,9 +13,10 @@ namespace hemelb
   {
     namespace lattices
     {
-      template<class DmQn>
-      class IncompressibleLattice : public Lattice<DmQn>
+      template<std::size_t Q, std::array<util::Vector3D<int>, Q> V, std::array<distribn_t, Q> W>
+      class IncompressibleLattice : public Lattice<Q, V, W>
       {
+          using Base = Lattice<Q, V, W>;
         public:
 
           inline static void CalculateFeq(const distribn_t &density, const distribn_t &momentum_x,
@@ -25,12 +26,12 @@ namespace hemelb
             const distribn_t momentumMagnitudeSquared = momentum_x * momentum_x
                 + momentum_y * momentum_y + momentum_z * momentum_z;
 
-            for (Direction i = 0; i < DmQn::NUMVECTORS; ++i)
+            for (Direction i = 0; i < Base::NUMVECTORS; ++i)
             {
-              const distribn_t mom_dot_ei = DmQn::CX[i] * momentum_x + DmQn::CY[i] * momentum_y
-                  + DmQn::CZ[i] * momentum_z;
+              const distribn_t mom_dot_ei = Base::CX[i] * momentum_x + Base::CY[i] * momentum_y
+                  + Base::CZ[i] * momentum_z;
 
-              f_eq[i] = DmQn::EQMWEIGHTS[i]
+              f_eq[i] = Base::EQMWEIGHTS[i]
                   * (density - (3. / 2.) * momentumMagnitudeSquared
                       + (9. / 2.) * mom_dot_ei * mom_dot_ei + 3. * mom_dot_ei);
             }
@@ -44,7 +45,7 @@ namespace hemelb
                                                          distribn_t &velocity_y,
                                                          distribn_t &velocity_z, distribn_t f_eq[])
           {
-            Lattice<DmQn>::CalculateDensityAndMomentum(f,
+              Base::CalculateDensityAndMomentum(f,
                                                        density,
                                                        momentum_x,
                                                        momentum_y,

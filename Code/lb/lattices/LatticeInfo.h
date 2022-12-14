@@ -6,51 +6,52 @@
 #ifndef HEMELB_LB_LATTICES_LATTICEINFO_H
 #define HEMELB_LB_LATTICES_LATTICEINFO_H
 
-#include <vector>
+#include <array>
+#include "Exception.h"
 #include "util/Vector3D.h"
 #include "units.h"
 
-namespace hemelb
+namespace hemelb::lb::lattices
 {
-  namespace lb
-  {
-    namespace lattices
+    class LatticeInfo
     {
-      class LatticeInfo
-      {
-        public:
-          inline LatticeInfo(unsigned numberOfVectors, const util::Vector3D<int>* vectors,
-                             const Direction* inverseVectorIndicesIn) :
-              numVectors(numberOfVectors), vectorSet(), inverseVectorIndices()
-          {
-            for (Direction direction = 0; direction < numberOfVectors; ++direction)
-            {
-              vectorSet.push_back(util::Vector3D<int>(vectors[direction]));
-              inverseVectorIndices.push_back(inverseVectorIndicesIn[direction]);
-            }
-          }
+    public:
+        constexpr LatticeInfo(
+                std::size_t numberOfVectors,
+                const util::Vector3D<int>* vectors,
+                const Direction* inverseVectorIndicesIn
+        ) : numVectors(numberOfVectors)
+        {
+            if (numberOfVectors > MAX_Q)
+                throw Exception() << "LatticeInfo only supports velocity sets with a maximum of " << MAX_Q << " velocities.";
 
-          inline unsigned GetNumVectors() const
-          {
+            std::copy(vectors, vectors + numberOfVectors, vectorSet.begin());
+            std::copy(inverseVectorIndicesIn, inverseVectorIndicesIn + numberOfVectors, inverseVectorIndices.begin());
+        }
+
+        constexpr unsigned GetNumVectors() const
+        {
             return numVectors;
-          }
+        }
 
-          inline const util::Vector3D<int>& GetVector(unsigned index) const
-          {
+        constexpr const util::Vector3D<int>& GetVector(unsigned index) const
+        {
             return vectorSet[index];
-          }
+        }
 
-          inline unsigned GetInverseIndex(unsigned index) const
-          {
+        constexpr unsigned GetInverseIndex(unsigned index) const
+        {
             return inverseVectorIndices[index];
-          }
+        }
 
-        private:
-          const unsigned numVectors;
-          std::vector<util::Vector3D<int> > vectorSet;
-          std::vector<Direction> inverseVectorIndices;
-      };
-    }
-  }
+    private:
+        // Max possible number to help with constexpr-ness
+        static constexpr std::size_t MAX_Q = 27;
+        // Actual number
+        unsigned numVectors;
+        // Make storage for maximum number
+        std::array<util::Vector3D<int>, MAX_Q> vectorSet;
+        std::array<Direction, MAX_Q> inverseVectorIndices;
+    };
 }
 #endif

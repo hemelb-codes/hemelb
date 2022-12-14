@@ -82,7 +82,7 @@ namespace hemelb
     template<>
     void CollisionTester<lb::kernels::EntropicChik<lb::lattices::D3Q15>>::make_feq(const distribn_t& density, const VEC& momentum, DISTS& feq) const {
       LATTICE::CalculateEntropicFeqChik(density,
-					momentum.x, momentum.y, momentum.z,
+					momentum,
 					feq);
     }
     template<>

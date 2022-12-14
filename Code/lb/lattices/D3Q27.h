@@ -8,35 +8,72 @@
 
 #include "lb/lattices/Lattice.h"
 
-namespace hemelb
+namespace hemelb::lb::lattices
 {
-  namespace lb
-  {
-    namespace lattices
-    {
-      class D3Q27 : public Lattice<D3Q27>
-      {
-        public:
-          // The number of discrete velocity vectors
-          static const Direction NUMVECTORS = 27;
+    using D3Q27 = Lattice<
+            27,
+            std::array<util::Vector3D<int>, 27>{
+                    {
+                            {0, 0, 0},
+                            {1, 0, 0},
+                            {-1, 0, 0},
+                            {0, 1, 0},
+                            {0, -1, 0},
+                            {0, 0, 1},
+                            {0, 0, -1},
+                            {1, 1, 0},
+                            {-1, -1, 0},
+                            {1, -1, 0},
+                            {-1, 1, 0},
+                            {1, 0, 1},
+                            {-1, 0, -1},
+                            {1, 0, -1},
+                            {-1, 0, 1},
+                            {0, 1, 1},
+                            {0, -1, -1},
+                            {0, 1, -1},
+                            {0, -1, 1},
+                            {1, 1, 1},
+                            {-1, -1, -1},
+                            {1, 1, -1},
+                            {-1, -1, 1},
+                            {1, -1, 1},
+                            {-1, 1, -1},
+                            {1, -1, -1},
+                            {-1, 1, 1}
+                    }
+            },
+            std::array<distribn_t , 27>{
+                    8.0 / 27.0,
+                    2.0 / 27.0,
+                    2.0 / 27.0,
+                    2.0 / 27.0,
+                    2.0 / 27.0,
+                    2.0 / 27.0,
+                    2.0 / 27.0,
+                    1.0 / 54.0,
+                    1.0 / 54.0,
+                    1.0 / 54.0,
+                    1.0 / 54.0,
+                    1.0 / 54.0,
+                    1.0 / 54.0,
+                    1.0 / 54.0,
+                    1.0 / 54.0,
+                    1.0 / 54.0,
+                    1.0 / 54.0,
+                    1.0 / 54.0,
+                    1.0 / 54.0,
+                    1.0 / 216.0,
+                    1.0 / 216.0,
+                    1.0 / 216.0,
+                    1.0 / 216.0,
+                    1.0 / 216.0,
+                    1.0 / 216.0,
+                    1.0 / 216.0,
+                    1.0 / 216.0
+            }
+    >;
 
-          // The x, y and z components of each of the discrete velocity vectors
-          static const int CX[NUMVECTORS];
-          static const int CY[NUMVECTORS];
-          static const int CZ[NUMVECTORS];
-          static const int* discreteVelocityVectors[3];
-
-          // the same in double (in order to prevent int->double conversions), and aligned to 16B
-          static const distribn_t CXD[NUMVECTORS] __attribute__((aligned(16)));
-          static const distribn_t CYD[NUMVECTORS] __attribute__((aligned(16)));
-          static const distribn_t CZD[NUMVECTORS] __attribute__((aligned(16)));
-
-          static const double EQMWEIGHTS[NUMVECTORS] __attribute__((aligned(16)));
-          // The index of the inverse direction of each discrete velocity vector
-          static const Direction INVERSEDIRECTIONS[NUMVECTORS];
-      };
-    }
-  }
 }
 
 #endif

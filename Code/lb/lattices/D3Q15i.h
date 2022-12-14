@@ -7,37 +7,45 @@
 
 #include "lb/lattices/IncompressibleLattice.h"
 
-namespace hemelb
-{
-  namespace lb
-  {
-    namespace lattices
-    {
+namespace hemelb::lb::lattices {
+    using D3Q15i = IncompressibleLattice<15,
+            std::array<util::Vector3D<int>, 15>{{
+                                                        {0, 0, 0},
 
-      class D3Q15i : public hemelb::lb::lattices::IncompressibleLattice<D3Q15i>
-      {
-        public:
-          // The number of discrete velocity vectors
-          static const Direction NUMVECTORS = 15;
+                                                        {1, 0, 0},
+                                                        {-1, 0, 0},
+                                                        {0, 1, 0},
+                                                        {0, -1, 0},
+                                                        {0, 0, 1},
+                                                        {0, 0, -1},
 
-          // The x, y and z components of each of the discrete velocity vectors
-          static const int CX[NUMVECTORS];
-          static const int CY[NUMVECTORS];
-          static const int CZ[NUMVECTORS];
-          static const int* discreteVelocityVectors[3];
+                                                        {1, 1, 1},
+                                                        {-1, -1, -1},
+                                                        {1, 1, -1},
+                                                        {-1, -1, 1},
+                                                        {1, -1, 1},
+                                                        {-1, 1, -1},
+                                                        {1, -1, -1},
+                                                        {-1, 1, 1}
+                                                }},
+            std::array<distribn_t, 15>{
+                    2.0 / 9.0,
 
-          // the same in double (in order to prevent int->double conversions), and aligned to 16B
-          static const distribn_t CXD[NUMVECTORS] __attribute__((aligned(16)));
-          static const distribn_t CYD[NUMVECTORS] __attribute__((aligned(16)));
-          static const distribn_t CZD[NUMVECTORS] __attribute__((aligned(16)));
+                    1.0 / 9.0,
+                    1.0 / 9.0,
+                    1.0 / 9.0,
+                    1.0 / 9.0,
+                    1.0 / 9.0,
+                    1.0 / 9.0,
 
-          static const double EQMWEIGHTS[NUMVECTORS] __attribute__((aligned(16)));
-
-          // The index of the inverse direction of each discrete velocity vector
-          static const Direction INVERSEDIRECTIONS[NUMVECTORS];
-      };
-
-    } /* namespace lattices */
-  } /* namespace lb */
-} /* namespace hemelb */
-#endif /* HEMELB_LB_LATTICES_D3Q15I_H */
+                    1.0 / 72.0,
+                    1.0 / 72.0,
+                    1.0 / 72.0,
+                    1.0 / 72.0,
+                    1.0 / 72.0,
+                    1.0 / 72.0,
+                    1.0 / 72.0,
+                    1.0 / 72.0
+            }>;
+}
+#endif

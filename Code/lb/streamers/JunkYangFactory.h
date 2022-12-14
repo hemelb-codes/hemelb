@@ -335,8 +335,8 @@ namespace hemelb
                         * LatticeType::EQMWEIGHTS[*rowIndexIncomingVelocity]
                         * ( (rowColdirectionsInnProd * rowColdirectionsInnProd)
                             - (rowRowdirectionsInnProd / 3.0)
-                            - LatticeType::discreteVelocityVectors[ALPHA][*rowIndexIncomingVelocity]
-                                * LatticeType::discreteVelocityVectors[ALPHA][*rowIndexIncomingVelocity]
+                            - LatticeType::VECTORS[*rowIndexIncomingVelocity][ALPHA]
+                                * LatticeType::VECTORS[*rowIndexIncomingVelocity][ALPHA]
                                 * (colColdirectionsInnProd - (DIMENSION / 3.0)));
 
                 assert(fabs(kMatrices[contiguousSiteIndex](rowIndex, columnIndex)) < 1e3);
@@ -379,8 +379,8 @@ namespace hemelb
                         * LatticeType::EQMWEIGHTS[*rowIndexIncomingVelocity]
                         * ( (rowColdirectionsInnProd * rowColdirectionsInnProd)
                             - (rowRowdirectionsInnProd / 3.0)
-                            - LatticeType::discreteVelocityVectors[ALPHA][*rowIndexIncomingVelocity]
-                                * LatticeType::discreteVelocityVectors[ALPHA][*rowIndexIncomingVelocity]
+                            - LatticeType::VECTORS[*rowIndexIncomingVelocity][ALPHA]
+                                * LatticeType::VECTORS[*rowIndexIncomingVelocity][ALPHA]
                                 * (colColdirectionsInnProd - (DIMENSION / 3.0)));
 
                 assert(fabs(kMatrices[contiguousSiteIndex](rowIndex, columnIndex)) < 1e3);
