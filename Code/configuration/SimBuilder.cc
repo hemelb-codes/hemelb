@@ -15,12 +15,12 @@
 
 namespace hemelb::configuration {
 
-    util::UnitConverter build_unit_converter(GlobalSimInfo const& info) {
-        return {
+    auto build_unit_converter(GlobalSimInfo const& info) {
+        return std::make_shared<util::UnitConverter>(
             info.time.step_s,
             info.space.step_m, info.space.geometry_origin_m,
             info.fluid.density_kgm3, info.fluid.reference_pressure_mmHg
-        };
+        );
     }
 
     SimBuilder::SimBuilder(configuration::SimConfig const& conf) :
@@ -31,12 +31,11 @@ namespace hemelb::configuration {
     }
 
     util::UnitConverter const& SimBuilder::GetUnitConverter() const {
-        return unit_converter;
+        return *unit_converter;
     }
 
     lb::SimulationState SimBuilder::BuildSimulationState() const {
-        return lb::SimulationState(config.GetTimeStepLength(),
-                                   config.GetTotalTimeSteps());
+        return {config.GetTimeStepLength(), config.GetTotalTimeSteps()};
     }
     geometry::GmyReadResult SimBuilder::ReadGmy(lb::lattices::LatticeInfo const& lat_info, reporting::Timers& timings, net::IOCommunicator& ioComms) const {
         geometry::GeometryReader reader(lat_info,
@@ -73,7 +72,7 @@ namespace hemelb::configuration {
 
     // Factory function just delegates to visitor
     lb::InitialCondition SimBuilder::BuildInitialCondition() const {
-        return std::visit(ICMaker{unit_converter}, config.initial_condition);
+        return std::visit(ICMaker{*unit_converter}, config.initial_condition);
     }
 
     // Build the iolets
@@ -103,11 +102,11 @@ namespace hemelb::configuration {
         BuildBaseIolet(ic, ans.get());
 
         // Amplitude is a pressure DIFFERENCE (no use of REFERENCE_PRESSURE)
-        ans->SetPressureAmp(unit_converter.ConvertPressureDifferenceToLatticeUnits(ic.amp_mmHg));
+        ans->SetPressureAmp(unit_converter->ConvertPressureDifferenceToLatticeUnits(ic.amp_mmHg));
         // Mean is an absolute pressure
-        ans->SetPressureMean(unit_converter.ConvertPressureToLatticeUnits(ic.mean_mmHg));
+        ans->SetPressureMean(unit_converter->ConvertPressureToLatticeUnits(ic.mean_mmHg));
         ans->SetPhase(ic.phase_rad);
-        ans->SetPeriod(unit_converter.ConvertTimeToLatticeUnits(ic.period_s));
+        ans->SetPeriod(unit_converter->ConvertTimeToLatticeUnits(ic.period_s));
         return ans;
     }
 
@@ -130,17 +129,17 @@ namespace hemelb::configuration {
     auto SimBuilder::BuildParabolicVelocityIolet(const ParabolicVelocityIoletConfig& ic) const -> IoletPtr {
         auto ans = util::make_clone_ptr<lb::iolets::InOutLetParabolicVelocity>();
         BuildBaseIolet(ic, ans.get());
-        ans->SetRadius(unit_converter.ConvertDistanceToLatticeUnits(ic.radius_m));
-        ans->SetMaxSpeed(unit_converter.ConvertSpeedToLatticeUnits(ic.max_speed_ms));
+        ans->SetRadius(unit_converter->ConvertDistanceToLatticeUnits(ic.radius_m));
+        ans->SetMaxSpeed(unit_converter->ConvertSpeedToLatticeUnits(ic.max_speed_ms));
         return ans;
     }
 
     auto SimBuilder::BuildWomersleyVelocityIolet(const WomersleyVelocityIoletConfig& ic) const -> IoletPtr {
         auto ans = util::make_clone_ptr<lb::iolets::InOutLetWomersleyVelocity>();
         BuildBaseIolet(ic, ans.get());
-        ans->SetRadius(unit_converter.ConvertDistanceToLatticeUnits(ic.radius_m));
-        ans->SetPressureGradientAmplitude(unit_converter.ConvertPressureGradientToLatticeUnits(ic.pgrad_amp_mmHgm));
-        ans->SetPeriod(unit_converter.ConvertTimeToLatticeUnits(ic.period_s));
+        ans->SetRadius(unit_converter->ConvertDistanceToLatticeUnits(ic.radius_m));
+        ans->SetPressureGradientAmplitude(unit_converter->ConvertPressureGradientToLatticeUnits(ic.pgrad_amp_mmHgm));
+        ans->SetPeriod(unit_converter->ConvertTimeToLatticeUnits(ic.period_s));
         ans->SetWomersleyNumber(ic.womersley);
         return ans;
     }
@@ -149,14 +148,14 @@ namespace hemelb::configuration {
         auto ans = util::make_clone_ptr<lb::iolets::InOutLetFileVelocity>();
         BuildBaseIolet(ic, ans.get());
         ans->SetFilePath(ic.file_path);
-        ans->SetRadius(unit_converter.ConvertDistanceToLatticeUnits(ic.radius_m));
+        ans->SetRadius(unit_converter->ConvertDistanceToLatticeUnits(ic.radius_m));
         return ans;
     }
 
     void SimBuilder::BuildBaseIolet(IoletConfigBase const& conf,
                                         lb::iolets::InOutLet* obj) const
     {
-        obj->SetPosition(unit_converter.ConvertPositionToLatticeUnits(conf.position));
+        obj->SetPosition(unit_converter->ConvertPositionToLatticeUnits(conf.position));
         obj->SetNormal(conf.normal);
     }
 

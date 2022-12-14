@@ -122,7 +122,7 @@ namespace hemelb
       std::shared_ptr<net::IteratedAction> colloidController;
       net::Net communicationNet;
 
-      std::optional<util::UnitConverter> unitConverter;
+      std::shared_ptr<util::UnitConverter> unitConverter;
 
       std::shared_ptr<extraction::IterableDataSource> propertyDataSource;
       std::shared_ptr<extraction::PropertyActor> propertyExtractor;

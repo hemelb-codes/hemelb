@@ -285,7 +285,7 @@ namespace hemelb
   template<class TRAITS>
   const util::UnitConverter& SimulationMaster<TRAITS>::GetUnitConverter() const
   {
-    return unitConverter.value();
+    return *unitConverter;
   }
 }
 

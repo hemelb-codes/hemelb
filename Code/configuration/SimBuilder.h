@@ -46,7 +46,7 @@ namespace hemelb::configuration {
 
     protected:
         configuration::SimConfig config;
-        util::UnitConverter unit_converter;
+        std::shared_ptr<util::UnitConverter> unit_converter;
 
     public:
         explicit SimBuilder(SimConfig const& conf);
@@ -59,13 +59,13 @@ namespace hemelb::configuration {
                                                const std::string& units, T& value)
         {
             GetDimensionalValue(elem, units, value);
-            value = unit_converter.ConvertToLatticeUnits(units, value);
+            value = unit_converter->ConvertToLatticeUnits(units, value);
         }
 
         template<typename T>
         T ConvertToLatticeUnits(T const& val, std::string_view units)
         {
-            return unit_converter.template ConvertToLatticeUnits(units, val);
+            return unit_converter->template ConvertToLatticeUnits(units, val);
         }
 
         // Fully build the SimulationMaster<T> from the configuration.
@@ -114,7 +114,7 @@ namespace hemelb::configuration {
         auto& timings = control.timings;
         auto& ioComms = control.ioComms;
         using latticeType = typename T::latticeType;
-        auto lat_info = latticeType::GetLatticeInfo();
+        auto& lat_info = latticeType::GetLatticeInfo();
 
         control.unitConverter = unit_converter;
 
@@ -175,7 +175,7 @@ namespace hemelb::configuration {
                 BuildIolets(config.GetInlets()),
                 &*control.simulationState,
                 ioComms,
-                unit_converter
+                *unit_converter
         );
         maybe_register_actor(control.inletValues, 1);
 
@@ -185,14 +185,14 @@ namespace hemelb::configuration {
                 BuildIolets(config.GetOutlets()),
                 &*control.simulationState,
                 ioComms,
-                unit_converter
+                *unit_converter
         );
         maybe_register_actor(control.outletValues, 1);
 
         // Copy cos about to scale to lattice units.
         auto mon_conf = config.GetMonitoringConfiguration();
         if (std::holds_alternative<extraction::source::Velocity>(mon_conf.convergenceVariable)) {
-            mon_conf.convergenceReferenceValue = unit_converter.ConvertSpeedToLatticeUnits(mon_conf.convergenceReferenceValue);
+            mon_conf.convergenceReferenceValue = unit_converter->ConvertSpeedToLatticeUnits(mon_conf.convergenceReferenceValue);
         }
 
         // Always track stability
@@ -221,8 +221,7 @@ namespace hemelb::configuration {
         }
 
         lbm->Initialise(control.inletValues.get(),
-                        control.outletValues.get(),
-                        &unit_converter);
+                        control.outletValues.get());
         auto ic = BuildInitialCondition();
         lbm->SetInitialConditions(ic, ioComms);
         ndm->ShareNeeds();

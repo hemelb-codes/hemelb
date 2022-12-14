@@ -117,12 +117,10 @@ namespace hemelb
 
     template<class TRAITS>
     void LBM<TRAITS>::Initialise(iolets::BoundaryValues* iInletValues,
-                                 iolets::BoundaryValues* iOutletValues,
-                                 const util::UnitConverter* iUnits)
+                                 iolets::BoundaryValues* iOutletValues)
     {
       mInletValues = iInletValues;
       mOutletValues = iOutletValues;
-      mUnits = iUnits;
 
       InitCollisions();
     }

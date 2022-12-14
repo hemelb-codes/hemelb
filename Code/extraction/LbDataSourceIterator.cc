@@ -5,16 +5,13 @@
 
 #include "extraction/LbDataSourceIterator.h"
 
-namespace hemelb
+namespace hemelb::extraction
 {
-  namespace extraction
-  {
     LbDataSourceIterator::LbDataSourceIterator(const lb::MacroscopicPropertyCache& propertyCache,
                                                const geometry::FieldData& data, int rank_,
-                                               const util::UnitConverter& converter) :
-        propertyCache(propertyCache), data(data), rank(rank_), converter(converter), position(-1)
+                                               std::shared_ptr<util::UnitConverter> converter) :
+            propertyCache(propertyCache), data(data), rank(rank_), converter(std::move(converter)), position(-1)
     {
-
     }
 
     bool LbDataSourceIterator::ReadNext()
@@ -36,44 +33,44 @@ namespace hemelb
 
     FloatingType LbDataSourceIterator::GetPressure() const
     {
-      return converter.ConvertPressureToPhysicalUnits(propertyCache.densityCache.Get(position)
+      return converter->ConvertPressureToPhysicalUnits(propertyCache.densityCache.Get(position)
           * Cs2);
     }
 
     util::Vector3D<FloatingType> LbDataSourceIterator::GetVelocity() const
     {
-      return converter.ConvertVelocityToPhysicalUnits(propertyCache.velocityCache.Get(position).as<float>());
+      return converter->ConvertVelocityToPhysicalUnits(propertyCache.velocityCache.Get(position).as<float>());
     }
 
     FloatingType LbDataSourceIterator::GetShearStress() const
     {
-      return converter.ConvertStressToPhysicalUnits(propertyCache.wallShearStressMagnitudeCache.Get(position));
+      return converter->ConvertStressToPhysicalUnits(propertyCache.wallShearStressMagnitudeCache.Get(position));
     }
 
     FloatingType LbDataSourceIterator::GetVonMisesStress() const
     {
-      return converter.ConvertStressToPhysicalUnits(propertyCache.vonMisesStressCache.Get(position));
+      return converter->ConvertStressToPhysicalUnits(propertyCache.vonMisesStressCache.Get(position));
     }
 
     FloatingType LbDataSourceIterator::GetShearRate() const
     {
-      return converter.ConvertShearRateToPhysicalUnits(propertyCache.shearRateCache.Get(position));
+      return converter->ConvertShearRateToPhysicalUnits(propertyCache.shearRateCache.Get(position));
     }
 
     util::Matrix3D LbDataSourceIterator::GetStressTensor() const
     {
-      return converter.ConvertFullStressTensorToPhysicalUnits(propertyCache.stressTensorCache.Get(position));
+      return converter->ConvertFullStressTensorToPhysicalUnits(propertyCache.stressTensorCache.Get(position));
     }
 
     util::Vector3D<PhysicalStress> LbDataSourceIterator::GetTraction() const
     {
-      return converter.ConvertTractionToPhysicalUnits(propertyCache.tractionCache.Get(position),
+      return converter->ConvertTractionToPhysicalUnits(propertyCache.tractionCache.Get(position),
                                                       data.GetSite(position).GetWallNormal());
     }
 
     util::Vector3D<PhysicalStress> LbDataSourceIterator::GetTangentialProjectionTraction() const
     {
-      return converter.ConvertStressToPhysicalUnits(propertyCache.tangentialProjectionTractionCache.Get(position));
+      return converter->ConvertStressToPhysicalUnits(propertyCache.tangentialProjectionTractionCache.Get(position));
     }
 
     const distribn_t* LbDataSourceIterator::GetDistribution() const
@@ -99,12 +96,12 @@ namespace hemelb
 
     PhysicalDistance LbDataSourceIterator::GetVoxelSize() const
     {
-      return converter.GetVoxelSize();
+      return converter->GetVoxelSize();
     }
 
     const PhysicalPosition& LbDataSourceIterator::GetOrigin() const
     {
-      return converter.GetLatticeOrigin();
+      return converter->GetLatticeOrigin();
     }
 
     bool LbDataSourceIterator::IsWallSite(const util::Vector3D<site_t>& location) const
@@ -118,5 +115,4 @@ namespace hemelb
     {
       return data.GetDomain().GetLatticeInfo().GetNumVectors();
     }
-  }
 }

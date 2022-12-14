@@ -41,7 +41,7 @@ namespace hemelb
         std::vector<site_t> localContiguousIndex;
 
         // Constant for the id assigned to any solid sites.
-        static const site_t SOLID_SITE_ID;
+        static constexpr site_t SOLID_SITE_ID = 1U << 31;
     };
   }
 }

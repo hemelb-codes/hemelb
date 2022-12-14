@@ -19,13 +19,11 @@
 #include "Traits.h"
 #include <typeinfo>
 
-namespace hemelb
+/**
+ * Namespace 'lb' contains classes for the scientific core of the Lattice Boltzman simulation
+ */
+namespace hemelb::lb
 {
-  /**
-   * Namespace 'lb' contains classes for the scientific core of the Lattice Boltzman simulation
-   */
-  namespace lb
-  {
     /**
      * Class providing core Lattice Boltzmann functionality.
      * Implements the IteratedAction interface.
@@ -78,8 +76,7 @@ namespace hemelb
          *
          */
         void Initialise(iolets::BoundaryValues* iInletValues,
-                        iolets::BoundaryValues* iOutletValues,
-                        const util::UnitConverter* iUnits);
+                        iolets::BoundaryValues* iOutletValues);
 
         void SetInitialConditions(lb::InitialCondition const& ic_conf, const net::IOCommunicator& ioComms);
 
@@ -138,8 +135,6 @@ namespace hemelb
 
         LbmParameters mParams;
 
-        const util::UnitConverter* mUnits;
-
         hemelb::reporting::Timers &timings;
 
         MacroscopicPropertyCache propertyCache;
@@ -147,6 +142,5 @@ namespace hemelb
         geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
     };
 
-  } // Namespace lb
-} // Namespace hemelb
+}
 #endif // HEMELB_LB_LB_H

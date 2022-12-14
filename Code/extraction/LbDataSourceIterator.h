@@ -11,10 +11,8 @@
 #include "lb/MacroscopicPropertyCache.h"
 #include "util/UnitConverter.h"
 
-namespace hemelb
+namespace hemelb::extraction
 {
-  namespace extraction
-  {
     class LbDataSourceIterator : public IterableDataSource
     {
       public:
@@ -27,7 +25,7 @@ namespace hemelb
          */
         LbDataSourceIterator(const lb::MacroscopicPropertyCache& propertyCache,
                              const geometry::FieldData& data, int rank,
-                             const util::UnitConverter& converter);
+                             std::shared_ptr<util::UnitConverter> converter);
 
         /**
          * Reads the next fluid site from the data source. Returns true if values could
@@ -35,72 +33,72 @@ namespace hemelb
          *
          * @return
          */
-        bool ReadNext();
+        bool ReadNext() override;
 
         /**
          * Returns the coordinates of the site.
          * @return
          */
-        util::Vector3D<site_t> GetPosition() const;
+        [[nodiscard]] util::Vector3D<site_t> GetPosition() const override;
 
         /**
          * Returns the pressure at the site.
          * @return
          */
-        FloatingType GetPressure() const;
+        [[nodiscard]] FloatingType GetPressure() const override;
 
         /**
          * Returns the velocity at the site.
          * @return
          */
-        util::Vector3D<FloatingType> GetVelocity() const;
+        [[nodiscard]] util::Vector3D<FloatingType> GetVelocity() const override;
 
         /**
          * Returns the shear stress at the site.
          * @return
          */
-        FloatingType GetShearStress() const;
+        [[nodiscard]] FloatingType GetShearStress() const override;
 
         /**
          * Returns the Von Mises stress at the site.
          * @return
          */
-        FloatingType GetVonMisesStress() const;
+        [[nodiscard]] FloatingType GetVonMisesStress() const override;
 
         /**
          * Returns the shear rate at the site.
          * @return shear rate
          */
-        FloatingType GetShearRate() const;
+        [[nodiscard]] FloatingType GetShearRate() const override;
 
         /**
          * Returns the full stress tensor at the site.
          * @return stress tensor
          */
-        util::Matrix3D GetStressTensor() const;
+        [[nodiscard]] util::Matrix3D GetStressTensor() const override;
 
         /**
          * Returns the traction vector at a wall site (i.e. stress tensor times surface normal).
          * @return traction vector
          */
-        util::Vector3D<PhysicalStress> GetTraction() const;
+        [[nodiscard]] util::Vector3D<PhysicalStress> GetTraction() const override;
 
         /**
          * Returns the projection of the traction vector on the tangential plane of a wall site.
          * @return projected traction vector
          */
-        util::Vector3D<PhysicalStress> GetTangentialProjectionTraction() const;
+        [[nodiscard]] util::Vector3D<PhysicalStress> GetTangentialProjectionTraction() const override;
 
         /**
          * Returns a pointer to the velocity distribution of a site.
          * @return pointer to a velocity distribution
          */
-        const distribn_t* GetDistribution() const;
+        [[nodiscard]] const distribn_t* GetDistribution() const override;
 
         /**
          * Resets the iterator to the beginning again.
          */
-        void Reset();
+        void Reset() override;
 
         /**
          * Returns true iff the passed location is within the lattice.
@@ -108,27 +106,27 @@ namespace hemelb
          * @param
          * @return
          */
-        bool IsValidLatticeSite(const util::Vector3D<site_t>& location) const;
+        [[nodiscard]] bool IsValidLatticeSite(const util::Vector3D<site_t>& location) const override;
 
         /**
          * Returns true iff the given location is available on this core (i.e. if the data
          * lives on this core).
          * @return
          */
-        bool IsAvailable(const util::Vector3D<site_t>& location) const;
+        [[nodiscard]] bool IsAvailable(const util::Vector3D<site_t>& location) const override;
 
         /**
          * Returns the real-world size of a single lattice unit.
          * @return
          */
-        PhysicalDistance GetVoxelSize() const;
+        [[nodiscard]] PhysicalDistance GetVoxelSize() const override;
 
         /**
          * Returns the origin of the geometry in real, spatial units.
          *
          * @return
          */
-        const PhysicalPosition& GetOrigin() const;
+        [[nodiscard]] const PhysicalPosition& GetOrigin() const override;
 
         /**
          * Returns true if the site at the given location is marked as a wall site
@@ -137,13 +135,13 @@ namespace hemelb
          * @param location coordinates of interest
          * @return whether there is a boundary site at location
          */
-        bool IsWallSite(const util::Vector3D<site_t>& location) const;
+        [[nodiscard]] bool IsWallSite(const util::Vector3D<site_t>& location) const override;
 
         /**
          * Returns the number of components in a velocity distribution.
          * @return
          */
-	unsigned GetNumVectors() const;
+        [[nodiscard]] unsigned GetNumVectors() const override;
 
       private:
         /**
@@ -161,13 +159,12 @@ namespace hemelb
         /**
          * Object capable of converting from physical to lattice units and vice versa.
          */
-        const util::UnitConverter& converter;
+        std::shared_ptr<util::UnitConverter> converter;
         /**
          * Iteration variable for tracking progress through all the local fluid sites.
          */
         site_t position;
     };
-  }
 }
 
 #endif /* HEMELB_EXTRACTION_LBDATASOURCEITERATOR_H */
