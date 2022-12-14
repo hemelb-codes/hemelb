@@ -80,7 +80,7 @@ on lldbRun(binary, pIds)
 			delay 1
 			do script ("frame select -r 3") in curTab
 			do script ("expr amWaiting = 0") in curTab
-			do script ("breakpoint set -F hemelb::debug::ActiveDebugger::BreakHere()") in curTab
+			do script ("breakpoint set -n hemelb::debug::ActiveDebugger::BreakHere") in curTab
 			do script ("breakpoint command add -o 'finish' 1") in curTab
 			do script ("continue") in curTab
 		end repeat
