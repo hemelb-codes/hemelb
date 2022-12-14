@@ -52,7 +52,7 @@ namespace hemelb
 
     bool BlockTraverser::IsValidLocation(util::Vector3D<site_t> iBlock)
     {
-      return mLatticeData.IsValidBlock(iBlock.x, iBlock.y, iBlock.z);
+      return mLatticeData.IsValidBlock(iBlock);
     }
 
     bool BlockTraverser::GoToNextBlock()
@@ -62,17 +62,17 @@ namespace hemelb
 
     site_t BlockTraverser::GetXCount() const
     {
-      return mLatticeData.GetBlockDimensions().x;
+      return mLatticeData.GetBlockDimensions().x();
     }
 
     site_t BlockTraverser::GetYCount() const
     {
-      return mLatticeData.GetBlockDimensions().y;
+      return mLatticeData.GetBlockDimensions().y();
     }
 
     site_t BlockTraverser::GetZCount() const
     {
-      return mLatticeData.GetBlockDimensions().z;
+      return mLatticeData.GetBlockDimensions().z();
     }
   }
 }

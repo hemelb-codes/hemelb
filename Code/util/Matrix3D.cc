@@ -121,7 +121,7 @@ namespace hemelb
       LatticePosition const b0 = b.GetNormalised();
       // Special case where a0 == b0: Rotation is identity
       // Also works for a = 0 and b = 0... But that's just bad input
-      if (a0.Cross(b0).GetMagnitude() < 1e-8)
+      if (Cross(a0, b0).GetMagnitude() < 1e-8)
       {
         for (size_t i(0); i < 3; ++i)
         {
@@ -135,9 +135,9 @@ namespace hemelb
         return result;
       }
 
-      LatticePosition const u = (a0.Cross(b0)).GetNormalised();
-      LatticePosition const a1 = a0.Cross(u).GetNormalised();
-      LatticePosition const b1 = b0.Cross(u).GetNormalised();
+      LatticePosition const u = Cross(a0, b0).GetNormalised();
+      LatticePosition const a1 = Cross(a0, u).GetNormalised();
+      LatticePosition const b1 = Cross(b0, u).GetNormalised();
 
       // HemeLB doesn't need linear algebra, so it doesn't have it - cos that would be
       // complicated - which in turn implies it doesn't need it. Instead, do lets use a square
@@ -168,17 +168,17 @@ namespace hemelb
     {
       auto const u = axis.GetNormalised();
       Matrix3D result;
-      result[0][0] = std::cos(theta) + u.x * u.x * (1 - std::cos(theta));
-      result[1][0] = u.y * u.x * (1 - std::cos(theta)) + u.z * std::sin(theta);
-      result[2][0] = u.z * u.x * (1 - std::cos(theta)) - u.y * std::sin(theta);
+      result[0][0] = std::cos(theta) + u.x() * u.x() * (1 - std::cos(theta));
+      result[1][0] = u.y() * u.x() * (1 - std::cos(theta)) + u.z() * std::sin(theta);
+      result[2][0] = u.z() * u.x() * (1 - std::cos(theta)) - u.y() * std::sin(theta);
 
-      result[0][1] = u.y * u.x * (1 - std::cos(theta)) - u.z * std::sin(theta);
-      result[1][1] = std::cos(theta) + u.y * u.y * (1 - std::cos(theta));
-      result[2][1] = u.z * u.y * (1 - std::cos(theta)) + u.x * std::sin(theta);
+      result[0][1] = u.y() * u.x() * (1 - std::cos(theta)) - u.z() * std::sin(theta);
+      result[1][1] = std::cos(theta) + u.y() * u.y() * (1 - std::cos(theta));
+      result[2][1] = u.z() * u.y() * (1 - std::cos(theta)) + u.x() * std::sin(theta);
 
-      result[0][2] = u.x * u.z * (1 - std::cos(theta)) + u.y * std::sin(theta);
-      result[1][2] = u.z * u.y * (1 - std::cos(theta)) - u.x * std::sin(theta);
-      result[2][2] = std::cos(theta) + u.z * u.z * (1 - std::cos(theta));
+      result[0][2] = u.x() * u.z() * (1 - std::cos(theta)) + u.y() * std::sin(theta);
+      result[1][2] = u.z() * u.y() * (1 - std::cos(theta)) - u.x() * std::sin(theta);
+      result[2][2] = std::cos(theta) + u.z() * u.z() * (1 - std::cos(theta));
 
       return result;
     }

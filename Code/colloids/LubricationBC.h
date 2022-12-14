@@ -42,9 +42,9 @@ namespace hemelb
                 - particle.GetRadius();
 
             log::Logger::Log<log::Trace, log::OnePerCore>("*** In LubricationBC::DoSomethingToParticle - wall vector: {%g,%g,%g}, mag: %g, particle radius: %g, separation_h: %g\n",
-                                                          particleToWallVector.x,
-                                                          particleToWallVector.y,
-                                                          particleToWallVector.z,
+                                                          particleToWallVector.x(),
+                                                          particleToWallVector.y(),
+                                                          particleToWallVector.z(),
                                                           particleToWallVector.GetMagnitude(),
                                                           particle.GetRadius(),
                                                           separation_h);
@@ -52,7 +52,7 @@ namespace hemelb
             if (separation_h <= effectiveRange)
             {
               lubricationVelocityAdjustment += particleToWallVector.GetNormalised()
-                  * particle.GetVelocity().Dot(particleToWallVector.GetNormalised())
+                  * Dot(particle.GetVelocity(), particleToWallVector.GetNormalised())
                   * ( (separation_h - effectiveRange) / (separation_h * effectiveRange))
                   * particle.GetRadius() * particle.GetRadius()
                   * particle.GetInverseNormalisedRadius();
@@ -61,9 +61,9 @@ namespace hemelb
                                                             particle.GetInverseNormalisedRadius(),
                                                             ( (effectiveRange - separation_h)
                                                                 / (separation_h * effectiveRange)),
-                                                            lubricationVelocityAdjustment.x,
-                                                            lubricationVelocityAdjustment.y,
-                                                            lubricationVelocityAdjustment.z);
+                                                            lubricationVelocityAdjustment.x(),
+                                                            lubricationVelocityAdjustment.y(),
+                                                            lubricationVelocityAdjustment.z());
             }
             else
             {
@@ -76,18 +76,18 @@ namespace hemelb
 
           log::Logger::Log<log::Trace, log::OnePerCore>("*** In LubricationBC::DoSomethingToParticle - particleId: %lu, vel before: {%g,%g,%g}, total adj: {%g,%g,%g}, vel after: {%g,%g,%g}\n",
                                                         particle.GetParticleId(),
-                                                        particle.GetVelocity().x
-                                                            - lubricationVelocityAdjustment.x,
-                                                        particle.GetVelocity().y
-                                                            - lubricationVelocityAdjustment.y,
-                                                        particle.GetVelocity().z
-                                                            - lubricationVelocityAdjustment.z,
-                                                        lubricationVelocityAdjustment.x,
-                                                        lubricationVelocityAdjustment.y,
-                                                        lubricationVelocityAdjustment.z,
-                                                        particle.GetVelocity().x,
-                                                        particle.GetVelocity().y,
-                                                        particle.GetVelocity().z);
+                                                        particle.GetVelocity().x()
+                                                            - lubricationVelocityAdjustment.x(),
+                                                        particle.GetVelocity().y()
+                                                            - lubricationVelocityAdjustment.y(),
+                                                        particle.GetVelocity().z()
+                                                            - lubricationVelocityAdjustment.z(),
+                                                        lubricationVelocityAdjustment.x(),
+                                                        lubricationVelocityAdjustment.y(),
+                                                        lubricationVelocityAdjustment.z(),
+                                                        particle.GetVelocity().x(),
+                                                        particle.GetVelocity().y(),
+                                                        particle.GetVelocity().z());
 
           return keep;
         }

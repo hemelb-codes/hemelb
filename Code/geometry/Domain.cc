@@ -59,11 +59,12 @@ namespace hemelb
             blockSize = blockSizeIn;
             sites = blocksIn * blockSize;
             sitesPerBlockVolumeUnit = blockSize * blockSize * blockSize;
-            blockCount = blockCounts.x * blockCounts.y * blockCounts.z;
+            blockCount = blockCounts.x() * blockCounts.y() * blockCounts.z();
         }
 
         void Domain::ProcessReadSites(const GmyReadResult & readResult)
         {
+            const auto max_site_index = readResult.GetBlockDimensions() * readResult.GetBlockSize() - util::Vector3D<site_t>::Ones();
             blocks.resize(GetBlockCount());
 
             totalSharedFs = 0;
@@ -120,15 +121,10 @@ namespace hemelb
                                                                        * readResult.GetBlockSize() + siteTraverser.GetCurrentLocation()
                                                                        + util::Vector3D<site_t>(latticeInfo.GetVector(l));
 
-                        if (neighbourGlobalCoords.x < 0 || neighbourGlobalCoords.y < 0
-                            || neighbourGlobalCoords.z < 0
-                            || neighbourGlobalCoords.x
-                               >= readResult.GetBlockDimensions().x * readResult.GetBlockSize()
-                            || neighbourGlobalCoords.y
-                               >= readResult.GetBlockDimensions().y * readResult.GetBlockSize()
-                            || neighbourGlobalCoords.z
-                               >= readResult.GetBlockDimensions().z * readResult.GetBlockSize())
-                        {
+                        if (!neighbourGlobalCoords.IsInRange(
+                                util::Vector3D<site_t>::Zero(),
+                                max_site_index
+                                )) {
                             continue;
                         }
 
@@ -137,9 +133,9 @@ namespace hemelb
                                                                 / readResult.GetBlockSize();
                         util::Vector3D<site_t> neighbourSite = neighbourGlobalCoords
                                                                % readResult.GetBlockSize();
-                        site_t neighbourBlockId = readResult.GetBlockIdFromBlockCoordinates(neighbourBlock.x,
-                                                                                            neighbourBlock.y,
-                                                                                            neighbourBlock.z);
+                        site_t neighbourBlockId = readResult.GetBlockIdFromBlockCoordinates(neighbourBlock.x(),
+                                                                                            neighbourBlock.y(),
+                                                                                            neighbourBlock.z());
 
                         // Move on if the neighbour is in a block of solids
                         // in which case the block will contain zero sites
@@ -152,9 +148,9 @@ namespace hemelb
                             continue;
                         }
 
-                        site_t neighbourSiteId = readResult.GetSiteIdFromSiteCoordinates(neighbourSite.x,
-                                                                                         neighbourSite.y,
-                                                                                         neighbourSite.z);
+                        site_t neighbourSiteId = readResult.GetSiteIdFromSiteCoordinates(neighbourSite.x(),
+                                                                                         neighbourSite.y(),
+                                                                                         neighbourSite.z());
 
                         proc_t neighbourProc = readResult.Blocks[neighbourBlockId].Sites[neighbourSiteId].targetProcessor;
                         if (neighbourProc == SITE_OR_BLOCK_SOLID || localRank == neighbourProc)
@@ -202,9 +198,9 @@ namespace hemelb
                                                                           (int) neighbourBlockId,
                                                                           (int) localSiteId,
                                                                           (int) blockId,
-                                                                          latticeInfo.GetVector(l).x,
-                                                                          latticeInfo.GetVector(l).y,
-                                                                          latticeInfo.GetVector(l).z);
+                                                                          latticeInfo.GetVector(l).x(),
+                                                                          latticeInfo.GetVector(l).y(),
+                                                                          latticeInfo.GetVector(l).z());
                         }
                     }
 
@@ -504,9 +500,9 @@ namespace hemelb
                             // its neighbours which say which sites
                             // on this process are shared with the
                             // neighbour.
-                            sharedFLocationForEachProc[proc_id_p].push_back(currentLocationCoords.x);
-                            sharedFLocationForEachProc[proc_id_p].push_back(currentLocationCoords.y);
-                            sharedFLocationForEachProc[proc_id_p].push_back(currentLocationCoords.z);
+                            sharedFLocationForEachProc[proc_id_p].push_back(currentLocationCoords.x());
+                            sharedFLocationForEachProc[proc_id_p].push_back(currentLocationCoords.y());
+                            sharedFLocationForEachProc[proc_id_p].push_back(currentLocationCoords.z());
                             sharedFLocationForEachProc[proc_id_p].push_back(direction);
                         }
                     }
@@ -574,9 +570,9 @@ namespace hemelb
                     // Correct so that each process has the correct coordinates.
                     if (neigh_proc_p->Rank < localRank)
                     {
-                        i += latticeInfo.GetVector(l).x;
-                        j += latticeInfo.GetVector(l).y;
-                        k += latticeInfo.GetVector(l).z;
+                        i += latticeInfo.GetVector(l).x();
+                        j += latticeInfo.GetVector(l).y();
+                        k += latticeInfo.GetVector(l).z();
                         l = latticeInfo.GetInverseIndex(l);
                     }
                     // Get the fluid site number of site that will send data to another process.
@@ -624,11 +620,11 @@ namespace hemelb
 
         bool Domain::IsValidBlock(site_t i, site_t j, site_t k) const
         {
-            if (i < 0 || i >= blockCounts.x)
+            if (i < 0 || i >= blockCounts.x())
                 return false;
-            if (j < 0 || j >= blockCounts.y)
+            if (j < 0 || j >= blockCounts.y())
                 return false;
-            if (k < 0 || k >= blockCounts.z)
+            if (k < 0 || k >= blockCounts.z())
                 return false;
 
             return true;
@@ -636,26 +632,16 @@ namespace hemelb
 
         bool Domain::IsValidBlock(const util::Vector3D<site_t>& blockCoords) const
         {
-            if (blockCoords.x < 0 || blockCoords.x >= blockCounts.x)
-                return false;
-            if (blockCoords.y < 0 || blockCoords.y >= blockCounts.y)
-                return false;
-            if (blockCoords.z < 0 || blockCoords.z >= blockCounts.z)
-                return false;
-
+            for (int i =0 ; i < 3; ++i)
+                if (blockCoords[i] < 0 || blockCoords[i] >= blockCounts[i])
+                    return false;
             return true;
         }
 
         bool Domain::IsValidLatticeSite(const util::Vector3D<site_t>& siteCoords) const
         {
-            if (siteCoords.x < 0 || siteCoords.x >= sites.x)
-                return false;
-            if (siteCoords.y < 0 || siteCoords.y >= sites.y)
-                return false;
-            if (siteCoords.z < 0 || siteCoords.z >= sites.z)
-                return false;
-
-            return true;
+            using V = util::Vector3D<site_t>;
+            return siteCoords.IsInRange(V::Zero(), sites - V::Ones());
         }
 
         site_t Domain::GetContiguousSiteId(util::Vector3D<site_t> location) const
@@ -707,18 +693,17 @@ namespace hemelb
         const util::Vector3D<site_t> Domain::GetGlobalCoords(
                 site_t blockNumber, const util::Vector3D<site_t>& localSiteCoords) const
         {
-            util::Vector3D<site_t> blockCoords;
-            GetBlockIJK(blockNumber, blockCoords);
+            auto blockCoords = GetBlockIJK(blockNumber);
             return GetGlobalCoords(blockCoords, localSiteCoords);
         }
 
         util::Vector3D<site_t> Domain::GetSiteCoordsFromSiteId(site_t siteId) const
         {
             util::Vector3D<site_t> siteCoords;
-            siteCoords.z = siteId % blockSize;
+            siteCoords.z() = siteId % blockSize;
             site_t siteIJData = siteId / blockSize;
-            siteCoords.y = siteIJData % blockSize;
-            siteCoords.x = siteIJData / blockSize;
+            siteCoords.y() = siteIJData % blockSize;
+            siteCoords.x() = siteIJData / blockSize;
             return siteCoords;
         }
 
@@ -740,12 +725,14 @@ namespace hemelb
             return midDomainSiteCount;
         }
 
-        void Domain::GetBlockIJK(site_t block, util::Vector3D<site_t>& blockCoords) const
+        util::Vector3D<site_t> Domain::GetBlockIJK(site_t block) const
         {
-            blockCoords.z = block % blockCounts.z;
-            site_t blockIJData = block / blockCounts.z;
-            blockCoords.y = blockIJData % blockCounts.y;
-            blockCoords.x = blockIJData / blockCounts.y;
+            util::Vector3D<site_t> blockCoords;
+            blockCoords.z() = block % blockCounts.z();
+            site_t blockIJData = block / blockCounts.z();
+            blockCoords.y() = blockIJData % blockCounts.y();
+            blockCoords.x() = blockIJData / blockCounts.y();
+            return blockCoords;
         }
 
 /*    void FieldData::SendAndReceive(hemelb::net::Net* net)

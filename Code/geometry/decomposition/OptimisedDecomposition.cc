@@ -193,11 +193,12 @@ namespace hemelb
         int localweight = 1;
 
         // For each block (counting up by lowest site id)...
-        for (site_t blockI = 0; blockI < geometry.GetBlockDimensions().x; blockI++)
+        auto const& block_dims = geometry.GetBlockDimensions();
+        for (site_t blockI = 0; blockI < block_dims.x(); blockI++)
         {
-          for (site_t blockJ = 0; blockJ < geometry.GetBlockDimensions().y; blockJ++)
+          for (site_t blockJ = 0; blockJ < block_dims.y(); blockJ++)
           {
-            for (site_t blockK = 0; blockK < geometry.GetBlockDimensions().z; blockK++)
+            for (site_t blockK = 0; blockK < block_dims.z(); blockK++)
             {
               const site_t blockNumber = geometry.GetBlockIdFromBlockCoordinates(blockI,
                                                                                  blockJ,
@@ -353,11 +354,12 @@ namespace hemelb
 
         // TODO: Reimplement using traversers or iterators.
         // For each block (counting up by lowest site id)...
-        for (site_t blockI = 0; blockI < geometry.GetBlockDimensions().x; blockI++)
+        auto const& block_dims = geometry.GetBlockDimensions();
+        for (site_t blockI = 0; blockI < block_dims.x(); blockI++)
         {
-          for (site_t blockJ = 0; blockJ < geometry.GetBlockDimensions().y; blockJ++)
+          for (site_t blockJ = 0; blockJ < block_dims.y(); blockJ++)
           {
-            for (site_t blockK = 0; blockK < geometry.GetBlockDimensions().z; blockK++)
+            for (site_t blockK = 0; blockK < block_dims.z(); blockK++)
             {
               const site_t blockNumber = geometry.GetBlockIdFromBlockCoordinates(blockI,
                                                                                  blockJ,
@@ -387,18 +389,18 @@ namespace hemelb
                     {
                       // ... which leads to a valid neighbouring site...
                       site_t neighbourI = blockI * geometry.GetBlockSize() + localSiteI
-                          + latticeInfo.GetVector(l).x;
+                          + latticeInfo.GetVector(l).x();
                       site_t neighbourJ = blockJ * geometry.GetBlockSize() + localSiteJ
-                          + latticeInfo.GetVector(l).y;
+                          + latticeInfo.GetVector(l).y();
                       site_t neighbourK = blockK * geometry.GetBlockSize() + localSiteK
-                          + latticeInfo.GetVector(l).z;
+                          + latticeInfo.GetVector(l).z();
                       if (neighbourI < 0 || neighbourJ < 0 || neighbourK < 0
                           || neighbourI
-                              >= (geometry.GetBlockSize() * geometry.GetBlockDimensions().x)
+                              >= (geometry.GetBlockSize() * block_dims.x())
                           || neighbourJ
-                              >= (geometry.GetBlockSize() * geometry.GetBlockDimensions().y)
+                              >= (geometry.GetBlockSize() * block_dims.y())
                           || neighbourK
-                              >= (geometry.GetBlockSize() * geometry.GetBlockDimensions().z))
+                              >= (geometry.GetBlockSize() * block_dims.z()))
                       {
                         continue;
                       }
@@ -630,18 +632,15 @@ namespace hemelb
                   ++direction)
               {
                 // Calculate the putative neighbour's coordinates...
-                BlockLocation neighbourCoords = blockCoords
-                    + BlockLocation(lb::lattices::D3Q27::CX[direction],
-                                    lb::lattices::D3Q27::CY[direction],
-                                    lb::lattices::D3Q27::CZ[direction]);
+                BlockLocation neighbourCoords = blockCoords + lb::lattices::D3Q27::VECTORS[direction];
                 // If the neighbour is a real block...
                 if (geometry.AreBlockCoordinatesValid(neighbourCoords))
                 {
                   // Get the block id, and check whether it has any fluid sites...
                   site_t neighbourBlockId =
-                      geometry.GetBlockIdFromBlockCoordinates(neighbourCoords.x,
-                                                              neighbourCoords.y,
-                                                              neighbourCoords.z);
+                      geometry.GetBlockIdFromBlockCoordinates(neighbourCoords.x(),
+                                                              neighbourCoords.y(),
+                                                              neighbourCoords.z());
                   proc_t neighbourBlockProc = procForEachBlock[neighbourBlockId];
                   if (neighbourBlockProc >= 0)
                   {

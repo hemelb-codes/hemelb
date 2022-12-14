@@ -6,12 +6,8 @@
 #include "geometry/decomposition/BasicDecomposition.h"
 #include "net/mpi.h"
 
-namespace hemelb
+namespace hemelb::geometry::decomposition
 {
-  namespace geometry
-  {
-    namespace decomposition
-    {
 
       BasicDecomposition::BasicDecomposition(const GmyReadResult& geometry,
                                              const lb::lattices::LatticeInfo& latticeInfo,
@@ -64,17 +60,16 @@ namespace hemelb
         }
       }
 
-      void BasicDecomposition::DivideBlocks(std::vector<proc_t>& unitForEachBlock,
+      void BasicDecomposition::DivideBlocks(std::vector<proc_t>& processForEachBlock,
                                             site_t unassignedBlocks, const GmyReadResult& geometry,
-                                            const proc_t unitCount,
+                                            const proc_t processCount,
                                             const std::vector<site_t>& fluidSitesPerBlock)
       {
-        // Initialise the unit being assigned to, and the approximate number of blocks
-        // required on each unit.
-        proc_t currentUnit = 0;
+        // Initialise the process being assigned to, and the approximate number of blocks
+        // required on each process.
+        proc_t currentProcess = 0;
 
-        site_t targetBlocksPerUnit = (site_t) ceil((double) unassignedBlocks
-            / (double) (communicator.Size()));
+        site_t targetBlocksPerProcess = (unassignedBlocks - 1) / processCount + 1;
 
         // Create an array to monitor whether each block has been assigned yet.
         std::vector<bool> blockAssigned(geometry.GetBlockCount(), false);
@@ -97,12 +92,11 @@ namespace hemelb
         site_t blocksOnCurrentProc = 0;
 
         // Iterate over all blocks.
-        for (site_t blockCoordI = 0; blockCoordI < geometry.GetBlockDimensions().x; blockCoordI++)
+        for (site_t blockCoordI = 0; blockCoordI < geometry.GetBlockDimensions().x(); blockCoordI++)
         {
-          for (site_t blockCoordJ = 0; blockCoordJ < geometry.GetBlockDimensions().y; blockCoordJ++)
+          for (site_t blockCoordJ = 0; blockCoordJ < geometry.GetBlockDimensions().y(); blockCoordJ++)
           {
-            for (site_t blockCoordK = 0; blockCoordK < geometry.GetBlockDimensions().z;
-                blockCoordK++)
+            for (site_t blockCoordK = 0; blockCoordK < geometry.GetBlockDimensions().z(); blockCoordK++)
             {
               // Block number is the number of the block we're currently on.
               blockNumber++;
@@ -111,7 +105,7 @@ namespace hemelb
               // Alternatively, if this block has already been assigned, move on.
               if (fluidSitesPerBlock[blockNumber] == 0)
               {
-                unitForEachBlock[blockNumber] = -1;
+                processForEachBlock[blockNumber] = -1;
                 continue;
               }
               else if (blockAssigned[blockNumber])
@@ -119,9 +113,9 @@ namespace hemelb
                 continue;
               }
 
-              // Assign this block to the current unit.
+              // Assign this block to the current process.
               blockAssigned[blockNumber] = true;
-              unitForEachBlock[blockNumber] = currentUnit;
+              processForEachBlock[blockNumber] = currentProcess;
 
               ++blocksOnCurrentProc;
 
@@ -135,32 +129,34 @@ namespace hemelb
 
               // While the region can grow (i.e. it is not bounded by solids or visited
               // sites), and we need more sites on this particular rank.
-              while (blocksOnCurrentProc < targetBlocksPerUnit && isRegionGrowing)
+              while (blocksOnCurrentProc < targetBlocksPerProcess && isRegionGrowing)
               {
                 expandedEdge.clear();
 
                 // Sites added to the edge of the mClusters during the iteration.
                 isRegionGrowing = Expand(expandedEdge,
                                          blockAssigned,
-                                         unitForEachBlock,
+                                         processForEachBlock,
                                          blocksOnCurrentProc,
                                          currentEdge,
-                                         currentUnit,
-                                         targetBlocksPerUnit);
+                                         currentProcess,
+                                         targetBlocksPerProcess);
 
                 // When the new layer of edge sites has been found, swap the buffers for
                 // the current and new layers of edge sites.
                 currentEdge.swap(expandedEdge);
               }
 
-              // If we have enough sites, we have finished.
-              if (blocksOnCurrentProc >= targetBlocksPerUnit)
+              // If we have enough sites, we have finished this process.
+              if (blocksOnCurrentProc >= targetBlocksPerProcess)
               {
-                ++currentUnit;
+                ++currentProcess;
 
                 unassignedBlocks -= blocksOnCurrentProc;
-                targetBlocksPerUnit = (site_t) ceil((double) unassignedBlocks
-                    / (double) (unitCount - currentUnit));
+
+                targetBlocksPerProcess = unassignedBlocks == 0 ?
+                        0 :
+                        (unassignedBlocks - 1) / (processCount - currentProcess) + 1;
 
                 blocksOnCurrentProc = 0;
               }
@@ -174,22 +170,22 @@ namespace hemelb
 
       bool BasicDecomposition::Expand(std::vector<BlockLocation>& expansionBlocks,
                                       std::vector<bool>& blockAssigned,
-                                      std::vector<proc_t>& unitForEachBlock,
-                                      site_t &blocksOnCurrentUnit,
+                                      std::vector<proc_t>& processForEachBlock,
+                                      site_t &blocksOnCurrentProcess,
                                       const std::vector<BlockLocation>& edgeBlocks,
-                                      const proc_t currentUnit, const site_t blocksPerUnit)
+                                      const proc_t currentProcess, const site_t blocksPerProcess)
       {
         bool regionExpanded = false;
 
         // For sites on the edge of the domain (sites_a), deal with the neighbours.
         for (unsigned int edgeBlockId = 0;
-            (edgeBlockId < edgeBlocks.size()) && (blocksOnCurrentUnit < blocksPerUnit);
+            (edgeBlockId < edgeBlocks.size()) && (blocksOnCurrentProcess < blocksPerProcess);
             edgeBlockId++)
         {
           const BlockLocation& edgeBlockCoords = edgeBlocks[edgeBlockId];
 
           for (Direction direction = 1;
-              direction < latticeInfo.GetNumVectors() && blocksOnCurrentUnit < blocksPerUnit;
+              direction < latticeInfo.GetNumVectors() && blocksOnCurrentProcess < blocksPerProcess;
               direction++)
           {
             // Record neighbour location.
@@ -206,9 +202,9 @@ namespace hemelb
             // been assigned to a rank (in which case ProcessorRankForEachBlockSite != -1).  ProcessorRankForEachBlockSite
             // was initialized in lbmReadConfig in io.cc.
 
-            site_t neighBlockId = geometry.GetBlockIdFromBlockCoordinates(neighbourCoords.x,
-                                                                          neighbourCoords.y,
-                                                                          neighbourCoords.z);
+            site_t neighBlockId = geometry.GetBlockIdFromBlockCoordinates(neighbourCoords.x(),
+                                                                          neighbourCoords.y(),
+                                                                          neighbourCoords.z());
 
             // Don't use this block if it has no fluid sites, or if it has already been assigned to a processor.
             if (fluidSitesOnEachBlock[neighBlockId] == 0 || blockAssigned[neighBlockId])
@@ -218,8 +214,8 @@ namespace hemelb
 
             // Set the rank for a neighbour and update the fluid site counters.
             blockAssigned[neighBlockId] = true;
-            unitForEachBlock[neighBlockId] = currentUnit;
-            ++blocksOnCurrentUnit;
+            processForEachBlock[neighBlockId] = currentProcess;
+            ++blocksOnCurrentProcess;
 
             // Neighbour was found, so the region can grow.
             regionExpanded = true;
@@ -232,6 +228,4 @@ namespace hemelb
         return regionExpanded;
       }
 
-    } /* namespace decomposition */
-  } /* namespace geometry */
-} /* namespace hemelb */
+}

@@ -73,13 +73,13 @@ namespace hemelb
     {
       // 0 < angle < 180 in a triangle, so sine always positive in case of
       // interest. I think.
-      return edge(0).Cross(edge(1)).GetMagnitude() / (length(0) * length(1));
+      return Cross(edge(0), edge(1)).GetMagnitude() / (length(0) * length(1));
     }
     LatticePosition Facet::normal() const
     {
       LatticePosition const edgeA(operator()(0, 1));
       LatticePosition const edgeB(operator()(2, 1));
-      return edgeA.Cross(edgeB);
+      return Cross(edgeA, edgeB);
     }
     LatticePosition Facet::unitNormal() const
     {

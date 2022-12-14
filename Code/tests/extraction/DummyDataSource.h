@@ -35,9 +35,7 @@ namespace hemelb
               {
                 for (unsigned k = 0; k < 4; ++k)
                 {
-                  gridPositions[ijk].x = i;
-                  gridPositions[ijk].y = j;
-                  gridPositions[ijk].z = k;
+                  gridPositions[ijk] = {i, j, k};
                   ++ijk;
                 }
               }

@@ -44,7 +44,7 @@ namespace hemelb
       LatticePosition const pd = point - flowExt.origin;
 
       // distance from pos to point
-      LatticeDistance const dot = pd.Dot(flowExt.normal);
+      LatticeDistance const dot = Dot(pd, flowExt.normal);
 
       // If the (squared) distance is less than 0 then the point is behind the
       // cylinder cap at pos.
@@ -64,7 +64,7 @@ namespace hemelb
       if (not contains(flowExt, position))
         return 0e0;
 
-      auto const z = flowExt.normal.Dot(position - flowExt.origin);
+      auto const z = Dot(flowExt.normal, position - flowExt.origin);
       return std::max(0e0, 1e0 - z / flowExt.fadeLength);
     }
   } // namespace hemelb::redblood

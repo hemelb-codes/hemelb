@@ -100,7 +100,7 @@ namespace hemelb
     }                                                        \
     static Dimensionless stencil(LatticePosition const &x)   \
     {                                                        \
-      return STENCIL(x.x) * STENCIL(x.y) * STENCIL(x.z);     \
+      return STENCIL(x.x()) * STENCIL(x.y()) * STENCIL(x.z());     \
     }                                                        \
     static constexpr size_t GetRange()                       \
     {                                                        \

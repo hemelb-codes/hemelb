@@ -33,7 +33,7 @@ namespace hemelb
                                       LatticePosition const &col, LatticePosition const& normal)
         {
           LatticeDistance const x = maxExtension(vertices, normal);
-          LatticeDistance const y = maxExtension(vertices, col.Cross(normal));
+          LatticeDistance const y = maxExtension(vertices, Cross(col, normal));
           LatticeDistance const z = maxExtension(vertices, col);
           return LatticePosition(x, y, z);
         }
@@ -73,7 +73,7 @@ namespace hemelb
         current = min;
 
         major = colAxis.GetNormalised() * extents.z;
-        minor = colAxis.GetNormalised().Cross(cylinder->normal.GetNormalised()) * extents.y;
+        minor = Cross(colAxis.GetNormalised(), cylinder->normal.GetNormalised()) * extents.y;
         depth = cylinder->normal.GetNormalised() * extents.x;
         spacing = (extents + LatticePosition{separation}) / 2.0;
 

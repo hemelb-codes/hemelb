@@ -38,16 +38,16 @@ namespace hemelb
       class IoletExtraData
       {
         public:
-          IoletExtraData(InOutLet& iolet);
+          IoletExtraData(InOutLet const& iolet);
           virtual ~IoletExtraData();
           LatticePosition WorldToIolet(LatticeVector r);
           LatticePosition WorldToIolet(LatticePosition r);
         protected:
-          typedef util::Vector3D<Dimensionless> UnitVec;
+          using UnitVec = util::Vector3D<Dimensionless>;
           UnitVec e1;
           UnitVec e2;
-          const UnitVec& n;
-          const LatticePosition centre;
+          UnitVec n;
+          LatticePosition centre;
         private:
           IoletExtraData();
       };

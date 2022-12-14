@@ -26,7 +26,7 @@ namespace hemelb
                                                              const LatticeTimeStep t) const
       {
         LatticePosition displ = x - position;
-        LatticeDistance z = displ.Dot(normal);
+        LatticeDistance z = Dot(displ, normal);
         Dimensionless r = sqrt(displ.GetMagnitudeSquared() - z * z);
 
         double omega = 2.0 * PI / period;

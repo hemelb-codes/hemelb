@@ -10,7 +10,7 @@ project(HemeLbGmyTool)
 # list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../CMake)
 # include(Debug)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(GNUInstallDirs)
@@ -54,7 +54,6 @@ set(generation_dir HlbGmyTool/Model/Generation)
 set(hemelb_cpps
   util/Vector3D.cc
   geometry/SiteDataBare.cc
-  lb/lattices/D3Q27.cc
   io/formats/geometry.cc
   io/writers/XdrFileWriter.cc
   io/writers/XdrMemWriter.cc

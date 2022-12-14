@@ -19,10 +19,8 @@
 #include "util/utilityFunctions.h"
 #include "constants.h"
 
-namespace hemelb
+namespace hemelb::geometry
 {
-  namespace geometry
-  {
     namespace fmt = io::formats;
     using gmy = fmt::geometry;
 
@@ -703,11 +701,12 @@ namespace hemelb
 
       // Read a block in if it has fluid sites and is to live on the current processor. Also read
       // in any neighbours with fluid sites.
-      for (site_t blockI = 0; blockI < geometry.GetBlockDimensions().x; ++blockI)
+      auto const block_dims = geometry.GetBlockDimensions();
+      for (site_t blockI = 0; blockI < block_dims.x(); ++blockI)
       {
-        for (site_t blockJ = 0; blockJ < geometry.GetBlockDimensions().y; ++blockJ)
+        for (site_t blockJ = 0; blockJ < block_dims.y(); ++blockJ)
         {
-          for (site_t blockK = 0; blockK < geometry.GetBlockDimensions().z; ++blockK)
+          for (site_t blockK = 0; blockK < block_dims.z(); ++blockK)
           {
             site_t lBlockId = geometry.GetBlockIdFromBlockCoordinates(blockI, blockJ, blockK);
 
@@ -717,14 +716,14 @@ namespace hemelb
             }
 
             // Read in all neighbouring blocks.
-            for (site_t neighI = util::NumericalFunctions::max<site_t>(0, blockI - 1);
-                (neighI <= (blockI + 1)) && (neighI < geometry.GetBlockDimensions().x); ++neighI)
+            for (site_t neighI = std::max<site_t>(0, blockI - 1);
+                (neighI <= (blockI + 1)) && (neighI < block_dims.x()); ++neighI)
             {
-              for (site_t neighJ = util::NumericalFunctions::max<site_t>(0, blockJ - 1);
-                  (neighJ <= (blockJ + 1)) && (neighJ < geometry.GetBlockDimensions().y); ++neighJ)
+              for (site_t neighJ = std::max<site_t>(0, blockJ - 1);
+                  (neighJ <= (blockJ + 1)) && (neighJ < block_dims.y()); ++neighJ)
               {
-                for (site_t neighK = util::NumericalFunctions::max<site_t>(0, blockK - 1);
-                    (neighK <= (blockK + 1)) && (neighK < geometry.GetBlockDimensions().z);
+                for (site_t neighK = std::max<site_t>(0, blockK - 1);
+                    (neighK <= (blockK + 1)) && (neighK < block_dims.z());
                     ++neighK)
                 {
                   site_t lNeighId = geometry.GetBlockIdFromBlockCoordinates(neighI, neighJ, neighK);
@@ -888,5 +887,4 @@ namespace hemelb
       return false;
 #endif
     }
-  }
 }

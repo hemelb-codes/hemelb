@@ -8,10 +8,8 @@
 
 #include "geometry/VolumeTraverser.h"
 
-namespace hemelb
+namespace hemelb::geometry
 {
-  namespace geometry
-  {
     class Domain;
 
     /**
@@ -20,25 +18,24 @@ namespace hemelb
      */
     class SiteTraverser : public VolumeTraverser
     {
-      public:
+    public:
         SiteTraverser(const Domain & iLatticeDat);
 
-        virtual ~SiteTraverser();
+        ~SiteTraverser() override;
 
-        site_t GetXCount() const;
+        site_t GetXCount() const override;
 
-        site_t GetYCount() const;
+        site_t GetYCount() const override;
 
-        site_t GetZCount() const;
+        site_t GetZCount() const override;
 
-      private:
+    private:
         //Returns the block size in number of sites
         site_t GetBlockSize() const;
 
         const Domain & mLatticeData;
     };
 
-  }
 }
 
 #endif // HEMELB_GEOMETRY_SITETRAVERSER_H

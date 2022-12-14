@@ -8,7 +8,7 @@
 namespace hemelb::geometry {
     GmyReadResult::GmyReadResult(const util::Vector3D<site_t>& dimensionsInBlocks, site_t blockSize) :
             dimensionsInBlocks(dimensionsInBlocks), blockSize(blockSize),
-            blockCount(dimensionsInBlocks.x * dimensionsInBlocks.y * dimensionsInBlocks.z),
+            blockCount(dimensionsInBlocks.x() * dimensionsInBlocks.y() * dimensionsInBlocks.z()),
             sitesPerBlock(util::NumericalFunctions::IntegerPower(blockSize, 3)),
             Blocks(blockCount)
     {

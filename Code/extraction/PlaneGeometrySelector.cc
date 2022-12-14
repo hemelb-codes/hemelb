@@ -52,7 +52,7 @@ namespace hemelb::extraction
   {
     const util::Vector3D<float> coords = LatticeToPhysical(data, location);
 
-    const float perpendicularDistance = (coords - planePoint).Dot(normal);
+    const float perpendicularDistance = Dot(coords - planePoint, normal);
 
     if (std::abs(perpendicularDistance) > (0.5 * data.GetVoxelSize()))
       {

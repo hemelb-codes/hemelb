@@ -51,7 +51,7 @@ namespace hemelb
         LatticePosition const &v0(vertices[ (*i_facet)[0]]);
         LatticePosition const &v1(vertices[ (*i_facet)[1]]);
         LatticePosition const &v2(vertices[ (*i_facet)[2]]);
-        result += v0.Cross(v1).Dot(v2);
+        result += Dot(Cross(v0, v1), v2);
       }
 
       // Minus sign comes from outward facing facet orientation
@@ -73,7 +73,7 @@ namespace hemelb
         LatticePosition const &v0(vertices[ (*i_facet)[0]]);
         LatticePosition const &v1(vertices[ (*i_facet)[1]]);
         LatticePosition const &v2(vertices[ (*i_facet)[2]]);
-        result += (v0 - v1).Cross(v2 - v1).GetMagnitude();
+        result += Cross(v0 - v1, v2 - v1).GetMagnitude();
       }
 
       return result * 0.5;
@@ -651,7 +651,7 @@ namespace hemelb
 		       auto& v0 = mesh.vertices[facet[0]];
 		       auto& v1 = mesh.vertices[facet[1]];
 		       auto& v2 = mesh.vertices[facet[2]];
-		       return (v0 - v1).Cross(v2 - v1).GetNormalised();
+               return Cross(v0 - v1, v2 - v1).GetNormalised();
 		     });
 
       // Do as vtkPolyDataNormals, does, but simplified as only have
@@ -779,7 +779,7 @@ namespace hemelb
         normals->GetTuple(normalId, vtkNormal);
         LatticePosition direction(vtkNormal[0], vtkNormal[1], vtkNormal[2]);
 
-        if ( ( (v0 - v1).Cross(v2 - v1).Dot(direction) > 0e0) xor outward)
+        if ( ( Dot(Cross(v0 - v1, v2 - v1), direction) > 0e0) xor outward)
         {
           std::swap(facet[0], facet[2]);
           ++numSwapped;

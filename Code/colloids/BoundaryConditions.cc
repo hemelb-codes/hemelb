@@ -31,11 +31,8 @@ namespace hemelb
       io::xml::Element colloidsBC =
           xml.GetRoot().GetChildOrThrow("colloids").GetChildOrThrow("boundaryConditions");
 
-      for (std::map<std::string, BoundaryConditionFactory_Create>::const_iterator iter =
-          mapBCGenerators.begin(); iter != mapBCGenerators.end(); iter++)
+      for (auto const& [boundaryConditionClass, createFunction]: mapBCGenerators)
       {
-        const std::string boundaryConditionClass = iter->first;
-        const BoundaryConditionFactory_Create createFunction = iter->second;
         log::Logger::Log<log::Debug, log::OnePerCore>("*** In BoundaryConditions::InitBoundaryConditions - looking for %s BC in XML\n",
                                                       boundaryConditionClass.c_str());
         for ( // There must be at least one BC element for each type
@@ -63,31 +60,30 @@ namespace hemelb
       particle.SetLubricationVelocityAdjustment(LatticeVelocity());
 
       // detect collision(s)
-      const util::Vector3D<site_t> siteGlobalPosition((site_t) (0.5 + particle.GetGlobalPosition().x),
-                                                      (site_t) (0.5 + particle.GetGlobalPosition().y),
-                                                      (site_t) (0.5 + particle.GetGlobalPosition().z));
+      LatticePosition const &pos = particle.GetGlobalPosition();
+      auto const siteGlobalPosition = (pos + util::Vector3D(0.5)).as<site_t>();
       proc_t procId;
       site_t localContiguousId;
       const bool isLocalFluid = latticeData->GetContiguousSiteId(siteGlobalPosition,
                                                                  procId,
                                                                  localContiguousId);
-      if (particle.GetGlobalPosition().y < 1.5 && particle.GetGlobalPosition().y >= 0.5)
+      if (pos.y() < 1.5 && pos.y() >= 0.5)
         log::Logger::Log<log::Trace, log::OnePerCore>("*** In BoundaryConditions::DoSomeThingsToParticle for id: %lu, p.pos: {%g,%g,%g}, p.vel: {%g,%g,%g}, isLocalFluid: %s, procId: %u, localContiguousId: %lu, siteCoords: {%lu,%lu,%lu}, ownerRank: %u\n",
                                                       particle.GetParticleId(),
-                                                      particle.GetGlobalPosition().x,
-                                                      particle.GetGlobalPosition().y,
-                                                      particle.GetGlobalPosition().z,
-                                                      particle.GetVelocity().x,
-                                                      particle.GetVelocity().y,
-                                                      particle.GetVelocity().z,
+                                                      pos.x(),
+                                                      pos.y(),
+                                                      pos.z(),
+                                                      particle.GetVelocity().x(),
+                                                      particle.GetVelocity().y(),
+                                                      particle.GetVelocity().z(),
                                                       isLocalFluid ?
                                                         "TRUE" :
                                                         "FALSE",
                                                       procId,
                                                       localContiguousId,
-                                                      siteGlobalPosition.x,
-                                                      siteGlobalPosition.y,
-                                                      siteGlobalPosition.z,
+                                                      siteGlobalPosition.x(),
+                                                      siteGlobalPosition.y(),
+                                                      siteGlobalPosition.z(),
                                                       particle.GetOwnerRank());
 
       if (!isLocalFluid)
@@ -151,23 +147,23 @@ namespace hemelb
         // auto-magically by the multiplication & its arithmetic traits
         const LatticePosition siteToWall = latticeInfo.GetVector(direction) * thisDistance;
         const LatticePosition particleToSite = (LatticePosition) siteGlobalPosition
-            - particle.GetGlobalPosition();
+                                               - pos;
 
         // particleToWall = siteToWall + projection of particleToSite in the siteToWall direction
         const LatticePosition particleToWallVector = siteToWall
-            + siteToWall.GetNormalised() * siteToWall.GetNormalised().Dot(particleToSite);
+            + siteToWall.GetNormalised() * Dot(siteToWall.GetNormalised(), particleToSite);
 
         log::Logger::Log<log::Trace, log::OnePerCore>("*** In BoundaryConditions::DoSomeThingsToParticle for id: %lu, siteToWall: {%g,%g,%g}, particleToSite: {%g,%g,%g}, particleToWall: {%g,%g,%g}\n",
                                                       particle.GetParticleId(),
-                                                      siteToWall.x,
-                                                      siteToWall.y,
-                                                      siteToWall.z,
-                                                      particleToSite.x,
-                                                      particleToSite.y,
-                                                      particleToSite.z,
-                                                      particleToWallVector.x,
-                                                      particleToWallVector.y,
-                                                      particleToWallVector.z);
+                                                      siteToWall.x(),
+                                                      siteToWall.y(),
+                                                      siteToWall.z(),
+                                                      particleToSite.x(),
+                                                      particleToSite.y(),
+                                                      particleToSite.z(),
+                                                      particleToWallVector.x(),
+                                                      particleToWallVector.y(),
+                                                      particleToWallVector.z());
 
         particleToWallVectors.push_back(particleToWallVector);
       }

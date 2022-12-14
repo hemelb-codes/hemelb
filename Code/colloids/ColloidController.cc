@@ -100,9 +100,9 @@ namespace hemelb
         {
           log::Logger::Log<log::Trace, log::OnePerCore>("ColloidController: block with id %i and coords (%i,%i,%i) is solid.\n",
                                                         blockId,
-                                                        blockTraverser.GetCurrentLocation().x,
-                                                        blockTraverser.GetCurrentLocation().y,
-                                                        blockTraverser.GetCurrentLocation().z);
+                                                        blockTraverser.GetCurrentLocation().x(),
+                                                        blockTraverser.GetCurrentLocation().y(),
+                                                        blockTraverser.GetCurrentLocation().z());
           continue;
         }
 
@@ -119,18 +119,18 @@ namespace hemelb
           {
             log::Logger::Log<log::Trace, log::OnePerCore>("ColloidController: site with id %i and coords (%i,%i,%i) has proc %i (non-local).\n",
                                                           siteId,
-                                                          siteTraverser.GetCurrentLocation().x,
-                                                          siteTraverser.GetCurrentLocation().y,
-                                                          siteTraverser.GetCurrentLocation().z,
+                                                          siteTraverser.GetCurrentLocation().x(),
+                                                          siteTraverser.GetCurrentLocation().y(),
+                                                          siteTraverser.GetCurrentLocation().z(),
                                                           gmyResult.Blocks[blockId].Sites[siteId].targetProcessor);
             continue;
           }
 
           log::Logger::Log<log::Trace, log::OnePerCore>("ColloidController: site with id %i and coords (%i,%i,%i) is local.\n",
                                                         siteId,
-                                                        siteTraverser.GetCurrentLocation().x,
-                                                        siteTraverser.GetCurrentLocation().y,
-                                                        siteTraverser.GetCurrentLocation().z);
+                                                        siteTraverser.GetCurrentLocation().x(),
+                                                        siteTraverser.GetCurrentLocation().y(),
+                                                        siteTraverser.GetCurrentLocation().z());
 
           // foreach neighbour of site
           for (Neighbourhood::const_iterator itDirectionVector = neighbourhood.begin();
@@ -170,9 +170,9 @@ namespace hemelb
                                                           (int) neighbourBlockId,
                                                           (int) siteId,
                                                           (int) blockId,
-                                                          (*itDirectionVector).x,
-                                                          (*itDirectionVector).y,
-                                                          (*itDirectionVector).z);
+                                                          itDirectionVector->x(),
+                                                          itDirectionVector->y(),
+                                                          itDirectionVector->z());
 
           } // end for itDirectionVector
         } // end for siteTraverser
@@ -192,9 +192,9 @@ namespace hemelb
       if (!gmyResult.AreBlockCoordinatesValid(blockLocationForSite))
         return false;
 
-      *blockIdForSite = gmyResult.GetBlockIdFromBlockCoordinates(blockLocationForSite.x,
-                                                                 blockLocationForSite.y,
-                                                                 blockLocationForSite.z);
+      *blockIdForSite = gmyResult.GetBlockIdFromBlockCoordinates(blockLocationForSite.x(),
+                                                                 blockLocationForSite.y(),
+                                                                 blockLocationForSite.z());
 
       // if the block does not contain any sites then return invalid
       if (gmyResult.Blocks[*blockIdForSite].Sites.empty())
@@ -207,9 +207,9 @@ namespace hemelb
       if (!gmyResult.AreLocalSiteCoordinatesValid(localSiteLocation))
         return false;
 
-      *localSiteIdForSite = gmyResult.GetSiteIdFromSiteCoordinates(localSiteLocation.x,
-                                                                   localSiteLocation.y,
-                                                                   localSiteLocation.z);
+      *localSiteIdForSite = gmyResult.GetSiteIdFromSiteCoordinates(localSiteLocation.x(),
+                                                                   localSiteLocation.y(),
+                                                                   localSiteLocation.z());
 
       // obtain the rank of the processor responsible for simulating the fluid at this site
       *ownerRankForSite =

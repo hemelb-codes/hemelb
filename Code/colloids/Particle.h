@@ -35,31 +35,29 @@ namespace hemelb
                  io::xml::Element& xml);
 
         /** constructor - gets an invalid particle for making MPI data types */
-        Particle()
-        {
-        }
-        ;
+        Particle() = default;
+
 
         /** property getter for particleId */
-        const unsigned long GetParticleId() const
+        [[nodiscard]] unsigned long GetParticleId() const
         {
           return particleId;
         }
-        const LatticePosition& GetGlobalPosition() const
+        [[nodiscard]] const LatticePosition& GetGlobalPosition() const
         {
           return globalPosition;
         }
 
-        const LatticeVelocity GetVelocity() const
+        [[nodiscard]]  LatticeVelocity GetVelocity() const
         {
           return velocity + bodyForces * CalculateDragCoefficient() + lubricationVelocityAdjustment;
         }
 
-        const PhysicalMass GetMass() const
+        [[nodiscard]] PhysicalMass GetMass() const
         {
           return mass;
         }
-        const LatticeDistance GetRadius() const
+        [[nodiscard]] LatticeDistance GetRadius() const
         {
           return smallRadius_a0;
         }
@@ -69,7 +67,7 @@ namespace hemelb
          *
          * a = 1/(1/a0 - 1/ah) = 1/((ah-a0)/(a0*ah)) = (a0*ah)/(ah-a0)
          */
-        const LatticeDistance GetNormalisedRadius() const
+        [[nodiscard]] LatticeDistance GetNormalisedRadius() const
         {
           return (smallRadius_a0 * largeRadius_ah) / (largeRadius_ah - smallRadius_a0);
         }
@@ -79,22 +77,22 @@ namespace hemelb
          *
          * 1/a = (1/a0 - 1/ah) = (ah-a0)/(a0*ah)
          */
-        const LatticeDistance GetInverseNormalisedRadius() const
+        [[nodiscard]] LatticeDistance GetInverseNormalisedRadius() const
         {
           return (largeRadius_ah - smallRadius_a0) / (smallRadius_a0 * largeRadius_ah);
         }
 
-        const LatticeTimeStep& GetLastCheckpointTimestep() const
+        [[nodiscard]] const LatticeTimeStep& GetLastCheckpointTimestep() const
         {
           return lastCheckpointTimestep;
         }
-        const LatticeTimeStep& GetDeletionMarker() const
+        [[nodiscard]] const LatticeTimeStep& GetDeletionMarker() const
         {
           return markedForDeletionTimestep;
         }
 
         /** unsets the deletion marker - the particle will not be deleted */
-        const void SetDeletionMarker()
+        void SetDeletionMarker()
         {
           markedForDeletionTimestep = SITE_OR_BLOCK_SOLID;
         }
@@ -102,20 +100,20 @@ namespace hemelb
         /** sets the deletion marker to the current timestep
          *  the particle will be deleted after the next checkpoint
          */
-        const void SetDeletionMarker(LatticeTimeStep timestep)
+        void SetDeletionMarker(LatticeTimeStep timestep)
         {
           if (timestep < markedForDeletionTimestep)
             markedForDeletionTimestep = timestep;
         }
 
         /** property getter for ownerRank */
-        const proc_t GetOwnerRank() const
+        [[nodiscard]] proc_t GetOwnerRank() const
         {
           return ownerRank;
         }
 
         /** property getter for isValid */
-        const bool IsValid() const
+        [[nodiscard]] bool IsValid() const
         {
           return isValid;
         }
@@ -131,47 +129,46 @@ namespace hemelb
          */
         //const bool operator<(const Particle& other) const;
         /** determines if the owner rank of this particle is an existing key in map */
-        const bool IsOwnerRankKnown(
+        [[nodiscard]] bool IsOwnerRankKnown(
             std::map<proc_t, std::pair<unsigned int, unsigned int> > const& map) const;
 
-        const bool IsReadyToBeDeleted() const;
+        [[nodiscard]] bool IsReadyToBeDeleted() const;
 
         /** for debug purposes only - outputs all properties to info log */
-        const void OutputInformation() const;
+        void OutputInformation() const;
 
         /** for serialisation into output file */
-        const void WriteToStream(const LatticeTimeStep currentTimestep,
+        void WriteToStream(LatticeTimeStep currentTimestep,
                                  io::Writer& writer);
 
         /** obtains the fluid viscosity at the position of this particle */
         // TODO: currently returns BLOOD_VISCOSITY_Pa_s, which has the wrong units
-        const Dimensionless GetViscosity() const;
+        [[nodiscard]] Dimensionless GetViscosity() const;
 
         /** calculates the drag coefficient = 1/(6*pi*viscosity*radius) */
-        const Dimensionless CalculateDragCoefficient() const;
+        [[nodiscard]] Dimensionless CalculateDragCoefficient() const;
 
         /** updates the position of this particle using body forces and fluid velocity */
-        const void UpdatePosition(const geometry::Domain& latDatLBM);
+        void UpdatePosition(const geometry::Domain& latDatLBM);
 
         /** calculates the effects of all body forces on this particle */
-        const void CalculateBodyForces();
+        void CalculateBodyForces();
 
         /** calculates the effects of this particle on each lattice site */
-        const void CalculateFeedbackForces(const geometry::Domain& latDatLBM) const;
+        void CalculateFeedbackForces(const geometry::Domain& latDatLBM) const;
 
         /** interpolates the fluid velocity to the location of each particle */
-        const void InterpolateFluidVelocity(const geometry::Domain& latDatLBM,
-                                            const lb::MacroscopicPropertyCache& propertyCache);
+        void InterpolateFluidVelocity(const geometry::Domain& latDatLBM,
+                                      const lb::MacroscopicPropertyCache& propertyCache);
 
         /** accumulate contributions to velocity from remote processes */
-        const void AccumulateVelocity(util::Vector3D<double>& contribution)
+        void AccumulateVelocity(util::Vector3D<double> const& contribution)
         {
           velocity += contribution;
         }
-        ;
 
         /** sets the value for the velocity adjustment due to the lubrication BC */
-        const void SetLubricationVelocityAdjustment(const LatticeVelocity adjustment)
+        void SetLubricationVelocityAdjustment(LatticeVelocity const& adjustment)
         {
           lubricationVelocityAdjustment = adjustment;
         }
@@ -182,7 +179,7 @@ namespace hemelb
          *  refer to Example 4.17 on pp114-117 of the MPI specification version 2.2
          *  when you no longer need this type, remember to call MPI_Type_free
          */
-        const MPI_Datatype CreateMpiDatatypeWithPosition() const;
+        [[nodiscard]] MPI_Datatype CreateMpiDatatypeWithPosition() const;
 
         /** creates a derived MPI datatype that represents a single particle object
          *  the fields included in this type are: particleId and velocity(xyz) only
@@ -190,7 +187,7 @@ namespace hemelb
          *  refer to Example 4.17 on pp114-117 of the MPI specification version 2.2
          *  when you no longer need this type, remember to call MPI_Type_free
          */
-        const MPI_Datatype CreateMpiDatatypeWithVelocity() const;
+        [[nodiscard]] MPI_Datatype CreateMpiDatatypeWithVelocity() const;
 
       private:
         /** partial interpolation of fluid velocity - temporary value only */

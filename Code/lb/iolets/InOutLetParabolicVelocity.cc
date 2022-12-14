@@ -28,7 +28,7 @@ namespace hemelb
         // v(r) = vMax (1 - r**2 / a**2)
         // where r is the distance from the centreline
         LatticePosition displ = x - position;
-        LatticeDistance z = displ.Dot(normal);
+        LatticeDistance z = Dot(displ, normal);
         Dimensionless rSq = (displ.GetMagnitudeSquared() - z * z) / (radius * radius);
         assert(rSq <= 1.0);
 

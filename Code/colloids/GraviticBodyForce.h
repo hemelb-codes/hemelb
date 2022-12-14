@@ -28,9 +28,9 @@ namespace hemelb
           LatticeForceVector field;
           // TODO: convert to lattice units
           io::xml::Element fieldElem = xml.GetChildOrThrow("field");
-          fieldElem.GetAttributeOrThrow("x", field.x);
-          fieldElem.GetAttributeOrThrow("y", field.y);
-          fieldElem.GetAttributeOrThrow("z", field.z);
+          fieldElem.GetAttributeOrThrow("x", field.x());
+          fieldElem.GetAttributeOrThrow("y", field.y());
+          fieldElem.GetAttributeOrThrow("z", field.z());
 
           return new GraviticBodyForce(field);
         }

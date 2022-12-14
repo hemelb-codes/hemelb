@@ -54,7 +54,7 @@ namespace hemelb
 
       SECTION("testVolume") {
 	LatticePosition a(0.1, 0.1, 0.1), b(1, 0, 0), c(0, 1, 0), d(0, 0, 1);
-	double const expected = std::abs( (b - a).Cross(c - a).Dot(d - a)) / 6.0;
+	double const expected = std::abs( Dot(Cross(b - a, c - a), d - a)) / 6.0;
 
 	for (size_t facet(0); facet != 4; ++facet) {
 	  REQUIRE(Approx(expected).margin(1e-8) == volume(mesh));

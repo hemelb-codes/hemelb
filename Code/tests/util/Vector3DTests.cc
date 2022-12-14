@@ -52,14 +52,14 @@ namespace hemelb
       using V = util::Vector3D<int>;
 
       constexpr auto z = V::Zero();
-      STATIC_REQUIRE(z.x == 0);
-      STATIC_REQUIRE(z.y == 0);
-      STATIC_REQUIRE(z.z == 0);
+      STATIC_REQUIRE(z.x() == 0);
+      STATIC_REQUIRE(z.y() == 0);
+      STATIC_REQUIRE(z.z() == 0);
 
       constexpr auto one = V::Ones();
-      STATIC_REQUIRE(one.x == 1);
-      STATIC_REQUIRE(one.y == 1);
-      STATIC_REQUIRE(one.z == 1);
+      STATIC_REQUIRE(one.x() == 1);
+      STATIC_REQUIRE(one.y() == 1);
+      STATIC_REQUIRE(one.z() == 1);
 
     }
   }

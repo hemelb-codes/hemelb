@@ -36,7 +36,7 @@ namespace hemelb
     {
       util::Vector3D<float> coords = LatticeToPhysical(data, location);
 
-      const float lengthAlongLine = (lineVector.Dot(coords - endpoint1)) / lineLength;
+      const float lengthAlongLine = Dot(lineVector, coords - endpoint1) / lineLength;
 
       if (lengthAlongLine < 0. || lengthAlongLine > lineLength)
       {

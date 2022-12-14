@@ -123,9 +123,9 @@ namespace hemelb::extraction {
 	{
 	  // Stored as 32 b unsigned
 	  util::Vector3D<uint32_t> tmp;
-	  dataReader.read(tmp.x);
-	  dataReader.read(tmp.y);
-	  dataReader.read(tmp.z);
+	  dataReader.read(tmp.x());
+	  dataReader.read(tmp.y());
+	  dataReader.read(tmp.z());
 
 	  // Convert to canonical type
 	  util::Vector3D<site_t> grid{tmp};

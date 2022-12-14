@@ -11,10 +11,8 @@
 #include "geometry/VolumeTraverser.h"
 #include "geometry/SiteTraverser.h"
 
-namespace hemelb
+namespace hemelb::geometry
 {
-  namespace geometry
-  {
     /**
      *BlockTraverser is used to traverse the blocks in a lattice sequentially.
      */
@@ -26,7 +24,7 @@ namespace hemelb
         /**
          * @override Of the default destructor in VolumeTraverser.
          */
-        ~BlockTraverser();
+        ~BlockTraverser() override;
 
         site_t CurrentBlockNumber() const;
 
@@ -45,21 +43,21 @@ namespace hemelb
          * @override of the abstract function in VolumeTraverser.
          * @return
          */
-        site_t GetXCount() const;
+        site_t GetXCount() const override;
 
         /**
          * Gets the number of blocks in the y direction.
          * @override of the abstract function in VolumeTraverser.
          * @return
          */
-        site_t GetYCount() const;
+        site_t GetYCount() const override;
 
         /**
          * Gets the number of blocks in the z direction.
          * @override of the abstract function in VolumeTraverser.
          * @return
          */
-        site_t GetZCount() const;
+        site_t GetZCount() const override;
 
         bool IsValidLocation(util::Vector3D<site_t> block);
 
@@ -68,7 +66,7 @@ namespace hemelb
 
         const Domain & mLatticeData;
     };
-  }
+
 }
 
 #endif // HEMELB_GEOMETRY_BLOCKTRAVERSER_H

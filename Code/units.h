@@ -80,6 +80,9 @@ namespace hemelb
   typedef util::Vector3D<PhysicalSpeed> PhysicalVelocity;
   typedef util::Vector3D<LatticeSpeed> LatticeVelocity;
 
+  using PhysicalMomentum = util::Vector3D<double>;
+  using LatticeMomentum = util::Vector3D<double>;
+
   typedef double PhysicalPressureGradient;
   typedef double LatticePressureGradient;
 

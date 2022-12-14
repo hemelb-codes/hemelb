@@ -36,9 +36,15 @@ PYBIND11_MODULE(Generation, mod) {
       .def(py::init<double>())                  // All the same
       .def(py::init<double, double, double>())  // Three components
       // Attribute acces to elements
-      .def_readwrite("x", &DV::x)
-      .def_readwrite("y", &DV::y)
-      .def_readwrite("z", &DV::z)
+      .def_property(
+          "x", [](DV const& self) { return self.x(); },
+          [](DV& self, double v) { self.x() = v; })
+      .def_property(
+          "y", [](DV const& self) { return self.y(); },
+          [](DV& self, double v) { self.y() = v; })
+      .def_property(
+          "z", [](DV const& self) { return self.z(); },
+          [](DV& self, double v) { self.z() = v; })
       // get/set via []
       .def("__getitem__", [](DV const& self, int i) { return self[i]; })
       .def("__setitem__", [](DV& self, int i, double v) { self[i] = v; })

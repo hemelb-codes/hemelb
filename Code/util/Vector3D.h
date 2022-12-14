@@ -6,31 +6,17 @@
 #ifndef HEMELB_UTIL_VECTOR3D_H
 #define HEMELB_UTIL_VECTOR3D_H
 
+#include <array>
 #include <cmath>
 #include <iterator>
 #include <ostream>
 #include <algorithm>
+#include <numeric>
 #include <limits>
 #include "util/utilityFunctions.h"
 
-namespace hemelb
+namespace hemelb::util
 {
-  namespace util
-  {
-    namespace Direction
-    {
-      /**
-       * The Cartesian directions.
-       */
-      enum Direction
-      {
-        X, //!< X
-        Y, //!< Y
-        Z
-      //!< Z
-      };
-    }
-
     /**
      * Base class for Vector3D that handles IndexError.
      *
@@ -46,7 +32,7 @@ namespace hemelb
         /**
          * Typedef for the error handler function.
          */
-        typedef void (HandlerFunction)(int direction);
+        using HandlerFunction = void (int);
 
         /**
          * Set the function used to handle errors, overriding the default.
@@ -71,9 +57,6 @@ namespace hemelb
         static HandlerFunction* handler;
     };
 
-    // Forward definition of template class fully defined below.
-    template<typename T> class Vector3DIterator;
-
     /**
      * Three dimensional vector class template.
      *
@@ -84,39 +67,77 @@ namespace hemelb
     template<class T>
     class Vector3D : public Vector3DBase
     {
-      static_assert(std::is_arithmetic<T>::value, "Vector3D only allowed with arithmetic types");
-      public:
+        static_assert(std::is_arithmetic_v<T>, "Vector3D only allowed with arithmetic types");
+
+        // In debug mode, always do bounds checking.
+        static constexpr bool debug =
+#ifndef NDEBUG
+                true
+#else
+                false
+#endif
+        ;
+
+    public:
         // The type of the element
         using value_type = T;
 
-        // An iterator over elements of this Vector3D
-        using iterator = Vector3DIterator<T>;
+        // The data.
+        // Would like to make this private, but also want to allow
+        // its use as a non-type template parameter, so this has to
+        // be a structural type.
+        std::array<value_type, 3> m_values;
 
         /**
          * Iterator pointing to first element of the Vector3D.
          * @return
          */
-        iterator begin()
+        auto begin()
         {
-          return iterator(*this, 0U);
+            return m_values.begin();
+        }
+        auto begin() const
+        {
+            return m_values.begin();
         }
 
         /**
          * Iterator pointing just past the last element of the Vector3D.
          * @return
          */
-        iterator end()
+        auto end()
         {
-          return iterator(*this, 3U);
+            return m_values.end();
+        }
+        auto end() const
+        {
+            return m_values.end();
         }
 
         // Be friends with all other Vec3 instantiations.
-        // template<class > friend class Vector3D;
+        template<class> friend class Vector3D;
 
         /**
          * x, y and z components.
          */
-        T x, y, z;
+        constexpr T const& x() const {
+            return m_values[0];
+        }
+        constexpr T & x() {
+            return m_values[0];
+        }
+        constexpr T const& y() const {
+            return m_values[1];
+        }
+        constexpr T & y() {
+            return m_values[1];
+        }
+        constexpr T const& z() const {
+            return m_values[2];
+        }
+        constexpr T & z() {
+            return m_values[2];
+        }
 
         // Default constructor. It's a value type so this has undefined value when default constructed.
         constexpr Vector3D() = default;
@@ -128,7 +149,7 @@ namespace hemelb
          * @param z-component
          */
         constexpr Vector3D(const T iX, const T iY, const T iZ) :
-            x(iX), y(iY), z(iZ)
+            m_values({iX, iY, iZ})
         {
         }
 
@@ -137,7 +158,7 @@ namespace hemelb
          * @param used for all components
          */
         explicit constexpr Vector3D(const T iX) :
-            x(iX), y(iX), z(iX)
+                m_values({iX, iX, iX})
         {
         }
 
@@ -150,49 +171,66 @@ namespace hemelb
         // usefully moveable. We also don't provide a converting move
         // c'tor as that will need a copy even if one of the types
         // involved is moveable.
-        constexpr Vector3D(Vector3D&&) = default;
+        constexpr Vector3D(Vector3D&&) noexcept = default;
 
         // Constructor converting elements from another type
         template<class U>
-        explicit constexpr Vector3D(const Vector3D<U>& i) :
-	    x(T(i.x)), y(T(i.y)), z(T(i.z))
+        explicit constexpr Vector3D(const Vector3D<U>& i)
         {
+            std::copy(i.m_values.begin(), i.m_values.end(), m_values.begin());
         }
 
         // Go the other way and create a copy as the supplied type
         template <class U>
         constexpr Vector3D<U> as() const {
-          return Vector3D<U>{U(x), U(y), U(z)};
+          return Vector3D<U>{*this};
         }
 
         // Copy and move assignment are both explicitly defaulted
         constexpr Vector3D& operator=(const Vector3D&) = default;
-        constexpr Vector3D& operator=(Vector3D&&) = default;
+        constexpr Vector3D& operator=(Vector3D&&) noexcept = default;
 
         /**
          * Get a component by Direction
          * @param lDirection
          * @return The component
          */
-        T& GetByDirection(Direction::Direction lDirection)
+        constexpr T& at(std::size_t i)
         {
-          switch (lDirection)
-          {
-            case Direction::X:
-              return x;
-
-            case Direction::Y:
-              return y;
-
-            case Direction::Z:
-              return z;
-
-            default:
-              HandleIndexError(lDirection);
-              // HandleIndexError will either throw or bring the simulation
-              // down. We include this return statement to suppress warnings!
-              return x;
-          }
+            try {
+                return m_values.at(i);
+            }
+            catch (std::out_of_range& e) {
+                // HandleIndexError will either throw or bring the simulation
+                // down. We include this return statement to suppress warnings!
+                HandleIndexError(i);
+                return m_values[0];
+            }
+        }
+        constexpr T const& at(std::size_t i) const
+        {
+            try {
+                return m_values.at(i);
+            }
+            catch (std::out_of_range& e) {
+                // HandleIndexError will either throw or bring the simulation
+                // down. We include this return statement to suppress warnings!
+                HandleIndexError(i);
+                return m_values[0];
+            }
+        }
+        /**
+         * Get a component by index (x = 0, y = 1, z = 2).
+         * @param index
+         * @return component
+         */
+        constexpr T& operator[](size_t index)
+        {
+            if constexpr (debug) {
+                return at(index);
+            } else {
+                return m_values[index];
+            }
         }
 
         /**
@@ -200,51 +238,13 @@ namespace hemelb
          * @param index
          * @return component
          */
-        T& operator[](int index)
+        constexpr const T& operator[](size_t index) const
         {
-          switch (index)
-          {
-            case 0:
-              return x;
-
-            case 1:
-              return y;
-
-            case 2:
-              return z;
-
-            default:
-              HandleIndexError(index);
-              // HandleIndexError will either throw or bring the simulation
-              // down. We include this return statement to suppress warnings!
-              return x;
-          }
-        }
-
-        /**
-         * Get a component by index (x = 0, y = 1, z = 2).
-         * @param index
-         * @return component
-         */
-        const T& operator[](int index) const
-        {
-          switch (index)
-          {
-            case 0:
-              return x;
-
-            case 1:
-              return y;
-
-            case 2:
-              return z;
-
-            default:
-              HandleIndexError(index);
-              // HandleIndexError will either throw or bring the simulation
-              // down. We include this return statement to suppress warnings!
-              return x;
-          }
+            if constexpr (debug) {
+                return at(index);
+            } else {
+                return m_values[index];
+            }
         }
 
         /**
@@ -252,20 +252,7 @@ namespace hemelb
          */
         constexpr bool operator==(const Vector3D& right) const
         {
-          if (x != right.x)
-          {
-            return false;
-          }
-          if (y != right.y)
-          {
-            return false;
-          }
-          if (z != right.z)
-          {
-            return false;
-          }
-
-          return true;
+            return m_values == right.m_values;
         }
 
         /**
@@ -294,66 +281,14 @@ namespace hemelb
         // 
         // First, result type of doing T OPERATOR decay(scalar)
         template <typename U>
-	using add_result_t = decltype(std::declval<T>() + std::declval<typename std::decay<U>::type>());
+        using add_result_t = decltype(std::declval<T>() + std::declval<std::decay_t<U>>());
         template <typename U>
-	using mul_result_t = decltype(std::declval<T>() * std::declval<typename std::decay<U>::type>());
+        using mul_result_t = decltype(std::declval<T>() * std::declval<std::decay_t<U>>());
         // Second, predicate whether that type is the same as T
         template <typename U>
-	static constexpr bool add_result_same_v = std::is_same<T, add_result_t<U>>::value;
+        static constexpr bool add_result_same_v = std::is_same_v<T, add_result_t<U>>;
         template <typename U>
-	static constexpr bool mul_result_same_v = std::is_same<T, mul_result_t<U>>::value;
-
-        /**
-         * Dot product between this vector and another
-         * @param other
-         * @return
-         */
-        template <typename U, typename RES = mul_result_t<U>>
-        constexpr RES Dot(const Vector3D<U>& otherVector) const
-        {
-          return (x * otherVector.x + y * otherVector.y + z * otherVector.z);
-        }
-        /**
-         * Dot product between two Vector3Ds.
-         * @param V1
-         * @param V2
-         * @return
-         */
-        template <typename U, typename RES = mul_result_t<U>>
-        constexpr static RES Dot(const Vector3D &V1, const Vector3D<U> &V2)
-        {
-          return V1.Dot(V2);
-        }
-
-        /**
-         * Cross product between two Vector3D.
-         * @param V1
-         * @param V2
-         * @return
-         */
-        template <typename U, typename RES = mul_result_t<U>>
-        constexpr static Vector3D<RES> Cross(const Vector3D& V1, const Vector3D<U>& V2)
-        {
-          return Vector3D<RES>(V1.y * V2.z - V1.z * V2.y,
-			       V1.z * V2.x - V1.x * V2.z,
-			       V1.x * V2.y - V1.y * V2.x);
-        }
-
-        /**
-         * Cross product between this vector and another.
-         * @param other
-         * @return
-         */
-        template <typename U, typename RES = mul_result_t<U>>
-	constexpr Vector3D<RES> Cross(const Vector3D<U>& other) const
-        {
-          return Cross<U, RES>(*this, other);
-        }
-
-        template<class OTHER> Vector3D<OTHER> cast() const
-        {
-          return Vector3D<OTHER>(*this);
-        }
+        static constexpr bool mul_result_same_v = std::is_same_v<T, mul_result_t<U>>;
 
         /**
          * Compute the magnitude squared of the vector
@@ -361,7 +296,7 @@ namespace hemelb
          */
         constexpr T GetMagnitudeSquared() const
         {
-          return this->Dot(*this);
+          return Dot(*this, *this);
         }
 
         /**
@@ -370,7 +305,7 @@ namespace hemelb
          */
         T GetMagnitude() const
         {
-          static_assert(!std::is_integral<T>::value, "Vector3D::GetMagnitude only makes sense for floating types");
+          static_assert(!std::is_integral_v<T>, "Vector3D::GetMagnitude only makes sense for floating types");
           return std::sqrt(GetMagnitudeSquared());
         }
 
@@ -382,7 +317,7 @@ namespace hemelb
         template <typename U, typename RES = add_result_t<U>>
         constexpr Vector3D<RES> operator+(const Vector3D<U>& right) const
         {
-          return Vector3D<RES>(x + right.x, y + right.y, z + right.z);
+            return Vector3D<RES>(x() + right.x(), y() + right.y(), z() + right.z());
         }
 
         /**
@@ -390,14 +325,13 @@ namespace hemelb
          * @param right
          * @return the updated vector
          */
-        template <typename U, typename = typename std::enable_if<add_result_same_v<U>>::type>
+        template <typename U, typename = std::enable_if_t<add_result_same_v<U>>>
         constexpr Vector3D& operator+=(const Vector3D<U>& right)
         {
-          x += right.x;
-          y += right.y;
-          z += right.z;
-
-          return *this;
+            for (int i = 0; i < m_values.size(); ++i) {
+                m_values[i] += right.m_values[i];
+            }
+            return *this;
         }
 
         /**
@@ -406,7 +340,7 @@ namespace hemelb
          */
         constexpr Vector3D operator-() const
         {
-          return Vector3D(-x, -y, -z);
+          return Vector3D(-x(), -y(), -z());
         }
 
         /**
@@ -417,7 +351,7 @@ namespace hemelb
         template <typename U, typename RES = add_result_t<U>>
         constexpr Vector3D<RES> operator-(const Vector3D<U>& right) const
         {
-          return Vector3D<RES>(x - right.x, y - right.y, z - right.z);
+          return Vector3D<RES>(x() - right.x(), y() - right.y(), z() - right.z());
         }
 
         /**
@@ -425,12 +359,12 @@ namespace hemelb
          * @param right
          * @return this - right
          */
-        template <typename U, typename = typename std::enable_if<add_result_same_v<U>>::type>
+        template <typename U, typename = std::enable_if_t<add_result_same_v<U>>>
         constexpr Vector3D& operator-=(const Vector3D<U>& right)
         {
-          x -= right.x;
-          y -= right.y;
-          z -= right.z;
+          x() -= right.x();
+          y() -= right.y();
+          z() -= right.z();
           return *this;
         }
 
@@ -440,24 +374,24 @@ namespace hemelb
          * @return
          */
         template<class U,
-		 typename = typename std::enable_if<std::is_arithmetic<U>::value>::type,
-		 typename RES = mul_result_t<U>>
+                typename = std::enable_if_t<std::is_arithmetic_v<U>>,
+                typename RES = mul_result_t<U>>
         friend constexpr Vector3D<RES> operator*(const Vector3D& lhs, const U& rhs)
         {
-          return Vector3D<RES>{
-	    lhs.x * rhs,
-	    lhs.y * rhs,
-	    lhs.z * rhs
-          };
+            return Vector3D<RES>{
+                    lhs.x() * rhs,
+                    lhs.y() * rhs,
+                    lhs.z() * rhs
+            };
         }
 
         // For scalar * vector just swap and call above
         template<class U,
-		 typename = typename std::enable_if<std::is_arithmetic<U>::value>::type,
-		 typename RES = mul_result_t<U>>
+                typename = std::enable_if_t<std::is_arithmetic_v<U>>,
+                typename RES = mul_result_t<U>>
         friend constexpr Vector3D<RES> operator*(const U& lhs, const Vector3D& rhs)
         {
-          return rhs*lhs;
+            return rhs*lhs;
         }
 
         /**
@@ -465,37 +399,35 @@ namespace hemelb
          * @param multiplier
          * @return
          */
-        template<class U, typename = typename std::enable_if<mul_result_same_v<U>>::type>
+        template<class U, typename = std::enable_if_t<mul_result_same_v<U>>>
         constexpr Vector3D& operator*=(const U& multiplier)
         {
-          x *= multiplier;
-          y *= multiplier;
-          z *= multiplier;
-          return *this;
+            for (T& v: m_values)
+                v *= multiplier;
+            return *this;
         }
 
         // Division by a scalar
         // Return type is a new Vector3D of the type of (T / U)
         template<class U,
-		 typename = typename std::enable_if<std::is_arithmetic<U>::value>::type,
-		 typename RES = mul_result_t<U>>
+                typename = std::enable_if_t<std::is_arithmetic_v<U>>,
+                typename RES = mul_result_t<U>>
         constexpr Vector3D<RES> operator/(const U& divisor) const
         {
-          return Vector3D<RES>{x / divisor,
-			       y / divisor,
-			       z / divisor};
+            return Vector3D<RES>{x() / divisor,
+                                 y() / divisor,
+                                 z() / divisor};
         }
 
         // In-place divison by a scalar
         // Only enabled if the type of T/U == T
         // Returns the updated object
-        template<class U, typename = typename std::enable_if<mul_result_same_v<U>>::type>
+        template<class U, typename = std::enable_if_t<mul_result_same_v<U>>>
         constexpr Vector3D& operator/=(const U& divisor)
         {
-          x /= divisor;
-          y /= divisor;
-          z /= divisor;
-          return *this;
+            for (T& v: m_values)
+                v /= divisor;
+            return *this;
         }
 
         /**
@@ -505,20 +437,19 @@ namespace hemelb
         template<class U, typename RES = mul_result_t<U>>
         constexpr Vector3D<RES> operator%(const U& divisor) const
         {
-          return Vector3D<RES>{x % divisor, y % divisor, z % divisor};
+          return Vector3D<RES>{x() % divisor, y() % divisor, z() % divisor};
         }
 
         /**
          * In-place scalar modulus
          * @param divisor
          */
-        template<class U, typename = typename std::enable_if<mul_result_same_v<U>>::type>
+        template<class U, typename = std::enable_if_t<mul_result_same_v<U>>>
         constexpr Vector3D& operator%=(const U& divisor)
         {
-          x %= divisor;
-          y %= divisor;
-          z %= divisor;
-          return *this;
+            for (T& v: m_values)
+                v %= divisor;
+            return *this;
         }
 
         /**
@@ -526,7 +457,7 @@ namespace hemelb
          */
         constexpr Vector3D PointwiseMultiplication(const Vector3D& rightArgument) const
         {
-          return Vector3D(x * rightArgument.x, y * rightArgument.y, z * rightArgument.z);
+          return Vector3D(x() * rightArgument.x(), y() * rightArgument.y(), z() * rightArgument.z());
         }
 
         /**
@@ -534,7 +465,7 @@ namespace hemelb
          */
         constexpr Vector3D PointwiseDivision(const Vector3D& rightArgument) const
         {
-          return Vector3D(x / rightArgument.x, y / rightArgument.y, z / rightArgument.z);
+          return Vector3D(x() / rightArgument.x(), y() / rightArgument.y(), z() / rightArgument.z());
         }
 
         /**
@@ -545,11 +476,8 @@ namespace hemelb
          */
         constexpr void UpdatePointwiseMin(const Vector3D& iCompareVector)
         {
-          x = std::min(x, iCompareVector.x);
-
-          y = std::min(y, iCompareVector.y);
-
-          z = std::min(z, iCompareVector.z);
+            for (int i = 0; i < 3; ++i)
+                m_values[i] = std::min(m_values[i], iCompareVector.m_values[i]);
         }
 
         /**
@@ -560,11 +488,8 @@ namespace hemelb
          */
         constexpr void UpdatePointwiseMax(const Vector3D& iCompareVector)
         {
-          x = std::max(x, iCompareVector.x);
-
-          y = std::max(y, iCompareVector.y);
-
-          z = std::max(z, iCompareVector.z);
+            for (int i = 0; i < 3; ++i)
+                m_values[i] = std::max(m_values[i], iCompareVector.m_values[i]);
         }
 
         /**
@@ -575,9 +500,11 @@ namespace hemelb
          */
         constexpr bool IsInRange(const Vector3D& vMin, const Vector3D& vMax) const
         {
-          return NumericalFunctions::IsInRange(x, vMin.x, vMax.x)
-              && NumericalFunctions::IsInRange(y, vMin.y, vMax.y)
-              && NumericalFunctions::IsInRange(z, vMin.z, vMax.z);
+            bool ans = true;
+            for (int i = 0; i < 3; ++i) {
+                ans &= NumericalFunctions::IsInRange(m_values[i], vMin.m_values[i], vMax.m_values[i]);
+            }
+            return ans;
         }
 
         /**
@@ -617,120 +544,46 @@ namespace hemelb
         }
     };
 
-    /**
-     * Template class for iterators over the elements of a Vector3D instantiation.
-     */
-    template<typename T>
-    class Vector3DIterator : public std::iterator<std::forward_iterator_tag, T>
-    {
-      public:
-        /**
-         * The type of vector over which we will iterate.
-         */
-        typedef Vector3D<T> vector;
-      protected:
-        vector* vec; //!< The Vector3D
-        unsigned int i; //!< Current position in the vector
+    // Dot product for both args being the same type.
+    // Guarantees to return that same type (unlike e.g. char * char -> int).
+    template <typename T>
+    constexpr T Dot(Vector3D<T> const& l, Vector3D<T> const& r) {
+        return std::inner_product(l.m_values.begin(), l.m_values.end(), r.m_values.begin(), T{0});
+    }
 
-      public:
-        /**
-         * Default constructor
-         */
-        Vector3DIterator() :
-            vec(nullptr), i(0)
-        {
-        }
+    // Types differ, so returns decltype(left * right)
+    template <typename T, typename U>
+    constexpr auto Dot(Vector3D<T> const& l, Vector3D<U> const& r) {
+        using R = decltype(std::declval<T>() * std::declval<U>());
+        return std::inner_product(l.m_values.begin(), l.m_values.end(), r.m_values.begin(), R{0});
+    }
 
-        /**
-         * Construct an iterator over the given vector, starting at the given
-         * element
-         * @param vector
-         * @param element index
-         */
-        Vector3DIterator(vector& vec, unsigned int i = 0) :
-            vec(&vec), i(i)
-        {
-        }
+    // Cross product for both args being the same type.
+    // Guarantees to return that same type (unlike e.g. char * char -> int).
+    template <typename T>
+    constexpr Vector3D<T> Cross(Vector3D<T> const& l, Vector3D<T> const& r) {
+        return {
+                l.y() * r.z() - l.z() * r.y(),
+                l.z() * r.x() - l.x() * r.z(),
+                l.x() * r.y() - l.y() * r.x()
+        };
+    }
 
-        /**
-         * Copy constructor.
-         * @param other
-         */
-        Vector3DIterator(const Vector3DIterator& other) :
-            vec(other.vec), i(other.i)
-        {
-        }
-
-        /**
-         * Assignment
-         * @param other
-         * @return
-         */
-        Vector3DIterator& operator=(const Vector3DIterator& other)
-        {
-          if (this == &other)
-          {
-            return (*this);
-          }
-          this->vec = other.vec;
-          this->i = other.i;
-
-          return (*this);
-        }
-
-        /**
-         * Advance to next element.
-         * @return the iterator advanced to the next position.
-         */
-        Vector3DIterator& operator++()
-        {
-          this->i++;
-          return *this;
-        }
-
-        /**
-         * Test for equality.
-         * @param other
-         * @return
-         */
-        bool operator==(const Vector3DIterator& other) const
-        {
-          return (this->vec == other.vec) && (this->i == other.i);
-        }
-
-        /**
-         * Test for inequality.
-         * @param other
-         * @return
-         */
-        bool operator!=(const Vector3DIterator& other) const
-        {
-          return ! (*this == other);
-        }
-
-        /**
-         * Dereference
-         * @return element at the current position.
-         */
-        T& operator*()
-        {
-          return (*this->vec)[this->i];
-        }
-
-        /**
-         * Deference
-         * @return pointer to element at the current position.
-         */
-        T* operator->()
-        {
-          return & (* (*this));
-        }
-    };
+    // Types differ, so returns decltype(left * right)
+    template <typename T, typename U>
+    constexpr auto Cross(Vector3D<T> const& l, Vector3D<U> const& r) {
+        using R = decltype(std::declval<T>() * std::declval<U>());
+        return Vector3D<R>{
+                l.y() * r.z() - l.z() * r.y(),
+                l.z() * r.x() - l.x() * r.z(),
+                l.x() * r.y() - l.y() * r.x()
+        };
+    }
 
     template<typename T>
     std::ostream& operator<<(std::ostream& o, Vector3D<T> const& v3)
     {
-      return o << "(" << v3.x << "," << v3.y << "," << v3.z << ")";
+      return o << "(" << v3.x() << "," << v3.y() << "," << v3.z() << ")";
     }
 
     namespace detail
@@ -743,36 +596,33 @@ namespace hemelb
     {
       if (detail::CheckNextChar(i, '('))
       {
-        i >> v3.x;
+        i >> v3.x();
         if (detail::CheckNextChar(i, ','))
         {
-          i >> v3.y;
+          i >> v3.y();
           if (detail::CheckNextChar(i, ','))
           {
-            i >> v3.z;
+            i >> v3.z();
             detail::CheckNextChar(i, ')');
           }
         }
       }
       return i;
     }
-  }
+
 }
 
 #ifdef HEMELB_CODE
 #include "net/MpiDataType.h"
 
-namespace hemelb
+namespace hemelb::net
 {
-  namespace net
-  {
     template<>
     MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<float> >::RegisterMpiDataType();
     template<>
     MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<int64_t> >::RegisterMpiDataType();
     template<>
     MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<double> >::RegisterMpiDataType();
-  }
 }
 #endif
 

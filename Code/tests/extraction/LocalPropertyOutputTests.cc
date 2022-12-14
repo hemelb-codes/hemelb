@@ -74,9 +74,7 @@ namespace hemelb
 	  reader.read(y);
 	  reader.read(z);
 
-	  REQUIRE(grid.x == x);
-	  REQUIRE(grid.y == y);
-	  REQUIRE(grid.z == z);
+	  REQUIRE(grid == LatticeVector{x, y, z});
 
 	  // Read the pressure, which should be an offset of the
 	  // reference pressure away.
@@ -92,9 +90,9 @@ namespace hemelb
 	  reader.read(vy);
 	  reader.read(vz);
 
-	  REQUIRE(apprx(velocity.x) == vx);
-          REQUIRE(apprx(velocity.y) == vy);
-	  REQUIRE(apprx(velocity.z) == vz);
+	  REQUIRE(apprx(velocity.x()) == vx);
+          REQUIRE(apprx(velocity.y()) == vy);
+	  REQUIRE(apprx(velocity.z()) == vz);
 	}
 
       }

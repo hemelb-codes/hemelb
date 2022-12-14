@@ -21,10 +21,8 @@
 #include "tests/helpers/FourCubeLatticeData.h"
 #include "tests/helpers/HasCommsTestFixture.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     TEST_CASE_METHOD(helpers::HasCommsTestFixture, "GeometrySelector")
     {
       
@@ -37,11 +35,12 @@ namespace hemelb
 
       auto simState = lb::SimulationState{60.0 / (70.0 * 5000.0), 1000};
       auto propertyCache = lb::MacroscopicPropertyCache(simState, latticeData->GetDomain());
-      auto unitConverter = util::UnitConverter(simState.GetTimeStepLength(),
-					       VoxelSize,
-					       PhysicalPosition::Zero(),
-					       DEFAULT_FLUID_DENSITY_Kg_per_m3,
-					       0.0);
+      auto unitConverter = std::make_shared<util::UnitConverter>(
+              simState.GetTimeStepLength(),
+              VoxelSize,
+              PhysicalPosition::Zero(),
+              DEFAULT_FLUID_DENSITY_Kg_per_m3,
+              0.0);
       auto dataSourceIterator = extraction::LbDataSourceIterator(propertyCache,
 								 *latticeData,
 								 0,
@@ -59,10 +58,7 @@ namespace hemelb
 	  bool actualIncluded =
 	    geometrySelector.Include(dataSourceIterator, dataSourceIterator.GetPosition());
 
-	  INFO("Site at ("
-	       << dataSourceIterator.GetPosition().x << ", "
-	       << dataSourceIterator.GetPosition().y << ", "
-	       << dataSourceIterator.GetPosition().z << ")"
+	  INFO("Site at " << dataSourceIterator.GetPosition()
 	       << (expectedIncluded ? " was" : " was not")
 	       << " expected to be included but actually"
 	       << (actualIncluded ? " was." : " was not."))
@@ -131,7 +127,7 @@ namespace hemelb
 	      // normal must be roughly equal to the centre point's
 	      // coordinate dotted with the normal for the current
 	      // point to be on the plane.
-	      if (std::abs(planeNormal.Dot(x) - 3 * CentreCoordinate) > 0.5f) {
+	      if (std::abs(Dot(planeNormal, x) - 3 * CentreCoordinate) > 0.5f) {
 		continue;
 	      }
 
@@ -238,5 +234,4 @@ namespace hemelb
       }
 
     }
-  }
 }

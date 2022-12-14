@@ -6,10 +6,8 @@
 #include "colloids/PersistedParticle.h"
 #include "constants.h"
 
-namespace hemelb
+namespace hemelb::colloids
 {
-  namespace colloids
-  {
     PersistedParticle::PersistedParticle(io::xml::Element& xml)
     {
       // assume we are currently at a <SubgridParticle> node
@@ -22,12 +20,12 @@ namespace hemelb
       xml.GetAttributeOrThrow("Mass", mass);
       // TODO: Convert to lattice
       io::xml::Element initPosElem = xml.GetChildOrThrow("initialPosition");
-      initPosElem.GetAttributeOrThrow("x", globalPosition.x);
-      initPosElem.GetAttributeOrThrow("y", globalPosition.y);
-      initPosElem.GetAttributeOrThrow("z", globalPosition.z);
+      initPosElem.GetAttributeOrThrow("x", globalPosition.x());
+      initPosElem.GetAttributeOrThrow("y", globalPosition.y());
+      initPosElem.GetAttributeOrThrow("z", globalPosition.z());
 
       lastCheckpointTimestep = 0;
       markedForDeletionTimestep = SITE_OR_BLOCK_SOLID;
     };
-  }
+
 }

@@ -124,7 +124,7 @@ namespace hemelb::geometry
         inline site_t GetLocalSiteIdFromLocalSiteCoords(
             const util::Vector3D<site_t>& siteCoords) const
         {
-          return ( (siteCoords.x * blockSize) + siteCoords.y) * blockSize + siteCoords.z;
+          return ( (siteCoords.x() * blockSize) + siteCoords.y()) * blockSize + siteCoords.z();
         }
 
         /**
@@ -134,7 +134,7 @@ namespace hemelb::geometry
          */
         inline site_t GetBlockIdFromBlockCoords(const util::Vector3D<site_t>& blockCoords) const
         {
-          return (blockCoords.x * blockCounts.y + blockCoords.y) * blockCounts.z + blockCoords.z;
+          return (blockCoords.x() * blockCounts.y() + blockCoords.y()) * blockCounts.z() + blockCoords.z();
         }
 
         bool IsValidLatticeSite(const util::Vector3D<site_t>& siteCoords) const;
@@ -215,7 +215,7 @@ namespace hemelb::geometry
         inline site_t GetGlobalNoncontiguousSiteIdFromGlobalCoords(
             const util::Vector3D<site_t>&globalCoords) const
         {
-          return (globalCoords.x * sites.y + globalCoords.y) * sites.z + globalCoords.z;
+          return (globalCoords.x() * sites.y() + globalCoords.y()) * sites.z() + globalCoords.z();
         }
 
         inline site_t GetLocalContiguousIdFromGlobalNoncontiguousId(const site_t globalId) const
@@ -228,10 +228,10 @@ namespace hemelb::geometry
         void GetGlobalCoordsFromGlobalNoncontiguousSiteId(
             site_t globalId, util::Vector3D<site_t>& globalCoords) const
         {
-          globalCoords.z = globalId % sites.z;
-          site_t blockIJData = globalId / sites.z;
-          globalCoords.y = blockIJData % sites.y;
-          globalCoords.x = blockIJData / sites.y;
+          globalCoords.z() = globalId % sites.z();
+          site_t blockIJData = globalId / sites.z();
+          globalCoords.y() = blockIJData % sites.y();
+          globalCoords.x() = blockIJData / sites.y();
         }
 
         proc_t ProcProvidingSiteByGlobalNoncontiguousId(site_t globalId) const
@@ -371,7 +371,7 @@ namespace hemelb::geometry
           neighbourIndices[siteIndex * latticeInfo.GetNumVectors() + direction] = distributionIndex;
         }
 
-        void GetBlockIJK(site_t block, util::Vector3D<site_t>& blockCoords) const;
+        util::Vector3D<site_t> GetBlockIJK(site_t block) const;
 
         // Method should remain protected, intent is to access this information via Site
         template<typename LatticeType>

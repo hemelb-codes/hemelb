@@ -12,12 +12,8 @@
 #include "units.h"
 #include "util/Vector3D.h"
 
-namespace hemelb
+namespace hemelb::geometry::decomposition
 {
-  namespace geometry
-  {
-    namespace decomposition
-    {
       class BasicDecomposition
       {
         public:
@@ -67,20 +63,20 @@ namespace hemelb
           /**
            * Does the work of dividing blocks up between processors.
            *
-           * The algorithm iterates over processors (units).
-           * We start by assigning the next unassigned block to the current unit, then growing out
-           * the region by adding new blocks, until the current unit has approximately the right
-           * number of blocks for the given numbers of blocks / units. When adding blocks, we prefer
-           * blocks that are neighbours of blocks already assigned to the current unit.
+           * The algorithm iterates over processes.
+           * We start by assigning the next unassigned block to the current process, then growing out
+           * the region by adding new blocks, until the current process has approximately the right
+           * number of blocks for the given numbers of blocks / processes. When adding blocks, we prefer
+           * blocks that are neighbours of blocks already assigned to the current process.
            *
-           * @param unitForEachBlock [out] The processor id for each block
+           * @param processForEachBlock [out] The processor id for each block
            * @param unassignedBlocks [in] The number of blocks yet to be assigned a processor
            * @param geometry [in] The geometry we're decomposing
-           * @param unitCount [in] The total number of processors
+           * @param processCount [in] The total number of processors
            * @param fluidSitesPerBlock [in] The number of fluid sites in each block
            */
-          void DivideBlocks(std::vector<proc_t>& unitForEachBlock, site_t unassignedBlocks,
-                            const GmyReadResult& geometry, const proc_t unitCount,
+          void DivideBlocks(std::vector<proc_t>& processForEachBlock, site_t unassignedBlocks,
+                            const GmyReadResult& geometry, const proc_t processCount,
                             const std::vector<site_t>& fluidSitesPerBlock);
 
           /**
@@ -92,22 +88,20 @@ namespace hemelb
            * @param edgeBlocks
            * @param expansionBlocks
            * @param blockAssigned
-           * @param currentUnit
-           * @param unitForEachBlock
-           * @param blocksPerUnit
+           * @param currentProcess
+           * @param processForEachBlock
+           * @param blocksPerProcess
            * @return Returns true if the region was expanded.
            */
           bool Expand(std::vector<BlockLocation>& expansionBlocks, std::vector<bool>& blockAssigned,
-                      std::vector<proc_t>& unitForEachBlock, site_t &blocksOnCurrentUnit,
-                      const std::vector<BlockLocation>& edgeBlocks, const proc_t currentUnit,
-                      const site_t blocksPerUnit);
+                      std::vector<proc_t>& processForEachBlock, site_t &blocksOnCurrentProcess,
+                      const std::vector<BlockLocation>& edgeBlocks, const proc_t currentProcess,
+                      const site_t blocksPerProcess);
 
           const GmyReadResult& geometry; //! The geometry being decomposed.
           const lb::lattices::LatticeInfo& latticeInfo; //! The lattice to decompose for.
           const net::MpiCommunicator& communicator; //! The communicator object being decomposed over.
           const std::vector<site_t>& fluidSitesOnEachBlock; //! The number of fluid sites on each block in the geometry.
       };
-    } /* namespace decomposition */
-  } /* namespace geometry */
-} /* namespace hemelb */
-#endif /* HEMELB_GEOMETRY_DECOMPOSITION_BASICDECOMPOSITION_H */
+}
+#endif

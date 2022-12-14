@@ -33,9 +33,10 @@ namespace hemelb
       LatticePosition const normalj = facetB.unitNormal();
 
       // Figures out orientation of the common nodes, whether we have x3 - x1 or x1 - x3.
-      const bool orientation =
-	facetA(commons.first, commons.second).Cross(facetA(singles.first, commons.second)).Dot(normali)
-	< 0e0;
+      const bool orientation = Dot(
+              Cross(facetA(commons.first, commons.second), facetA(singles.first, commons.second)),
+              normali
+      ) < 0e0;
 
       auto n_ij = normali - normalj * normali.Dot(normalj);
       auto n_ji = normalj - normali * normalj.Dot(normali);
@@ -76,10 +77,10 @@ namespace hemelb
 				  commons.first);
       auto & f4 = facetB.GetForce(singles.second);
 
-      f1 += (n2 - n3).Cross(n_ji) + (n3 - n4).Cross(n_ij);
-      f2 += (n3 - n1).Cross(n_ji);
-      f3 += (n1 - n2).Cross(n_ji) + (n4 - n1).Cross(n_ij);
-      f4 += (n1 - n3).Cross(n_ij);
+      f1 += Cross(n2 - n3, n_ji) + Cross(n3 - n4, n_ij);
+      f2 += Cross(n3 - n1, n_ji);
+      f3 += Cross(n1 - n2, n_ji) + Cross(n4 - n1, n_ij);
+      f4 += Cross(n1 - n3, n_ij);
 
       return std::sqrt(3.) * intensity * (theta - theta0) * (theta - theta0);
     }
@@ -139,9 +140,9 @@ namespace hemelb
           LatticePosition const &b(vertices[i1]);
           LatticePosition const &c(vertices[i2]);
 
-          forces[i0] += b.Cross(c) * strength;
-          forces[i1] += c.Cross(a) * strength;
-          forces[i2] += a.Cross(b) * strength;
+          forces[i0] += Cross(b, c) * strength;
+          forces[i1] += Cross(c, a) * strength;
+          forces[i2] += Cross(a, b) * strength;
         }
 
       return 0.5 * intensity * deltaV * deltaV / vol0;
@@ -170,9 +171,9 @@ namespace hemelb
           ForceFacet facet(vertices, orig.facets, facetIndex, forces);
           LatticePosition const n0 = facet.unitNormal();
 
-          facet.GetForce(0) += n0.Cross(facet(2, 1)) * strength;
-          facet.GetForce(1) += n0.Cross(facet(0, 2)) * strength;
-          facet.GetForce(2) += n0.Cross(facet(1, 0)) * strength;
+          facet.GetForce(0) += Cross(n0, facet(2, 1)) * strength;
+          facet.GetForce(1) += Cross(n0, facet(0, 2)) * strength;
+          facet.GetForce(2) += Cross(n0, facet(1, 0)) * strength;
         }
 
       return intensity * 0.5 * deltaS * deltaS / surf0;
@@ -234,8 +235,9 @@ namespace hemelb
 		   + dw_dI2 * (dI2_dGyy * dGyy_du1y + dI2_dGxy * dGxy_du1y));
 
       /// Coordinate system
-      LatticePosition const ex = deformed.edge(0).GetNormalised(), ez =
-	deformed.edge(0).Cross(deformed.edge(1)).GetNormalised(), ey = ez.Cross(ex);
+      auto const ex = deformed.edge(0).GetNormalised();
+      auto const ez = Cross(deformed.edge(0), deformed.edge(1)).GetNormalised();
+      auto const ey = Cross(ez, ex);
 
       LatticeForceVector const force0 = ex * force0x + ey * force0y, force1 = ex * force1x
 	+ ey * force1y;

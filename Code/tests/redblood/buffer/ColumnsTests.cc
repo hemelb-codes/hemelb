@@ -33,7 +33,7 @@ namespace hemelb
 	}
 	for (auto const &v : verts) {
 	  LatticePosition const x = a + v - barycenter - cylinder->origin;
-	  if (x.Cross(n0).GetMagnitude() >= cylinder->radius) {
+	  if (Cross(x, n0).GetMagnitude() >= cylinder->radius) {
 	    return false;
 	  }
 	}
@@ -109,7 +109,7 @@ namespace hemelb
 	positions.push_back(*iterator);
 	REQUIRE(is_in_cylinder(*iterator, verts));
 	const auto a0 = positions[1] - positions[0];
-	REQUIRE(zero == a0.Cross(colAxis).GetMagnitude());
+	REQUIRE(zero == Cross(a0, colAxis).GetMagnitude());
 	// going two back should be outside cylinder
 	// Goin one back might not since checking size of mesh is only approximate
 	REQUIRE(not is_in_cylinder(positions[0] - a0 * 2.0, verts));
@@ -119,12 +119,12 @@ namespace hemelb
 	  ++iterator;
 	  positions.push_back(*iterator);
 	  REQUIRE(is_in_cylinder(positions.back(), verts));
-	} while ( (positions.back() - positions[0]).Cross(a0).GetMagnitude() < 1e-8);
+	} while ( Cross(positions.back() - positions[0], a0).GetMagnitude() < 1e-8);
 
 	// a1 goes from last position in one column to first position in other
 	auto const a1 = positions.back() - positions[positions.size() - 2];
-	REQUIRE(a1.Cross(a0).GetMagnitude() > 1e-8);
-	REQUIRE(a1.Cross(a0).Cross(cylinder->normal).GetMagnitude() < 1e-8);
+	REQUIRE(Cross(a1, a0).GetMagnitude() > 1e-8);
+	REQUIRE(Cross(Cross(a1, a0), cylinder->normal).GetMagnitude() < 1e-8);
 
 	// Now look for first item outside current plane
 	do {

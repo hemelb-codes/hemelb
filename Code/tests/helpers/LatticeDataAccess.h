@@ -176,11 +176,11 @@ namespace hemelb::tests::helpers
         Dimensionless const non_neg_pop(_cubeSize * 3);
         auto linear = [non_neg_pop, gradient](PhysicalVelocity const &_v)
         {
-            return non_neg_pop + _v.Dot(gradient);
+            return non_neg_pop + Dot(_v, gradient);
         };
         auto linear_inv = [non_neg_pop, gradient](PhysicalVelocity const &_v)
         {
-            return 2.0 * non_neg_pop - _v.Dot(gradient);
+            return 2.0 * non_neg_pop - Dot(_v, gradient);
         };
         setUpDistribution<LATTICE>(latDat, 0, linear);
         setUpDistribution<LATTICE>(latDat, 1, linear_inv);

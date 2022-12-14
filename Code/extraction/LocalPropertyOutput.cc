@@ -14,10 +14,8 @@
 #include "constants.h"
 #include "units.h"
 
-namespace hemelb
+namespace hemelb::extraction
 {
-  namespace extraction
-  {
     namespace
     {
       // Declare recursive helper
@@ -238,27 +236,38 @@ namespace hemelb
       }
     }
 
+    template <typename... Ts>
+    std::string safe_fmt(std::string const& pattern, Ts... args) {
+        int sz = std::snprintf(nullptr, 0,
+                               pattern.data(), args...);
+        if (sz < 0)
+            throw Exception() << "Formatting error";
+
+        // +1 for the null terminator
+        std::string ans(sz + 1, '\0');
+        std::snprintf(ans.data(), ans.size(),
+                      pattern.data(), args...);
+        return ans;
+    }
+
     void LocalPropertyOutput::Write(unsigned long timestepNumber, unsigned long totalSteps)
     {
-      // Don't write if we shouldn't this iteration.
-      if (!ShouldWrite(timestepNumber))
-      {
-        return;
-      }
+        // Don't write if we shouldn't this iteration.
+        if (!ShouldWrite(timestepNumber))
+        {
+            return;
+        }
 
-      if (std::holds_alternative<single_timestep_files>(outputSpec.ts_mode)) {
-	int prec = 3;
-	unsigned long next = 1000;
-	while (totalSteps > next) {
-	  prec += 1;
-	  next *= 10;
-	}
-	std::size_t sz = std::snprintf(nullptr, 0,
-				       output_file_pattern.data(), prec, timestepNumber);
-	std::string fn(sz + 1, '\0');
-	std::sprintf(fn.data(), output_file_pattern.data(), prec, timestepNumber);
-	StartFile(fn);
-      }
+        if (std::holds_alternative<single_timestep_files>(outputSpec.ts_mode)) {
+            int prec = 3;
+            unsigned long next = 1000;
+            while (totalSteps > next) {
+                prec += 1;
+                next *= 10;
+            }
+            std::string fn = safe_fmt(output_file_pattern, prec, timestepNumber);
+            StartFile(fn);
+        }
 
       // Don't write if this core doesn't do anything.
       if (local_data_write_length > 0)
@@ -280,7 +289,7 @@ namespace hemelb
 	  if (outputSpec.geometry->Include(dataSource, position))
 	  {
 	    // Write the position
-	    xdrWriter << (uint32_t) position.x << (uint32_t) position.y << (uint32_t) position.z;
+	    xdrWriter << (uint32_t) position.x() << (uint32_t) position.y() << (uint32_t) position.z();
 
 	    // Write for each field.
 	    for (auto& fieldSpec: outputSpec.fields)
@@ -292,7 +301,7 @@ namespace hemelb
 		},
 		[&](source::Velocity) {
 		  auto&& v = dataSource.GetVelocity();
-		  write(xdrWriter, fieldSpec.typecode, v.x, v.y, v.z);
+		  write(xdrWriter, fieldSpec.typecode, v.x(), v.y(), v.z());
 		},
 		//! @TODO: Work out how to handle the different stresses.
 		[&](source::VonMisesStress) {
@@ -315,11 +324,11 @@ namespace hemelb
 		},
 		[&](source::Traction) {
 		  auto&& t = dataSource.GetTraction();
-		  write(xdrWriter, fieldSpec.typecode, t.x, t.y, t.z);
+		  write(xdrWriter, fieldSpec.typecode, t.x(), t.y(), t.z());
 		},
 		[&](source::TangentialProjectionTraction) {
 		  auto&& t = dataSource.GetTangentialProjectionTraction();
-		  write(xdrWriter, fieldSpec.typecode, t.x, t.y, t.z);
+		  write(xdrWriter, fieldSpec.typecode, t.x(), t.y(), t.z());
 		},
 		[&](source::Distributions) {
 		  unsigned numComponents= dataSource.GetNumVectors();
@@ -420,5 +429,4 @@ namespace hemelb
 	}
       );
     }
-  }
 }

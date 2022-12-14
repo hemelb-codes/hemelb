@@ -52,7 +52,7 @@ namespace hemelb
          */
         inline site_t GetBlockIdFromBlockCoordinates(site_t blockI, site_t blockJ, site_t blockK) const
         {
-          return (blockI * dimensionsInBlocks.y + blockJ) * dimensionsInBlocks.z + blockK;
+          return (blockI * dimensionsInBlocks.y() + blockJ) * dimensionsInBlocks.z() + blockK;
         }
 
         /***
@@ -60,10 +60,10 @@ namespace hemelb
          */
         inline util::Vector3D<site_t> GetBlockCoordinatesFromBlockId(site_t blockId) const
         {
-          site_t blockZ = blockId % dimensionsInBlocks.z;
-          site_t remainder = blockId / dimensionsInBlocks.z;
-          site_t blockY = remainder % dimensionsInBlocks.y;
-          site_t blockX = remainder / dimensionsInBlocks.y;
+          site_t blockZ = blockId % dimensionsInBlocks.z();
+          site_t remainder = blockId / dimensionsInBlocks.z();
+          site_t blockY = remainder % dimensionsInBlocks.y();
+          site_t blockX = remainder / dimensionsInBlocks.y();
           return util::Vector3D<site_t>(blockX, blockY, blockZ);
         }
 
@@ -80,9 +80,9 @@ namespace hemelb
          */
         inline bool AreBlockCoordinatesValid(const util::Vector3D<site_t>& blockCoords) const
         {
-          return blockCoords.x >= 0 && blockCoords.y >= 0 && blockCoords.z >= 0
-              && blockCoords.x < dimensionsInBlocks.x && blockCoords.y < dimensionsInBlocks.y
-              && blockCoords.z < dimensionsInBlocks.z;
+          return blockCoords.x() >= 0 && blockCoords.y() >= 0 && blockCoords.z() >= 0
+              && blockCoords.x() < dimensionsInBlocks.x() && blockCoords.y() < dimensionsInBlocks.y()
+              && blockCoords.z() < dimensionsInBlocks.z();
         }
 
         /**
@@ -90,8 +90,8 @@ namespace hemelb
          */
         inline bool AreLocalSiteCoordinatesValid(const util::Vector3D<site_t>& siteCoords) const
         {
-          return siteCoords.x >= 0 && siteCoords.y >= 0 && siteCoords.z >= 0
-              && siteCoords.x < blockSize && siteCoords.y < blockSize && siteCoords.z < blockSize;
+          return siteCoords.x() >= 0 && siteCoords.y() >= 0 && siteCoords.z() >= 0
+              && siteCoords.x() < blockSize && siteCoords.y() < blockSize && siteCoords.z() < blockSize;
         }
 
         /**

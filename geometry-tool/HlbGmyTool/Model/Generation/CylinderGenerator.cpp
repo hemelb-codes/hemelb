@@ -49,9 +49,9 @@ void CylinderGenerator::ComputeBounds(double bounds[6]) const {
 
 bool IsInsideCylinder(CylinderData* cyl, Vector& pt) {
   Vector x = pt - cyl->Centre;
-  double z = Vector::Dot(x, cyl->Axis);
+  double z = Dot(x, cyl->Axis);
   if (z > -0.5 * cyl->Length && z < 0.5 * cyl->Length) {
-    double rsq = Vector::Dot(x, x) - z * z;
+    double rsq = Dot(x, x) - z * z;
     if (rsq < cyl->Radius * cyl->Radius) {
       return true;
     } else {
@@ -114,11 +114,11 @@ Hit ComputeIntersection(CylinderData const* cyl,
     Vector b = to.Position - c;
     Vector b_a = b - a;
 
-    double b_aDOTn = Vector::Dot(b_a, n);
-    double aDOTn = Vector::Dot(a, n);
+    double b_aDOTn = Dot(b_a, n);
+    double aDOTn = Dot(a, n);
 
     double A = (b_a.GetMagnitudeSquared() - b_aDOTn * b_aDOTn);
-    double B = 2. * (Vector::Dot(a, b_a) - aDOTn * b_aDOTn);
+    double B = 2. * (Dot(a, b_a) - aDOTn * b_aDOTn);
     double C = a.GetMagnitudeSquared() - aDOTn * aDOTn - r * r;
 
     double discriminant = B * B - 4 * A * C;
@@ -172,12 +172,12 @@ Hit ComputeIntersection(CylinderData const* cyl,
     Vector const& q = iolet.Centre;
     Vector const& p = iolet.Normal;
 
-    double t = Vector::Dot(q - a, p) / Vector::Dot(b_a, p);
+    double t = Dot(q - a, p) / Dot(b_a, p);
     if (t > 0. && t < 1. + TOL) {
       // Intersection within the line segment. Now check within cap.
       Vector x = a + b_a * t;
       Vector x_c = x - c;
-      double x_cDOTn = Vector::Dot(x_c, n);
+      double x_cDOTn = Dot(x_c, n);
       Vector radial = x_c - n * x_cDOTn;
       if (radial.GetMagnitudeSquared() < (r + TOL) * (r + TOL)) {
         // Within the cap
@@ -301,6 +301,6 @@ void CylinderGenerator::ComputeCylinderNormalAtAPoint(
     Vector& wallNormal,
     const Vector& surfacePoint,
     const Vector& cylinderAxis) const {
-  wallNormal = surfacePoint - cylinderAxis * surfacePoint.Dot(cylinderAxis);
+  wallNormal = surfacePoint - cylinderAxis * Dot(surfacePoint, cylinderAxis);
   wallNormal.Normalise();
 }

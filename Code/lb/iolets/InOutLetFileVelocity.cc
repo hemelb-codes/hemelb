@@ -12,25 +12,21 @@
 #include <cmath>
 #include <algorithm>
 
-namespace hemelb
+namespace hemelb::lb::iolets
 {
-  namespace lb
-  {
-    namespace iolets
+    InOutLetFileVelocity::InOutLetFileVelocity() :
+            units(nullptr)
     {
-      InOutLetFileVelocity::InOutLetFileVelocity() :
-          units(nullptr)
-      {
-      }
+    }
 
-      InOutLet* InOutLetFileVelocity::clone() const
-      {
+    InOutLet* InOutLetFileVelocity::clone() const
+    {
         InOutLet* copy = new InOutLetFileVelocity(*this);
         return copy;
-      }
+    }
 
-      void InOutLetFileVelocity::CalculateTable(LatticeTimeStep totalTimeSteps, PhysicalTime timeStepLength)
-      {
+    void InOutLetFileVelocity::CalculateTable(LatticeTimeStep totalTimeSteps, PhysicalTime timeStepLength)
+    {
         // First read in values from file
         // Used to be complex code here to keep a vector unique, but this is just achieved by using a map.
         std::map<PhysicalTime, PhysicalSpeed> timeValuePairs;
@@ -118,7 +114,7 @@ namespace hemelb
           // v(r) = vMax (1 - r**2 / a**2)
           // where r is the distance from the centreline
           LatticePosition displ = x - position;
-          LatticeDistance z = displ.Dot(normal);
+          LatticeDistance z = Dot(displ, normal);
           Dimensionless rSqOverASq = (displ.GetMagnitudeSquared() - z * z) / (radius * radius);
           assert(rSqOverASq <= 1.0);
 
@@ -133,12 +129,12 @@ namespace hemelb
           /* These absolute normal values can still be negative here,
            * but are corrected below to become positive.
            * */
-          double abs_normal[3] = {normal.x, normal.y, normal.z};
+          auto abs_normal = normal;
 
           /* Prevent division by 0 errors if the normals are 0.0. */
-          if(normal.x < 0.0000001) { abs_normal[0] = 0.0000001; }
-          if(normal.y < 0.0000001) { abs_normal[1] = 0.0000001; }
-          if(normal.z < 0.0000001) { abs_normal[2] = 0.0000001; }
+          for (auto& comp: abs_normal) {
+              comp = std::max(comp, 0.0000001);
+          }
 
           /*bool logging = false;
           if (402.9 < x.x && x.x < 403.1 && 312.9 < x.y && x.y < 313.1 && 160.4 < x.z && x.z < 160.6)
@@ -163,38 +159,17 @@ namespace hemelb
            * xyz is incremented and a new grid point is attempted.
            * In addition, the specific residual value is decreased by 1.0. */
 
-          if (normal.x < 0.0)
-          {
-            xyz_directions[0] = -1;
-            xyz[0] = floor(x.x);
-            abs_normal[0] = -abs_normal[0];
-            /* Start with a negative residual because we already moved partially in this direction. */
-            xyz_residual[0] = -(x.x - floor(x.x));
-          } else {
-            xyz[0] = std::ceil(x.x);
-            xyz_residual[0] = -(std::ceil(x.x) - x.x);
-          }
-
-          if (normal.y < 0.0)
-          {
-            xyz_directions[1] = -1;
-            xyz[1] = floor(x.y);
-            abs_normal[1] = -abs_normal[1];
-            xyz_residual[1] = -(x.y - floor(x.y));
-          } else {
-            xyz[1] = std::ceil(x.y);
-            xyz_residual[1] = -(std::ceil(x.y) - x.y);
-          }
-
-          if (normal.z < 0.0)
-          {
-            xyz_directions[2] = -1;
-            xyz[2] = floor(x.z);
-            abs_normal[2] = -abs_normal[2];
-            xyz_residual[2] = -(x.z - floor(x.z));
-          } else {
-            xyz[2] = std::ceil(x.z);
-            xyz_residual[2] = -(std::ceil(x.z) - x.z);
+          for (int i = 0; i < 3; ++i)  {
+              if (normal[i] < 0.0) {
+                  xyz_directions[i] = -1;
+                  xyz[i] = floor(x[i]);
+                  abs_normal[i] = -abs_normal[i];
+                  /* Start with a negative residual because we already moved partially in this direction. */
+                  xyz_residual[i] = -(x[i] - floor(x[i]));
+              } else {
+                  xyz[i] = std::ceil(x[i]);
+                  xyz_residual[i] = -(std::ceil(x[i]) - x[i]);
+              }
           }
 
 	  auto v_tot = LatticeVelocity::Zero();
@@ -275,7 +250,7 @@ namespace hemelb
           /* Lists the sites which should be in the wall, outside of the main inlet.
            * If you are unsure, you can increase the log level of this, run HemeLb
            * for 1 time step, and plot these points out. */
-          log::Logger::Log<log::Trace, log::OnePerCore>("%f %f %f", x.x, x.y, x.z);
+          log::Logger::Log<log::Trace, log::OnePerCore>("%f %f %f", x.x(), x.y(), x.z());
           return normal * 0.0;
         }
 
@@ -331,6 +306,4 @@ namespace hemelb
         }
       }
 
-    }
-  }
 }
