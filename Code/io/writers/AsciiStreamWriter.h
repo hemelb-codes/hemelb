@@ -35,12 +35,12 @@ namespace hemelb::io
 
             // These necessary since can't override a virtual method with a
             // template member.
-            void _write(int16_t const& intToWrite) override;
-            void _write(uint16_t const& uIntToWrite) override;
-            void _write(int32_t const& intToWrite) override;
-            void _write(uint32_t const& uIntToWrite) override;
-            void _write(int64_t const& intToWrite) override;
-            void _write(uint64_t const& uIntToWrite) override;
+            void _write(std::int16_t const& intToWrite) override;
+            void _write(std::uint16_t const& uIntToWrite) override;
+            void _write(std::int32_t const& intToWrite) override;
+            void _write(std::uint32_t const& uIntToWrite) override;
+            void _write(std::int64_t const& intToWrite) override;
+            void _write(std::uint64_t const& uIntToWrite) override;
 
             void _write(double const& doubleToWrite) override;
             void _write(float const& floatToWrite) override;
