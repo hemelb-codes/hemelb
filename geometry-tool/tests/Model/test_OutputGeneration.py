@@ -268,9 +268,7 @@ class CubeTestingGmyParser(BaseTestingGmyParser):
 
 class CubeNormalsTestingGmyParser(CubeTestingGmyParser):
 
-    ValidNormals = np.array(
-        [(1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0)], dtype=np.float
-    )
+    ValidNormals = np.array([(1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0)], dtype=float)
 
     def OnEndSite(self, block, site):
         CubeTestingGmyParser.OnEndSite(self, block, site)
