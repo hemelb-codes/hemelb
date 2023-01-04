@@ -47,6 +47,7 @@ jobs:
           - 3.7
           - 3.8
           - 3.9
+          - '3.10'
 
     env:
       HEMELB_TESTS_DIR: ${{ github.workspace }}/tests
