@@ -11,7 +11,7 @@ from hlb.parsers.extraction import ExtractedProperty
 
 
 def test_load_xtr(diffTestDir):
-    snap_path = os.path.join(diffTestDir, "CleanExtracted", "flow_snapshot.dat")
+    snap_path = os.path.join(diffTestDir, "CleanExtracted", "flow_snapshot.xtr")
 
     exp = ExtractedProperty(snap_path)
 

@@ -79,7 +79,7 @@ def test_ExtractedPropertyUnstructuredGridReader(diffTestDir):
     gmy_reader = gmy.GmyUnstructuredGridReader()
     gmy_reader.SetFileName(config_path)
 
-    xtr_path = os.path.join(diffTestDir, "CleanExtracted", "flow_snapshot.dat")
+    xtr_path = os.path.join(diffTestDir, "CleanExtracted", "flow_snapshot.xtr")
     extraction = ExtractedProperty(xtr_path)
 
     xtr_reader = xtr.ExtractedPropertyUnstructuredGridReader()

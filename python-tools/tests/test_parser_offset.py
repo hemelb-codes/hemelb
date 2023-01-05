@@ -11,5 +11,5 @@ from hlb.parsers.offset import OffsetFile
 def test_load_off(diffTestDir):
     off_path = Path(diffTestDir) / "CleanExtracted" / "flow_snapshot.off"
     off = OffsetFile(off_path)
-    assert off.NumberOfRanks == 3
-    assert off.Data.shape == (4,)
+    assert off.NumberOfRanks == 2
+    assert off.Data.shape == (3,)
