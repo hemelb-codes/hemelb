@@ -30,14 +30,12 @@ namespace hemelb
 
   typedef double PhysicalDensity;
   typedef distribn_t LatticeDensity;
-  typedef float ScreenDensity;
 
   typedef double PhysicalPressure;
   typedef distribn_t LatticePressure;
 
   typedef double PhysicalStress;
   typedef distribn_t LatticeStress;
-  typedef float ScreenStress;
 
   typedef unsigned long LatticeTimeStep; // lattice time steps.
   typedef double LatticeTime;
@@ -51,29 +49,33 @@ namespace hemelb
 
   typedef double Angle;
 
-  // TODO: deprecated, use PhysicalDistance instead - should be fixed as part of ticket #437
-  typedef double PhysicalLength_deprecated;
-
   typedef double PhysicalDistance; // continuous distance in physical units
   typedef double LatticeVolume; // continuous volume in physical units
   typedef double LatticeArea; // continuous area in physical units
   typedef double LatticeDistance; // continuous distance in lattice units
   typedef int64_t LatticeCoordinate; // discrete distance in lattice units
 
-  typedef util::Vector3D<LatticeDistance> LatticePosition; // origin of lattice is at {0.0,0.0,0.0}
   typedef util::Vector3D<LatticeCoordinate> LatticeVector; // origin of lattice is at {0,0,0}
 
-  typedef util::Vector3D<PhysicalDistance> PhysicalPosition;
+  // Note that Euclidean space is an affine space.
+  // We can model this by distinguishing the types of points in the
+  // space (positions) from the differences between them (displacements).
+  // Compare to std::chrono's time_point and duration types.
+  //
+  // When converting between lattice and physical units, we must be aware
+  // that positions are represented with respect to an origin.
+  using LatticePosition = util::Vector3D<LatticeDistance>; // origin of lattice is at {0.0,0.0,0.0}
+  using PhysicalPosition = util::Vector3D<PhysicalDistance>;
+  using LatticeDisplacement = util::Vector3D<LatticeDistance>; // Position - Position == Displacement
+  using PhysicalDisplacement = util::Vector3D<LatticeDistance>;
 
   typedef double PhysicalEnergy; // type for energy
   typedef double PhysicalForce; // continuous scalar force in physical units
   typedef double LatticeEnergy; // continuous scalar energy in lattice units
   typedef double LatticeForce; // continuous scalar force in lattice units
+  using PhysicalModulus = double; // placeholder for any moduli, though actual dimension may differ
   typedef double LatticeModulus; // placeholder for any moduli, though actual dimension may differ
   typedef util::Vector3D<LatticeForce> LatticeForceVector; // continuous force in lattice units
-
-  // TODO: xxxVelocity is a Vector3D<xxxSpeed> not a scalar - should be fixed as part of ticket #437
-  typedef double PhysicalVelocity_deprecated;
 
   typedef double PhysicalSpeed;
   typedef double LatticeSpeed;

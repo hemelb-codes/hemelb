@@ -74,7 +74,14 @@ namespace hemelb
     {
       return x * latticeDistance + latticeOrigin;
     }
-
+    LatticeDisplacement UnitConverter::ConvertDisplacementToLatticeUnits(const PhysicalDisplacement& x) const
+    {
+        return x / latticeDistance;
+    }
+    PhysicalDisplacement UnitConverter::ConvertDisplacementToPhysicalUnits(const LatticeDisplacement& x) const
+    {
+        return x * latticeDistance;
+    }
     LatticeSpeed UnitConverter::ConvertSpeedToLatticeUnits(const PhysicalSpeed& v) const
     {
       return v / latticeSpeed;

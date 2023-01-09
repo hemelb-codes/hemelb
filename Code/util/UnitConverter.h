@@ -35,6 +35,9 @@ namespace hemelb::util
         LatticePosition ConvertPositionToLatticeUnits(const PhysicalPosition& x) const;
         PhysicalPosition ConvertPositionToPhysicalUnits(const LatticePosition& x) const;
 
+        LatticeDisplacement ConvertDisplacementToLatticeUnits(const PhysicalDisplacement& x) const;
+        PhysicalDisplacement ConvertDisplacementToPhysicalUnits(const LatticeDisplacement& x) const;
+
         LatticeSpeed ConvertSpeedToLatticeUnits(const PhysicalSpeed& v) const;
         PhysicalSpeed ConvertSpeedToPhysicalUnits(const LatticeSpeed& v) const;
 
