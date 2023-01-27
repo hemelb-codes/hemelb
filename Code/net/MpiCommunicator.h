@@ -30,20 +30,24 @@ namespace hemelb::net
     // corresponding process's data.
     template <typename T>
     struct displaced_data {
+        // Element i gives the index into data for the data from rank i
+        // Element MPI_Comm_size gives the total size of data
         std::vector<int> displacements;
         std::vector<T> data;
 
         // Default is empty.
         displaced_data() = default;
+
         // Construct from a vector of sizes, computing the displacements.
         displaced_data(std::vector<int> const& sizes) {
-            auto const N = sizes.size();
-            displacements.resize(N);
+            auto const P = sizes.size();
+            displacements.resize(P + 1);
             displacements[0] = 0;
-            std::inclusive_scan(sizes.begin(),
-                                sizes.end(),
-                                displacements.begin() + 1);
-            data.resize(displacements[N]);
+            std::inclusive_scan(
+                    sizes.begin(), sizes.end(),
+                    displacements.begin() + 1
+            );
+            data.resize(displacements[P]);
         }
 
         // Size should be the number of participating processes from the collective.
@@ -52,7 +56,7 @@ namespace hemelb::net
         }
 
         // Return a span over the data belonging to the given process.
-        std::span<T> operator[](int i) {
+        std::span<T> operator[](std::size_t i) {
             assert(i >= 0 && i < displacements.size());
             auto start = displacements[i];
             auto count = displacements[i+1] - start;
