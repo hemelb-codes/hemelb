@@ -14,6 +14,7 @@
 #include "lb/InitialCondition.h"
 #include "lb/StabilityTester.h"
 #include "lb/IncompressibilityChecker.hpp"
+#include "lb/iolets/BoundaryValues.h"
 #include "net/PhasedBroadcastRegular.h"
 #include "net/phased/StepManager.h"
 #include "net/phased/NetConcern.h"
@@ -21,9 +22,12 @@
 #include "util/clone_ptr.h"
 #include "util/UnitConverter.h"
 
+#ifdef HEMELB_BUILD_RBC
+#include "redblood/CellControllerBuilder.h"
+#endif
+
 namespace hemelb::extraction { class PropertyActor; }
 namespace hemelb::lb::iolets {
-    class BoundaryValues;
     class InOutLet;
 }
 namespace hemelb::net {
@@ -36,23 +40,20 @@ namespace hemelb::reporting {
 
 namespace hemelb::configuration {
 
-    class LbmBuilder {
-
-    };
     // This class converters the SimConfig into a ready-to-run simulation.
     class SimBuilder {
     public:
         using IoletPtr = util::clone_ptr<lb::iolets::InOutLet>;
 
     protected:
-        configuration::SimConfig config;
+        SimConfig config;
         std::shared_ptr<util::UnitConverter> unit_converter;
 
     public:
-        explicit SimBuilder(SimConfig const& conf);
+        explicit SimBuilder(SimConfig const& conf, bool construct_unit_converter = true);
         virtual ~SimBuilder() = default;
 
-        util::UnitConverter const& GetUnitConverter() const;
+        [[nodiscard]] std::shared_ptr<util::UnitConverter const> GetUnitConverter() const;
 
         template<typename T>
         void GetDimensionalValueInLatticeUnits(const io::xml::Element& elem,
@@ -68,12 +69,12 @@ namespace hemelb::configuration {
             return unit_converter->template ConvertToLatticeUnits(units, val);
         }
 
-        // Fully build the SimulationMaster<T> from the configuration.
+        // Fully build the T = SimulationMaster<Traits> from the configuration.
         template <typename T>
-        void operator()(T & sim_controller) const;
+        void operator()(T & control) const;
 
         // The below could probably be protected/private, but handy for testing.
-        [[nodiscard]] lb::SimulationState BuildSimulationState() const;
+        [[nodiscard]] std::shared_ptr<lb::SimulationState> BuildSimulationState() const;
         [[nodiscard]] geometry::GmyReadResult ReadGmy(
                 lb::lattices::LatticeInfo const& lat_info,
                 reporting::Timers& timings,
@@ -91,9 +92,11 @@ namespace hemelb::configuration {
         [[nodiscard]] IoletPtr BuildWomersleyVelocityIolet(WomersleyVelocityIoletConfig const&) const;
         [[nodiscard]] IoletPtr BuildFileVelocityIolet(FileVelocityIoletConfig const&) const;
         void BuildBaseIolet(IoletConfigBase const& conf, lb::iolets::InOutLet* obj) const;
+        [[nodiscard]] std::shared_ptr<redblood::FlowExtension> BuildFlowExtension(FlowExtensionConfig const& conf) const;
 
         [[nodiscard]] std::shared_ptr<net::IteratedAction> BuildColloidController() const;
-        [[nodiscard]] std::shared_ptr<net::IteratedAction> BuildCellController() const;
+        template <typename T>
+        [[nodiscard]] std::shared_ptr<net::IteratedAction> BuildCellController(T const& control, reporting::Timers& timings) const;
         [[nodiscard]] lb::InitialCondition BuildInitialCondition() const;
         [[nodiscard]] std::shared_ptr<extraction::PropertyActor> BuildPropertyExtraction(
                 std::filesystem::path const& xtr_path,
@@ -111,9 +114,11 @@ namespace hemelb::configuration {
 
     template <typename T>
     void SimBuilder::operator()(T& control) const {
+        using traitsType = typename T::Traits;
+        using latticeType = typename T::latticeType;
+
         auto& timings = control.timings;
         auto& ioComms = control.ioComms;
-        using latticeType = typename T::latticeType;
         auto& lat_info = latticeType::GetLatticeInfo();
 
         control.unitConverter = unit_converter;
@@ -155,7 +160,7 @@ namespace hemelb::configuration {
         log::Logger::Log<log::Info, log::Singleton>("Initialising LBM.");
         auto lbm =
                 control.latticeBoltzmannModel =
-                        std::make_shared<lb::LBM<typename T::Traits>>(
+                        std::make_shared<lb::LBM<traitsType>>(
                                 BuildLbmParams(),
                                 &control.communicationNet,
                                 control.fieldData.get(),
@@ -165,13 +170,12 @@ namespace hemelb::configuration {
                         );
 
         maybe_register_actor(control.colloidController = BuildColloidController(), 1);
-        maybe_register_actor(control.cellController = BuildCellController(), 1);
 
         maybe_register_actor(lbm, 1);
 
         control.inletValues = std::make_shared<lb::iolets::BoundaryValues>(
                 geometry::INLET_TYPE,
-                control.domainData.get(),
+                *control.domainData,
                 BuildIolets(config.GetInlets()),
                 &*control.simulationState,
                 ioComms,
@@ -181,13 +185,15 @@ namespace hemelb::configuration {
 
         control.outletValues = std::make_shared<lb::iolets::BoundaryValues>(
                 geometry::OUTLET_TYPE,
-                control.domainData.get(),
+                *control.domainData,
                 BuildIolets(config.GetOutlets()),
                 &*control.simulationState,
                 ioComms,
                 *unit_converter
         );
         maybe_register_actor(control.outletValues, 1);
+
+        maybe_register_actor(control.cellController = BuildCellController<T>(control, timings), 1);
 
         // Copy cos about to scale to lattice units.
         auto mon_conf = config.GetMonitoringConfiguration();
@@ -258,6 +264,50 @@ namespace hemelb::configuration {
             control.stepManager->RegisterIteratedActorSteps(*actor_ptr, phase);
         }
         control.stepManager->RegisterCommsForAllPhases(*control.netConcern);
+    }
+
+#ifdef HEMELB_BUILD_RBC
+    inline redblood::CountedIoletView MakeCountedIoletView(lb::iolets::BoundaryValues const& iolets) {
+        return {
+                [&]() { return iolets.GetGlobalIoletCount(); },
+                [&](unsigned i) { return iolets.GetGlobalIolet(i); }
+        };
+    }
+    inline redblood::CountedIoletView MakeCountedIoletView(std::vector<SimBuilder::IoletPtr> const& iolets) {
+        return {
+                [&]() { return iolets.size(); },
+                [&](unsigned i) { return iolets[i].get(); }
+        };
+    }
+#endif
+
+    template <typename T>
+    [[nodiscard]] std::shared_ptr<net::IteratedAction> SimBuilder::BuildCellController(T const& control, reporting::Timers& timings) const {
+        if (config.HasRBCSection()) {
+#ifdef HEMELB_BUILD_RBC
+            using traitsType = typename T::Traits;
+
+            auto ccb = redblood::CellControllerBuilder(unit_converter);
+
+            auto& ioComms = control.ioComms;
+
+            auto inlets = MakeCountedIoletView(*control.inletValues);
+            auto outlets = MakeCountedIoletView(*control.outletValues);
+
+            return ccb.build<traitsType>(
+                    config,
+                    timings, ioComms,
+                    control.fieldData,
+                    inlets,
+                    outlets,
+                    control.simulationState,
+                    control.fileManager
+            );
+#else
+            throw hemelb::Exception() << "Trying to create red blood cell controller with HEMELB_BUILD_RBC=OFF";
+#endif
+        }
+        return {};
     }
 }
 #endif

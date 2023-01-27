@@ -12,60 +12,60 @@
 
 #include "tests/helpers/FolderTestFixture.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     namespace xml = hemelb::io::xml;
+
     namespace {
 
-      xml::Element GetDatum(xml::Element& parent, unsigned iRequired) {
-	unsigned i = 0;
-	for (xml::Element datum = parent.GetChildOrThrow("datum");
-	     datum != xml::Element::Missing();
-	     datum = datum.NextSiblingOrNull("datum"))
-	  {
-	    if (i == iRequired)
-	      return datum;
-	    ++i;
-	  }
-	throw Exception() << "Cannot find element 'datum' with required index = " << iRequired;
-      }
+        xml::Element GetDatum(xml::Element& parent, unsigned iRequired) {
+            unsigned i = 0;
+            for (xml::Element datum = parent.GetChildOrThrow("datum");
+                 datum != xml::Element::Missing();
+                 datum = datum.NextSiblingOrNull("datum"))
+            {
+                if (i == iRequired)
+                    return datum;
+                ++i;
+            }
+            throw Exception() << "Cannot find element 'datum' with required index = " << iRequired;
+        }
 
-      template <typename T>
-      struct TestAttributeTraits {
-	static const std::string value;
-      };
-      template<>
-      const std::string TestAttributeTraits<int>::value = "int";
-      template<>
-      const std::string TestAttributeTraits<unsigned>::value = "unsigned";
-      template<>
-      const std::string TestAttributeTraits<double>::value = "double";
-      template<>
-      const std::string TestAttributeTraits<util::Vector3D<int>>::value = "hemelb::util::Vector3D<int>";
-      template<>
-      const std::string TestAttributeTraits<util::Vector3D<double>>::value = "hemelb::util::Vector3D<double>";
+        template <typename T>
+        struct TestAttributeTraits {
+            static const std::string value;
+        };
+        template<>
+        const std::string TestAttributeTraits<int>::value = "int";
+        template<>
+        const std::string TestAttributeTraits<unsigned>::value = "unsigned";
+        template<>
+        const std::string TestAttributeTraits<double>::value = "double";
+        template<>
+        const std::string TestAttributeTraits<util::Vector3D<int>>::value = "hemelb::util::Vector3D<int>";
+        template<>
+        const std::string TestAttributeTraits<util::Vector3D<double>>::value = "hemelb::util::Vector3D<double>";
 
-      template<typename T>
-      void TestAttributeConversion(int i, const T& EXPECTED, const xml::Element& root) {
-	xml::Element shouldWork = root.GetChildOrThrow("conversiontests").GetChildOrThrow("shouldwork");
-	xml::Element datum = GetDatum(shouldWork, i);
-	std::string type = datum.GetAttributeOrThrow("type");
-	REQUIRE(TestAttributeTraits<T>::value == type);
-	T value;
-	datum.GetAttributeOrThrow("value", value);
-	REQUIRE(value == EXPECTED);
-      }
-      template<typename T>
-      void TestAttributeConversionFails(int i, const xml::Element& root) {
-	xml::Element shouldFail = root.GetChildOrThrow("conversiontests").GetChildOrThrow("shouldfail");
-	xml::Element datum = GetDatum(shouldFail, i);
-	std::string type = datum.GetAttributeOrThrow("type");
-	REQUIRE(TestAttributeTraits<T>::value == type);
-	T value;
-	REQUIRE_THROWS_AS(datum.GetAttributeOrThrow("value", value), io::xml::DeserialisationError);
-      }
+        template<typename T>
+        void TestAttributeConversion(int i, const T& EXPECTED, const xml::Element& root) {
+            xml::Element shouldWork = root.GetChildOrThrow("conversiontests").GetChildOrThrow("shouldwork");
+            xml::Element datum = GetDatum(shouldWork, i);
+            auto type = datum.GetAttributeOrThrow("type");
+            REQUIRE(TestAttributeTraits<T>::value == type);
+            T value;
+            datum.GetAttributeOrThrow("value", value);
+            REQUIRE(value == EXPECTED);
+        }
+
+        template<typename T>
+        void TestAttributeConversionFails(int i, const xml::Element& root) {
+            xml::Element shouldFail = root.GetChildOrThrow("conversiontests").GetChildOrThrow("shouldfail");
+            xml::Element datum = GetDatum(shouldFail, i);
+            auto type = datum.GetAttributeOrThrow("type");
+            REQUIRE(TestAttributeTraits<T>::value == type);
+            T value;
+            REQUIRE_THROWS_AS(datum.GetAttributeOrThrow("value", value), io::xml::DeserialisationError);
+        }
     }
 
     TEST_CASE_METHOD(helpers::FolderTestFixture, "XML tests") {
@@ -173,5 +173,4 @@ namespace hemelb
       }
     }
 
-  }
 }

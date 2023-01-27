@@ -18,9 +18,9 @@ namespace hemelb
     using redblood::detail::splitVertices;
 
     static proc_t proc_at_pos(LatticeVector const &position) {
-      return (position.x > 0 ? 0 : 1) +
-	(position.y > 0 ? 0 : 1) * 2 +
-	(position.z > 0 ? 0 : 1) * 4;
+      return (position.x() > 0 ? 0 : 1) +
+	(position.y() > 0 ? 0 : 1) * 2 +
+	(position.z() > 0 ? 0 : 1) * 4;
     }
 
     TEST_CASE("VertexBagTests", "[redblood]") {

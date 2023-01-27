@@ -18,59 +18,96 @@
 #include "extraction/PropertyOutputFile.h"
 #include "io/xml.h"
 
-namespace hemelb::redblood {
-    class RBCConfig;
-}
-
 namespace hemelb::configuration
 {
-    template<typename T>
-    void GetDimensionalValue(const io::xml::Element& elem, const std::string& units, T& value)
-    {
-      const std::string& got = elem.GetAttributeOrThrow("units");
-      if (got != units)
-      {
-        throw Exception() << "Invalid units for element " << elem.GetPath() << ". Expected '"
-            << units << "', got '" << got << "'";
-      }
+    // Note on specifying physical quantities.
+    //
+    // In the XML, these are encoded in attributes of an element (the name
+    // of the element doesn't matter for these purposes). The two required
+    // attributes are:
+    // 1. "units" (e.g. "m" for a physical length or "lattice" for something specified in scaled units)
+    // 2. "value" which is a string encoding of the representation (typically a double)
+    //
+    // Now some parts of the code (e.g. RBC) can specify units as multiple options (e.g. physical OR lattice)
+    // This will be given as a tuple of string like values. The consumer (i.e. SimBuilder etc) will have
+    // to take care around this.
 
-      elem.GetAttributeOrThrow("value", value);
+    using UnitUnion = std::vector<std::string_view>;
+
+    inline void check_unit_spec(const io::xml::Element& elem, std::string_view actual, std::string_view const& expected) {
+        if (actual != expected)
+            throw Exception() << "Invalid units for element " << elem.GetPath()
+                              << "."" Expected '" << expected
+                              << "', got '" << actual << "'";
     }
-    template<typename T>
-    T GetDimensionalValue(const io::xml::Element& elem, const std::string& units)
-    {
-      const std::string& got = elem.GetAttributeOrThrow("units");
-      if (got != units)
-      {
-        throw Exception() << "Invalid units for element " << elem.GetPath() << ". Expected '"
-            << units << "', got '" << got << "'";
-      }
+    inline void check_unit_spec(const io::xml::Element& elem, std::string_view actual, UnitUnion const& expected) {
+        if (expected.empty())
+            throw Exception() << "Invalid empty unit spec for element " << elem.GetPath();
 
-      return elem.GetAttributeOrThrow<T>("value");
-    }
-
-    template<typename T>
-    void GetDimensionalValueInLatticeUnits(const io::xml::Element& elem, const std::string& units, const util::UnitConverter& converter, T& value)
-    {
-      if (units == "lattice")
-	return GetDimensionalValue(elem, units, value);
-
-      T phys;
-      GetDimensionalValue(elem, units, phys);
-      value = converter.ConvertToLatticeUnits(units, phys);
-    }
-
-    template<typename T>
-    T GetDimensionalValueInLatticeUnits(const io::xml::Element& elem, const std::string& units, const util::UnitConverter& converter)
-    {
-      auto phys = GetDimensionalValue<T>(elem, units);
-
-      if (units == "lattice")
-	return phys;
-      else
-	return converter.ConvertToLatticeUnits(units, phys);
+        if (std::find(expected.begin(), expected.end(), actual) == expected.end()) {
+            auto e = Exception() << "Invalid units for element " << elem.GetPath()
+                                 << ". Expected one of ";
+            char sep = '(';
+            for (auto& exp: expected) {
+                e << sep << '"' << exp << '"';
+                sep = ',';
+            }
+            e << "), got \"" << actual << '"';
+        }
     }
 
+    //! Check the units of the quantity and decode the value into @param value
+    template<typename T>
+    void GetDimensionalValue(const io::xml::Element& elem, std::string_view units, T& value)
+    {
+        auto got = elem.GetAttributeOrThrow("units");
+        check_unit_spec(elem, got, units);
+        elem.GetAttributeOrThrow("value", value);
+    }
+    //! Check the units of the quantity and return the value
+    template<typename T>
+    T GetDimensionalValue(const io::xml::Element& elem, std::string_view units)
+    {
+        auto got = elem.GetAttributeOrThrow("units");
+        check_unit_spec(elem, got, units);
+
+        return elem.GetAttributeOrThrow<T>("value");
+    }
+
+    //! Check the units of the quantity and return the value and the actual units
+    template<typename T>
+    auto GetDimensionalValue(const io::xml::Element& elem, UnitUnion units)
+    {
+        auto got = elem.GetAttributeOrThrow("units");
+        check_unit_spec(elem, got, units);
+
+        return std::pair<T, std::string>{elem.GetAttributeOrThrow<T>("value"), got};
+    }
+
+    //! Given an element (@param elem), check for a child with the given @param name.
+    //! If it exists, return the unit-checked (against @param unit) value.
+    //! If it doesn't exist, return @param default_value.
+    template <typename T>
+    T GetDimensionalValueWithDefault(const io::xml::Element& elem,
+                                     std::string_view name, std::string_view unit, T default_value) {
+        return elem
+                .and_then([&](const io::xml::Element& _) { return _.GetChildOrNull(name); })
+                .transform([&](const io::xml::Element& _) { return GetDimensionalValue<T>(_, unit); })
+                .value_or(default_value);
+    }
+    //! Given an element (@param elem), check for a child with the given @param name.
+    //! If it exists, return the unit-checked (against @param unit) value.
+    //! If it doesn't exist, return @param default_value.
+    template <typename T>
+    std::pair<T, std::string> GetDimensionalValueWithDefault(
+            const io::xml::Element& elem, std::string_view name,
+            UnitUnion unit, std::pair<T, std::string> default_value_units
+    ) {
+        return elem
+                .and_then([&](const io::xml::Element& _) { return _.GetChildOrNull(name); })
+                .transform([&](const io::xml::Element& _) { return GetDimensionalValue<T>(_, unit); })
+                .value_or(default_value_units);
+    }
     // Base for initial conditions configuration
     struct ICConfigBase {
       ICConfigBase(std::optional<LatticeTimeStep> t);
@@ -87,7 +124,7 @@ namespace hemelb::configuration
 
     // Read from checkpoint IC
     struct CheckpointIC : ICConfigBase {
-      CheckpointIC(std::optional<LatticeTimeStep> t, const std::string& cp, std::optional<std::string> const & maybeOff);
+      CheckpointIC(std::optional<LatticeTimeStep> t, std::string cp, std::optional<std::string> maybeOff);
       std::string cpFile;
       std::optional<std::string> maybeOffFile;
     };
@@ -127,11 +164,27 @@ namespace hemelb::configuration
         PhysicalPosition origin_m;
     };
 
+    struct CellInserterConfig {
+        std::int64_t seed;
+        std::string template_name;
+        PhysicalTime offset_s;
+        Angle theta_rad;
+        Angle phi_rad;
+        PhysicalDisplacement translation_m;
+        PhysicalTime drop_period_s;
+        PhysicalTime dt_s;
+        Angle dtheta_rad;
+        Angle dphi_rad;
+        PhysicalDistance dx_m;
+        PhysicalDistance dy_m;
+    };
+
     struct IoletConfigBase {
         PhysicalPosition position;
         util::Vector3D<double> normal;
         std::optional<std::uint64_t> warmup_steps;
         std::optional<FlowExtensionConfig> flow_extension;
+        std::vector<CellInserterConfig> cell_inserters;
     };
 
     // Consider removing
@@ -182,6 +235,48 @@ namespace hemelb::configuration
             ParabolicVelocityIoletConfig, WomersleyVelocityIoletConfig, FileVelocityIoletConfig
     >;
 
+    struct VTKMeshFormat {};
+    struct KruegerMeshFormat {};
+    using MeshFormat = std::variant<std::monostate, VTKMeshFormat, KruegerMeshFormat>;
+
+    struct CellModuli {
+        //! Bending energy parameter
+        PhysicalEnergy bending_Nm;
+        //! Surface energy parameter
+        LatticeModulus surface_lat;
+        //! Volume energy parameter
+        LatticeModulus volume_lat;
+        //! Skalak dilation modulus
+        LatticeModulus dilation_lat;
+        //! Skalak strain modulus
+        PhysicalModulus strain_Npm;
+    };
+
+    struct TemplateCellConfig {
+        std::string name;
+        std::filesystem::path mesh_path;
+        MeshFormat format;
+        PhysicalDistance scale_m;
+        std::optional<std::filesystem::path> reference_mesh_path;
+        MeshFormat reference_mesh_format;
+        CellModuli moduli;
+    };
+
+    struct NodeForceConfig {
+        double intensity;
+        std::string intensity_units;
+        LatticeDistance cutoffdist;
+        std::size_t exponent;
+    };
+
+    struct RBCConfig {
+        LatticeDistance boxSize;
+        std::map<std::string, TemplateCellConfig> meshes;
+        NodeForceConfig cell2cell;
+        NodeForceConfig cell2wall;
+        LatticeTimeStep output_period;
+    };
+
     class SimConfig
     {
         friend class SimBuilder;
@@ -195,10 +290,10 @@ namespace hemelb::configuration
         void Init();
 
       public:
-        virtual ~SimConfig();
+        virtual ~SimConfig() = default;
 
         // Turn an input XML-relative path into a full path
-        [[nodiscard]] path RelPathToFullPath(const std::string& path) const;
+        [[nodiscard]] path RelPathToFullPath(std::string_view path) const;
 
         void Save(std::string path); // TODO this method should be able to be CONST
         // but because it uses DoIo, which uses one function signature for both reading and writing, it cannot be.
@@ -278,12 +373,13 @@ namespace hemelb::configuration
          */
         inline bool HasRBCSection() const
         {
-          return rbcConf != nullptr;
+          return rbcConf.has_value();
         }
 
-	inline const redblood::RBCConfig* GetRBCConfig() const {
-	  return rbcConf;
-	}
+        inline const RBCConfig& GetRBCConfig() const {
+            return *rbcConf;
+        }
+
       protected:
 
         /**
@@ -294,14 +390,14 @@ namespace hemelb::configuration
         virtual void CheckIoletMatchesCMake(const io::xml::Element& ioletEl,
                                             const std::string& requiredBC) const;
 
-      private:
+      public:
         void DoIO(const io::xml::Element xmlNode);
         void DoIOForSimulation(const io::xml::Element simEl);
         void DoIOForGeometry(const io::xml::Element geometryEl);
 
         std::vector<IoletConfig> DoIOForInOutlets(const io::xml::Element xmlNode) const;
 
-        void DoIOForBaseInOutlet(const io::xml::Element& ioletEl, IoletConfigBase& value) const;
+        void DoIOForBaseInOutlet(const io::xml::Element& ioletEl, IoletConfigBase& ioletConf) const;
 
         IoletConfig DoIOForPressureInOutlet(const io::xml::Element& ioletEl) const;
         IoletConfig DoIOForCosinePressureInOutlet(const io::xml::Element& ioletEl) const;
@@ -364,6 +460,11 @@ namespace hemelb::configuration
          */
         void DoIOForConvergenceCriterion(const io::xml::Element& criterionEl);
 
+        TemplateCellConfig readCell(const io::xml::Element& cellNode) const;
+        std::map<std::string, TemplateCellConfig> readTemplateCells(io::xml::Element const& cellsEl) const;
+        RBCConfig DoIOForRedBloodCells(const io::xml::Element& rbcEl) const;
+
+    private:
         path xmlFilePath;
         path dataFilePath;
 
@@ -375,12 +476,7 @@ namespace hemelb::configuration
 
         MonitoringConfig monitoringConfig; ///< Configuration of various checks/tests
 
-        // We want to keep the RBC types isolated in their own library
-        // so put all the configuration in a type that is opaque to
-        // the rest of the code.
-        //
-        // nullptr => no RBC
-        redblood::RBCConfig* rbcConf = nullptr;
+        std::optional<RBCConfig> rbcConf;
 
       protected:
         GlobalSimInfo sim_info;

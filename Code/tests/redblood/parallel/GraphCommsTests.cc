@@ -3,15 +3,12 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "redblood/RBCConfig.h"
 #include "tests/helpers/FolderTestFixture.h"
 #include "tests/redblood/Fixtures.h"
 #include "tests/redblood/parallel/ParallelFixtures.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace redblood;
 
     class GraphCommsTests : public helpers::FolderTestFixture
@@ -32,9 +29,9 @@ namespace hemelb
       template<class STENCIL>
       struct MasterSim
       {
-	typedef ::hemelb::Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type LBTraits;
-	typedef typename LBTraits::ChangeStencil<STENCIL>::Type Traits;
-	typedef OpenedSimulationMaster<Traits> Type;
+	using LBTraits = ::hemelb::Traits<>::ChangeKernel<hemelb::lb::GuoForcingLBGK>::Type;
+	using Traits = typename LBTraits::ChangeStencil<STENCIL>::Type;
+	using Type = OpenedSimulationMaster<Traits>;
       };
 
       //! Creates a master simulation
@@ -42,7 +39,7 @@ namespace hemelb
       std::shared_ptr<typename MasterSim<STENCIL>::Type> CreateMasterSim(
               net::MpiCommunicator const &comm) const
       {
-	typedef typename MasterSim<STENCIL>::Type MasterSim;
+	using MasterSim = typename MasterSim<STENCIL>::Type;
 	return std::make_shared<MasterSim>(*options, comm);
       }
 
@@ -165,24 +162,38 @@ namespace hemelb
     }
 
     void GraphCommsTests::testComputeCellsEffectiveSize() {
-      using hemelb::redblood::parallel::ComputeCellsEffectiveSize;
+        using hemelb::redblood::parallel::ComputeCellsEffectiveSize;
 
-      // Setup simulation with cylinder
-      auto comms = Comms();
-      auto master = CreateMasterSim(comms);
-      REQUIRE(master);
+        // Setup simulation with cylinder
+        auto comms = Comms();
+        auto master = CreateMasterSim(comms);
+        REQUIRE(master);
 
-      auto simConf = master->GetSimConfig();
-      REQUIRE(simConf->HasRBCSection());
-      auto rbcConf = simConf->GetRBCConfig();
-      REQUIRE(rbcConf);
-      // Biggest cell radius in lattice units times a tolerance
-      REQUIRE(
-        Approx(
-	  parallel::MAXIMUM_SIZE_TO_RADIUS_RATIO * (8e-06 / simConf->GetVoxelSize())
-	).margin(1e-9) ==
-	ComputeCellsEffectiveSize(rbcConf->GetRBCMeshes())
-      );
+        auto simConf = master->GetSimConfig();
+        REQUIRE(simConf->HasRBCSection());
+        auto builder = configuration::SimBuilder(*simConf);
+        auto rbcConf = simConf->GetRBCConfig();
+
+        auto meshes = [&]() {
+            using IoletPtr = util::clone_ptr<lb::iolets::InOutLet>;
+            auto ccb = redblood::CellControllerBuilder(builder.GetUnitConverter());
+            auto inlets = builder.BuildIolets(simConf->GetInlets());
+            auto outlets = builder.BuildIolets(simConf->GetOutlets());
+            auto mk_view = [](std::vector<IoletPtr> const &iolets) {
+                return redblood::CountedIoletView(
+                        [&iolets]() { return iolets.size(); },
+                        [&iolets](unsigned i) { return iolets[i].get(); }
+                );
+            };
+            return ccb.build_template_cells(rbcConf.meshes, mk_view(inlets), mk_view(outlets));
+        }();
+
+        // Biggest cell radius in lattice units times a tolerance
+        REQUIRE(
+                Approx(
+                        parallel::MAXIMUM_SIZE_TO_RADIUS_RATIO * (8e-06 / simConf->GetVoxelSize())
+                ).margin(1e-9) == ComputeCellsEffectiveSize(*meshes)
+        );
     }
 
     void GraphCommsTests::testComputeGlobalCoordsToProcMap()
@@ -241,5 +252,4 @@ namespace hemelb
     METHOD_AS_TEST_CASE(GraphCommsTests::testComputeGlobalCoordsToProcMap,
 			"testComputeGlobalCoordsToProcMap",
 			"[redblood]");
-  }
 }

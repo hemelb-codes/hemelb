@@ -36,8 +36,7 @@ namespace hemelb::tests
     class ConcreteIolet : public InOutLet {
         [[nodiscard]] InOutLet* clone() const override
         {
-            ConcreteIolet* copy = new ConcreteIolet(*this);
-            return copy;
+            return new ConcreteIolet(*this);
         }
         LatticeDensity GetDensityMin() const override
         {
@@ -62,7 +61,7 @@ namespace hemelb::tests
             // Bootstrap ourselves an iolet, by loading config.xml.
             UncheckedSimConfig config(Resource("config.xml").Path());
             configuration::SimBuilder builder(config);
-            auto& converter = builder.GetUnitConverter();
+            auto& converter = *builder.GetUnitConverter();
 
             auto cosineConfig = config.GetInlets()[0];
             auto cosine = util::clone_dynamic_cast<InOutLetCosine>(builder.BuildIolet(cosineConfig));
@@ -110,7 +109,7 @@ namespace hemelb::tests
 
             UncheckedSimConfig config(Resource("config_file_inlet.xml").Path());
             configuration::SimBuilder builder(config);
-            auto& converter = builder.GetUnitConverter();
+            auto& converter = *builder.GetUnitConverter();
 
             lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
                                                             config.GetTotalTimeSteps());
@@ -142,7 +141,7 @@ namespace hemelb::tests
             // Bootstrap ourselves a in inoutlet, by loading config.xml.
             UncheckedSimConfig config(Resource("config-velocity-iolet.xml").Path());
             configuration::SimBuilder builder(config);
-            auto& converter = builder.GetUnitConverter();
+            auto& converter = *builder.GetUnitConverter();
 
             auto p_vel_config = config.GetInlets()[0];
             auto p_vel = util::clone_dynamic_cast<InOutLetParabolicVelocity>(builder.BuildIolet(p_vel_config));
@@ -176,7 +175,7 @@ namespace hemelb::tests
             // Bootstrap ourselves a in inoutlet, by loading config.xml.
             UncheckedSimConfig config(Resource("config_new_velocity_inlets.xml").Path());
             configuration::SimBuilder builder(config);
-            auto& converter = builder.GetUnitConverter();
+            auto& converter = *builder.GetUnitConverter();
 
             auto womersVelConfig = config.GetInlets()[0];
             auto womersVel = util::clone_dynamic_cast<InOutLetWomersleyVelocity>(builder.BuildIolet(womersVelConfig));
@@ -246,7 +245,7 @@ namespace hemelb::tests
             // Bootstrap ourselves a file velocity inlet, by loading an appropriate config file.
             UncheckedSimConfig config(Resource("config_file_velocity_inlet.xml").Path());
             configuration::SimBuilder builder(config);
-            auto& converter = builder.GetUnitConverter();
+            auto& converter = *builder.GetUnitConverter();
 
             auto fileVelConfig = config.GetInlets()[0];
             auto fileVel = util::clone_dynamic_cast<InOutLetFileVelocity>(builder.BuildIolet(fileVelConfig));

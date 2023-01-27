@@ -3,8 +3,6 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include <cstdio>
-
 #include <catch2/catch.hpp>
 #include <tinyxml.h>
 
@@ -16,10 +14,8 @@
 #include "tests/helpers/LatticeDataAccess.h"
 #include "tests/helpers/FolderTestFixture.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace redblood;
     class CellIntegrationTests : public helpers::FolderTestFixture
     {
@@ -32,11 +28,7 @@ namespace hemelb
 	CopyResourceToTempdir("red_blood_cell.txt");
 	TiXmlDocument doc(resources::Resource("large_cylinder.xml").Path());
 	CopyResourceToTempdir("large_cylinder.xml");
-	std::vector<std::string> intel;
-	intel.push_back("simulation");
-	intel.push_back("steps");
-	intel.push_back("value");
-	ModifyXMLInput("large_cylinder.xml", std::move(intel), 8);
+    ModifyXMLInput("large_cylinder.xml", {"simulation", "steps", "value"}, 8);
 	CopyResourceToTempdir("large_cylinder.gmy");
 	options = std::make_shared<hemelb::configuration::CommandLine>(argc, argv);
 
@@ -82,7 +74,7 @@ namespace hemelb
 	auto const mid = LatticePosition(dom.GetGlobalSiteMaxes()
                                      + dom.GetGlobalSiteMins()) * 0.5;
 	(**cells.begin()) += mid - (*cells.begin())->GetBarycenter();
-	(**cells.begin()) += LatticePosition(0, 0, 8 - mid.z);
+	(**cells.begin()) += LatticePosition(0, 0, 8 - mid.z());
 	(**cells.begin()) *= 5.0;
 	auto controller = std::make_shared<CellControll>(fieldData, cells, templates, timings);
 	auto const barycenter = (*cells.begin())->GetBarycenter();
@@ -93,16 +85,16 @@ namespace hemelb
 
 	// check position of cell has changed
 	auto const moved = (*cells.begin())->GetBarycenter();
-	REQUIRE(Approx(barycenter.x).margin(1e-12) == moved.x);
-	REQUIRE(Approx(barycenter.y).margin(1e-12) == moved.y);
-	REQUIRE(std::abs(barycenter.z - moved.z) > 1e-8);
+	REQUIRE(Approx(barycenter.x()).margin(1e-12) == moved.x());
+	REQUIRE(Approx(barycenter.y()).margin(1e-12) == moved.y());
+	REQUIRE(std::abs(barycenter.z() - moved.z()) > 1e-8);
 
 	// Check there is force on one of the lattice site near a
 	// node node position is guessed at from geometry. This
 	// truncates.
-	auto const nodepos = LatticeVector{mid + LatticePosition(0, 0, 8 - 5 - mid.z)};
+	auto const nodepos = LatticeVector{mid + LatticePosition(0, 0, 8 - 5 - mid.z())};
 	auto const force = fieldData.GetSite(nodepos).GetForce();
-	REQUIRE(std::abs(force.z) > 1e-4);
+	REQUIRE(std::abs(force.z()) > 1e-4);
 
 	AssertPresent("results/report.txt");
 	AssertPresent("results/report.xml");
@@ -147,5 +139,4 @@ namespace hemelb
 			"Test things work without any cells",
 			"[redblood][.long]");
 
-  }
 }

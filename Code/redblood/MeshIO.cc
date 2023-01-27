@@ -21,8 +21,7 @@
 #include "redblood/VTKError.h"
 #include "util/Iterator.h"
 
-namespace hemelb {
-  namespace redblood {
+namespace hemelb::redblood {
 
     auto MeshIO::readFile(std::string const &filename, bool fixFacetOrientation) const -> MeshPtr {
       return read(Storage::file, filename, fixFacetOrientation);
@@ -118,79 +117,81 @@ namespace hemelb {
     // Rvalue ref OK cos ifstream has virtual d'tor
     static std::shared_ptr<MeshData> read_krueger_mesh(std::istream&& stream, bool fixFacetOrientation)
     {
-      log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from stream");
+        log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from stream");
 
-      std::string line;
+        std::string line;
 
-      // Drop header
-      for (int i(0); i < 4; ++i)
-      {
-        std::getline(stream, line);
-      }
+        // Drop header
+        for (int i(0); i < 4; ++i)
+            std::getline(stream, line);
 
-      // Number of vertices
-      unsigned int num_vertices;
-      stream >> num_vertices;
+        // Number of vertices
+        unsigned int num_vertices;
+        stream >> num_vertices;
 
-      // Create Mesh data
-      auto result = std::make_shared<MeshData>();
-      result->vertices.resize(num_vertices);
+        // Create Mesh data
+        auto result = std::make_shared<MeshData>();
+        result->vertices.resize(num_vertices);
 
-      // Then read in first and subsequent lines
-      MeshData::Facet::value_type offset;
-      stream >> offset >> result->vertices[0].x >> result->vertices[0].y >> result->vertices[0].z;
-      log::Logger::Log<log::Trace, log::Singleton>("Vertex 0 at %d, %d, %d",
-                                                   result->vertices[0].x,
-                                                   result->vertices[0].y,
-                                                   result->vertices[0].z);
+        // Then read in first and subsequent lines
+        MeshData::Facet::value_type offset;
+        {
+            auto &v = result->vertices[0];
+            stream >> offset
+                   >> v[0] >> v[1] >> v[2];
+        }
+        log::Logger::Log<log::Trace, log::Singleton>("Vertex 0 at %d, %d, %d",
+                                                     result->vertices[0].x(),
+                                                     result->vertices[0].y(),
+                                                     result->vertices[0].z());
 
-      for (unsigned int i(1), index(0); i < num_vertices; ++i)
-      {
-        stream >> index >> result->vertices[i].x >> result->vertices[i].y >> result->vertices[i].z;
-        // No gaps in vertex index list
-        assert(index == (i + offset));
-        log::Logger::Log<log::Trace, log::Singleton>("Vertex %i at %d, %d, %d",
-                                                     i,
-                                                     result->vertices[i].x,
-                                                     result->vertices[i].y,
-                                                     result->vertices[i].z);
-      }
+        for (unsigned i = 1; i < num_vertices; ++i)
+        {
+            unsigned index;
+            auto& v = result->vertices[i];
+            stream >> index >> v[0] >> v[1] >> v[2];
+            // No gaps in vertex index list
+            assert(index == (i + offset));
+            log::Logger::Log<log::Trace, log::Singleton>("Vertex %i at %d, %d, %d",
+                                                         i,
+                                                         result->vertices[i].x(),
+                                                         result->vertices[i].y(),
+                                                         result->vertices[i].z());
+        }
 
-      // Drop mid-file headers
-      for (int i(0); i < 3; ++i)
-      {
-        std::getline(stream, line);
-      }
+        // Drop mid-file headers
+        for (int i = 0; i < 3; ++i)
+            std::getline(stream, line);
 
-      // Read facet indices
-      unsigned int num_facets;
-      MeshData::Facet indices;
-      stream >> num_facets;
-      result->facets.resize(num_facets);
+        // Read facet indices
+        unsigned num_facets;
+        MeshData::Facet indices;
+        stream >> num_facets;
+        result->facets.resize(num_facets);
 
-      for (unsigned int i(0), dummy(0); i < num_facets; ++i)
-      {
-        stream >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy >> indices[0] >> indices[1]
-            >> indices[2];
-        result->facets[i][0] = indices[0] - offset;
-        result->facets[i][1] = indices[1] - offset;
-        result->facets[i][2] = indices[2] - offset;
-        log::Logger::Log<log::Trace, log::Singleton>("Facet %i with %i, %i, %i",
-                                                     i,
-                                                     indices[0] - offset,
-                                                     indices[1] - offset,
-                                                     indices[2] - offset);
-      }
+        for (unsigned i = 0; i < num_facets; ++i)
+        {
+            unsigned dummy;
+            stream >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy
+                   >> indices[0] >> indices[1] >> indices[2];
 
-      log::Logger::Log<log::Debug, log::Singleton>("Read %i vertices and %i triangular facets",
-                                                   num_vertices,
-                                                   num_facets);
+            for (unsigned dim = 0; dim < 3; ++dim)
+                result->facets[i][dim] = indices[dim] - offset;
+            log::Logger::Log<log::Trace, log::Singleton>("Facet %i with %i, %i, %i",
+                                                         i,
+                                                         result->facets[i][0],
+                                                         result->facets[i][1],
+                                                         result->facets[i][2]);
+        }
 
-      if (fixFacetOrientation)
-      {
-        orientFacets(*result);
-      }
-      return result;
+        log::Logger::Log<log::Debug, log::Singleton>("Read %i vertices and %i triangular facets",
+                                                     num_vertices,
+                                                     num_facets);
+
+        if (fixFacetOrientation)
+            orientFacets(*result);
+
+        return result;
     }
 
     auto KruegerMeshIO::read(Storage mode, std::string const &filename_or_data, bool fixFacetOrientation) const -> MeshPtr {
@@ -238,12 +239,12 @@ namespace hemelb {
     std::string KruegerMeshIO::write(Storage m, std::string const& filename,
                                      MeshData::Vertices const& vertices, MeshData::Facets const& facets,
                                      util::UnitConverter const& c, PointScalarData const& data) const {
-      if (data.size()) {
+      if (!data.empty()) {
 	std::string msg{"Krueger mesh IO does not support point data. Omitting fields:"};
 	for (auto&& pair: data) {
 	  msg += " " + pair.first;
 	}
-	log::Logger::Log<log::Warning, log::Singleton>(msg.c_str());
+	log::Logger::Log<log::Warning, log::Singleton>(msg);
       }
 
       switch (m) {
@@ -302,19 +303,17 @@ namespace hemelb {
       for (unsigned int i(0); i < num_vertices; ++i)
       {
         double* point_coord = polydata->GetPoints()->GetPoint(i);
-        result->vertices[i].x = point_coord[0];
-        result->vertices[i].y = point_coord[1];
-        result->vertices[i].z = point_coord[2];
+        result->vertices[i] = {point_coord[0], point_coord[1], point_coord[2]};
 
         log::Logger::Log<log::Trace, log::Singleton>("Vertex %i at %e, %e, %e",
                                                      i,
-                                                     result->vertices[i].x,
-                                                     result->vertices[i].y,
-                                                     result->vertices[i].z);
+                                                     result->vertices[i].x(),
+                                                     result->vertices[i].y(),
+                                                     result->vertices[i].z());
       }
 
       // Read facet indices
-      unsigned int num_facets = polydata->GetNumberOfCells();;
+      unsigned int num_facets = polydata->GetNumberOfCells();
       result->facets.resize(num_facets);
 
       for (unsigned int i(0); i < num_facets; ++i)
@@ -359,16 +358,16 @@ namespace hemelb {
       
       // First, the points/vertices
       auto points = vtkSmartPointer<vtkPoints>::New();
-      points->SetNumberOfPoints(vertices.size());
+      points->SetNumberOfPoints(ssize(vertices));
       for (auto&& [i, v_lat]: util::enumerate(vertices)) {
           auto const v = c.ConvertPositionToPhysicalUnits(v_lat);
-          points->SetPoint(i, v.x, v.y, v.z);
+          points->SetPoint(i, v.m_values.data());
       }
       pd->SetPoints(points);
 
       // Second, the polys/facets/triangles
       auto tris = vtkSmartPointer<vtkCellArray>::New();
-      tris->AllocateExact(facets.size(), 3);
+      tris->AllocateExact(ssize(facets), 3);
       for (auto&& tri: facets) {
 	tris->InsertNextCell({tri[0], tri[1], tri[2]});
       }
@@ -384,7 +383,7 @@ namespace hemelb {
 	// This let's VTK "borrow" the data inside our vector.  We
 	// know we're not modifying the polydata, so the const cast is
 	// OK.
-	da->SetArray(const_cast<double*>(data.data()), data.size(), 1);
+	da->SetArray(const_cast<double*>(data.data()), ssize(data), 1);
 	pd->GetPointData()->AddArray(da);
       }
 
@@ -412,5 +411,4 @@ namespace hemelb {
       }
     }
 
-  }
 }

@@ -40,11 +40,11 @@ if (HEMELB_BUILD_RBC)
   )
 
   add_library(hemelb_redblood OBJECT
-    RBCConfig.cc
+    CellControllerBuilder.cc
     Mesh.cc MeshIO.cc
     CellBase.cc Cell.cc CellEnergy.cc Facet.cc
     Interpolation.cc
-    CellCell.cc FlowExtension.cc FaderCell.cc xmlIO.cc RBCInserter.cc
+    CellCell.cc FlowExtension.cc FaderCell.cc RBCInserter.cc
     VertexBag.cc Borders.cc
     WallCellPairIterator.cc
     VTKError.cc
@@ -60,7 +60,6 @@ if (HEMELB_BUILD_RBC)
 else()
   # Build minimal interface
   add_library(hemelb_redblood OBJECT
-    RBCConfig.cc
     FlowExtension.cc
     )
   target_link_libraries(hemelb_redblood PRIVATE

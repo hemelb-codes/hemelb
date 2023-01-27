@@ -70,36 +70,36 @@ namespace hemelb
 	auto approx = Approx(0.0).margin(1e-8);
         *fadingCell += LatticePosition(5, 1, 1) - fadingCell->GetBarycenter();
         REQUIRE(approx(1e0) == fadingCell->Energy(forces));
-        REQUIRE(approx(0e0) == forces.front().x);
-        REQUIRE(approx(1e0) == forces.front().y);
-        REQUIRE(approx(8e0) == forces.front().z);
-        REQUIRE(approx(0e0) == forces.back().x);
-        REQUIRE(approx(2e0) == forces.back().y);
-        REQUIRE(approx(8e0) == forces.back().z);
+        REQUIRE(approx(0e0) == forces.front().x());
+        REQUIRE(approx(1e0) == forces.front().y());
+        REQUIRE(approx(8e0) == forces.front().z());
+        REQUIRE(approx(0e0) == forces.back().x());
+        REQUIRE(approx(2e0) == forces.back().y());
+        REQUIRE(approx(8e0) == forces.back().z());
 
         // Now fades to 0.7
         forces = std::vector<LatticeForceVector>(2, zero);
         *fadingCell += LatticePosition(3.0 - inlet.fadeLength * 0.3, 1, 1)
             - fadingCell->GetBarycenter();
         REQUIRE(approx(0.7 * 1e0) == fadingCell->Energy(forces));
-        REQUIRE(approx(0.7 * 0e0) == forces.front().x);
-        REQUIRE(approx(0.7 * 1e0) == forces.front().y);
-        REQUIRE(approx(0.7 * 8e0) == forces.front().z);
-        REQUIRE(approx(0.7 * 0e0) == forces.back().x);
-        REQUIRE(approx(0.7 * 2e0) == forces.back().y);
-        REQUIRE(approx(0.7 * 8e0) == forces.back().z);
+        REQUIRE(approx(0.7 * 0e0) == forces.front().x());
+        REQUIRE(approx(0.7 * 1e0) == forces.front().y());
+        REQUIRE(approx(0.7 * 8e0) == forces.front().z());
+        REQUIRE(approx(0.7 * 0e0) == forces.back().x());
+        REQUIRE(approx(0.7 * 2e0) == forces.back().y());
+        REQUIRE(approx(0.7 * 8e0) == forces.back().z());
 
         // fades to 0.7 in outlet
         forces = std::vector<LatticeForceVector>(2, zero);
         *fadingCell += LatticePosition(8.0 + inlet.fadeLength * 0.3, 1, 1)
             - fadingCell->GetBarycenter();
         REQUIRE(approx(0.7 * 1e0) == fadingCell->Energy(forces));
-        REQUIRE(approx(0.7 * 0e0) == forces.front().x);
-        REQUIRE(approx(0.7 * 1e0) == forces.front().y);
-        REQUIRE(approx(0.7 * 8e0) == forces.front().z);
-        REQUIRE(approx(0.7 * 0e0) == forces.back().x);
-        REQUIRE(approx(0.7 * 2e0) == forces.back().y);
-        REQUIRE(approx(0.7 * 8e0) == forces.back().z);
+        REQUIRE(approx(0.7 * 0e0) == forces.front().x());
+        REQUIRE(approx(0.7 * 1e0) == forces.front().y());
+        REQUIRE(approx(0.7 * 8e0) == forces.front().z());
+        REQUIRE(approx(0.7 * 0e0) == forces.back().x());
+        REQUIRE(approx(0.7 * 2e0) == forces.back().y());
+        REQUIRE(approx(0.7 * 8e0) == forces.back().z());
       }
 
       SECTION("testDivideAndConquer") {

@@ -231,7 +231,7 @@ namespace hemelb
 	*cell -= cylinder.normal * 2.0;
 	buffer->updateOffset();
 	auto const nextDrop = buffer->drop();
-	REQUIRE(approx(cylinder.origin.x) == nextDrop->GetBarycenter().x);
+	REQUIRE(approx(cylinder.origin.x()) == nextDrop->GetBarycenter().x());
       }
 
       SECTION("testOutsideInteractionRange") {

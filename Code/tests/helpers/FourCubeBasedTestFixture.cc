@@ -20,10 +20,10 @@ namespace hemelb::tests::helpers
         simConfig = std::make_unique<OneInOneOutSimConfig>();
         simBuilder = std::make_unique<configuration::SimBuilder>(*simConfig);
 
-        simState = std::make_unique<lb::SimulationState>(simBuilder->BuildSimulationState());
+        simState = simBuilder->BuildSimulationState();
         lbmParams = lb::LbmParameters(simState->GetTimeStepLength(),
                                       simConfig->GetVoxelSize());
-        unitConverter = &simBuilder->GetUnitConverter();
+        unitConverter = simBuilder->GetUnitConverter();
 
         initParams.latDat = &latDat->GetDomain();
         initParams.siteCount = initParams.latDat->GetLocalFluidSiteCount();
@@ -38,7 +38,7 @@ namespace hemelb::tests::helpers
             std::vector<configuration::IoletConfig> const& conf
     ) const {
         return lb::iolets::BoundaryValues(tp,
-                                          dom,
+                                          *dom,
                                           simBuilder->BuildIolets(conf),
                                           simState.get(),
                                           Comms(),

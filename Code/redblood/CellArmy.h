@@ -34,11 +34,9 @@ namespace hemelb
     template<class TRAITS> class CellArmy
     {
       public:
-        typedef typename TRAITS::Lattice Lattice;
-        typedef typename TRAITS::Kernel Kernel;
-        typedef typename TRAITS::Stencil Stencil;
-        //! Type of callback for listening to changes to cells
-        typedef std::function<void(const CellContainer &)> CellChangeListener;
+        using Lattice = typename TRAITS::Lattice;
+        using Kernel = typename TRAITS::Kernel;
+        using Stencil = typename TRAITS::Stencil;
 
         CellArmy(geometry::FieldData &latDat, CellContainer const &cells,
                  std::shared_ptr<TemplateCellContainer> cellTemplates,
@@ -138,9 +136,9 @@ namespace hemelb
         }
 
         //! Sets outlets within which cells disappear
-        void SetOutlets(std::vector<FlowExtension> const & olets)
+        void SetOutlets(std::vector<FlowExtension> olets)
         {
-          outlets = olets;
+          outlets = std::move(olets);
         }
 
         //! Remove cells if they have reached outlets
@@ -346,9 +344,9 @@ namespace hemelb
       if (insertAtThisRank)
       {
         log::Logger::Log<log::Info, log::OnePerCore>("Adding cell at (%f, %f, %f)",
-            barycenter.x,
-            barycenter.y,
-            barycenter.z);
+            barycenter.x(),
+            barycenter.y(),
+            barycenter.z());
         cellDnC.insert(cell);
         cells.insert(cell);
 
@@ -367,9 +365,9 @@ namespace hemelb
       if (numCellsAdded != 1)
       {
         log::Logger::Log<log::Info, log::OnePerCore>("Failed to add cell at (%f, %f, %f). It was added %d times.",
-            barycenter.x,
-            barycenter.y,
-            barycenter.z,
+            barycenter.x(),
+            barycenter.y(),
+            barycenter.z(),
             numCellsAdded);
 
         hemelb::net::MpiEnvironment::Abort(-1);

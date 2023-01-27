@@ -45,8 +45,8 @@ namespace hemelb
             lb::LbmParameters lbmParams;
             std::unique_ptr<configuration::SimConfig> simConfig;
             std::unique_ptr<configuration::SimBuilder> simBuilder;
-            std::unique_ptr<lb::SimulationState> simState;
-            const util::UnitConverter* unitConverter = nullptr;
+            std::shared_ptr<lb::SimulationState> simState;
+            std::shared_ptr<const util::UnitConverter> unitConverter;
             int cubeSize;
             int cubeSizeWithHalo;
         };

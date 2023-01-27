@@ -13,38 +13,25 @@
 #include "tests/helpers/ApproxVector.h"
 #include "tests/helpers/LatticeDataAccess.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     //! Mock cell for ease of use
     class FakeCell : public hemelb::redblood::Cell
     {
     public:
-      mutable size_t nbcalls = 0;
-// #         ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
-//       FakeCell(Mesh const &mesh) :
-// 	Cell(mesh)
-//       {
-//       }
-//       FakeCell(std::shared_ptr<MeshData> const &mesh) :
-// 	Cell(mesh)
-//       {
-//       }
-// #         else
-      using hemelb::redblood::Cell::Cell;
-// #         endif 
-      //! Facet bending energy
-      virtual LatticeEnergy operator()() const override
-      {
-	return 0;
-      }
-      //! Facet bending energy
-      virtual LatticeEnergy operator()(std::vector<LatticeForceVector> &) const override
-      {
-	++nbcalls;
-	return 0;
-      }
+        mutable size_t nbcalls = 0;
+        using hemelb::redblood::Cell::Cell;
+        //! Facet bending energy
+        LatticeEnergy operator()() const override
+        {
+            return 0;
+        }
+        //! Facet bending energy
+        LatticeEnergy operator()(std::vector<LatticeForceVector> &) const override
+        {
+            ++nbcalls;
+            return 0;
+        }
     };
 
     TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<32>, "CellArmyTests", "[redblood]") {
@@ -80,8 +67,8 @@ namespace hemelb
 	assert(std::dynamic_pointer_cast<FakeCell>( (*cells.begin()))->nbcalls == 0);
 	assert(std::dynamic_pointer_cast<FakeCell>( (*std::next(cells.begin())))->nbcalls == 0);
 
-	helpers::ZeroOutFOld(latDat);
-	helpers::ZeroOutForces(latDat);
+	helpers::ZeroOutFOld(latDat.get());
+	helpers::ZeroOutForces(latDat.get());
 
 	CellArmy<Traits> army(*latDat, cells, BuildTemplateContainer(cells), *timers, cutoff);
 	army.SetCell2Cell(/* intensity */1e0, /* cutoff */0.5);
@@ -114,13 +101,14 @@ namespace hemelb
         // Shift cell to be contained in flow domain
         *cell += LatticePosition(2, 2, 2);
 
-        helpers::ZeroOutFOld(latDat);
-        helpers::ZeroOutForces(latDat);
+        helpers::ZeroOutFOld(latDat.get());
+        helpers::ZeroOutForces(latDat.get());
 
         auto cells = CellContainer();
         CellArmy<Traits> army(*latDat, cells, BuildTemplateContainer(cells), *timers, cutoff);
         int called = 0;
-        auto callback = [cell, &called](std::function<void(CellContainer::value_type)> inserter)
+        //using CellInserter = std::function<void(CellContainer::value_type)>;
+        auto callback = [cell, &called](CellInserter const& inserter)
         {
           ++called;
           inserter(cell);
@@ -145,7 +133,7 @@ namespace hemelb
         Dimensionless non_neg_pop;
         std::function<Dimensionless(LatticeVelocity const &)> linear, linear_inv;
         std::tie(non_neg_pop, gradient, linear, linear_inv) = helpers::makeLinearProfile(cubeSizeWithHalo,
-                                                                                         latDat,
+                                                                                         latDat.get(),
                                                                                          normal);
 
         CellArmy<Traits> army(*latDat, cells, BuildTemplateContainer(cells), *timers, cutoff);
@@ -172,7 +160,7 @@ namespace hemelb
         *cell += LatticePosition(2, 2, 2);
 
         MeshData::Vertices::value_type barycentre;
-        CellArmy<Traits>::CellChangeListener callback =
+        CellChangeListener callback =
             [&barycentre](const CellContainer & container)
             {
               barycentre = (*(container.begin()))->GetBarycenter();
@@ -199,8 +187,8 @@ namespace hemelb
         // Shift cell to be contained in flow domain
         *cell += LatticePosition(2, 2, 2);
 
-        helpers::ZeroOutFOld(latDat);
-        helpers::ZeroOutForces(latDat);
+        helpers::ZeroOutFOld(latDat.get());
+        helpers::ZeroOutForces(latDat.get());
 
         CellContainer intel;
         intel.insert(cell);
@@ -226,6 +214,5 @@ namespace hemelb
 
     }
 
-  }
 }
 

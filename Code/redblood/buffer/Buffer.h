@@ -6,43 +6,40 @@
 #ifndef HEMELB_REDBLOOD_BUFFER_BUFFER_H
 #define HEMELB_REDBLOOD_BUFFER_BUFFER_H
 
+#include <utility>
+
 #include "redblood/Cell.h"
 #include "redblood/FlowExtension.h"
 #include "redblood/types.h"
 #include "units.h"
 
-namespace hemelb
+namespace hemelb::redblood::buffer
 {
-  namespace redblood
-  {
-    namespace buffer
-    {
       //! Container of virtual cells
       class Buffer
       {
         public:
           //! Signature of a function returning a new cell at each call
-          typedef std::function<CellContainer::value_type()> CellDistributionFunction;
+          using CellDistributionFunction = std::function<CellContainer::value_type ()>;
           //! Constructs buffer from geometry and cells
           //! \param[in] cyl: Geometric description of the buffer
           //!     The origin of the cylinder is the drop point in the coordinates of LB. The normal
           //!     should point from the region nearest to drop point to furthest from drop point. It
           //!     is co-linear with the axis of the cylinder.
           //! \param[in] cells: Virtuals cells at input.
-          Buffer(std::shared_ptr<Cylinder> cyl, CellContainer const& cells = CellContainer()) :
-              geometry(cyl), virtuals(cells), offset(0), interactionRadius(0), numberOfRequests(0)
+          Buffer(std::shared_ptr<Cylinder> cyl, CellContainer cells = CellContainer()) :
+              geometry(std::move(cyl)), virtuals(std::move(cells)),
+              offset(0), interactionRadius(0), numberOfRequests(0)
           {
           }
           //! Constructs buffer from geometry only
-          Buffer(Cylinder const & cyl, CellContainer const& cells = CellContainer()) :
-              geometry(new Cylinder(cyl)), virtuals(cells), offset(0), interactionRadius(0),
-                  numberOfRequests(0)
+          Buffer(Cylinder const & cyl, CellContainer cells = CellContainer()) :
+              geometry(std::make_shared<Cylinder>(cyl)), virtuals(std::move(cells)),
+              offset(0), interactionRadius(0), numberOfRequests(0)
           {
           }
           //! Destroys buffer
-          virtual ~Buffer()
-          {
-          }
+          virtual ~Buffer() = default;
 
           /**
            * Cell insertion callback called on each step of the simulation.  Cells
@@ -93,7 +90,7 @@ namespace hemelb
 
           //! Inserts a cell. Does not check whether it is inside the geometry of the buffer, nor
           //! whether it overlaps with other cells.
-          auto insert(CellContainer::value_type cell) -> decltype(CellContainer().insert(cell))
+          auto insert(const CellContainer::value_type& cell)
           {
             return virtuals.insert(cell);
           }
@@ -121,7 +118,5 @@ namespace hemelb
           CellContainer::value_type furthestCell() const;
       };
 
-    }
-  }
 } // namespace hemelb::redblood
 #endif

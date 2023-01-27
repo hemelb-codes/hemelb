@@ -10,9 +10,7 @@
 #include "redblood/DivideConquer.h"
 #include "units.h"
 
-namespace hemelb
-{
-  namespace redblood
+namespace hemelb::redblood
   {
     //! Names for each border
     enum class Borders
@@ -45,13 +43,13 @@ namespace hemelb
     {
       public:
         //! Type returned by dereference
-        typedef LatticeVector value_type;
-        typedef value_type const& const_reference;
-        typedef value_type const* const_pointer;
+        using value_type = LatticeVector;
+        using const_reference = const value_type &;
+        using const_pointer = const value_type *;
 
         //! \brief Iterates over all boxes for which a bit is set
         //! \see Borders
-        BorderBoxIterator(size_t const nearness);
+        BorderBoxIterator(size_t nearness);
         //! Current direction to look at
         const_reference operator*() const
         {
@@ -79,7 +77,7 @@ namespace hemelb
         bool doCenter, doTop, doBottom, doNorth, doSouth, doWest, doEast;
 
         //! Returns true if this is a box we want to visit
-        bool wannaSee(value_type const &current) const;
+        bool wannaSee(value_type const &point) const;
     };
 
     template<class T>
@@ -101,12 +99,14 @@ namespace hemelb
           return {0, 0, 1};
         default:
           return {0, 0, 0};
-      };
+      }
       return {0, 0, 0};
     }
-    template<class T> util::Vector3D<T> direction(size_t border)
+
+    template<class T>
+    util::Vector3D<T> direction(size_t border)
     {
-      Borders const b(static_cast<Borders>(border));
+      auto const b = static_cast<Borders>(border);
       assert(b == Borders::TOP or Borders(b) == Borders::BOTTOM or b == Borders::NORTH
           or b == Borders::SOUTH or b == Borders::EAST or b == Borders::WEST);
       return direction<T>(b);
@@ -129,11 +129,11 @@ namespace hemelb
       }
 
       size_t result = 0;
-      typedef LatticePosition::value_type Distance;
+      using Distance = LatticePosition::value_type;
 
       for (size_t d(1); d < (1 << 6); d <<= 1)
       {
-        Borders const border(static_cast<Borders>(d));
+        auto const border = static_cast<Borders>(d);
         LatticePosition const translated(direction<Distance>(border) * haloLength);
 
         if (not (key == dnc.DowngradeKey(vertex + translated)))
@@ -151,7 +151,6 @@ namespace hemelb
       return figureNearness<T>(dnc, dnc.DowngradeKey(vertex), vertex, haloLength);
     }
 
-  }
-} // hemelb::redblood
+  } // hemelb::redblood
 
 #endif

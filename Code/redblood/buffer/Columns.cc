@@ -7,23 +7,19 @@
 #include "redblood/buffer/Columns.h"
 #include "util/Matrix3D.h"
 
-namespace hemelb
+namespace hemelb::redblood::buffer
 {
-  namespace redblood
-  {
-    namespace buffer
+    namespace detail
     {
-      namespace detail
-      {
         LatticeDistance maxExtension(MeshData::Vertices const &vertices,
                                      LatticePosition const &direction)
         {
-          auto const barycenter = hemelb::redblood::barycenter(vertices);
+          auto const barycenter = redblood::barycenter(vertices);
           LatticeDistance result(0);
           auto const normalised = direction.GetNormalised();
           auto maxdist = [&normalised, &result, &barycenter](LatticePosition const &b)
           {
-            result = std::max(result, std::abs(normalised.Dot(b - barycenter)));
+            result = std::max(result, std::abs(Dot(normalised, b - barycenter)));
           };
           std::for_each(vertices.begin(), vertices.end(), maxdist);
           return 2e0 * result;
@@ -35,17 +31,17 @@ namespace hemelb
           LatticeDistance const x = maxExtension(vertices, normal);
           LatticeDistance const y = maxExtension(vertices, Cross(col, normal));
           LatticeDistance const z = maxExtension(vertices, col);
-          return LatticePosition(x, y, z);
+          return {x, y, z};
         }
       }
 
-      ColumnPositionIterator::ColumnPositionIterator(std::shared_ptr<Cylinder const> cylinder,
-                                                     MeshData::Vertices const& vertices,
-                                                     LatticePosition cellAxis,
-                                                     LatticePosition colAxis,
-                                                     LatticeDistance separation) :
-          IndexIterator(LatticeVector(0, 0, 0), LatticeVector(0, 0, 0)), cylinder(cylinder)
-      {
+    ColumnPositionIterator::ColumnPositionIterator(std::shared_ptr<Cylinder const> i_cylinder,
+                                                   MeshData::Vertices const& vertices,
+                                                   LatticePosition cellAxis,
+                                                   LatticePosition colAxis,
+                                                   LatticeDistance separation) :
+            IndexIterator(LatticeVector(0, 0, 0), LatticeVector(0, 0, 0)), cylinder(std::move(i_cylinder))
+    {
         if (cellAxis.GetMagnitude() < 1e-8)
         {
           throw Exception() << "Cell axis cannot be 0";
@@ -54,7 +50,7 @@ namespace hemelb
         {
           throw Exception() << "Column axis cannot be 0";
         }
-        if (std::abs(colAxis.Dot(cylinder->normal)) > 1e-8)
+        if (std::abs(Dot(colAxis, cylinder->normal)) > 1e-8)
         {
           throw Exception() << "Column axis should be perpendicular to cylinder axis";
         }
@@ -64,17 +60,17 @@ namespace hemelb
         auto const extents = detail::maxExtensions(vertices, antiRot * colAxis, antiRot * cylinder->normal)
 	  + LatticePosition{separation};
 
-        max.x = std::numeric_limits<LatticeCoordinate>::max();
-        max.y = static_cast<LatticeCoordinate>(std::ceil(cylinder->radius / extents.y));
-        max.z = static_cast<LatticeCoordinate>(std::ceil(cylinder->radius / extents.z));
-        min.x = 0;
-        min.y = -max.y;
-        min.z = -max.z;
+        max = LatticeVector(
+                std::numeric_limits<LatticeCoordinate>::max(),
+                std::ceil(cylinder->radius / extents.y()),
+                std::ceil(cylinder->radius / extents.z())
+        );
+        min = LatticeVector(0, -max.y(), -max.z());
         current = min;
 
-        major = colAxis.GetNormalised() * extents.z;
-        minor = Cross(colAxis.GetNormalised(), cylinder->normal.GetNormalised()) * extents.y;
-        depth = cylinder->normal.GetNormalised() * extents.x;
+        major = colAxis.GetNormalised() * extents.z();
+        minor = Cross(colAxis.GetNormalised(), cylinder->normal.GetNormalised()) * extents.y();
+        depth = cylinder->normal.GetNormalised() * extents.x();
         spacing = (extents + LatticePosition{separation}) / 2.0;
 
         if (not IsInside())
@@ -85,10 +81,10 @@ namespace hemelb
       {
         // avoids missing defs for operator^
         LatticeDistance const a = major.GetMagnitudeSquared()
-            / std::pow(cylinder->radius - spacing.z, 2e0);
+            / std::pow(cylinder->radius - spacing.z(), 2e0);
         LatticeDistance const b = minor.GetMagnitudeSquared()
-            / std::pow(cylinder->radius - spacing.y, 2e0);
-        return (current.z * current.z) * a + (current.y * current.y) * b < 1e0;
+            / std::pow(cylinder->radius - spacing.y(), 2e0);
+        return (current.z() * current.z()) * a + (current.y() * current.y()) * b < 1e0;
       }
 
       void ColumnPositionIterator::operator++()
@@ -131,6 +127,4 @@ namespace hemelb
         return result;
       }
 
-    } // namespace buffer
-  }
 } // hemelb::redblood

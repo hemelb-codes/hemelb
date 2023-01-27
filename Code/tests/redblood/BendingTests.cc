@@ -11,10 +11,8 @@
 #include "redblood/Facet.h"
 #include "redblood/Mesh.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace redblood;
     TEST_CASE("BendingTests") {
       auto vertices = MeshData::Vertices{ { 0, 0, 0 }, { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } };
@@ -44,14 +42,14 @@ namespace hemelb
 
       	auto const e0 = energyAndForces();
       	if (std::abs(theta - theta0) < 1e-8) {
-	  REQUIRE(z8 == forces[node].Dot(direction));
+	  REQUIRE(z8 == Dot(forces[node], direction));
 	  return;
 	}
 
 	vertices[node] += direction * epsilon;
 	auto const e1 = energy();
 	auto const tol = std::max(std::abs( (e1 - e0) / epsilon) * 1e-2, 1e-5);
-	REQUIRE(Approx(- (e1 - e0) / epsilon).margin(tol) == forces[node].Dot(direction));
+	REQUIRE(Approx(- (e1 - e0) / epsilon).margin(tol) == Dot(forces[node], direction));
 	vertices[node] = oldPos;
       };
 
@@ -100,9 +98,9 @@ namespace hemelb
       SECTION("testNoBendingNoNothing") {
 	REQUIRE(energyAndForces() == z10);
 	for (auto const& force : forces) {
-	  REQUIRE(force.x == z10);
-	  REQUIRE(force.y == z10);
-	  REQUIRE(force.z == z10);
+	  REQUIRE(force.x() == z10);
+	  REQUIRE(force.y() == z10);
+	  REQUIRE(force.z() == z10);
 	}
       }
 
@@ -122,9 +120,9 @@ namespace hemelb
 	vertices.back() = LatticePosition(1, 1, 0);
 	REQUIRE(z10(std::sqrt(3.) * moduli * theta * theta) == energyAndForces());
 	for (auto const &force : forces) {
-	  REQUIRE(z8 == force.x);
-	  REQUIRE(z8 == force.y);
-	  REQUIRE(z8 == force.z);
+	  REQUIRE(z8 == force.x());
+	  REQUIRE(z8 == force.y());
+	  REQUIRE(z8 == force.z());
 	}
       }
 
@@ -204,5 +202,4 @@ namespace hemelb
       }
 
     }
-  }
 }

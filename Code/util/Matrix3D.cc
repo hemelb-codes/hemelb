@@ -123,13 +123,9 @@ namespace hemelb
       // Also works for a = 0 and b = 0... But that's just bad input
       if (Cross(a0, b0).GetMagnitude() < 1e-8)
       {
-        for (size_t i(0); i < 3; ++i)
-        {
-          for (size_t j(0); j < 3; ++j)
-          {
-            result[i][j] = i == j ?
-              1 :
-              0;
+        for (size_t i = 0; i < 3; ++i) {
+          for (size_t j = 0; j < 3; ++j) {
+            result[i][j] = i == j ? 1 : 0;
           }
         }
         return result;
@@ -140,7 +136,7 @@ namespace hemelb
       LatticePosition const b1 = Cross(b0, u).GetNormalised();
 
       // HemeLB doesn't need linear algebra, so it doesn't have it - cos that would be
-      // complicated - which in turn implies it doesn't need it. Instead, do lets use a square
+      // complicated - which in turn implies it doesn't need it. Instead, lets use a square
       // wheel.
       util::Matrix3D A, B;
       A[0][0] = a0[0];

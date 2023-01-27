@@ -15,12 +15,8 @@
 #include "Exception.h"
 #include "units.h"
 
-namespace hemelb
+namespace hemelb::redblood::buffer
 {
-  namespace redblood
-  {
-    namespace buffer
-    {
       //! Iterates over positions of cells arranged as columns in a cylinder
       class ColumnPositionIterator : private IndexIterator
       {
@@ -38,18 +34,16 @@ namespace hemelb
                                  MeshData::Vertices const& vertices, LatticePosition cellAxis,
                                  LatticePosition colAxis, LatticeDistance wallSeparation);
           //! Destroys buffer
-          virtual ~ColumnPositionIterator()
-          {
-          }
+          virtual ~ColumnPositionIterator() = default;
 
           //! Goes to next cell position
           void operator++();
           //! Current position
           LatticePosition operator*() const
           {
-            return major * static_cast<LatticeDistance>(current.z)
-                + minor * static_cast<LatticeDistance>(current.y)
-                + depth * static_cast<LatticeDistance>(current.x) + cylinder->origin;
+            return major * static_cast<LatticeDistance>(current.z())
+                + minor * static_cast<LatticeDistance>(current.y())
+                + depth * static_cast<LatticeDistance>(current.x()) + cylinder->origin;
           }
 
         protected:
@@ -90,8 +84,6 @@ namespace hemelb
         LatticePosition maxExtensions(MeshData::Vertices const &vertices,
                                       LatticePosition const &col, LatticePosition const& normal);
       }
-    }
-  }
 } // namespace hemelb::redblood
 #endif
 

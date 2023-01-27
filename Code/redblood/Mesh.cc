@@ -5,7 +5,6 @@
 
 #include <cassert>
 #include <deque>
-#include <fstream>
 #include <map>
 #include <numeric>
 
@@ -15,16 +14,12 @@
 #include <vtkSmartPointer.h>
 
 #include "redblood/Mesh.h"
-#include "redblood/Facet.h"
-#include "util/Iterator.h"
-#include "log/Logger.h"
 #include "Exception.h"
 #include "constants.h"
+#include "util/Iterator.h"
 
-namespace hemelb
+namespace hemelb::redblood
 {
-  namespace redblood
-  {
     // Check that the condition in Mesh.h is true.
     // TODO: fix as described in header
     static_assert(std::is_same<IdType, vtkIdType>::value,
@@ -42,20 +37,18 @@ namespace hemelb
     }
     LatticeVolume volume(MeshData::Vertices const &vertices, MeshData::Facets const &facets)
     {
-      MeshData::Facets::const_iterator i_facet = facets.begin();
-      MeshData::Facets::const_iterator const i_facet_end(facets.end());
-      LatticeVolume result(0);
-
-      for (; i_facet != i_facet_end; ++i_facet)
-      {
-        LatticePosition const &v0(vertices[ (*i_facet)[0]]);
-        LatticePosition const &v1(vertices[ (*i_facet)[1]]);
-        LatticePosition const &v2(vertices[ (*i_facet)[2]]);
-        result += Dot(Cross(v0, v1), v2);
-      }
-
+      auto result = std::transform_reduce(
+              facets.begin(), facets.end(),
+              LatticeVolume{0}, std::plus<LatticeVolume>{},
+              [&](MeshData::Facet const& facet) {
+                  auto& v0 = vertices[facet[0]];
+                  auto& v1 = vertices[facet[1]];
+                  auto& v2 = vertices[facet[2]];
+                  return Dot(Cross(v0, v1), v2);
+              }
+      );
       // Minus sign comes from outward facing facet orientation
-      return -result / LatticeVolume(6);
+      return -result / 6.0;
     }
     LatticeVolume volume(MeshData const &mesh)
     {
@@ -64,20 +57,19 @@ namespace hemelb
 
     LatticeVolume area(MeshData::Vertices const &vertices, MeshData::Facets const &facets)
     {
-      MeshData::Facets::const_iterator i_facet = facets.begin();
-      MeshData::Facets::const_iterator const i_facet_end(facets.end());
-      LatticeVolume result(0);
-
-      for (; i_facet != i_facet_end; ++i_facet)
-      {
-        LatticePosition const &v0(vertices[ (*i_facet)[0]]);
-        LatticePosition const &v1(vertices[ (*i_facet)[1]]);
-        LatticePosition const &v2(vertices[ (*i_facet)[2]]);
-        result += Cross(v0 - v1, v2 - v1).GetMagnitude();
-      }
-
-      return result * 0.5;
+        auto result = std::transform_reduce(
+                facets.begin(), facets.end(),
+                LatticeArea{0}, std::plus<LatticeArea>{},
+                [&](MeshData::Facet const& facet) {
+                    auto& v0 = vertices[facet[0]];
+                    auto& v1 = vertices[facet[1]];
+                    auto& v2 = vertices[facet[2]];
+                    return Cross(v0 - v1, v2 - v1).GetMagnitude();
+                }
+        );
+        return result * 0.5;
     }
+
     LatticeArea area(MeshData const &mesh)
     {
       return area(mesh.vertices, mesh.facets);
@@ -103,77 +95,64 @@ namespace hemelb
       void insert(MeshData::Facet &container, MeshData::Facet::value_type value,
                   MeshData::Facet::value_type max)
       {
-        for (size_t i(0); i < container.size(); ++i)
-          if (container[i] >= max)
-          {
-            container[i] = value;
-            return;
-          }
-          else if (container[i] == value)
-          {
-            return;
+          for (auto& val: container) {
+              if (val >= max)
+              {
+                  val = value;
+                  return;
+              }
+              else if (val == value)
+              {
+                  return;
+              }
           }
       }
     }
 
-    MeshTopology::MeshTopology(MeshData const &mesh)
+    MeshTopology::MeshTopology(MeshData const &mesh) :
+            vertexToFacets(mesh.vertices.size()),
+            facetNeighbors(mesh.facets.size())
     {
-      vertexToFacets.resize(mesh.vertices.size());
-      facetNeighbors.resize(mesh.facets.size());
-
-      // Loop over facets to create map from vertices to facets
-      MeshData::Facets::const_iterator i_facet = mesh.facets.begin();
-      MeshData::Facets::const_iterator const i_facet_end = mesh.facets.end();
-
-      for (unsigned int i(0); i_facet != i_facet_end; ++i_facet, ++i)
-      {
-        vertexToFacets.at( (*i_facet)[0]).insert(i);
-        vertexToFacets.at( (*i_facet)[1]).insert(i);
-        vertexToFacets.at( (*i_facet)[2]).insert(i);
-      }
-
-      // Now creates map of neighboring facets
-      size_t const Nmax = mesh.facets.size();
-      FacetNeighbors::value_type intelcompiler;
-      // intel compiler without parameter list initialization
-      intelcompiler[0] = Nmax;
-      intelcompiler[1] = Nmax;
-      intelcompiler[2] = Nmax;
-      std::fill(facetNeighbors.begin(), facetNeighbors.end(), intelcompiler);
-      i_facet = mesh.facets.begin();
-
-      for (unsigned int i(0); i_facet != i_facet_end; ++i_facet, ++i)
-      {
-        for (size_t node(0); node != i_facet->size(); ++node)
+        // Loop over facets to create map from vertices to facets
+        for (auto [i, facet]: util::enumerate(mesh.facets))
         {
-          // check facets that this node is attached to
-          MeshTopology::VertexToFacets::const_reference neighboringFacets =
-              vertexToFacets.at( (*i_facet)[node]);
-          MeshTopology::VertexToFacets::value_type::const_iterator i_neigh =
-              neighboringFacets.begin();
-
-          for (; i_neigh != neighboringFacets.end(); ++i_neigh)
-          {
-            if (i == *i_neigh)
-            {
-              continue;
-            }
-
-            if (edge_sharing(*i_facet, mesh.facets.at(*i_neigh)))
-            {
-              insert(facetNeighbors.at(i), *i_neigh, Nmax);
-            }
-          }
+            vertexToFacets.at(facet[0]).insert(i);
+            vertexToFacets.at(facet[1]).insert(i);
+            vertexToFacets.at(facet[2]).insert(i);
         }
-      }
+
+        // Now creates map of neighboring facets
+        IdType const N_FACETS = std::ssize(mesh.facets);
+        std::array<IdType, 3> default_neigh = {N_FACETS, N_FACETS, N_FACETS};
+        std::fill(facetNeighbors.begin(), facetNeighbors.end(), default_neigh);
+
+        for (auto [i, facet]: util::enumerate(mesh.facets))
+        {
+            static_assert(std::is_same_v<decltype(facet), std::array<IdType,3> const&>);
+            for (auto vertex_id: facet)
+            {
+                // check facets that this node is attached to
+                auto const& neighboringFacets = vertexToFacets.at(vertex_id);
+                for (auto neighboringFacet: neighboringFacets)
+                {
+                    if (i == neighboringFacet)
+                        continue;
+
+                    if (edge_sharing(facet, mesh.facets.at(neighboringFacet)))
+                    {
+                        insert(facetNeighbors.at(i), neighboringFacet, N_FACETS);
+                    }
+                }
+            }
+        }
 
 #ifndef NDEBUG
 
       // Checks there are no uninitialized values
-      for (unsigned int i(0); i < facetNeighbors.size(); ++i)
-        for (unsigned int j(0); j < 3; ++j)
+      for (auto const& facetNeighbor: facetNeighbors)
+        for (unsigned int j = 0; j < 3; ++j)
         {
-          assert(facetNeighbors[i][j] < Nmax);
+          assert(facetNeighbor[j] < N_FACETS);
         }
 
 #endif
@@ -546,7 +525,7 @@ namespace hemelb
 	    // For each point in each triangle, get its ID
 	    auto const& ptId = mesh.facets[triId][dim];
 
-	    // Where's it's data?
+	    // Where's its data?
 	    auto const& start = point2cell[ptId];
 	    // Note mutable ref for inc below
 	    auto& nSeen = point2cell[start];
@@ -667,7 +646,7 @@ namespace hemelb
       auto leftmost_pt_iter =
 	std::min_element(mesh.vertices.cbegin(), mesh.vertices.cend(),
 			 [](LatticePosition const& a, LatticePosition const& b) {
-			   return a.x < b.x;
+			   return a.x() < b.x();
 			 });
       const IdType leftmost_pt_id = std::distance(mesh.vertices.cbegin(), leftmost_pt_iter);
       auto leftmost_cells = conn.iter_tris_using_pt(leftmost_pt_id);
@@ -678,7 +657,7 @@ namespace hemelb
       auto leftmost_tri_id =
 	*std::max_element(leftmost_cells.begin(), leftmost_cells.end(),
 			  [&normals](std::size_t a, std::size_t b) {
-			    return std::fabs(normals[a].x) < std::fabs(normals[b].x);
+			    return std::fabs(normals[a].x()) < std::fabs(normals[b].x());
 			  });
 
       unsigned nFlips = 0;
@@ -702,7 +681,7 @@ namespace hemelb
       auto visited = std::vector<bool>(nTris, false);
 
       // Flip if pointing to the right.
-      if (normals[leftmost_tri_id].x > 0) {
+      if (normals[leftmost_tri_id].x() > 0) {
 	flip(leftmost_tri_id);
       }
       visited[leftmost_tri_id] = true;
@@ -791,5 +770,4 @@ namespace hemelb
       return numSwapped;
     }
 
-  }
 } // hemelb::redblood

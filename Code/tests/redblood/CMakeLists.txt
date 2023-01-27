@@ -3,13 +3,15 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-add_test_lib(test_rbc_xml
-  CellInserterTests.cc
-  CellIOTests.cc
-  FlowExtensionTests.cc
-  CellIntegrationTests.cc
-)
-target_link_libraries(test_rbc_xml PRIVATE TinyXML::TinyXML)
+#add_test_lib(test_rbc_xml
+#  CellInserterTests.cc
+#  CellIOTests.cc
+#  FlowExtensionTests.cc
+#  CellIntegrationTests.cc
+#)
+#target_link_libraries(test_rbc_xml PRIVATE TinyXML::TinyXML)
+#set(src_needs_xml
+#)
 
 add_test_lib(test_redblood
   Fixtures.cc
@@ -47,6 +49,11 @@ add_test_lib(test_redblood
 
   parallel/NodeParallelizationTests.cc
 
+        CellInserterTests.cc
+        CellIOTests.cc
+        FlowExtensionTests.cc
+        CellIntegrationTests.cc
+
   # Longer-running integration tests
   FadeInOutIntegrationTests.cc
   SadCellTest.cc
@@ -55,7 +62,7 @@ add_test_lib(test_redblood
   FedosovValidationTests.cc
 )
 
-target_link_libraries(test_redblood PRIVATE VTK::CommonCore test_rbc_xml)
+target_link_libraries(test_redblood PRIVATE VTK::CommonCore TinyXML::TinyXML)
 
 add_test_lib(test_mpi_rbc_xml
   parallel/MPISpreadForcesTests.cc

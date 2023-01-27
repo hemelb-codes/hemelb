@@ -4,14 +4,9 @@
 // license in the file LICENSE.
 
 #include <string>
-#include <unistd.h>
-#include <cstdlib>
 
 #include "configuration/SimConfig.h"
 #include "reporting/BuildInfo.h"
-#include "lb/InitialCondition.h"
-#include "redblood/FlowExtension.h"
-#include "redblood/RBCConfig.h"
 
 namespace hemelb::configuration
 {
@@ -27,7 +22,8 @@ namespace hemelb::configuration
     }
 
     // checkpoint IC
-    CheckpointIC::CheckpointIC(std::optional<LatticeTimeStep> t, const std::string& cp, std::optional<std::string> const& maybeOff) : ICConfigBase(t), cpFile(cp), maybeOffFile(maybeOff) {
+    CheckpointIC::CheckpointIC(std::optional<LatticeTimeStep> t, std::string cp, std::optional<std::string> maybeOff)
+            : ICConfigBase(t), cpFile(std::move(cp)), maybeOffFile(std::move(maybeOff)) {
     }
 
 
@@ -54,14 +50,8 @@ namespace hemelb::configuration
       DoIO(rawXmlDoc.GetRoot());
     }
 
-    SimConfig::~SimConfig()
-    {
-      delete rbcConf;
-      rbcConf = nullptr;
-    }
-
     // Turn an input XML-relative path into a full path
-    std::filesystem::path SimConfig::RelPathToFullPath(const std::string& path) const {
+    std::filesystem::path SimConfig::RelPathToFullPath(std::string_view path) const {
         auto xml_dir = xmlFilePath.parent_path();
         return std::filesystem::absolute(xml_dir / path);
     }
@@ -103,10 +93,10 @@ namespace hemelb::configuration
       // defined
       if (auto rbcEl = topNode.GetChildOrNull("redbloodcells")) {
 #ifdef HEMELB_BUILD_RBC
-	rbcConf = new redblood::RBCConfig;
-	rbcConf->DoIOForRedBloodCells(topNode, *this, *unitConverter);
+	//rbcConf = new redblood::RBCConfig;
+          rbcConf = DoIOForRedBloodCells(rbcEl);
 #else
-	throw Exception() << "Input XML has redbloodcells section but HEMELB_BUILD_RBC=OFF";
+	      throw Exception() << "Input XML has redbloodcells section but HEMELB_BUILD_RBC=OFF";
 #endif
       }
     }
@@ -231,7 +221,7 @@ namespace hemelb::configuration
       {
         // Determine which InOutlet to create
         io::xml::Element conditionEl = currentIoletNode.GetChildOrThrow("condition");
-        const std::string& conditionType = conditionEl.GetAttributeOrThrow("type");
+        auto conditionType = conditionEl.GetAttributeOrThrow("type");
 
         IoletConfig newIolet;
 
@@ -257,7 +247,7 @@ namespace hemelb::configuration
     {
       CheckIoletMatchesCMake(ioletEl, "NASHZEROTHORDERPRESSUREIOLET");
       io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
-      const std::string& conditionSubtype = conditionEl.GetAttributeOrThrow("subtype");
+      auto conditionSubtype = conditionEl.GetAttributeOrThrow("subtype");
 
       if (conditionSubtype == "cosine")
       {
@@ -282,7 +272,7 @@ namespace hemelb::configuration
     {
       CheckIoletMatchesCMake(ioletEl, "LADDIOLET");
       io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
-      const std::string& conditionSubtype = conditionEl.GetAttributeOrThrow("subtype");
+      auto conditionSubtype = conditionEl.GetAttributeOrThrow("subtype");
 
       if (conditionSubtype == "parabolic")
       {
@@ -370,7 +360,7 @@ namespace hemelb::configuration
       propertyoutputEl.GetAttributeOrThrow("period", file.frequency);
 
       io::xml::Element geometryEl = propertyoutputEl.GetChildOrThrow("geometry");
-      const std::string& type = geometryEl.GetAttributeOrThrow("type");
+      auto type = geometryEl.GetAttributeOrThrow("type");
 
       if (type == "plane")
       {
@@ -455,7 +445,7 @@ namespace hemelb::configuration
     extraction::OutputField SimConfig::DoIOForPropertyField(const io::xml::Element& fieldEl)
     {
       extraction::OutputField field;
-      const std::string& type = fieldEl.GetAttributeOrThrow("type");
+      auto type = fieldEl.GetAttributeOrThrow("type");
       // Default name is identical to type.
       field.name = fieldEl.GetAttributeMaybe("name").value_or(type);
 
@@ -519,43 +509,121 @@ namespace hemelb::configuration
     }
 
     void SimConfig::DoIOForBaseInOutlet(const io::xml::Element& ioletEl,
-                                        IoletConfigBase& value) const
+                                        IoletConfigBase& ioletConf) const
     {
         io::xml::Element positionEl = ioletEl.GetChildOrThrow("position");
         io::xml::Element normalEl = ioletEl.GetChildOrThrow("normal");
 
-        GetDimensionalValue(positionEl, "m", value.position);
-        GetDimensionalValue(normalEl, "dimensionless", value.normal);
+        GetDimensionalValue(positionEl, "m", ioletConf.position);
+        GetDimensionalValue(normalEl, "dimensionless", ioletConf.normal);
 
         if (sim_info.time.warmup_steps) {
-            value.warmup_steps = sim_info.time.warmup_steps;
+            ioletConf.warmup_steps = sim_info.time.warmup_steps;
         }
 
         // Optional element <flowextension>
-        if (auto const flowXML = ioletEl.GetChildOrNull("flowextension")) {
-            FlowExtensionConfig result;
-            GetDimensionalValue(flowXML.GetChildOrThrow("length"), "m", result.length_m);
-            GetDimensionalValue(flowXML.GetChildOrThrow("radius"), "m", result.radius_m);
+        if (auto const flowEl = ioletEl.GetChildOrNull("flowextension")) {
+            FlowExtensionConfig flowConf;
+            GetDimensionalValue(flowEl.GetChildOrThrow("length"), "m", flowConf.length_m);
+            GetDimensionalValue(flowEl.GetChildOrThrow("radius"), "m", flowConf.radius_m);
 
             // Optional element - default is length of flowext
-            // <fadelength value="float" units="m" />
-            result.fadelength_m = flowXML.GetChildOrNull("fluid_density").transform(
+            // <fadelength ioletConf="float" units="m" />
+            flowConf.fadelength_m = flowEl.GetChildOrNull("fadelength").transform(
                     [](io::xml::Element const &el) {
                         return GetDimensionalValue<PhysicalDistance>(el, "m");
-                    }).value_or(result.length_m);
+                    }).value_or(flowConf.length_m);
 
             // Infer normal and position from inlet
-            // However, normals point in *opposite* direction, and, as a result, origin are at opposite
+            // However, normals point in *opposite* direction, and, as a flowConf, origin are at opposite
             // end of the cylinder
-            GetDimensionalValue(ioletEl.GetChildOrThrow("normal"), "dimensionless", result.normal);
-            result.normal *= -1;
-            result.normal.Normalise();
+            flowConf.normal = -ioletConf.normal;
+            flowConf.normal.Normalise();
 
-            result.origin_m =
-                    GetDimensionalValue<PhysicalPosition>(ioletEl.GetChildOrThrow("position"), "m")
-                    - result.normal * result.length_m;
-            value.flow_extension = result;
+            flowConf.origin_m = ioletConf.position - flowConf.normal * flowConf.length_m;
+            ioletConf.flow_extension = flowConf;
         }
+
+        // Optional element(s) <insertcell>
+        std::int64_t horrible_hack_seed = 0;
+        for (auto insertEl = ioletEl.IterChildren("insertcell"); !insertEl.AtEnd(); ++insertEl) {
+            CellInserterConfig inserterConf;
+            auto maybeSeed = insertEl->GetChildOrNull("seed").transform(
+                    [](io::xml::Element const& _) { return _.GetAttributeOrThrow<std::int64_t>("value"); }
+            );
+            if (maybeSeed) {
+                inserterConf.seed = *maybeSeed;
+            } else {
+                // We need to seed each of the RBCInserterWithPerturbation objects consistently across MPI processes
+                if (horrible_hack_seed == 0) {
+                    auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+                    auto comm_world = hemelb::net::MpiCommunicator::World();
+                    comm_world.Broadcast(seed, 0);
+                    std::stringstream message;
+                    message << "RBC insertion random seed: " << std::hex << std::showbase << seed;
+                    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>(message.str());
+                    horrible_hack_seed = seed;
+                } else {
+                    horrible_hack_seed += 1;
+                }
+                inserterConf.seed = horrible_hack_seed;
+            }
+            inserterConf.template_name = insertEl->GetAttributeOrThrow("template");
+//                    if (templateCells.count(templateName) == 0)
+//                    {
+//                        throw Exception() << "Template cell name does not match a known template cell";
+//                    }
+
+            // Rotate cell to align z axis with given position, and then z axis with flow
+            // If phi == 0, then cell symmetry axis is aligned with the flow
+            inserterConf.theta_rad = GetDimensionalValueWithDefault<Angle>(*insertEl, "theta", "rad", 0e0);
+            inserterConf.phi_rad = GetDimensionalValueWithDefault<Angle>(*insertEl, "phi", "rad", 0e0);
+            inserterConf.translation_m = {
+                    GetDimensionalValueWithDefault<PhysicalDistance>(*insertEl, "x", "m", 0e0),
+                    GetDimensionalValueWithDefault<PhysicalDistance>(*insertEl, "y", "m", 0e0),
+                    GetDimensionalValueWithDefault<PhysicalDistance>(*insertEl, "z", "m", 0e0)
+            };
+
+            inserterConf.offset_s = GetDimensionalValueWithDefault<PhysicalTime>(*insertEl,
+                                                                                 "offset",
+                                                                                 "s",
+                                                                                 0);
+            inserterConf.drop_period_s = GetDimensionalValue<LatticeTime>(
+                    insertEl->GetChildOrThrow("every"), "s");
+            inserterConf.dt_s = GetDimensionalValueWithDefault<LatticeTime>(
+                    *insertEl, "delta_t", "s", 0e0);
+
+            inserterConf.dtheta_rad = GetDimensionalValueWithDefault<Angle>(*insertEl,
+                                                                      "delta_theta",
+                                                                      "rad",
+                                                                      0e0);
+            inserterConf.dphi_rad = GetDimensionalValueWithDefault<Angle>(*insertEl,
+                                                                    "delta_phi",
+                                                                    "rad",
+                                                                    0e0);
+            inserterConf.dx_m = GetDimensionalValueWithDefault<LatticeDistance>(*insertEl,
+                                                                            "delta_x",
+                                                                            "m",
+                                                                            0e0);
+            inserterConf.dy_m = GetDimensionalValueWithDefault<LatticeDistance>(*insertEl,
+                                                                            "delta_y",
+                                                                            "m",
+                                                                            0e0);
+            ioletConf.cell_inserters.push_back(inserterConf);
+        }
+    }
+
+    template <typename T, typename F>
+    auto opt_transform (std::optional<T>&& o, F&& f) {
+        using U = std::remove_cv_t<std::invoke_result_t<F, T>>;
+        if (o.has_value())
+            return std::make_optional<U>(
+                    std::invoke(
+                            std::forward<F>(f),
+                            std::move(o.value())
+                    )
+            );
+        return std::optional<U>{};
     }
 
     void SimConfig::DoIOForInitialConditions(io::xml::Element initialconditionsEl)
@@ -585,9 +653,14 @@ namespace hemelb::configuration
         } else {
             if (checkpointEl) {
                 // Only checkpoint
-                initial_condition = CheckpointIC(t0,
-                                                 checkpointEl.GetAttributeOrThrow("file"),
-                                                 checkpointEl.GetAttributeMaybe("offsets"));
+                initial_condition = CheckpointIC(
+                        t0,
+                        std::string{checkpointEl.GetAttributeOrThrow("file")},
+                        opt_transform(
+                                checkpointEl.GetAttributeMaybe("offsets"),
+                                [](std::string_view sv) { return std::string{sv}; }
+                        )
+                );
             } else {
                 // No IC!
                 throw Exception() << "XML <initialconditions> element contains no known initial condition type";
@@ -722,7 +795,7 @@ namespace hemelb::configuration
 
     void SimConfig::DoIOForConvergenceCriterion(const io::xml::Element& criterionEl)
     {
-      const std::string& criterionType = criterionEl.GetAttributeOrThrow("type");
+      auto criterionType = criterionEl.GetAttributeOrThrow("type");
 
       // We only allow velocity-based convergence check for the time being
       if (criterionType != "velocity")
@@ -732,6 +805,136 @@ namespace hemelb::configuration
       }
       monitoringConfig.convergenceVariable = extraction::source::Velocity{};
       monitoringConfig.convergenceReferenceValue = GetDimensionalValue<PhysicalSpeed>(criterionEl, "m/s");
+    }
+
+    TemplateCellConfig SimConfig::readCell(const io::xml::Element& cellNode) const {
+        TemplateCellConfig ans;
+        ans.name = cellNode.GetAttributeMaybe("name").value_or("default");
+        auto const shape = cellNode.GetChildOrThrow("shape");
+        ans.mesh_path = RelPathToFullPath(
+                shape.GetAttributeOrThrow("mesh_path")
+        );
+
+        auto get_fmt = [](io::xml::Element const& shape, std::string attr_name) -> MeshFormat {
+            auto fmt = shape.GetAttributeOrThrow(attr_name);
+            if (fmt == "VTK") {
+                return VTKMeshFormat{};
+            } else if (fmt == "Krueger") {
+                log::Logger::Log<log::Warning, log::Singleton>("Krueger format meshes are deprecated, move to VTK when you can.");
+                return KruegerMeshFormat{};
+            }
+            throw Exception() << "Invalid " << attr_name << " '" << fmt << "' on element " << shape.GetPath();
+        };
+
+        ans.format = get_fmt(shape, "mesh_format");
+
+        ans.scale_m = GetDimensionalValue<PhysicalDistance>(cellNode.GetChildOrThrow("scale"), "m");
+        auto reference_mesh_path = shape.GetAttributeMaybe("reference_mesh_path");
+        if (reference_mesh_path) {
+            ans.reference_mesh_path = RelPathToFullPath(*reference_mesh_path);
+            ans.reference_mesh_format = get_fmt(shape, "reference_mesh_format");
+        }
+
+        auto const moduliNode = cellNode.GetChildOrNull("moduli");
+        ans.moduli.bending_Nm = GetDimensionalValueWithDefault<PhysicalModulus>(
+                moduliNode, "bending", "Nm", 2e-19);
+        ans.moduli.surface_lat = GetDimensionalValueWithDefault<LatticeModulus>(
+                moduliNode, "surface", "lattice", 1e0);
+        ans.moduli.volume_lat = GetDimensionalValueWithDefault<LatticeModulus>(
+                moduliNode, "volume", "lattice", 1e0);
+        ans.moduli.dilation_lat = GetDimensionalValueWithDefault<LatticeModulus>(
+                moduliNode, "dilation", "lattice", 0.75);
+        if (1e0 < ans.moduli.dilation_lat or ans.moduli.dilation_lat < 0.5)
+        {
+            log::Logger::Log<log::Critical, log::Singleton>("Dilation modulus is outside the recommended range 1e0 >= m >= 0.5");
+        }
+        ans.moduli.strain_Npm = GetDimensionalValueWithDefault<PhysicalModulus>(
+                moduliNode, "strain", "N/m", 5e-6);
+        return ans;
+    }
+
+    std::map<std::string, TemplateCellConfig> SimConfig::readTemplateCells(io::xml::Element const& cellsEl) const {
+        std::map<std::string, TemplateCellConfig> ans;
+        for (auto cellNode = cellsEl.GetChildOrNull("cell");
+             cellNode;
+             cellNode = cellNode.NextSiblingOrNull("cell"))
+        {
+            auto const key = std::string{cellNode.GetAttributeMaybe("name").value_or("default")};
+            if (ans.contains(key))
+                throw Exception() << "Multiple template mesh with same name: " << key;
+
+            ans[key] = readCell(cellNode);
+        }
+        return ans;
+    }
+
+    NodeForceConfig readNode2NodeForce(const io::xml::Element& node) {
+        auto intensity = GetDimensionalValueWithDefault<PhysicalEnergy>(
+                node, "intensity", {"Nm", "lattice"}, {1.0, "Nm"});
+
+        auto cutoffdist = GetDimensionalValueWithDefault<LatticeDistance>(
+                node, "cutoffdistance", "lattice", 1.0);
+
+        // exponent doesnt have units apparently
+        auto exponent = node.and_then(
+                [](io::xml::Element const& el) { return el.GetChildOrNull("exponent"); }
+        ).transform(
+                [](io::xml::Element const& el) { return el.GetAttributeOrThrow<std::size_t>("value"); }
+        ).value_or(std::size_t(2));
+
+        return {intensity.first, intensity.second, cutoffdist, exponent};
+    }
+
+    RBCConfig SimConfig::DoIOForRedBloodCells(const io::xml::Element &rbcEl) const {
+        RBCConfig ans;
+
+        const io::xml::Element controllerNode = rbcEl.GetChildOrThrow("controller");
+        ans.boxSize = GetDimensionalValue<LatticeDistance>(controllerNode.GetChildOrThrow("boxsize"), "lattice");
+
+        if (auto cellsEl = rbcEl.GetChildOrNull("cells"))
+            ans.meshes = readTemplateCells(rbcEl.GetChildOrNull("cells"));
+
+        // Now we can check that the cell inserters only refer to templates that exist
+        auto cell_inserter_templates_exist = [&] (IoletConfig const& iolet_v) {
+            bool ok = true;
+            std::visit([&](auto const& iolet) {
+                if constexpr(std::is_same_v<std::decay_t<decltype(iolet)>, std::monostate>) {
+                    throw Exception() << "invalid iolet";
+                } else {
+                    for (auto const &ins: iolet.cell_inserters) {
+                        if (!ans.meshes.contains(ins.template_name)) {
+                            ok = false;
+                            log::Logger::Log<log::Error, log::Singleton>(
+                                    "Cell inserter for iolet refers to template that does not exist '%s'",
+                                    ins.template_name.c_str());
+                        }
+                    }
+                }
+            }, iolet_v);
+            return ok;
+        };
+        if (!(std::all_of(inlets.begin(), inlets.end(), cell_inserter_templates_exist)
+              &&
+              std::all_of(outlets.begin(), outlets.end(), cell_inserter_templates_exist))) {
+            throw Exception() << "One or more cell inserters refer to a template that does not exist";
+        }
+
+        ans.cell2cell = readNode2NodeForce(rbcEl.GetChildOrNull("cell2Cell"));
+        ans.cell2wall = readNode2NodeForce(rbcEl.GetChildOrNull("cell2Wall"));
+        if (ans.boxSize < ans.cell2wall.cutoffdist)
+            throw Exception() << "Box-size < cell-wall interaction size: "
+                                 "cell-wall interactions cannot be all accounted for.";
+
+        if (ans.boxSize < ans.cell2cell.cutoffdist)
+            throw Exception() << "Box-size < cell-cell interaction size: "
+                                 "cell-cell interactions cannot be all accounted for.";
+
+        ans.output_period = GetDimensionalValue<LatticeTimeStep>(
+                rbcEl.GetChildOrThrow("output").GetChildOrThrow("period"),
+                "lattice"
+        );
+
+        return ans;
     }
 
     const MonitoringConfig& SimConfig::GetMonitoringConfiguration() const

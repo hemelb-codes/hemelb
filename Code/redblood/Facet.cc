@@ -9,10 +9,8 @@
 #include "constants.h"
 #include "redblood/Mesh.h"
 
-namespace hemelb
+namespace hemelb::redblood
 {
-  namespace redblood
-  {
  
     Facet::Facet(MeshData const &mesh, size_t index) :
       indices(mesh.facets[index])
@@ -59,7 +57,7 @@ namespace hemelb
 
 	default:
 	  return LatticePosition(0, 0, 0);
-        };
+        }
     }
     LatticeDistance Facet::length(size_t i) const
     {
@@ -67,7 +65,7 @@ namespace hemelb
     }
     Dimensionless Facet::cosine() const
     {
-      return edge(0).Dot(edge(1)) / (length(0) * length(1));
+      return Dot(edge(0), edge(1)) / (length(0) * length(1));
     }
     Dimensionless Facet::sine() const
     {
@@ -182,7 +180,7 @@ namespace hemelb
     // Computes angle between two facets
     Angle angle(LatticePosition const &a, LatticePosition const &b)
     {
-      Angle const cosine(a.Dot(b));
+      Angle const cosine(Dot(a, b));
 
       if (cosine >= 1e0)
         {
@@ -211,7 +209,7 @@ namespace hemelb
       // (p - anode).Dot(normal to a) < 0  <==> given side of plane defined by facet a
       // where anode (bnode) is the node of a (b) not in common with b (a)
       auto const inside = (b(singles.second) - a(singles.first)) * 0.5;
-      return inside.Dot(unitA) < 0e0 ?
+      return Dot(inside, unitA) < 0e0 ?
 				 result :
 	-result;
     }
@@ -265,5 +263,4 @@ namespace hemelb
     {
       return strainInvariants(squaredDisplacements(deformed, ref, origMesh_scale));
     }
-  }
 }

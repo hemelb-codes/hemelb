@@ -16,14 +16,9 @@
 #include "lb/kernels/GuoForcingLBGK.h"
 
 #include <vector>
-#include <boost/shared_array.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/mpl/bool.hpp>
 
-namespace hemelb
+namespace hemelb::redblood
 {
-  namespace redblood
-  {
     //! \brief Returns the interpolated velocity at given point
     //! \param[in] center: off lattice position for which to interpolate.
     //! \param[in] latDat: lattice data
@@ -37,11 +32,11 @@ namespace hemelb
     {
       // Type traits to specialize for kernels with forces
       template<class KERNEL>
-      struct HasForce : public boost::mpl::false_
+      struct HasForce : public std::false_type
       {
       };
       template<class LATTICE>
-      struct HasForce<lb::kernels::GuoForcingLBGK<LATTICE> > : public boost::mpl::true_
+      struct HasForce<lb::kernels::GuoForcingLBGK<LATTICE> > : public std::true_type
       {
       };
 
@@ -65,18 +60,18 @@ namespace hemelb
 
         protected:
           //! Implementation with forces correction
-          LatticeVelocity computeVelocity(site_t index, boost::mpl::true_ const &) const;
+          LatticeVelocity computeVelocity(site_t index, std::true_type const &) const;
           //! Implementation without forces correction
-          LatticeVelocity computeVelocity(site_t index, boost::mpl::false_ const &) const;
+          LatticeVelocity computeVelocity(site_t index, std::false_type const &) const;
           //! Lattice data that holds the grid of population and forces
           geometry::FieldData const &latticeData;
       };
 
       template<class KERNEL>
       LatticeVelocity VelocityFromLatticeData<KERNEL>::computeVelocity(
-          site_t index, boost::mpl::true_ const &) const
+          site_t index, std::true_type const &) const
       {
-        typedef typename KERNEL::LatticeType LatticeType;
+        using LatticeType = typename KERNEL::LatticeType;
         LatticeVelocity result;
         distribn_t density;
         auto site = latticeData.GetSite(index);
@@ -90,22 +85,18 @@ namespace hemelb
         auto const fDistribution = site.GetFOld<LatticeType>();
 #endif
         LatticeType::CalculateDensityAndMomentum(fDistribution,
-                                                 force[0],
-                                                 force[1],
-                                                 force[2],
+                                                 force,
                                                  density,
-                                                 result.x,
-                                                 result.y,
-                                                 result.z);
+                                                 result);
         return result / density;
       }
 
       template<class KERNEL>
       LatticeVelocity VelocityFromLatticeData<KERNEL>::computeVelocity(
-          site_t index, boost::mpl::false_ const &) const
+          site_t index, std::false_type const &) const
       {
-        typedef typename KERNEL::LatticeType LatticeType;
-        LatticeVelocity result(0, 0, 0);
+        using LatticeType = typename KERNEL::LatticeType;
+        LatticeMomentum mom;
         distribn_t density;
 #ifdef HEMELB_USE_KRUEGER_ORDERING
         // Use distribution functions at the beginning of the previous timestep (stored in
@@ -117,10 +108,8 @@ namespace hemelb
 #endif
         LatticeType::CalculateDensityAndMomentum(fDistribution,
                                                  density,
-                                                 result.x,
-                                                 result.y,
-                                                 result.z);
-        return result / density;
+                                                 mom);
+        return mom / density;
       }
     }
 
@@ -145,6 +134,5 @@ namespace hemelb
       }
       return result;
     }
-  }
 } // hemelb::redblood
 #endif

@@ -10,6 +10,7 @@
 
 #include "geometry/GeometryReader.h"
 #include "lb/InitialCondition.h"
+#include "redblood/FlowExtension.h"
 #include "reporting/Reporter.h"
 #include "util/variant.h"
 
@@ -23,20 +24,21 @@ namespace hemelb::configuration {
         );
     }
 
-    SimBuilder::SimBuilder(configuration::SimConfig const& conf) :
-            config(conf),
-            unit_converter(build_unit_converter(conf.sim_info))
+    SimBuilder::SimBuilder(configuration::SimConfig const& conf, bool construct_unit_converter) :
+            config(conf)
     {
-
+        if (construct_unit_converter)
+            unit_converter = build_unit_converter(conf.sim_info);
     }
 
-    util::UnitConverter const& SimBuilder::GetUnitConverter() const {
-        return *unit_converter;
+    std::shared_ptr<util::UnitConverter const> SimBuilder::GetUnitConverter() const {
+        return unit_converter;
     }
 
-    lb::SimulationState SimBuilder::BuildSimulationState() const {
-        return {config.GetTimeStepLength(), config.GetTotalTimeSteps()};
+    std::shared_ptr<lb::SimulationState> SimBuilder::BuildSimulationState() const {
+        return std::make_shared<lb::SimulationState>(config.GetTimeStepLength(), config.GetTotalTimeSteps());
     }
+
     geometry::GmyReadResult SimBuilder::ReadGmy(lb::lattices::LatticeInfo const& lat_info, reporting::Timers& timings, net::IOCommunicator& ioComms) const {
         geometry::GeometryReader reader(lat_info,
                                         timings,
@@ -157,6 +159,19 @@ namespace hemelb::configuration {
     {
         obj->SetPosition(unit_converter->ConvertPositionToLatticeUnits(conf.position));
         obj->SetNormal(conf.normal);
+        if (conf.flow_extension.has_value()) {
+            obj->SetFlowExtension(BuildFlowExtension(conf.flow_extension.value()));
+        }
+    }
+
+    std::shared_ptr<redblood::FlowExtension> SimBuilder::BuildFlowExtension(FlowExtensionConfig const& conf) const {
+        return std::make_shared<redblood::FlowExtension>(
+                conf.normal,
+                unit_converter->ConvertPositionToLatticeUnits(conf.origin_m),
+                unit_converter->ConvertDistanceToLatticeUnits(conf.length_m),
+                unit_converter->ConvertDistanceToLatticeUnits(conf.radius_m),
+                unit_converter->ConvertDistanceToLatticeUnits(conf.fadelength_m)
+        );
     }
 
     std::shared_ptr<hemelb::net::IteratedAction> SimBuilder::BuildColloidController() const {
@@ -192,97 +207,21 @@ namespace hemelb::configuration {
         return {};
     }
 
-    std::shared_ptr<net::IteratedAction> SimBuilder::BuildCellController() const {
-        if (config.HasRBCSection())
-        {
-#ifdef HEMELB_BUILD_RBC
-            auto rbcConfig = simConfig->GetRBCConfig();
-          hemelb::redblood::CellContainer cells;
-          typedef hemelb::redblood::CellController<Traits> Controller;
-          auto const controller = std::make_shared<Controller>(*fieldData,
-                                                               cells,
-                                                               rbcConfig->GetRBCMeshes(),
-                                                               timings,
-                                                               rbcConfig->GetBoxSize(),
-                                                               rbcConfig->GetCell2Cell(),
-                                                               rbcConfig->GetCell2Wall(),
-                                                               ioComms);
-          controller->SetCellInsertion(rbcConfig->GetInserter());
-          controller->SetOutlets(*rbcConfig->GetRBCOutlets());
-          cellController = std::static_pointer_cast<hemelb::net::IteratedAction>(controller);
-
-          auto output_callback =
-              [this](const hemelb::redblood::CellContainer & cells)
-              {
-            auto rbcConfig = simConfig->GetRBCConfig();
-                auto timestep = simulationState->Get0IndexedTimeStep();
-                if ((timestep % rbcConfig->GetRBCOutputPeriod()) == 0)
-                {
-                  log::Logger::Log<log::Info, log::OnePerCore>("printstep %d, num cells %d", timestep, cells.size());
-
-                  // Create output directory for current writing step. Requires syncing to
-                  // ensure no process goes ahead before directory is created.
-                  std::string rbcOutputDir;
-                  try
-                  {
-                    rbcOutputDir = fileManager->GetRBCOutputPathWithSubdir(std::to_string(timestep));
-                  }
-                  catch(Exception& e)
-                  {
-                    std::stringstream message;
-                    message << e.what() << std::endl
-                            << "Error " << errno << ": " << std::strerror(errno);
-                    log::Logger::Log<log::Critical, log::OnePerCore>(message.str());
-                    ioComms.Abort(-1);
-                    exit(-1);
-                  }
-                  ioComms.Barrier();
-
-                  for (auto cell : cells)
-                  {
-                    std::stringstream filename;
-                    filename << rbcOutputDir << cell->GetTag() << "_t_" << timestep << ".vtp";
-
-                    std::shared_ptr<redblood::CellBase> cell_base;
-                    auto fader_cell_cast = std::dynamic_pointer_cast<redblood::FaderCell>(cell);
-                    if(fader_cell_cast)
-                    {
-                      cell_base = fader_cell_cast->GetWrapeeCell();
-                    }
-                    else
-                    {
-                      cell_base = cell;
-                    }
-                    auto cell_cast = std::dynamic_pointer_cast<redblood::Cell>(cell_base);
-                    assert(cell_cast);
-            auto meshio = redblood::VTKMeshIO{};
-            meshio.writeFile(filename.str(), *cell_cast, *unitConverter);
-                  }
-                }
-              };
-          controller->AddCellChangeListener(output_callback);
-#else
-            throw hemelb::Exception() << "Trying to create red blood cell controller with HEMELB_BUILD_RBC=OFF";
-#endif
-        }
-        return {};
-    }
-
-    template <typename F>
-    struct transformer {
-        F func;
-
-        transformer(F&& f) : func{f} {}
-
-        template <template <typename...> class ContainerT, typename V, typename... ARGS>
-        //requires std::invocable<F, V const&>
-        auto operator()(ContainerT<V, ARGS...>const & c) {
-            using R = std::invoke_result_t<F, V const&>;
-            ContainerT<R> ans;
-            std::transform(c.begin(), c.end(), std::back_inserter(ans), func);
-            return ans;
-        }
-    };
+//    template <typename F>
+//    struct transformer {
+//        F func;
+//
+//        transformer(F&& f) : func{f} {}
+//
+//        template <template <typename...> class ContainerT, typename V, typename... ARGS>
+//        //requires std::invocable<F, V const&>
+//        auto operator()(ContainerT<V, ARGS...>const & c) {
+//            using R = std::invoke_result_t<F, V const&>;
+//            ContainerT<R> ans;
+//            std::transform(c.begin(), c.end(), std::back_inserter(ans), func);
+//            return ans;
+//        }
+//    };
 
     std::shared_ptr<extraction::PropertyActor> SimBuilder::BuildPropertyExtraction(
             std::filesystem::path const& xtr_path,

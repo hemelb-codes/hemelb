@@ -14,10 +14,8 @@
 #include "tests/redblood/Fixtures.h"
 #include "tests/helpers/LatticeDataAccess.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace redblood;
     namespace {
       LatticeDistance constexpr cutoff = 5.0;
@@ -48,7 +46,7 @@ namespace hemelb
       (*std::next(cells.begin()))->GetVertices().front() = n1;
 
       // Set forces to zero
-      helpers::ZeroOutFOld(this->latDat);
+      helpers::ZeroOutFOld(this->latDat.get());
 
       // Finds pairs, computes interaction, spread forces to lattice
       addCell2CellInteractions<STENCIL>(DivideConquerCells(cells, cutoff, halo),
@@ -69,11 +67,11 @@ namespace hemelb
 	auto const right = this->latDat->GetSite(15 - delta, 15, 15).GetForce();
 	REQUIRE(ApproxV(left) == -right);
 	// The forces at (14, 15, 15) should be  in direction (-1, 0, 0)
-	REQUIRE(right.Dot( util::Vector3D<double>{-1, 0, 0}) == Approx(std::abs(right.x)).margin(1e-8));
+	REQUIRE(Dot(right, {-1.0, 0.0, 0.0}) == Approx(std::abs(right.x())).margin(1e-8));
       }
       // This node is too far away
       REQUIRE(approx_zero == this->latDat->GetSite(15 + delta, 15, 15).GetForce());
       REQUIRE(approx_zero == this->latDat->GetSite(15 - delta, 15, 15).GetForce());
     }
-  }
+
 }

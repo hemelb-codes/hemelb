@@ -7,18 +7,14 @@
 #include "net/MpiCommunicator.h"
 #include "reporting/Timers.h"
 #include "util/Iterator.h"
-
-namespace hemelb
+#include "debug.h"
+namespace hemelb::redblood::parallel
 {
-  namespace redblood
-  {
-    namespace parallel
-    {
         GlobalCoordsToProcMap ComputeGlobalCoordsToProcMap(net::MpiCommunicator const &comm,
                                                            const geometry::Domain& domain)
         {
           GlobalCoordsToProcMap coordsToProcMap;
-
+debug::Break();
           // Populate map with coordinates of locally owned lattice sites first
           std::vector<LatticeVector> locallyOwnedSites;
           locallyOwnedSites.reserve(domain.GetLocalFluidSiteCount());
@@ -32,7 +28,7 @@ namespace hemelb
 
           // Exchange coordinates of locally owned lattice sites with neighbours in comms graph
           auto const& neighbouringProcs = comm.GetNeighbors();
-          if (neighbouringProcs.size() > 0)
+          if (!neighbouringProcs.empty())
           {
             auto neighSites = comm.AllNeighGatherV(locallyOwnedSites);
             assert(neighSites.size() == comm.GetNeighborsCount());
@@ -88,7 +84,7 @@ namespace hemelb
 
           auto cellsEffectiveSizeSq = cellsEffectiveSize * cellsEffectiveSize;
           auto areProcsNeighbours =
-              [cellsEffectiveSizeSq, &coordsPerProc] (unsigned procA, unsigned procB)
+              [cellsEffectiveSizeSq, &coordsPerProc] (int procA, int procB)
               {
                 if (procA == procB)
                 {
@@ -124,11 +120,11 @@ namespace hemelb
           return vertices;
         }
 
-        LatticeDistance ComputeCellsEffectiveSize(std::shared_ptr<TemplateCellContainer> cellTemplates)
+        LatticeDistance ComputeCellsEffectiveSize(TemplateCellContainer const& cellTemplates)
         {
           double maxCellRadius = std::numeric_limits<LatticeDistance>::min();
 
-          for (auto cellTemplate : *cellTemplates)
+          for (auto& cellTemplate : cellTemplates)
           {
             maxCellRadius = std::max(maxCellRadius, cellTemplate.second->GetScale());
           }
@@ -142,16 +138,15 @@ namespace hemelb
                                              std::shared_ptr<TemplateCellContainer> cellTemplates,
                                              hemelb::reporting::Timers &timings)
         {
+            debug::Break();
           timings[hemelb::reporting::Timers::graphComm].Start();
           auto graphComm =
               comm.Graph(ComputeProcessorNeighbourhood(comm,
                                                        domain,
-                                                       ComputeCellsEffectiveSize(cellTemplates)));
+                                                       ComputeCellsEffectiveSize(*cellTemplates)));
           timings[hemelb::reporting::Timers::graphComm].Stop();
 
           return graphComm;
         }
 
-    }
-  }
 }

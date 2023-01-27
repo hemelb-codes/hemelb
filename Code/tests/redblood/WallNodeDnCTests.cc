@@ -53,7 +53,7 @@ namespace hemelb
 	for (; upper.first != upper.second; ++upper.first) {
 	  REQUIRE(upper.first->second.nearBorder bitand size_t(Borders::CENTER));
 	  bool cond1 = (upper.first->second.nearBorder bitand size_t(Borders::BOTTOM)) != 0;
-	  bool cond2 = upper.first->second.node.x < halo;
+	  bool cond2 = upper.first->second.node.x() < halo;
 	  REQUIRE(cond1 == cond2);
 	}
       }

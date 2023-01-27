@@ -7,10 +7,8 @@
 
 #include "redblood/Facet.h"
 
-namespace hemelb
+namespace hemelb::redblood
 {
-  namespace redblood
-  {
     // Facet bending energy between two facets
     LatticeEnergy facetBending(Facet const &facetA, Facet const &facetB, Facet const &facetA_eq,
 			       Facet const &facetB_eq, LatticeModulus intensity)
@@ -38,8 +36,8 @@ namespace hemelb
               normali
       ) < 0e0;
 
-      auto n_ij = normali - normalj * normali.Dot(normalj);
-      auto n_ji = normalj - normali * normalj.Dot(normali);
+      auto n_ij = normali - normalj * Dot(normali, normalj);
+      auto n_ji = normalj - normali * Dot(normali, normalj);
       auto const area_ij = n_ij.GetMagnitude();
       auto const area_ji = n_ji.GetMagnitude();
       if (area_ij > 1e-12)
@@ -279,5 +277,4 @@ namespace hemelb
 
       return result;
     }
-  }
 }

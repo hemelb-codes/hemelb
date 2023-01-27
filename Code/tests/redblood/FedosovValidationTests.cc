@@ -12,6 +12,7 @@
 #include "lb/lattices/D3Q19.h"
 #include "Traits.h"
 #include "redblood/Mesh.h"
+#include "redblood/MeshIO.h"
 #include "redblood/Cell.h"
 #include "redblood/CellController.h"
 #include "redblood/stencil.h"

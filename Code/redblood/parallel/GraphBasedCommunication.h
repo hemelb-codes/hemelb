@@ -10,30 +10,26 @@
 #include "reporting/timers_fwd.h"
 namespace hemelb::net { class MpiCommunicator; }
 
-namespace hemelb
+namespace hemelb::redblood::parallel
 {
-  namespace redblood
-  {
-    namespace parallel
-    {
 
-      template <typename VectorT>
-      struct VectorLexicographicalOrdering {
-	// Lexicographical comparison between vectors
-	constexpr bool operator()( const VectorT& lhs, const VectorT& rhs ) const {
-	  if (lhs.x != rhs.x) {
-	    return lhs.x < rhs.x;
-	  } else {
-	    // x-equal
-	    if (lhs.y != rhs.y) {
-	      return lhs.y < rhs.y;
-	    } else {
-	      // x- AND y-equal
-	      return lhs.z < rhs.z;
-	    }
-	  }
-	}
-      };
+    template <typename VectorT>
+    struct VectorLexicographicalOrdering {
+        // Lexicographical comparison between vectors
+        constexpr bool operator()( const VectorT& lhs, const VectorT& rhs ) const {
+            if (lhs.x() != rhs.x()) {
+                return lhs.x() < rhs.x();
+            } else {
+                // x-equal
+                if (lhs.y() != rhs.y()) {
+                    return lhs.y() < rhs.y();
+                } else {
+                    // x- AND y-equal
+                    return lhs.z() < rhs.z();
+                }
+            }
+        }
+    };
 
       //! @todo #668 Should this be a std::unordered_map instead? The
       //! map is to be created once (and never modified again) and
@@ -62,14 +58,12 @@ namespace hemelb
       // In order to compute the graph neighbourhood we assume that cells elongate maximum MAXIMUM_SIZE_TO_RADIUS_RATIO times the radius
       static const LatticeDistance MAXIMUM_SIZE_TO_RADIUS_RATIO = 5.0;
 
-      LatticeDistance ComputeCellsEffectiveSize(std::shared_ptr<TemplateCellContainer> cellTemplates);
+      LatticeDistance ComputeCellsEffectiveSize(TemplateCellContainer const& cellTemplates);
 
       //! \brief Generates a graph communicator describing the data dependencies for interpolation and spreading
       net::MpiCommunicator CreateGraphComm(net::MpiCommunicator const &comm,
                                            geometry::Domain &domain,
                                            std::shared_ptr<TemplateCellContainer> cellTemplates,
                                            hemelb::reporting::Timers &timings);
-    }
-  }
 }
 #endif

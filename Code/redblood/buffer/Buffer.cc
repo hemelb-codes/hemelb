@@ -8,18 +8,14 @@
 #include "redblood/types.h"
 #include "Exception.h"
 
-namespace hemelb
+namespace hemelb::redblood::buffer
 {
-  namespace redblood
-  {
-    namespace buffer
-    {
       namespace
       {
-        LatticeDistance maxCellRadius(CellContainer::value_type cell)
+        LatticeDistance maxCellRadius(CellBase const& cell)
         {
-          auto const barycenter = cell->GetBarycenter();
-          auto const &vertices = cell->GetVertices();
+          auto const barycenter = cell.GetBarycenter();
+          auto const &vertices = cell.GetVertices();
           auto const first = vertices.begin();
           auto dist = [&barycenter](LatticePosition const &a, LatticePosition const &b)
           {
@@ -32,7 +28,7 @@ namespace hemelb
         template<class T_FUNC>
         CellContainer::value_type orderedCell(T_FUNC measure, CellContainer const &cells)
         {
-          if (cells.size() == 0)
+          if (cells.empty())
             throw Exception() << "No cells in buffer";
 
           std::vector<LatticeDistance> dists(cells.size(), 0);
@@ -51,9 +47,9 @@ namespace hemelb
         // e.g. opposite to vascular system
         // The drop point is *always* (0, 0, 0) in the coordinate system of the virtual buffer.
         auto const &normal = geometry->normal;
-        auto getdist = [&normal](CellContainer::value_type c)
+        auto getdist = [&normal](CellContainer::value_type const& c)
         {
-          return c->GetBarycenter().Dot(normal);
+          return Dot(c->GetBarycenter(), normal);
         };
         return orderedCell(getdist, virtuals);
       }
@@ -61,9 +57,9 @@ namespace hemelb
       CellContainer::value_type Buffer::furthestCell() const
       {
         auto const &normal = geometry->normal;
-        auto getdist = [&normal](CellContainer::value_type c)
+        auto getdist = [&normal](const CellContainer::value_type& c)
         {
-          return -c->GetBarycenter().Dot(normal);
+          return -Dot(c->GetBarycenter(), normal);
         };
         return orderedCell(getdist, virtuals);
       }
@@ -73,7 +69,7 @@ namespace hemelb
         justDropped = nearestCell();
         virtuals.erase(justDropped);
 
-        lastZ = justDropped->GetBarycenter().Dot(geometry->normal);
+        lastZ = Dot(justDropped->GetBarycenter(), geometry->normal);
         *justDropped += geometry->origin + geometry->normal * offset;
         return justDropped;
       }
@@ -81,7 +77,7 @@ namespace hemelb
       bool Buffer::isDroppablePosition(LatticePosition const &position) const
       {
         // position with respect to cylinder updated by offset
-        auto const z = (position + geometry->normal * offset).Dot(geometry->normal);
+        auto const z = Dot(position + geometry->normal * offset, geometry->normal);
         return z <= geometry->length;
       }
 
@@ -98,7 +94,7 @@ namespace hemelb
           return *(this->virtuals.insert(a).first);
         };
         // Make sure buffer is not empty
-        if (virtuals.size() == 0 and n <= 0)
+        if (virtuals.empty() and n <= 0)
         {
           n = 1;
         }
@@ -117,7 +113,7 @@ namespace hemelb
         while (isDroppablePosition(lastCell->GetBarycenter() - geometry->normal * interactionRadius))
         {
           lastCell = insertCell();
-        };
+        }
       }
 
       void Buffer::operator()(CellInserter const& insertFn)
@@ -125,7 +121,7 @@ namespace hemelb
         // Add virtual cells, if necessary
         if (virtuals.size() < static_cast<std::size_t>(NumberOfRequests()))
         {
-          fillBuffer(NumberOfRequests() - virtuals.size());
+          fillBuffer(NumberOfRequests() - ssize(virtuals));
         }
         // Drop as many cells as possible
         for (; NumberOfRequests() > 0; --numberOfRequests)
@@ -148,7 +144,7 @@ namespace hemelb
       void Buffer::updateOffset()
       {
         // if no cell, then reset offset to zero
-        if (virtuals.size() == 0)
+        if (virtuals.empty())
         {
           offset = 0;
           return;
@@ -157,17 +153,17 @@ namespace hemelb
         // Makes sure there is an interaction distance, otherwise compute it
         if (interactionRadius <= 0e0)
         {
-          interactionRadius = 1.25 * maxCellRadius(*virtuals.begin());
+          interactionRadius = 1.25 * maxCellRadius(**virtuals.begin());
         }
 
         auto const normal = geometry->normal;
-        auto const zCell = normal.Dot(nearestCell()->GetBarycenter());
+        auto const zCell = Dot(normal, nearestCell()->GetBarycenter());
         if (not justDropped)
         {
           offset = -zCell;
           return;
         }
-        auto const zDropped = normal.Dot(justDropped->GetBarycenter() - geometry->origin) - offset;
+        auto const zDropped = Dot(normal, justDropped->GetBarycenter() - geometry->origin) - offset;
         // dropped cell moved forward but distance with next cell is small
         // Then movement must the smallest of:
         // - distance moved by dropped cell over last LB iteration
@@ -188,6 +184,4 @@ namespace hemelb
         // Now we can move by as much as zCell, as long as we don't reach the interaction radius
         offset -= std::min(zCell, zCell - zDropped - interactionRadius);
       }
-    } // buffer
-  }
 } // hemelb::redblood

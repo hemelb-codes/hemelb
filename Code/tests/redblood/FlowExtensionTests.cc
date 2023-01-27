@@ -7,17 +7,14 @@
 #include <tinyxml.h>
 
 #include "redblood/FlowExtension.h"
-#include "redblood/xmlIO.h"
-#include "redblood/RBCConfig.h"
 #include "util/Vector3D.h"
 #include "units.h"
 
 #include "tests/redblood/Fixtures.h"
+#include "tests/helpers/SimConfBuildHelp.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace redblood;
     
     TEST_CASE_METHOD(FlowExtensionFixture, "FlowExtensionTests", "[redblood]") {
@@ -105,27 +102,35 @@ namespace hemelb
 		  "    <fadelength units=\"m\" value=\"0.05\" />"
 		  "  </flowextension>"
 		  "</inlet>");
-	util::UnitConverter converter(0.5, 0.6, PhysicalPosition{0.7}, DEFAULT_FLUID_DENSITY_Kg_per_m3, 0.0);
-	auto flow = readFlowExtension(doc.FirstChildElement("inlet"), converter);
+            auto converter = std::make_shared<util::UnitConverter>(0.5, 0.6, PhysicalPosition{0.7}, DEFAULT_FLUID_DENSITY_Kg_per_m3, 0.0);
+            auto conf = UninitSimConfig("ignored.xml");
+            configuration::CosinePressureIoletConfig iolet_conf;
+            conf.DoIOForBaseInOutlet(doc.FirstChildElement("inlet"), iolet_conf);
+
+            auto fe_conf = iolet_conf.flow_extension;
+            REQUIRE(fe_conf.has_value());
+            auto builder = UninitSimBuilder(conf, converter);
+            auto flow = builder.BuildFlowExtension(*fe_conf);
+	//auto flow = readFlowExtension(doc.FirstChildElement("inlet"), converter);
 	// Normal is opposite direction compared to XML inlet definition
-	REQUIRE(approx(-2e0 / std::sqrt(2)) == LatticePosition(0, 1, 1).Dot(flow.normal));
-	auto const length = converter.ConvertToLatticeUnits("m", 0.1);
-	REQUIRE(approx(length) == flow.length);
-	REQUIRE(approx(converter.ConvertToLatticeUnits("m", 0.01)) == flow.radius);
-	REQUIRE(approx(converter.ConvertToLatticeUnits("m", 0.05)) == flow.fadeLength);
+	REQUIRE(approx(-2e0 / std::sqrt(2)) == Dot(LatticePosition(0, 1, 1), flow->normal));
+	auto const length = converter->ConvertToLatticeUnits("m", 0.1);
+	REQUIRE(approx(length) == flow->length);
+	REQUIRE(approx(converter->ConvertToLatticeUnits("m", 0.01)) == flow->radius);
+	REQUIRE(approx(converter->ConvertToLatticeUnits("m", 0.05)) == flow->fadeLength);
 
 	// position is at opposite end compared to XML inlet definition
-	auto const position = converter.ConvertPositionToLatticeUnits(LatticePosition(0.1,
+	auto const position = converter->ConvertPositionToLatticeUnits(LatticePosition(0.1,
 										      0.2,
 										      0.3));
-	REQUIRE(approx(position.x) == flow.origin.x);
-	REQUIRE(approx(position.y + length / std::sqrt(2e0)) == flow.origin.y);
-	REQUIRE(approx(position.z + length / std::sqrt(2e0)) == flow.origin.z);
+	REQUIRE(approx(position.x()) == flow->origin.x());
+	REQUIRE(approx(position.y() + length / std::sqrt(2e0)) == flow->origin.y());
+	REQUIRE(approx(position.z() + length / std::sqrt(2e0)) == flow->origin.z());
 
 	// Check flow extension is positioned correctly
 	auto isInFlow = [&flow, &converter](double x, double y, double z) {
 	  LatticePosition const pos(x, y, z);
-	  LatticePosition const conv = converter.ConvertPositionToLatticeUnits(pos);
+	  LatticePosition const conv = converter->ConvertPositionToLatticeUnits(pos);
 	  return contains(flow, conv);
 	};
 	auto const l = 0.1 / std::sqrt(2);
@@ -137,6 +142,5 @@ namespace hemelb
       }
     }
 
-  }
 }
 

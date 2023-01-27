@@ -15,42 +15,45 @@
 #include "tests/helpers/LatticeDataAccess.h"
 #include "tests/helpers/FourCubeBasedTestFixture.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace redblood;
     struct PlanarFunction
     {
-      LatticePosition operator()(LatticePosition const &pos) const
-      {
-	return LatticePosition(LatticePosition(1, 1, 1).Dot(pos),
-			       LatticePosition(-1, 2, 1).Dot(pos),
-			       LatticePosition(0, 0, 1).Dot(pos));
-      }
-      // We need to accept grid point and continuous input points
-      LatticePosition operator()(LatticeVector const &pos) const
-      {
-	return operator()(pos.as<double>());
-      }
-      LatticePosition operator()(Dimensionless x, Dimensionless y, Dimensionless z) const
-      {
-	return operator()(LatticePosition(x, y, z));
-      }
+        LatticePosition operator()(LatticePosition const &pos) const
+        {
+            return {
+                    Dot(pos, {1, 1, 1}),
+                    Dot(pos, {-1, 2, 1}),
+                    Dot(pos, {0, 0, 1})
+            };
+        }
+        // We need to accept grid point and continuous input points
+        LatticePosition operator()(LatticeVector const &pos) const
+        {
+            return operator()(pos.as<double>());
+        }
+        LatticePosition operator()(Dimensionless x, Dimensionless y, Dimensionless z) const
+        {
+            return operator()(LatticePosition(x, y, z));
+        }
     };
 
     struct QuadraticFunction
     {
-      // We need to accept grid point and continuous input points
-      LatticePosition operator()(LatticePosition const &pos) const
-      {
-	Dimensionless const offset(0);
-	return LatticePosition( (LatticePosition(1, 1, 1).Dot(pos) - offset)
-				* (LatticePosition(1, 1, 1).Dot(pos) - offset),
-				(LatticePosition(0, 1, 0).Dot(pos) - offset)
-				* (LatticePosition(0, 1, 0).Dot(pos) - offset),
-				(LatticePosition(0, 0, 1).Dot(pos) - offset)
-				* (LatticePosition(0, 0, 1).Dot(pos) - offset));
+        // We need to accept grid point and continuous input points
+        LatticePosition operator()(LatticePosition const &pos) const
+        {
+            Dimensionless const offset(0);
+            auto dot_shift_square = [&](LatticePosition v) {
+                auto tmp = Dot(pos, v) - offset;
+                return tmp * tmp;
+            };
+            return {
+                dot_shift_square({1, 1, 1}),
+                dot_shift_square({0, 1, 0}),
+                dot_shift_square({0, 0, 1})
+            };
       }
       // We need to accept grid point and continuous input points
       LatticePosition operator()(LatticeVector const &pos) const
@@ -150,9 +153,9 @@ namespace hemelb
 	    ;
 
 	  REQUIRE(iterator.IsValid());
-	  REQUIRE(item.first.x == iterator->x);
-	  REQUIRE(item.first.y == iterator->y);
-	  REQUIRE(item.first.z == iterator->z);
+	  REQUIRE(item.first.x() == iterator->x());
+	  REQUIRE(item.first.y() == iterator->y());
+	  REQUIRE(item.first.z() == iterator->z());
 	  REQUIRE(iterator.weight() == approx(STENCIL::stencil(pos - item.first)));
 	}
 
@@ -217,9 +220,9 @@ namespace hemelb
       FUNCTION func;
       LatticePosition expected(func(x, y, z));
       LatticePosition actual(interpolate<FUNCTION, STENCIL>(func, x, y, z));
-      REQUIRE(Approx(expected.x).margin(tolerance) == actual.x);
-      REQUIRE(Approx(expected.y).margin(tolerance) == actual.y);
-      REQUIRE(Approx(expected.z).margin(tolerance) == actual.z);
+      REQUIRE(Approx(expected.x()).margin(tolerance) == actual.x());
+      REQUIRE(Approx(expected.y()).margin(tolerance) == actual.y());
+      REQUIRE(Approx(expected.z()).margin(tolerance) == actual.z());
     }
 
     // Test interpolation when the point is on the grid
@@ -344,7 +347,7 @@ namespace hemelb
       };
 
       SECTION("VelocityDataFromLatticeWithoutForces") {
-	helpers::LatticeDataAccess(latDat).ZeroOutForces();
+	helpers::LatticeDataAccess(latDat.get()).ZeroOutForces();
 	LBGK kernel{initParams};
 	velocityFromLatticeDataTester(kernel, false);
       }
@@ -359,6 +362,5 @@ namespace hemelb
       }
     }
 
-  }
 }
 

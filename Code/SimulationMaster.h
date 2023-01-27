@@ -109,7 +109,7 @@ namespace hemelb
       std::shared_ptr<reporting::Reporter> reporter;
       reporting::BuildInfo build_info;
 
-      std::optional<lb::SimulationState> simulationState;
+      std::shared_ptr<lb::SimulationState> simulationState;
 
       /** Struct containing the configuration of various checkers/testers */
       std::shared_ptr<lb::StabilityTester<latticeType>> stabilityTester;

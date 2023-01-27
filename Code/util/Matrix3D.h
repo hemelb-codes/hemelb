@@ -10,10 +10,8 @@
 #include "units.h"
 #include "util/Vector3D.h"
 
-namespace hemelb
+namespace hemelb::util
 {
-  namespace util
-  {
 
     class Matrix3D
     {
@@ -84,6 +82,5 @@ namespace hemelb
     //! Rotation matrix around axis by theta
     util::Matrix3D rotationMatrix(LatticePosition const& axis, Dimensionless const& theta);
 
-  } /* namespace util */
-} /* namespace hemelb */
-#endif /* HEMELB_UTIL_MATRIX3D_H */
+}
+#endif // HEMELB_UTIL_MATRIX3D_H

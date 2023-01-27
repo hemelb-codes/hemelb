@@ -11,10 +11,8 @@
 #include "redblood/CellArmy.h"
 #include "log/Logger.h"
 
-namespace hemelb
+namespace hemelb::redblood
 {
-  namespace redblood
-  {
     //! \brief Federates the cells together so we can apply ops simultaneously
     //! \tparam TRAITS holds type of kernel and stencil
     template<class TRAITS>
@@ -22,7 +20,7 @@ namespace hemelb
                            public net::IteratedAction
     {
       public:
-        typedef TRAITS Traits;
+        using Traits = TRAITS;
         using CellArmy<TRAITS>::CellArmy;
 
         void RequestComms() override
@@ -52,6 +50,5 @@ namespace hemelb
         }
     };
   }
-}
 
 #endif

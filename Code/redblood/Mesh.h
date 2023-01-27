@@ -22,20 +22,18 @@
 
 class vtkPolyData;
 
-namespace hemelb
+namespace hemelb::redblood
 {
-  namespace redblood
-  {
     //! Holds raw mesh data
     //! Data is separated into vertices and triangular facets
     struct MeshData
     {
         //! Type of containers over indices
-        typedef std::array<IdType, 3> Facet;
+        using Facet = std::array<IdType, 3>;
         //! Facet container type
-        typedef std::vector<Facet> Facets;
+        using Facets = std::vector<Facet>;
         //! Vertex container type
-        typedef std::vector<LatticePosition> Vertices;
+        using Vertices = std::vector<LatticePosition>;
         //! Vertex container
         Vertices vertices;
         //! Facet container
@@ -64,9 +62,9 @@ namespace hemelb
     {
       public:
         //! Type for map from vertices to facets
-        typedef std::vector<std::set<std::size_t> > VertexToFacets;
+        using VertexToFacets = std::vector<std::set<IdType> >;
         //! Type for map from facets to its neighbors
-        typedef std::vector<std::array<IdType, 3> > FacetNeighbors;
+        using FacetNeighbors = std::vector<std::array<IdType, 3> >;
         //! For each vertex, lists the facet indices
         VertexToFacets vertexToFacets;
         //! For each facet, lists the neighboring facets
@@ -244,6 +242,6 @@ namespace hemelb
 
     //! Orients facet outward, or inward
     unsigned orientFacets(Mesh &mesh, bool outward = true);
-  }
+
 }
 #endif

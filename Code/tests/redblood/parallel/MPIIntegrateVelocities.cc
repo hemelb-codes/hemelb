@@ -19,10 +19,8 @@
 #include "tests/helpers/ApproxVector.h"
 #include "tests/redblood/parallel/ParallelFixtures.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace redblood;
     class MPIIntegrateVelocitiesTests : public helpers::FolderTestFixture
     {
@@ -43,15 +41,15 @@ namespace hemelb
       }
 
     protected:
-      std::shared_ptr<hemelb::configuration::CommandLine> options;
+      std::shared_ptr<configuration::CommandLine> options;
 
       //! Meta-function to create simulation type
       template<class STENCIL>
       struct MasterSim
       {
-	typedef ::hemelb::Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type LBTraits;
-	typedef typename LBTraits::ChangeStencil<STENCIL>::Type Traits;
-	typedef OpenedSimulationMaster<Traits> Type;
+	using LBTraits = Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type;
+	using Traits = typename LBTraits::ChangeStencil<STENCIL>::Type;
+	using Type = OpenedSimulationMaster<Traits>;
       };
 
       //! Creates a master simulation
@@ -59,7 +57,7 @@ namespace hemelb
       std::shared_ptr<typename MasterSim<STENCIL>::Type> CreateMasterSim(
 									 net::MpiCommunicator const &comm) const
       {
-	typedef typename MasterSim<STENCIL>::Type MasterSim;
+	using MasterSim = typename MasterSim<STENCIL>::Type;
 	return std::make_shared<MasterSim>(*options, comm);
       }
 
@@ -109,7 +107,7 @@ namespace hemelb
       for (Direction i = 0; i < Traits::Lattice::NUMVECTORS; ++i) {
 	auto func = [i](LatticePosition const &x) {
 	  double const fac = (1e0 + static_cast<double>(i) * 0.1);
-	  return x.Dot(x) * fac - x.Dot(LatticePosition(1, 1, 1));
+	  return x.GetMagnitudeSquared() * fac - Dot(x, {1, 1, 1});
 	};
 	helpers::setUpDistribution<typename Traits::Lattice>(&fieldData, i, func);
       }
@@ -210,5 +208,4 @@ namespace hemelb
     METHOD_AS_TEST_CASE(MPIIntegrateVelocitiesTests::testMidRegion<hemelb::redblood::stencil::TwoPoint>,
 			"Test velocity integration in all with 2 point stencil",
 			"[redblood]");
-  }
 }

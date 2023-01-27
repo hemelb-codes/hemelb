@@ -121,12 +121,12 @@ namespace hemelb
       REQUIRE(alpha.first->second.cellIterator == cells.begin());
       REQUIRE(alpha.first->second.nearBorder == (size_t) Borders::CENTER);
 
-      REQUIRE(LatticeVector::value_type(1) == haloed.first->first.x);
-      REQUIRE(LatticeVector::value_type(0) == haloed.first->first.y);
-      REQUIRE(LatticeVector::value_type(0) == haloed.first->first.z);
+      REQUIRE(LatticeVector::value_type(1) == haloed.first->first.x());
+      REQUIRE(LatticeVector::value_type(0) == haloed.first->first.y());
+      REQUIRE(LatticeVector::value_type(0) == haloed.first->first.z());
       REQUIRE(site_t(3) == haloed.first->second.nodeIndex);
       REQUIRE(cells.begin() == haloed.first->second.cellIterator);
-      REQUIRE(size_t(Borders::NORTH) bitor size_t(Borders::CENTER)
+      REQUIRE((size_t(Borders::NORTH) bitor size_t(Borders::CENTER))
 	      == haloed.first->second.nearBorder);
     }
 

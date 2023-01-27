@@ -13,10 +13,8 @@
 #include "units.h"
 #include "util/Vector3D.h"
 
-namespace hemelb
+namespace hemelb::redblood
 {
-  namespace redblood
-  {
     namespace details
     {
       // Short-hand to get type of the base of Divide and Conquer class
@@ -25,35 +23,35 @@ namespace hemelb
       struct DnCBase
       {
           //! Key of the divide and conquer mapping
-          typedef LatticeVector key_type;
+          using key_type = LatticeVector;
           //! Comparison of two divide and conquer keys
           struct CompareKeys
           {
               bool operator()(key_type const &a, key_type const &b) const
               {
-                if (a.x > b.x)
+                if (a.x() > b.x())
                 {
                   return false;
                 }
-                else if (a.x < b.x)
+                else if (a.x() < b.x())
                 {
                   return true;
                 }
 
-                if (a.y > b.y)
+                if (a.y() > b.y())
                 {
                   return false;
                 }
-                else if (a.y < b.y)
+                else if (a.y() < b.y())
                 {
                   return true;
                 }
 
-                return a.z < b.z;
+                return a.z() < b.z();
               }
           };
           //! Base type for Divide and Conquer class
-          typedef std::multimap<key_type, T, CompareKeys> type;
+          using type = std::multimap<key_type, T, CompareKeys>;
       };
       static_assert(std::is_trivial_v<DnCBase<int>> && std::is_standard_layout_v<DnCBase<int>>, "Can be a struct");
       static_assert(std::is_trivial_v<DnCBase<int>::CompareKeys> && std::is_standard_layout_v<DnCBase<int>::CompareKeys>, "Can be a struct");
@@ -64,17 +62,17 @@ namespace hemelb
     template<class T>
     class DivideConquer : public details::DnCBase<T>::type
     {
-        typedef typename details::DnCBase<T>::type base_type;
+        using base_type = typename details::DnCBase<T>::type;
 
       public:
-        typedef typename base_type::key_type key_type;
-        typedef typename base_type::value_type value_type;
-        typedef typename base_type::reference reference;
-        typedef typename base_type::const_reference const_reference;
-        typedef typename base_type::iterator iterator;
-        typedef typename base_type::const_iterator const_iterator;
-        typedef std::pair<iterator, iterator> range;
-        typedef std::pair<const_iterator, const_iterator> const_range;
+        using key_type = typename base_type::key_type;
+        using value_type = typename base_type::value_type;
+        using reference = typename base_type::reference;
+        using const_reference = typename base_type::const_reference;
+        using iterator = typename base_type::iterator;
+        using const_iterator = typename base_type::const_iterator;
+        using range = std::pair<iterator, iterator>;
+        using const_range = std::pair<const_iterator, const_iterator>;
 
         //! Constructor sets size of cutoff
         DivideConquer(LatticeDistance boxsize) :
@@ -121,9 +119,9 @@ namespace hemelb
         //! Converts from position to box index
         key_type DowngradeKey(LatticePosition const &pos) const
         {
-          return key_type(static_cast<LatticeCoordinate>(std::floor(pos.x / boxsize)),
-                          static_cast<LatticeCoordinate>(std::floor(pos.y / boxsize)),
-                          static_cast<LatticeCoordinate>(std::floor(pos.z / boxsize)));
+          return key_type(static_cast<LatticeCoordinate>(std::floor(pos.x() / boxsize)),
+                          static_cast<LatticeCoordinate>(std::floor(pos.y() / boxsize)),
+                          static_cast<LatticeCoordinate>(std::floor(pos.z() / boxsize)));
         }
         //! No conversion since in box index type already
         key_type DowngradeKey(key_type const &pos) const
@@ -134,7 +132,6 @@ namespace hemelb
       protected:
         LatticeDistance boxsize;
     };
-  }
 } // hemelb::redblood
 
 #endif

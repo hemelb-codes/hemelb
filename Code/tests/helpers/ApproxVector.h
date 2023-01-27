@@ -10,8 +10,7 @@
 
 #include "util/Vector3D.h"
 
-namespace hemelb {
-  namespace tests {
+namespace hemelb::tests {
     // Similar to Catch2's Approx class, but for HemeLB Vector3D.
     // 
     // Don't use this class directly, use the template alias
@@ -93,5 +92,4 @@ namespace hemelb {
       static_assert(std::is_same<ApproxVector<util::Vector3D<double>>, ApproxVectorImpl<double>>::value, "ApproxVector helpers types all wrong");
     }
   }
-}
 #endif

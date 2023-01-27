@@ -11,6 +11,7 @@
 #include "lb/BuildSystemInterface.h"
 #include "Traits.h"
 #include "redblood/Mesh.h"
+#include "redblood/MeshIO.h"
 #include "redblood/Cell.h"
 #include "redblood/CellController.h"
 #include "tests/helpers/FolderTestFixture.h"

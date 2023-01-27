@@ -114,35 +114,35 @@ namespace hemelb
 
       SECTION("A cell beyond the cutoff will not move") {
 	auto const farFromWall = this->testNodeWall(2e0, { 7e0, 7e0, 16.1e0 });
-	REQUIRE(approx(7e0) == farFromWall.x);
-	REQUIRE(approx(7e0) == farFromWall.y);
-	REQUIRE(approx(16.1e0) == farFromWall.z);
+	REQUIRE(approx(7e0) == farFromWall.x());
+	REQUIRE(approx(7e0) == farFromWall.y());
+	REQUIRE(approx(16.1e0) == farFromWall.z());
       }
       
       LatticePosition const nearWall(3.5, 2.5, 16.0);
       SECTION("no interaction because intensity is zero, even if near wall") {
 	auto const noForce = this->testNodeWall(0e0, nearWall);
-	REQUIRE(approx(nearWall.x) == noForce.x);
-	REQUIRE(approx(nearWall.y) == noForce.y);
-	REQUIRE(approx(nearWall.z) == noForce.z);
+	REQUIRE(approx(nearWall.x()) == noForce.x());
+	REQUIRE(approx(nearWall.y()) == noForce.y());
+	REQUIRE(approx(nearWall.z()) == noForce.z());
       }
       
       SECTION("A cell near the wall will repel from it in a normal direction (if symmetrically placed)") {
 	// yes we can
 	auto const withForce = this->testNodeWall(1e0, nearWall);
 	auto const dr = withForce - nearWall;
-	REQUIRE(dr.x > 1e-4);
-	REQUIRE(dr.y > 1e-4);
-	REQUIRE(approx(dr.z) == 0.0);
+	REQUIRE(dr.x() > 1e-4);
+	REQUIRE(dr.y() > 1e-4);
+	REQUIRE(approx(dr.z()) == 0.0);
       }
 
       SECTION("As forces depend on node location this will not be symmetric in general") {
 	auto const start = nearWall + LatticePosition(0, 0, 0.1);
 	auto const nonSym = this->testNodeWall(1e0, start);
 	auto const dr = nonSym - start;
-	REQUIRE(dr.x > 1e-4);
-	REQUIRE(dr.y > 1e-4);
-	REQUIRE(dr.z > 1e-4);
+	REQUIRE(dr.x() > 1e-4);
+	REQUIRE(dr.y() > 1e-4);
+	REQUIRE(dr.z() > 1e-4);
       }
     }
 
@@ -181,16 +181,16 @@ namespace hemelb
 	INFO(withForce.second);
 	// a moves in negative z direction
 	auto const da = withForce.first - a;
-	REQUIRE(da.x == approx(0));
-	REQUIRE(da.y == approx(0));
-	REQUIRE(da.z < -1e-4);
+	REQUIRE(da.x() == approx(0));
+	REQUIRE(da.y() == approx(0));
+	REQUIRE(da.z() < -1e-4);
 	// b moves in positive z direction
 	auto const db = withForce.second - b;
-	REQUIRE(db.x == approx(0));
-	REQUIRE(db.y == approx(0));
-	REQUIRE(db.z > +1e-4);
+	REQUIRE(db.x() == approx(0));
+	REQUIRE(db.y() == approx(0));
+	REQUIRE(db.z() > +1e-4);
 	// Symmetric movement
-	REQUIRE(da.z + db.z == approx(0));
+	REQUIRE(da.z() + db.z() == approx(0));
       }
     }
   }

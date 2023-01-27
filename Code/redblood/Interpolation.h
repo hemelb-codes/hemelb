@@ -14,10 +14,8 @@
 #include <cassert>
 #include <array>
 
-namespace hemelb
+namespace hemelb::redblood
 {
-  namespace redblood
-  {
 
     namespace
     {
@@ -157,17 +155,17 @@ namespace hemelb
     LatticeVector InterpolationIterator<STENCIL>::minimumPosition(LatticePosition const &node,
                                                                   size_t range)
     {
-      return LatticeVector(minimumPosImpl(node.x, range),
-                           minimumPosImpl(node.y, range),
-                           minimumPosImpl(node.z, range));
+      return LatticeVector(minimumPosImpl(node.x(), range),
+                           minimumPosImpl(node.y(), range),
+                           minimumPosImpl(node.z(), range));
     }
     template<class STENCIL>
     LatticeVector InterpolationIterator<STENCIL>::maximumPosition(LatticePosition const &node,
                                                                   size_t range)
     {
-      return LatticeVector(maximumPosImpl(node.x, range),
-                           maximumPosImpl(node.y, range),
-                           maximumPosImpl(node.z, range));
+      return LatticeVector(maximumPosImpl(node.x(), range),
+                           maximumPosImpl(node.y(), range),
+                           maximumPosImpl(node.z(), range));
     }
 
     template<class STENCIL>
@@ -227,6 +225,6 @@ namespace hemelb
     {
       return InterpolationIterator<STENCIL>(in);
     }
-  }
+
 } // hemelb::redblood
 #endif

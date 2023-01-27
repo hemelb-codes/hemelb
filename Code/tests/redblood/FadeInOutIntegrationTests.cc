@@ -87,13 +87,13 @@ namespace hemelb
 	    tenth = first;
 	  }
 	  auto const position = cell->GetBarycenter();
-	  REQUIRE(Approx(first.x).margin(1e-8) == position.x);
-	  REQUIRE(Approx(first.y).margin(1e-8) == position.y);
-	  REQUIRE(current.z <= position.z);
+	  REQUIRE(Approx(first.x()).margin(1e-8) == position.x());
+	  REQUIRE(Approx(first.y()).margin(1e-8) == position.y());
+	  REQUIRE(current.z() <= position.z());
 	  current = position;
 	  ++iter;
 	  if(iter % 10 == 0) {
-	    REQUIRE(tenth.z < position.z);
+	    REQUIRE(tenth.z() < position.z());
 	    tenth = position;
 	  }
 	};

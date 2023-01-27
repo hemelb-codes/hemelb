@@ -46,9 +46,9 @@ namespace hemelb
       auto const barycenter = cell->GetBarycenter();
 
       const double p = world.Size();
-      auto const x_times_p = world.AllReduce(barycenter.x, MPI_SUM);
-      auto const y_times_p = world.AllReduce(barycenter.y, MPI_SUM);
-      auto const z_times_p = world.AllReduce(barycenter.z, MPI_SUM);
+      auto const x_times_p = world.AllReduce(barycenter.x(), MPI_SUM);
+      auto const y_times_p = world.AllReduce(barycenter.y(), MPI_SUM);
+      auto const z_times_p = world.AllReduce(barycenter.z(), MPI_SUM);
       auto const mean_barycenter = LatticePosition{x_times_p, y_times_p, z_times_p} / p;
       REQUIRE(barycenter == mean_barycenter);
     }

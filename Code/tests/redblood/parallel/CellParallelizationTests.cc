@@ -15,10 +15,8 @@
 #include "redblood/parallel/CellParallelization.h"
 #include "util/Iterator.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
 
     class ExchangeCells : public redblood::parallel::ExchangeCells
     {
@@ -65,7 +63,7 @@ namespace hemelb
       void testUpdateNodeDistributions();
       //! All cells are in zero at first
       void testDistributeCells();
-      //! Two cells are lent from 1 to 0, one of whcih switches ownership
+      //! Two cells are lent from 1 to 0, one of which switches ownership
       void testLendCells();
       //! Several cells to and from several processors
       void testMotherOfAll();
@@ -737,10 +735,9 @@ namespace hemelb
       REQUIRE(expected->GetTemplateName() == actual->GetTemplateName());
       REQUIRE(approx(expected->GetScale()) == actual->GetScale());
       REQUIRE(expected->GetNumberOfNodes() == actual->GetNumberOfNodes());
-      for (auto item : util::zip(expected->GetVertices(), actual->GetVertices())) {
-	REQUIRE(approx(std::get<0>(item).x) == std::get<1>(item).x);
-	REQUIRE(approx(std::get<0>(item).y) == std::get<1>(item).y);
-	REQUIRE(approx(std::get<0>(item).z) == std::get<1>(item).z);
+      for (auto [exp_v, act_v] : util::zip(expected->GetVertices(), actual->GetVertices())) {
+          for (int i = 0; i < 3; ++i)
+              REQUIRE(approx(exp_v[i]) == act_v[i]);
       }
     }
 
@@ -767,10 +764,9 @@ namespace hemelb
       REQUIRE(size_t(expectedNodes.size()) == size_t(actualCell->GetNumberOfNodes()));
       auto const &expectedV = expectedCell->GetVertices();
       auto const &actualV = actualCell->GetVertices();
-      for (auto const item : util::enumerate(expectedNodes)) {
-	REQUIRE(approx(expectedV[item.value].x) == actualV[item.index].x);
-	REQUIRE(approx(expectedV[item.value].y) == actualV[item.index].y);
-	REQUIRE(approx(expectedV[item.value].z) == actualV[item.index].z);
+      for (auto [i, val] : util::enumerate(expectedNodes)) {
+          for (int dim = 0; dim < 3; ++dim)
+              REQUIRE(approx(expectedV[val][dim]) == actualV[i][dim]);
       }
     }
 
@@ -818,5 +814,4 @@ namespace hemelb
 			"[redblood]" "Several cells to and from several processors",
 			"[redblood]");
 
-  }
 }

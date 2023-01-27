@@ -10,6 +10,7 @@
 #include <functional>
 #include <list>
 #include <random>
+#include <utility>
 #include "io/xml.h"
 #include "lb/iolets/InOutLet.h"
 #include "redblood/types.h"
@@ -18,10 +19,8 @@
 #include "units.h"
 #include "util/Matrix3D.h"
 
-namespace hemelb
+namespace hemelb::redblood
 {
-  namespace redblood
-  {
 
     /**
      * The RBC Inserter inserts cells into the simulation while some condition
@@ -41,18 +40,20 @@ namespace hemelb
          * @param scale the scale of the cell to insert
          */
         RBCInserter(std::function<bool()> condition, std::unique_ptr<CellBase const> cell) :
-            condition(condition), cell(std::move(cell)), barycenter(this->cell->GetBarycenter())
+            condition(std::move(condition)), cell(std::move(cell)), barycenter(this->cell->GetBarycenter())
         {
         }
         RBCInserter(RBCInserter &&c) :
             condition(std::move(c.condition)), cell(std::move(c.cell)),
-                barycenter(std::move(c.barycenter))
+                barycenter(c.barycenter)
         {
         }
         RBCInserter(RBCInserter const&c) :
             condition(c.condition), cell(c.cell->clone()), barycenter(c.barycenter)
         {
         }
+        virtual ~RBCInserter() = default;
+
         void operator=(RBCInserter const &c)
         {
           condition = c.condition;
@@ -79,9 +80,9 @@ namespace hemelb
           if (condition())
           {
             log::Logger::Log<log::Debug, log::OnePerCore>("Dropping one cell at (%f, %f, %f)",
-                                                          barycenter.x,
-                                                          barycenter.y,
-                                                          barycenter.z);
+                                                          barycenter.x(),
+                                                          barycenter.y(),
+                                                          barycenter.z());
             insertFn(drop());
           }
         }
@@ -164,7 +165,6 @@ namespace hemelb
       private:
         std::list<std::shared_ptr<RBCInserter>> inserters;
     };
-  }
 }
 
 #endif

@@ -31,13 +31,6 @@
 #  include "colloids/ColloidController.h"
 #endif
 
-#ifdef HEMELB_BUILD_RBC
-#  include "redblood/CellController.h"
-#  include "redblood/FaderCell.h"
-#  include "redblood/MeshIO.h"
-#  include "redblood/RBCConfig.h"
-#endif
-
 namespace hemelb
 {
     /**

@@ -9,18 +9,16 @@
 #include <boost/uuid/uuid_io.hpp>
 
 #include "SimulationMaster.h"
-#include "lb/BuildSystemInterface.h"
 #include "lb/lattices/D3Q19.h"
 #include "Traits.h"
 #include "redblood/Mesh.h"
 #include "redblood/Cell.h"
 #include "redblood/CellController.h"
+#include "redblood/MeshIO.h"
 
 #include "tests/helpers/FolderTestFixture.h"
 
-namespace hemelb
-{
-  namespace tests
+namespace hemelb::tests
   {
     using namespace redblood;
     TEST_CASE_METHOD(helpers::FolderTestFixture, "LoadDeformedCellTests") {
@@ -101,7 +99,7 @@ namespace hemelb
           [&converter,io](const hemelb::redblood::CellContainer &cells)
           {
             static int iter = 0;
-            for (auto cell : cells) {
+            for (auto& cell : cells) {
               if(iter % 10 == 0) {
                 std::stringstream filename;
                 filename << cell->GetTag() << "_t_" << iter << ".vtp";
@@ -140,5 +138,4 @@ namespace hemelb
       }
     }
 
-  } // namespace tests
-} // namespace hemelb
+  } // namespace hemelb

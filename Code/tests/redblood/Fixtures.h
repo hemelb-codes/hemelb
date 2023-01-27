@@ -55,7 +55,7 @@ namespace hemelb {
 	LatticeEnergy const deltaE(energy(newmesh) - firstE);
 
 	double const tolerance(std::max(std::abs( (deltaE / epsilon) * 1e-4), 1e-8));
-	REQUIRE(Approx(- (deltaE / epsilon)).margin(tolerance) == forces[node].Dot(dir));
+	REQUIRE(Approx(- (deltaE / epsilon)).margin(tolerance) == Dot(forces[node], dir));
       }
 
       template<class ENERGY, class GRADIENT>

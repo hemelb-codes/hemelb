@@ -35,9 +35,9 @@ namespace hemelb
       SECTION("testConstruction") {
         auto func = [](LatticePosition const &position) -> std::set<proc_t>
         {
-          bool isZero = std::abs(position.x) < 1e1 and std::abs(position.y) < 1e1
-          and std::abs(position.z) < 1e1;
-          bool isOne = std::abs(position.x - 15e0) < 1e1 or not isZero;
+          bool isZero = std::abs(position.x()) < 1e1 and std::abs(position.y()) < 1e1
+          and std::abs(position.z()) < 1e1;
+          bool isOne = std::abs(position.x() - 15e0) < 1e1 or not isZero;
           if(isZero and isOne)
           return
           { 0, 1};
@@ -66,26 +66,23 @@ namespace hemelb
         std::vector<LatticePosition> const expected0 = { { 1, 0, 0 }, { 0, 2, 0 }, { 0, 0, 0 } };
         for (auto const item : util::czip(expected0, reduced))
         {
-          REQUIRE(std::get<0>(item).x == approx(std::get<1>(item).x));
-          REQUIRE(std::get<0>(item).y == approx(std::get<1>(item).y));
-          REQUIRE(std::get<0>(item).z == approx(std::get<1>(item).z));
+            for (int i = 0; i < 3; ++i)
+              REQUIRE(std::get<0>(item)[i] == approx(std::get<1>(item)[i]));
         }
 
         nc.ReduceFrom(reduced, 1, incomming1);
         std::vector<LatticePosition> const expected1 = { { 1, 1, 1 }, { 0, 2, 0 }, { 0, 0, 1 } };
         for (auto const item : util::czip(expected1, reduced))
         {
-          REQUIRE(std::get<0>(item).x == approx(std::get<1>(item).x));
-          REQUIRE(std::get<0>(item).y == approx(std::get<1>(item).y));
-          REQUIRE(std::get<0>(item).z == approx(std::get<1>(item).z));
+            for (int i = 0; i < 3; ++i)
+                REQUIRE(std::get<0>(item)[i] == approx(std::get<1>(item)[i]));
         }
 
         nc.ReduceFrom(reduced, 2, { });
         for (auto const item : util::czip(expected1, reduced))
         {
-          REQUIRE(std::get<0>(item).x == approx(std::get<1>(item).x));
-          REQUIRE(std::get<0>(item).y == approx(std::get<1>(item).y));
-          REQUIRE(std::get<0>(item).z == approx(std::get<1>(item).z));
+            for (int i = 0; i < 3; ++i)
+                REQUIRE(std::get<0>(item)[i] == approx(std::get<1>(item)[i]));
         }
       }
 
@@ -98,9 +95,8 @@ namespace hemelb
         std::vector<LatticePosition> const expected = { { 1, 1, 1 }, { 0, 2, 0 }, { 0, 0, 1 } };
         for (auto const item : util::czip(expected, reduced))
         {
-          REQUIRE(std::get<0>(item).x == approx(std::get<1>(item).x));
-          REQUIRE(std::get<0>(item).y == approx(std::get<1>(item).y));
-          REQUIRE(std::get<0>(item).z == approx(std::get<1>(item).z));
+            for (int i = 0; i < 3; ++i)
+                REQUIRE(std::get<0>(item)[i] == approx(std::get<1>(item)[i]));
         }
       }
 
@@ -117,9 +113,8 @@ namespace hemelb
         REQUIRE(expected.size() == actual.second.size());
         for (auto const item : util::czip(expected, actual.second))
         {
-          REQUIRE(std::get<0>(item).x == approx(std::get<1>(item).x));
-          REQUIRE(std::get<0>(item).y == approx(std::get<1>(item).y));
-          REQUIRE(std::get<0>(item).z == approx(std::get<1>(item).z));
+            for (int i = 0; i < 3; ++i)
+                REQUIRE(std::get<0>(item)[i] == approx(std::get<1>(item)[i]));
         }
       }
 

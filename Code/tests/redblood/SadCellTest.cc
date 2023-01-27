@@ -78,7 +78,7 @@ namespace hemelb
 	    ).GetNormalised();
 
 	    double const expected = derivative(direction, i, epsilon);
-	    double const actual = -forces[i].Dot(direction);
+	    double const actual = -Dot(forces[i], direction);
 	    REQUIRE(Approx(expected).margin(1e-7).epsilon(1e-4) == actual);
 	  }
 	}

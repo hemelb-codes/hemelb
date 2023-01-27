@@ -21,7 +21,7 @@ namespace hemelb
     {
       std::vector<size_t> result(3 * 3 * 3, 0);
       for (; iterator; ++iterator) {
-	++result[index(iterator->x, iterator->y, iterator->z)];
+	++result[index(iterator->x(), iterator->y(), iterator->z())];
       }
       return result;
     }
@@ -42,8 +42,8 @@ namespace hemelb
 	auto testIterate = [](size_t border, std::vector<LatticeVector> const &indices) {
 	  auto visited = visitme(BorderBoxIterator(border));
 	  for (auto const &id : indices) {
-	    REQUIRE(size_t(1) == visited[index(id.x, id.y, id.z)]);
-	    visited[index(id.x, id.y, id.z)] = 0;
+	    REQUIRE(size_t(1) == visited[index(id.x(), id.y(), id.z())]);
+	    visited[index(id.x(), id.y(), id.z())] = 0;
 	  }
 
 	  for (auto const v : visited) {

@@ -5,7 +5,6 @@
 
 #include <catch2/catch.hpp>
 
-#include "lb/kernels/LBGK.h"
 #include "redblood/GridAndCell.h"
 #include "redblood/Mesh.h"
 
@@ -13,10 +12,8 @@
 #include "tests/helpers/LatticeDataAccess.h"
 #include "tests/redblood/Fixtures.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace redblood;
 
     namespace
@@ -33,7 +30,7 @@ namespace hemelb
       }
     }
 
-    // Becase Catch doesn't support template test cases + fixture,
+    // Because Catch doesn't support template test cases + fixture,
     // only test cases over a templated fixture.
     template <typename STENCIL>
     class CellForceSpreadTestsFixture : public SquareDuctTetrahedronFixture {
@@ -41,14 +38,14 @@ namespace hemelb
       std::vector<LatticeForceVector> forces;
       LatticePosition center;
 
-      CellForceSpreadTestsFixture() : SquareDuctTetrahedronFixture{triangleMesh(), 3}
+      CellForceSpreadTestsFixture() : SquareDuctTetrahedronFixture{triangleMesh(), 3}, center{double(cubeSizeWithHalo / 2)}
       {
       }
 
       LatticeForceVector force_at_center(LatticePosition const &position)
       {
         mesh += position - mesh.GetBarycenter();
-        helpers::ZeroOutForces(latDat);
+        helpers::ZeroOutForces(*latDat);
         details::spreadForce2Grid<details::SpreadForces, STENCIL>(std::shared_ptr<CellBase>(&mesh,
                                                                                             [](CellBase*)
                                                                                             {}),
@@ -66,18 +63,16 @@ namespace hemelb
       using STENCIL = TestType;
 
       LatticePosition direction;
-      this->center = LatticePosition(this->cubeSizeWithHalo / 2, this->cubeSizeWithHalo / 2, this->cubeSizeWithHalo / 2);
       auto setupForces = [this, &direction]() {
 	direction = LatticePosition(1, 2, 3);
 	LatticePosition intensity = LatticePosition(3, 2, 1).Normalise();
 	this->forces.resize(this->mesh.GetNumberOfNodes());
-	using const_iterator = MeshData::Vertices::const_iterator;
-	const_iterator i_vertex = this->mesh.GetVertices().begin();
-	const_iterator const i_end = this->mesh.GetVertices().end();
-	std::vector<LatticeForceVector>::iterator i_force = this->forces.begin();
+	auto i_vertex = this->mesh.GetVertices().begin();
+	auto const i_end = this->mesh.GetVertices().end();
+	auto i_force = this->forces.begin();
       
 	for (; i_vertex != i_end; ++i_vertex, ++i_force) {
-	  *i_force = direction * i_vertex->Dot(intensity);
+	  *i_force = direction * Dot(*i_vertex, intensity);
 	}
       };
       setupForces();
@@ -144,22 +139,21 @@ namespace hemelb
         LatticeForceVector const v0(this->force_at_center(x0)),
 	  v1(this->force_at_center(x1));
 
-        LatticeForceVector const a( (v1 - v0) / (direction.Dot(x1) - direction.Dot(x0)));
+        LatticeForceVector const a( (v1 - v0) / (Dot(direction, x1) - Dot(direction, x0)));
 
         auto const reltol = std::vector<double> { 1e-3, 1e-4, 1e-5 }.at(STENCIL::GetRange() - 2);
 	auto approx = Approx(0.0).epsilon(reltol).margin(1e-8);
         for (size_t i(0); i < N; ++i)
         {
           LatticePosition const x = (x1 - x0) * (Dimensionless(i + 1) / Dimensionless(N + 2)) + x0;
-          LatticeForceVector const expected(a * (direction.Dot(x) - direction.Dot(x0)) + v0);
+          LatticeForceVector const expected(a * (Dot(direction, x) - Dot(direction, x0)) + v0);
           auto const actual = this->force_at_center(x);
-          REQUIRE(approx(expected.x) == actual.x);
-	  REQUIRE(approx(expected.y) == actual.y);
-	  REQUIRE(approx(expected.z) == actual.z);
+          REQUIRE(approx(expected.x()) == actual.x());
+	  REQUIRE(approx(expected.y()) == actual.y());
+	  REQUIRE(approx(expected.z()) == actual.z());
         }
       }
 
 
     }
-  }
 }

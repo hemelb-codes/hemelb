@@ -12,49 +12,46 @@
 #include "resources/Resource.h"
 //#include "unittests/redblood/Fixtures.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace redblood;
 
     TEST_CASE("TopologyTests") {
-      std::string filename = resources::Resource("red_blood_cube.txt").Path();
-      std::shared_ptr<MeshData> mesh = redblood::KruegerMeshIO{}.readFile(filename, true);
-      // Checks the mesh input makes sense
-      REQUIRE(mesh->vertices.size() == 8);
-      REQUIRE(mesh->facets.size() == 12);
+        std::string filename = resources::Resource("red_blood_cube.txt").Path();
+        std::shared_ptr<MeshData> mesh = redblood::KruegerMeshIO{}.readFile(filename, true);
+        // Checks the mesh input makes sense
+        REQUIRE(mesh->vertices.size() == 8);
+        REQUIRE(mesh->facets.size() == 12);
 
-      // Creates topology
-      std::shared_ptr<MeshTopology> topo = std::make_shared<MeshTopology>(*mesh);
+        // Creates topology
+        std::shared_ptr<MeshTopology> topo = std::make_shared<MeshTopology>(*mesh);
       
-      SECTION("testNodeToVertex") {
-	REQUIRE(topo->vertexToFacets.size() == 8);
+        SECTION("testNodeToVertex") {
+            REQUIRE(topo->vertexToFacets.size() == 8);
 
-	// expected[vertex] = {nfacets, facet indices}
-	unsigned int expected[8][6] = { { 4, 0, 1, 6, 9 }, { 5, 0, 2, 3, 8, 9 }, { 4,
-										   0,
-										   1,
-										   3,
-										   10 },
-					{ 5, 1, 6, 7, 10, 11 }, { 5, 4, 6, 7, 8, 9 }, { 4,
-											2,
-											4,
-											5,
-											8 },
-					{ 5, 2, 3, 5, 10, 11 }, { 4, 4, 5, 7, 11 }, };
+            // expected[vertex] = {nfacets, facet indices}
+            unsigned int expected[8][6] = {
+                    { 4, 0, 1, 6, 9 },
+                    { 5, 0, 2, 3, 8, 9 },
+                    { 4, 0, 1, 3, 10 },
+					{ 5, 1, 6, 7, 10, 11 },
+                    { 5, 4, 6, 7, 8, 9 },
+                    { 4, 2, 4, 5, 8 },
+					{ 5, 2, 3, 5, 10, 11 },
+                    { 4, 4, 5, 7, 11 }
+            };
 
-	for (unsigned vertex(0); vertex < 8; ++vertex)
-	  {
-	    std::set<size_t> facets = topo->vertexToFacets[vertex];
-	    REQUIRE(facets.size() == expected[vertex][0]);
+            for (unsigned vertex = 0; vertex < 8; ++vertex)
+            {
+                auto facets = topo->vertexToFacets[vertex];
+                REQUIRE(facets.size() == expected[vertex][0]);
 	    
-	    for (size_t facet(1); facet <= expected[vertex][0]; ++facet)
-              {
-                REQUIRE(facets.count(expected[vertex][facet]) == 1);
-              }
-	  }
-      }
+                for (size_t facet = 1; facet <= expected[vertex][0]; ++facet)
+                {
+                    REQUIRE(facets.count(expected[vertex][facet]) == 1);
+                }
+            }
+        }
       
       SECTION("testFacetNeighbors") {
 	REQUIRE(topo->facetNeighbors.size() == 12);
@@ -77,5 +74,4 @@ namespace hemelb
 	  }
       }
     }
-  }
 }

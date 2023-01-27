@@ -5,10 +5,8 @@
 
 #include "redblood/Borders.h"
 
-namespace hemelb
+namespace hemelb::redblood
 {
-  namespace redblood
-  {
     BorderBoxIterator::BorderBoxIterator(size_t const nearness) :
         current(-1, -1, -1), isValid(true),
             doCenter(nearness bitand static_cast<size_t>(Borders::CENTER)),
@@ -33,12 +31,12 @@ namespace hemelb
       }
     }
 
-    bool BorderBoxIterator::wannaSee(value_type const &current) const
+    bool BorderBoxIterator::wannaSee(value_type const &point) const
     {
-      return ( (current.x == -1 and doBottom) or (current.x == 1 and doTop) or current.x == 0)
-          and ( (current.y == -1 and doSouth) or (current.y == 1 and doNorth) or current.y == 0)
-          and ( (current.z == -1 and doWest) or (current.z == 1 and doEast) or current.z == 0)
-          and (current.x != 0 or current.y != 0 or current.z != 0 or doCenter);
+      return ((point.x() == -1 and doBottom) or (point.x() == 1 and doTop) or point.x() == 0)
+          and ((point.y() == -1 and doSouth) or (point.y() == 1 and doNorth) or point.y() == 0)
+          and ((point.z() == -1 and doWest) or (point.z() == 1 and doEast) or point.z() == 0)
+          and (point.x() != 0 or point.y() != 0 or point.z() != 0 or doCenter);
     }
 
     BorderBoxIterator& BorderBoxIterator::operator++()
@@ -48,7 +46,7 @@ namespace hemelb
         return *this;
       }
       bool const hasCycled = true;
-      auto increment = [this, hasCycled](value_type::value_type &x)
+      auto increment = [](value_type::value_type &x)
       {
         ++x;
         if(x == 2)
@@ -71,5 +69,4 @@ namespace hemelb
       while (isValid and not wannaSee(current));
       return *this;
     }
-  }
-} // namespace hemelb::redblood
+  } // namespace hemelb::redblood
