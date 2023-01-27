@@ -20,7 +20,7 @@ namespace hemelb::lb::iolets
     {
         using IoletPtr = util::clone_ptr<iolets::InOutLet>;
     public:
-        BoundaryValues(geometry::SiteType ioletType, geometry::Domain* latticeData,
+        BoundaryValues(geometry::SiteType ioletType, geometry::Domain const& latticeData,
                        const std::vector<IoletPtr>& iolets,
                        SimulationState* simulationState, const net::MpiCommunicator& comms,
                        const util::UnitConverter& units);
@@ -40,13 +40,29 @@ namespace hemelb::lb::iolets
 
         // Borrow the pointer to an Iolet - this object still owns
         // the value.
-        iolets::InOutLet* GetLocalIolet(unsigned int index)
+        inline iolets::InOutLet* GetLocalIolet(unsigned int index)
         {
             return iolets[localIoletIDs[index]].get();
         }
-        unsigned int GetLocalIoletCount() const
+        inline iolets::InOutLet const* GetLocalIolet(unsigned int index) const
         {
-            return localIoletCount;
+            return iolets[localIoletIDs[index]].get();
+        }
+        inline iolets::InOutLet const* GetGlobalIolet(unsigned int index) const
+        {
+            return iolets[index].get();
+        }
+        inline iolets::InOutLet* GetGlobalIolet(unsigned int index)
+        {
+            return iolets[index].get();
+        }
+        inline auto GetLocalIoletCount() const
+        {
+            return localIoletIDs.size();
+        }
+        inline auto GetGlobalIoletCount() const
+        {
+            return iolets.size();
         }
         inline unsigned int GetTimeStep() const
         {
@@ -58,17 +74,15 @@ namespace hemelb::lb::iolets
         }
 
     private:
-        bool IsIoletOnThisProc(geometry::SiteType ioletType, geometry::Domain* latticeData,
-                               int boundaryId);
+        bool IsIoletOnThisProc(geometry::Domain const& latticeData, int boundaryId);
         std::vector<int> GatherProcList(bool hasBoundary);
         void HandleComms(iolets::InOutLet* iolet);
         geometry::SiteType ioletType;
-        int totalIoletCount;
-        // Number of iolets and vector of their indices for communication purposes
-        int localIoletCount;
-        std::vector<int> localIoletIDs;
-        // Has to be a vector of pointers for InOutLet polymorphism
+        // All inlets/outlets in the simulation.
+        // (Has to be a vector of pointers for InOutLet polymorphism)
         std::vector<IoletPtr> iolets;
+        // The indices of the iolets that this process cares about
+        std::vector<int> localIoletIDs;
         SimulationState* state;
         BoundaryCommunicator bcComms;
     };

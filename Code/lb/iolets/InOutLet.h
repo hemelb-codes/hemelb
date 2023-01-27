@@ -197,7 +197,7 @@ namespace hemelb
             this->flowExtension = flowExt;
           }
 
-          const std::shared_ptr<redblood::FlowExtension> GetFlowExtension() const {
+          std::shared_ptr<redblood::FlowExtension> GetFlowExtension() const {
             return this->flowExtension;
           }
 

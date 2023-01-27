@@ -7,20 +7,20 @@
 #include "lb/iolets/BoundaryComms.h"
 #include "util/utilityFunctions.h"
 #include <algorithm>
-#include <fstream>
 
 namespace hemelb::lb::iolets
 {
       BoundaryValues::BoundaryValues(geometry::SiteType ioletType,
-                                     geometry::Domain* latticeData,
+                                     geometry::Domain const& latticeData,
                                      const std::vector<IoletPtr> &incoming_iolets,
                                      SimulationState* simulationState,
                                      const net::MpiCommunicator& comms,
                                      const util::UnitConverter& unitConverter) :
-          net::IteratedAction(), ioletType(ioletType), totalIoletCount(incoming_iolets.size()),
-              localIoletCount(0), state(simulationState), bcComms(comms)
+              net::IteratedAction(), ioletType(ioletType),
+              state(simulationState), bcComms(comms)
       {
-	std::vector<std::vector<int>> procsList(totalIoletCount);
+          const auto totalIoletCount = incoming_iolets.size();
+          std::vector<std::vector<int>> procsList(totalIoletCount);
 
         // Determine which iolets need comms and create them
         for (int ioletIndex = 0; ioletIndex < totalIoletCount; ioletIndex++)
@@ -30,16 +30,15 @@ namespace hemelb::lb::iolets
 
           iolet->Initialise(&unitConverter);
 
-          bool isIoletOnThisProc = IsIoletOnThisProc(ioletType, latticeData, ioletIndex);
+          bool isIoletOnThisProc = IsIoletOnThisProc(latticeData, ioletIndex);
           hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("BOUNDARYVALUES.CC - isioletonthisproc? : %d",
                                                                                 isIoletOnThisProc);
           procsList[ioletIndex] = GatherProcList(isIoletOnThisProc);
 
-          // With information on whether a proc has an IOlet and the list of procs for each IOlte
+          // With information on whether a proc has an iolet and the list of procs for each iolet
           // on the BC task we can create the comms
           if (isIoletOnThisProc || bcComms.IsCurrentProcTheBCProc())
           {
-            localIoletCount++;
             localIoletIDs.push_back(ioletIndex);
 //            hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("BOUNDARYVALUES.H - ioletIndex: %d", ioletIndex);
 
@@ -56,19 +55,13 @@ namespace hemelb::lb::iolets
 
         // Send out initial values
         Reset();
-
-        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("BOUNDARYVALUES.H - ioletCount: %d, first iolet ID %d",
-                                                                              localIoletCount,
-                                                                              localIoletIDs[0]);
-
       }
 
-      bool BoundaryValues::IsIoletOnThisProc(geometry::SiteType ioletType,
-                                             geometry::Domain* latticeData, int boundaryId)
+      bool BoundaryValues::IsIoletOnThisProc(geometry::Domain const& latticeData, int boundaryId)
       {
-        for (site_t i = 0; i < latticeData->GetLocalFluidSiteCount(); i++)
+        for (site_t i = 0; i < latticeData.GetLocalFluidSiteCount(); i++)
         {
-          auto&& site = latticeData->GetSite(i);
+          auto&& site = latticeData.GetSite(i);
 
           if (site.GetSiteType() == ioletType && site.GetIoletId() == boundaryId)
           {
@@ -76,7 +69,7 @@ namespace hemelb::lb::iolets
           }
         }
 
-        return true;
+        return false;
       }
 
       std::vector<int> BoundaryValues::GatherProcList(bool hasBoundary)
@@ -85,19 +78,19 @@ namespace hemelb::lb::iolets
 
         // This is where the info about whether a proc contains the given inlet/outlet is sent
         // If it does contain the given inlet/outlet it sends a true value, else it sends a false.
-        int isIOletOnThisProc = hasBoundary; // true if inlet i is on this proc
+        int isIoletOnThisProc = hasBoundary; // true if inlet i is on this proc
 
         // These should be bool, but MPI only supports MPI_INT
         // For each inlet/outlet there is an array of length equal to total number of procs.
         // Each stores true/false value. True if proc of rank equal to the index contains
         // the given inlet/outlet.
 
-        std::vector<int> processorsNeedingIoletFlags = bcComms.Gather(isIOletOnThisProc,
+        std::vector<int> processorsNeedingIoletFlags = bcComms.Gather(isIoletOnThisProc,
                                                                       bcComms.GetBCProcRank());
 
         if (bcComms.IsCurrentProcTheBCProc())
         {
-          // Now we have an array for each IOlet with true (1) at indices corresponding to
+          // Now we have an array for each iolet with true (1) at indices corresponding to
           // processes that are members of that group. We have to convert this into arrays
           // of ints which store a list of processor ranks.
           for (proc_t process = 0; process < proc_t(processorsNeedingIoletFlags.size()); ++process)
@@ -114,7 +107,7 @@ namespace hemelb::lb::iolets
 
       void BoundaryValues::RequestComms()
       {
-        for (int i = 0; i < localIoletCount; i++)
+        for (int i = 0; i < ssize(localIoletIDs); i++)
         {
           HandleComms(GetLocalIolet(i));
         }
@@ -132,7 +125,7 @@ namespace hemelb::lb::iolets
 
       void BoundaryValues::EndIteration()
       {
-        for (int i = 0; i < localIoletCount; i++)
+        for (int i = 0; i < ssize(localIoletIDs); i++)
         {
           if (GetLocalIolet(i)->IsCommsRequired())
           {
@@ -143,7 +136,7 @@ namespace hemelb::lb::iolets
 
       void BoundaryValues::FinishReceive()
       {
-        for (int i = 0; i < localIoletCount; i++)
+        for (int i = 0; i < ssize(localIoletIDs); i++)
         {
           if (GetLocalIolet(i)->IsCommsRequired())
           {
@@ -154,7 +147,7 @@ namespace hemelb::lb::iolets
 
       void BoundaryValues::Reset()
       {
-        for (int i = 0; i < localIoletCount; i++)
+        for (int i = 0; i < ssize(localIoletIDs); i++)
         {
           GetLocalIolet(i)->Reset(*state);
           if (GetLocalIolet(i)->IsCommsRequired())
