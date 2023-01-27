@@ -7,6 +7,7 @@
 #define HEMELB_IO_XML_H
 
 #include <cstdlib>
+#include <cstring>
 #include <functional>
 #include <iostream>
 #include <sstream>
@@ -62,7 +63,7 @@ namespace hemelb::io::xml
      *   returns the child element if it was found or
      *   Element::Missing() if not
      */
-    Element GetChildOrNull(const std::string& name) const;
+    Element GetChildOrNull(std::string_view name) const;
     /**
      * Gets the first child element with the specified name or throw
      * ChildError if it does not exist.
@@ -73,14 +74,14 @@ namespace hemelb::io::xml
      * @return
      *   returns the child element
      */
-    Element GetChildOrThrow(const std::string& name) const;
+    Element GetChildOrThrow(std::string_view name) const;
 
     /**
      * Return iterator over children with the specified name.
      * @param name
      * @return
      */
-    ChildIterator IterChildren(const std::string& name) const;
+    ChildIterator IterChildren(std::string_view name) const;
 
     /**
      * Return the next sibling element with the specified name, if any
@@ -92,7 +93,7 @@ namespace hemelb::io::xml
      * @return
      *   Next sibling or Element::Missing()
      */
-    Element NextSiblingOrNull(const std::string& name) const;
+    Element NextSiblingOrNull(std::string_view name) const;
 
     /**
      * Return the next sibling element with the specified name, if any
@@ -104,7 +105,7 @@ namespace hemelb::io::xml
      * @return
      *   Next sibling.
      */
-    Element NextSiblingOrThrow(const std::string& name) const;
+    Element NextSiblingOrThrow(std::string_view name) const;
 
     /**
      * Return the parent element unless this is the root element.
@@ -132,7 +133,7 @@ namespace hemelb::io::xml
      *   An optional string containing the attribute value (or nullopt
      *   on failure)
      */
-    std::optional<std::string> GetAttributeMaybe(const std::string& name) const;
+    std::optional<std::string_view> GetAttributeMaybe(std::string_view name) const;
     /**
      * Get the value (as a string) contained in the specified attribute.
      * If it does not exist, throws AttributeError
@@ -141,7 +142,7 @@ namespace hemelb::io::xml
      * @return
      *   A reference to a string containing the attribute value
      */
-    const std::string& GetAttributeOrThrow(const std::string& name) const;
+    std::string_view GetAttributeOrThrow(std::string_view name) const;
 
     /**
      * Get the value contained in the specified attribute. This function
@@ -167,10 +168,10 @@ namespace hemelb::io::xml
      *   bool indicating if the attribute was present.
      */
     template<class T>
-    std::optional<T> GetAttributeMaybe(const std::string& name) const;
+    std::optional<T> GetAttributeMaybe(std::string_view name) const;
 
     template<class T>
-    T GetAttributeOrThrow(const std::string& name) const;
+    T GetAttributeOrThrow(std::string_view name) const;
 
     /**
      * Get the value contained in the specified attribute. This function
@@ -199,7 +200,7 @@ namespace hemelb::io::xml
      *   A reference to a string containing the attribute value
      */
     template<class T>
-    void GetAttributeOrThrow(const std::string& name, T& out) const;
+    void GetAttributeOrThrow(std::string_view name, T& out) const;
 
     /**
      * Return a string giving a full path to the element.
@@ -248,11 +249,11 @@ namespace hemelb::io::xml
   private:
 
     // For use in templates to hide TinyXML API
-    std::string const* GetAttrOrNull(std::string const& attr) const;
+    char const* GetAttrOrNull(std::string_view attr) const;
 
     // Convert a string to a value
     template <typename T>
-    void StringToVal(std::string const& name, std::string const& s, T& val) const;
+    void StringToVal(std::string_view name, char const* s, T& val) const;
 
     /**
      * Recursive function used by GetPath
@@ -291,7 +292,7 @@ namespace hemelb::io::xml
      * @param elem
      * @param subElemName
      */
-    ChildIterator(const Element& elem, const std::string& subElemName);
+    ChildIterator(const Element& elem, std::string subElemName);
 
     /**
      * Copy constructor
@@ -377,7 +378,7 @@ namespace hemelb::io::xml
     void LoadFile(const std::filesystem::path& path);
 
     // Load some XML from a string
-    void LoadString(const std::string& path);
+    void LoadString(std::string_view path);
 
   private:
     std::unique_ptr<TiXmlDocument> xmlDoc;
@@ -425,7 +426,7 @@ namespace hemelb::io::xml
   class AttributeError : public XmlError
   {
   public:
-    AttributeError(const Element& n, const std::string& attr_);
+    AttributeError(const Element& n, std::string_view attr_);
 
     template<typename T>
     AttributeError& operator<<(const T& t)
@@ -437,7 +438,7 @@ namespace hemelb::io::xml
   class DeserialisationError : public XmlError
   {
   public:
-    DeserialisationError(const Element& el, const std::string& attrName, const std::string& attrVal);
+    DeserialisationError(const Element& el, std::string_view attrName, std::string_view attrVal);
 
     template<typename T>
     DeserialisationError& operator<<(const T& t)
@@ -470,7 +471,7 @@ namespace hemelb::io::xml
   class ChildError : public ElementError
   {
   public:
-    ChildError(const Element& elem, const std::string& subElemName);
+    ChildError(const Element& elem, std::string_view subElemName);
     template<typename T>
     ChildError& operator<<(const T& t)
     {
@@ -500,7 +501,7 @@ namespace hemelb::io::xml
   class SiblingError : public ElementError
   {
   public:
-    SiblingError(const Element& elem, const std::string& subElemName);
+    SiblingError(const Element& elem, std::string_view subElemName);
     template<typename T>
     SiblingError& operator<<(const T& t)
     {
@@ -509,76 +510,79 @@ namespace hemelb::io::xml
 
   };
 
-  template<class T>
-  void Element::StringToVal(std::string const& name, std::string const& s, T& out) const
-  {
-    // So, basically parsing of unsigned values varies across platforms
-    // such that on OS X 10.8
-    //   unsigned ans
-    //   stream = istringstream("-1");
-    //   stream >> ans;
-    // will NOT set ans but will set stream's failbit.
-    //
-    // On various Linux boxes, this will set ans == 2**32 - 1 and NOT set
-    // the fail bit.
-    //
-    // Here, for types numeric_limits knows are unsigned we explicitly
-    // check for a "-" and throw a suitable error.
-    if (std::numeric_limits<T>::is_specialized && !std::numeric_limits<T>::is_signed)
+    template<class T>
+    void Element::StringToVal(std::string_view name, char const* s, T& out) const
     {
-      if (s.at(0) == '-')
-      {
-	throw DeserialisationError(*this, name, s)
-	  << " attempt to convert negative number to unsigned type";
-      }
+        const auto N = std::strlen(s);
+        if (N == 0)
+            throw DeserialisationError(*this, name, s) << "Zero length string for value";
+
+        // So, basically parsing of unsigned values varies across platforms
+        // such that on OS X 10.8
+        //   unsigned ans
+        //   stream = istringstream("-1");
+        //   stream >> ans;
+        // will NOT set ans but will set stream's failbit.
+        //
+        // On various Linux boxes, this will set ans == 2**32 - 1 and NOT set
+        // the fail bit.
+        //
+        // Here, for types numeric_limits knows are unsigned we explicitly
+        // check for a "-" and throw a suitable error.
+        if constexpr (std::numeric_limits<T>::is_specialized && !std::numeric_limits<T>::is_signed)
+        {
+            if (s[0] == '-')
+            {
+                throw DeserialisationError(*this, name, s)
+                        << " attempt to convert negative number to unsigned type";
+            }
+        }
+        std::stringstream attrStream(s, std::ios_base::in);
+
+        // Don't skip whitespace as that could indicate a malformed value
+        attrStream >> std::noskipws;
+
+        attrStream >> out;
+        if (attrStream.fail())
+        {
+            throw DeserialisationError(*this, name, s) << " error in extraction operator";
+        }
+        bool eof = attrStream.eof();
+        if (!eof && attrStream.tellg() != N)
+        {
+            throw DeserialisationError(*this, name, s) << " not all characters consumed";
+        }
     }
-    std::stringstream attrStream(s, std::ios_base::in);
 
-    // Don't skip whitespace as that could indicate a malformed value
-    attrStream >> std::noskipws;
-
-    attrStream >> out;
-    if (attrStream.fail())
+    template<class T>
+    std::optional<T> Element::GetAttributeMaybe(std::string_view name) const
     {
-      throw DeserialisationError(*this, name, s) << " error in extraction operator";
+        const char* attrString = GetAttrOrNull(name);
+        if (attrString == nullptr) {
+            return std::nullopt;
+        } else {
+            // Requires T is  default constructible
+            std::optional<T> ans{std::in_place};
+            StringToVal(name, attrString, *ans);
+            return ans;
+        }
     }
-    bool eof = attrStream.eof();
-    std::stringstream::pos_type pos = attrStream.tellg();
-    if (!eof && pos != int(s.size()))
+
+    template<class T>
+    void Element::GetAttributeOrThrow(std::string_view name, T& out) const
     {
-      throw DeserialisationError(*this, name, s) << " not all characters consumed";
+        const char* attrString = GetAttrOrNull(name);
+        if (attrString == nullptr)
+            throw AttributeError(*this, name);
+        StringToVal(name, attrString, out);
     }
-  }
 
-  template<class T>
-  std::optional<T> Element::GetAttributeMaybe(const std::string& name) const
-  {
-    const std::string* attrString = GetAttrOrNull(name);
-    if (attrString == nullptr) {
-      return std::nullopt;
-    } else {
-      // Requires T is  default constructible
-      std::optional<T> ans{std::in_place};
-      StringToVal(name, *attrString, *ans);
-      return ans;
+    template<class T>
+    T Element::GetAttributeOrThrow(std::string_view name) const {
+        T out;
+        GetAttributeOrThrow(name, out);
+        return out;
     }
-  }
-
-  template<class T>
-  void Element::GetAttributeOrThrow(const std::string& name, T& out) const
-  {
-    const std::string* attrString = GetAttrOrNull(name);
-    if (attrString == nullptr)
-      throw AttributeError(*this, name);
-    StringToVal(name, *attrString, out);
-  }
-
-  template<class T>
-  T Element::GetAttributeOrThrow(const std::string& name) const {
-    T out;
-    GetAttributeOrThrow(name, out);
-    return out;
-  }
 
 }
 #endif  // HEMELB_IO_XML_H

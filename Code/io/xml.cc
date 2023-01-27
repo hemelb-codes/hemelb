@@ -8,12 +8,8 @@
 
 #include "io/xml.h"
 
-namespace hemelb
+namespace hemelb::io::xml
 {
-  namespace io
-  {
-    namespace xml
-    {
       Document::Document()
       {
         xmlDoc = std::make_unique<::TiXmlDocument>();
@@ -29,7 +25,7 @@ namespace hemelb
 
       Element Document::GetRoot()
       {
-        return Element(xmlDoc->RootElement());
+        return {xmlDoc->RootElement()};
       }
 
       void Document::LoadFile(const std::filesystem::path& path) {
@@ -38,11 +34,11 @@ namespace hemelb
           }
       }
 
-      void Document::LoadString(const std::string& data) {
-	if (xmlDoc->Parse(data.c_str()) == nullptr) {
-	  throw ParseError(xmlDoc.get());
-	}
-      }
+    void Document::LoadString(std::string_view data) {
+        if (xmlDoc->Parse(data.data()) == nullptr) {
+            throw ParseError(xmlDoc.get());
+        }
+    }
 
       Element::Element(TiXmlElement const* el_) :
           el(el_)
@@ -66,63 +62,64 @@ namespace hemelb
         return el->Row();
       }
 
-      Element Element::GetChildOrNull(const std::string& name) const
+      Element Element::GetChildOrNull(std::string_view name) const
       {
-        return Element(el->FirstChildElement(name));
+        return Element(el->FirstChildElement(name.data()));
       }
 
-      Element Element::GetChildOrThrow(const std::string& name) const
+      Element Element::GetChildOrThrow(std::string_view name) const
       {
-        auto ans = el->FirstChildElement(name);
+        auto ans = el->FirstChildElement(name.data());
         if (ans == nullptr)
           throw ChildError(*this, name);
 
         return Element(ans);
       }
 
-      ChildIterator Element::IterChildren(const std::string& name) const
+      ChildIterator Element::IterChildren(std::string_view name) const
       {
-        return ChildIterator(*this, name);
+        return ChildIterator(*this, std::string{name});
       }
 
-      Element Element::NextSiblingOrNull(const std::string& name) const
+      Element Element::NextSiblingOrNull(std::string_view name) const
       {
-        auto ans = el->NextSiblingElement(name);
+        auto ans = el->NextSiblingElement(name.data());
         if (ans == nullptr)
           return nullptr;
 
         return Element(ans);
       }
 
-      Element Element::NextSiblingOrThrow(const std::string& name) const
+      Element Element::NextSiblingOrThrow(std::string_view name) const
       {
-        auto ans = el->NextSiblingElement(name);
+        auto ans = el->NextSiblingElement(name.data());
         if (ans == nullptr)
           throw SiblingError(*this, name);
 
         return Element(ans);
       }
-      std::string const* Element::GetAttrOrNull(std::string const& attr) const {
-	return el->Attribute(attr);
+      char const* Element::GetAttrOrNull(std::string_view attr) const {
+          return el->Attribute(attr.data());
       }
 
-      std::optional<std::string> Element::GetAttributeMaybe(const std::string& name) const
-      {
-        auto attr_p = el->Attribute(name);
-	if (attr_p == nullptr) {
-	  return std::nullopt;
-	} else {
-	  return std::make_optional(*attr_p);
-	}
-      }
-      const std::string& Element::GetAttributeOrThrow(const std::string& name) const
-      {
-        const std::string* ans = el->Attribute(name);
+    std::optional<std::string_view> Element::GetAttributeMaybe(std::string_view name) const
+    {
+        auto attr_p = el->Attribute(name.data());
+        if (attr_p == nullptr) {
+            return std::nullopt;
+        } else {
+            return std::make_optional<std::string_view>(attr_p);
+        }
+    }
+
+    std::string_view Element::GetAttributeOrThrow(std::string_view name) const
+    {
+        const char* ans = el->Attribute(name.data());
         if (ans == nullptr)
-          throw AttributeError(*this, name);
+            throw AttributeError(*this, name);
 
-        return *ans;
-      }
+        return {ans};
+    }
 
       Element Element::GetParentOrNull() const
       {
@@ -192,8 +189,8 @@ namespace hemelb
        * @param elem
        * @param subElemName
        */
-      ChildIterator::ChildIterator(const Element& elem, const std::string& subElemName) :
-          parent(elem), current(elem.GetChildOrNull(subElemName)), name(subElemName)
+      ChildIterator::ChildIterator(const Element& elem, std::string subElemName) :
+          parent(elem), current(elem.GetChildOrNull(subElemName)), name(std::move(subElemName))
       {
       }
 
@@ -297,15 +294,15 @@ namespace hemelb
       }
 
       // Missing attribute
-      AttributeError::AttributeError(const Element& n, const std::string& attr) :
+      AttributeError::AttributeError(const Element& n, std::string_view attr) :
         XmlError()
       {
         *this << "AttributeError: '" << n.GetPath() << "' has no attribute '" << attr << "'";
       }
 
       // Attribute parsing error
-      DeserialisationError::DeserialisationError(const Element& el, const std::string& attrName,
-                             const std::string& attrVal) :
+      DeserialisationError::DeserialisationError(const Element& el, std::string_view attrName,
+                             std::string_view attrVal) :
         XmlError()
       {
         *this << "ParseError: '" << el.GetPath() << "' Cannot convert attribute '" << attrName << "=\""
@@ -316,7 +313,7 @@ namespace hemelb
         XmlError(), elemPath(el.GetPath())
       {
       }
-      ChildError::ChildError(const Element& elem, const std::string& subElemName) :
+      ChildError::ChildError(const Element& elem, std::string_view subElemName) :
         ElementError(elem)
       {
         *this << "ChildError: '" << elemPath << "' has no child '" << subElemName << "'";
@@ -328,13 +325,11 @@ namespace hemelb
         *this << "ParentError: '" << elemPath << "' is root element";
       }
 
-      SiblingError::SiblingError(const Element& elem, const std::string& sibElemName) :
+      SiblingError::SiblingError(const Element& elem, std::string_view sibElemName) :
         ElementError(elem)
       {
         *this << "SiblingError: '" << elemPath << "' has no later sibling '" << sibElemName << "'";
       }
 
-    }
-  }
 }
 
