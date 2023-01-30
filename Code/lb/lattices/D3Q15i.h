@@ -5,47 +5,16 @@
 #ifndef HEMELB_LB_LATTICES_D3Q15I_H
 #define HEMELB_LB_LATTICES_D3Q15I_H
 
-#include "lb/lattices/IncompressibleLattice.h"
+#include "lb/lattices/Lattice.h"
+#include "lb/lattices/D3Q15.h"
 
 namespace hemelb::lb::lattices {
-    using D3Q15i = IncompressibleLattice<15,
-            std::array<util::Vector3D<int>, 15>{{
-                                                        {0, 0, 0},
-
-                                                        {1, 0, 0},
-                                                        {-1, 0, 0},
-                                                        {0, 1, 0},
-                                                        {0, -1, 0},
-                                                        {0, 0, 1},
-                                                        {0, 0, -1},
-
-                                                        {1, 1, 1},
-                                                        {-1, -1, -1},
-                                                        {1, 1, -1},
-                                                        {-1, -1, 1},
-                                                        {1, -1, 1},
-                                                        {-1, 1, -1},
-                                                        {1, -1, -1},
-                                                        {-1, 1, 1}
-                                                }},
-            std::array<distribn_t, 15>{
-                    2.0 / 9.0,
-
-                    1.0 / 9.0,
-                    1.0 / 9.0,
-                    1.0 / 9.0,
-                    1.0 / 9.0,
-                    1.0 / 9.0,
-                    1.0 / 9.0,
-
-                    1.0 / 72.0,
-                    1.0 / 72.0,
-                    1.0 / 72.0,
-                    1.0 / 72.0,
-                    1.0 / 72.0,
-                    1.0 / 72.0,
-                    1.0 / 72.0,
-                    1.0 / 72.0
-            }>;
+    // Use inheritance rather than an alias to get a nicer name when compiling/debugging.
+    struct D3Q15i : Lattice<
+            15,
+            D3Q15::VECTORS,
+            D3Q15::EQMWEIGHTS,
+            false
+    > {};
 }
 #endif

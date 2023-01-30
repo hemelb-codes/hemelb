@@ -21,6 +21,8 @@
 namespace hemelb::lb::lattices
 {
     namespace detail {
+        // "Array slice": given an array of Vec3D, create an array
+        // of a single component of each Vec3D.
         template <typename T, typename U = T, std::size_t N>
         consteval std::array<T, N> get_component(std::array<util::Vector3D<U>, N> const& aov, int dir) {
             std::array<T, N> ans;
@@ -30,6 +32,8 @@ namespace hemelb::lb::lattices
             return ans;
         }
 
+        // Given an array of the lattice's directions, compute for
+        // each one the index of the inverse.
         template <std::size_t N>
         constexpr std::array<Direction, N> compute_inverses(std::array<util::Vector3D<int>, N> const& vecs)
         {
@@ -54,7 +58,9 @@ namespace hemelb::lb::lattices
         }
     }
 
-    template<std::size_t Q, std::array<util::Vector3D<int>, Q> V, std::array<distribn_t, Q> W>
+
+
+    template<std::size_t Q, std::array<util::Vector3D<int>, Q> V, std::array<distribn_t, Q> W, bool COMPRESSIBLE>
     class Lattice
     {
     public:
@@ -80,26 +86,26 @@ namespace hemelb::lb::lattices
                                                        util::Vector3D<distribn_t>& momentum) {
             CalculateDensityAndMomentum(f, density, momentum.x(), momentum.y(), momentum.z());
         }
-          /**
-           * Calculates density and momentum using SSE3 intrinsics.
-           * If the lattice has an odd number of vectors (directions), 
-           * the last element is processed first 
-           * 
-           * The reductions are calculated in two streams (the loop is virtually 
-           * twice unrolled), followed by horizontal adds to sum two partial results together
-           * 
-           * @param f
-           * @param density
-           * @param momentum_x
-           * @param momentum_y
-           * @param momentum_z
-           */
-          inline static void CalculateDensityAndMomentum(const distribn_t f[],
-              distribn_t &density,
-              distribn_t &momentum_x,
-              distribn_t &momentum_y,
-              distribn_t &momentum_z)
-          {
+        /**
+         * Calculates density and momentum using SSE3 intrinsics.
+         * If the lattice has an odd number of vectors (directions),
+         * the last element is processed first
+         *
+         * The reductions are calculated in two streams (the loop is virtually
+         * twice unrolled), followed by horizontal adds to sum two partial results together
+         *
+         * @param f
+         * @param density
+         * @param momentum_x
+         * @param momentum_y
+         * @param momentum_z
+         */
+        inline static void CalculateDensityAndMomentum(const distribn_t f[],
+                                                       distribn_t &density,
+                                                       distribn_t &momentum_x,
+                                                       distribn_t &momentum_y,
+                                                       distribn_t &momentum_z)
+        {
             // SSE2 accumulator registers containing a pair of double values
             __m128d density_SSE2;
             __m128d momentum_x_SSE2;
@@ -168,30 +174,6 @@ namespace hemelb::lb::lattices
             }
         }
 
-//          /**
-//           * Calculates density and momentum, the original non-SSE version
-//           * @param f
-//           * @param density
-//           * @param momentum_x
-//           * @param momentum_y
-//           * @param momentum_z
-//           */
-//          inline static void CalculateDensityAndMomentum(const distribn_t f[], distribn_t &density,
-//                                                         distribn_t &momentum_x,
-//                                                         distribn_t &momentum_y,
-//                                                         distribn_t &momentum_z)
-//          {
-//            density = momentum_x = momentum_y = momentum_z = 0.0;
-//
-//            for (Direction direction = 0; direction < NUMVECTORS; ++direction)
-//            {
-//              density += f[direction];
-//              momentum_x += CX[direction] * f[direction];
-//              momentum_y += CY[direction] * f[direction];
-//              momentum_z += CZ[direction] * f[direction];
-//            }
-//          }
-
 #endif                   
 
           /**
@@ -215,13 +197,13 @@ namespace hemelb::lb::lattices
             momentum += 0.5 * force;
           }
 
-#ifdef HEMELB_USE_SSE3
         inline static void CalculateFeq(const distribn_t density, const LatticeMomentum& momentum,
                                         distribn_t f_eq[]) {
             CalculateFeq(density, momentum.x(), momentum.y(), momentum.z(), f_eq);
         }
 
-          /**
+#ifdef HEMELB_USE_SSE3
+        /**
            * Calculates Feq using SSE3 intrinsics.
            * If the lattice has an odd number of vectors (directions), 
            * the last element is processed using scalar arithmetics
@@ -235,27 +217,38 @@ namespace hemelb::lb::lattices
            * @param momentum_z
            * @param f_eq
            */
-          inline static void CalculateFeq(const distribn_t &density,
-              const distribn_t &momentum_x,
-              const distribn_t &momentum_y,
-              const distribn_t &momentum_z,
-              distribn_t f_eq[])
-          {
+        static void CalculateFeq(const distribn_t &density,
+                                 const distribn_t &momentum_x,
+                                 const distribn_t &momentum_y,
+                                 const distribn_t &momentum_z,
+                                 distribn_t f_eq[])
+        {
+            // f_eq[i] = EQMWEIGHTS[i]
+            //            * (density - (3. / 2.) * momentumMagnitudeSquared/ DENSITY // Note this line invariant over i loop
+            //               + (9. / 2. * DENSITY) * mom_dot_ei * mom_dot_ei + 3. * mom_dot_ei);
+            // Where DENSITY = (constexpr COMPRESSIBLE) ? density : 1
 
-            // merge some constants and invariants and populate SSE registers by them                        
+            // merge some constants and invariants and populate SSE registers by them
+            // want f_eq[i] = weight[i] * (tmp1 + tmp2 + tmp3)
             const distribn_t threeHalvesOfMomentumMagnitudeSquared = (3./2.) * (momentum_x * momentum_x + momentum_y * momentum_y
                 + momentum_z * momentum_z);
-            const __m128d threeHalvesOfMomentumMagnitudeSquared_SSE2 = _mm_set1_pd(threeHalvesOfMomentumMagnitudeSquared);
+            distribn_t tmp1_scalar;
+            if constexpr (COMPRESSIBLE)
+                tmp1_scalar = density - threeHalvesOfMomentumMagnitudeSquared / density;
+            else
+                tmp1_scalar = density - threeHalvesOfMomentumMagnitudeSquared;
+
+            //const __m128d threeHalvesOfMomentumMagnitudeSquared_SSE2 = _mm_set1_pd(tmp0);
 
             const distribn_t density_1 = 1. / density;
-            const __m128d density_1_SSE2 = _mm_set1_pd(density_1);
-            const __m128d density_SSE2 = _mm_set1_pd(density);
 
             const __m128d momentum_x_SSE2 = _mm_set1_pd(momentum_x);
             const __m128d momentum_y_SSE2 = _mm_set1_pd(momentum_y);
             const __m128d momentum_z_SSE2 = _mm_set1_pd(momentum_z);
 
-            const distribn_t nineHalvesOfDensity_1 = (9. / 2.) * density_1;
+            distribn_t nineHalvesOfDensity_1 = (9. / 2.);
+            if constexpr (COMPRESSIBLE)
+                nineHalvesOfDensity_1 *= density_1;
             const __m128d nineOnTwoDensity_1_SSE2 = _mm_set1_pd(nineHalvesOfDensity_1);
             const __m128d three_SSE2 = _mm_set1_pd(3.);
 
@@ -264,9 +257,9 @@ namespace hemelb::lb::lattices
             for (Direction i = 0; i < numVect2; i+=2)
             {
               // mom_dot_ei = CX[i] * momentum_x + CY[i] * momentum_y + CZ[i] * momentum_z;
-              const __m128d CXD_momentum_x_SSE2 = _mm_mul_pd(_mm_load_pd(&CXD[i]),momentum_x_SSE2);
-              const __m128d CYD_momentum_y_SSE2 = _mm_mul_pd(_mm_load_pd(&CYD[i]),momentum_y_SSE2);
-              const __m128d CZD_momentum_z_SSE2 = _mm_mul_pd(_mm_load_pd(&CZD[i]),momentum_z_SSE2);
+              const __m128d CXD_momentum_x_SSE2 = _mm_mul_pd(_mm_load_pd(&CXD[i]), momentum_x_SSE2);
+              const __m128d CYD_momentum_y_SSE2 = _mm_mul_pd(_mm_load_pd(&CYD[i]), momentum_y_SSE2);
+              const __m128d CZD_momentum_z_SSE2 = _mm_mul_pd(_mm_load_pd(&CZD[i]), momentum_z_SSE2);
 
               const __m128d EQMWEIGHTS_SSE2 = _mm_load_pd(&EQMWEIGHTS[i]);
 
@@ -276,9 +269,7 @@ namespace hemelb::lb::lattices
               );
 
               //  (density - (3. / 2.) * momentumMagnitudeSquared * density_1
-              const __m128d tmp1 = _mm_sub_pd(density_SSE2,
-                  _mm_mul_pd(threeHalvesOfMomentumMagnitudeSquared_SSE2, density_1_SSE2 )
-              );
+              const __m128d tmp1 = _mm_set1_pd(tmp1_scalar);
 
               // (9. / 2.) * density_1 * mom_dot_ei * mom_dot_ei
               const __m128d tmp2 = (_mm_mul_pd(
@@ -293,40 +284,27 @@ namespace hemelb::lb::lattices
               tmp4 = _mm_add_pd(tmp4, tmp3);
 
               // f_eq is not 16B aligned
-              _mm_storeu_pd(&f_eq[i],_mm_mul_pd(EQMWEIGHTS_SSE2,tmp4));
+              _mm_storeu_pd(&f_eq[i], _mm_mul_pd(EQMWEIGHTS_SSE2,tmp4));
             }
 
             // do the odd element (15/19/27) 
             if (NUMVECTORS != numVect2)// constants are reduced
             {
+                constexpr auto i = NUMVECTORS - 1;
 
-              const distribn_t mom_dot_ei = CXD[NUMVECTORS-1] * momentum_x
-              + CYD[NUMVECTORS-1] * momentum_y + CZD[NUMVECTORS-1] * momentum_z;
-
-              f_eq[NUMVECTORS-1] = EQMWEIGHTS[NUMVECTORS - 1]
-              * (density - threeHalvesOfMomentumMagnitudeSquared * density_1
-                  + nineHalvesOfDensity_1 * (mom_dot_ei * mom_dot_ei)
-                  + 3. * mom_dot_ei);
-
-            }
-          }
-#else
-
-        inline static void CalculateFeq(const distribn_t density, const LatticeMomentum& momentum,
-                                        distribn_t f_eq[])
-        {
-            const distribn_t density_1 = 1. / density;
-            const distribn_t mom_mag_sq = momentum.GetMagnitudeSquared();
-
-            for (Direction i = 0; i < NUMVECTORS; ++i)
-            {
-                const distribn_t mom_dot_ei = momentum.Dot(VECTORS[i]);
+                const distribn_t mom_dot_ei = CXD[i] * momentum_x
+                                              + CYD[i] * momentum_y
+                                              + CZD[i] * momentum_z;
 
                 f_eq[i] = EQMWEIGHTS[i]
-                          * (density - (3. / 2.) * mom_mag_sq * density_1
-                             + (9. / 2.) * density_1 * mom_dot_ei * mom_dot_ei + 3. * mom_dot_ei);
+                          * (tmp1_scalar
+                             + nineHalvesOfDensity_1 * (mom_dot_ei * mom_dot_ei)
+                             + 3. * mom_dot_ei);
+
             }
         }
+#else
+
           /**
            * Calculate Feq, the orginal version
            * @param density
@@ -348,9 +326,15 @@ namespace hemelb::lb::lattices
               const distribn_t mom_dot_ei = CX[i] * momentum_x + CY[i] * momentum_y
                   + CZ[i] * momentum_z;
 
-              f_eq[i] = EQMWEIGHTS[i]
-                  * (density - (3. / 2.) * momentumMagnitudeSquared * density_1
-                      + (9. / 2.) * density_1 * mom_dot_ei * mom_dot_ei + 3. * mom_dot_ei);
+              if constexpr (COMPRESSIBLE) {
+                  f_eq[i] = EQMWEIGHTS[i]
+                            * (density - (3. / 2.) * momentumMagnitudeSquared * density_1
+                               + (9. / 2.) * density_1 * mom_dot_ei * mom_dot_ei + 3. * mom_dot_ei);
+              } else {
+                  f_eq[i] = EQMWEIGHTS[i]
+                            * (density - (3. / 2.) * momentumMagnitudeSquared
+                               + (9. / 2.) * mom_dot_ei * mom_dot_ei + 3. * mom_dot_ei);
+              }
             }
           }
 #endif
@@ -489,7 +473,11 @@ namespace hemelb::lb::lattices
                                                          distribn_t f_eq[])
           {
             CalculateDensityAndMomentum(f, density, momentum);
-            velocity = momentum / density;
+            if constexpr (COMPRESSIBLE) {
+                velocity = momentum / density;
+            } else {
+                velocity = momentum;
+            }
             CalculateFeq(density, momentum, f_eq);
           }
 
@@ -504,14 +492,17 @@ namespace hemelb::lb::lattices
                                                          LatticeVelocity& velocity,
                                                          distribn_t f_eq[])
           {
-            CalculateDensityAndMomentum(f,
-                                        force,
-                                        density,
-                                        momentum);
+              CalculateDensityAndMomentum(f,
+                                          force,
+                                          density,
+                                          momentum);
+              if constexpr (COMPRESSIBLE) {
+                  velocity = momentum / density;
+              } else {
+                  velocity = momentum;
+              }
 
-            velocity = momentum / density;
-
-            CalculateFeq(density, momentum, f_eq);
+              CalculateFeq(density, momentum, f_eq);
           }
 
           // von Mises stress computation given the non-equilibrium distribution functions.
@@ -889,9 +880,9 @@ namespace hemelb::lb::lattices
             return singletonInfo;
           }
 
-          inline static bool IsLatticeCompressible()
+          static constexpr bool IsLatticeCompressible()
           {
-            return true;
+            return COMPRESSIBLE;
           }
 
         private:

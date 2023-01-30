@@ -429,8 +429,6 @@ namespace hemelb
 
             // Compute the magnitude of the velocity.
             LatticeSpeed ansNorm = Dot(coeffs, vSite.hv.posIolet);
-//                    coeffs[0] * vSite.hv.posIolet.x + coeffs[1] * vSite.hv.posIolet.y
-//                + coeffs[2];
 
             // multiply by the iolet normal and we're done!
             return iolet.GetNormal() * ansNorm;
@@ -452,7 +450,7 @@ namespace hemelb
             auto neigh =
                 latDat.GetNeighbouringData().GetSite(globalIdx);
             const distribn_t* fOld = neigh.GetFOld<LatticeType>();
-            LatticeType::CalculateDensityAndMomentum(fOld, ans.rho, ans.u.x(), ans.u.y(), ans.u.z());
+            LatticeType::CalculateDensityAndMomentum(fOld, ans.rho, ans.u);
             if (LatticeType::IsLatticeCompressible())
             {
               ans.u /= ans.rho;

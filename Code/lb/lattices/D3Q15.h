@@ -11,7 +11,9 @@
 namespace hemelb::lb::lattices
 {
 
-    using D3Q15 = Lattice<15,
+    // Use inheritance rather than an alias to get a nicer name when compiling/debugging.
+    struct D3Q15 : Lattice<
+            15,
             std::array<util::Vector3D<int>, 15>{{
                                                         { 0, 0, 0},
 
@@ -49,6 +51,8 @@ namespace hemelb::lb::lattices
                     1.0 / 72.0,
                     1.0 / 72.0,
                     1.0 / 72.0
-            }>;
+            },
+            true
+    >{};
 }
 #endif

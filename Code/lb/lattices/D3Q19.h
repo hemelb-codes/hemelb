@@ -10,7 +10,8 @@
 
 namespace hemelb::lb::lattices
 {
-    using D3Q19 = Lattice<
+    // Use inheritance rather than an alias to get a nicer name when compiling/debugging.
+    struct D3Q19 : Lattice<
             19,
             std::array<util::Vector3D<int>, 19>{
                     {
@@ -43,8 +44,9 @@ namespace hemelb::lb::lattices
                     1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0
                                                                     / 36.0,
                     1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0
-            }
-    >;
+            },
+            true
+    > {};
 
 }
 
