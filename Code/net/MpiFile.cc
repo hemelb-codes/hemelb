@@ -4,6 +4,7 @@
 // license in the file LICENSE.
 
 #include "net/MpiFile.h"
+
 #include "net/MpiCommunicator.h"
 
 namespace hemelb
@@ -30,7 +31,7 @@ namespace hemelb
       filePtr.reset(new MPI_File(fh), Deleter);
     }
 
-    MpiFile MpiFile::Open(const MpiCommunicator& comm, const std::string& filename, int mode,
+    MpiFile MpiFile::Open(const MpiCommunicator& comm, const std::filesystem::path& filename, int mode,
                           const MPI_Info info)
     {
       MPI_File ans;

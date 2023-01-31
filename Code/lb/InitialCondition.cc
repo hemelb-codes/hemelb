@@ -37,8 +37,8 @@ namespace hemelb {
       mom_x(mx), mom_y(my), mom_z(mz) {
     }
     
-    CheckpointInitialCondition::CheckpointInitialCondition(std::optional<LatticeTimeStep> t0, const std::string& cp, std::optional<std::string> const& maybeOff)
-      : InitialConditionBase(t0), cpFile(cp), maybeOffFile(maybeOff) {
+    CheckpointInitialCondition::CheckpointInitialCondition(std::optional<LatticeTimeStep> t0, std::filesystem::path cp, std::optional<std::filesystem::path> maybeOff)
+      : InitialConditionBase(t0), cpFile(std::move(cp)), maybeOffFile(std::move(maybeOff)) {
     }
 
     // InitialCondition - sum type container

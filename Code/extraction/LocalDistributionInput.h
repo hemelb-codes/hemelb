@@ -7,6 +7,7 @@
 #define HEMELB_EXTRACTION_LOCALDISTRIBUTIONINPUT_H
 
 #include <optional>
+#include <filesystem>
 
 #include "extraction/IterableDataSource.h"
 #include "extraction/InputField.h"
@@ -37,7 +38,7 @@ namespace hemelb
       //
       // Take the path string by value since we will move it into a member
       // anyway.
-      LocalDistributionInput(std::string dataFilePath, std::optional<std::string> const& maybeOffsetPath, const net::IOCommunicator& ioComms);
+      LocalDistributionInput(std::filesystem::path dataFilePath, std::optional<std::filesystem::path> maybeOffsetPath, const net::IOCommunicator& ioComms);
 
       // Open the file and load our part into the domain_type
       // instance.
@@ -57,8 +58,8 @@ namespace hemelb
       const net::IOCommunicator& comms;
 
       // The path to the file to read from.
-      std::string filePath;
-      std::string offsetPath;
+      std::filesystem::path filePath;
+      std::filesystem::path offsetPath;
 
       InputField distField;
       uint64_t localStart;

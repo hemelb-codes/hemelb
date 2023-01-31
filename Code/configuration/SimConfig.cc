@@ -22,7 +22,7 @@ namespace hemelb::configuration
     }
 
     // checkpoint IC
-    CheckpointIC::CheckpointIC(std::optional<LatticeTimeStep> t, std::string cp, std::optional<std::string> maybeOff)
+    CheckpointIC::CheckpointIC(std::optional<LatticeTimeStep> t, std::filesystem::path cp, std::optional<std::filesystem::path> maybeOff)
             : ICConfigBase(t), cpFile(std::move(cp)), maybeOffFile(std::move(maybeOff)) {
     }
 
@@ -655,10 +655,10 @@ namespace hemelb::configuration
                 // Only checkpoint
                 initial_condition = CheckpointIC(
                         t0,
-                        std::string{checkpointEl.GetAttributeOrThrow("file")},
+                        RelPathToFullPath(checkpointEl.GetAttributeOrThrow("file")),
                         opt_transform(
                                 checkpointEl.GetAttributeMaybe("offsets"),
-                                [](std::string_view sv) { return std::string{sv}; }
+                                [&](std::string_view sv) { return RelPathToFullPath(sv); }
                         )
                 );
             } else {

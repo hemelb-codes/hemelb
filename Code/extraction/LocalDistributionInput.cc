@@ -16,13 +16,13 @@
 namespace hemelb::extraction {
   namespace fmt = hemelb::io::formats;
 
-  LocalDistributionInput::LocalDistributionInput(std::string dataFilePath,
-						 std::optional<std::string> const& maybeOffsetPath,
+  LocalDistributionInput::LocalDistributionInput(std::filesystem::path dataFilePath,
+						 std::optional<std::filesystem::path> maybeOffsetPath,
 						 const net::IOCommunicator& ioComm) :
     comms{ioComm}, filePath{std::move(dataFilePath)}
   {
     if (maybeOffsetPath) {
-      offsetPath = *maybeOffsetPath;
+      offsetPath = std::move(*maybeOffsetPath);
     } else {
       offsetPath = fmt::offset::ExtractionToOffset(filePath);
     }

@@ -124,9 +124,9 @@ namespace hemelb::configuration
 
     // Read from checkpoint IC
     struct CheckpointIC : ICConfigBase {
-      CheckpointIC(std::optional<LatticeTimeStep> t, std::string cp, std::optional<std::string> maybeOff);
-      std::string cpFile;
-      std::optional<std::string> maybeOffFile;
+      CheckpointIC(std::optional<LatticeTimeStep> t, std::filesystem::path cp, std::optional<std::filesystem::path> maybeOff);
+      std::filesystem::path cpFile;
+      std::optional<std::filesystem::path> maybeOffFile;
     };
 
     // Variant including null state

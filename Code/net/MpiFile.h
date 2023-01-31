@@ -6,6 +6,7 @@
 #ifndef HEMELB_NET_MPIFILE_H
 #define HEMELB_NET_MPIFILE_H
 
+#include <filesystem>
 #include <memory>
 #include "net/MpiError.h"
 #include "net/MpiCommunicator.h"
@@ -27,7 +28,7 @@ namespace hemelb
          * @param info
          * @return
          */
-        static MpiFile Open(const MpiCommunicator& comm, const std::string& filename, int mode,
+        static MpiFile Open(const MpiCommunicator& comm, const std::filesystem::path& filename, int mode,
                             const MPI_Info info = MPI_INFO_NULL);
 
         /**

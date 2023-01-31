@@ -101,9 +101,10 @@ As for "inlets" but with `s/inlet/outlet/`
   * `<uniform value="float" units="mmHg">` - a uniform pressure at all
     sites. Value must be in mmHg.
 
-* `<checkpoint file="relative/path/to/file">` - restart from a
+* `<checkpoint file="rel/path/to/file" offset="rel/path">` - restart from a
   checkpoint + offset file. Attribute `file` is required and gives
-  path to the checkpoint. The offset file must have the same path with
+  path to the checkpoint. The offset file is optional - if given it
+  must be a relative path to the file, else must have the same path with
   the extension replaced by ".off".
 
 ## (Extracted) Properties
