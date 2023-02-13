@@ -17,6 +17,7 @@
 #include "extraction/GeometrySelectors.h"
 #include "extraction/PropertyOutputFile.h"
 #include "io/xml.h"
+#include "quantity.h"
 
 namespace hemelb::configuration
 {
@@ -29,31 +30,13 @@ namespace hemelb::configuration
     // 2. "value" which is a string encoding of the representation (typically a double)
     //
     // Now some parts of the code (e.g. RBC) can specify units as multiple options (e.g. physical OR lattice)
-    // This will be given as a tuple of string like values. The consumer (i.e. SimBuilder etc) will have
+    // for these, use the quantity union types. The consumer (i.e. SimBuilder etc) will have
     // to take care around this.
-
-    using UnitUnion = std::vector<std::string_view>;
-
     inline void check_unit_spec(const io::xml::Element& elem, std::string_view actual, std::string_view const& expected) {
         if (actual != expected)
             throw Exception() << "Invalid units for element " << elem.GetPath()
                               << "."" Expected '" << expected
                               << "', got '" << actual << "'";
-    }
-    inline void check_unit_spec(const io::xml::Element& elem, std::string_view actual, UnitUnion const& expected) {
-        if (expected.empty())
-            throw Exception() << "Invalid empty unit spec for element " << elem.GetPath();
-
-        if (std::find(expected.begin(), expected.end(), actual) == expected.end()) {
-            auto e = Exception() << "Invalid units for element " << elem.GetPath()
-                                 << ". Expected one of ";
-            char sep = '(';
-            for (auto& exp: expected) {
-                e << sep << '"' << exp << '"';
-                sep = ',';
-            }
-            e << "), got \"" << actual << '"';
-        }
     }
 
     //! Check the units of the quantity and decode the value into @param value
@@ -74,16 +57,6 @@ namespace hemelb::configuration
         return elem.GetAttributeOrThrow<T>("value");
     }
 
-    //! Check the units of the quantity and return the value and the actual units
-    template<typename T>
-    auto GetDimensionalValue(const io::xml::Element& elem, UnitUnion units)
-    {
-        auto got = elem.GetAttributeOrThrow("units");
-        check_unit_spec(elem, got, units);
-
-        return std::pair<T, std::string>{elem.GetAttributeOrThrow<T>("value"), got};
-    }
-
     //! Given an element (@param elem), check for a child with the given @param name.
     //! If it exists, return the unit-checked (against @param unit) value.
     //! If it doesn't exist, return @param default_value.
@@ -95,19 +68,21 @@ namespace hemelb::configuration
                 .transform([&](const io::xml::Element& _) { return GetDimensionalValue<T>(_, unit); })
                 .value_or(default_value);
     }
-    //! Given an element (@param elem), check for a child with the given @param name.
-    //! If it exists, return the unit-checked (against @param unit) value.
-    //! If it doesn't exist, return @param default_value.
-    template <typename T>
-    std::pair<T, std::string> GetDimensionalValueWithDefault(
-            const io::xml::Element& elem, std::string_view name,
-            UnitUnion unit, std::pair<T, std::string> default_value_units
-    ) {
+
+    template <QuantityUnion QUnion, IsVariantAlternative<QUnion> DefaultQ>
+    QUnion GetDimensionalValueWithDefault(const io::xml::Element& elem, std::string_view name, DefaultQ const& default_q) {
+        using RepT = typename quantity_union_traits<QUnion>::representation_type;
+        using io::xml::Element;
         return elem
-                .and_then([&](const io::xml::Element& _) { return _.GetChildOrNull(name); })
-                .transform([&](const io::xml::Element& _) { return GetDimensionalValue<T>(_, unit); })
-                .value_or(default_value_units);
+            .and_then([&](Element const& _) { return _.GetChildOrNull(name); })
+            .transform([](Element const& _) {
+                auto xml_units = _.GetAttributeOrThrow("units");
+                auto xml_val = _.GetAttributeOrThrow<RepT>("value");
+                return quantity_union_factory<QUnion>()(xml_val, xml_units);
+            })
+            .value_or(default_q);
     }
+
     // Base for initial conditions configuration
     struct ICConfigBase {
       ICConfigBase(std::optional<LatticeTimeStep> t);
@@ -167,7 +142,7 @@ namespace hemelb::configuration
     struct CellInserterConfig {
         std::int64_t seed;
         std::string template_name;
-        PhysicalTime offset_s;
+        quantity_union<double, "s", "lattice"> offset;
         Angle theta_rad;
         Angle phi_rad;
         PhysicalDisplacement translation_m;
@@ -263,8 +238,7 @@ namespace hemelb::configuration
     };
 
     struct NodeForceConfig {
-        double intensity;
-        std::string intensity_units;
+        quantity_union<double, "Nm", "lattice"> intensity;
         LatticeDistance cutoffdist;
         std::size_t exponent;
     };

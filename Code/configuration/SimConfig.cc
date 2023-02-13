@@ -584,10 +584,9 @@ namespace hemelb::configuration
                     GetDimensionalValueWithDefault<PhysicalDistance>(*insertEl, "z", "m", 0e0)
             };
 
-            inserterConf.offset_s = GetDimensionalValueWithDefault<PhysicalTime>(*insertEl,
-                                                                                 "offset",
-                                                                                 "s",
-                                                                                 0);
+            inserterConf.offset = GetDimensionalValueWithDefault<
+                    quantity_union<double, "s", "lattice">
+            >(*insertEl, "offset", quantity<double, "s">(0));
             inserterConf.drop_period_s = GetDimensionalValue<LatticeTime>(
                     insertEl->GetChildOrThrow("every"), "s");
             inserterConf.dt_s = GetDimensionalValueWithDefault<LatticeTime>(
@@ -869,8 +868,9 @@ namespace hemelb::configuration
     }
 
     NodeForceConfig readNode2NodeForce(const io::xml::Element& node) {
-        auto intensity = GetDimensionalValueWithDefault<PhysicalEnergy>(
-                node, "intensity", {"Nm", "lattice"}, {1.0, "Nm"});
+        auto intensity = GetDimensionalValueWithDefault<
+                quantity_union<double, "Nm", "lattice">
+        >(node, "intensity", quantity<double, "Nm">(1.0));
 
         auto cutoffdist = GetDimensionalValueWithDefault<LatticeDistance>(
                 node, "cutoffdistance", "lattice", 1.0);
@@ -882,7 +882,7 @@ namespace hemelb::configuration
                 [](io::xml::Element const& el) { return el.GetAttributeOrThrow<std::size_t>("value"); }
         ).value_or(std::size_t(2));
 
-        return {intensity.first, intensity.second, cutoffdist, exponent};
+        return {intensity, cutoffdist, exponent};
     }
 
     RBCConfig SimConfig::DoIOForRedBloodCells(const io::xml::Element &rbcEl) const {

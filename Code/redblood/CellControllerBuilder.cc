@@ -88,15 +88,17 @@ namespace hemelb::redblood {
     }
 
     Node2NodeForce CellControllerBuilder::build_node2node_force(configuration::NodeForceConfig const& conf) const {
-        auto intensity_lat = [&]() {
-            if (conf.intensity_units == "Nm") {
-                return unit_converter->ConvertToLatticeUnits("Nm", conf.intensity);
-            } else if (conf.intensity_units == "lattice") {
-                return conf.intensity;
-            } else {
-                throw Exception() << "Invalid units for intensity: " << conf.intensity_units;
-            }
-        }();
+        // ensure intensity is converted to lattice units
+        auto intensity_lat = overload_visit(
+                conf.intensity,
+                [&](quantity<double, "Nm"> const & q) {
+                    return unit_converter->ConvertToLatticeUnits("Nm", q.value());
+                },
+                [](quantity<double, "lattice"> const& q) {
+                    return q.value();
+                }
+        );
+
         if (2e0 * conf.cutoffdist > Dimensionless(Traits<>::Stencil::GetRange()))
         {
             log::Logger::Log<log::Warning, log::Singleton>("Input inconsistency: cell-cell and cell-wall interactions larger then stencil size\n"
@@ -216,8 +218,16 @@ namespace hemelb::redblood {
             // Drops first cell when time reaches offset, and then every deltaTime thereafter.
             // Note: c++14 will allow more complex captures. Until then, we will need to create
             // semi-local lambda variables on the stack as shared pointers. Where semi-local means the
-            // variables should live as long as the lambda. But longuer than a single call.
-            auto const offset = unit_converter->ConvertTimeToLatticeUnits(conf.offset_s);
+            // variables should live as long as the lambda. But longer than a single call.
+            auto const offset = overload_visit(
+                    conf.offset,
+                    [&](quantity<double, "s"> const & q){
+                        return unit_converter->ConvertTimeToLatticeUnits(q.value());
+                    },
+                    [](quantity<double, "lattice"> const& q) {
+                        return q.value();
+                    }
+            );
             auto const timeStep = unit_converter->ConvertTimeToLatticeUnits(conf.drop_period_s);
             auto const dt = unit_converter->ConvertTimeToLatticeUnits(conf.dt_s);
             auto time = std::make_shared<LatticeTime>(timeStep - 1e0
