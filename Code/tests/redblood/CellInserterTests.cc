@@ -171,7 +171,7 @@ namespace hemelb::tests
 	REQUIRE(current_cell);
 	auto const trans = cell0->GetBarycenter() - current_cell->GetBarycenter();
 	auto approx = Approx(0.0).margin(1e-8);
-	REQUIRE(approx(0) == Dot(trans, {0, 1, 1}));
+	REQUIRE(approx(0) == Dot(trans, util::Vector3D{0, 1, 1}));
 	REQUIRE(approx(0.1 / 0.6 * 0.1 / 0.6 * 2e0) == trans.GetMagnitudeSquared());
 
 	helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "z", "units" }, "m");
@@ -182,7 +182,7 @@ namespace hemelb::tests
 	insertWithZ(addCell);
 	REQUIRE(current_cell);
 	auto const transZ = cell0->GetBarycenter() - current_cell->GetBarycenter();
-	REQUIRE(approx(0.1 / 0.6 * std::sqrt(2)) == Dot(transZ, {0, 1, 1}));
+	REQUIRE(approx(0.1 / 0.6 * std::sqrt(2)) == Dot(transZ, util::Vector3D{0, 1, 1}));
 	REQUIRE(approx(0.1 / 0.6 * 0.1 / 0.6 * 3e0) == transZ.GetMagnitudeSquared());
       }
 

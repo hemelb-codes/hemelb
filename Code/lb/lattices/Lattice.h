@@ -32,6 +32,16 @@ namespace hemelb::lb::lattices
             return ans;
         }
 
+        // Convert array element wise
+        template <typename T, typename U = T, std::size_t N>
+        consteval auto array_as(std::array<util::Vector3D<U>, N> const& in) {
+            std::array<util::Vector3D<T>, N> out;
+            for (std::size_t i = 0; i < N; ++i) {
+                out[i] = in[i].template as<T>();
+            }
+            return out;
+        }
+
         // Given an array of the lattice's directions, compute for
         // each one the index of the inverse.
         template <std::size_t N>
@@ -71,7 +81,7 @@ namespace hemelb::lb::lattices
         static constexpr std::array<int, Q> CY = detail::get_component<int>(V, 1);
         static constexpr std::array<int, Q> CZ = detail::get_component<int>(V, 2);
 
-        alignas(16) static constexpr std::array<util::Vector3D<distribn_t>, Q> CD = V;
+        alignas(16) static constexpr std::array<util::Vector3D<distribn_t>, Q> CD = detail::array_as<distribn_t>(V);
         alignas(16) static constexpr std::array<distribn_t, Q> CXD = detail::get_component<distribn_t>(V, 0);
         alignas(16) static constexpr std::array<distribn_t, Q> CYD = detail::get_component<distribn_t>(V, 1);
         alignas(16) static constexpr std::array<distribn_t, Q> CZD = detail::get_component<distribn_t>(V, 2);

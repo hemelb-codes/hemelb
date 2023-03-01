@@ -184,7 +184,7 @@ namespace hemelb
                   LatticePosition sitePos(site.GetGlobalSiteCoords());
 
                   LatticePosition neighPos(sitePos);
-                  neighPos += LatticeType::VECTORS[i];
+                  neighPos += LatticeType::CD[i];
 
                   LatticeVelocity neighbourVelocity(iolet->GetVelocity(neighPos,
                                                                        bValues->GetTimeStep()));

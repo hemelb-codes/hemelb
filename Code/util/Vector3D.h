@@ -57,6 +57,30 @@ namespace hemelb::util
         static HandlerFunction* handler;
     };
 
+    template <typename T>
+    concept Arithmetic = std::integral<T> || std::floating_point<T>;
+
+    // Helper traits
+    // Note: standard defines additive (+, -) and multiplicative (*, /, %) categories of arithmetic operators
+    //
+    // The result type of doing T OPERATOR U
+    template <Arithmetic T, Arithmetic U>
+    using add_result_t = decltype(std::declval<std::decay_t<T>>() + std::declval<std::decay_t<U>>());
+    template <Arithmetic T, Arithmetic U>
+    using mul_result_t = decltype(std::declval<std::decay_t<T>>() * std::declval<std::decay_t<U>>());
+
+    // Check for integer promotion shenanigans.
+    //
+    // This is used in the operators below to ensure you don't
+    // accidentally have any surprises like how char + char -> int.
+    // Fixes:
+    // - explicitly cast one argument to the output type
+    // - use a compound assignment (e.g +=)
+    // - for Dot and Cross explicitly give the template args
+    // - maybe remove the static assert and act like a builtin type?
+    template <Arithmetic T, Arithmetic U, Arithmetic Res>
+    constexpr bool integer_promotion_occurred = std::is_same_v<T, U> && !std::is_same_v<T, Res>;
+
     /**
      * Three dimensional vector class template.
      *
@@ -64,11 +88,9 @@ namespace hemelb::util
      * operators as well as providing a number of useful methods. Other
      * methods are defined for convenience
      */
-    template<class T>
+    template<Arithmetic T>
     class Vector3D : public Vector3DBase
     {
-        static_assert(std::is_arithmetic_v<T>, "Vector3D only allowed with arithmetic types");
-
         // In debug mode, always do bounds checking.
         static constexpr bool debug =
 #ifndef NDEBUG
@@ -115,7 +137,7 @@ namespace hemelb::util
         }
 
         // Be friends with all other Vec3 instantiations.
-        template<class> friend class Vector3D;
+        template<Arithmetic> friend class Vector3D;
 
         /**
          * x, y and z components.
@@ -139,7 +161,8 @@ namespace hemelb::util
             return m_values[2];
         }
 
-        // Default constructor. It's a value type so this has undefined value when default constructed.
+        // Default constructor. It's a value type so this has
+        // undefined value when default constructed.
         constexpr Vector3D() = default;
 
         /**
@@ -181,17 +204,18 @@ namespace hemelb::util
         }
 
         // Go the other way and create a copy as the supplied type
-        template <class U>
+        template <Arithmetic U>
         constexpr Vector3D<U> as() const {
           return Vector3D<U>{*this};
         }
 
-        // Copy and move assignment are both explicitly defaulted
+        // Copy and move assignment are both explicitly defaulted.
+        // Deliberately do not want converting assign (use `as` instead).
         constexpr Vector3D& operator=(const Vector3D&) = default;
         constexpr Vector3D& operator=(Vector3D&&) noexcept = default;
 
         /**
-         * Get a component by Direction
+         * Get a component by Direction with bounds check
          * @param lDirection
          * @return The component
          */
@@ -220,7 +244,7 @@ namespace hemelb::util
             }
         }
         /**
-         * Get a component by index (x = 0, y = 1, z = 2).
+         * Get a component by index without bounds check in release builds
          * @param index
          * @return component
          */
@@ -234,7 +258,7 @@ namespace hemelb::util
         }
 
         /**
-         * Get a component by index (x = 0, y = 1, z = 2).
+         * Get a component by index without bounds check in release builds
          * @param index
          * @return component
          */
@@ -250,9 +274,13 @@ namespace hemelb::util
         /**
          * Equality
          */
-        constexpr bool operator==(const Vector3D& right) const
+        constexpr friend bool operator==(const Vector3D& left, const Vector3D& right)
         {
-            return m_values == right.m_values;
+            return left.m_values == right.m_values;
+        }
+        constexpr friend bool operator!=(const Vector3D& left, const Vector3D& right)
+        {
+            return !(left == right);
         }
 
         /**
@@ -276,20 +304,6 @@ namespace hemelb::util
           return normed;
         }
 
-        // Helper traits
-        // Note: standard defines additive (+, -) and multiplicative (*, /, %) categories of arithmetic operators
-        // 
-        // First, result type of doing T OPERATOR decay(scalar)
-        template <typename U>
-        using add_result_t = decltype(std::declval<T>() + std::declval<std::decay_t<U>>());
-        template <typename U>
-        using mul_result_t = decltype(std::declval<T>() * std::declval<std::decay_t<U>>());
-        // Second, predicate whether that type is the same as T
-        template <typename U>
-        static constexpr bool add_result_same_v = std::is_same_v<T, add_result_t<U>>;
-        template <typename U>
-        static constexpr bool mul_result_same_v = std::is_same_v<T, mul_result_t<U>>;
-
         /**
          * Compute the magnitude squared of the vector
          * @return magnitude**2
@@ -305,19 +319,9 @@ namespace hemelb::util
          */
         T GetMagnitude() const
         {
-          static_assert(!std::is_integral_v<T>, "Vector3D::GetMagnitude only makes sense for floating types");
+          static_assert(std::is_floating_point_v<T>,
+                  "Vector3D::GetMagnitude only makes sense for floating types");
           return std::sqrt(GetMagnitudeSquared());
-        }
-
-        /**
-         * Vector addition
-         * @param right
-         * @return this + right
-         */
-        template <typename U, typename RES = add_result_t<U>>
-        constexpr Vector3D<RES> operator+(const Vector3D<U>& right) const
-        {
-            return Vector3D<RES>(x() + right.x(), y() + right.y(), z() + right.z());
         }
 
         /**
@@ -325,12 +329,11 @@ namespace hemelb::util
          * @param right
          * @return the updated vector
          */
-        template <typename U, typename = std::enable_if_t<add_result_same_v<U>>>
+        template <Arithmetic U>
         constexpr Vector3D& operator+=(const Vector3D<U>& right)
         {
-            for (int i = 0; i < m_values.size(); ++i) {
+            for (int i = 0; i < m_values.size(); ++i)
                 m_values[i] += right.m_values[i];
-            }
             return *this;
         }
 
@@ -344,28 +347,16 @@ namespace hemelb::util
         }
 
         /**
-         * Vector subtraction
-         * @param right
-         * @return this - right
-         */
-        template <typename U, typename RES = add_result_t<U>>
-        constexpr Vector3D<RES> operator-(const Vector3D<U>& right) const
-        {
-          return Vector3D<RES>(x() - right.x(), y() - right.y(), z() - right.z());
-        }
-
-        /**
          * In-place vector subtraction
          * @param right
          * @return this - right
          */
-        template <typename U, typename = std::enable_if_t<add_result_same_v<U>>>
+        template <Arithmetic U>
         constexpr Vector3D& operator-=(const Vector3D<U>& right)
         {
-          x() -= right.x();
-          y() -= right.y();
-          z() -= right.z();
-          return *this;
+            for (int i = 0; i < m_values.size(); ++i)
+                m_values[i] -= right.m_values[i];
+            return *this;
         }
 
         /**
@@ -373,11 +364,11 @@ namespace hemelb::util
          * @param multiplier
          * @return
          */
-        template<class U,
-                typename = std::enable_if_t<std::is_arithmetic_v<U>>,
-                typename RES = mul_result_t<U>>
-        friend constexpr Vector3D<RES> operator*(const Vector3D& lhs, const U& rhs)
+        template<Arithmetic U>
+        friend constexpr auto operator*(const Vector3D& lhs, const U& rhs)
         {
+            using RES = mul_result_t<T, U>;
+            static_assert(!integer_promotion_occurred<T, U, RES>);
             return Vector3D<RES>{
                     lhs.x() * rhs,
                     lhs.y() * rhs,
@@ -386,10 +377,8 @@ namespace hemelb::util
         }
 
         // For scalar * vector just swap and call above
-        template<class U,
-                typename = std::enable_if_t<std::is_arithmetic_v<U>>,
-                typename RES = mul_result_t<U>>
-        friend constexpr Vector3D<RES> operator*(const U& lhs, const Vector3D& rhs)
+        template<Arithmetic U>
+        friend constexpr auto operator*(const U& lhs, const Vector3D& rhs)
         {
             return rhs*lhs;
         }
@@ -399,7 +388,7 @@ namespace hemelb::util
          * @param multiplier
          * @return
          */
-        template<class U, typename = std::enable_if_t<mul_result_same_v<U>>>
+        template<Arithmetic U>
         constexpr Vector3D& operator*=(const U& multiplier)
         {
             for (T& v: m_values)
@@ -409,20 +398,19 @@ namespace hemelb::util
 
         // Division by a scalar
         // Return type is a new Vector3D of the type of (T / U)
-        template<class U,
-                typename = std::enable_if_t<std::is_arithmetic_v<U>>,
-                typename RES = mul_result_t<U>>
-        constexpr Vector3D<RES> operator/(const U& divisor) const
+        template<Arithmetic U>
+        constexpr auto operator/(const U& divisor) const
         {
+            using RES = mul_result_t<T, U>;
+            static_assert(!integer_promotion_occurred<T, U, RES>);
             return Vector3D<RES>{x() / divisor,
                                  y() / divisor,
                                  z() / divisor};
         }
 
-        // In-place divison by a scalar
-        // Only enabled if the type of T/U == T
+        // In-place division by a scalar
         // Returns the updated object
-        template<class U, typename = std::enable_if_t<mul_result_same_v<U>>>
+        template<Arithmetic U>
         constexpr Vector3D& operator/=(const U& divisor)
         {
             for (T& v: m_values)
@@ -434,17 +422,19 @@ namespace hemelb::util
          * Scalar modulus
          * @param divisor
          */
-        template<class U, typename RES = mul_result_t<U>>
-        constexpr Vector3D<RES> operator%(const U& divisor) const
+        template<Arithmetic U>
+        constexpr auto operator%(const U& divisor) const
         {
-          return Vector3D<RES>{x() % divisor, y() % divisor, z() % divisor};
+            using RES = mul_result_t<T, U>;
+            static_assert(!integer_promotion_occurred<T, U, RES>);
+            return Vector3D<RES>{x() % divisor, y() % divisor, z() % divisor};
         }
 
         /**
          * In-place scalar modulus
          * @param divisor
          */
-        template<class U, typename = std::enable_if_t<mul_result_same_v<U>>>
+        template<Arithmetic U>
         constexpr Vector3D& operator%=(const U& divisor)
         {
             for (T& v: m_values)
@@ -457,7 +447,7 @@ namespace hemelb::util
          */
         constexpr Vector3D PointwiseMultiplication(const Vector3D& rightArgument) const
         {
-          return Vector3D(x() * rightArgument.x(), y() * rightArgument.y(), z() * rightArgument.z());
+          return {x() * rightArgument.x(), y() * rightArgument.y(), z() * rightArgument.z()};
         }
 
         /**
@@ -465,7 +455,7 @@ namespace hemelb::util
          */
         constexpr Vector3D PointwiseDivision(const Vector3D& rightArgument) const
         {
-          return Vector3D(x() / rightArgument.x(), y() / rightArgument.y(), z() / rightArgument.z());
+          return {x() / rightArgument.x(), y() / rightArgument.y(), z() / rightArgument.z()};
         }
 
         /**
@@ -511,7 +501,7 @@ namespace hemelb::util
          * Vector filled with the maximum value for the element type.
          * @return
          */
-        static constexpr Vector3D MaxLimit()
+        static constexpr Vector3D Largest()
         {
           return Vector3D(std::numeric_limits<T>::max());
         }
@@ -520,9 +510,9 @@ namespace hemelb::util
          * Vector filled with the minimum value for the element type.
          * @return
          */
-        static constexpr Vector3D MinLimit()
+        static constexpr Vector3D Lowest()
         {
-          return Vector3D(std::numeric_limits<T>::min());
+          return Vector3D(std::numeric_limits<T>::lowest());
         }
 
         /**
@@ -544,43 +534,58 @@ namespace hemelb::util
         }
     };
 
-    // Dot product for both args being the same type.
-    // Guarantees to return that same type (unlike e.g. char * char -> int).
-    template <typename T>
-    constexpr T Dot(Vector3D<T> const& l, Vector3D<T> const& r) {
-        return std::inner_product(l.m_values.begin(), l.m_values.end(), r.m_values.begin(), T{0});
+    /**
+      * Vector addition
+      * @param right
+      * @return this + right
+     */
+    template <Arithmetic T, Arithmetic U>
+    constexpr auto operator+(const Vector3D<T>& left, const Vector3D<U>& right)
+    {
+        using RES = add_result_t<T, U>;
+        static_assert(!integer_promotion_occurred<T, U, RES>);
+        Vector3D<RES> ans;
+        std::transform(left.begin(), left.end(), right.begin(), ans.begin(), std::plus<void>{});
+        return ans;
     }
 
-    // Types differ, so returns decltype(left * right)
-    template <typename T, typename U>
+    /**
+      * Vector subtraction
+      * @param right
+      * @return this - right
+      */
+    template <Arithmetic T, Arithmetic U>
+    constexpr auto operator-(const Vector3D<T>& left, const Vector3D<U>& right)
+    {
+        using RES = add_result_t<T, U>;
+        static_assert(!integer_promotion_occurred<T, U, RES>);
+        Vector3D<RES> ans;
+        std::transform(left.begin(), left.end(), right.begin(), ans.begin(), std::minus<void>{});
+        return ans;
+    }
+
+
+    // Dot product
+    template <Arithmetic T, Arithmetic U>
     constexpr auto Dot(Vector3D<T> const& l, Vector3D<U> const& r) {
-        using R = decltype(std::declval<T>() * std::declval<U>());
-        return std::inner_product(l.m_values.begin(), l.m_values.end(), r.m_values.begin(), R{0});
+        using RES = mul_result_t<T, U>;
+        static_assert(!integer_promotion_occurred<T, U, RES>);
+        return std::inner_product(l.m_values.begin(), l.m_values.end(), r.m_values.begin(), RES{0});
     }
 
-    // Cross product for both args being the same type.
-    // Guarantees to return that same type (unlike e.g. char * char -> int).
-    template <typename T>
-    constexpr Vector3D<T> Cross(Vector3D<T> const& l, Vector3D<T> const& r) {
-        return {
-                l.y() * r.z() - l.z() * r.y(),
-                l.z() * r.x() - l.x() * r.z(),
-                l.x() * r.y() - l.y() * r.x()
-        };
-    }
-
-    // Types differ, so returns decltype(left * right)
-    template <typename T, typename U>
+    // Cross product
+    template <Arithmetic T, Arithmetic U>
     constexpr auto Cross(Vector3D<T> const& l, Vector3D<U> const& r) {
-        using R = decltype(std::declval<T>() * std::declval<U>());
-        return Vector3D<R>{
+        using RES = mul_result_t<T, U>;
+        static_assert(!std::is_same_v<T, U> || std::is_same_v<T, RES>);
+        return Vector3D<RES>{
                 l.y() * r.z() - l.z() * r.y(),
                 l.z() * r.x() - l.x() * r.z(),
                 l.x() * r.y() - l.y() * r.x()
         };
     }
 
-    template<typename T>
+    template<Arithmetic T>
     std::ostream& operator<<(std::ostream& o, Vector3D<T> const& v3)
     {
       return o << "(" << v3.x() << "," << v3.y() << "," << v3.z() << ")";
@@ -591,7 +596,7 @@ namespace hemelb::util
       bool CheckNextChar(std::istream& i, char c);
     }
 
-    template<typename T>
+    template<Arithmetic T>
     std::istream& operator>>(std::istream& i, Vector3D<T>& v3)
     {
       if (detail::CheckNextChar(i, '('))

@@ -67,7 +67,7 @@ namespace hemelb::tests
 	auto const right = this->latDat->GetSite(15 - delta, 15, 15).GetForce();
 	REQUIRE(ApproxV(left) == -right);
 	// The forces at (14, 15, 15) should be  in direction (-1, 0, 0)
-	REQUIRE(Dot(right, {-1.0, 0.0, 0.0}) == Approx(std::abs(right.x())).margin(1e-8));
+	REQUIRE(Dot(right, util::Vector3D{-1.0, 0.0, 0.0}) == Approx(std::abs(right.x())).margin(1e-8));
       }
       // This node is too far away
       REQUIRE(approx_zero == this->latDat->GetSite(15 + delta, 15, 15).GetForce());

@@ -107,7 +107,7 @@ namespace hemelb::tests
       for (Direction i = 0; i < Traits::Lattice::NUMVECTORS; ++i) {
 	auto func = [i](LatticePosition const &x) {
 	  double const fac = (1e0 + static_cast<double>(i) * 0.1);
-	  return x.GetMagnitudeSquared() * fac - Dot(x, {1, 1, 1});
+	  return x.GetMagnitudeSquared() * fac - Dot(x, LatticePosition{1, 1, 1});
 	};
 	helpers::setUpDistribution<typename Traits::Lattice>(&fieldData, i, func);
       }

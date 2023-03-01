@@ -23,9 +23,9 @@ namespace hemelb::tests
         LatticePosition operator()(LatticePosition const &pos) const
         {
             return {
-                    Dot(pos, {1, 1, 1}),
-                    Dot(pos, {-1, 2, 1}),
-                    Dot(pos, {0, 0, 1})
+                    Dot(pos, util::Vector3D{1, 1, 1}),
+                    Dot(pos, util::Vector3D{-1, 2, 1}),
+                    Dot(pos, util::Vector3D{0, 0, 1})
             };
         }
         // We need to accept grid point and continuous input points
