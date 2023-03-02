@@ -17,7 +17,7 @@ namespace hemelb::geometry
     {
     }
 
-    util::Vector3D<site_t> VolumeTraverser::GetCurrentLocation()
+    util::Vector3D<site_t>const& VolumeTraverser::GetCurrentLocation()
     {
         return mCurrentLocation;
     }

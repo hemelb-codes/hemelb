@@ -20,7 +20,7 @@ namespace hemelb::geometry
       public:
         virtual ~VolumeTraverser();
 
-        util::Vector3D<site_t> GetCurrentLocation();
+        util::Vector3D<site_t> const& GetCurrentLocation();
 
         site_t GetCurrentIndex() const;
 

@@ -117,9 +117,10 @@ namespace hemelb
                     for (unsigned int l = 1; l < latticeInfo.GetNumVectors(); l++)
                     {
                         // Find the neighbour site co-ords in this direction.
-                        util::Vector3D<site_t> neighbourGlobalCoords = blockTraverser.GetCurrentLocation()
-                                                                       * readResult.GetBlockSize() + siteTraverser.GetCurrentLocation()
-                                                                       + util::Vector3D<site_t>(latticeInfo.GetVector(l));
+                        util::Vector3D<site_t> neighbourGlobalCoords =
+                                blockTraverser.GetCurrentLocation() * readResult.GetBlockSize()
+                                + siteTraverser.GetCurrentLocation()
+                                + latticeInfo.GetVector(l).as<site_t>();
 
                         if (!neighbourGlobalCoords.IsInRange(
                                 util::Vector3D<site_t>::Zero(),
@@ -355,23 +356,16 @@ namespace hemelb
 
         void Domain::CollectGlobalSiteExtrema()
         {
-            std::vector<site_t> localMins(3);
-            std::vector<site_t> localMaxes(3);
-
-            for (unsigned dim = 0; dim < 3; ++dim)
-            {
-                localMins[dim] = std::numeric_limits<site_t>::max();
-                localMaxes[dim] = 0;
-            }
+            auto localMins = util::Vector3D<site_t>::Largest();
+            auto localMaxes = util::Vector3D<site_t>::Zero();
 
             for (BlockTraverser blockSet(*this); blockSet.CurrentLocationValid();
                  blockSet.TraverseOne())
             {
                 auto const& block = blockSet.GetCurrentBlockData();
                 if (block.IsEmpty())
-                {
                     continue;
-                }
+
                 for (auto siteSet = blockSet.GetSiteTraverser();
                      siteSet.CurrentLocationValid(); siteSet.TraverseOne())
                 {
@@ -380,26 +374,18 @@ namespace hemelb
                         util::Vector3D<site_t> globalCoords = blockSet.GetCurrentLocation() * GetBlockSize()
                                                               + siteSet.GetCurrentLocation();
 
-                        for (unsigned dim = 0; dim < 3; ++dim)
-                        {
-                            localMins[dim] = hemelb::util::NumericalFunctions::min(localMins[dim],
-                                                                                   globalCoords[dim]);
-                            localMaxes[dim] = hemelb::util::NumericalFunctions::max(localMaxes[dim],
-                                                                                    globalCoords[dim]);
-                        }
+                        localMins.UpdatePointwiseMin(globalCoords);
+                        localMaxes.UpdatePointwiseMax(globalCoords);
                     }
                 }
 
             }
 
-            std::vector<site_t> siteMins = comms.AllReduce(localMins, MPI_MIN);
-            std::vector<site_t> siteMaxes = comms.AllReduce(localMaxes, MPI_MAX);
+            comms.AllReduceInPlace(std::span(localMins.begin(), localMins.end()), MPI_MIN);
+            comms.AllReduceInPlace(std::span(localMins.begin(), localMins.end()), MPI_MAX);
 
-            for (unsigned ii = 0; ii < 3; ++ii)
-            {
-                globalSiteMins[ii] = siteMins[ii];
-                globalSiteMaxes[ii] = siteMaxes[ii];
-            }
+            globalSiteMins = localMins;
+            globalSiteMaxes = localMaxes;
         }
 
         void Domain::InitialiseNeighbourLookups()
