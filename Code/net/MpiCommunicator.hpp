@@ -8,10 +8,8 @@
 #include <numeric>
 #include "net/MpiDataType.h"
 
-namespace hemelb
+namespace hemelb::net
 {
-  namespace net
-  {
     template<typename T>
     void MpiCommunicator::Broadcast(T& val, const int root) const
     {
@@ -39,6 +37,13 @@ namespace hemelb
       T ans;
       HEMELB_MPI_CALL(MPI_Allreduce, (&val, &ans, 1, MpiDataType<T>(), op, *this));
       return ans;
+    }
+
+    template<typename T>
+    void MpiCommunicator::AllReduceInPlace(const std::span<T>& vals, const MPI_Op& op) const
+    {
+        HEMELB_MPI_CALL(MPI_Allreduce,
+                        (MPI_IN_PLACE, vals.data(), vals.size(), MpiDataType<T>(), op, *this));
     }
 
     template<typename T>
@@ -234,7 +239,7 @@ namespace hemelb
     {
       HEMELB_MPI_CALL(MPI_Recv, (&vals, vals.size(), MpiDataType<T>(), src, tag, *this, stat));
     }
-  }
+
 }
 
 #endif // HEMELB_NET_MPICOMMUNICATOR_HPP

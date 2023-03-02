@@ -152,6 +152,8 @@ namespace hemelb::net
         template<typename T>
         T AllReduce(const T& val, const MPI_Op& op) const;
         template<typename T>
+        void AllReduceInPlace(const std::span<T>& vals, const MPI_Op& op) const;
+        template<typename T>
         std::vector<T> AllReduce(const std::vector<T>& vals, const MPI_Op& op) const;
 
 	template <typename T>
