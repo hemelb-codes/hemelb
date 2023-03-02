@@ -39,7 +39,8 @@ add_to_resources(resources/four_cube.gmy resources/four_cube.xml resources/four_
   resources/config-velocity-iolet.xml resources/config_new_velocity_inlets.xml
   resources/velocity_inlet.txt.weights.txt
   resources/xmltest.xml resources/config_file_velocity_inlet.xml resources/velocity_inlet.txt
-  )
+  resources/large_cylinder.gmy resources/large_cylinder.xml
+)
 
 if (HEMELB_BUILD_MULTISCALE)
   add_to_resources(multiscale/mpwide/MPWSettings.cfg)
@@ -67,7 +68,6 @@ add_to_tests(util)
 if (HEMELB_BUILD_RBC)
   add_to_resources(
     resources/red_blood_cell.txt resources/red_blood_cube.txt
-    resources/large_cylinder.gmy resources/large_cylinder.xml
     resources/large_cylinder_rbc.xml
     resources/rbc_ico_1280.msh resources/rbc_ico_720.msh
     resources/fedosov1c.xml resources/fedosov1c.gmy

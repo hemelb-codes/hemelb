@@ -22,15 +22,13 @@
 
 #include "net/MpiFile.h"
 
-namespace hemelb
+namespace hemelb::geometry
 {
-  namespace geometry
-  {
 
     class GeometryReader
     {
-      public:
-        typedef util::Vector3D<site_t> BlockLocation;
+    public:
+        using BlockLocation = util::Vector3D<site_t>;
 
         GeometryReader(const lb::lattices::LatticeInfo&,
                        reporting::Timers &timings, const net::IOCommunicator& ioComm);
@@ -38,7 +36,7 @@ namespace hemelb
 
         GmyReadResult LoadAndDecompose(const std::string& dataFilePath);
 
-      private:
+    private:
         /**
          * Read from the file into a buffer. We read this on a single core then broadcast it.
          * This has proven to be more efficient than reading in on every core (even using a collective
@@ -176,7 +174,6 @@ namespace hemelb
         //! Timings object for recording the time taken for each step of the domain decomposition.
         hemelb::reporting::Timers &timings;
     };
-  }
 }
 
 #endif /* HEMELB_GEOMETRY_GEOMETRYREADER_H */

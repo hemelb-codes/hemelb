@@ -13,6 +13,7 @@
 #include "geometry/decomposition/BasicDecomposition.h"
 #include "geometry/decomposition/OptimisedDecomposition.h"
 #include "geometry/GeometryReader.h"
+#include "geometry/LookupTree.h"
 #include "net/net.h"
 #include "net/IOCommunicator.h"
 #include "log/Logger.h"
@@ -111,6 +112,10 @@ namespace hemelb::geometry
       timings[hemelb::reporting::Timers::initialDecomposition].Start();
       log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
       principalProcForEachBlock.resize(geometry.GetBlockCount());
+
+      geometry.blockTree = std::make_unique<octree::LookupTree>(
+              octree::build_block_tree(geometry.GetBlockDimensions().as<octree::U16>(), fluidSitesOnEachBlock)
+      );
 
       // Get an initial base-level decomposition of the domain macro-blocks over processors.
       // This will later be improved upon by ParMetis.
@@ -249,6 +254,10 @@ namespace hemelb::geometry
       // Create a Xdr translation object to translate from binary
       auto preambleReader = hemelb::io::XdrMemReader(headerBuffer.data(),
 								   headerByteCount);
+
+      fluidSitesOnEachBlock.reserve(blockCount);
+      bytesPerCompressedBlock.reserve(blockCount);
+      bytesPerUncompressedBlock.reserve(blockCount);
 
       // Read in all the data.
       for (site_t block = 0; block < blockCount; block++)

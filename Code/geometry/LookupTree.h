@@ -1,0 +1,174 @@
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
+
+#ifndef HEMELB_GEOMETRY_LOOKUPTREE_H
+#define HEMELB_GEOMETRY_LOOKUPTREE_H
+
+#include <algorithm>
+#include <cstdint>
+#include <vector>
+
+#include "Exception.h"
+#include "units.h"
+#include "util/Vector3D.h"
+
+namespace hemelb::geometry::octree
+{
+
+    //  Children are stored in the standard C++ order with the
+    //  associated level-local index being their 3D local coordinate
+    //  concatenated and treated as a binary number.
+    //
+    //  I.e.:
+    //
+    // (0,0,0) - 000 - 0
+    // (0,0,1) - 001 - 1
+    // (0,1,0) - 010 - 2
+    // (0,1,1) - 011 - 3
+    // (1,0,0) - 100 - 4
+    // (1,0,1) - 101 - 5
+    // (1,1,0) - 110 - 6
+    // (1,1,1) - 111 - 7
+
+    // This is repeated down each level.
+    // E.g. a point at (2, 0, 7)  = (010, 000, 111)
+    // would go root node -> child(0,0,1) -> child (1,0,1) -> child(0,0,1)
+    // effectively we are interleaving the bits.
+
+    // Restrict each dimension to a 16 bit int and the oct index to 64 bits.
+    using U16 = std::uint16_t;
+    using U64 = std::uint64_t;
+    using Vec16 = util::Vector3D<U16>;
+
+    // We can squeeze an extra one in, because the root node in level zero
+    // always has index zero.
+    constexpr U16 MAX_LEVELS = 17;
+
+    // These constants used for interleaving the bits of the dimension coords
+    constexpr std::array<U64, 4> shifts = {2, 4, 8, 16};
+    constexpr std::array<U64, 5> masks = {
+            0b0000000000000000001001001001001001001001001001001001001001001001,
+            0b0000000000000000000011000011000011000011000011000011000011000011,
+            0b0000000000000000000000001111000000001111000000001111000000001111,
+            0b0000000000000000000000000000000011111111000000000000000011111111,
+            0b0000000000000000000000000000000000000000000000001111111111111111
+    };
+
+    // Spread the first 16 bits of the input out. I.e.:
+    // 0b0000000000000000000000000000000000000000000000001111111111111111
+    // goes to:
+    // 0b0000000000000000001001001001001001001001001001001001001001001001
+    constexpr U64 bitspread_one(U64 x) {
+        x = (x | (x << shifts[3])) & masks[3];
+        x = (x | (x << shifts[2])) & masks[2];
+        x = (x | (x << shifts[1])) & masks[1];
+        x = (x | (x << shifts[0])) & masks[0];
+        return x;
+    }
+
+    // Condense the bits of a spread number back to the lowest 16 bits
+    constexpr U16 bitcondense_one(U64 x) {
+        // mask out irrelevant bits
+        x = x & masks[0];
+        x = (x | x >> shifts[0]) & masks[1];
+        x = (x | x >> shifts[1]) & masks[2];
+        x = (x | x >> shifts[2]) & masks[3];
+        x = (x | x >> shifts[3]) & masks[4];
+        return std::uint16_t(x);
+    }
+
+    // Interleave the bits of the input
+    constexpr U64 ijk_to_oct(Vec16 const & ijk) {
+        auto x = bitspread_one(ijk.x());
+        auto y = bitspread_one(ijk.y());
+        auto z = bitspread_one(ijk.z());
+        return (x << 2U) ^ (y << 1U) ^ z;
+    }
+
+    // Separate the bits of the input and return a Vector
+    constexpr Vec16 oct_to_ijk(U64 oct) {
+        auto x = bitcondense_one(oct >> 2U);
+        auto y = bitcondense_one(oct >> 1U);
+        auto z = bitcondense_one(oct);
+        return {x, y, z};
+    }
+
+    struct LookupTree;
+
+    // Single level of a condensed octree
+    // Have a structure of arrays view on the data - vectors must have the same length
+    struct Level {
+        // Constant for no child
+        static constexpr std::size_t NC = ~0U;
+        static constexpr std::array<std::size_t, 8> NOCHILDREN = {NC, NC, NC, NC, NC, NC, NC, NC};
+
+        // The octree ID of the point - unique at the level and can be converted to 3D coordinates
+        std::vector<U64> node_ids;
+        // The number of fluid sites under the node (is the sum of child sites_per_nodes)
+        std::vector<U64> sites_per_node;
+        // The indexes of child nodes in the next Level's arrays
+        std::vector<std::array<std::size_t, 8>> child_indices;
+        // This level's ID (root node has level == 0)
+        U16 level;
+    };
+
+    // Refer to a particular node in the tree
+    struct NodeRef {
+        //
+        std::array<std::size_t, MAX_LEVELS> path;
+        LookupTree const* tree;
+
+        inline explicit NodeRef(LookupTree const* t) : tree{t} {
+            std::fill(path.begin(), path.end(), Level::NC);
+        }
+    };
+
+    // A tree with one level holds only the root node
+    struct LookupTree {
+        std::vector<Level> levels;
+        U16 n_levels;
+
+        explicit LookupTree(U16 N);
+
+        // Get from the lowest level in the tree
+        NodeRef operator()(Vec16 ijk) const;
+    };
+
+    // Iterate over all the octree leaf coordinates that are within a simple cuboid
+    // bounding box starting at origin up to (not including) the bounds.
+    //
+    // Used to iterate a GMY blocks in octree order
+    class WithinBoundsIterator {
+        Vec16 mPos;
+        Vec16 mBounds;
+        U64 mEnd;
+
+        friend struct IterBounds;
+        explicit WithinBoundsIterator(Vec16 bounds);
+    public:
+
+        [[nodiscard]] bool within_dims(Vec16 const& coord) const;
+
+        [[nodiscard]] Vec16 advance(U64 prev) const;
+
+        WithinBoundsIterator& operator++();
+
+        Vec16 const& operator*() const;
+
+        friend bool operator==(WithinBoundsIterator const& lhs, WithinBoundsIterator const& rhs);
+        friend bool operator!=(WithinBoundsIterator const& lhs, WithinBoundsIterator const& rhs);
+    };
+
+    struct IterBounds {
+        Vec16 bounds;
+        WithinBoundsIterator begin() const;
+        WithinBoundsIterator end() const;
+    };
+
+    LookupTree build_block_tree(const Vec16& dimensionsInBlocks, std::vector<site_t> const& fluidSitesPerBlock);
+}
+
+
+#endif

@@ -6,6 +6,7 @@ add_test_lib(test_geometry
   GeometryReaderTests.cc
   LatticeDataTests.cc
   NeedsTests.cc
+  LookupTreeTests.cc
   )
 add_subdirectory(neighbouring)
 target_link_libraries(test_geometry PUBLIC test_neighbouring)

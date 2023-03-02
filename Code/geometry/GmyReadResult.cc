@@ -4,6 +4,7 @@
 // license in the file LICENSE.
 
 #include "geometry/GmyReadResult.h"
+#include "geometry/LookupTree.h"
 
 namespace hemelb::geometry {
     GmyReadResult::GmyReadResult(const util::Vector3D<site_t>& dimensionsInBlocks, site_t blockSize) :
@@ -14,6 +15,9 @@ namespace hemelb::geometry {
     {
     }
 
+    GmyReadResult::~GmyReadResult() {
+
+    }
     site_t GmyReadResult::FindSiteIndexInBlock(site_t fluidSiteBlock, site_t fluidSitesToPass) const
     {
         site_t siteIndex = 0;
@@ -51,5 +55,9 @@ namespace hemelb::geometry {
         }
 
         return SiteId;
+    }
+
+    std::unique_ptr<octree::LookupTree> GmyReadResult::StealBlockTree() {
+        return std::move(blockTree);
     }
 }

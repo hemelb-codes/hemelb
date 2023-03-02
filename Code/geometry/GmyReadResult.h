@@ -6,27 +6,33 @@
 #ifndef HEMELB_GEOMETRY_GMYREADRESULT_H
 #define HEMELB_GEOMETRY_GMYREADRESULT_H
 
+#include <memory>
 #include <vector>
+
 #include "units.h"
 #include "constants.h"
 #include "geometry/GeometryBlock.h"
 #include "util/utilityFunctions.h"
 #include "util/Vector3D.h"
 
-namespace hemelb
+namespace hemelb::geometry
 {
-  namespace geometry
-  {
+    namespace octree { struct LookupTree; }
     /***
      * Model of the information in a geometry file
      */
     class GmyReadResult
     {
-      public:
+    public:
         /**
          * Default constructor initialises internal variables
          */
         GmyReadResult(const util::Vector3D<site_t>& dimensionsInBlocks, site_t blockSize);
+
+        //! Destructor has to be defined in a TU where LookupTree is defined
+        ~GmyReadResult();
+        GmyReadResult(GmyReadResult&&) = default;
+        GmyReadResult& operator=(GmyReadResult&&) = default;
 
         /***
          * Returns the total count of blocks in the bounding box of the geometry.
@@ -119,17 +125,18 @@ namespace hemelb
         site_t FindFluidSiteIndexInBlock(site_t fluidSiteBlock, site_t neighbourSiteId) const;
 
       private:
-        const util::Vector3D<site_t> dimensionsInBlocks; //! The count of blocks in each direction
-        const site_t blockSize; //! Size of a block, in sites.
+        util::Vector3D<site_t> dimensionsInBlocks; //! The count of blocks in each direction
+        site_t blockSize; //! Size of a block, in sites.
 
-        const site_t blockCount;
-        const site_t sitesPerBlock;
+        site_t blockCount;
+        site_t sitesPerBlock;
 
       public:
         std::vector<BlockReadResult> Blocks; //! Array of Block models
+        std::unique_ptr<octree::LookupTree> blockTree;
 
+        std::unique_ptr<octree::LookupTree> StealBlockTree();
     };
 
-  }
 }
 #endif // HEMELB_GEOMETRY_GMYREADRESULT_H
