@@ -23,7 +23,7 @@ on:
 
 jobs:
   lint-python:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
 
@@ -32,7 +32,7 @@ jobs:
         run: pip install black~=22.0 && black --check .
 
   lint-cpp:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
 
@@ -41,7 +41,7 @@ jobs:
         run: ${{ github.workspace }}/.github/workflows/run-clang-format.py --style file -r .
 
   gmy-tool:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:

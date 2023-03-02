@@ -16,7 +16,7 @@ on:
 
 jobs:
   python-lint:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     defaults:
       run:
@@ -38,7 +38,7 @@ jobs:
         run: black --check .
 
   python-tests:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
