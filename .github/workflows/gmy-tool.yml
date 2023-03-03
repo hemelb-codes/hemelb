@@ -25,7 +25,7 @@ jobs:
   lint-python:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Run black to check Python formatting
         working-directory: geometry-tool
@@ -46,19 +46,19 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - "3.6"
-          - "3.7"
-          - "3.8"
-          - "3.9"
+          - '3.8'
+          - '3.9'
+          - '3.10'
+          - '3.11'
 
     env:
-      VMTK_VERSION: 1.4.1-rc4
+      VMTK_VERSION: 1.5.0
       VMTK_DIR: /opt/vmtk
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -74,7 +74,7 @@ jobs:
             libopengl0 libglx0 libxt6
 
       - name: pip cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           # Increase this value to reset cache
           CACHE_NUMBER: 0
@@ -101,7 +101,7 @@ jobs:
 
       - name: Store build tree on error
         if: failure()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: failed-build-tree
           path: geometry-tool/_skbuild
@@ -120,7 +120,7 @@ jobs:
 
       - name: Store failed install
         if: failure()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: failed-python-${{ matrix.python-version }}
           path: fail-${{ matrix.python-version }}.tar.gz

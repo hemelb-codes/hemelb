@@ -31,7 +31,7 @@ jobs:
 
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Check copyright statements
         run: python Scripts/checkCopyright.py
@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - uses: ./.github/actions/install-hemelb-deps
       with:
@@ -77,7 +77,7 @@ jobs:
 
     - name: Store build tree on error
       if: failure()
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: fluid-only-failed-build-tree
         path: build
@@ -103,7 +103,7 @@ jobs:
 
     - name: Store results on error
       if: failure()
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: fluid-only-failed-diffTest
         path: hemelb-tests/diffTest/results
@@ -116,7 +116,7 @@ jobs:
 
     - name: Store results on error
       if: failure()
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: fluid-only-failed-checkpointTest
         path: hemelb-tests/fluid-checkpoint/results
@@ -126,7 +126,7 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - uses: ./.github/actions/install-hemelb-deps
       with:
@@ -166,7 +166,7 @@ jobs:
 
     - name: Store build tree on error
       if: failure()
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: rbc-failed-build-tree
         path: build

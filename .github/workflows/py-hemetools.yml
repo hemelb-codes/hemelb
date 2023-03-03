@@ -23,12 +23,12 @@ jobs:
         working-directory: python-tools
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: '3.9'
 
       - name: install
         run: |
@@ -43,17 +43,16 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - 3.6
-          - 3.7
-          - 3.8
-          - 3.9
+          - '3.8'
+          - '3.9'
           - '3.10'
+          - '3.11'
 
     env:
       HEMELB_TESTS_DIR: ${{ github.workspace }}/tests
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           path: main
 
@@ -65,7 +64,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
