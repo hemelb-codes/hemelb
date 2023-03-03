@@ -10,39 +10,36 @@
 #include <CGAL/Polyhedron_incremental_builder_3.h>
 
 #include <vtkCellArray.h>
+#include <vtkCellArrayIterator.h>
 #include <vtkIntArray.h>
 #include <vtkPoints.h>
-
-// #include "vtkIdList.h"
-// #include "vtkCellData.h"
-// #include "vtkPolyDataAlgorithm.h"
-// #include "vtkOBBTree.h"
-
-// #include "vtkCellData.h"
-// #include "vtkDataSet.h"
-// #include "vtkMatrix4x4.h"
-// #include "vtkXMLPolyDataWriter.h"
-// #include "vtkCellArray.h"
 
 using namespace hemelb::io::formats;
 
 template <class HDS>
 void BuildCGALPolygon<HDS>::operator()(HDS& hds) {
+  using Vertex = typename HDS::Vertex;
+  using Point = typename Vertex::Point;
+
   CGAL::Polyhedron_incremental_builder_3<HDS> B(hds, true);
   B.begin_surface(this->pts->GetNumberOfPoints(),
                   this->polys->GetNumberOfCells(), 0);
-  typedef typename HDS::Vertex Vertex;
-  typedef typename Vertex::Point Point;
-  vtkIdType npts = 0;
-  vtkIdType* indx;
+
   double vertex[3];
   for (int i = 0; i != this->pts->GetNumberOfPoints(); i++) {
     this->pts->GetPoint(i, vertex);
     B.add_vertex(Point(vertex[0], vertex[1], vertex[2]));
   }
+
   int j = 0;
   Face_handle face;
-  for (this->polys->InitTraversal(); this->polys->GetNextCell(npts, indx);) {
+  vtkIdType npts = 0;
+  vtkIdType const* indx = nullptr;
+  auto iter = vtk::TakeSmartPointer(this->polys->NewIterator());
+
+  for (iter->GoToFirstCell(); !iter->IsDoneWithTraversal(); iter->GoToNextCell()) {
+    // do work with iter
+    iter->GetCurrentCell(npts, indx);
     if (indx[0] != indx[1] & indx[0] != indx[2] & indx[1] != indx[2]) {
       // VTK polygons can contain lines where two vertexes are identical. Forget
       // these

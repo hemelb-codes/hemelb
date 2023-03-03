@@ -16,12 +16,12 @@ Build dependencies:
 
 - Python >= 3.6
 - Setuptools >= 21.1
-- C++ compiler
-- CMake
+- C++ compiler (C++20)
+- CMake >= 3.13
 - Pybind11
 - scikit-build
 - Boost (header only)
-- VTK
+- VTK >= 9
 - CGAL
 
 Runtime dependencies:
@@ -41,18 +41,15 @@ Test dependencies:
 ## Conda install
 
 VMTK is hard to build yourself but is easily installed via Conda, so
-we present this process here. On some Ubuntu machines, the VMTK
-package from Conda is also broken, so please see the next section.
-
-VMTK requires VTK 8 (unfortunately it does not yet work with VTK 9,
-required by the main HemeLB application...).
+we present this process here.
 
 ### Virtual enviroment setup
 
 We *strongly* recommend that you install into an isolated virtual
 environment.
 
-Create the environment for the tool and specify required packages. The
+Create the environment for the tool and specify required
+packages. They live in the `conda-forge` "channel". The
 dependencies are recorded in the `conda-environment.yml` file.
 
 ```
@@ -70,24 +67,15 @@ You then need to activate this for your shell session:
 conda activate gmy-tool
 ```
 
-The VTK and VMTK packages installed by conda do not appear to
-setuptools as they don't have the proper metadata included. You can
-run this script to fix it:
-
-```
-./bodge-packages-for-setuptools.sh
-```
-
 ### Install
 
 With the environment above, install should be as simple as
 
 ```
-pip install --use-feature=in-tree-build '.[gui]'
+pip install '.[gui]'
 ```
 
-At some point setuptools will not require the extra flag, but for now
-it does.
+(If your pip version is less than 21.3, add the extra flag `--use-feature=in-tree-build`)
 
 If you don't want the GUI, you can drop the `[gui]` extra
 specification.
@@ -119,55 +107,11 @@ python macos-fix-gui-launcher.py
 ## Install with custom VMTK
 
 The hemelb-codes organisation on GitHub includes a project to build
-VMTK correctly. This currently run on Ubuntu 20.04 and is used in the
-CI for this tool.
+VMTK  for Ubuntu: https://github.com/hemelb-codes/vmtk-build/
 
-### System packages
-This is known to work with the following APT packages
-
-```bash
-apt-get install -y \
-    cmake \
-    gcc-9 \
-    libboost-dev \
-    libcgal-dev \
-    libopengl0 \
-    libosmesa6 \
-    libxt6 \
-    ninja-build \
-    python-is-python3 \
-    python3.8-venv \
-    python3.8-dev \
-    python3-pip \
-    python3-wxgtk4.0 \
-```
-
-### Virtual environment
-A virtual environment is recommended:
-
-```bash
-venv_prefix=$HOME/gmy-tool
-# system packages are optional but avoids rebuilding wxpython
-python -m venv --system-site-packages $venv_prefix
-. $venv_prefix/bin/activate
-# system packages are old
-pip install --upgrade pip setuptools
-
-VMTK_VERSION=1.4.1-rc4
-PYTHON_VERSION=3.8
-
-tarball=all-${VMTK_VERSION}-ubuntu-py${PYTHON_VERSION}.tar.gz
-wget https://github.com/hemelb-codes/vmtk-build/releases/download/v${VMTK_VERSION}/${tarball}
-
-# extract the tarball into your virtual environment
-tar -C $venv_prefix -xzf $tarball
-
-rm $tarball
-```
-
-### Install
-
-As above!
+That will hopefully give you an idea for how to proceed. If you are
+lucky you can just download the tarball. (Some Ubuntu packages will
+have to be installed - see that repo)
 
 ## Test
 

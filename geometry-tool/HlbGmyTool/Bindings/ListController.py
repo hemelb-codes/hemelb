@@ -3,7 +3,7 @@
 # file AUTHORS. This software is provided under the terms of the
 # license in the file LICENSE.
 
-import collections
+from collections.abc import MutableSequence
 
 from ..Util.Observer import ObservableList
 
@@ -14,7 +14,7 @@ from .Bindings import ValueBinding
 from .Mappers import ReadOnlyMapper, WriteOnlyMapper
 
 
-class ListController(ObjectController, collections.MutableSequence):
+class ListController(ObjectController, MutableSequence):
     def __init__(self, delegate, SelectionControllerClass=ObjectController):
         assert isinstance(delegate, ObservableList)
         ObjectController.__init__(self, delegate)

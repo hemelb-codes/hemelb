@@ -1,11 +1,6 @@
 name: gmy-tool
 channels:
-  - vmtk
   - conda-forge
 dependencies:
-  # For now, pretty much all versions are fixed by VMTK being last
-  # updated in 2018.
-  - itk=4.13.0
-  - vmtk=1.4.0
-  - vtk=8.1.0
+  - vmtk=1.5.0
   - wxpython=4.0.6
