@@ -4,45 +4,64 @@
 // license in the file LICENSE.
 
 #include "geometry/decomposition/BasicDecomposition.h"
+#include "geometry/GmyReadResult.h"
+#include "geometry/LookupTree.h"
 #include "net/mpi.h"
 
 namespace hemelb::geometry::decomposition
 {
 
-      BasicDecomposition::BasicDecomposition(const GmyReadResult& geometry,
-                                             const lb::lattices::LatticeInfo& latticeInfo,
-                                             const net::MpiCommunicator& communicator,
-                                             const std::vector<site_t>& fluidSitesOnEachBlock) :
-          geometry(geometry), latticeInfo(latticeInfo), communicator(communicator),
-              fluidSitesOnEachBlock(fluidSitesOnEachBlock)
-      {
-      }
+    BasicDecomposition::BasicDecomposition(const GmyReadResult& geometry,
+                                           const net::MpiCommunicator& communicator) :
+            geometry(geometry), communicator(communicator)
+    {
+    }
 
-      void BasicDecomposition::Decompose(std::vector<proc_t>& procAssignedToEachBlock)
-      {
-        // Keep a count of the number of non-empty blocks that haven't yet been assigned
-        // a processor.
-        site_t unvisitedFluidBlockCount = 0;
-        for (site_t block = 0; block < geometry.GetBlockCount(); ++block)
-        {
-          if (fluidSitesOnEachBlock[block] != 0)
-          {
-            ++unvisitedFluidBlockCount;
-          }
+    void BasicDecomposition::Decompose(std::vector<proc_t>& procAssignedToEachBlock)
+    {
+        auto const& tree = *geometry.blockTree;
+        // Root node of tree holds total fluid sites
+        auto total_sites = tree.levels[0].sites_per_node[0];
+        auto target_sites_per_rank = (total_sites - 1) / communicator.Size() + 1;
+        // Those blocks which contain at least one fluid site are here
+        auto& nonsolid_block_fluid_site_counts = tree.levels[tree.n_levels].sites_per_node;
+        auto const n_nonsolid = nonsolid_block_fluid_site_counts.size();
+        std::vector<int> rank_for_block(n_nonsolid);
+
+        // We need to return data organised in GMY file order
+        // Initialise output to -1 => SOLID, we will overwrite the non-solid below
+        std::fill(procAssignedToEachBlock.begin(), procAssignedToEachBlock.end(), -1);
+        // We need to know the octree ID to map to 3D coords.
+        auto& block_oct_ids = tree.levels[tree.n_levels].node_ids;
+        auto& dims = geometry.GetBlockDimensions();
+        auto const strides = BlockLocation{dims[1]*dims[2], dims[2], 1};
+
+        int assigned_rank = 0;
+        std::decay_t<decltype(nonsolid_block_fluid_site_counts)>::value_type assigned_sites = 0;
+        for (int i = 0; i < n_nonsolid; ++i) {
+            if (assigned_rank >= communicator.Size())
+                throw Exception() << "Trying to assign block to rank that does not exist";
+
+            // This holds only the fluid blocks in octree order
+            rank_for_block[i] = assigned_rank;
+            // Need to map back to GMY order
+            auto ijk = octree::oct_to_ijk(block_oct_ids[i]);
+            auto gmy = Dot(ijk, strides);
+            procAssignedToEachBlock[gmy] = assigned_rank;
+
+            assigned_sites += nonsolid_block_fluid_site_counts[i];
+
+            if (assigned_sites >= target_sites_per_rank) {
+                // Reached target, assign to next rank now
+                assigned_rank += 1;
+                assigned_sites = 0;
+            }
         }
 
-        // Divide blocks between the processors.
-        procAssignedToEachBlock.resize(geometry.GetBlockCount());
+    }
 
-        DivideBlocks(procAssignedToEachBlock,
-                     unvisitedFluidBlockCount,
-                     geometry,
-                     communicator.Size(),
-                     fluidSitesOnEachBlock);
-      }
-
-      void BasicDecomposition::Validate(std::vector<proc_t>& procAssignedToEachBlock)
-      {
+    void BasicDecomposition::Validate(std::vector<proc_t>& procAssignedToEachBlock)
+    {
         log::Logger::Log<log::Debug, log::OnePerCore>("Validating procForEachBlock");
 
         std::vector<proc_t> procForEachBlockRecv = communicator.AllReduce(procAssignedToEachBlock,
@@ -50,182 +69,14 @@ namespace hemelb::geometry::decomposition
 
         for (site_t block = 0; block < geometry.GetBlockCount(); ++block)
         {
-          if (procAssignedToEachBlock[block] != procForEachBlockRecv[block])
-          {
-            log::Logger::Log<log::Critical, log::OnePerCore>("At least one other proc thought block %li should be on proc %li but we locally had it as %li",
-                                                             block,
-                                                             procAssignedToEachBlock[block],
-                                                             procForEachBlockRecv[block]);
-          }
-        }
-      }
-
-      void BasicDecomposition::DivideBlocks(std::vector<proc_t>& processForEachBlock,
-                                            site_t unassignedBlocks, const GmyReadResult& geometry,
-                                            const proc_t processCount,
-                                            const std::vector<site_t>& fluidSitesPerBlock)
-      {
-        // Initialise the process being assigned to, and the approximate number of blocks
-        // required on each process.
-        proc_t currentProcess = 0;
-
-        site_t targetBlocksPerProcess = (unassignedBlocks - 1) / processCount + 1;
-
-        // Create an array to monitor whether each block has been assigned yet.
-        std::vector<bool> blockAssigned(geometry.GetBlockCount(), false);
-
-        // Create lists of the current edge of blocks on the current proc and the edge being expanded into
-        std::vector<BlockLocation> currentEdge;
-        std::vector<BlockLocation> expandedEdge;
-
-        site_t blockNumber = -1;
-
-        // domain_type Decomposition.  Pick a site. Set it to the rank we are
-        // looking at. Find its neighbours and put those on the same
-        // rank, then find the next-nearest neighbours, etc. until we
-        // have a completely joined region, or there are enough fluid
-        // sites on the rank.  In the former case, start again at
-        // another site. In the latter case, move on to the next rank.
-        // Do this until all sites are assigned to a rank. There is a
-        // high chance of of all sites on a rank being joined.
-
-        site_t blocksOnCurrentProc = 0;
-
-        // Iterate over all blocks.
-        for (site_t blockCoordI = 0; blockCoordI < geometry.GetBlockDimensions().x(); blockCoordI++)
-        {
-          for (site_t blockCoordJ = 0; blockCoordJ < geometry.GetBlockDimensions().y(); blockCoordJ++)
-          {
-            for (site_t blockCoordK = 0; blockCoordK < geometry.GetBlockDimensions().z(); blockCoordK++)
+            if (procAssignedToEachBlock[block] != procForEachBlockRecv[block])
             {
-              // Block number is the number of the block we're currently on.
-              blockNumber++;
-
-              // If the array of proc rank for each site is nullptr, we're on an all-solid block.
-              // Alternatively, if this block has already been assigned, move on.
-              if (fluidSitesPerBlock[blockNumber] == 0)
-              {
-                processForEachBlock[blockNumber] = -1;
-                continue;
-              }
-              else if (blockAssigned[blockNumber])
-              {
-                continue;
-              }
-
-              // Assign this block to the current process.
-              blockAssigned[blockNumber] = true;
-              processForEachBlock[blockNumber] = currentProcess;
-
-              ++blocksOnCurrentProc;
-
-              // Record the location of this initial site.
-              currentEdge.clear();
-              BlockLocation lNew(blockCoordI, blockCoordJ, blockCoordK);
-              currentEdge.push_back(lNew);
-
-              // The subdomain can grow.
-              bool isRegionGrowing = true;
-
-              // While the region can grow (i.e. it is not bounded by solids or visited
-              // sites), and we need more sites on this particular rank.
-              while (blocksOnCurrentProc < targetBlocksPerProcess && isRegionGrowing)
-              {
-                expandedEdge.clear();
-
-                // Sites added to the edge of the mClusters during the iteration.
-                isRegionGrowing = Expand(expandedEdge,
-                                         blockAssigned,
-                                         processForEachBlock,
-                                         blocksOnCurrentProc,
-                                         currentEdge,
-                                         currentProcess,
-                                         targetBlocksPerProcess);
-
-                // When the new layer of edge sites has been found, swap the buffers for
-                // the current and new layers of edge sites.
-                currentEdge.swap(expandedEdge);
-              }
-
-              // If we have enough sites, we have finished this process.
-              if (blocksOnCurrentProc >= targetBlocksPerProcess)
-              {
-                ++currentProcess;
-
-                unassignedBlocks -= blocksOnCurrentProc;
-
-                targetBlocksPerProcess = unassignedBlocks == 0 ?
-                        0 :
-                        (unassignedBlocks - 1) / (processCount - currentProcess) + 1;
-
-                blocksOnCurrentProc = 0;
-              }
-              // If not, we have to start growing a different region for the same rank:
-              // region expansions could get trapped.
-
-            } // Block co-ord k
-          } // Block co-ord j
-        } // Block co-ord i
-      }
-
-      bool BasicDecomposition::Expand(std::vector<BlockLocation>& expansionBlocks,
-                                      std::vector<bool>& blockAssigned,
-                                      std::vector<proc_t>& processForEachBlock,
-                                      site_t &blocksOnCurrentProcess,
-                                      const std::vector<BlockLocation>& edgeBlocks,
-                                      const proc_t currentProcess, const site_t blocksPerProcess)
-      {
-        bool regionExpanded = false;
-
-        // For sites on the edge of the domain (sites_a), deal with the neighbours.
-        for (unsigned int edgeBlockId = 0;
-            (edgeBlockId < edgeBlocks.size()) && (blocksOnCurrentProcess < blocksPerProcess);
-            edgeBlockId++)
-        {
-          const BlockLocation& edgeBlockCoords = edgeBlocks[edgeBlockId];
-
-          for (Direction direction = 1;
-              direction < latticeInfo.GetNumVectors() && blocksOnCurrentProcess < blocksPerProcess;
-              direction++)
-          {
-            // Record neighbour location.
-            BlockLocation neighbourCoords = edgeBlockCoords + latticeInfo.GetVector(direction);
-
-            // Move on if neighbour is outside the bounding box.
-            if (!geometry.AreBlockCoordinatesValid(neighbourCoords))
-            {
-              continue;
+                log::Logger::Log<log::Critical, log::OnePerCore>("At least one other proc thought block %li should be on proc %li but we locally had it as %li",
+                                                                 block,
+                                                                 procAssignedToEachBlock[block],
+                                                                 procForEachBlockRecv[block]);
             }
-
-            // Move on if the neighbour is in a block of solids (in which case
-            // the pointer to ProcessorRankForEachBlockSite is nullptr) or it is solid or has already
-            // been assigned to a rank (in which case ProcessorRankForEachBlockSite != -1).  ProcessorRankForEachBlockSite
-            // was initialized in lbmReadConfig in io.cc.
-
-            site_t neighBlockId = geometry.GetBlockIdFromBlockCoordinates(neighbourCoords.x(),
-                                                                          neighbourCoords.y(),
-                                                                          neighbourCoords.z());
-
-            // Don't use this block if it has no fluid sites, or if it has already been assigned to a processor.
-            if (fluidSitesOnEachBlock[neighBlockId] == 0 || blockAssigned[neighBlockId])
-            {
-              continue;
-            }
-
-            // Set the rank for a neighbour and update the fluid site counters.
-            blockAssigned[neighBlockId] = true;
-            processForEachBlock[neighBlockId] = currentProcess;
-            ++blocksOnCurrentProcess;
-
-            // Neighbour was found, so the region can grow.
-            regionExpanded = true;
-
-            // Record the location of the neighbour.
-            expansionBlocks.push_back(neighbourCoords);
-          }
         }
-
-        return regionExpanded;
-      }
+    }
 
 }

@@ -120,9 +120,7 @@ namespace hemelb::geometry
       // Get an initial base-level decomposition of the domain macro-blocks over processors.
       // This will later be improved upon by ParMetis.
       decomposition::BasicDecomposition basicDecomposer(geometry,
-                                                        latticeInfo,
-                                                        computeComms,
-                                                        fluidSitesOnEachBlock);
+                                                        computeComms);
       basicDecomposer.Decompose(principalProcForEachBlock);
 
       if (ShouldValidate())
