@@ -85,15 +85,26 @@ jobs:
       - name: ensure pip is up-to-date
         run: pip install --upgrade pip
 
-      - name: Get and install VMTK from our builder (and check setuptools sees it)
+      - name: Get and install VMTK from our builder
         run: |
           wget -nv -O vmtk.tar.gz https://github.com/hemelb-codes/vmtk-build/releases/download/v${VMTK_VERSION}/all-${VMTK_VERSION}-ubuntu-py${{ matrix.python-version }}.tar.gz
-          mkdir -p /opt/vmtk
+          mkdir -p $VMTK_DIR
           tar -xzf vmtk.tar.gz -C $VMTK_DIR
           echo "PATH=$VMTK_DIR/bin:$PATH" >> $GITHUB_ENV
           echo "PYTHONPATH=$VMTK_DIR/lib/python${{ matrix.python-version }}/site-packages:$PYTHONPATH" >> $GITHUB_ENV
           echo "CMAKE_PREFIX_PATH=$VMTK_DIR:$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
+
+      - name: Check setuptools sees VMTK
+        run: |
           pip list
+          pip list --format json | jq -e '.[] | select(.name == "vmtk")'
+
+      - name: Store VMTK dir on error
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: failed-vmtk-tree
+          path: ${{ env.VMTK_DIR }}
 
       - name: Build and install the app
         working-directory: geometry-tool
