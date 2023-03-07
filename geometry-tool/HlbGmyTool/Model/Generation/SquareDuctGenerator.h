@@ -9,7 +9,6 @@
 #include "GeometryGenerator.h"
 
 #include "GenerationError.h"
-#include "GetSet.h"
 #include "Index.h"
 
 class GeometryWriter;

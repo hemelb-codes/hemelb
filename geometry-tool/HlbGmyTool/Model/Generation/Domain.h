@@ -9,8 +9,8 @@
 #include <vector>
 
 #include "BlockWriter.h"
-#include "GetSet.h"
 #include "Index.h"
+
 class Block;
 class Site;
 class BlockIterator;
@@ -18,8 +18,20 @@ class BlockIterator;
 // Note that the "working" units for this are voxels.
 
 class Domain {
+ protected:
+  Index BlockCounts;
+  Index SiteCounts;
+  Vector OriginWorking;
+  int BlockSize;
+
+  std::vector<Block*> blocks;
+
+  friend class BlockIterator;
+  friend class NeighbourIteratorBase;
+
  public:
-  typedef BlockIterator iterator;
+  using iterator = BlockIterator;
+
   /*
    * C'tor
    * SurfaceBounds - bounds of the surface, in standard VTK order
@@ -36,13 +48,13 @@ class Domain {
   BlockIterator begin();
   BlockIterator end();
 
-  GETTER(BlockSize, int);
-  SETTER(BlockSize, int);
+  inline int GetBlockSize() const { return BlockSize; }
+  inline void SetBlockSize(int val) { BlockSize = val; }
 
-  GETTER(BlockCounts, Index);
-  SETTER(BlockCounts, Index);
+  inline Index const& GetBlockCounts() const { return BlockCounts; }
+  inline void SetBlockCounts(Index const& val) { BlockCounts = val; }
 
-  GETTER(SiteCounts, Index);
+  inline Index const& GetSiteCounts() const { return SiteCounts; }
 
   /*
    * These TranslateIndex member functions translate between 3d and 1a
@@ -83,17 +95,6 @@ class Domain {
                             const unsigned int& k) {
     return (i * this->BlockCounts[1] + j) * this->BlockCounts[2] + k;
   }
-
- protected:
-  Index BlockCounts;
-  Index SiteCounts;
-  Vector OriginWorking;
-  int BlockSize;
-
-  std::vector<Block*> blocks;
-
-  friend class BlockIterator;
-  friend class NeighbourIteratorBase;
 };
 
 class BlockIterator : public std::iterator<std::forward_iterator_tag, Block> {

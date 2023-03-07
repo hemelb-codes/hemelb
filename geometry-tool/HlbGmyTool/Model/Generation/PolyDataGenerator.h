@@ -17,7 +17,6 @@ class vtkIdList;
 class vtkIntArray;
 
 #include "GenerationError.h"
-#include "GetSet.h"
 
 class GeometryWriter;
 class Site;
