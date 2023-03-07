@@ -37,7 +37,8 @@ void BuildCGALPolygon<HDS>::operator()(HDS& hds) {
   vtkIdType const* indx = nullptr;
   auto iter = vtk::TakeSmartPointer(this->polys->NewIterator());
 
-  for (iter->GoToFirstCell(); !iter->IsDoneWithTraversal(); iter->GoToNextCell()) {
+  for (iter->GoToFirstCell(); !iter->IsDoneWithTraversal();
+       iter->GoToNextCell()) {
     // do work with iter
     iter->GetCurrentCell(npts, indx);
     if (indx[0] != indx[1] & indx[0] != indx[2] & indx[1] != indx[2]) {
