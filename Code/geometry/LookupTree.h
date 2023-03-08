@@ -8,11 +8,14 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 #include "Exception.h"
 #include "units.h"
 #include "util/Vector3D.h"
+#include "net/MpiCommunicator.h"
+#include "net/MpiWindow.h"
 
 namespace hemelb::geometry::octree
 {
@@ -95,11 +98,12 @@ namespace hemelb::geometry::octree
         return {x, y, z};
     }
 
-    struct LookupTree;
+    class LookupTree;
 
     // Single level of a condensed octree
     // Have a structure of arrays view on the data - vectors must have the same length
-    struct Level {
+    class Level {
+    public:
         // Constant for no child
         static constexpr std::size_t NC = ~0U;
         static constexpr std::array<std::size_t, 8> NOCHILDREN = {NC, NC, NC, NC, NC, NC, NC, NC};
@@ -115,8 +119,8 @@ namespace hemelb::geometry::octree
     };
 
     // Refer to a particular node in the tree
-    struct NodeRef {
-        //
+    class NodeRef {
+    public:
         std::array<std::size_t, MAX_LEVELS> path;
         LookupTree const* tree;
 
@@ -126,7 +130,8 @@ namespace hemelb::geometry::octree
     };
 
     // A tree with one level holds only the root node
-    struct LookupTree {
+    class LookupTree {
+    public:
         std::vector<Level> levels;
         U16 n_levels;
 
@@ -163,11 +168,68 @@ namespace hemelb::geometry::octree
 
     struct IterBounds {
         Vec16 bounds;
+
         WithinBoundsIterator begin() const;
         WithinBoundsIterator end() const;
     };
 
     LookupTree build_block_tree(const Vec16& dimensionsInBlocks, std::vector<site_t> const& fluidSitesPerBlock);
+
+
+
+    // Store something (in this case the rank that owns a given site)
+    // distributed across MPI processes/
+
+    class DistributedStore {
+        // Needed for offset calculations
+        MPI_Aint sites_per_block;
+        // Octree describing layout of blocks
+        LookupTree block_tree;
+        // Which MPI rank holds data for which block, **in octree order**.
+        std::vector<int> storage_rank;
+
+        net::MpiCommunicator comm;
+        // MPI_Win and allocated data - holds which MPI rank owns a site
+        using WinData = net::WinData<int>;
+        WinData rank_that_owns_site_win;
+
+    public:
+        // Construct - collective on the communicator
+        DistributedStore(site_t sites_per_block, LookupTree tree, std::vector<int> ranks, net::MpiCommunicator c);
+
+        inline LookupTree const& GetTree() const {
+            return block_tree;
+        }
+
+        // Allow many writes to the same block, wherever it is.
+        // Constructed by a WriteSession below
+        struct BlockWriteChunk {
+            // where the block lives
+            int rank;
+            // offset of the block in the owner's window
+            MPI_Aint block_start_idx;
+            // window wrapper
+            WinData* window;
+
+            // Return a write-object for the given site
+            WinData::RemoteRef operator()(site_t site_id);
+        };
+
+        // Hide some access details behind in a more natural access style
+        // Recall that the destructor has a fence so is collective.
+        struct WriteSession : public WinData::WriteSession {
+            DistributedStore* store;
+            WriteSession(DistributedStore* s);
+            // Do the block level calculations once
+            BlockWriteChunk operator()(Vec16 const& block_coord);
+            // Do everything
+            WinData::RemoteRef operator()(Vec16 const& block_coord, site_t site_id);
+        };
+
+        // Start a load of writes
+        WriteSession begin_writes();
+    };
+
 }
 
 

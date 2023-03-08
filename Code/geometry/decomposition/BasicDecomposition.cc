@@ -17,9 +17,9 @@ namespace hemelb::geometry::decomposition
     {
     }
 
-    void BasicDecomposition::Decompose(std::vector<proc_t>& procAssignedToEachBlock)
+    std::vector<int> BasicDecomposition::Decompose(octree::LookupTree const& tree,
+                                                   std::vector<proc_t>& procAssignedToEachBlock)
     {
-        auto const& tree = *geometry.blockTree;
         // Root node of tree holds total fluid sites
         auto total_sites = tree.levels[0].sites_per_node[0];
         auto target_sites_per_rank = (total_sites - 1) / communicator.Size() + 1;
@@ -57,7 +57,7 @@ namespace hemelb::geometry::decomposition
                 assigned_sites = 0;
             }
         }
-
+        return rank_for_block;
     }
 
     void BasicDecomposition::Validate(std::vector<proc_t>& procAssignedToEachBlock)

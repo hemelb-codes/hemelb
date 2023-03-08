@@ -17,7 +17,7 @@
 
 namespace hemelb::geometry
 {
-    namespace octree { struct LookupTree; }
+    namespace octree { class DistributedStore; }
     /***
      * Model of the information in a geometry file
      */
@@ -133,9 +133,7 @@ namespace hemelb::geometry
 
       public:
         std::vector<BlockReadResult> Blocks; //! Array of Block models
-        std::unique_ptr<octree::LookupTree> blockTree;
-
-        std::unique_ptr<octree::LookupTree> StealBlockTree();
+        std::unique_ptr<octree::DistributedStore> block_store;
     };
 
 }

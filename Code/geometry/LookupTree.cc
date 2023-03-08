@@ -171,4 +171,50 @@ namespace hemelb::geometry::octree {
         }
         return ans;
     }
+
+    DistributedStore::DistributedStore(site_t spb, LookupTree tree, std::vector<int> ranks, net::MpiCommunicator c) :
+            sites_per_block(spb),
+            block_tree(std::move(tree)),
+            storage_rank(std::move(ranks)),
+            comm(std::move(c))
+    {
+        // Need to find the number of blocks per rank and then the max of those
+        int rank = comm.Rank();
+        int num_my_blocks = std::count(storage_rank.begin(), storage_rank.end(), rank);
+        auto max_blocks_per_rank = comm.AllReduce(num_my_blocks, MPI_MAX);
+        auto max_sites_per_rank = max_blocks_per_rank * sites_per_block;
+
+        rank_that_owns_site_win = WinData(max_sites_per_rank, comm, -1);
+    }
+
+    DistributedStore::WriteSession::WriteSession(DistributedStore *s)
+            : WinData::WriteSession(&s->rank_that_owns_site_win), store(s) {
+    }
+
+    auto DistributedStore::WriteSession::operator()(Vec16 const& block_coord) -> BlockWriteChunk {
+        auto const& t = store->block_tree;
+        // Find the index of the block in those that are non-solid
+        auto leaf_idx = t(block_coord).path[t.n_levels];
+        // What rank does it live on
+        auto rank = store->storage_rank[leaf_idx];
+        // To get the offset, need to know the number of blocks on that rank
+        auto begin = store->storage_rank.begin();
+        auto first_block_on_rank = std::lower_bound(begin, begin + leaf_idx, rank);
+        MPI_Aint block_offset = leaf_idx - std::distance(begin, first_block_on_rank);
+        return {rank, block_offset * store->sites_per_block, &store->rank_that_owns_site_win};
+    }
+
+    auto DistributedStore::BlockWriteChunk::operator()(site_t site_id) -> WinData::RemoteRef {
+        MPI_Aint site_offset = block_start_idx + site_id;
+        return {rank, site_offset, window};
+    }
+
+    auto DistributedStore::WriteSession::operator()(Vec16 const& block_coord, site_t site_id) -> WinData::RemoteRef {
+        auto& self = *this;
+        return self(block_coord)(site_id);
+    }
+
+    auto DistributedStore::begin_writes() -> WriteSession {
+        return {this};
+    }
 }

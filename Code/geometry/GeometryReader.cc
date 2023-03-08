@@ -6,6 +6,7 @@
 #include <cmath>
 #include <list>
 #include <algorithm>
+#include <utility>
 #include <zlib.h>
 
 #include "io/formats/geometry.h"
@@ -29,43 +30,43 @@ namespace hemelb::geometry
     template <typename Enum, Enum... allowed>
     struct EnumValidator {
     private:
-      using INT = std::underlying_type_t<Enum>;
+        using INT = std::underlying_type_t<Enum>;
 
-      // Want to turn the parameter pack into something iterable at
-      // constexpr time, such as an initializer_list
-      static constexpr bool IsValid(INT raw, std::initializer_list<Enum> vals) {
-	for (auto& val: vals) {
-	  if (val == static_cast<Enum>(raw))
-	    return true;
-	}
-	return false;
-      }
+        // Want to turn the parameter pack into something iterable at
+        // constexpr time, such as an initializer_list
+        static constexpr bool IsValid(INT raw, std::initializer_list<Enum> vals) {
+            for (auto& val: vals) {
+                if (val == static_cast<Enum>(raw))
+                    return true;
+            }
+            return false;
+        }
 
     public:
-      static Enum Run(INT raw) {
-	if (IsValid(raw, {allowed...})) {
-	  return static_cast<Enum>(raw);
-	} else {
-	  throw Exception() << "Invalid value for enum " << raw;
-	}
-      }
+        static Enum Run(INT raw) {
+            if (IsValid(raw, {allowed...})) {
+                return static_cast<Enum>(raw);
+            } else {
+                throw Exception() << "Invalid value for enum " << raw;
+            }
+        }
     };
 
     using SiteTypeValidator =  EnumValidator<gmy::SiteType,
-					     gmy::SiteType::SOLID,
-					     gmy::SiteType::FLUID>;
+            gmy::SiteType::SOLID,
+            gmy::SiteType::FLUID>;
     using CutTypeValidator = EnumValidator<gmy::CutType,
-					   gmy::CutType::NONE,
-					   gmy::CutType::WALL,
-					   gmy::CutType::INLET,
-					   gmy::CutType::OUTLET>;
+            gmy::CutType::NONE,
+            gmy::CutType::WALL,
+            gmy::CutType::INLET,
+            gmy::CutType::OUTLET>;
     using WallNormalAvailabilityValidator = EnumValidator<gmy::WallNormalAvailability,
-							  gmy::WallNormalAvailability::NOT_AVAILABLE,
-							  gmy::WallNormalAvailability::AVAILABLE>;
+            gmy::WallNormalAvailability::NOT_AVAILABLE,
+            gmy::WallNormalAvailability::AVAILABLE>;
 
     GeometryReader::GeometryReader(const lb::lattices::LatticeInfo& latticeInfo,
-                                   reporting::Timers &atimings, const net::IOCommunicator& ioComm) :
-        latticeInfo(latticeInfo), computeComms(ioComm), timings(atimings)
+                                   reporting::Timers &atimings, net::IOCommunicator ioComm) :
+            latticeInfo(latticeInfo), computeComms(std::move(ioComm)), timings(atimings)
     {
     }
 
@@ -75,97 +76,107 @@ namespace hemelb::geometry
 
     GmyReadResult GeometryReader::LoadAndDecompose(const std::string& dataFilePath)
     {
-      log::Logger::Log<log::Debug, log::OnePerCore>("Starting file read timer");
-      timings[hemelb::reporting::Timers::fileRead].Start();
+        log::Logger::Log<log::Debug, log::OnePerCore>("Starting file read timer");
+        timings[hemelb::reporting::Timers::fileRead].Start();
 
-      // Create hints about how we'll read the file. See Chapter 13, page 400 of the MPI 2.2 spec.
-      MPI_Info fileInfo;
-      HEMELB_MPI_CALL(MPI_Info_create, (&fileInfo));
-      std::string accessStyle = "access_style";
-      std::string accessStyleValue = "sequential";
-      std::string buffering = "collective_buffering";
-      std::string bufferingValue = "true";
+        // Create hints about how we'll read the file. See Chapter 13, page 400 of the MPI 2.2 spec.
+        MPI_Info fileInfo;
+        HEMELB_MPI_CALL(MPI_Info_create, (&fileInfo));
+        std::string accessStyle = "access_style";
+        std::string accessStyleValue = "sequential";
+        std::string buffering = "collective_buffering";
+        std::string bufferingValue = "true";
 
-      HEMELB_MPI_CALL(MPI_Info_set,
-                      (fileInfo, const_cast<char*> (accessStyle.c_str()), const_cast<char*> (accessStyleValue.c_str())));
-      HEMELB_MPI_CALL(MPI_Info_set,
-                      (fileInfo, const_cast<char*> (buffering.c_str()), const_cast<char*> (bufferingValue.c_str())));
+        HEMELB_MPI_CALL(MPI_Info_set,
+                        (fileInfo, const_cast<char*> (accessStyle.c_str()), const_cast<char*> (accessStyleValue.c_str())));
+        HEMELB_MPI_CALL(MPI_Info_set,
+                        (fileInfo, const_cast<char*> (buffering.c_str()), const_cast<char*> (bufferingValue.c_str())));
 
-      // Open the file.
-      file = net::MpiFile::Open(computeComms, dataFilePath, MPI_MODE_RDONLY, fileInfo);
-      log::Logger::Log<log::Info, log::OnePerCore>("Opened config file %s", dataFilePath.c_str());
-      // TODO: Why is there this fflush?
-      fflush(nullptr);
+        // Open the file.
+        file = net::MpiFile::Open(computeComms, dataFilePath, MPI_MODE_RDONLY, fileInfo);
+        log::Logger::Log<log::Info, log::OnePerCore>("Opened config file %s", dataFilePath.c_str());
+        // TODO: Why is there this fflush?
+        fflush(nullptr);
 
-      // Set the view to the file.
-      file.SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);
+        // Set the view to the file.
+        file.SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
-      GmyReadResult geometry = ReadPreamble();
+        log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
+        GmyReadResult geometry = ReadPreamble();
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("Reading file header");
-      ReadHeader(geometry.GetBlockCount());
+        log::Logger::Log<log::Debug, log::OnePerCore>("Reading file header");
+        ReadHeader(geometry.GetBlockCount());
 
-      // Close the file - only the ranks participating in the topology need to read it again.
-      file.Close();
+        // Close the file - only the ranks participating in the topology need to read it again.
+        file.Close();
 
-      timings[hemelb::reporting::Timers::initialDecomposition].Start();
-      log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
-      principalProcForEachBlock.resize(geometry.GetBlockCount());
+        log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
+        {
+            timings[hemelb::reporting::Timers::initialDecomposition].Start();
+            principalProcForEachBlock.resize(geometry.GetBlockCount());
 
-      geometry.blockTree = std::make_unique<octree::LookupTree>(
-              octree::build_block_tree(geometry.GetBlockDimensions().as<octree::U16>(), fluidSitesOnEachBlock)
-      );
 
-      // Get an initial base-level decomposition of the domain macro-blocks over processors.
-      // This will later be improved upon by ParMetis.
-      decomposition::BasicDecomposition basicDecomposer(geometry,
-                                                        computeComms);
-      basicDecomposer.Decompose(principalProcForEachBlock);
+            auto blockTree = octree::build_block_tree(
+                    geometry.GetBlockDimensions().as<octree::U16>(),
+                    fluidSitesOnEachBlock
+            );
 
-      if (ShouldValidate())
-      {
-        basicDecomposer.Validate(principalProcForEachBlock);
-      }
+            // Get an initial base-level decomposition of the domain macro-blocks over processors.
+            // This will later be improved upon by ParMetis.
+            decomposition::BasicDecomposition basicDecomposer(geometry,
+                                                              computeComms);
 
-      timings[hemelb::reporting::Timers::initialDecomposition].Stop();
-      // Perform the initial read-in.
-      log::Logger::Log<log::Debug, log::OnePerCore>("Reading in my blocks");
+            auto owner_for_block = basicDecomposer.Decompose(blockTree, principalProcForEachBlock);
+            geometry.block_store = std::make_unique<octree::DistributedStore>(
+                    geometry.GetSitesPerBlock(),
+                    std::move(blockTree),
+                    std::move(owner_for_block),
+                    computeComms
+            );
+            if (ShouldValidate()) {
+                basicDecomposer.Validate(principalProcForEachBlock);
+            }
 
-      // Reopen in the file just between the nodes in the topology decomposition. Read in blocks
-      // local to this node.
-      file = net::MpiFile::Open(computeComms, dataFilePath, MPI_MODE_RDONLY, fileInfo);
+            timings[hemelb::reporting::Timers::initialDecomposition].Stop();
+        }
 
-      ReadInBlocksWithHalo(geometry, principalProcForEachBlock, computeComms.Rank());
+        // Perform the initial read-in.
+        log::Logger::Log<log::Debug, log::OnePerCore>("Reading in my blocks");
 
-      if (ShouldValidate())
-      {
-        ValidateGeometry(geometry);
-      }
+        // Reopen in the file just between the nodes in the topology decomposition. Read in blocks
+        // local to this node.
+        file = net::MpiFile::Open(computeComms, dataFilePath, MPI_MODE_RDONLY, fileInfo);
 
-      timings[hemelb::reporting::Timers::fileRead].Stop();
+        ReadInBlocksWithHalo(geometry, principalProcForEachBlock, computeComms.Rank());
 
-      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Begin optimising the domain decomposition.");
-      timings[hemelb::reporting::Timers::domainDecomposition].Start();
+        if (ShouldValidate())
+        {
+            ValidateGeometry(geometry);
+        }
 
-      // Having done an initial decomposition of the geometry, and read in the data, we optimise the
-      // domain decomposition.
-      log::Logger::Log<log::Debug, log::OnePerCore>("Beginning domain decomposition optimisation");
-      OptimiseDomainDecomposition(geometry, principalProcForEachBlock);
-      log::Logger::Log<log::Debug, log::OnePerCore>("Ending domain decomposition optimisation");
+        timings[hemelb::reporting::Timers::fileRead].Stop();
 
-      if (ShouldValidate())
-      {
-        ValidateGeometry(geometry);
-      }
-      file.Close();
+        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Begin optimising the domain decomposition.");
+        timings[hemelb::reporting::Timers::domainDecomposition].Start();
 
-      // Finish up - close the file, set the timings, deallocate memory.
-      HEMELB_MPI_CALL(MPI_Info_free, (&fileInfo));
+        // Having done an initial decomposition of the geometry, and read in the data, we optimise the
+        // domain decomposition.
+        log::Logger::Log<log::Debug, log::OnePerCore>("Beginning domain decomposition optimisation");
+        OptimiseDomainDecomposition(geometry, principalProcForEachBlock);
+        log::Logger::Log<log::Debug, log::OnePerCore>("Ending domain decomposition optimisation");
 
-      timings[hemelb::reporting::Timers::domainDecomposition].Stop();
+        if (ShouldValidate())
+        {
+            ValidateGeometry(geometry);
+        }
+        file.Close();
 
-      return geometry;
+        // Finish up - close the file, set the timings, deallocate memory.
+        HEMELB_MPI_CALL(MPI_Info_free, (&fileInfo));
+
+        timings[hemelb::reporting::Timers::domainDecomposition].Stop();
+
+        return geometry;
     }
 
     std::vector<char> GeometryReader::ReadOnAllTasks(unsigned nBytes)
@@ -235,7 +246,7 @@ namespace hemelb::geometry
       unsigned paddingValue;
       preambleReader.read(paddingValue);
 
-      return GmyReadResult(util::Vector3D<site_t>(blocksX, blocksY, blocksZ), blockSize);
+      return {util::Vector3D<site_t>(blocksX, blocksY, blocksZ), blockSize};
     }
 
     /**
@@ -606,7 +617,7 @@ namespace hemelb::geometry
         myProcForSite.clear();
         dummySiteData.clear();
 
-        if (geometry.Blocks[block].Sites.size() == 0)
+        if (geometry.Blocks[block].Sites.empty())
         {
           for (site_t localSite = 0; localSite < geometry.GetSitesPerBlock(); ++localSite)
           {
@@ -664,7 +675,7 @@ namespace hemelb::geometry
                                                              procForSiteRecv[site]);
           }
 
-          if (geometry.Blocks[block].Sites.size() > 0)
+          if (!geometry.Blocks[block].Sites.empty())
           {
             if (dummySiteData[site * latticeInfo.GetNumVectors()]
                 != siteDataRecv[site * latticeInfo.GetNumVectors()])
@@ -827,7 +838,7 @@ namespace hemelb::geometry
       {
         // If this proc has owned a fluid site on this block either before or after optimisation,
         // the following will be non-null.
-        if (geometry.Blocks[block].Sites.size() > 0)
+        if (!geometry.Blocks[block].Sites.empty())
         {
           // Get the original proc for that block.
           proc_t originalProc = procForEachBlock[block];
@@ -859,7 +870,7 @@ namespace hemelb::geometry
           idx_t toProc = movesList[3 * moveIndex + 2];
 
           // Only implement the move if we have read that block's data.
-          if (geometry.Blocks[block].Sites.size() > 0)
+          if (!geometry.Blocks[block].Sites.empty())
           {
             // Some logging code - the unmodified rank for each move's site should equal
             // lFromProc.

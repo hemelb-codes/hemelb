@@ -10,15 +10,13 @@
 #include "geometry/Domain.h"
 #include "geometry/GmyReadResult.h"
 #include "geometry/neighbouring/NeighbouringDomain.h"
+#include "geometry/LookupTree.h"
 #include "net/IOCommunicator.h"
 #include "net/net.h"
 #include "reporting/Dict.h"
-#include "util/utilityFunctions.h"
 
-namespace hemelb
+namespace hemelb::geometry
 {
-    namespace geometry
-    {
         Domain::Domain(const lb::lattices::LatticeInfo& latticeInfo,
                        const net::IOCommunicator& comms_) :
                 latticeInfo(latticeInfo),
@@ -27,9 +25,11 @@ namespace hemelb
         }
 
         Domain::Domain(const lb::lattices::LatticeInfo& latticeInfo,
-                       const GmyReadResult& readResult, const net::IOCommunicator& comms_) :
+                       GmyReadResult& readResult, const net::IOCommunicator& comms_) :
                 latticeInfo(latticeInfo),
-                neighbouringData(new neighbouring::NeighbouringDomain(latticeInfo)), comms(comms_)
+                neighbouringData(new neighbouring::NeighbouringDomain(latticeInfo)),
+                comms(comms_),
+                rank_for_site_store(std::move(readResult.block_store))
         {
             SetBasicDetails(readResult.GetBlockDimensions(), readResult.GetBlockSize());
 
@@ -51,6 +51,10 @@ namespace hemelb
             CollectGlobalSiteExtrema();
 
             InitialiseNeighbourLookups();
+        }
+
+        // Need d'tor in its own TU to avoid include of LookupTree
+        Domain::~Domain() noexcept {
         }
 
         void Domain::SetBasicDetails(util::Vector3D<site_t> blocksIn, site_t blockSizeIn)
@@ -775,5 +779,4 @@ namespace hemelb
             return comms.Rank();
         }
 
-    }
 }

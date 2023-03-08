@@ -56,8 +56,4 @@ namespace hemelb::geometry {
 
         return SiteId;
     }
-
-    std::unique_ptr<octree::LookupTree> GmyReadResult::StealBlockTree() {
-        return std::move(blockTree);
-    }
 }

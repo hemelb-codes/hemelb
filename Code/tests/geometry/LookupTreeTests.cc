@@ -220,7 +220,8 @@ namespace hemelb::tests
                                                                  *timings,
                                                                  Comms());
         auto result = reader->LoadAndDecompose("large_cylinder.gmy");
-        auto tree = result.StealBlockTree();
+        auto& tree = result.block_store->GetTree();
+        //auto tree = //result.StealBlockTree();
         // hlb-gmy-countsites -v -v gives:
         //  BlockCounts = [2 2 5]
         //  BlockSize = 8
@@ -247,26 +248,25 @@ namespace hemelb::tests
         //    17  328  14
         //    18  328  15
         //    19  123  70
-        REQUIRE(tree->n_levels == 3);
-        REQUIRE(tree->levels[0].sites_per_node.size() == 1);
-        REQUIRE(tree->levels[0].sites_per_node[0] == 5576);
-        REQUIRE(tree->levels[3].node_ids.size() == 20);
+        REQUIRE(tree.n_levels == 3);
+        REQUIRE(tree.levels[0].sites_per_node.size() == 1);
+        REQUIRE(tree.levels[0].sites_per_node[0] == 5576);
+        REQUIRE(tree.levels[3].node_ids.size() == 20);
 
-        auto const& t = *tree;
-        auto b000 = t({0,0,0});
+        auto b000 = tree({0,0,0});
         REQUIRE(b000.path[0] == 0);
 
-        auto b114 = t({1,1,4});
+        auto b114 = tree({1,1,4});
         // 1,1,4 => 0001, 0001, 0100 => 000 001 000 110
-        REQUIRE(t.levels[0].node_ids[b114.path[0]] == 0);
-        REQUIRE(t.levels[1].node_ids[b114.path[1]] == 1);
-        REQUIRE(t.levels[2].node_ids[b114.path[2]] == 8);
-        REQUIRE(t.levels[3].node_ids[b114.path[3]] == 70);
+        REQUIRE(tree.levels[0].node_ids[b114.path[0]] == 0);
+        REQUIRE(tree.levels[1].node_ids[b114.path[1]] == 1);
+        REQUIRE(tree.levels[2].node_ids[b114.path[2]] == 8);
+        REQUIRE(tree.levels[3].node_ids[b114.path[3]] == 70);
 
-        auto b334 = t({3,3,4});
+        auto b334 = tree({3,3,4});
         // 3,3,4 => 0011, 0011, 0100 => 000 001 110 110
-        REQUIRE(t.levels[0].node_ids[b334.path[0]] == 0);
-        REQUIRE(t.levels[1].node_ids[b334.path[1]] == 1);
+        REQUIRE(tree.levels[0].node_ids[b334.path[0]] == 0);
+        REQUIRE(tree.levels[1].node_ids[b334.path[1]] == 1);
         REQUIRE(b334.path[2] == Level::NC);
         REQUIRE(b334.path[3] == Level::NC);
 
@@ -282,25 +282,25 @@ namespace hemelb::tests
         }
 
         for (int i = 0; i < 20; ++i) {
-            auto oct = t.levels[3].node_ids[i];
+            auto oct = tree.levels[3].node_ids[i];
             REQUIRE(oct2spb.contains(oct));
-            REQUIRE(t.levels[3].sites_per_node[i] == oct2spb[oct]);
+            REQUIRE(tree.levels[3].sites_per_node[i] == oct2spb[oct]);
         }
 
         // The next level up in the tree, have three nodes
-        REQUIRE(t.levels[2].node_ids.size() == 3);
-        REQUIRE(t.levels[2].node_ids[0] == 0);
-        REQUIRE(t.levels[2].node_ids[1] == 1);
-        REQUIRE(t.levels[2].node_ids[2] == 8);
-        REQUIRE(t.levels[2].sites_per_node[0] == 2460);
-        REQUIRE(t.levels[2].sites_per_node[1] == 2624);
-        REQUIRE(t.levels[2].sites_per_node[2] == 492);
+        REQUIRE(tree.levels[2].node_ids.size() == 3);
+        REQUIRE(tree.levels[2].node_ids[0] == 0);
+        REQUIRE(tree.levels[2].node_ids[1] == 1);
+        REQUIRE(tree.levels[2].node_ids[2] == 8);
+        REQUIRE(tree.levels[2].sites_per_node[0] == 2460);
+        REQUIRE(tree.levels[2].sites_per_node[1] == 2624);
+        REQUIRE(tree.levels[2].sites_per_node[2] == 492);
 
         // The next level up in the tree, have two nodes
-        REQUIRE(t.levels[1].node_ids.size() == 2);
-        REQUIRE(t.levels[1].node_ids[0] == 0);
-        REQUIRE(t.levels[1].node_ids[1] == 1);
-        REQUIRE(t.levels[1].sites_per_node[0] == 5084);
-        REQUIRE(t.levels[1].sites_per_node[1] == 492);
+        REQUIRE(tree.levels[1].node_ids.size() == 2);
+        REQUIRE(tree.levels[1].node_ids[0] == 0);
+        REQUIRE(tree.levels[1].node_ids[1] == 1);
+        REQUIRE(tree.levels[1].sites_per_node[0] == 5084);
+        REQUIRE(tree.levels[1].sites_per_node[1] == 492);
     }
 }

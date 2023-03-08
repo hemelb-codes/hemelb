@@ -42,9 +42,8 @@ namespace hemelb::geometry
 {
     //class FieldData;
     class GmyReadResult;
-    namespace neighbouring {
-        class NeighbouringDomain;
-    }
+    namespace neighbouring { class NeighbouringDomain; }
+    namespace octree { class DistributedStore; }
 
     // Hold geometrical and indexing type data about the domain to be simulated.
     class Domain : public reporting::Reportable
@@ -60,10 +59,10 @@ namespace hemelb::geometry
         template<class LatticeData>
 	friend class Site; //! Let the inner classes have access to site-related data that's otherwise private.
 
-        Domain(const lb::lattices::LatticeInfo& latticeInfo, const GmyReadResult& readResult,
+        Domain(const lb::lattices::LatticeInfo& latticeInfo, GmyReadResult& readResult,
                const net::IOCommunicator& comms);
 
-        ~Domain() override = default;
+        ~Domain() noexcept override;
 
         inline net::IOCommunicator const & GetCommunicator() const
         {
@@ -489,6 +488,7 @@ namespace hemelb::geometry
         std::vector<site_t> neighbourIndices; //! Data about neighbouring fluid sites.
         std::vector<site_t> streamingIndicesForReceivedDistributions; //! The indices to stream to for distributions received from other processors.
         std::shared_ptr<neighbouring::NeighbouringDomain> neighbouringData;
+        std::unique_ptr<octree::DistributedStore> rank_for_site_store;
         const net::IOCommunicator& comms;
     };
 

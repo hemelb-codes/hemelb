@@ -31,7 +31,7 @@ namespace hemelb::geometry
         using BlockLocation = util::Vector3D<site_t>;
 
         GeometryReader(const lb::lattices::LatticeInfo&,
-                       reporting::Timers &timings, const net::IOCommunicator& ioComm);
+                       reporting::Timers &timings, net::IOCommunicator ioComm);
         ~GeometryReader();
 
         GmyReadResult LoadAndDecompose(const std::string& dataFilePath);
