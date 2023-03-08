@@ -10,10 +10,8 @@
 #include "geometry/SiteData.h"
 #include "util/Vector3D.h"
 
-namespace hemelb
+namespace hemelb::geometry
 {
-  namespace geometry
-  {
     namespace detail {
         // Implement a simple trait for determining if a type has an inner type "domain_type".
         template <typename T, typename = void>
@@ -231,7 +229,6 @@ namespace hemelb
           return m_domain->GetGlobalSiteCoords(index);
         }
     };
-  }
 }
 
 #endif

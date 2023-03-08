@@ -9,31 +9,27 @@
 #include "units.h"
 #include <vector>
 
-namespace hemelb
+namespace hemelb::geometry
 {
-  namespace geometry
-  {
     // Data about each global block in the lattice,
     // site_data[] is an array containing individual lattice site data
     // within a global block.
     class Block
     {
-      public:
-        Block();
-        Block(site_t sitesPerBlock);
+    public:
+        Block() = default;
+        explicit Block(site_t sitesPerBlock);
 
-        ~Block();
+        [[nodiscard]] bool IsEmpty() const;
 
-        bool IsEmpty() const;
-
-        proc_t GetProcessorRankForSite(site_t localSiteIndex) const;
-        site_t GetLocalContiguousIndexForSite(site_t localSiteIndex) const;
-        bool SiteIsSolid(site_t localSiteIndex) const;
+        [[nodiscard]] proc_t GetProcessorRankForSite(site_t localSiteIndex) const;
+        [[nodiscard]] site_t GetLocalContiguousIndexForSite(site_t localSiteIndex) const;
+        [[nodiscard]] bool SiteIsSolid(site_t localSiteIndex) const;
 
         void SetProcessorRankForSite(site_t localSiteIndex, proc_t rank);
         void SetLocalContiguousIndexForSite(site_t localSiteIndex, site_t localContiguousIndex);
 
-      private:
+    private:
         // An array of the ranks on which each lattice site within the block resides.
         std::vector<proc_t> processorRankForEachBlockSite;
 
@@ -43,7 +39,6 @@ namespace hemelb
         // Constant for the id assigned to any solid sites.
         static constexpr site_t SOLID_SITE_ID = 1U << 31;
     };
-  }
 }
 
 #endif

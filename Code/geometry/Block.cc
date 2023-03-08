@@ -3,24 +3,17 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "constants.h"
 #include "geometry/Block.h"
+
+#include "constants.h"
 #include <cassert>
 
-namespace hemelb
+namespace hemelb::geometry
 {
-  namespace geometry
-  {
-    Block::Block()
-    {
-    }
 
     Block::Block(site_t sitesPerBlock) :
-        processorRankForEachBlockSite(sitesPerBlock, SITE_OR_BLOCK_SOLID), localContiguousIndex(sitesPerBlock, SOLID_SITE_ID)
-    {
-    }
-
-    Block::~Block()
+        processorRankForEachBlockSite(sitesPerBlock, SITE_OR_BLOCK_SOLID),
+        localContiguousIndex(sitesPerBlock, SOLID_SITE_ID)
     {
     }
 
@@ -59,5 +52,4 @@ namespace hemelb
       localContiguousIndex[localSiteIndex] = contiguousIndex;
     }
 
-  }
 }
