@@ -85,6 +85,7 @@ namespace hemelb::geometry
             std::vector<float> midDomainWallDistance[COLLISION_TYPES];
 
             proc_t localRank = comms.Rank();
+            auto write_my_sites = rank_for_site_store->begin_writes();
             // Iterate over all blocks in site units
             for (BlockTraverser blockTraverser(*this); blockTraverser.CurrentLocationValid();
                  blockTraverser.TraverseOne())
@@ -96,7 +97,7 @@ namespace hemelb::geometry
                 {
                     continue;
                 }
-
+                auto write_my_sites_for_block = write_my_sites(blockTraverser.GetCurrentLocation().as<octree::U16>());
                 // Iterate over all sites within the current block.
                 for (auto siteTraverser = blockTraverser.GetSiteTraverser();
                      siteTraverser.CurrentLocationValid(); siteTraverser.TraverseOne())
@@ -116,6 +117,8 @@ namespace hemelb::geometry
                     {
                         continue;
                     }
+                    write_my_sites_for_block(localSiteId) = localRank;
+
                     bool isMidDomainSite = true;
                     // Iterate over all non-zero direction vectors.
                     for (unsigned int l = 1; l < latticeInfo.GetNumVectors(); l++)

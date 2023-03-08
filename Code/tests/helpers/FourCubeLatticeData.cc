@@ -9,14 +9,14 @@
 #include "units.h"
 #include "geometry/Domain.h"
 #include "geometry/GmyReadResult.h"
+#include "geometry/LookupTree.h"
 #include "io/formats/geometry.h"
 #include "util/Vector3D.h"
 #include "lb/lattices/D3Q15.h"
+#include "net/IOCommunicator.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
 
     TestSiteData::TestSiteData(geometry::SiteData& siteData) :
       geometry::SiteData(siteData)
@@ -52,28 +52,30 @@ namespace hemelb
      */
     std::shared_ptr<geometry::Domain> FourCubeDomain::Create(const net::IOCommunicator& comm, site_t sitesPerBlockUnit, proc_t rankCount)
     {
-      hemelb::geometry::GmyReadResult readResult(util::Vector3D<site_t>::Ones(),
-                                                 sitesPerBlockUnit);
-// VoxelSize                                               0.01,
-// Origin                                               util::Vector3D<PhysicalDistance>::Zero());
-      site_t sitesAlongCube = sitesPerBlockUnit - 2;
-      site_t minInd = 1, maxInd = sitesAlongCube;
-      
-      hemelb::geometry::BlockReadResult& block = readResult.Blocks[0];
-      block.Sites.resize(readResult.GetSitesPerBlock(), geometry::GeometrySite(false));
-      
-      site_t index = -1;
-      for (site_t i = 0; i < sitesPerBlockUnit; ++i) {
-	for (site_t j = 0; j < sitesPerBlockUnit; ++j) {
-	  for (site_t k = 0; k < sitesPerBlockUnit; ++k) {
-	    ++index;
+        using namespace geometry;
+        GmyReadResult readResult(util::Vector3D<site_t>::Ones(),
+                                 sitesPerBlockUnit);
 
-	    if (i < minInd || i > maxInd ||
-		j < minInd || j > maxInd ||
-		k < minInd || k	> maxInd)
-	      continue;
+        // VoxelSize = 0.01
+        // Origin = util::Vector3D<PhysicalDistance>::Zero();
+        site_t sitesAlongCube = sitesPerBlockUnit - 2;
+        site_t minInd = 1, maxInd = sitesAlongCube;
+      
+        geometry::BlockReadResult& block = readResult.Blocks[0];
+        block.Sites.resize(readResult.GetSitesPerBlock(), geometry::GeometrySite(false));
 
-	    hemelb::geometry::GeometrySite& site = block.Sites[index];
+        site_t index = -1;
+        for (site_t i = 0; i < sitesPerBlockUnit; ++i) {
+            for (site_t j = 0; j < sitesPerBlockUnit; ++j) {
+                for (site_t k = 0; k < sitesPerBlockUnit; ++k) {
+                    ++index;
+
+                    if (i < minInd || i > maxInd ||
+                        j < minInd || j > maxInd ||
+                        k < minInd || k	> maxInd)
+                        continue;
+
+	    geometry::GeometrySite& site = block.Sites[index];
 
 	    site.isFluid = true;
 	    site.targetProcessor = 0;
@@ -84,7 +86,7 @@ namespace hemelb
 		site_t neighJ = j + lb::lattices::D3Q15::CY[direction];
 		site_t neighK = k + lb::lattices::D3Q15::CZ[direction];
 
-		hemelb::geometry::GeometrySiteLink link;
+		geometry::GeometrySiteLink link;
 
 		float randomDistance = (float(std::rand() % 10000) / 10000.0);
 		using CutType = io::formats::geometry::CutType;
@@ -138,13 +140,24 @@ namespace hemelb
 		site.wallNormalAvailable = true;
 		site.wallNormal = util::Vector3D<float>(0, 1, 0);
 	      }
-	  }
-	}
-      }
+                }
+            }
+        }
 
-      auto domain = std::make_shared<FourCubeDomain>(lb::lattices::D3Q15::GetLatticeInfo(),
-                                                   readResult,
-                                                   comm);
+        readResult.block_store = std::make_unique<octree::DistributedStore>(
+                readResult.GetSitesPerBlock(),
+                octree::build_block_tree(
+                        readResult.GetBlockDimensions().as<octree::U16>(),
+                        {readResult.GetSitesPerBlock()}
+                ),
+                std::vector{0},
+                comm
+        );
+        auto domain = std::make_shared<FourCubeDomain>(
+                lb::lattices::D3Q15::GetLatticeInfo(),
+                readResult,
+                comm
+        );
 
       // First, fiddle with the fluid site count, for tests that require this set.
       domain->fluidSitesOnEachProcessor.resize(rankCount);
@@ -190,5 +203,4 @@ namespace hemelb
     FourCubeLatticeData* FourCubeLatticeData::Create(const net::IOCommunicator& comm, site_t sitesPerBlockUnit, proc_t rankCount) {
       return new FourCubeLatticeData{FourCubeDomain::Create(comm, sitesPerBlockUnit, rankCount)};
     }
-  }
 }
