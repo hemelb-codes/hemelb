@@ -132,9 +132,9 @@ namespace hemelb
         /**
          * Destructor
          */
-        virtual ~IncompressibilityChecker();
+        ~IncompressibilityChecker() noexcept override = default;
 
-        void Report(reporting::Dict& dictionary);
+        void Report(reporting::Dict& dictionary) override;
 
         /**
          * Returns smallest density in the domain as agreed by all the processes.
@@ -191,32 +191,32 @@ namespace hemelb
          * Override the methods from the base class to propagate data from the root, and
          * to send data about this node and its childrens' density trackers up towards the root.
          */
-        void ProgressFromChildren(unsigned long splayNumber);
-        void ProgressFromParent(unsigned long splayNumber);
-        void ProgressToChildren(unsigned long splayNumber);
-        void ProgressToParent(unsigned long splayNumber);
+        void ProgressFromChildren(unsigned long splayNumber) override;
+        void ProgressFromParent(unsigned long splayNumber) override;
+        void ProgressToChildren(unsigned long splayNumber) override;
+        void ProgressToParent(unsigned long splayNumber) override;
 
         /**
          * Take the combined density tracker information and start passing it back down the tree.
          */
-        void TopNodeAction();
+        void TopNodeAction() override;
 
         /**
          * Override the method from the base class to use the data from child nodes.
          */
-        void PostReceiveFromChildren(unsigned long splayNumber);
+        void PostReceiveFromChildren(unsigned long splayNumber) override;
 
         /**
          * Override the method from the base class for a node in the tree to update its density tracker
          *
          * @param splayNumber The parameter splayNumber is 0 indexed and less than splay (a template parameter of PhasedBroadcast)
          */
-        virtual void PostSendToParent(unsigned long splayNumber);
+        void PostSendToParent(unsigned long splayNumber) override;
 
         /**
          * Use the density tracker sent by the root node.
          */
-        void Effect();
+        void Effect() override;
 
       private:
 

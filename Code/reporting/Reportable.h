@@ -18,7 +18,7 @@ namespace hemelb
     class Reportable
     {
       public:
-        virtual ~Reportable() = default;
+        virtual ~Reportable() noexcept = default;
         virtual void Report(Dict& dictionary) = 0;
     };
   }

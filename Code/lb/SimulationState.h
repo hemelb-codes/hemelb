@@ -10,10 +10,8 @@
 #include "reporting/Reportable.h"
 #include "units.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
     enum Stability
     {
       UndefinedStability = -1,
@@ -24,8 +22,9 @@ namespace hemelb
 
     class SimulationState : public reporting::Reportable
     {
-      public:
+    public:
         SimulationState(double timeStepLength, unsigned long totalTimeSteps);
+        ~SimulationState() noexcept override = default;
 
         void Increment();
         void Reset();
@@ -47,9 +46,9 @@ namespace hemelb
           return timeStepLength;
         }
 
-        void Report(reporting::Dict& dictionary);
+        void Report(reporting::Dict& dictionary) override;
 
-      private:
+    private:
         PhysicalTime timeStepLength;
         LatticeTimeStep timeStep;
         LatticeTimeStep totalTimeSteps;
@@ -57,7 +56,6 @@ namespace hemelb
         Stability stability;
         friend struct InitialConditionBase;
     };
-  }
 }
 
 #endif /* SIMULATIONSTATE_H_ */

@@ -12,10 +12,8 @@
 #include "reporting/Policies.h"
 #include "reporting/timers_fwd.h"
 
-namespace hemelb
+namespace hemelb::reporting
 {
-  namespace reporting
-  {
     /**
      * Timer which manages performance measurement for a single aspect of the code
      * @tparam ClockPolicy Policy defining how to get the current time
@@ -77,7 +75,7 @@ namespace hemelb
                        public Reportable
     {
       public:
-        typedef TimerBase<ClockPolicy> Timer;
+        using Timer = TimerBase<ClockPolicy>;
         /**
          * The set of possible timers
          */
@@ -144,6 +142,8 @@ namespace hemelb
                 means(numberOfTimers)
         {
         }
+        ~TimersBase() noexcept override = default;
+
         /**
          * Max across all processes.
          * Following the sharing of timing data between processes, the max time across all processes for each timer.
@@ -212,7 +212,7 @@ namespace hemelb
          */
         void Reduce();
 
-        void Report(Dict& dictionary);
+        void Report(Dict& dictionary) override;
 
       private:
         std::vector<Timer> timers; //! The set of timers
@@ -274,8 +274,6 @@ namespace hemelb
       "Notify cell listeners",
       "Create graph communicator"
     };
-  }
-
 }
 
 #endif //HEMELB_REPORTING_TIMERS_H

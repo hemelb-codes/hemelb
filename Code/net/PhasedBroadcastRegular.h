@@ -8,9 +8,7 @@
 
 #include "net/PhasedBroadcast.h"
 
-namespace hemelb
-{
-  namespace net
+namespace hemelb::net
   {
     /**
      * PhasedBroadcastRegular - a class for performing phased broadcasts starting at regular
@@ -191,7 +189,7 @@ namespace hemelb
       protected:
 
         // Typedef for the base class type, for convenience.
-        typedef PhasedBroadcast<initialAction, splay, overlap, goDown, goUp> base;
+        using base = PhasedBroadcast<initialAction, splay, overlap, goDown, goUp>;
 
         /**
          * Overridable function for the initial action performed by a node at the beginning of the
@@ -290,6 +288,5 @@ namespace hemelb
         }
     };
   }
-}
 
 #endif /* HEMELB_NET_PHASEDBROADCASTREGULAR_H */

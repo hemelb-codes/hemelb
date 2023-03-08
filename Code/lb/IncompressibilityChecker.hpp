@@ -140,11 +140,6 @@ namespace hemelb
     }
 
     template<class BroadcastPolicy>
-    IncompressibilityChecker<BroadcastPolicy>::~IncompressibilityChecker()
-    {
-    }
-
-    template<class BroadcastPolicy>
     distribn_t IncompressibilityChecker<BroadcastPolicy>::GetGlobalSmallestDensity() const
     {
       assert(AreDensitiesAvailable());
