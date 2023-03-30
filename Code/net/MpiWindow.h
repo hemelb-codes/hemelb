@@ -40,6 +40,8 @@ namespace hemelb::net
             );
             MPI_Info_free(&info);
             data = span(tmp, n);
+            // Windows do not inherit the handler from parent communicator
+            HEMELB_MPI_CALL(MPI_Win_set_errhandler, (window, MPI_ERRORS_RETURN));
             std::fill(data.begin(), data.end(), init);
         }
 
