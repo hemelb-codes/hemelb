@@ -8,6 +8,7 @@
 
 #include <cassert>
 #include <memory>
+#include <map>
 #include <vector>
 
 #include "constants.h"
@@ -53,11 +54,12 @@ namespace hemelb::geometry
         friend lb::InitialConditionBase;
         friend class tests::helpers::LatticeDataAccess;
 
-      public:
+    public:
+
         template<class TRAITS>
-	friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
+        friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
         template<class LatticeData>
-	friend class Site; //! Let the inner classes have access to site-related data that's otherwise private.
+        friend class Site; //! Let the inner classes have access to site-related data that's otherwise private.
 
         Domain(const lb::lattices::LatticeInfo& latticeInfo, GmyReadResult& readResult,
                const net::IOCommunicator& comms);
@@ -91,7 +93,7 @@ namespace hemelb::geometry
          * Get the number of sites along one block length
          * @return
          */
-        inline site_t GetBlockSize() const
+        inline U16 GetBlockSize() const
         {
           return blockSize;
         }
@@ -121,7 +123,7 @@ namespace hemelb::geometry
          * @return
          */
         inline site_t GetLocalSiteIdFromLocalSiteCoords(
-            const util::Vector3D<site_t>& siteCoords) const
+            Vec16 const& siteCoords) const
         {
           return ( (siteCoords.x() * blockSize) + siteCoords.y()) * blockSize + siteCoords.z();
         }
@@ -131,10 +133,12 @@ namespace hemelb::geometry
          * @param blockCoords
          * @return
          */
-        inline site_t GetBlockIdFromBlockCoords(const util::Vector3D<site_t>& blockCoords) const
+        inline site_t GetBlockGmyIdxFromBlockCoords(const Vec16& blockCoords) const
         {
           return (blockCoords.x() * blockCounts.y() + blockCoords.y()) * blockCounts.z() + blockCoords.z();
         }
+
+        std::size_t GetBlockOctIndexFromBlockCoords(const util::Vector3D<std::uint16_t>& blockCoords) const;
 
         bool IsValidLatticeSite(const util::Vector3D<site_t>& siteCoords) const;
 
@@ -151,25 +155,19 @@ namespace hemelb::geometry
          * @return
          */
         bool IsValidBlock(site_t i, site_t j, site_t k) const;
-        bool IsValidBlock(const util::Vector3D<site_t>& blockCoords) const;
+        bool IsValidBlock(const Vec16& blockCoords) const;
 
         /**
          * Get the dimensions of the bounding box of the geometry in terms of blocks.
          * @return
          */
-        inline const util::Vector3D<site_t>& GetBlockDimensions() const
+        inline const Vec16& GetBlockDimensions() const
         {
           return blockCounts;
         }
 
-        /**
-         * @param blockNumber
-         * @return
-         */
-        inline const Block& GetBlock(site_t blockNumber) const
-        {
-          assert(blockNumber < site_t(blocks.size()));
-          return blocks[blockNumber];
+        inline const Block& GetBlock(const util::Vector3D<std::uint16_t>& blockCoords) const {
+            return blocks[GetBlockOctIndexFromBlockCoords(blockCoords)];
         }
 
         /**
@@ -204,7 +202,7 @@ namespace hemelb::geometry
          * @param localSiteCoords
          * @return
          */
-        inline const util::Vector3D<site_t> GetGlobalCoords(
+        inline util::Vector3D<site_t> GetGlobalCoords(
             const util::Vector3D<site_t>& blockCoords,
             const util::Vector3D<site_t>& localSiteCoords) const
         {
@@ -240,13 +238,13 @@ namespace hemelb::geometry
           return GetProcIdFromGlobalCoords(resultCoord);
         }
 
-        const util::Vector3D<site_t>
+        util::Vector3D<site_t>
         GetGlobalCoords(site_t blockNumber, const util::Vector3D<site_t>& localSiteCoords) const;
         util::Vector3D<site_t> GetSiteCoordsFromSiteId(site_t siteId) const;
 
         void GetBlockAndLocalSiteCoords(const util::Vector3D<site_t>& location,
-                                        util::Vector3D<site_t>& blockCoords,
-                                        util::Vector3D<site_t>& siteCoords) const;
+                                        Vec16& blockCoords,
+                                        Vec16& siteCoords) const;
 
         site_t GetMidDomainSiteCount() const;
 
@@ -327,7 +325,7 @@ namespace hemelb::geometry
          */
         Domain(const lb::lattices::LatticeInfo& latticeInfo, const net::IOCommunicator& comms);
 
-        void SetBasicDetails(util::Vector3D<site_t> blocks, site_t blockSize);
+        void SetBasicDetails(Vec16 blocks, U16 blockSize);
 
         void ProcessReadSites(const GmyReadResult& readResult);
 
@@ -349,11 +347,17 @@ namespace hemelb::geometry
 
         void InitialiseNeighbourLookups();
 
-        void InitialiseNeighbourLookup(
-            std::vector<std::vector<site_t> >& sharedFLocationForEachProc);
+        using point_direction = std::pair<util::Vector3D<site_t>, site_t>;
+        // These checks are to ensure that the vector below has contiguous
+        // elements so we can be a bit naughty sending and receiving.
+        static_assert(sizeof(point_direction) == 4*sizeof(site_t));
+        static_assert(alignof(point_direction) == alignof(site_t));
+        using proc2neighdata = std::map<proc_t, std::vector<point_direction>>;
+
+        proc2neighdata InitialiseNeighbourLookup();
         void InitialisePointToPointComms(
-            std::vector<std::vector<site_t> >& sharedFLocationForEachProc);
-        void InitialiseReceiveLookup(std::vector<std::vector<site_t> >& sharedFLocationForEachProc);
+                proc2neighdata& sharedFLocationForEachProc);
+        void InitialiseReceiveLookup(proc2neighdata const& sharedFLocationForEachProc);
 
         sitedata_t GetSiteData(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
 
@@ -370,7 +374,7 @@ namespace hemelb::geometry
           neighbourIndices[siteIndex * latticeInfo.GetNumVectors() + direction] = distributionIndex;
         }
 
-        util::Vector3D<site_t> GetBlockIJK(site_t block) const;
+        Vec16 GetBlockIJK(site_t block) const;
 
         // Method should remain protected, intent is to access this information via Site
         template<typename LatticeType>
@@ -464,8 +468,8 @@ namespace hemelb::geometry
          * Basic lattice variables.
          */
         const lb::lattices::LatticeInfo& latticeInfo;
-        util::Vector3D<site_t> blockCounts;
-        site_t blockSize;
+        Vec16 blockCounts;
+        U16 blockSize;
         util::Vector3D<site_t> sites;
         site_t sitesPerBlockVolumeUnit;
         site_t blockCount;
@@ -476,7 +480,7 @@ namespace hemelb::geometry
         site_t midDomainProcCollisions[COLLISION_TYPES]; //! Number of fluid sites with all fluid neighbours on this rank, for each collision type.
         site_t domainEdgeProcCollisions[COLLISION_TYPES]; //! Number of fluid sites with at least one fluid neighbour on another rank, for each collision type.
         site_t localFluidSites; //! The number of local fluid sites.
-        std::vector<Block> blocks; //! Data where local fluid sites are stored contiguously.
+        std::vector<Block> blocks; //! Data where local fluid sites are stored contiguously - hold only blocks with fluid sites in octree order
 
         std::vector<distribn_t> distanceToWall; //! Hold the distance to the wall for each fluid site.
         std::vector<util::Vector3D<site_t> > globalSiteCoords; //! Hold the global site coordinates for each contiguous site.

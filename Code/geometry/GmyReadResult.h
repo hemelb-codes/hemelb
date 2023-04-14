@@ -27,7 +27,7 @@ namespace hemelb::geometry
         /**
          * Default constructor initialises internal variables
          */
-        GmyReadResult(const util::Vector3D<site_t>& dimensionsInBlocks, site_t blockSize);
+        GmyReadResult(const Vec16& dimensionsInBlocks, U16 blockSize);
 
         //! Destructor has to be defined in a TU where LookupTree is defined
         ~GmyReadResult();
@@ -54,9 +54,9 @@ namespace hemelb::geometry
 
         /***
          * Get the i.d. of a block, i.e. the one-d coordinate, from the three-d coordinate.
-         * @todo Use this to replace domain_type::GetBlockIdFromBlockCoords
+         * @todo Use this to replace domain_type::GetBlockGmyIdxFromBlockCoords
          */
-        inline site_t GetBlockIdFromBlockCoordinates(site_t blockI, site_t blockJ, site_t blockK) const
+        inline site_t GetBlockIdFromBlockCoordinates(U16 blockI, U16 blockJ, U16 blockK) const
         {
           return (blockI * dimensionsInBlocks.y() + blockJ) * dimensionsInBlocks.z() + blockK;
         }
@@ -64,13 +64,13 @@ namespace hemelb::geometry
         /***
          * Get the coordinates of a block from a block id.
          */
-        inline util::Vector3D<site_t> GetBlockCoordinatesFromBlockId(site_t blockId) const
+        inline Vec16 GetBlockCoordinatesFromBlockId(site_t blockId) const
         {
           site_t blockZ = blockId % dimensionsInBlocks.z();
           site_t remainder = blockId / dimensionsInBlocks.z();
           site_t blockY = remainder % dimensionsInBlocks.y();
           site_t blockX = remainder / dimensionsInBlocks.y();
-          return util::Vector3D<site_t>(blockX, blockY, blockZ);
+          return Vec16(blockX, blockY, blockZ);
         }
 
         /***
@@ -84,7 +84,7 @@ namespace hemelb::geometry
         /**
          * True if the given block coordinates are within the geometry bounding-box.
          */
-        inline bool AreBlockCoordinatesValid(const util::Vector3D<site_t>& blockCoords) const
+        inline bool AreBlockCoordinatesValid(const Vec16& blockCoords) const
         {
           return blockCoords.x() >= 0 && blockCoords.y() >= 0 && blockCoords.z() >= 0
               && blockCoords.x() < dimensionsInBlocks.x() && blockCoords.y() < dimensionsInBlocks.y()
@@ -104,7 +104,7 @@ namespace hemelb::geometry
          * Get the dimensions of the bounding box in terms of blocks.
          * @return Dimensions of the bounding box in blocks.
          */
-        inline util::Vector3D<site_t> const& GetBlockDimensions() const
+        inline Vec16 const& GetBlockDimensions() const
         {
           return dimensionsInBlocks;
         }
@@ -113,7 +113,7 @@ namespace hemelb::geometry
          * Get the number of sites along one edge of a block.
          * @return Number of sites that make up one block-length.
          */
-        inline site_t GetBlockSize() const
+        inline U16 GetBlockSize() const
         {
           return blockSize;
         }
@@ -125,8 +125,8 @@ namespace hemelb::geometry
         site_t FindFluidSiteIndexInBlock(site_t fluidSiteBlock, site_t neighbourSiteId) const;
 
       private:
-        util::Vector3D<site_t> dimensionsInBlocks; //! The count of blocks in each direction
-        site_t blockSize; //! Size of a block, in sites.
+        Vec16 dimensionsInBlocks; //! The count of blocks in each direction
+        U16 blockSize; //! Size of a block, in sites.
 
         site_t blockCount;
         site_t sitesPerBlock;

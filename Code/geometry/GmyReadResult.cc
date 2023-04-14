@@ -7,7 +7,7 @@
 #include "geometry/LookupTree.h"
 
 namespace hemelb::geometry {
-    GmyReadResult::GmyReadResult(const util::Vector3D<site_t>& dimensionsInBlocks, site_t blockSize) :
+    GmyReadResult::GmyReadResult(const Vec16& dimensionsInBlocks, U16 blockSize) :
             dimensionsInBlocks(dimensionsInBlocks), blockSize(blockSize),
             blockCount(dimensionsInBlocks.x() * dimensionsInBlocks.y() * dimensionsInBlocks.z()),
             sitesPerBlock(util::NumericalFunctions::IntegerPower(blockSize, 3)),
@@ -15,9 +15,8 @@ namespace hemelb::geometry {
     {
     }
 
-    GmyReadResult::~GmyReadResult() {
+    GmyReadResult::~GmyReadResult() = default;
 
-    }
     site_t GmyReadResult::FindSiteIndexInBlock(site_t fluidSiteBlock, site_t fluidSitesToPass) const
     {
         site_t siteIndex = 0;

@@ -50,7 +50,6 @@ namespace hemelb
           }
 
         private:
-          using BlockLocation = util::Vector3D<site_t>;
           /**
            * Populates the vector of vertex weights with different values for each local site type.
            * This allows ParMETIS to more efficiently decompose the system.

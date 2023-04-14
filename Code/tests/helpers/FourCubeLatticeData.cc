@@ -53,7 +53,7 @@ namespace hemelb::tests
     std::shared_ptr<geometry::Domain> FourCubeDomain::Create(const net::IOCommunicator& comm, site_t sitesPerBlockUnit, proc_t rankCount)
     {
         using namespace geometry;
-        GmyReadResult readResult(util::Vector3D<site_t>::Ones(),
+        GmyReadResult readResult(Vec16::Ones(),
                                  sitesPerBlockUnit);
 
         // VoxelSize = 0.01

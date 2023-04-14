@@ -115,7 +115,6 @@ namespace hemelb::geometry
             timings[hemelb::reporting::Timers::initialDecomposition].Start();
             principalProcForEachBlock.resize(geometry.GetBlockCount());
 
-
             auto blockTree = octree::build_block_tree(
                     geometry.GetBlockDimensions().as<octree::U16>(),
                     fluidSitesOnEachBlock
@@ -236,17 +235,23 @@ namespace hemelb::geometry
       // regardless of the internal type used.
       uint32_t blocksX, blocksY, blocksZ, blockSize;
 
+      auto read_check = [&](uint32_t& var) {
+          preambleReader.read(var);
+          if (var > std::uint32_t(std::numeric_limits<std::uint16_t>::max())) {
+              throw Exception() << "size greater than 2^16 - 1!";
+          }
+      };
       // Read in the values.
-      preambleReader.read(blocksX);
-      preambleReader.read(blocksY);
-      preambleReader.read(blocksZ);
-      preambleReader.read(blockSize);
+      read_check(blocksX);
+      read_check(blocksY);
+      read_check(blocksZ);
+      read_check(blockSize);
 
       // Read the padding unsigned int.
       unsigned paddingValue;
       preambleReader.read(paddingValue);
 
-      return {util::Vector3D<site_t>(blocksX, blocksY, blocksZ), blockSize};
+      return {Vec16(blocksX, blocksY, blocksZ), U16(blockSize)};
     }
 
     /**
@@ -383,7 +388,7 @@ namespace hemelb::geometry
           if (*receiver != computeComms.Rank())
           {
 
-            net.RequestSendV(compressedBlockData, *receiver);
+            net.RequestSendV(std::span<const char>(compressedBlockData), *receiver);
           }
         }
         timings[hemelb::reporting::Timers::readBlock].Stop();
@@ -392,7 +397,7 @@ namespace hemelb::geometry
       {
         compressedBlockData.resize(bytesPerCompressedBlock[blockNumber]);
 
-        net.RequestReceiveV(compressedBlockData, readingCore);
+        net.RequestReceiveV(std::span<char>(compressedBlockData), readingCore);
 
       }
       else
@@ -902,7 +907,7 @@ namespace hemelb::geometry
 #ifdef HEMELB_VALIDATE_GEOMETRY
       return true;
 #else
-      return false;
+      return true;
 #endif
     }
 }

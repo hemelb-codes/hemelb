@@ -6,6 +6,7 @@
 #include "geometry/LookupTree.h"
 
 #include <cassert>
+#include "constants.h"
 
 namespace hemelb::geometry::octree {
 
@@ -15,8 +16,12 @@ namespace hemelb::geometry::octree {
         }
     }
 
+    std::size_t NodeRef::leaf() const {
+        return path[tree->n_levels];
+    }
+
     // Get from the lowest level in the tree
-    NodeRef LookupTree::operator()(Vec16 ijk) const {
+    NodeRef LookupTree::GetPath(Vec16 ijk) const {
         auto ans = NodeRef{this};
         auto leaf_oct = ijk_to_oct(ijk);
 
@@ -40,6 +45,21 @@ namespace hemelb::geometry::octree {
             current_oct = next_oct;
         }
         return ans;
+    }
+
+    LeafRef LookupTree::GetLeaf(Vec16 ijk) const {
+        auto p = GetPath(ijk);
+        return {levels[n_levels], p.path[n_levels]};
+    }
+
+    LeafRange LookupTree::IterLeaves() const {
+        LeafRef beg{levels[n_levels], 0};
+        LeafRef end{levels[n_levels], levels[n_levels].node_ids.size()};
+        return {LeafIterator{beg}, LeafIterator{end}};
+    }
+
+    Vec16 LookupTree::GetLeafCoords(std::size_t idx) const {
+        return oct_to_ijk(levels[n_levels].node_ids[idx]);
     }
 
     constexpr U64 bounds_to_end(Vec16 bounds) {
@@ -184,37 +204,58 @@ namespace hemelb::geometry::octree {
         auto max_blocks_per_rank = comm.AllReduce(num_my_blocks, MPI_MAX);
         auto max_sites_per_rank = max_blocks_per_rank * sites_per_block;
 
-        rank_that_owns_site_win = WinData(max_sites_per_rank, comm, -1);
+        rank_that_owns_site_win = WinData(max_sites_per_rank, comm, SITE_OR_BLOCK_SOLID);
+        // Immediately start an RMA epoch so the window is usable.
+        rank_that_owns_site_win.Fence();
+    }
+
+    MPI_Aint DistributedStore::ComputeBlockStart(std::size_t block_idx) const {
+        // What rank does it live on
+        auto rank = storage_rank[block_idx];
+        // To get the offset, need to know the number of blocks on that rank
+        auto begin = storage_rank.begin();
+        auto first_block_on_rank = std::lower_bound(begin, begin + block_idx, rank);
+        MPI_Aint block_offset = block_idx - std::distance(begin, first_block_on_rank);
+        return block_offset * sites_per_block;
     }
 
     DistributedStore::WriteSession::WriteSession(DistributedStore *s)
             : WinData::WriteSession(&s->rank_that_owns_site_win), store(s) {
     }
 
+    auto DistributedStore::WriteSession::operator()(std::size_t block_idx) -> BlockWriteChunk {
+        return {store->storage_rank[block_idx], store->ComputeBlockStart(block_idx), &store->rank_that_owns_site_win};
+
+    }
     auto DistributedStore::WriteSession::operator()(Vec16 const& block_coord) -> BlockWriteChunk {
         auto const& t = store->block_tree;
         // Find the index of the block in those that are non-solid
-        auto leaf_idx = t(block_coord).path[t.n_levels];
-        // What rank does it live on
-        auto rank = store->storage_rank[leaf_idx];
-        // To get the offset, need to know the number of blocks on that rank
-        auto begin = store->storage_rank.begin();
-        auto first_block_on_rank = std::lower_bound(begin, begin + leaf_idx, rank);
-        MPI_Aint block_offset = leaf_idx - std::distance(begin, first_block_on_rank);
-        return {rank, block_offset * store->sites_per_block, &store->rank_that_owns_site_win};
+        return operator()(t.GetLeaf(block_coord).index());
     }
 
-    auto DistributedStore::BlockWriteChunk::operator()(site_t site_id) -> WinData::RemoteRef {
+    auto DistributedStore::BlockWriteChunk::operator()(site_t site_id) -> WinData::reference {
         MPI_Aint site_offset = block_start_idx + site_id;
         return {rank, site_offset, window};
     }
 
-    auto DistributedStore::WriteSession::operator()(Vec16 const& block_coord, site_t site_id) -> WinData::RemoteRef {
+    auto DistributedStore::WriteSession::operator()(Vec16 const& block_coord, site_t site_id) -> WinData::reference {
         auto& self = *this;
         return self(block_coord)(site_id);
     }
 
     auto DistributedStore::begin_writes() -> WriteSession {
-        return {this};
+        return WriteSession{this};
     }
+
+    int DistributedStore::GetSiteRank(Vec16 const& blockIjk, site_t siteIdx) const {
+        if (auto blockIdx = block_tree.GetPath(blockIjk).leaf(); blockIdx != Level::NC)
+            return GetSiteRank(blockIdx, siteIdx);
+        else
+            return SITE_OR_BLOCK_SOLID;
+    }
+    int DistributedStore::GetSiteRank(std::size_t blockIdx, site_t siteIdx) const {
+        auto rank = storage_rank[blockIdx];
+        return rank_that_owns_site_win(rank, ComputeBlockStart(blockIdx) + siteIdx);
+    }
+
 }

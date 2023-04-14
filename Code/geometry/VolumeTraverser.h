@@ -6,6 +6,8 @@
 #ifndef HEMELB_GEOMETRY_VOLUMETRAVERSER_H
 #define HEMELB_GEOMETRY_VOLUMETRAVERSER_H
 
+#include <cstdint>
+
 #include "util/Vector3D.h"
 
 namespace hemelb::geometry
@@ -17,14 +19,14 @@ namespace hemelb::geometry
      */
     class VolumeTraverser
     {
-      public:
-        virtual ~VolumeTraverser();
+    public:
+        virtual ~VolumeTraverser() = default;
 
-        util::Vector3D<site_t> const& GetCurrentLocation();
+        Vec16 const& GetCurrentLocation();
 
         site_t GetCurrentIndex() const;
 
-        site_t GetIndexFromLocation(util::Vector3D<site_t> const& iLocation) const;
+        site_t GetIndexFromLocation(Vec16 const& iLocation) const;
 
         //Increments the index by one and update the location accordingly
         //Returns true if successful or false if the whole volume has been
@@ -34,16 +36,16 @@ namespace hemelb::geometry
         bool CurrentLocationValid();
 
         //Virtual methods which must be defined for correct traversal
-        virtual site_t GetXCount() const = 0;
-        virtual site_t GetYCount() const = 0;
-        virtual site_t GetZCount() const = 0;
+        virtual U16 GetXCount() const = 0;
+        virtual U16 GetYCount() const = 0;
+        virtual U16 GetZCount() const = 0;
 
-      protected:
-        VolumeTraverser();
+    protected:
+        VolumeTraverser() = default;
 
-      private:
-        util::Vector3D<site_t> mCurrentLocation;
-        site_t mCurrentNumber;
+    private:
+        Vec16 mCurrentLocation = Vec16::Zero();
+        site_t mCurrentNumber = 0;
     };
 
 }

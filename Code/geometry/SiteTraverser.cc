@@ -6,38 +6,31 @@
 #include "geometry/Domain.h"
 #include "geometry/SiteTraverser.h"
 
-namespace hemelb
+namespace hemelb::geometry
 {
-  namespace geometry
-  {
     SiteTraverser::SiteTraverser(const geometry::Domain& iLatticeData) :
         mLatticeData(iLatticeData)
 
     {
     }
 
-    SiteTraverser::~SiteTraverser()
-    {
-    }
-
-    site_t SiteTraverser::GetXCount() const
+    U16 SiteTraverser::GetXCount() const
     {
       return GetBlockSize();
     }
 
-    site_t SiteTraverser::GetYCount() const
+    U16 SiteTraverser::GetYCount() const
     {
       return GetBlockSize();
     }
 
-    site_t SiteTraverser::GetZCount() const
+    U16 SiteTraverser::GetZCount() const
     {
       return GetBlockSize();
     }
 
-    site_t SiteTraverser::GetBlockSize() const
+    U16 SiteTraverser::GetBlockSize() const
     {
       return mLatticeData.GetBlockSize();
     }
   }
-}

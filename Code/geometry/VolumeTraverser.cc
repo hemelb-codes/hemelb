@@ -8,16 +8,8 @@
 
 namespace hemelb::geometry
 {
-    VolumeTraverser::VolumeTraverser() :
-            mCurrentLocation(0), mCurrentNumber(0)
-    {
-    }
 
-    VolumeTraverser::~VolumeTraverser()
-    {
-    }
-
-    util::Vector3D<site_t>const& VolumeTraverser::GetCurrentLocation()
+    Vec16 const& VolumeTraverser::GetCurrentLocation()
     {
         return mCurrentLocation;
     }
@@ -27,7 +19,7 @@ namespace hemelb::geometry
         return mCurrentNumber;
     }
 
-    site_t VolumeTraverser::GetIndexFromLocation(util::Vector3D<site_t> const& iLocation) const
+    site_t VolumeTraverser::GetIndexFromLocation(Vec16 const& iLocation) const
     {
         return ( (iLocation.x() * GetYCount() + iLocation.y()) * GetZCount()) + iLocation.z();
     }
@@ -67,8 +59,8 @@ namespace hemelb::geometry
         }
 
         if (!mCurrentLocation.IsInRange(
-                util::Vector3D<site_t>::Zero(),
-                {GetXCount() - 1, GetYCount() - 1, GetZCount() - 1}
+                Vec16::Zero(),
+                Vec16(GetXCount() - 1, GetYCount() - 1, GetZCount() - 1)
         ))
         {
             return false;

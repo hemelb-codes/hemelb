@@ -171,10 +171,10 @@ auto const site = localFieldData.GetSite(localContiguousId);
         {
 
           // now, for every proc, which I need something from,send the ids of those
-          net.RequestSendV(needsIHaveFromEachProc[other], other);
+          net.RequestSendV(std::span<const site_t>(needsIHaveFromEachProc[other]), other);
           // and, for every proc, which needs something from me, receive those ids
           needsEachProcHasFromMe[other].resize(countOfNeedsOnEachProcFromMe[other]);
-          net.RequestReceiveV(needsEachProcHasFromMe[other], other);
+          net.RequestReceiveV(std::span<site_t>(needsEachProcHasFromMe[other]), other);
           // In principle, this bit could have been implemented as a separate GatherV onto every proc
           // However, in practice, we expect the needs to be basically local
           // so using point-to-point will be more efficient.

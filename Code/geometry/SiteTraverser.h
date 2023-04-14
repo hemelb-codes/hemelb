@@ -21,17 +21,17 @@ namespace hemelb::geometry
     public:
         SiteTraverser(const Domain & iLatticeDat);
 
-        ~SiteTraverser() override;
+        ~SiteTraverser() override = default;
 
-        site_t GetXCount() const override;
+        U16 GetXCount() const override;
 
-        site_t GetYCount() const override;
+        U16 GetYCount() const override;
 
-        site_t GetZCount() const override;
+        U16 GetZCount() const override;
 
     private:
         //Returns the block size in number of sites
-        site_t GetBlockSize() const;
+        U16 GetBlockSize() const;
 
         const Domain & mLatticeData;
     };

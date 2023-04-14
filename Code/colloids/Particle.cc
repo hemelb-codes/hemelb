@@ -349,7 +349,7 @@ namespace hemelb::colloids
               log::Logger::Log<log::Trace, log::OnePerCore>("WAIT A MINUTE 2 ...\n");
               if (!latDatLBM.IsValidBlock(blockCoords))
                 blockStatus = 1; // invalid - out of range
-              else if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).IsEmpty())
+              else if (latDatLBM.GetBlock(blockCoords).IsEmpty())
                 blockStatus = 2; // empty - entire block is solid
 
               log::Logger::Log<log::Trace, log::OnePerCore>("WAIT A MINUTE 3 ...\n");
@@ -360,14 +360,14 @@ namespace hemelb::colloids
                 siteStatus = 2; // deemed solid because block is empty
               else if (blockStatus == 0)
               {
-                if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)) == SITE_OR_BLOCK_SOLID)
+                if (latDatLBM.GetBlock(blockCoords).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)) == SITE_OR_BLOCK_SOLID)
                 {
                   siteStatus = 3; // individual site is not simulated, i.e. must be solid
                 }
-                else if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords))
+                else if (latDatLBM.GetBlock(blockCoords).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords))
                     == latDatLBM.GetLocalRank())
                 {
-                  if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).SiteIsSolid(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)))
+                  if (latDatLBM.GetBlock(blockCoords).SiteIsSolid(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)))
                     siteStatus = 4; // individual site is local but solid (should not happen?)
                 }
               }
@@ -377,7 +377,7 @@ namespace hemelb::colloids
                 globalStatus = 1; // invalid - out of range
               else if (blockStatus == 2 || (siteStatus == 3) | (siteStatus == 4))
                 globalStatus = 2; // solid
-              else if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords))
+              else if (latDatLBM.GetBlock(blockCoords).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords))
                   != latDatLBM.GetLocalRank())
                 globalStatus = 3; // remote fluid
 
@@ -432,7 +432,7 @@ namespace hemelb::colloids
               if (siteStatus == 0)
                 log::Logger::Log<log::Trace, log::OnePerCore>("In colloids::Particle::InterpolateFluidVelocity, particleId: %i, procIdForSite: %i\n",
                                                               particleId,
-                                                              latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)));
+                                                              latDatLBM.GetBlock(blockCoords).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)));
               log::Logger::Log<log::Trace, log::OnePerCore>("DONE LOTS OF STUFF\n");
 
               if (!isSiteValid || !isSiteLocal)
@@ -445,7 +445,7 @@ namespace hemelb::colloids
                                                                 isSiteLocal ?
                                                                   "T" :
                                                                   "F",
-                                                                latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)),
+                                                                latDatLBM.GetBlock(blockCoords).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)),
                                                                 latDatLBM.GetLocalRank());
                 }
             }

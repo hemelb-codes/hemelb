@@ -24,15 +24,15 @@ namespace hemelb::geometry
         /**
          * @override Of the default destructor in VolumeTraverser.
          */
-        ~BlockTraverser() override;
+        ~BlockTraverser() override = default;
 
-        site_t CurrentBlockNumber() const;
+        [[nodiscard]] site_t CurrentBlockNumber() const;
 
         util::Vector3D<site_t> GetSiteCoordinatesOfLowestSiteInCurrentBlock();
 
         const Block& GetCurrentBlockData();
 
-        const Block& GetBlockDataForLocation(const util::Vector3D<site_t>& iLocation);
+        const Block& GetBlockDataForLocation(const Vec16& iLocation);
 
         site_t GetBlockSize();
 
@@ -43,23 +43,23 @@ namespace hemelb::geometry
          * @override of the abstract function in VolumeTraverser.
          * @return
          */
-        site_t GetXCount() const override;
+        [[nodiscard]] U16 GetXCount() const override;
 
         /**
          * Gets the number of blocks in the y direction.
          * @override of the abstract function in VolumeTraverser.
          * @return
          */
-        site_t GetYCount() const override;
+        [[nodiscard]] U16 GetYCount() const override;
 
         /**
          * Gets the number of blocks in the z direction.
          * @override of the abstract function in VolumeTraverser.
          * @return
          */
-        site_t GetZCount() const override;
+        [[nodiscard]] U16 GetZCount() const override;
 
-        bool IsValidLocation(util::Vector3D<site_t> block);
+        bool IsValidLocation(Vec16 const& block);
 
       protected:
         bool GoToNextBlock();

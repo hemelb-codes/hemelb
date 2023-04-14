@@ -253,17 +253,17 @@ namespace hemelb::tests
         REQUIRE(tree.levels[0].sites_per_node[0] == 5576);
         REQUIRE(tree.levels[3].node_ids.size() == 20);
 
-        auto b000 = tree({0,0,0});
+        auto b000 = tree.GetPath({0,0,0});
         REQUIRE(b000.path[0] == 0);
 
-        auto b114 = tree({1,1,4});
+        auto b114 = tree.GetPath({1,1,4});
         // 1,1,4 => 0001, 0001, 0100 => 000 001 000 110
         REQUIRE(tree.levels[0].node_ids[b114.path[0]] == 0);
         REQUIRE(tree.levels[1].node_ids[b114.path[1]] == 1);
         REQUIRE(tree.levels[2].node_ids[b114.path[2]] == 8);
         REQUIRE(tree.levels[3].node_ids[b114.path[3]] == 70);
 
-        auto b334 = tree({3,3,4});
+        auto b334 = tree.GetPath({3,3,4});
         // 3,3,4 => 0011, 0011, 0100 => 000 001 110 110
         REQUIRE(tree.levels[0].node_ids[b334.path[0]] == 0);
         REQUIRE(tree.levels[1].node_ids[b334.path[1]] == 1);

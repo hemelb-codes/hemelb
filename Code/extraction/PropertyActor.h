@@ -13,10 +13,8 @@
 #include "net/IteratedAction.h"
 #include "reporting/timers_fwd.h"
 
-namespace hemelb
+namespace hemelb::extraction
 {
-  namespace extraction
-  {
     class PropertyActor : public net::IteratedAction
     {
       public:
@@ -32,7 +30,7 @@ namespace hemelb
                       IterableDataSource& dataSource, reporting::Timers& timers,
                       const net::IOCommunicator& ioComms);
 
-        ~PropertyActor();
+        ~PropertyActor() override;
 
         /**
          * Set which properties will be required this iteration.
@@ -43,14 +41,13 @@ namespace hemelb
         /**
          * Override the iterated actor end of iteration method to perform writing.
          */
-        void EndIteration();
+        void EndIteration() override;
 
       private:
         const lb::SimulationState& simulationState;
-        PropertyWriter* propertyWriter;
+        std::unique_ptr<PropertyWriter> propertyWriter;
         reporting::Timers& timers;
     };
-  }
 }
 
 #endif /* HEMELB_EXTRACTION_PROPERTYACTOR_H */

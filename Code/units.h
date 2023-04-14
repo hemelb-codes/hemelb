@@ -24,6 +24,11 @@ namespace hemelb
   typedef unsigned Direction;
   typedef uint64_t sitedata_t;
 
+  // types used to represent domain size in blocks and for octree operations
+  using U16 = std::uint16_t;
+  using U64 = std::uint64_t;
+  using Vec16 = util::Vector3D<U16>;
+
   // ------- NEW POLICY -------------
   // Types should reflect the meaning of a quantity as well as the precision
   // the type name should reflect the dimensionality and the base of the units

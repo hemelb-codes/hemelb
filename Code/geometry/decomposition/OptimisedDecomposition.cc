@@ -10,12 +10,8 @@
 #include "log/Logger.h"
 #include "net/net.h"
 
-namespace hemelb
+namespace hemelb::geometry::decomposition
 {
-  namespace geometry
-  {
-    namespace decomposition
-    {
       OptimisedDecomposition::OptimisedDecomposition(
           reporting::Timers& timers, net::MpiCommunicator& comms, const GmyReadResult& geometry,
           const lb::lattices::LatticeInfo& latticeInfo, const std::vector<proc_t>& procForEachBlock,
@@ -420,7 +416,7 @@ namespace hemelb
                           geometry.GetSiteIdFromSiteCoordinates(neighbourSiteI,
                                                                 neighbourSiteJ,
                                                                 neighbourSiteK);
-                      if (neighbourBlock.Sites.size() == 0
+                      if (neighbourBlock.Sites.empty()
                           || neighbourBlock.Sites[neighbourSiteId].targetProcessor == SITE_OR_BLOCK_SOLID)
                       {
                         continue;
@@ -594,11 +590,11 @@ namespace hemelb
           {
             blocksForcedOnMeByEachProc[otherProc] =
                 std::vector<site_t>(blocksForcedOnMe[otherProc]);
-            netForMoveSending.RequestReceiveV(blocksForcedOnMeByEachProc[otherProc], otherProc);
+            netForMoveSending.RequestReceiveV(std::span<site_t>(blocksForcedOnMeByEachProc[otherProc]), otherProc);
           }
           if (numberOfBlocksIForceUponX[otherProc] > 0)
           {
-            netForMoveSending.RequestSendV(blockForcedUponX[otherProc], otherProc);
+            netForMoveSending.RequestSendV(std::span<site_t const>(blockForcedUponX[otherProc]), otherProc);
           }
           log::Logger::Log<log::Trace, log::OnePerCore>("I'm forcing %i blocks on proc %i.",
                                                         numberOfBlocksIForceUponX[otherProc],
@@ -612,7 +608,7 @@ namespace hemelb
         {
           if (blocksForcedOnMe[otherProc] > 0)
           {
-            for (std::vector<site_t>::iterator it = blocksForcedOnMeByEachProc[otherProc].begin();
+            for (auto it = blocksForcedOnMeByEachProc[otherProc].begin();
                 it != blocksForcedOnMeByEachProc[otherProc].end(); ++it)
             {
               if (std::count(blockIdsIRequireFromX[otherProc].begin(),
@@ -625,14 +621,14 @@ namespace hemelb
                                                               otherProc);
               }
               // We also need to take all neighbours of the forced block from their processors.
-              BlockLocation blockCoords = geometry.GetBlockCoordinatesFromBlockId(*it);
+              auto blockCoords = geometry.GetBlockCoordinatesFromBlockId(*it).as<int>();
               // Iterate over every direction we might need (except 0 as we obviously already have
               // that block in the list).
               for (Direction direction = 1; direction < lb::lattices::D3Q27::NUMVECTORS;
                   ++direction)
               {
                 // Calculate the putative neighbour's coordinates...
-                BlockLocation neighbourCoords = blockCoords + lb::lattices::D3Q27::VECTORS[direction];
+                auto neighbourCoords = (blockCoords + lb::lattices::D3Q27::VECTORS[direction]).as<U16>();
                 // If the neighbour is a real block...
                 if (geometry.AreBlockCoordinatesValid(neighbourCoords))
                 {
@@ -702,8 +698,8 @@ namespace hemelb
           log::Logger::Log<log::Trace, log::OnePerCore>("Proc %i requires %i blocks from me",
                                                         otherProc,
                                                         blockIdsXRequiresFromMe[otherProc].size());
-          netForMoveSending.RequestReceiveV(blockIdsXRequiresFromMe[otherProc], otherProc);
-          netForMoveSending.RequestSendV(blockIdsIRequireFromX[otherProc], otherProc);
+          netForMoveSending.RequestReceiveV(std::span<site_t>(blockIdsXRequiresFromMe[otherProc]), otherProc);
+          netForMoveSending.RequestSendV(std::span<site_t const>(blockIdsIRequireFromX[otherProc]), otherProc);
         }
         netForMoveSending.Dispatch();
         timers[hemelb::reporting::Timers::blockRequirements].Stop();
@@ -764,7 +760,7 @@ namespace hemelb
         net::Net netForMoveSending(comms);
         for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.Size()))))); ++otherProc)
         {
-          for (std::vector<site_t>::iterator it = blockIdsIRequireFromX[otherProc].begin();
+          for (auto it = blockIdsIRequireFromX[otherProc].begin();
               it != blockIdsIRequireFromX[otherProc].end(); ++it)
           {
             netForMoveSending.RequestReceiveR(movesForEachBlockWeCareAbout[*it], otherProc);
@@ -772,7 +768,7 @@ namespace hemelb
                                                           *it,
                                                           otherProc);
           }
-          for (std::vector<site_t>::iterator it = blockIdsXRequiresFromMe[otherProc].begin();
+          for (auto it = blockIdsXRequiresFromMe[otherProc].begin();
               it != blockIdsXRequiresFromMe[otherProc].end(); ++it)
           {
             netForMoveSending.RequestSendR(movesForEachLocalBlock[*it], otherProc);
@@ -811,7 +807,7 @@ namespace hemelb
         for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.Size()))))); ++otherProc)
         {
           allMoves[otherProc] = 0;
-          for (std::vector<site_t>::iterator it = blockIdsIRequireFromX[otherProc].begin();
+          for (auto it = blockIdsIRequireFromX[otherProc].begin();
               it != blockIdsIRequireFromX[otherProc].end(); ++it)
           {
             if (movesForEachBlockWeCareAbout[*it] > 0)
@@ -828,16 +824,15 @@ namespace hemelb
             }
           }
 
-          for (std::vector<site_t>::iterator it = blockIdsXRequiresFromMe[otherProc].begin();
-              it != blockIdsXRequiresFromMe[otherProc].end(); ++it)
+          for (auto& bi: blockIdsXRequiresFromMe[otherProc])
           {
-            if (moveDataForEachBlock[*it].size() > 0)
+            if (!moveDataForEachBlock[bi].empty())
             {
-              netForMoveSending.RequestSendV(moveDataForEachBlock[*it], otherProc);
+              netForMoveSending.RequestSendV(std::span<idx_t const>(moveDataForEachBlock[bi]), otherProc);
               log::Logger::Log<log::Trace, log::OnePerCore>("Sending %i moves from to proc %i about block %i",
-                                                            moveDataForEachBlock[*it].size() / 3,
+                                                            moveDataForEachBlock[bi].size() / 3,
                                                             otherProc,
-                                                            *it);
+                                                            bi);
             }
           }
 
@@ -1174,11 +1169,10 @@ namespace hemelb
           // Create a sendable array (std::lists aren't organised in a sendable format).
           neighboursAdjacencyData.resize(neighboursAdjacencyCount);
           unsigned int adjacencyIndex = 0;
-          for (std::multimap<idx_t, idx_t>::const_iterator it = expectedAdjacencyData.begin();
-              it != expectedAdjacencyData.end(); ++it)
+          for (auto & it : expectedAdjacencyData)
           {
-            neighboursAdjacencyData[2 * adjacencyIndex] = it->first;
-            neighboursAdjacencyData[2 * adjacencyIndex + 1] = it->second;
+            neighboursAdjacencyData[2 * adjacencyIndex] = it.first;
+            neighboursAdjacencyData[2 * adjacencyIndex + 1] = it.second;
             ++adjacencyIndex;
           }
           // Send the data to the neighbouringProc.
@@ -1198,11 +1192,10 @@ namespace hemelb
           neighboursAdjacencyCount = 2 * expectedAdjacencyData.size();
           neighboursAdjacencyData.resize(neighboursAdjacencyCount);
           int adjacencyIndex = 0;
-          for (std::multimap<idx_t, idx_t>::const_iterator it = expectedAdjacencyData.begin();
-              it != expectedAdjacencyData.end(); ++it)
+          for (auto & it : expectedAdjacencyData)
           {
-            neighboursAdjacencyData[2 * adjacencyIndex] = it->first;
-            neighboursAdjacencyData[2 * adjacencyIndex + 1] = it->second;
+            neighboursAdjacencyData[2 * adjacencyIndex] = it.first;
+            neighboursAdjacencyData[2 * adjacencyIndex + 1] = it.second;
             ++adjacencyIndex;
           }
         }
@@ -1221,7 +1214,7 @@ namespace hemelb
           bool found = false;
           // Go through each neighbour we know about on this proc, and check whether it
           // matches the current received neighbour-data.
-          for (std::multimap<idx_t, idx_t>::iterator it =
+          for (auto it =
               expectedAdjacencyData.find(neighboursAdjacencyData[ii + 1]);
               it != expectedAdjacencyData.end(); ++it)
           {
@@ -1247,7 +1240,7 @@ namespace hemelb
         }
 
         // The local store of adjacencies should now be empty, if there was complete matching.
-        std::multimap<idx_t, idx_t>::iterator it = expectedAdjacencyData.begin();
+        auto it = expectedAdjacencyData.begin();
         while (it != expectedAdjacencyData.end())
         {
           idx_t adj1 = it->first;
@@ -1282,6 +1275,4 @@ namespace hemelb
           }
         }
       }
-    }
-  }
 }

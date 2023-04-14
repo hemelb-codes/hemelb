@@ -7,16 +7,10 @@
 #include "geometry/Domain.h"
 #include "util/Vector3D.h"
 
-namespace hemelb
+namespace hemelb::geometry
 {
-  namespace geometry
-  {
     BlockTraverser::BlockTraverser(const geometry::Domain& iLatDat) :
         VolumeTraverser(), mLatticeData(iLatDat)
-    {
-    }
-
-    BlockTraverser::~BlockTraverser()
     {
     }
 
@@ -27,17 +21,17 @@ namespace hemelb
 
     util::Vector3D<site_t> BlockTraverser::GetSiteCoordinatesOfLowestSiteInCurrentBlock()
     {
-      return GetCurrentLocation() * mLatticeData.GetBlockSize();
+      return GetCurrentLocation().as<site_t>() * mLatticeData.GetBlockSize();
     }
 
     const Block& BlockTraverser::GetCurrentBlockData()
     {
-      return mLatticeData.GetBlock(GetCurrentIndex());
+      return mLatticeData.GetBlock(GetCurrentLocation());
     }
 
-    const Block& BlockTraverser::GetBlockDataForLocation(const util::Vector3D<site_t>& iLocation)
+    const Block& BlockTraverser::GetBlockDataForLocation(const Vec16& iLocation)
     {
-      return mLatticeData.GetBlock(GetIndexFromLocation(iLocation));
+      return mLatticeData.GetBlock(iLocation);
     }
 
     site_t BlockTraverser::GetBlockSize()
@@ -50,7 +44,7 @@ namespace hemelb
       return SiteTraverser(mLatticeData);
     }
 
-    bool BlockTraverser::IsValidLocation(util::Vector3D<site_t> iBlock)
+    bool BlockTraverser::IsValidLocation(Vec16 const& iBlock)
     {
       return mLatticeData.IsValidBlock(iBlock);
     }
@@ -60,19 +54,18 @@ namespace hemelb
       return TraverseOne();
     }
 
-    site_t BlockTraverser::GetXCount() const
+    U16 BlockTraverser::GetXCount() const
     {
       return mLatticeData.GetBlockDimensions().x();
     }
 
-    site_t BlockTraverser::GetYCount() const
+    U16 BlockTraverser::GetYCount() const
     {
       return mLatticeData.GetBlockDimensions().y();
     }
 
-    site_t BlockTraverser::GetZCount() const
+    U16 BlockTraverser::GetZCount() const
     {
       return mLatticeData.GetBlockDimensions().z();
     }
-  }
 }

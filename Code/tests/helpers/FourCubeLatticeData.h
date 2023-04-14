@@ -13,10 +13,8 @@
 #include "io/formats/geometry.h"
 #include "util/Vector3D.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     class TestSiteData : public geometry::SiteData
     {
       public:
@@ -66,7 +64,6 @@ namespace hemelb
             return *static_cast<FourCubeDomain*>(m_domain.get());
         }
     };
-  }
 }
 
 #endif // ONCE

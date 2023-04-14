@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <compare>
 #include <memory>
 #include <vector>
 
@@ -118,6 +119,43 @@ namespace hemelb::geometry::octree
         U16 level;
     };
 
+    class LeafRef {
+        Level const* level;
+        std::size_t idx;
+        friend class NodeRef;
+        friend class LookupTree;
+        friend class LeafIterator;
+
+        inline LeafRef(Level const& l, std::size_t i) : level(&l), idx(i) {}
+    public:
+        inline explicit operator bool() const{
+            return idx != Level::NC;
+        }
+
+        [[nodiscard]] inline std::size_t index() const {
+            return idx;
+        }
+        [[nodiscard]] inline U64 const& id() const {
+            return level->node_ids[idx];
+        }
+        [[nodiscard]] inline U64 const& sites() const {
+            return level->sites_per_node[idx];
+        }
+        [[nodiscard]] inline Vec16 coords() const {
+            return oct_to_ijk(id());
+        }
+
+        inline friend std::partial_ordering operator<=>(const LeafRef& a, const LeafRef& b) {
+            if (a.level != b.level)
+                return std::partial_ordering::unordered;
+            return a.idx <=> b.idx;
+        }
+        inline friend bool operator==(const LeafRef& a, const LeafRef& b) {
+            return (a <=> b) == std::partial_ordering::equivalent;
+        }
+
+        };
+
     // Refer to a particular node in the tree
     class NodeRef {
     public:
@@ -127,7 +165,12 @@ namespace hemelb::geometry::octree
         inline explicit NodeRef(LookupTree const* t) : tree{t} {
             std::fill(path.begin(), path.end(), Level::NC);
         }
+
+        [[nodiscard]] std::size_t leaf() const;
     };
+
+    class LeafIterator;
+    using LeafRange = std::pair<LeafIterator, LeafIterator>;
 
     // A tree with one level holds only the root node
     class LookupTree {
@@ -138,9 +181,37 @@ namespace hemelb::geometry::octree
         explicit LookupTree(U16 N);
 
         // Get from the lowest level in the tree
-        NodeRef operator()(Vec16 ijk) const;
+        [[nodiscard]] NodeRef GetPath(Vec16 ijk) const;
+
+        [[nodiscard]] LeafRef GetLeaf(Vec16 ijk) const;
+
+        [[nodiscard]] LeafRange IterLeaves() const;
+
+        [[nodiscard]] Vec16 GetLeafCoords(std::size_t) const;
     };
 
+    // Iterate over tree leaf nodes in storage order
+    class LeafIterator {
+        LeafRef r;
+    public:
+        inline explicit LeafIterator(LeafRef lr) : r(std::move(lr)) {}
+
+        inline LeafIterator& operator++() {
+            r.idx++;
+            return *this;
+        }
+        inline LeafRef const& operator*() const {
+            return r;
+        }
+        friend auto operator<=>(const LeafIterator&, const LeafIterator&) = default;
+    };
+
+    inline LeafIterator begin(LeafRange const& r) {
+        return r.first;
+    }
+    inline LeafIterator end(LeafRange const& r) {
+        return r.second;
+    }
     // Iterate over all the octree leaf coordinates that are within a simple cuboid
     // bounding box starting at origin up to (not including) the bounds.
     //
@@ -169,8 +240,8 @@ namespace hemelb::geometry::octree
     struct IterBounds {
         Vec16 bounds;
 
-        WithinBoundsIterator begin() const;
-        WithinBoundsIterator end() const;
+        [[nodiscard]] WithinBoundsIterator begin() const;
+        [[nodiscard]] WithinBoundsIterator end() const;
     };
 
     LookupTree build_block_tree(const Vec16& dimensionsInBlocks, std::vector<site_t> const& fluidSitesPerBlock);
@@ -193,12 +264,18 @@ namespace hemelb::geometry::octree
         using WinData = net::WinData<int>;
         WinData rank_that_owns_site_win;
 
+        // Compute the index within a partition's array where a block lives (block given by its flat index).
+        MPI_Aint ComputeBlockStart(std::size_t block_idx) const;
     public:
         // Construct - collective on the communicator
         DistributedStore(site_t sites_per_block, LookupTree tree, std::vector<int> ranks, net::MpiCommunicator c);
 
-        inline LookupTree const& GetTree() const {
+        [[nodiscard]] inline LookupTree const& GetTree() const {
             return block_tree;
+        }
+
+        [[nodiscard]] inline auto GetBlockCount() const {
+            return storage_rank.size();
         }
 
         // Allow many writes to the same block, wherever it is.
@@ -212,22 +289,26 @@ namespace hemelb::geometry::octree
             WinData* window;
 
             // Return a write-object for the given site
-            WinData::RemoteRef operator()(site_t site_id);
+            WinData::reference operator()(site_t site_id);
         };
 
         // Hide some access details behind in a more natural access style
         // Recall that the destructor has a fence so is collective.
         struct WriteSession : public WinData::WriteSession {
             DistributedStore* store;
-            WriteSession(DistributedStore* s);
+            explicit WriteSession(DistributedStore* s);
             // Do the block level calculations once
             BlockWriteChunk operator()(Vec16 const& block_coord);
+            BlockWriteChunk operator()(std::size_t block_idx);
             // Do everything
-            WinData::RemoteRef operator()(Vec16 const& block_coord, site_t site_id);
+            WinData::reference operator()(Vec16 const& block_coord, site_t site_id);
         };
 
         // Start a load of writes
         WriteSession begin_writes();
+
+        [[nodiscard]] int GetSiteRank(Vec16 const& blockIjk, site_t siteIdx) const;
+        [[nodiscard]] int GetSiteRank(std::size_t blockIdx, site_t siteIdx) const;
     };
 
 }

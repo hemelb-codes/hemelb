@@ -6,80 +6,73 @@
 #include "extraction/PropertyActor.h"
 #include "reporting/Timers.h"
 
-namespace hemelb
+namespace hemelb::extraction
 {
-  namespace extraction
-  {
     PropertyActor::PropertyActor(const lb::SimulationState& simulationState,
                                  const std::vector<PropertyOutputFile>& propertyOutputs,
                                  IterableDataSource& dataSource, reporting::Timers& timers,
                                  const net::IOCommunicator& ioComms) :
         simulationState(simulationState), timers(timers)
     {
-      propertyWriter = new PropertyWriter(dataSource, propertyOutputs, ioComms);
+      propertyWriter = std::make_unique<PropertyWriter>(dataSource, propertyOutputs, ioComms);
     }
 
-    PropertyActor::~PropertyActor()
-    {
-      delete propertyWriter;
-    }
+    PropertyActor::~PropertyActor() = default;
 
     void PropertyActor::SetRequiredProperties(lb::MacroscopicPropertyCache& propertyCache)
     {
-      const std::vector<LocalPropertyOutput*>& propertyOutputs =
-          propertyWriter->GetPropertyOutputs();
+        const std::vector<LocalPropertyOutput*>& propertyOutputs =
+                propertyWriter->GetPropertyOutputs();
 
-      // Iterate over each property output spec.
-      for (unsigned output = 0; output < propertyOutputs.size(); ++output)
-      {
-        const LocalPropertyOutput* propertyOutput = propertyOutputs[output];
-
-        // Only consider the ones that are being written this iteration.
-        if (propertyOutput->ShouldWrite(simulationState.GetTimeStep()))
+        // Iterate over each property output spec.
+        for (auto propertyOutput : propertyOutputs)
         {
-          auto& outputFile = propertyOutput->GetOutputSpec();
+            // Only consider the ones that are being written this iteration.
+            if (propertyOutput->ShouldWrite(simulationState.GetTimeStep()))
+            {
+                auto& outputFile = propertyOutput->GetOutputSpec();
 
-          // Iterate over each field.
-	  for (auto&& fieldSpec: outputFile.fields)
-          {
-            // Set the cache to calculate each required field.
-	    overload_visit(
-	      fieldSpec.src,
-	      [&](source::Pressure) {
-		propertyCache.densityCache.SetRefreshFlag();
-	      },
-	      [&](source::Velocity) {
-		propertyCache.velocityCache.SetRefreshFlag();
-	      },
-	      [&](source::ShearStress) {
-		propertyCache.wallShearStressMagnitudeCache.SetRefreshFlag();
-	      },
-	      [&](source::VonMisesStress) {
-		propertyCache.vonMisesStressCache.SetRefreshFlag();
-	      },
-	      [&](source::ShearRate) {
-		propertyCache.shearRateCache.SetRefreshFlag();
-	      },
-	      [&](source::StressTensor) {
-		propertyCache.stressTensorCache.SetRefreshFlag();
-	      },
-	      [&](source::Traction) {
-		propertyCache.tractionCache.SetRefreshFlag();
-	      },
-	      [&](source::TangentialProjectionTraction) {
-		propertyCache.tangentialProjectionTractionCache.SetRefreshFlag();
-	      },
-	      [](source::Distributions) {
-		// We don't actually have to cache anything to get the distribution.
-	      },
-	      [](source::MpiRank) {
-		// We don't actually have to cache anything to get the rank.
-	      }
-	    );
+                // Iterate over each field.
+                for (auto&& fieldSpec: outputFile.fields)
+                {
+                    // Set the cache to calculate each required field.
+                    overload_visit(
+                            fieldSpec.src,
+                            [&](source::Pressure) {
+                                propertyCache.densityCache.SetRefreshFlag();
+                            },
+                            [&](source::Velocity) {
+                                propertyCache.velocityCache.SetRefreshFlag();
+                            },
+                            [&](source::ShearStress) {
+                                propertyCache.wallShearStressMagnitudeCache.SetRefreshFlag();
+                            },
+                            [&](source::VonMisesStress) {
+                                propertyCache.vonMisesStressCache.SetRefreshFlag();
+                            },
+                            [&](source::ShearRate) {
+                                propertyCache.shearRateCache.SetRefreshFlag();
+                            },
+                            [&](source::StressTensor) {
+                                propertyCache.stressTensorCache.SetRefreshFlag();
+                            },
+                            [&](source::Traction) {
+                                propertyCache.tractionCache.SetRefreshFlag();
+                            },
+                            [&](source::TangentialProjectionTraction) {
+                                propertyCache.tangentialProjectionTractionCache.SetRefreshFlag();
+                            },
+                            [](source::Distributions) {
+                                // We don't actually have to cache anything to get the distribution.
+                            },
+                            [](source::MpiRank) {
+                                // We don't actually have to cache anything to get the rank.
+                            }
+                    );
 
-          }
+                }
+            }
         }
-      }
     }
 
     void PropertyActor::EndIteration()
@@ -89,5 +82,4 @@ namespace hemelb
       timers[reporting::Timers::extractionWriting].Stop();
     }
 
-  }
 }
