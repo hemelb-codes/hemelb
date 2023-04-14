@@ -5,7 +5,7 @@
 
 add_library(hemelb_geometry OBJECT
   GmyReadResult.cc
-  BlockTraverser.cc BlockTraverserWithVisitedBlockTracker.cc
+  BlockTraverser.cc
   GeometryReader.cc needs/Needs.cc
   LookupTree.cc
   Domain.cc FieldData.cc
