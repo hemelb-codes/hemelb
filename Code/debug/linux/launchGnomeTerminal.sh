@@ -5,11 +5,20 @@
 # license in the file LICENSE.
 DIR=$(dirname "$0")
 debuggerCommandFile=$DIR/resume.gdb
-binary=$2
-debugger="gdb -q -x $debuggerCommandFile $binary"
 
+binary=$1
 shift
-# Remove the first to params.
+
+# Build the debugger invocation
+debugger="gdb -q -x $debuggerCommandFile"
+# If the -file flag is given then also run those GDB commands
+if [ "$1" == "-file" ]; then
+  debugger="$debugger -x $2"
+  shift 2
+fi
+# Add the binary
+debugger="$debugger $binary"
+
 # Positional params now hold the process ids we
 # want to attach to.
     

@@ -3,18 +3,15 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include <iostream>
 #include "debug/none/NullDebugger.h"
 
-namespace hemelb
+namespace hemelb::debug
 {
-  namespace debug
-  {
     // Do nothing!
-    void NullDebugger::Attach(void)
+    void NullDebugger::Attach()
     {
     }
-    void NullDebugger::BreakHere(void)
+    void NullDebugger::BreakHere()
     {
     }
     void NullDebugger::Print(const char* iFormat, ...)
@@ -22,9 +19,8 @@ namespace hemelb
     }
 
     NullDebugger::NullDebugger(const char* const executable, const net::MpiCommunicator& comm) :
-        Debugger(executable, comm)
+            Debugger(executable, comm)
     {
     }
 
-  }
 }

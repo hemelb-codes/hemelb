@@ -9,16 +9,14 @@
 #include <unistd.h>
 #include <cerrno>
 
-namespace hemelb
+namespace hemelb::debug
 {
-  namespace debug
-  {
     LinuxDebugger::LinuxDebugger(const char* const executable, const net::MpiCommunicator& comm) :
         ActiveDebugger(executable, comm)
     {
     }
 
-    const std::string LinuxDebugger::GetBinaryPath(void) const
+    std::string LinuxDebugger::GetBinaryPath(void) const
     {
       char buf[1024];
       ssize_t len;
@@ -31,12 +29,12 @@ namespace hemelb
       return std::string(buf, len);
     }
 
-    const std::string LinuxDebugger::GetPlatformInterpreter(void) const
+    std::string LinuxDebugger::GetPlatformInterpreter(void) const
     {
-      return std::string("bash");
+      return {"bash"};
     }
 
-    const std::string LinuxDebugger::GetPlatformScript(void) const
+    std::string LinuxDebugger::GetPlatformScript(void) const
     {
       std::string include(__FILE__);
       std::string debugLinuxDir = include.substr(0, include.rfind('/'));
@@ -44,5 +42,4 @@ namespace hemelb
       return debugLinuxDir + "/launchGdbs.sh";
     }
 
-  } // namespace debug
-} // namespace hemelb
+}

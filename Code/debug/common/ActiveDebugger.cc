@@ -3,16 +3,16 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
+#include <iostream>
+#include <optional>
 #include <string>
 #include <sstream>
-#include <iostream>
 #include <vector>
 
 #include <cstdlib>
 #include <cstring>
 #include <cerrno>
 #include <cstdio>
-
 #include <cstdarg>
 
 #include <unistd.h>
@@ -22,26 +22,32 @@
 
 #include "debug/common/ActiveDebugger.h"
 
-namespace hemelb
+namespace hemelb::debug
 {
-  namespace debug
-  {
 
     ActiveDebugger::ActiveDebugger(const char* const executable, const net::MpiCommunicator& comm) :
         Debugger(executable, comm), mAmAttached(false), mPIds()
     {
     }
 
-    std::string ActiveDebugger::ConvertIntToString(int i)
-    {
-      // Convert an int to a string.
-      // Remember you will have to delete it!
-      std::stringstream ss;
-      ss << i;
-      return ss.str();
+    namespace {
+        std::string ConvertIntToString(int i) {
+            // Convert an int to a string.
+            std::stringstream ss;
+            ss << i;
+            return ss.str();
+        }
+
+        // Get an environment variable if it exists
+        std::optional<std::string> GetEnv(char const* vname) {
+            char const* val = std::getenv(vname);
+            if (val == nullptr)
+                return std::nullopt;
+            return std::make_optional<std::string>(val);
+        }
     }
 
-    void ActiveDebugger::BreakHere(void)
+    void ActiveDebugger::BreakHere()
     {
       return;
     }
@@ -54,9 +60,9 @@ namespace hemelb
       va_end(args);
     }
 
-    void ActiveDebugger::Attach(void)
+    void ActiveDebugger::Attach()
     {
-      // Start up a the debuggers, tell them to attach to the
+      // Start up the debugger(s), tell them to attach to the
       // processes and wait for them to attach. This function forks
       // another process on the rank 0 task and waits for it.
       if (mAmAttached)
@@ -101,7 +107,7 @@ namespace hemelb
       mPIds = mCommunicator.Gather(pId, 0);
     }
 
-    void ActiveDebugger::SpawnDebuggers(void)
+    void ActiveDebugger::SpawnDebuggers()
     {
       // Run the script to Tell the OS to start appropriate
       // terminal(s), launch the debuggers and attach them to our
@@ -120,9 +126,14 @@ namespace hemelb
 
       args.push_back(binaryPath);
 
+      auto debugger_commands_file = GetEnv("HEMELB_DEBUG_COMMANDS");
+      if (debugger_commands_file.has_value()) {
+          args.push_back("-file");
+          args.push_back(debugger_commands_file.value());
+      }
+
       for (VoI::iterator i = mPIds.begin(); i < mPIds.end(); ++i)
       {
-        // This leaks memory
         args.push_back(ConvertIntToString(*i));
       }
 
@@ -156,5 +167,4 @@ namespace hemelb
       exit(1);
     }
 
-  } // namespace debug
-} // namespace hemelb
+}

@@ -8,21 +8,19 @@
 
 #include <debug/common/ActiveDebugger.h>
 
-namespace hemelb
+namespace hemelb::debug
 {
-  namespace debug
-  {
 
     class LinuxDebugger : public ActiveDebugger
     {
       protected:
         // Platform specific getters
-        const std::string GetBinaryPath(void) const;
-        const std::string GetPlatformInterpreter(void) const;
-        const std::string GetPlatformScript(void) const;
+        [[nodiscard]] std::string GetBinaryPath(void) const override;
+        [[nodiscard]] std::string GetPlatformInterpreter(void) const override;
+        [[nodiscard]] std::string GetPlatformScript(void) const override;
 
         // C'tor...
-        LinuxDebugger(const char* const executable, const net::MpiCommunicator& comm);
+        LinuxDebugger(const char* executable, const net::MpiCommunicator& comm);
         // ... which the factory function needs to be able to get at.
         friend class Debugger;
 
@@ -31,7 +29,5 @@ namespace hemelb
     // Factory. Don't be calling this.
     Debugger* PlatformDebuggerFactory(const char* const executable,
                                       const net::MpiCommunicator& comm);
-  }
 }
-
 #endif // HEMELB_DEBUG_LINUX_LINUXDEBUGGER_H

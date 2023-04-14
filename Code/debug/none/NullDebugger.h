@@ -8,23 +8,20 @@
 
 #include "debug/Debugger.h"
 
-namespace hemelb
+namespace hemelb::debug
 {
-  namespace debug
-  {
     class NullDebugger : public Debugger
     {
       public:
-        void BreakHere(void);
-        void Print(const char* iFormat, ...);
+        void BreakHere() override;
+        void Print(const char* iFormat, ...) override;
 
       protected:
-        void Attach(void);
-        NullDebugger(const char* const executable, const net::MpiCommunicator& comm);
+        void Attach() override;
+        NullDebugger(const char* executable, const net::MpiCommunicator& comm);
         friend class Debugger;
     };
 
-  }
 }
 
-#endif // HEMELB_DEBUG_NONE_DEBUGGER_H
+#endif

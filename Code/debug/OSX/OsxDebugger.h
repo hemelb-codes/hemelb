@@ -8,27 +8,24 @@
 
 #include <debug/common/ActiveDebugger.h>
 
-namespace hemelb
+namespace hemelb::debug
 {
-  namespace debug
-  {
 
     class OsxDebugger : public ActiveDebugger
     {
       protected:
         // Platform specific getters
-        const std::string GetBinaryPath(void) const;
-        const std::string GetPlatformInterpreter(void) const;
-        const std::string GetPlatformScript(void) const;
+        [[nodiscard]] std::string GetBinaryPath() const override;
+        [[nodiscard]] std::string GetPlatformInterpreter() const override;
+        [[nodiscard]] std::string GetPlatformScript() const override;
 
         // C'tor...
-        OsxDebugger(const char* const executable, const net::MpiCommunicator& comm);
+        OsxDebugger(const char* executable, const net::MpiCommunicator& comm);
         // ... which the factory function needs to be able to get at.
         friend class Debugger;
 
     };
 
-  }
 }
 
 #endif // HEMELB_DEBUG_OSX_OSXDEBUGGER_H

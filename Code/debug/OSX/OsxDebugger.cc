@@ -7,15 +7,14 @@
 
 #include "debug/OSX/OsxDebugger.h"
 #include <mach-o/dyld.h>
-namespace hemelb
+
+namespace hemelb::debug
 {
-  namespace debug
-  {
     OsxDebugger::OsxDebugger(const char* const executable, const net::MpiCommunicator& comm) :
         ActiveDebugger(executable, comm)
     {
     }
-    const std::string OsxDebugger::GetBinaryPath(void) const
+    std::string OsxDebugger::GetBinaryPath() const
     {
       char* path = nullptr;
       uint32_t size = 0;
@@ -31,12 +30,12 @@ namespace hemelb
       return ans;
     }
 
-    const std::string OsxDebugger::GetPlatformInterpreter(void) const
+    std::string OsxDebugger::GetPlatformInterpreter() const
     {
-      return std::string("osascript");
+      return {"osascript"};
     }
 
-    const std::string OsxDebugger::GetPlatformScript(void) const
+    std::string OsxDebugger::GetPlatformScript() const
     {
       std::string include(__FILE__);
       std::string debugOsxDir = include.substr(0, include.rfind('/'));
@@ -44,5 +43,4 @@ namespace hemelb
       return debugOsxDir + "/MPIdebug.applescript";
     }
 
-  } // namespace debug
 } // namespace hemelb

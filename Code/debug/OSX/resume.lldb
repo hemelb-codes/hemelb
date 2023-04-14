@@ -1,0 +1,5 @@
+frame select -r 3
+expr amWaiting = 0
+breakpoint set -n hemelb::debug::Break
+breakpoint command add -o 'finish'
+continue
