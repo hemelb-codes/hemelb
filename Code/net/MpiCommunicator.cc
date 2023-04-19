@@ -3,19 +3,15 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include <cassert>
 #include <numeric>
 
 #include "net/MpiCommunicator.h"
 #include "net/MpiGroup.h"
 #include "util/Iterator.h"
 
-namespace hemelb
+namespace hemelb::net
 {
-  namespace net
-  {
-    namespace
-    {
+    namespace {
       void Deleter(MPI_Comm* comm)
       {
         int finalized;
@@ -28,7 +24,7 @@ namespace hemelb
 
     MpiCommunicator MpiCommunicator::World()
     {
-      return MpiCommunicator(MPI_COMM_WORLD, false);
+      return {MPI_COMM_WORLD, false};
     }
 
     MpiCommunicator::MpiCommunicator() :
@@ -89,14 +85,14 @@ namespace hemelb
     {
       MPI_Group grp;
       HEMELB_MPI_CALL(MPI_Comm_group, (*commPtr, &grp));
-      return MpiGroup(grp, true);
+      return {grp, true};
     }
 
     MpiCommunicator MpiCommunicator::Create(const MpiGroup& grp) const
     {
       MPI_Comm newComm;
       HEMELB_MPI_CALL(MPI_Comm_create, (*commPtr, grp, &newComm));
-      return MpiCommunicator(newComm, true);
+      return {newComm, true};
     }
 
     void MpiCommunicator::Abort(int errCode) const
@@ -108,61 +104,53 @@ namespace hemelb
     {
       MPI_Comm newComm;
       HEMELB_MPI_CALL(MPI_Comm_dup, (*commPtr, &newComm));
-      return MpiCommunicator(newComm, true);
+      return {newComm, true};
     }
 
-    MpiCommunicator MpiCommunicator::Graph(std::vector<std::vector<int>> edges, bool reorder) const
+    MpiCommunicator MpiCommunicator::DistGraphAdjacent(std::vector<int> my_neighbours, bool reorder) const
     {
-      std::vector<int> indices, flat_edges;
-      indices.reserve(1);
-      flat_edges.reserve(1);
-      for (auto const & edge_per_proc : edges)
-      {
-        for (auto&& edge : edge_per_proc)
-        {
-          assert(edge < Size());
-          flat_edges.push_back(edge);
-        }
-        indices.push_back(flat_edges.size());
-      }
-      MPI_Comm newComm;
-      HEMELB_MPI_CALL(MPI_Graph_create,
-                      (*commPtr, indices.size(), indices.data(), flat_edges.data(), reorder, &newComm));
-      return MpiCommunicator(newComm, true);
+        MPI_Comm newComm;
+        HEMELB_MPI_CALL(MPI_Dist_graph_create_adjacent ,
+                        (*commPtr,
+                                my_neighbours.size(), my_neighbours.data(), MPI_UNWEIGHTED,
+                                my_neighbours.size(), my_neighbours.data(), MPI_UNWEIGHTED,
+                                MPI_INFO_NULL, reorder, &newComm)
+        );
+        return {newComm, true};
     }
 
     int MpiCommunicator::GetNeighborsCount() const
     {
-      return GetNeighborsCount(Rank());
+        int n_in, n_out, weighted;
+        HEMELB_MPI_CALL(MPI_Dist_graph_neighbors_count, (*commPtr, &n_in, &n_out, &weighted));
+#ifndef NDEBUG
+        if (weighted)
+            throw (Exception() << "Only support unweighted graphs");
+        if (n_in != n_out)
+            throw (Exception() << "Only support bidirectional graphs");
+#endif
+        return n_in;
     }
 
     std::vector<int> MpiCommunicator::GetNeighbors() const
     {
-      return GetNeighbors(Rank());
-    }
-
-    int MpiCommunicator::GetNeighborsCount(int whoseNeighbours) const
-    {
-      assert(commPtr);
-      int N;
-      HEMELB_MPI_CALL(MPI_Graph_neighbors_count, (*commPtr, whoseNeighbours, &N));
-      return N;
-    }
-
-    std::vector<int> MpiCommunicator::GetNeighbors(int whoseNeighbours) const
-    {
-      assert(commPtr);
-      std::vector<int> result(GetNeighborsCount(whoseNeighbours));
-      result.reserve(1);
-      HEMELB_MPI_CALL(MPI_Graph_neighbors, (*commPtr, whoseNeighbours, result.size(), result.data()));
-      return result;
+        auto n = GetNeighborsCount();
+        auto result = std::vector<int>(n);
+        auto ignored = std::vector<int>(n);
+        MPI_Dist_graph_neighbors(*commPtr, n, result.data(), MPI_UNWEIGHTED, n, ignored.data(), MPI_UNWEIGHTED);
+#ifndef NDEBUG
+        for (int i = 0; i < n; ++i)
+            if (result[i] != ignored[i])
+                throw (Exception() << "In and out connections differ");
+#endif
+        return result;
     }
 
     MpiCommunicator MpiCommunicator::Split(int color, int key) const
     {
       MPI_Comm newComm;
       HEMELB_MPI_CALL(MPI_Comm_split, (*commPtr, color, key, &newComm));
-      return MpiCommunicator(newComm, true);
+      return {newComm, true};
     }
 
     std::map<int, int> MpiCommunicator::RankMap(MpiCommunicator const &valueComm) const
@@ -190,5 +178,4 @@ namespace hemelb
       return result;
     }
 
-  }
 }

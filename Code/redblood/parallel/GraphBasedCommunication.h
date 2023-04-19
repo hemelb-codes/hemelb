@@ -47,11 +47,8 @@ namespace hemelb::redblood::parallel
       GlobalCoordsToProcMap ComputeGlobalCoordsToProcMap(net::MpiCommunicator const &comm,
                                                          const geometry::Domain &domain);
 
-      //! \brief All processes are considered neighbours with each other. This is the most conservative and inefficient implementation of the method possible.
-      std::vector<std::vector<int>> ComputeProcessorNeighbourhood(net::MpiCommunicator const &comm);
-
       //! \brief Compute neighbourhood based on checking the minimum distance between every pair of subdomains and declaring them neighbours if this is shorter than the RBCs effective size.
-      std::vector<std::vector<int>> ComputeProcessorNeighbourhood(net::MpiCommunicator const &comm,
+      std::vector<int> ComputeProcessorNeighbourhood(net::MpiCommunicator const &comm,
                                                                   geometry::Domain &domain,
                                                                   LatticeDistance cellsEffectiveSize);
 

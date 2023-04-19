@@ -214,24 +214,14 @@ namespace hemelb::net
         void Receive(std::vector<T>& val, int src, int tag = 0,
                      MPI_Status* stat = MPI_STATUS_IGNORE) const;
 
-        //! \brief Creates a graph communicator
-        //! \param edges: [ [vertices connected to 0], [vertices connected to 1], ...]
-        //! \param reorder: Whether nodes can be re-ordered
-        MpiCommunicator Graph(std::vector<std::vector<int>> edges, bool reorder = true) const;
+        //! \brief Create a distributed graph communicator assuming unweighted and bidirectional communication.
+        MpiCommunicator DistGraphAdjacent(std::vector<int> my_neighbours, bool reorder = true) const;
 
         //! \brief Returns graph neighborhood for calling process
         //! \details This communicator must have been created with graph
         std::vector<int> GetNeighbors() const;
         //! \brief Number of neighbors for calling process in a graph communicator
         int GetNeighborsCount() const;
-
-        //! \brief Returns graph neighborhood for a given rank
-        //! \details This communicator must have been created with graph
-        //! \param whoseNeighbors: process rank whose neighbors we want to know about
-        std::vector<int> GetNeighbors(int whoseNeighbors) const;
-        //! \brief Number of neighbors in a graph communicator for a given rank
-        //! \param whoseNeighbors: process rank whose number of neighbors we want to know about
-        int GetNeighborsCount(int whoseNeighbors) const;
 
         //! A map from the ranks of this communicator to another
         std::map<int, int> RankMap(MpiCommunicator const &valueComm) const;

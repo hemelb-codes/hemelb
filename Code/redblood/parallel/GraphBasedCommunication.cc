@@ -7,14 +7,13 @@
 #include "net/MpiCommunicator.h"
 #include "reporting/Timers.h"
 #include "util/Iterator.h"
-#include "debug.h"
+
 namespace hemelb::redblood::parallel
 {
         GlobalCoordsToProcMap ComputeGlobalCoordsToProcMap(net::MpiCommunicator const &comm,
                                                            const geometry::Domain& domain)
         {
           GlobalCoordsToProcMap coordsToProcMap;
-debug::Break();
           // Populate map with coordinates of locally owned lattice sites first
           std::vector<LatticeVector> locallyOwnedSites;
           locallyOwnedSites.reserve(domain.GetLocalFluidSiteCount());
@@ -46,107 +45,103 @@ debug::Break();
           return coordsToProcMap;
         }
 
-        std::vector<std::vector<int>> ComputeProcessorNeighbourhood(net::MpiCommunicator const &comm)
-        {
-          // setups a graph communicator that in-practice is all-to-all
-          std::vector<std::vector<int>> vertices;
-          for (int i(0); i < comm.Size(); ++i)
-          {
-            vertices.push_back(std::vector<int>());
-            for (int j(0); j < comm.Size(); ++j)
-            {
-              if (j != i)
-              {
-                vertices[i].push_back(j);
-              }
-            }
-          }
+    //! \brief Compute ranks this one may communicate with based on which sites are with the RBCs effective size of an edge site.
+    std::vector<int> ComputeProcessorNeighbourhood(net::MpiCommunicator const &comm,
+                                                   geometry::Domain &domain,
+                                                   LatticeDistance cellsEffectiveSize)
+    {
+        // Keep this sorted for easy lookup
+        std::vector<int> ans;
 
-          return vertices;
+        // Neighbour site IDs that we have checked - kept sorted
+        std::vector<U64> checked_ids;
+        auto const grid_size = int(std::ceil(cellsEffectiveSize));
+
+        auto valid = [&domain](LatticeVector const& v) {
+            return v.IsInRange(domain.GetGlobalSiteMins(), domain.GetGlobalSiteMaxes());
+        };
+        auto rank = comm.Rank();
+
+        for (auto siteIndex = domain.GetMidDomainSiteCount();
+             siteIndex < domain.GetMidDomainSiteCount() + domain.GetDomainEdgeCollisionCount(0);
+             ++siteIndex) {
+            auto edge_site = domain.GetSite(siteIndex);
+            for (int dx = -grid_size; dx <= grid_size; ++dx)
+                for (int dy = -grid_size; dy <= grid_size; ++dy)
+                    for (int dz = -grid_size; dz <= grid_size; ++dz) {
+                        auto delta = util::Vector3D<int>{dx, dy, dz};
+                        // Points outside the sphere
+                        if (delta.GetMagnitudeSquared() > cellsEffectiveSize*cellsEffectiveSize)
+                            continue;
+
+                        // Sites with a negative or >= box max index will mess up ID calculation
+                        auto neigh = edge_site.GetGlobalSiteCoords() + delta;
+                        if (!valid(neigh))
+                            continue;
+
+                        // Have we checked this site before? Search the sorted vector to see.
+                        auto neigh_idx = geometry::octree::ijk_to_oct(neigh.as<U16>());
+                        //auto neigh_idx = coord_to_id(neigh);
+                        auto iter = std::lower_bound(checked_ids.begin(), checked_ids.end(), neigh_idx);
+                        if (iter == checked_ids.end()) {
+                            // No elem greater than or equal.
+                            // Therefore we've not seen it AND can just push onto the end.
+                            checked_ids.push_back(neigh_idx);
+                        } else if (*iter == neigh_idx) {
+                            // We have seen it, nothing else to do.
+                            continue;
+                        } else {
+                            // Not seen it, but have the iterator to the first greater. Insert here.
+                            checked_ids.insert(iter, neigh_idx);
+                        }
+
+                        // Since we didn't continue, we have an unchecked coord that could have a fluid site.
+                        auto neigh_rank = domain.GetProcIdFromGlobalCoords(neigh);
+                        if (neigh_rank == SITE_OR_BLOCK_SOLID)
+                            // It was not a fluid site
+                            continue;
+
+                        if (neigh_rank != rank) {
+                            // And it doesn't live on this process.
+                            // Add that rank to the answer if not already there.
+                            auto p_iter = std::lower_bound(ans.begin(), ans.end(), neigh_rank);
+
+                            if (p_iter == ans.end()) {
+                                ans.push_back(neigh_rank);
+                            } else if (*p_iter != neigh_rank) {
+                                ans.insert(p_iter, neigh_rank);
+                            }
+                        }
+                    }
         }
+        return ans;
+    }
 
-        //! \brief Compute neighbourhood based on checking the minimum distance between every pair of subdomains and declaring them neighbours if this is shorter than the RBCs effective size.
-        std::vector<std::vector<int>> ComputeProcessorNeighbourhood(net::MpiCommunicator const &comm,
-                                                                    geometry::Domain &domain,
-                                                                    LatticeDistance cellsEffectiveSize)
+    LatticeDistance ComputeCellsEffectiveSize(TemplateCellContainer const& cellTemplates)
+    {
+        double maxCellRadius = std::numeric_limits<LatticeDistance>::min();
+
+        for (auto& cellTemplate : cellTemplates)
         {
-          std::vector<LatticeVector> serialisedLocalCoords;
-          serialisedLocalCoords.reserve(domain.GetDomainEdgeCollisionCount(0));
-
-          for (auto siteIndex = domain.GetMidDomainSiteCount();
-               siteIndex < domain.GetMidDomainSiteCount() + domain.GetDomainEdgeCollisionCount(0);
-              ++siteIndex)
-          {
-            serialisedLocalCoords.push_back(domain.GetSite(siteIndex).GetGlobalSiteCoords());
-          }
-
-          auto coordsPerProc = comm.AllGatherV(serialisedLocalCoords);
-
-          auto cellsEffectiveSizeSq = cellsEffectiveSize * cellsEffectiveSize;
-          auto areProcsNeighbours =
-              [cellsEffectiveSizeSq, &coordsPerProc] (int procA, int procB)
-              {
-                if (procA == procB)
-                {
-                  return false;
-                }
-
-                auto distanceSqBetweenSubdomainEdges = std::numeric_limits<LatticeDistance>::max();
-                for(auto siteProcA : coordsPerProc[procA])
-                {
-                  for(auto siteProcB : coordsPerProc[procB])
-                  {
-                    distanceSqBetweenSubdomainEdges = std::min(distanceSqBetweenSubdomainEdges, (LatticeDistance)(siteProcA-siteProcB).GetMagnitudeSquared());
-                  }
-                }
-
-                return distanceSqBetweenSubdomainEdges < cellsEffectiveSizeSq;
-              };
-
-          auto const numProcs = comm.Size();
-          std::vector<std::vector<int>> vertices(numProcs);
-          for (int procA = 0; procA < numProcs; ++procA)
-          {
-            for (int procB = procA + 1; procB < numProcs; ++procB)
-            {
-              if (areProcsNeighbours(procA, procB))
-              {
-                vertices[procA].push_back(procB);
-                vertices[procB].push_back(procA);
-              }
-            }
-          }
-
-          return vertices;
-        }
-
-        LatticeDistance ComputeCellsEffectiveSize(TemplateCellContainer const& cellTemplates)
-        {
-          double maxCellRadius = std::numeric_limits<LatticeDistance>::min();
-
-          for (auto& cellTemplate : cellTemplates)
-          {
             maxCellRadius = std::max(maxCellRadius, cellTemplate.second->GetScale());
-          }
-
-          return MAXIMUM_SIZE_TO_RADIUS_RATIO * maxCellRadius;
         }
 
-        //! \brief Generates a graph communicator describing the data dependencies for interpolation and spreading
-        net::MpiCommunicator CreateGraphComm(net::MpiCommunicator const &comm,
-                                             geometry::Domain &domain,
-                                             std::shared_ptr<TemplateCellContainer> cellTemplates,
-                                             hemelb::reporting::Timers &timings)
-        {
-            debug::Break();
-          timings[hemelb::reporting::Timers::graphComm].Start();
-          auto graphComm =
-              comm.Graph(ComputeProcessorNeighbourhood(comm,
-                                                       domain,
-                                                       ComputeCellsEffectiveSize(*cellTemplates)));
-          timings[hemelb::reporting::Timers::graphComm].Stop();
+        return MAXIMUM_SIZE_TO_RADIUS_RATIO * maxCellRadius;
+    }
 
-          return graphComm;
-        }
+    //! \brief Generates a graph communicator describing the data dependencies for interpolation and spreading
+    net::MpiCommunicator CreateGraphComm(net::MpiCommunicator const &comm,
+                                         geometry::Domain &domain,
+                                         std::shared_ptr<TemplateCellContainer> cellTemplates,
+                                         hemelb::reporting::Timers &timings)
+    {
+        timings[hemelb::reporting::Timers::graphComm].Start();
+        auto ranks_i_may_communicate_with = ComputeProcessorNeighbourhood(comm,
+                                                                          domain,
+                                                                          ComputeCellsEffectiveSize(*cellTemplates));
+        auto graphComm = comm.DistGraphAdjacent(ranks_i_may_communicate_with);
+        timings[hemelb::reporting::Timers::graphComm].Stop();
 
+        return graphComm;
+    }
 }
