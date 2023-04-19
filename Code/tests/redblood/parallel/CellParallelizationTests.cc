@@ -21,10 +21,10 @@ namespace hemelb::tests
     class ExchangeCells : public redblood::parallel::ExchangeCells
     {
     public:
-      ExchangeCells(net::MpiCommunicator const &graphComm) :
-	redblood::parallel::ExchangeCells(graphComm)
-      {
-      }
+        ExchangeCells(net::MpiCommunicator const &graphComm) :
+                redblood::parallel::ExchangeCells(graphComm)
+        {
+        }
 #define HEMELB_MACRO(Name, name, TYPE)	  \
       net::TYPE & Get ## Name()			  \
       {						  \
@@ -117,15 +117,15 @@ namespace hemelb::tests
     };
 
     CellParallelizationTests::CellParallelizationTests() {
-      // setups graph communicator
-      auto world = net::MpiCommunicator::World();
-      if (world.Size() >= 4) {
-	std::vector<std::vector<int>> vertices { { 1 }, { 0, 2, 3 }, { 1, 3 }, { 1, 2 } };
-	for (int i(4); i < world.Size(); ++i) {
-	  vertices.push_back(std::vector<int> { });
-	}
-	graph = world.Graph(vertices);
-      }
+        // setups graph communicator
+        auto world = net::MpiCommunicator::World();
+        if (world.Size() >= 4) {
+            std::vector<std::vector<int>> vertices { { 1 }, { 0, 2, 3 }, { 1, 3 }, { 1, 2 } };
+            for (int i(4); i < world.Size(); ++i) {
+                vertices.push_back(std::vector<int> { });
+            }
+            graph = world.DistGraphAdjacent(vertices[world.Rank()]);
+        }
     }
 
     //! Get cell centered at given position

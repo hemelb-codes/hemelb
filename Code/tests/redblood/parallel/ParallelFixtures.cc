@@ -7,11 +7,9 @@
 
 #include <random>
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
-    //! \brief gathers mid-domain and egde positions from all procs
+    //! \brief gathers mid-domain and edge positions from all procs
     //! \details If there are insufficient number of edges, mid-domains are used instead.
     //! erase removes the components from the first process.
     std::vector<LatticeVector> GatherSpecialPositions(geometry::Domain const & domain,
@@ -99,7 +97,12 @@ namespace hemelb
 
     net::MpiCommunicator CreateDumbGraphComm(net::MpiCommunicator const &comm)
     {
-      return comm.Graph(hemelb::redblood::parallel::ComputeProcessorNeighbourhood(comm));
+        // Dumb meaning that it communicates with every other rank
+        auto neighbours = std::vector<int>(comm.Size() - 1);
+        for (int i = 0, j = 0; i < comm.Size(); ++i) {
+            if (i != comm.Rank())
+                neighbours[j++] = i;
+        }
+        return comm.DistGraphAdjacent(neighbours);
     }
-  }
 }

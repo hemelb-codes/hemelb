@@ -3,61 +3,55 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include <algorithm>
 #include <random>
 #include <memory>
-#include <iterator>
 
 #include <catch2/catch.hpp>
 
-#include "redblood/parallel/IntegrateVelocities.h"
 #include "redblood/parallel/NodeCharacterizer.h"
 #include "configuration/CommandLine.h"
-#include "SimulationMaster.h"
 #include "tests/redblood/Fixtures.h"
 #include "tests/helpers/LatticeDataAccess.h"
 #include "tests/helpers/FolderTestFixture.h"
 #include "tests/redblood/parallel/ParallelFixtures.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace redblood;
     //! Parallel and Sequential move in lock step
     class ParallelFixtureTests : public helpers::FolderTestFixture
     {
     public:
-      ParallelFixtureTests();
+        ParallelFixtureTests();
 
-      //! if owner procs thinks position affects proc i, then proc i knows it as well
-      void testTransitiveOwnership();
+        //! if owner procs thinks position affects proc i, then proc i knows it as well
+        void testTransitiveOwnership();
     protected:
-      std::shared_ptr<hemelb::configuration::CommandLine> options;
+        std::shared_ptr<configuration::CommandLine> options;
 
-      //! Meta-function to create simulation type
-      template<class STENCIL>
-      struct MasterSim
-      {
-	typedef ::hemelb::Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type LBTraits;
-	typedef typename LBTraits::ChangeStencil<STENCIL>::Type Traits;
-	typedef OpenedSimulationMaster<Traits> Type;
-      };
+        //! Meta-function to create simulation type
+        template<class STENCIL>
+        struct MasterSim
+        {
+            using LBTraits = Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type;
+            using Traits = typename LBTraits::ChangeStencil<STENCIL>::Type;
+            using Type = OpenedSimulationMaster<Traits>;
+        };
 
-      //! Creates a master simulation
-      template<class STENCIL>
-      std::shared_ptr<typename MasterSim<STENCIL>::Type> CreateMasterSim(
-									 net::MpiCommunicator const &comm) const
-      {
-	typedef typename MasterSim<STENCIL>::Type MasterSim;
-	return std::make_shared<MasterSim>(*options, comm);
-      }
+        //! Creates a master simulation
+        template<class STENCIL>
+        std::shared_ptr<typename MasterSim<STENCIL>::Type> CreateMasterSim(
+                net::MpiCommunicator const &comm) const
+        {
+            using MasterSim = typename MasterSim<STENCIL>::Type;
+            return std::make_shared<MasterSim>(*options, comm);
+        }
     };
 
 
     ParallelFixtureTests::ParallelFixtureTests() : FolderTestFixture()
     {
-      // Have everything ready to creates simulations
+      // Have everything ready to create simulations
       if (Comms().Rank() == 0)
 	{
 	  CopyResourceToTempdir("large_cylinder_rbc.xml");
@@ -77,7 +71,7 @@ namespace hemelb
 
     void ParallelFixtureTests::testTransitiveOwnership()
     {
-      typedef hemelb::redblood::stencil::FourPoint Stencil;
+      using Stencil = stencil::FourPoint;
 
       auto const world = Comms();
       if(world.Size() < 2)
@@ -96,15 +90,15 @@ namespace hemelb
       auto const positions = GatherSpecialPositions(dom, nmid, nedges, world);
 
       auto graphComm =
-	world.Graph(hemelb::redblood::parallel::ComputeProcessorNeighbourhood(world,
+	world.DistGraphAdjacent(parallel::ComputeProcessorNeighbourhood(world,
                                                                           dom,
 									      2e-6 / master->GetSimConfig()->GetVoxelSize()));
 
-      auto const& globalCoordsToProcMap = hemelb::redblood::parallel::ComputeGlobalCoordsToProcMap(graphComm, dom);
+      auto const& globalCoordsToProcMap = parallel::ComputeGlobalCoordsToProcMap(graphComm, dom);
 
       for(std::size_t i(0); i < positions.size(); ++i)
         {
-          auto const procs = hemelb::redblood::parallel::details::positionAffectsProcs<Stencil>(
+          auto const procs = parallel::details::positionAffectsProcs<Stencil>(
 												globalCoordsToProcMap, positions[i].as<LatticeDistance>());
 
           // Send set of affected procs as known by owner proc
@@ -147,6 +141,5 @@ namespace hemelb
     METHOD_AS_TEST_CASE(ParallelFixtureTests::testTransitiveOwnership,
 			"Test transitive ownership",
 			"[redblood]");
-  }
 }
 

@@ -16,7 +16,7 @@ namespace hemelb::tests
     public:
       GraphCommsTests();
 
-      void testLexicographicalOrderingOfVectors();
+      void testOrderingOfVectors();
       void testDumbGraphCommunicator();
       void testGraphCommunicator();
       void testComputeCellsEffectiveSize();
@@ -66,11 +66,11 @@ namespace hemelb::tests
     });
     }
 
-    void GraphCommsTests::testLexicographicalOrderingOfVectors() {
-      auto cmp = hemelb::redblood::parallel::VectorLexicographicalOrdering<util::Vector3D<int>>{};
+    void GraphCommsTests::testOrderingOfVectors() {
+      auto cmp = parallel::VectorOctreeOrdering{};
 
-      util::Vector3D<int> foo{0, 0, 0};
-      util::Vector3D<int> bar{1, 0, 0};
+      Vec16 foo{0, 0, 0};
+      Vec16 bar{1, 0, 0};
 
       // // Catch implementation
       // CHECK(cmp(foo, bar));
@@ -103,62 +103,54 @@ namespace hemelb::tests
 
     void GraphCommsTests::testDumbGraphCommunicator()
     {
-      using hemelb::redblood::parallel::ComputeProcessorNeighbourhood;
+        auto graph = CreateDumbGraphComm(Comms());
+        auto my_neighbours = graph.GetNeighbors();
 
-      auto comms = Comms();
-      auto neighbourhoods = ComputeProcessorNeighbourhood(comms);
+        REQUIRE(std::ssize(my_neighbours) == Comms().Size() - 1);
 
-      for (auto procid_neighbours : util::enumerate(neighbourhoods)) {
-	// All other processes must be neighbours
-	REQUIRE(int(procid_neighbours.value.size()) == comms.Size() - 1);
-
-	for (auto neighbour = 0; neighbour < comms.Size(); ++neighbour) {
-	  if (static_cast<unsigned>(neighbour) != procid_neighbours.index) {
-	    // All other process indices must be in the std::vector
-	    REQUIRE(find(procid_neighbours.value.begin(),
-			 procid_neighbours.value.end(),
-			 neighbour) != procid_neighbours.value.end());
-	  }
-	}
-      }
+        // All other processes must be neighbours
+        for (int neighbour = 0; neighbour < Comms().Size(); ++neighbour) {
+            if (neighbour != Comms().Rank()) {
+                REQUIRE(
+                        std::find(my_neighbours.begin(), my_neighbours.end(), neighbour) != my_neighbours.end()
+                );
+            }
+        }
     }
 
     void GraphCommsTests::testGraphCommunicator()
     {
-      using hemelb::redblood::parallel::ComputeProcessorNeighbourhood;
+        using parallel::ComputeProcessorNeighbourhood;
 
-      // Test only makes sense if run with 4 cores
-      auto comms = Comms();
-      REQUIRE(4 == comms.Size());
+        // Test only makes sense if run with 4 cores
+        auto comms = Comms();
+        REQUIRE(4 == comms.Size());
 
-      // Setup simulation with cylinder
-      auto master = CreateMasterSim(comms);
-      REQUIRE(master);
-      auto &latticeData = master->GetFieldData();
+        // Setup simulation with cylinder
+        auto master = CreateMasterSim(comms);
+        REQUIRE(master);
+        auto &latticeData = master->GetFieldData();
 
-      // Compute neighbourhoods (cylinder is 4.8e-5 long, a cell
-      // effective size of 2e-6 won't let cells span across more than
-      // two subdomains)
-      auto neighbourhoods =
-	ComputeProcessorNeighbourhood(comms,
-				      latticeData.GetDomain(),
-				      2e-6 / master->GetSimConfig()->GetVoxelSize());
+        // Compute neighbourhoods (cylinder is 4.8e-5 long, a cell
+        // effective size of 2e-6 won't let cells span across more than
+        // two subdomains)
+        auto neighbourhoods =
+                ComputeProcessorNeighbourhood(comms,
+                                              latticeData.GetDomain(),
+                                              2e-6 / master->GetSimConfig()->GetVoxelSize());
 
-      // Parmetis divides the cylinder in four consecutive cylindrical
-      // subdomains with interfaces roughly parallel to the iolets.
-      // The ranks are ordered 0,3,1,2 along the positive direction of
-      // the z axis.
-      std::vector<std::vector<int>> expected_neighbourhoods;
-      expected_neighbourhoods.push_back( { 3 });
-      expected_neighbourhoods.push_back( { 2, 3 });
-      expected_neighbourhoods.push_back( { 1 });
-      expected_neighbourhoods.push_back( { 0, 1 });
+        // Parmetis divides the cylinder in four consecutive cylindrical
+        // subdomains with interfaces roughly parallel to the iolets.
+        // The ranks are ordered 0,1,2,3 along the positive direction of
+        // the z axis.
+        std::vector<std::vector<int>> expected_neighbourhoods;
+        expected_neighbourhoods.push_back( { 1 });
+        expected_neighbourhoods.push_back( { 0, 2 });
+        expected_neighbourhoods.push_back( { 1, 3 });
+        expected_neighbourhoods.push_back( { 2 });
 
-      // Compare computed vs expected neighbourhoods
-      for (auto procid_neighbours : util::enumerate(neighbourhoods)) {
-	REQUIRE(procid_neighbours.value
-		== expected_neighbourhoods[procid_neighbours.index]);
-      }
+        // Compare computed vs expected neighbourhood for this rank
+        REQUIRE(expected_neighbourhoods[comms.Rank()] == neighbourhoods);
     }
 
     void GraphCommsTests::testComputeCellsEffectiveSize() {
@@ -198,47 +190,49 @@ namespace hemelb::tests
 
     void GraphCommsTests::testComputeGlobalCoordsToProcMap()
     {
-      using hemelb::redblood::parallel::ComputeGlobalCoordsToProcMap;
-      using hemelb::redblood::parallel::ComputeProcessorNeighbourhood;
+        using parallel::ComputeGlobalCoordsToProcMap;
+        using parallel::ComputeProcessorNeighbourhood;
 
-      // Test only makes sense if run with 4 cores
-      auto comms = Comms();
-      REQUIRE(4 == comms.Size());
+        // Test only makes sense if run with 4 cores
+        auto comms = Comms();
+        REQUIRE(4 == comms.Size());
 
-      // Setup simulation with cylinder
-      auto master = CreateMasterSim(comms);
-      REQUIRE(master);
-      auto &domain = master->GetFieldData().GetDomain();
-      auto graphComm = comms.Graph(hemelb::redblood::parallel::ComputeProcessorNeighbourhood(comms,
-                                                                                             domain,
-											     2e-6 / master->GetSimConfig()->GetVoxelSize()));
-      auto const& globalCoordsToProcMap = hemelb::redblood::parallel::ComputeGlobalCoordsToProcMap(graphComm, domain);
+        // Setup simulation with cylinder
+        auto master = CreateMasterSim(comms);
+        REQUIRE(master);
+        auto &domain = master->GetFieldData().GetDomain();
+        auto graphComm = comms.DistGraphAdjacent(
+              ComputeProcessorNeighbourhood(comms,
+                                            domain,
+                                            2e-6 / master->GetSimConfig()->GetVoxelSize())
+        );
+        auto const& globalCoordsToProcMap = ComputeGlobalCoordsToProcMap(graphComm, domain);
 
-      // The first lattice site for each rank is
-      std::vector<LatticeVector> lattice_coords;
-      lattice_coords.push_back({2,6,2});
-      lattice_coords.push_back({2,6,19});
-      lattice_coords.push_back({2,6,29});
-      lattice_coords.push_back({2,6,9});
+        // The first lattice site for each rank is
+        std::vector<Vec16> lattice_coords;
+        lattice_coords.emplace_back(2, 6, 2);
+        lattice_coords.emplace_back(2, 6, 9);
+        lattice_coords.emplace_back(2, 6, 19);
+        lattice_coords.emplace_back(2, 6, 29);
 
-      // Parmetis divides the cylinder in four consecutive cylindrical subdomains.
-      // The ranks are ordered 0,3,1,2 along the positive direction of the z axis.
-      // The cell size is such that only ranks to the left and right are neighbours.
-      std::vector<std::vector<proc_t>> neighs_to_know_about;
-      neighs_to_know_about.push_back({0, 3});
-      neighs_to_know_about.push_back({1, 2, 3});
-      neighs_to_know_about.push_back({1, 2});
-      neighs_to_know_about.push_back({0, 1, 3});
+        // Parmetis divides the cylinder in four consecutive cylindrical subdomains.
+        // The ranks are ordered 0,1,2,3 along the positive direction of the z axis.
+        // The cell size is such that only ranks to the left and right are neighbours.
+        std::vector<std::vector<proc_t>> neighs_to_know_about;
+        neighs_to_know_about.push_back({0, 1});
+        neighs_to_know_about.push_back({0, 1, 2});
+        neighs_to_know_about.push_back({1, 2, 3});
+        neighs_to_know_about.push_back({2, 3});
 
-      // Each process should know who is the owner of a local lattice and a lattice belonging to each neighbour
-      for (auto neigh : neighs_to_know_about[comms.Rank()]) {
-	// Use map::at to throw when the lattice coordinates are not known
-	REQUIRE(globalCoordsToProcMap.at(lattice_coords[neigh]) == neigh);
-      }
+        // Each process should know who is the owner of a local lattice and a lattice belonging to each neighbour
+        for (auto neigh : neighs_to_know_about[comms.Rank()]) {
+            // Use map::at to throw when the lattice coordinates are not known
+            REQUIRE(globalCoordsToProcMap.at(lattice_coords[neigh]) == neigh);
+        }
     }
 
-    METHOD_AS_TEST_CASE(GraphCommsTests::testLexicographicalOrderingOfVectors,
-			"testLexicographicalOrderingOfVectors",
+    METHOD_AS_TEST_CASE(GraphCommsTests::testOrderingOfVectors,
+			"testOrderingOfVectors",
 			"[redblood]");
     METHOD_AS_TEST_CASE(GraphCommsTests::testDumbGraphCommunicator,
 			"testDumbGraphCommunicator",
