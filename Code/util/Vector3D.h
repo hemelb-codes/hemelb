@@ -623,11 +623,13 @@ namespace hemelb::util
 namespace hemelb::net
 {
     template<>
-    MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<float> >::RegisterMpiDataType();
+    MPI_Datatype MpiDataTypeTraits<util::Vector3D<float> >::RegisterMpiDataType();
     template<>
-    MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<int64_t> >::RegisterMpiDataType();
+    MPI_Datatype MpiDataTypeTraits<util::Vector3D<std::int64_t> >::RegisterMpiDataType();
     template<>
-    MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<double> >::RegisterMpiDataType();
+    MPI_Datatype MpiDataTypeTraits<util::Vector3D<std::uint16_t> >::RegisterMpiDataType();
+    template<>
+    MPI_Datatype MpiDataTypeTraits<util::Vector3D<double> >::RegisterMpiDataType();
 }
 #endif
 

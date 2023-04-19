@@ -6,6 +6,7 @@
 #define HEMELB_REDBLOOD_PARALLEL_GRAPHBASEDCOMMUNICATION_H
 
 #include "geometry/Domain.h"
+#include "geometry/LookupTree.h"
 #include "redblood/types.h"
 #include "reporting/timers_fwd.h"
 namespace hemelb::net { class MpiCommunicator; }
@@ -13,29 +14,17 @@ namespace hemelb::net { class MpiCommunicator; }
 namespace hemelb::redblood::parallel
 {
 
-    template <typename VectorT>
-    struct VectorLexicographicalOrdering {
-        // Lexicographical comparison between vectors
-        constexpr bool operator()( const VectorT& lhs, const VectorT& rhs ) const {
-            if (lhs.x() != rhs.x()) {
-                return lhs.x() < rhs.x();
-            } else {
-                // x-equal
-                if (lhs.y() != rhs.y()) {
-                    return lhs.y() < rhs.y();
-                } else {
-                    // x- AND y-equal
-                    return lhs.z() < rhs.z();
-                }
-            }
+    struct VectorOctreeOrdering {
+        constexpr bool operator()( const Vec16& lhs, const Vec16& rhs ) const {
+            return geometry::octree::ijk_to_oct(lhs) < geometry::octree::ijk_to_oct(rhs);
         }
     };
 
-      //! @todo #668 Should this be a std::unordered_map instead? The
-      //! map is to be created once (and never modified again) and
-      //! look-up heavy later on. Possibly a boost::flatmap/sorted
-      //! vector might be more performant.
-      using GlobalCoordsToProcMap = std::map<LatticeVector, proc_t, VectorLexicographicalOrdering<LatticeVector>>;
+    //! @todo #668 Should this be a std::unordered_map instead? The
+    //! map is to be created once (and never modified again) and
+    //! look-up heavy later on. Possibly a boost::flatmap/sorted
+    //! vector might be more performant.
+    using GlobalCoordsToProcMap = std::map<Vec16, proc_t, VectorOctreeOrdering>;
 
       /**
        * Computes a map that allows looking up the process owning certain lattice sites (by global lattice coordinate).

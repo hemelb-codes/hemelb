@@ -10,29 +10,45 @@
 
 namespace hemelb::redblood::parallel
 {
-        GlobalCoordsToProcMap ComputeGlobalCoordsToProcMap(net::MpiCommunicator const &comm,
-                                                           const geometry::Domain& domain)
+
+    GlobalCoordsToProcMap ComputeGlobalCoordsToProcMap(net::MpiCommunicator const &comm,
+                                                       const geometry::Domain& domain)
+    {
+        // If we are going to use the octree ordering as-implemented, then
+        // sites must have coordinates that fit in 16 bits (per dimension).
+        // This can be relaxed of course but requires work. Here we check that.
         {
-          GlobalCoordsToProcMap coordsToProcMap;
-          // Populate map with coordinates of locally owned lattice sites first
-          std::vector<LatticeVector> locallyOwnedSites;
-          locallyOwnedSites.reserve(domain.GetLocalFluidSiteCount());
-          auto myRank = comm.Rank();
-          for (site_t localSiteId = 0; localSiteId < domain.GetLocalFluidSiteCount(); ++localSiteId)
-          {
-            auto const& globalSiteCoords = domain.GetSite(localSiteId).GetGlobalSiteCoords();
+            auto &largest_coord = domain.GetGlobalSiteMaxes();
+            if (std::any_of(largest_coord.begin(), largest_coord.end(),
+                            [](LatticeCoordinate x) {
+                                return x > LatticeCoordinate(std::numeric_limits<U16>::max());
+                            }
+            ))
+                throw (Exception() << "The domain dimensions in sites do not fit in 16 bits. "
+                                      "See comments in " __FILE__ " near line " << __LINE__);
+        }
+
+        GlobalCoordsToProcMap coordsToProcMap;
+        // Populate map with coordinates of locally owned lattice sites first
+        std::vector<Vec16> locallyOwnedSites;
+        locallyOwnedSites.reserve(domain.GetLocalFluidSiteCount());
+        auto myRank = comm.Rank();
+        for (site_t localSiteId = 0; localSiteId < domain.GetLocalFluidSiteCount(); ++localSiteId)
+        {
+            auto const& globalSiteCoords = domain.GetSite(localSiteId).GetGlobalSiteCoords().as<U16>();
             locallyOwnedSites.push_back(globalSiteCoords);
             coordsToProcMap[globalSiteCoords] = myRank;
-          }
+        }
 
-          // Exchange coordinates of locally owned lattice sites with neighbours in comms graph
-          auto const& neighbouringProcs = comm.GetNeighbors();
-          if (!neighbouringProcs.empty())
-          {
+        // Exchange coordinates of locally owned lattice sites with neighbours in comms graph
+        auto const neighbouringProcs = comm.GetNeighbors();
+        if (!neighbouringProcs.empty())
+        {
             auto neighSites = comm.AllNeighGatherV(locallyOwnedSites);
-            assert(neighSites.size() == comm.GetNeighborsCount());
+            if (neighSites.size() != comm.GetNeighborsCount())
+                throw (Exception() << "Something wrong with neighbourhood");
 
-            // Finish populating map with knowledge comming from neighbours
+            // Finish populating map with knowledge coming from neighbours
             for (auto&& [i, p]: util::enumerate(neighbouringProcs)) {
                 for (auto const& globalCoord: neighSites[i]) {
                     // lattice sites are uniquely owned, so no chance of coordinates being repeated across processes
@@ -40,10 +56,10 @@ namespace hemelb::redblood::parallel
                     coordsToProcMap[globalCoord] = p;
                 }
             }
-          }
-
-          return coordsToProcMap;
         }
+
+        return coordsToProcMap;
+    }
 
     //! \brief Compute ranks this one may communicate with based on which sites are with the RBCs effective size of an edge site.
     std::vector<int> ComputeProcessorNeighbourhood(net::MpiCommunicator const &comm,

@@ -7,10 +7,8 @@
 #include "net/mpi.h"
 #include "Exception.h"
 
-namespace hemelb
+namespace hemelb::net
 {
-  namespace net
-  {
     template<typename vectorType>
     MPI_Datatype GenerateTypeForVector()
     {
@@ -29,25 +27,30 @@ namespace hemelb
       return ret;
     }
     template<>
-    MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<float> >::RegisterMpiDataType()
+    MPI_Datatype MpiDataTypeTraits<util::Vector3D<float> >::RegisterMpiDataType()
     {
       return GenerateTypeForVector<float>();
     }
 
     template<>
-    MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<site_t> >::RegisterMpiDataType()
+    MPI_Datatype MpiDataTypeTraits<util::Vector3D<site_t> >::RegisterMpiDataType()
     {
       return GenerateTypeForVector<site_t>();
     }
+    template<>
+    MPI_Datatype MpiDataTypeTraits<util::Vector3D<U16> >::RegisterMpiDataType()
+    {
+        return GenerateTypeForVector<U16>();
+    }
 
     template<>
-    MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<distribn_t> >::RegisterMpiDataType()
+    MPI_Datatype MpiDataTypeTraits<util::Vector3D<distribn_t> >::RegisterMpiDataType()
     {
       return GenerateTypeForVector<distribn_t>();
     }
-  }
-  namespace util
-  {
+}
+namespace hemelb::util
+{
     namespace
     {
       void DefaultHandlerFunction(int direction)
@@ -57,6 +60,4 @@ namespace hemelb
       }
     }
     Vector3DBase::HandlerFunction* Vector3DBase::handler = DefaultHandlerFunction;
-
-  }
 }

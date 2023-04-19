@@ -17,18 +17,14 @@
 #include "Traits.h"
 #include "redblood/parallel/GraphBasedCommunication.h"
 
-namespace hemelb
+namespace hemelb::redblood::parallel
 {
-  namespace redblood
-  {
-    namespace parallel
+    namespace details
     {
-      namespace details
-      {
         //! Maps process indices to a sequence of node indices
-        typedef std::map<proc_t, std::set<MeshData::Vertices::size_type>> Process2NodesMap;
+        using Process2NodesMap = std::map<proc_t, std::set<MeshData::Vertices::size_type>>;
         //! Functions returning the set of affected procs for a given node
-        typedef std::function<std::set<proc_t>(LatticePosition const&)> AssessNodeRange;
+        using AssessNodeRange = std::function<std::set<proc_t> (const LatticePosition &)>;
         //! Set of procs affected by this position
         //! \param[in] globalCoordsToProcMap will tell us which site belongs to which proc
         //! \param[in] iterator a  stencil iterator going over affected lattice points
@@ -73,11 +69,11 @@ namespace hemelb
       {
         public:
           //! set of processors affected by a node
-          typedef details::Process2NodesMap Process2NodesMap;
+          using Process2NodesMap = details::Process2NodesMap;
           //! Indices of the nodes
-          typedef Process2NodesMap::value_type::second_type::size_type Index;
+          using Index = Process2NodesMap::value_type::second_type::size_type;
           //! A function to assess which processes a node may affect
-          typedef details::AssessNodeRange AssessNodeRange;
+          using AssessNodeRange = details::AssessNodeRange;
 
           //! Constructs object from prior knowledge of how processors are affected
           NodeCharacterizer(Process2NodesMap const &affectedProcs) :
@@ -184,8 +180,8 @@ namespace hemelb
           Process2NodesMap affectedProcs;
       };
 
-      namespace details
-      {
+    namespace details
+    {
         template<class STENCIL>
         std::set<proc_t> positionAffectsProcs(GlobalCoordsToProcMap const &globalCoordsToProcMap,
                                               InterpolationIterator<STENCIL> &&iterator)
@@ -193,7 +189,7 @@ namespace hemelb
           std::set<proc_t> result;
           for (; iterator.IsValid(); ++iterator)
           {
-            auto const& id = globalCoordsToProcMap.find(*iterator);
+            auto const& id = globalCoordsToProcMap.find(iterator->template as<U16>());
             //! @todo #668 Some unit tests throw the warning below. Requires further investigation.
             if(id == globalCoordsToProcMap.end())
             {
@@ -216,9 +212,6 @@ namespace hemelb
         {
           return positionAffectsProcs(globalCoordsToProcMap, interpolationIterator<STENCIL>(position));
         }
-      } /* details */
-
-    } /* parallel */
-  } /* redblood */
-} /* hemelb */
+    }
+}
 #endif
