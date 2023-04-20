@@ -548,7 +548,7 @@ namespace hemelb::io::xml
             throw DeserialisationError(*this, name, s) << " error in extraction operator";
         }
         bool eof = attrStream.eof();
-        if (!eof && attrStream.tellg() != N)
+        if (!eof && attrStream.tellg() != std::streampos(N))
         {
             throw DeserialisationError(*this, name, s) << " not all characters consumed";
         }

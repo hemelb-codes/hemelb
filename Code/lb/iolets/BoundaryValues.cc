@@ -23,7 +23,7 @@ namespace hemelb::lb::iolets
           std::vector<std::vector<int>> procsList(totalIoletCount);
 
         // Determine which iolets need comms and create them
-        for (int ioletIndex = 0; ioletIndex < totalIoletCount; ioletIndex++)
+        for (unsigned ioletIndex = 0; ioletIndex < totalIoletCount; ioletIndex++)
         {
           // First create a copy of all iolets
           auto iolet = incoming_iolets[ioletIndex].clone();

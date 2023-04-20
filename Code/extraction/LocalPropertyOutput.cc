@@ -331,9 +331,9 @@ namespace hemelb::extraction
 		  write(xdrWriter, fieldSpec.typecode, t.x(), t.y(), t.z());
 		},
 		[&](source::Distributions) {
-		  unsigned numComponents= dataSource.GetNumVectors();
+		  unsigned numComponents = dataSource.GetNumVectors();
 		  distribn_t const* d_ptr = dataSource.GetDistribution();
-		  for (int i = 0; i < numComponents; i++)
+		  for (auto i = 0U; i < numComponents; i++)
 		  {
 		    write(xdrWriter, fieldSpec.typecode, d_ptr[i]);
 		  }
@@ -377,7 +377,7 @@ namespace hemelb::extraction
 				uint32_t(fmt::HemeLbMagicNumber),
 				uint32_t(fmt::offset::MagicNumber),
 				uint32_t(fmt::offset::VersionNumber),
-				uint32_t(comms.Size())
+				int32_t(comms.Size())
 				);
 	assert(buf.size() == fmt::offset::HeaderLength);
 	offsetFile.WriteAt(0, buf);

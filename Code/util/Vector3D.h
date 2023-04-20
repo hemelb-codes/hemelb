@@ -332,7 +332,7 @@ namespace hemelb::util
         template <Arithmetic U>
         constexpr Vector3D& operator+=(const Vector3D<U>& right)
         {
-            for (int i = 0; i < m_values.size(); ++i)
+            for (std::size_t i = 0; i < m_values.size(); ++i)
                 m_values[i] += right.m_values[i];
             return *this;
         }
@@ -354,7 +354,7 @@ namespace hemelb::util
         template <Arithmetic U>
         constexpr Vector3D& operator-=(const Vector3D<U>& right)
         {
-            for (int i = 0; i < m_values.size(); ++i)
+            for (std::size_t i = 0; i < m_values.size(); ++i)
                 m_values[i] -= right.m_values[i];
             return *this;
         }

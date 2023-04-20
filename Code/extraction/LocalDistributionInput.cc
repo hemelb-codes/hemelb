@@ -150,7 +150,7 @@ namespace hemelb::extraction {
 	// distField is read on IO rank and checked to be equal to
 	// NUMVECTORS so we use that instead of broadcasting and
 	// storing.
-	for (int i = 0; i < NUMVECTORS; i++) {
+	for (auto i = 0U; i < NUMVECTORS; i++) {
 	  distribn_t field_val;
 	  dataReader.read(field_val);
 	  f_new_p[i] = f_old_p[i] = field_val;
@@ -258,7 +258,8 @@ namespace hemelb::extraction {
       // Only actually read on IO rank
       if (comms.OnIORank()) {
 	io::XdrFileReader offsetReader(offsetFileName);
-	uint32_t hlbMagicNumber, offMagicNumber, version, nRanks;
+	uint32_t hlbMagicNumber, offMagicNumber, version;
+	int32_t nRanks;
 	offsetReader.read(hlbMagicNumber);
 	offsetReader.read(offMagicNumber);
 	offsetReader.read(version);
@@ -290,7 +291,7 @@ namespace hemelb::extraction {
 	// where end_i == start_i+1 (except for the start finish obvs)
 	offsets.resize(2*nRanks);
 	offsetReader.read(offsets[0]);
-	for (unsigned i = 1; i < nRanks; ++i) {
+	for (int i = 1; i < nRanks; ++i) {
 	  offsetReader.read(offsets[2*i]);
 	  offsets[2*i - 1] = offsets[2*i];
 	}

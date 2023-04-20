@@ -11,6 +11,7 @@ This contains, encoded as uint32, in order:
  - HemeLbMagicNumber
  - OffsetMagicNumber (0x6F666604 == 'xtr\eof')
  - OffsetVersionNumber (currently 1)
+ Then, encoded as an int32 (because MPI defines it as signed)
  - Number of ranks
 
 # Body
