@@ -30,7 +30,6 @@ namespace hemelb::net
         WinData(MPI_Aint n, MpiCommunicator comm, value_type const& init) {
             MPI_Info info;
             MPI_Info_create(&info);
-            MPI_Info_set(info, "no_locks", "true");
             MPI_Info_set(info, "same_size", "true");
             MPI_Info_set(info, "same_disp_unit", "true");
             T* tmp;
@@ -82,8 +81,8 @@ namespace hemelb::net
         }
 
         // End an RMA epoch and ensure all communications within it are complete (collective)
-        void Fence() const {
-            HEMELB_MPI_CALL(MPI_Win_fence, (0, window));
+        void Fence(int assertions = 0) const {
+            HEMELB_MPI_CALL(MPI_Win_fence, (assertions, window));
         }
 
         // Possibly remote reference to a data item
@@ -93,16 +92,26 @@ namespace hemelb::net
             WinData const * win;
 
             operator T() const {
+                // A lock/unlock with MPI_MODE_NOCHECK should have zero overhead
+                // on proper RDMA machines but does satisfy MPI RMA requirements.
+                HEMELB_MPI_CALL(MPI_Win_lock,
+                                (MPI_LOCK_SHARED, trank, MPI_MODE_NOCHECK, win->window)
+                );
                 int ans;
                 HEMELB_MPI_CALL(MPI_Get, (
                         &ans, 1, traits::GetMpiDataType(),
                                 trank, tdisp, 1, traits::GetMpiDataType(),
                                 win->window
                 ));
+                HEMELB_MPI_CALL(MPI_Win_unlock,
+                                (trank, win->window)
+                );
                 return ans;
             }
         };
+
         struct reference : public const_reference {
+            // Up to the caller to deal with synchronisation!
             reference operator=(value_type const& val) {
                 HEMELB_MPI_CALL(MPI_Put, (
                         &val, 1, traits::GetMpiDataType(),
@@ -115,13 +124,18 @@ namespace hemelb::net
 
         // This type deals with synchronisation for a set of writes
         //
-        // Assumes that an RMA epoch is open for the window (if not, you may need to Fence first).
+        // Requires that there NOT be an open RMA epoch on construction.
         // You can then do zero or more writes (MPI_Put - a pure one-sided operation),
         // then destructor calls fence (collective) and these are then guaranteed to have occurred.
+        //
+        // Does NOT start a new epoch so it puts you back where you started.
         class WriteSession {
             WinData* win;
         public:
+            // Collective as it starts an epoch with fence.
             WriteSession(WinData* w) : win{w} {
+                // Start the writing epoch
+                win->Fence(MPI_MODE_NOPRECEDE);
             }
             // No copying: really we should ensure there is only one
             // active per window but leave that to the programmer.
@@ -133,7 +147,7 @@ namespace hemelb::net
             WriteSession& operator=(WriteSession&&) = delete;
 
             ~WriteSession() noexcept(false) {
-                win->Fence();
+                win->Fence(MPI_MODE_NOSUCCEED);
             }
             reference operator()(int rank, MPI_Aint i) {
                 return {rank, i, win};

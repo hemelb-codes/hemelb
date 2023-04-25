@@ -205,8 +205,6 @@ namespace hemelb::geometry::octree {
         auto max_sites_per_rank = max_blocks_per_rank * sites_per_block;
 
         rank_that_owns_site_win = WinData(max_sites_per_rank, comm, SITE_OR_BLOCK_SOLID);
-        // Immediately start an RMA epoch so the window is usable.
-        rank_that_owns_site_win.Fence();
     }
 
     MPI_Aint DistributedStore::ComputeBlockStart(std::size_t block_idx) const {
