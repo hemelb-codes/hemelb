@@ -46,8 +46,6 @@ pass_cachevar_choice(HEMELB HEMELB_LOG_LEVEL Info
   STRING "Log level"
   Critical Error Warning Info Debug Trace)
 
-pass_cachevar(HEMELB HEMELB_OPTIMISATION "-O3"
-  STRING "Optimisation level (can be blank or -O1 to -O4)")
 pass_cachevar_choice(HEMELB HEMELB_LATTICE ${_default_lattice}
   STRING "Select the lattice type to use"
   D3Q15 D3Q19 D3Q27 D3Q15i)

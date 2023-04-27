@@ -11,7 +11,7 @@ namespace hemelb::reporting
 {
     static const std::string mercurial_revision_number="@HEMELB_REVISION_NUMBER@";
     static const std::string build_type="@CMAKE_BUILD_TYPE@";
-    static const std::string optimisation="@HEMELB_OPTIMISATION@";
+    static const std::string optimisation="${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${BUILD_TYPE}}";
     static const std::string use_sse3="@HEMELB_USE_SSE3@";
     static const std::string build_time="@HEMELB_BUILD_TIME@";
     static const std::string reading_group_size="@HEMELB_READING_GROUP_SIZE@";
