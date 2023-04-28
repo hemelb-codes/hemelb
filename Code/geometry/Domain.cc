@@ -668,15 +668,13 @@ namespace hemelb::geometry
             siteCoords = (location % blockSize).as<U16>();
         }
 
-        site_t Domain::GetMidDomainSiteCount() const
-        {
-            site_t midDomainSiteCount = 0;
-            for (unsigned collisionType = 0; collisionType < COLLISION_TYPES; collisionType++)
-            {
-                midDomainSiteCount += midDomainProcCollisions[collisionType];
-            }
-            return midDomainSiteCount;
-        }
+    site_t Domain::GetMidDomainSiteCount() const
+    {
+        return std::reduce(midDomainProcCollisions.begin(), midDomainProcCollisions.end(), site_t(0), std::plus<>());
+    }
+    site_t Domain::GetDomainEdgeSiteCount() const {
+        return std::reduce(domainEdgeProcCollisions.begin(), domainEdgeProcCollisions.end(), site_t(0), std::plus<>());
+    }
 
         Vec16 Domain::GetBlockIJK(site_t block) const
         {

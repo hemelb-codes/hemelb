@@ -247,6 +247,7 @@ namespace hemelb::geometry
                                         Vec16& siteCoords) const;
 
         site_t GetMidDomainSiteCount() const;
+        site_t GetDomainEdgeSiteCount() const;
 
         /**
          * Number of sites with all fluid neighbours residing on this rank, for the given
@@ -477,8 +478,8 @@ namespace hemelb::geometry
         site_t totalSharedFs; //! Number of local distributions shared with neighbouring processors.
         std::vector<NeighbouringProcessor> neighbouringProcs; //! Info about processors with neighbouring fluid sites.
 
-        site_t midDomainProcCollisions[COLLISION_TYPES]; //! Number of fluid sites with all fluid neighbours on this rank, for each collision type.
-        site_t domainEdgeProcCollisions[COLLISION_TYPES]; //! Number of fluid sites with at least one fluid neighbour on another rank, for each collision type.
+        std::array<site_t, COLLISION_TYPES> midDomainProcCollisions; //! Number of fluid sites with all fluid neighbours on this rank, for each collision type.
+        std::array<site_t, COLLISION_TYPES> domainEdgeProcCollisions; //! Number of fluid sites with at least one fluid neighbour on another rank, for each collision type.
         site_t localFluidSites; //! The number of local fluid sites.
         std::vector<Block> blocks; //! Data where local fluid sites are stored contiguously - hold only blocks with fluid sites in octree order
 

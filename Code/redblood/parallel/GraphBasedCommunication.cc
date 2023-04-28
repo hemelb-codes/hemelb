@@ -78,8 +78,11 @@ namespace hemelb::redblood::parallel
         };
         auto rank = comm.Rank();
 
-        for (auto siteIndex = domain.GetMidDomainSiteCount();
-             siteIndex < domain.GetMidDomainSiteCount() + domain.GetDomainEdgeCollisionCount(0);
+        // Loop over this process's edge
+        auto first_edge_site_i = domain.GetMidDomainSiteCount();
+        auto last_edge_site_i = first_edge_site_i + domain.GetDomainEdgeSiteCount();
+        for (auto siteIndex = first_edge_site_i;
+             siteIndex < last_edge_site_i;
              ++siteIndex) {
             auto edge_site = domain.GetSite(siteIndex);
             for (int dx = -grid_size; dx <= grid_size; ++dx)
