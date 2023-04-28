@@ -94,7 +94,7 @@ namespace hemelb::geometry
 
         // Open the file.
         file = net::MpiFile::Open(computeComms, dataFilePath, MPI_MODE_RDONLY, fileInfo);
-        log::Logger::Log<log::Info, log::OnePerCore>("Opened config file %s", dataFilePath.c_str());
+        log::Logger::Log<log::Info, log::Singleton>("Opened config file %s", dataFilePath.c_str());
         // TODO: Why is there this fflush?
         fflush(nullptr);
 
