@@ -10,10 +10,8 @@
 #include "lb/InitialCondition.h"
 #include "lb/InitialCondition.hpp"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
 
     template<class TRAITS>
     hemelb::lb::LbmParameters* LBM<TRAITS>::GetLbmParams()
@@ -93,26 +91,26 @@ namespace hemelb
 
       unsigned collId;
       InitInitParamsSiteRanges(initParams, collId);
-      mMidFluidCollision = new tMidFluidCollision(initParams);
+      mMidFluidCollision = std::make_unique<tMidFluidCollision>(initParams);
 
       AdvanceInitParamsSiteRanges(initParams, collId);
-      mWallCollision = new tWallCollision(initParams);
-
-      AdvanceInitParamsSiteRanges(initParams, collId);
-      initParams.boundaryObject = mInletValues;
-      mInletCollision = new tInletCollision(initParams);
-
-      AdvanceInitParamsSiteRanges(initParams, collId);
-      initParams.boundaryObject = mOutletValues;
-      mOutletCollision = new tOutletCollision(initParams);
+      mWallCollision = std::make_unique<tWallCollision>(initParams);
 
       AdvanceInitParamsSiteRanges(initParams, collId);
       initParams.boundaryObject = mInletValues;
-      mInletWallCollision = new tInletWallCollision(initParams);
+      mInletCollision = std::make_unique<tInletCollision>(initParams);
 
       AdvanceInitParamsSiteRanges(initParams, collId);
       initParams.boundaryObject = mOutletValues;
-      mOutletWallCollision = new tOutletWallCollision(initParams);
+      mOutletCollision = std::make_unique<tOutletCollision>(initParams);
+
+      AdvanceInitParamsSiteRanges(initParams, collId);
+      initParams.boundaryObject = mInletValues;
+      mInletWallCollision = std::make_unique<tInletWallCollision>(initParams);
+
+      AdvanceInitParamsSiteRanges(initParams, collId);
+      initParams.boundaryObject = mOutletValues;
+      mOutletWallCollision = std::make_unique<tOutletWallCollision>(initParams);
     }
 
     template<class TRAITS>
@@ -190,24 +188,24 @@ namespace hemelb
       site_t offset = dom.GetMidDomainSiteCount();
 
       log::Logger::Log<log::Debug, log::OnePerCore>("LBM - PreSend - StreamAndCollide");
-      StreamAndCollide(mMidFluidCollision, offset, dom.GetDomainEdgeCollisionCount(0));
+      StreamAndCollide(*mMidFluidCollision, offset, dom.GetDomainEdgeCollisionCount(0));
       offset += dom.GetDomainEdgeCollisionCount(0);
 
-      StreamAndCollide(mWallCollision, offset, dom.GetDomainEdgeCollisionCount(1));
+      StreamAndCollide(*mWallCollision, offset, dom.GetDomainEdgeCollisionCount(1));
       offset += dom.GetDomainEdgeCollisionCount(1);
 
       mInletValues->FinishReceive();
-      StreamAndCollide(mInletCollision, offset, dom.GetDomainEdgeCollisionCount(2));
+      StreamAndCollide(*mInletCollision, offset, dom.GetDomainEdgeCollisionCount(2));
       offset += dom.GetDomainEdgeCollisionCount(2);
 
       mOutletValues->FinishReceive();
-      StreamAndCollide(mOutletCollision, offset, dom.GetDomainEdgeCollisionCount(3));
+      StreamAndCollide(*mOutletCollision, offset, dom.GetDomainEdgeCollisionCount(3));
       offset += dom.GetDomainEdgeCollisionCount(3);
 
-      StreamAndCollide(mInletWallCollision, offset, dom.GetDomainEdgeCollisionCount(4));
+      StreamAndCollide(*mInletWallCollision, offset, dom.GetDomainEdgeCollisionCount(4));
       offset += dom.GetDomainEdgeCollisionCount(4);
 
-      StreamAndCollide(mOutletWallCollision, offset, dom.GetDomainEdgeCollisionCount(5));
+      StreamAndCollide(*mOutletWallCollision, offset, dom.GetDomainEdgeCollisionCount(5));
 
       timings[hemelb::reporting::Timers::lb_calc].Stop();
       timings[hemelb::reporting::Timers::lb].Stop();
@@ -231,22 +229,22 @@ namespace hemelb
       site_t offset = 0;
 
       log::Logger::Log<log::Debug, log::OnePerCore>("LBM - PreReceive - StreamAndCollide");
-      StreamAndCollide(mMidFluidCollision, offset, dom.GetMidDomainCollisionCount(0));
+      StreamAndCollide(*mMidFluidCollision, offset, dom.GetMidDomainCollisionCount(0));
       offset += dom.GetMidDomainCollisionCount(0);
 
-      StreamAndCollide(mWallCollision, offset, dom.GetMidDomainCollisionCount(1));
+      StreamAndCollide(*mWallCollision, offset, dom.GetMidDomainCollisionCount(1));
       offset += dom.GetMidDomainCollisionCount(1);
 
-      StreamAndCollide(mInletCollision, offset, dom.GetMidDomainCollisionCount(2));
+      StreamAndCollide(*mInletCollision, offset, dom.GetMidDomainCollisionCount(2));
       offset += dom.GetMidDomainCollisionCount(2);
 
-      StreamAndCollide(mOutletCollision, offset, dom.GetMidDomainCollisionCount(3));
+      StreamAndCollide(*mOutletCollision, offset, dom.GetMidDomainCollisionCount(3));
       offset += dom.GetMidDomainCollisionCount(3);
 
-      StreamAndCollide(mInletWallCollision, offset, dom.GetMidDomainCollisionCount(4));
+      StreamAndCollide(*mInletWallCollision, offset, dom.GetMidDomainCollisionCount(4));
       offset += dom.GetMidDomainCollisionCount(4);
 
-      StreamAndCollide(mOutletWallCollision, offset, dom.GetMidDomainCollisionCount(5));
+      StreamAndCollide(*mOutletWallCollision, offset, dom.GetMidDomainCollisionCount(5));
 
       timings[hemelb::reporting::Timers::lb_calc].Stop();
       timings[hemelb::reporting::Timers::lb].Stop();
@@ -270,41 +268,41 @@ namespace hemelb
 
       log::Logger::Log<log::Debug, log::OnePerCore>("LBM - PostReceive - StreamAndCollide");
       //TODO yup, this is horrible. If you read this, please improve the following code.
-      PostStep(mMidFluidCollision, offset, dom.GetDomainEdgeCollisionCount(0));
+      PostStep(*mMidFluidCollision, offset, dom.GetDomainEdgeCollisionCount(0));
       offset += dom.GetDomainEdgeCollisionCount(0);
 
-      PostStep(mWallCollision, offset, dom.GetDomainEdgeCollisionCount(1));
+      PostStep(*mWallCollision, offset, dom.GetDomainEdgeCollisionCount(1));
       offset += dom.GetDomainEdgeCollisionCount(1);
 
-      PostStep(mInletCollision, offset, dom.GetDomainEdgeCollisionCount(2));
+      PostStep(*mInletCollision, offset, dom.GetDomainEdgeCollisionCount(2));
       offset += dom.GetDomainEdgeCollisionCount(2);
 
-      PostStep(mOutletCollision, offset, dom.GetDomainEdgeCollisionCount(3));
+      PostStep(*mOutletCollision, offset, dom.GetDomainEdgeCollisionCount(3));
       offset += dom.GetDomainEdgeCollisionCount(3);
 
-      PostStep(mInletWallCollision, offset, dom.GetDomainEdgeCollisionCount(4));
+      PostStep(*mInletWallCollision, offset, dom.GetDomainEdgeCollisionCount(4));
       offset += dom.GetDomainEdgeCollisionCount(4);
 
-      PostStep(mOutletWallCollision, offset, dom.GetDomainEdgeCollisionCount(5));
+      PostStep(*mOutletWallCollision, offset, dom.GetDomainEdgeCollisionCount(5));
 
       offset = 0;
 
-      PostStep(mMidFluidCollision, offset, dom.GetMidDomainCollisionCount(0));
+      PostStep(*mMidFluidCollision, offset, dom.GetMidDomainCollisionCount(0));
       offset += dom.GetMidDomainCollisionCount(0);
 
-      PostStep(mWallCollision, offset, dom.GetMidDomainCollisionCount(1));
+      PostStep(*mWallCollision, offset, dom.GetMidDomainCollisionCount(1));
       offset += dom.GetMidDomainCollisionCount(1);
 
-      PostStep(mInletCollision, offset, dom.GetMidDomainCollisionCount(2));
+      PostStep(*mInletCollision, offset, dom.GetMidDomainCollisionCount(2));
       offset += dom.GetMidDomainCollisionCount(2);
 
-      PostStep(mOutletCollision, offset, dom.GetMidDomainCollisionCount(3));
+      PostStep(*mOutletCollision, offset, dom.GetMidDomainCollisionCount(3));
       offset += dom.GetMidDomainCollisionCount(3);
 
-      PostStep(mInletWallCollision, offset, dom.GetMidDomainCollisionCount(4));
+      PostStep(*mInletWallCollision, offset, dom.GetMidDomainCollisionCount(4));
       offset += dom.GetMidDomainCollisionCount(4);
 
-      PostStep(mOutletWallCollision, offset, dom.GetMidDomainCollisionCount(5));
+      PostStep(*mOutletWallCollision, offset, dom.GetMidDomainCollisionCount(5));
 
       timings[hemelb::reporting::Timers::lb_calc].Stop();
       timings[hemelb::reporting::Timers::lb].Stop();
@@ -314,20 +312,6 @@ namespace hemelb
     void LBM<TRAITS>::EndIteration()
     {
     }
-
-    template<class TRAITS>
-    LBM<TRAITS>::~LBM()
-    {
-      // Delete the collision and stream objects we've been using
-      delete mMidFluidCollision;
-      delete mWallCollision;
-      delete mInletCollision;
-      delete mOutletCollision;
-      delete mInletWallCollision;
-      delete mOutletWallCollision;
-    }
-
-  }
 }
 
 #endif /* HEMELB_LB_LB_HPP */

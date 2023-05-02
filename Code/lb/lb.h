@@ -20,7 +20,7 @@
 #include <typeinfo>
 
 /**
- * Namespace 'lb' contains classes for the scientific core of the Lattice Boltzman simulation
+ * Namespace 'lb' contains classes for the scientific core of the Lattice Boltzmann simulation
  */
 namespace hemelb::lb
 {
@@ -32,23 +32,23 @@ namespace hemelb::lb
     class LBM : public net::IteratedAction
     {
       public:
-        //! Instanciation type
-        typedef TRAITS Traits;
+        //! Instantiation type
+        using Traits = TRAITS;
       private:
-        typedef typename Traits::Lattice LatticeType;
+        using LatticeType = typename Traits::Lattice;
         // Use the kernel specified through the build system. This will select one of the above classes.
-        typedef typename Traits::Kernel LBKernel;
+        using LBKernel = typename Traits::Kernel;
 
-        typedef typename Traits::Streamer tMidFluidCollision;
+        using tMidFluidCollision = typename Traits::Streamer;
         // Use the wall boundary condition specified through the build system.
-        typedef typename Traits::WallBoundary tWallCollision;
+        using tWallCollision = typename Traits::WallBoundary;
         // Use the inlet BC specified by the build system
-        typedef typename Traits::InletBoundary tInletCollision;
+        using tInletCollision = typename Traits::InletBoundary;
         // Use the outlet BC specified by the build system
-        typedef typename Traits::OutletBoundary tOutletCollision;
+        using tOutletCollision = typename Traits::OutletBoundary;
         // And again but for sites that are both in-/outlet and wall
-        typedef typename Traits::WallInletBoundary tInletWallCollision;
-        typedef typename Traits::WallOutletBoundary tOutletWallCollision;
+        using tInletWallCollision = typename Traits::WallInletBoundary;
+        using tOutletWallCollision = typename Traits::WallOutletBoundary;
 
       public:
         /**
@@ -60,15 +60,15 @@ namespace hemelb::lb
         LBM(LbmParameters params, net::Net* net,
             geometry::FieldData* latDat, SimulationState* simState, reporting::Timers &atimings,
             geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager);
-        ~LBM();
+        ~LBM() override = default;
 
-        void RequestComms(); ///< part of IteratedAction interface.
-        void PreSend(); ///< part of IteratedAction interface.
-        void PreReceive(); ///< part of IteratedAction interface.
-        void PostReceive(); ///< part of IteratedAction interface.
-        void EndIteration(); ///< part of IteratedAction interface.
+        void RequestComms() override; ///< part of IteratedAction interface.
+        void PreSend() override; ///< part of IteratedAction interface.
+        void PreReceive() override; ///< part of IteratedAction interface.
+        void PostReceive() override; ///< part of IteratedAction interface.
+        void EndIteration() override; ///< part of IteratedAction interface.
 
-        site_t TotalFluidSiteCount() const;
+        [[nodiscard]] site_t TotalFluidSiteCount() const;
         void SetTotalFluidSiteCount(site_t);
 
         /**
@@ -99,18 +99,19 @@ namespace hemelb::lb
         void handleIOError(int iError);
 
         // Collision objects
-        tMidFluidCollision* mMidFluidCollision;
-        tWallCollision* mWallCollision;
-        tInletCollision* mInletCollision;
-        tOutletCollision* mOutletCollision;
-        tInletWallCollision* mInletWallCollision;
-        tOutletWallCollision* mOutletWallCollision;
+        // TODO: these should probably be optional but we can't because some of the collisions aren't copyable
+        std::unique_ptr<tMidFluidCollision> mMidFluidCollision;
+        std::unique_ptr<tWallCollision> mWallCollision;
+        std::unique_ptr<tInletCollision> mInletCollision;
+        std::unique_ptr<tOutletCollision> mOutletCollision;
+        std::unique_ptr<tInletWallCollision> mInletWallCollision;
+        std::unique_ptr<tOutletWallCollision> mOutletWallCollision;
 
         template<typename Collision>
-        void StreamAndCollide(Collision* collision, const site_t iFirstIndex,
+        void StreamAndCollide(Collision& collision, const site_t iFirstIndex,
                               const site_t iSiteCount)
         {
-            collision->StreamAndCollide(iFirstIndex,
+            collision.StreamAndCollide(iFirstIndex,
                                                  iSiteCount,
                                                  &mParams,
                                                  *mLatDat,
@@ -118,9 +119,9 @@ namespace hemelb::lb
         }
 
         template<typename Collision>
-        void PostStep(Collision* collision, const site_t iFirstIndex, const site_t iSiteCount)
+        void PostStep(Collision& collision, const site_t iFirstIndex, const site_t iSiteCount)
         {
-            collision->DoPostStep(iFirstIndex,
+            collision.DoPostStep(iFirstIndex,
                                            iSiteCount,
                                            &mParams,
                                            *mLatDat,
@@ -131,7 +132,8 @@ namespace hemelb::lb
         net::Net* mNet;
         geometry::FieldData* mLatDat;
         SimulationState* mState;
-        iolets::BoundaryValues *mInletValues, *mOutletValues;
+        iolets::BoundaryValues *mInletValues = nullptr,
+                *mOutletValues = nullptr;
 
         LbmParameters mParams;
 
