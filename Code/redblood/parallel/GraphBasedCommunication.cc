@@ -45,7 +45,7 @@ namespace hemelb::redblood::parallel
         if (!neighbouringProcs.empty())
         {
             auto neighSites = comm.AllNeighGatherV(locallyOwnedSites);
-            if (neighSites.size() != comm.GetNeighborsCount())
+            if (std::ssize(neighSites) != comm.GetNeighborsCount())
                 throw (Exception() << "Something wrong with neighbourhood");
 
             // Finish populating map with knowledge coming from neighbours
@@ -92,9 +92,10 @@ namespace hemelb::redblood::parallel
                         // Points outside the sphere
                         if (delta.GetMagnitudeSquared() > cellsEffectiveSize*cellsEffectiveSize)
                             continue;
+                        auto& site = edge_site.GetGlobalSiteCoords();
 
                         // Sites with a negative or >= box max index will mess up ID calculation
-                        auto neigh = edge_site.GetGlobalSiteCoords() + delta;
+                        auto neigh = site + delta;
                         if (!valid(neigh))
                             continue;
 
@@ -148,6 +149,70 @@ namespace hemelb::redblood::parallel
         return MAXIMUM_SIZE_TO_RADIUS_RATIO * maxCellRadius;
     }
 
+    bool check_neighbourhood_consistency(net::MpiCommunicator const& comm, std::vector<int> const& this_ranks_neighs) {
+        // Send to all the ranks I think I have as neighbours
+        int const N = this_ranks_neighs.size();
+        std::vector<MPI_Request> sends(N);
+        int const rank = comm.Rank();
+        int const tag = 4671;
+        for (int i = 0; i < N; ++i) {
+            HEMELB_MPI_CALL(MPI_Issend,
+                            (&rank, 1, MPI_INT, this_ranks_neighs[i], tag, comm, &sends[i]));
+        }
+
+        // Signal that I have finished my sends
+        MPI_Request barrier = MPI_REQUEST_NULL;
+        int my_sends_received = 0;
+
+        // Put the received messages here
+        std::vector<int> neighs_sent_to_me;
+
+        int all_sends_received = 0;
+        while (!all_sends_received) {
+            // Check for arriving messages
+            MPI_Status status;
+            int msg_available;
+            HEMELB_MPI_CALL(MPI_Iprobe,
+                            (MPI_ANY_SOURCE, tag, comm, &msg_available, &status));
+            if (msg_available) {
+                // We have one - check it's correct and push data onto vec
+                int nrecv;
+                HEMELB_MPI_CALL(MPI_Get_count,
+                                (&status, MPI_INT, &nrecv));
+                if (nrecv != 1)
+                    throw (Exception() << "wrong size");
+                int data;
+                HEMELB_MPI_CALL(MPI_Recv,
+                                (&data, 1, MPI_INT, status.MPI_SOURCE, tag, comm, MPI_STATUS_IGNORE));
+                if (data != status.MPI_SOURCE)
+                    throw (Exception() << "wrong data received");
+                neighs_sent_to_me.push_back(data);
+            }
+
+            if (!my_sends_received) {
+                // check to see if all this rank's sends have been received
+                HEMELB_MPI_CALL(MPI_Testall,
+                                (N, sends.data(), &my_sends_received, MPI_STATUSES_IGNORE));
+                if (my_sends_received)
+                    HEMELB_MPI_CALL(MPI_Ibarrier,
+                                    (comm, &barrier));
+            } else {
+                HEMELB_MPI_CALL(MPI_Test,
+                                (&barrier, &all_sends_received, MPI_STATUS_IGNORE));
+            }
+        }
+
+        std::sort(neighs_sent_to_me.begin(), neighs_sent_to_me.end());
+        if (this_ranks_neighs.size() != neighs_sent_to_me.size())
+            throw (Exception() << "sent and received sizes don't match");
+
+        for (int i = 0; i < N; ++i) {
+            if (this_ranks_neighs[i] != neighs_sent_to_me[i])
+                throw (Exception() << "Differing neighbour lists");
+        }
+        return true;
+    }
+
     //! \brief Generates a graph communicator describing the data dependencies for interpolation and spreading
     net::MpiCommunicator CreateGraphComm(net::MpiCommunicator const &comm,
                                          geometry::Domain &domain,
@@ -158,6 +223,7 @@ namespace hemelb::redblood::parallel
         auto ranks_i_may_communicate_with = ComputeProcessorNeighbourhood(comm,
                                                                           domain,
                                                                           ComputeCellsEffectiveSize(*cellTemplates));
+        check_neighbourhood_consistency(comm, ranks_i_may_communicate_with);
         auto graphComm = comm.DistGraphAdjacent(ranks_i_may_communicate_with);
         timings[hemelb::reporting::Timers::graphComm].Stop();
 
