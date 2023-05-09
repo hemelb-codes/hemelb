@@ -135,19 +135,21 @@ namespace hemelb::configuration {
                 actors_to_register_for_phase.emplace_back(p.get(), i);
         };
 
-        log::Logger::Log<log::Info, log::Singleton>("Initialising geometry and fields.");
         timings[reporting::Timers::latDatInitialise].Start();
         // Use a reader to read in the file.
         log::Logger::Log<log::Info, log::Singleton>("Loading and decomposing geometry file %s.", config.GetDataFilePath().c_str());
         auto readGeometryData = ReadGmy(lat_info, timings, ioComms);
         // Create a new lattice based on that info and return it.
+        log::Logger::Log<log::Info, log::Singleton>("Initialising domain.");
         control.domainData = std::make_shared<geometry::Domain>(lat_info,
                                                                 readGeometryData,
                                                                 ioComms);
+        log::Logger::Log<log::Info, log::Singleton>("Initialising field data.");
         control.fieldData = std::make_shared<geometry::FieldData>(control.domainData);
         things_to_report.push_back(control.domainData.get());
         timings[reporting::Timers::latDatInitialise].Stop();
 
+        log::Logger::Log<log::Info, log::Singleton>("Initialising neighbouring data manager.");
         auto ndm =
                 control.neighbouringDataManager =
                         std::make_shared<geometry::neighbouring::NeighbouringDataManager>(

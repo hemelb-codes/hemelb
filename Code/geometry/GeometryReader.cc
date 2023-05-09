@@ -110,11 +110,12 @@ namespace hemelb::geometry
         // Close the file - only the ranks participating in the topology need to read it again.
         file.Close();
 
-        log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
+
         {
             timings[hemelb::reporting::Timers::initialDecomposition].Start();
             principalProcForEachBlock.resize(geometry.GetBlockCount());
 
+            log::Logger::Log<log::Info, log::Singleton>("Creating block-level octree");
             auto blockTree = octree::build_block_tree(
                     geometry.GetBlockDimensions().as<octree::U16>(),
                     fluidSitesOnEachBlock
@@ -122,6 +123,7 @@ namespace hemelb::geometry
 
             // Get an initial base-level decomposition of the domain macro-blocks over processors.
             // This will later be improved upon by ParMetis.
+            log::Logger::Log<log::Info, log::Singleton>("Beginning initial decomposition");
             decomposition::BasicDecomposition basicDecomposer(geometry,
                                                               computeComms);
 
@@ -133,6 +135,7 @@ namespace hemelb::geometry
                     computeComms
             );
             if (ShouldValidate()) {
+                log::Logger::Log<log::Info, log::Singleton>("Validating initial decomposition");
                 basicDecomposer.Validate(principalProcForEachBlock);
             }
 
@@ -155,7 +158,7 @@ namespace hemelb::geometry
 
         timings[hemelb::reporting::Timers::fileRead].Stop();
 
-        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Begin optimising the domain decomposition.");
+        hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Optimising the domain decomposition.");
         timings[hemelb::reporting::Timers::domainDecomposition].Start();
 
         // Having done an initial decomposition of the geometry, and read in the data, we optimise the
@@ -166,6 +169,7 @@ namespace hemelb::geometry
 
         if (ShouldValidate())
         {
+            log::Logger::Log<log::Info, log::Singleton>("Validating optimised decomposition");
             ValidateGeometry(geometry);
         }
         file.Close();

@@ -100,6 +100,8 @@ namespace hemelb::redblood {
                                                    std::shared_ptr<lb::SimulationState const> simState,
                                                    std::shared_ptr<io::PathManager const> fileManager
         ) {
+            log::Logger::Log<log::Info, log::Singleton>("Initialising RBCs.");
+            timings[reporting::Timers::cellInitialisation].Start();
             auto& rbcConfig = config.GetRBCConfig();
             CellContainer cells;
             using Controller = CellController<Traits>;
@@ -125,6 +127,7 @@ namespace hemelb::redblood {
                     fileManager,
                     ioComms
             ));
+            timings[reporting::Timers::cellInitialisation].Stop();
             return controller;
         }
     };

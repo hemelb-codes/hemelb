@@ -14,6 +14,7 @@ namespace hemelb::redblood::parallel
     GlobalCoordsToProcMap ComputeGlobalCoordsToProcMap(net::MpiCommunicator const &comm,
                                                        const geometry::Domain& domain)
     {
+        log::Logger::Log<log::Info, log::Singleton>("Creating coordinate to rank map");
         // If we are going to use the octree ordering as-implemented, then
         // sites must have coordinates that fit in 16 bits (per dimension).
         // This can be relaxed of course but requires work. Here we check that.
@@ -66,6 +67,7 @@ namespace hemelb::redblood::parallel
                                                    geometry::Domain &domain,
                                                    LatticeDistance cellsEffectiveSize)
     {
+        log::Logger::Log<log::Info, log::Singleton>("Computing which ranks are within a cell's size");
         // Keep this sorted for easy lookup
         std::vector<int> ans;
 
@@ -153,6 +155,7 @@ namespace hemelb::redblood::parallel
     }
 
     bool check_neighbourhood_consistency(net::MpiCommunicator const& comm, std::vector<int> const& this_ranks_neighs) {
+        log::Logger::Log<log::Info, log::Singleton>("Checking the neighbourhoos are self-consistent");
         // Send to all the ranks I think I have as neighbours
         int const N = std::ssize(this_ranks_neighs);
         std::vector<MPI_Request> sends(N);
@@ -227,6 +230,7 @@ namespace hemelb::redblood::parallel
                                                                           domain,
                                                                           ComputeCellsEffectiveSize(*cellTemplates));
         check_neighbourhood_consistency(comm, ranks_i_may_communicate_with);
+        log::Logger::Log<log::Info, log::Singleton>("Create the graph communicator");
         auto graphComm = comm.DistGraphAdjacent(ranks_i_may_communicate_with);
         timings[hemelb::reporting::Timers::graphComm].Stop();
 

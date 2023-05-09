@@ -68,6 +68,7 @@ namespace hemelb::geometry
 
         void Domain::ProcessReadSites(const GmyReadResult & readResult)
         {
+            log::Logger::Log<log::Info, log::Singleton>("Processing sites assigned to each MPI process");
             const auto max_site_index = sites - util::Vector3D<site_t>::Ones();
             blocks.resize(rank_for_site_store->GetBlockCount());
 
@@ -280,7 +281,7 @@ namespace hemelb::geometry
         {
             auto write_my_sites = rank_for_site_store->begin_writes();
 
-            hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>(".");
+            log::Logger::Log<log::Info, log::Singleton>("Assigning local indices to sites and associated data");
             // Populate the collision count arrays.
             for (unsigned collisionType = 0; collisionType < COLLISION_TYPES; collisionType++)
             {
@@ -335,11 +336,11 @@ namespace hemelb::geometry
 
             }
             LocalFluidSiteCount() = localFluidSites;
-
         }
+
         void Domain::CollectFluidSiteDistribution()
         {
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Gathering lattice info.");
+            log::Logger::Log<log::Debug, log::Singleton>("Gathering site counts.");
             fluidSitesOnEachProcessor = comms.AllGather(GetLocalFluidSiteCount());
             totalFluidSites = std::reduce(
                     fluidSitesOnEachProcessor.begin(), fluidSitesOnEachProcessor.end(),
@@ -348,6 +349,7 @@ namespace hemelb::geometry
 
         void Domain::CollectGlobalSiteExtrema()
         {
+            log::Logger::Log<log::Debug, log::Singleton>("Gathering bounds.");
             auto localMins = util::Vector3D<site_t>::Largest();
             auto localMaxes = util::Vector3D<site_t>::Zero();
 
@@ -383,6 +385,7 @@ namespace hemelb::geometry
 
         void Domain::InitialiseNeighbourLookups()
         {
+            log::Logger::Log<log::Info, log::Singleton>("Initialising neighbour lookups");
             // Allocate the index in which to put the distribution functions received from the other
             // process.
             //auto sharedDistributionLocationForEachProc = std::vector<std::vector<site_t> >(comms.Size());
