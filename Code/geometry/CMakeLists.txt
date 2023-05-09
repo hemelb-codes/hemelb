@@ -18,7 +18,7 @@ add_library(hemelb_geometry OBJECT
   neighbouring/RequiredSiteInformation.cc
   )
 target_link_libraries(hemelb_geometry PRIVATE ParMETIS::ParMETIS ZLIB::ZLIB)
-
+target_link_libraries(hemelb_geometry PUBLIC Boost::boost)
 configure_file (
   "${PROJECT_SOURCE_DIR}/geometry/decomposition/DecompositionWeights.h.in"
   "${PROJECT_BINARY_DIR}/geometry/decomposition/DecompositionWeights.h"

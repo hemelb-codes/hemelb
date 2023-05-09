@@ -11,6 +11,8 @@
 #include <map>
 #include <vector>
 
+#include <boost/container/flat_map.hpp>
+
 #include "constants.h"
 #include "units.h"
 #include "geometry/Block.h"
@@ -20,6 +22,7 @@
 #include "lb/lattices/LatticeInfo.h"
 #include "reporting/Reportable.h"
 #include "util/Vector3D.h"
+#include "net/MpiWindow.h"
 
 namespace hemelb::extraction {
     class LocalDistributionInput;
@@ -45,6 +48,7 @@ namespace hemelb::geometry
     class GmyReadResult;
     namespace neighbouring { class NeighbouringDomain; }
     namespace octree { class DistributedStore; }
+    using SiteRankIndex = std::array<int, 2>;
 
     // Hold geometrical and indexing type data about the domain to be simulated.
     class Domain : public reporting::Reportable
@@ -55,7 +59,6 @@ namespace hemelb::geometry
         friend class tests::helpers::LatticeDataAccess;
 
     public:
-
         template<class TRAITS>
         friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
         template<class LatticeData>
@@ -144,6 +147,7 @@ namespace hemelb::geometry
 
 
         proc_t GetProcIdFromGlobalCoords(const util::Vector3D<site_t>& globalSiteCoords) const;
+        SiteRankIndex GetRankIndexFromGlobalCoords(const util::Vector3D<site_t>& globalSiteCoords) const;
 
         /**
          * True if the given coordinates correspond to a valid block within the bounding
@@ -174,9 +178,9 @@ namespace hemelb::geometry
          * Get the number of fluid sites local to this proc.
          * @return
          */
-        inline site_t GetLocalFluidSiteCount() const
+        inline site_t const& GetLocalFluidSiteCount() const
         {
-          return localFluidSites;
+          return shared_counts.Span()[2 * COLLISION_TYPES];
         }
 
         site_t GetContiguousSiteId(util::Vector3D<site_t> location) const;
@@ -246,6 +250,11 @@ namespace hemelb::geometry
                                         Vec16& blockCoords,
                                         Vec16& siteCoords) const;
 
+        // Return whether a site is a domain edge.
+        // Use (rank, local contiguous index) to specify the site.
+        // Will do RMA iff required data not cached.
+        bool IsSiteDomainEdge(int rank, site_t local_idx) const;
+
         site_t GetMidDomainSiteCount() const;
         site_t GetDomainEdgeSiteCount() const;
 
@@ -255,9 +264,9 @@ namespace hemelb::geometry
          * @param collisionType
          * @return
          */
-        inline site_t GetMidDomainCollisionCount(unsigned int collisionType) const
+        inline site_t const& GetMidDomainCollisionCount(unsigned int collisionType) const
         {
-          return midDomainProcCollisions[collisionType];
+          return shared_counts.Span()[collisionType];
         }
 
         /**
@@ -266,17 +275,33 @@ namespace hemelb::geometry
          * @param collisionType
          * @return
          */
-        inline site_t GetDomainEdgeCollisionCount(unsigned int collisionType) const
+        inline site_t const& GetDomainEdgeCollisionCount(unsigned int collisionType) const
         {
-          return domainEdgeProcCollisions[collisionType];
+          return shared_counts.Span()[COLLISION_TYPES + collisionType];
         }
+
+    private:
+        // The setters should be private
+        inline site_t& MidDomainCollisionCount(unsigned int collisionType)
+        {
+            return shared_counts.Span()[collisionType];
+        }
+        inline site_t& DomainEdgeCollisionCount(unsigned int collisionType)
+        {
+            return shared_counts.Span()[COLLISION_TYPES + collisionType];
+        }
+        inline site_t& LocalFluidSiteCount()
+        {
+            return shared_counts.Span()[2 * COLLISION_TYPES];
+        }
+    public:
 
         /**
          * Get the number of fluid sites on the given rank.
          * @param proc
          * @return
          */
-        inline site_t GetFluidSiteCountOnProc(proc_t proc) const
+        inline site_t const& GetFluidSiteCountOnProc(proc_t proc) const
         {
           return fluidSitesOnEachProcessor[proc];
         }
@@ -478,9 +503,18 @@ namespace hemelb::geometry
         site_t totalSharedFs; //! Number of local distributions shared with neighbouring processors.
         std::vector<NeighbouringProcessor> neighbouringProcs; //! Info about processors with neighbouring fluid sites.
 
-        std::array<site_t, COLLISION_TYPES> midDomainProcCollisions; //! Number of fluid sites with all fluid neighbours on this rank, for each collision type.
-        std::array<site_t, COLLISION_TYPES> domainEdgeProcCollisions; //! Number of fluid sites with at least one fluid neighbour on another rank, for each collision type.
-        site_t localFluidSites; //! The number of local fluid sites.
+        // In this window, we store the counts of stuff that need to be PGAS accessible.
+        // First COLLISION_TYPES midDomainProcCollisions; //! Number of fluid sites with all fluid neighbours on this rank, for each collision type.
+        // Second COLLISION_TYPES> domainEdgeProcCollisions; //! Number of fluid sites with at least one fluid neighbour on another rank, for each collision type.
+        // Last  localFluidSites; //! The number of local fluid sites.
+        static constexpr MPI_Aint N_SHARED = 2 * COLLISION_TYPES + 1;
+        net::WinData<site_t, N_SHARED> shared_counts;
+        // Here we cache this data locally, since we expect to need
+        // only a small number of other process's data, but many times
+        using SharedCountArray = std::array<site_t, N_SHARED>;
+        // Key is the remote rank.
+        mutable boost::container::flat_map<int, SharedCountArray> remote_counts_cache;
+
         std::vector<Block> blocks; //! Data where local fluid sites are stored contiguously - hold only blocks with fluid sites in octree order
 
         std::vector<distribn_t> distanceToWall; //! Hold the distance to the wall for each fluid site.

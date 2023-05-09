@@ -12,36 +12,55 @@
 namespace hemelb::net
 {
     // An MPI Window created with MPI_Win_allocate that gives access to the data, PGAS style
-    template <typename T>
+    constexpr MPI_Aint DYNAMIC_EXTENT = -1;
+    template <typename T, MPI_Aint EXTENT = DYNAMIC_EXTENT>
     class WinData {
         using value_type = T;
-        using span = std::span<T>;
+        using span = std::span<T, EXTENT == DYNAMIC_EXTENT ? std::dynamic_extent : EXTENT>;
         using traits = net::MpiDataTypeTraits<value_type>;
 
         // We own the window (and data) so invoke rule of five
         MPI_Win window = MPI_WIN_NULL;
-        span data;
+
+        // A span with a non-dynamic extent cannot be default constructed.
+        // Here we create one that can be assigned-to and destroyed, but use will trigger SIGSEGV.
+        static constexpr span NULLSPAN() {
+            if constexpr(EXTENT == DYNAMIC_EXTENT) {
+                return span{};
+            } else {
+                value_type* null = nullptr;
+                return span{null, null + EXTENT};
+            }
+        }
+        span data = NULLSPAN();
+
+        static void Init(WinData& self, MPI_Aint n, MpiCommunicator comm, value_type const& init) {
+            MPI_Info info;
+            MPI_Info_create(&info);
+            MPI_Info_set(info, "same_size", "true");
+            MPI_Info_set(info, "same_disp_unit", "true");
+            T *tmp;
+            HEMELB_MPI_CALL(
+                    MPI_Win_allocate,
+                    (n * sizeof(value_type), sizeof(value_type), info, comm, &tmp, &self.window)
+            );
+            MPI_Info_free(&info);
+            self.data = span(tmp, n);
+            // Windows do not inherit the handler from parent communicator
+            HEMELB_MPI_CALL(MPI_Win_set_errhandler, (self.window, MPI_ERRORS_RETURN));
+            std::fill(self.data.begin(), self.data.end(), init);
+        }
 
     public:
         WinData() = default;
 
         // Construct window and allocate data - collective and `n`
         // must be the same across the communicator.
-        WinData(MPI_Aint n, MpiCommunicator comm, value_type const& init) {
-            MPI_Info info;
-            MPI_Info_create(&info);
-            MPI_Info_set(info, "same_size", "true");
-            MPI_Info_set(info, "same_disp_unit", "true");
-            T* tmp;
-            HEMELB_MPI_CALL(
-                    MPI_Win_allocate,
-                    (n * sizeof(value_type), sizeof(value_type), info, comm, &tmp, &window)
-            );
-            MPI_Info_free(&info);
-            data = span(tmp, n);
-            // Windows do not inherit the handler from parent communicator
-            HEMELB_MPI_CALL(MPI_Win_set_errhandler, (window, MPI_ERRORS_RETURN));
-            std::fill(data.begin(), data.end(), init);
+        WinData(MPI_Aint n, MpiCommunicator comm, value_type const& init) requires (EXTENT == DYNAMIC_EXTENT) {
+            Init(*this, n, comm, init);
+        }
+        WinData(MpiCommunicator comm, value_type const& init) requires (EXTENT != DYNAMIC_EXTENT) {
+            Init(*this, EXTENT, comm, init);
         }
 
         // No copying, uniquely owns the window
@@ -49,7 +68,7 @@ namespace hemelb::net
         WinData& operator=(WinData const&) = delete;
 
         // Moving is fine
-        WinData(WinData&& other) : WinData() {
+        WinData(WinData&& other) noexcept : WinData() {
             // Default constructor sets us to null, so swap leaves other in null state :)
             std::swap(window, other.window);
             std::swap(data, other.data);
@@ -71,7 +90,7 @@ namespace hemelb::net
         void Free() {
             if (window != MPI_WIN_NULL) {
                 HEMELB_MPI_CALL(MPI_Win_free, (&window));
-                data = span{};
+                data = NULLSPAN();
             }
         }
 
@@ -97,7 +116,7 @@ namespace hemelb::net
                 HEMELB_MPI_CALL(MPI_Win_lock,
                                 (MPI_LOCK_SHARED, trank, MPI_MODE_NOCHECK, win->window)
                 );
-                int ans;
+                T ans;
                 HEMELB_MPI_CALL(MPI_Get, (
                         &ans, 1, traits::GetMpiDataType(),
                                 trank, tdisp, 1, traits::GetMpiDataType(),
@@ -169,6 +188,53 @@ namespace hemelb::net
             return {rank, i, this};
         }
 
+        // The output arg dest sets the size
+        template <std::size_t YTENT>
+        void Get(std::span<T, YTENT> dest, int rank, MPI_Aint i) const {
+            // A lock/unlock with MPI_MODE_NOCHECK should have zero overhead
+            // on proper RDMA machines but does satisfy MPI RMA requirements.
+            HEMELB_MPI_CALL(MPI_Win_lock,
+                            (MPI_LOCK_SHARED, rank, MPI_MODE_NOCHECK, window)
+            );
+            HEMELB_MPI_CALL(MPI_Get, (
+                    dest.data(), dest.size(), traits::GetMpiDataType(),
+                            rank, i, dest.size(), traits::GetMpiDataType(),
+                            window
+            ));
+            HEMELB_MPI_CALL(MPI_Win_unlock,
+                            (rank, window)
+            );
+        }
+        template <std::size_t YTENT>
+        void Get(std::span<T, YTENT> dest, int rank) const {
+            if constexpr(EXTENT == DYNAMIC_EXTENT) {
+                if constexpr(YTENT == std::dynamic_extent) {
+                    if (dest.size() != data.size())
+                        throw (Exception() << "Size mismatch!");
+                } else {
+                    if (YTENT != data.size())
+                        throw (Exception() << "Size mismatch!");
+                }
+            } else {
+                if constexpr(YTENT == std::dynamic_extent) {
+                    if (dest.size() != EXTENT)
+                        throw (Exception() << "Size mismatch!");
+                } else {
+                    static_assert(EXTENT == YTENT, "Size mismatch");
+                }
+            }
+            HEMELB_MPI_CALL(MPI_Win_lock,
+                            (MPI_LOCK_SHARED, rank, MPI_MODE_NOCHECK, window)
+            );
+            HEMELB_MPI_CALL(MPI_Get, (
+                    dest.data(), dest.size(), traits::GetMpiDataType(),
+                            rank, 0, dest.size(), traits::GetMpiDataType(),
+                            window
+            ));
+            HEMELB_MPI_CALL(MPI_Win_unlock,
+                            (rank, window)
+            );
+        }
     };
 }
 

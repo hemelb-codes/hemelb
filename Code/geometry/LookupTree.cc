@@ -8,6 +8,20 @@
 #include <cassert>
 #include "constants.h"
 
+namespace hemelb::net {
+    template<>
+    MPI_Datatype MpiDataTypeTraits<std::array<int, 2>>::RegisterMpiDataType() {
+        const int typeCount = 1;
+        int blocklengths[typeCount] = {2};
+        MPI_Datatype types[typeCount] = { net::MpiDataType<int>() };
+        MPI_Aint displacements[typeCount] = { 0 };
+        MPI_Datatype ret;
+        HEMELB_MPI_CALL(MPI_Type_create_struct, (typeCount, blocklengths, displacements, types, &ret));
+        HEMELB_MPI_CALL(MPI_Type_commit, (&ret));
+        return ret;
+    }
+}
+
 namespace hemelb::geometry::octree {
 
     LookupTree::LookupTree(U16 N) : levels(N+1), n_levels(N) {
@@ -204,7 +218,7 @@ namespace hemelb::geometry::octree {
         auto max_blocks_per_rank = comm.AllReduce(num_my_blocks, MPI_MAX);
         auto max_sites_per_rank = max_blocks_per_rank * sites_per_block;
 
-        rank_that_owns_site_win = WinData(max_sites_per_rank, comm, SITE_OR_BLOCK_SOLID);
+        rank_that_owns_site_win = WinData(max_sites_per_rank, comm, {SITE_OR_BLOCK_SOLID, -1});
     }
 
     MPI_Aint DistributedStore::ComputeBlockStart(std::size_t block_idx) const {
@@ -245,6 +259,17 @@ namespace hemelb::geometry::octree {
         return WriteSession{this};
     }
 
+    SiteRankIndex DistributedStore::GetSiteData(std::size_t blockIdx, site_t siteIdx) const {
+        auto rank = storage_rank[blockIdx];
+        return rank_that_owns_site_win(rank, ComputeBlockStart(blockIdx) + siteIdx);
+    }
+    SiteRankIndex DistributedStore::GetSiteData(const Vec16 &blockIjk, site_t siteIdx) const {
+        if (auto blockIdx = block_tree.GetPath(blockIjk).leaf(); blockIdx != Level::NC)
+            return GetSiteData(blockIdx, siteIdx);
+        else
+            return {SITE_OR_BLOCK_SOLID, -1};
+
+    }
     int DistributedStore::GetSiteRank(Vec16 const& blockIjk, site_t siteIdx) const {
         if (auto blockIdx = block_tree.GetPath(blockIjk).leaf(); blockIdx != Level::NC)
             return GetSiteRank(blockIdx, siteIdx);
@@ -253,7 +278,8 @@ namespace hemelb::geometry::octree {
     }
     int DistributedStore::GetSiteRank(std::size_t blockIdx, site_t siteIdx) const {
         auto rank = storage_rank[blockIdx];
-        return rank_that_owns_site_win(rank, ComputeBlockStart(blockIdx) + siteIdx);
+        SiteRankIndex ans = rank_that_owns_site_win(rank, ComputeBlockStart(blockIdx) + siteIdx);
+        return ans[0];
     }
 
 }

@@ -116,20 +116,23 @@ namespace hemelb::redblood::parallel
                         }
 
                         // Since we didn't continue, we have an unchecked coord that could have a fluid site.
-                        auto neigh_rank = domain.GetProcIdFromGlobalCoords(neigh);
+                        auto [neigh_rank, neigh_local_idx] = domain.GetRankIndexFromGlobalCoords(neigh);
                         if (neigh_rank == SITE_OR_BLOCK_SOLID)
                             // It was not a fluid site
                             continue;
 
                         if (neigh_rank != rank) {
                             // And it doesn't live on this process.
-                            // Add that rank to the answer if not already there.
-                            auto p_iter = std::lower_bound(ans.begin(), ans.end(), neigh_rank);
+                            // Find out if the site is edge-of-domain
+                            if (domain.IsSiteDomainEdge(neigh_rank, neigh_local_idx)) {
+                                // Add that rank to the answer if not already there.
+                                auto p_iter = std::lower_bound(ans.begin(), ans.end(), neigh_rank);
 
-                            if (p_iter == ans.end()) {
-                                ans.push_back(neigh_rank);
-                            } else if (*p_iter != neigh_rank) {
-                                ans.insert(p_iter, neigh_rank);
+                                if (p_iter == ans.end()) {
+                                    ans.push_back(neigh_rank);
+                                } else if (*p_iter != neigh_rank) {
+                                    ans.insert(p_iter, neigh_rank);
+                                }
                             }
                         }
                     }
@@ -151,7 +154,7 @@ namespace hemelb::redblood::parallel
 
     bool check_neighbourhood_consistency(net::MpiCommunicator const& comm, std::vector<int> const& this_ranks_neighs) {
         // Send to all the ranks I think I have as neighbours
-        int const N = this_ranks_neighs.size();
+        int const N = std::ssize(this_ranks_neighs);
         std::vector<MPI_Request> sends(N);
         int const rank = comm.Rank();
         int const tag = 4671;

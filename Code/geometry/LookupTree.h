@@ -18,6 +18,9 @@
 #include "net/MpiCommunicator.h"
 #include "net/MpiWindow.h"
 
+namespace hemelb::geometry {
+    using SiteRankIndex = std::array<int, 2>;
+}
 namespace hemelb::geometry::octree
 {
 
@@ -248,8 +251,9 @@ namespace hemelb::geometry::octree
 
 
 
-    // Store something (in this case the rank that owns a given site)
-    // distributed across MPI processes/
+    // Store something (in this case the rank that owns a given site and its local index)
+    // distributed across MPI processes.
+
 
     class DistributedStore {
         // Needed for offset calculations
@@ -261,7 +265,7 @@ namespace hemelb::geometry::octree
 
         net::MpiCommunicator comm;
         // MPI_Win and allocated data - holds which MPI rank owns a site
-        using WinData = net::WinData<int>;
+        using WinData = net::WinData<SiteRankIndex>;
         WinData rank_that_owns_site_win;
 
         // Compute the index within a partition's array where a block lives (block given by its flat index).
@@ -309,9 +313,16 @@ namespace hemelb::geometry::octree
 
         [[nodiscard]] int GetSiteRank(Vec16 const& blockIjk, site_t siteIdx) const;
         [[nodiscard]] int GetSiteRank(std::size_t blockIdx, site_t siteIdx) const;
+
+        [[nodiscard]] SiteRankIndex GetSiteData(Vec16 const& blockIjk, site_t siteIdx) const;
+        [[nodiscard]] SiteRankIndex GetSiteData(std::size_t blockIdx, site_t siteIdx) const;
+
     };
 
 }
-
+namespace hemelb::net {
+    template<>
+    MPI_Datatype MpiDataTypeTraits<geometry::SiteRankIndex>::RegisterMpiDataType();
+}
 
 #endif

@@ -15,13 +15,13 @@ namespace hemelb::geometry {
             m_domain{d},
             m_currentDistributions(CalcDistSize(*d)),
             m_nextDistributions(CalcDistSize(*d)),
-            m_force(d->localFluidSites),
+            m_force(d->GetLocalFluidSiteCount()),
             m_neighbouringFields{std::make_unique<neighbouring::NeighbouringFieldData>(d->neighbouringData)} {
 
     }
 
     std::size_t FieldData::CalcDistSize(Domain const &d) {
-        return d.localFluidSites * d.latticeInfo.GetNumVectors() + 1 + d.totalSharedFs;
+        return d.GetLocalFluidSiteCount() * d.latticeInfo.GetNumVectors() + 1 + d.totalSharedFs;
     }
 
     void FieldData::SendAndReceive(net::Net *net) {
