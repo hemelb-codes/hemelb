@@ -38,9 +38,9 @@ runs:
         else
           ans=main
         fi
-        echo "::set-output name=value::$ans"
+        echo "value=$ans" >> "$GITHUB_OUTPUT"
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         repository: hemelb-codes/hemelb-tests
         ref: ${{ steps.branch.outputs.value }}
