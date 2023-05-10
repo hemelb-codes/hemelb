@@ -907,7 +907,7 @@ namespace hemelb::geometry
 #ifdef HEMELB_VALIDATE_GEOMETRY
       return true;
 #else
-      return true;
+      return false;
 #endif
     }
 }
