@@ -17,45 +17,80 @@ namespace hemelb::geometry::decomposition
     {
     }
 
+    // Figure out how to divide a range between two groups of ranks of almost equal size
+    auto share_range(std::vector<U64>::const_iterator begin, std::vector<U64>::const_iterator end, int N) {
+        auto lo = *begin;
+        auto hi = *end;
+        auto delta = hi - lo;
+
+        auto n_lo = N / 2;
+        auto mid = float(lo) + float(delta) * float(n_lo) / float(N);
+        auto middle = std::lower_bound(begin, end, mid);
+        if ((*middle - mid) / float(delta) > 0.5f)
+            --middle;
+
+        return std::make_pair(n_lo, middle);
+    }
+
+    // Assign a group of processes of size N (i.e. ranks 0.. N-1) to the blocks with cumulative site counts.
+    // Recursively split the range in half and assign depth-first.
+    void assign_range(std::vector<U64>::const_iterator count_begin, std::vector<U64>::const_iterator count_end,
+                      std::vector<int>::iterator rank_begin, std::vector<int>::iterator rank_end, int N);
+    void assign_range(std::vector<U64>::const_iterator count_begin, std::vector<U64>::const_iterator count_end,
+                      std::vector<int>::iterator rank_begin, std::vector<int>::iterator rank_end, int N) {
+        if (N < 2)
+            return;
+
+        // Fairly split the communicator in half(ish)
+        auto [n_lo, count_middle] = share_range(count_begin, count_end, N);
+        auto dn = std::distance(count_begin, count_middle);
+        auto rank_middle = rank_begin + dn;
+        // Recursively assign the two halves
+        assign_range(count_begin, count_middle, rank_begin, rank_middle, n_lo);
+        assign_range(count_middle, count_end, rank_middle, rank_end, N - n_lo);
+        // The second half needs to have the ranks incremented
+        for (; rank_middle != rank_end; ++rank_middle)
+            *rank_middle += n_lo;
+    }
+
     std::vector<int> BasicDecomposition::Decompose(octree::LookupTree const& tree,
                                                    std::vector<proc_t>& procAssignedToEachBlock)
     {
         // Root node of tree holds total fluid sites
         auto total_sites = tree.levels[0].sites_per_node[0];
-        auto target_sites_per_rank = (total_sites - 1) / communicator.Size() + 1;
+
         // Those blocks which contain at least one fluid site are here
         auto& nonsolid_block_fluid_site_counts = tree.levels[tree.n_levels].sites_per_node;
         auto const n_nonsolid = nonsolid_block_fluid_site_counts.size();
-        std::vector<int> rank_for_block(n_nonsolid);
+
+        if (n_nonsolid < communicator.Size())
+            throw (Exception() << "More MPI processes than blocks - ParMETIS will be unhappy.");
+        std::vector<U64> cumulative_fluid_sites(n_nonsolid + 1);
+        cumulative_fluid_sites[0] = 0;
+        std::inclusive_scan(nonsolid_block_fluid_site_counts.begin(), nonsolid_block_fluid_site_counts.end(),
+                            ++cumulative_fluid_sites.begin());
+
+        if (cumulative_fluid_sites.back() != total_sites)
+            throw (Exception() << "Octree is inconsistent");
+
+        // Going to divide the blocks amongst the ranks. Start with them all assigned to rank 0
+        std::vector<int> rank_for_block(n_nonsolid, 0);
+        assign_range(cumulative_fluid_sites.begin(), --cumulative_fluid_sites.end(),
+                     rank_for_block.begin(), rank_for_block.end(), communicator.Size());
 
         // We need to return data organised in GMY file order
         // Initialise output to -1 => SOLID, we will overwrite the non-solid below
         std::fill(procAssignedToEachBlock.begin(), procAssignedToEachBlock.end(), -1);
+
         // We need to know the octree ID to map to 3D coords.
         auto& block_oct_ids = tree.levels[tree.n_levels].node_ids;
         auto& dims = geometry.GetBlockDimensions();
         auto const strides = BlockLocation{dims[1]*dims[2], dims[2], 1};
 
-        int assigned_rank = 0;
-        std::decay_t<decltype(nonsolid_block_fluid_site_counts)>::value_type assigned_sites = 0;
-        for (int i = 0; i < n_nonsolid; ++i) {
-            if (assigned_rank >= communicator.Size())
-                throw Exception() << "Trying to assign block to rank that does not exist";
-
-            // This holds only the fluid blocks in octree order
-            rank_for_block[i] = assigned_rank;
-            // Need to map back to GMY order
+        for (std::size_t i = 0; i < n_nonsolid; ++i) {
             auto ijk = octree::oct_to_ijk(block_oct_ids[i]);
             auto gmy = Dot(ijk, strides);
-            procAssignedToEachBlock[gmy] = assigned_rank;
-
-            assigned_sites += nonsolid_block_fluid_site_counts[i];
-
-            if (assigned_sites >= target_sites_per_rank) {
-                // Reached target, assign to next rank now
-                assigned_rank += 1;
-                assigned_sites = 0;
-            }
+            procAssignedToEachBlock[gmy] = rank_for_block[i];
         }
         return rank_for_block;
     }
