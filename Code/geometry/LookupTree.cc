@@ -36,8 +36,12 @@ namespace hemelb::geometry::octree {
 
     // Get from the lowest level in the tree
     NodeRef LookupTree::GetPath(Vec16 ijk) const {
-        auto ans = NodeRef{this};
         auto leaf_oct = ijk_to_oct(ijk);
+        return GetPath(leaf_oct);
+    }
+
+    NodeRef LookupTree::GetPath(U64 leaf_oct) const {
+        auto ans = NodeRef{this};
 
         std::size_t current_idx = 0U;
         U16 current_level = 0U;
@@ -235,6 +239,10 @@ namespace hemelb::geometry::octree {
             : WinData::WriteSession(&s->rank_that_owns_site_win), store(s) {
     }
 
+    DistributedStore::WriteSession::~WriteSession() {
+        store->ClearCache();
+    }
+
     auto DistributedStore::WriteSession::operator()(std::size_t block_idx) -> BlockWriteChunk {
         return {store->storage_rank[block_idx], store->ComputeBlockStart(block_idx), &store->rank_that_owns_site_win};
 
@@ -259,27 +267,27 @@ namespace hemelb::geometry::octree {
         return WriteSession{this};
     }
 
-    SiteRankIndex DistributedStore::GetSiteData(std::size_t blockIdx, site_t siteIdx) const {
-        auto rank = storage_rank[blockIdx];
-        return rank_that_owns_site_win(rank, ComputeBlockStart(blockIdx) + siteIdx);
+    void DistributedStore::ClearCache() {
+        cache.clear();
     }
+
+    SiteRankIndex DistributedStore::GetSiteData(std::size_t blockIdx, site_t siteIdx) const {
+        if (!cache.contains(blockIdx)) {
+            // If data isn't in the cache, grab the whole block via RMA
+            auto rank = storage_rank[blockIdx];
+            std::vector<SiteRankIndex> tmp(sites_per_block);
+            rank_that_owns_site_win.Get(std::span<SiteRankIndex>(tmp.begin(), sites_per_block),
+                    rank, ComputeBlockStart(blockIdx));
+            cache[blockIdx] = std::move(tmp);
+        }
+        // Cache now must contain a copy of the remote data.
+        return cache[blockIdx][siteIdx];
+    }
+
     SiteRankIndex DistributedStore::GetSiteData(const Vec16 &blockIjk, site_t siteIdx) const {
         if (auto blockIdx = block_tree.GetPath(blockIjk).leaf(); blockIdx != Level::NC)
             return GetSiteData(blockIdx, siteIdx);
         else
             return {SITE_OR_BLOCK_SOLID, -1};
-
     }
-    int DistributedStore::GetSiteRank(Vec16 const& blockIjk, site_t siteIdx) const {
-        if (auto blockIdx = block_tree.GetPath(blockIjk).leaf(); blockIdx != Level::NC)
-            return GetSiteRank(blockIdx, siteIdx);
-        else
-            return SITE_OR_BLOCK_SOLID;
-    }
-    int DistributedStore::GetSiteRank(std::size_t blockIdx, site_t siteIdx) const {
-        auto rank = storage_rank[blockIdx];
-        SiteRankIndex ans = rank_that_owns_site_win(rank, ComputeBlockStart(blockIdx) + siteIdx);
-        return ans[0];
-    }
-
 }

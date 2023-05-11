@@ -12,6 +12,8 @@
 #include <memory>
 #include <vector>
 
+#include <boost/container/flat_map.hpp>
+
 #include "Exception.h"
 #include "units.h"
 #include "util/Vector3D.h"
@@ -185,6 +187,7 @@ namespace hemelb::geometry::octree
 
         // Get from the lowest level in the tree
         [[nodiscard]] NodeRef GetPath(Vec16 ijk) const;
+        [[nodiscard]] NodeRef GetPath(U64 oct) const;
 
         [[nodiscard]] LeafRef GetLeaf(Vec16 ijk) const;
 
@@ -249,12 +252,16 @@ namespace hemelb::geometry::octree
 
     LookupTree build_block_tree(const Vec16& dimensionsInBlocks, std::vector<site_t> const& fluidSitesPerBlock);
 
-
-
     // Store something (in this case the rank that owns a given site and its local index)
     // distributed across MPI processes.
-
-
+    //
+    // Expected use is all processes write data for the fluid sites
+    // they own in one epoch, then any process can query any site of
+    // interest.
+    //
+    // This is data is cached locally, so clearing this might be
+    // beneficial if access patterns change. Cache is cleared after
+    // a write session anyway.
     class DistributedStore {
         // Needed for offset calculations
         MPI_Aint sites_per_block;
@@ -268,8 +275,16 @@ namespace hemelb::geometry::octree
         using WinData = net::WinData<SiteRankIndex>;
         WinData rank_that_owns_site_win;
 
+        // Hold a local copy of a block's remote data to avoid remote
+        // access where possible. Particularly useful since a block
+        // may be stored on a rank that doesn't own it.
+        //
+        // Reset
+        mutable boost::container::flat_map<std::size_t, std::vector<SiteRankIndex>> cache;
+
         // Compute the index within a partition's array where a block lives (block given by its flat index).
-        MPI_Aint ComputeBlockStart(std::size_t block_idx) const;
+        [[nodiscard]] MPI_Aint ComputeBlockStart(std::size_t block_idx) const;
+
     public:
         // Construct - collective on the communicator
         DistributedStore(site_t sites_per_block, LookupTree tree, std::vector<int> ranks, net::MpiCommunicator c);
@@ -301,6 +316,8 @@ namespace hemelb::geometry::octree
         struct WriteSession : public WinData::WriteSession {
             DistributedStore* store;
             explicit WriteSession(DistributedStore* s);
+            // Cache needs invalidated
+            ~WriteSession();
             // Do the block level calculations once
             BlockWriteChunk operator()(Vec16 const& block_coord);
             BlockWriteChunk operator()(std::size_t block_idx);
@@ -311,12 +328,10 @@ namespace hemelb::geometry::octree
         // Start a load of writes
         WriteSession begin_writes();
 
-        [[nodiscard]] int GetSiteRank(Vec16 const& blockIjk, site_t siteIdx) const;
-        [[nodiscard]] int GetSiteRank(std::size_t blockIdx, site_t siteIdx) const;
-
         [[nodiscard]] SiteRankIndex GetSiteData(Vec16 const& blockIjk, site_t siteIdx) const;
         [[nodiscard]] SiteRankIndex GetSiteData(std::size_t blockIdx, site_t siteIdx) const;
 
+        void ClearCache();
     };
 
 }
