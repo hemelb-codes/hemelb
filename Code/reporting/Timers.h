@@ -230,7 +230,7 @@ namespace hemelb::reporting
 
     { "Total",
       "Seed Decomposition",
-      "domain_type Decomposition",
+      "Domain Decomposition",
       "File Read",
       "Re Read",
       "Unzip",
