@@ -49,7 +49,7 @@ namespace hemelb::redblood::parallel
       //! \brief Generates a graph communicator describing the data dependencies for interpolation and spreading
       net::MpiCommunicator CreateGraphComm(net::MpiCommunicator const &comm,
                                            geometry::Domain &domain,
-                                           std::shared_ptr<TemplateCellContainer> cellTemplates,
+                                           const std::shared_ptr<TemplateCellContainer>& cellTemplates,
                                            hemelb::reporting::Timers &timings);
 }
 #endif
