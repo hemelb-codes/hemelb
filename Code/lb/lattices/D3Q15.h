@@ -8,7 +8,7 @@
 
 #include "lb/lattices/Lattice.h"
 
-namespace hemelb::lb::lattices
+namespace hemelb::lb
 {
 
     // Use inheritance rather than an alias to get a nicer name when compiling/debugging.

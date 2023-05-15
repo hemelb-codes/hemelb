@@ -17,7 +17,7 @@ namespace hemelb::tests
 {
     using namespace redblood;
 
-    using D3Q15 = lb::lattices::D3Q15;
+    using D3Q15 = lb::D3Q15;
     using Kernel = lb::kernels::LBGK<D3Q15>;
 
     class CellVelocityInterpolTests : public SquareDuctTetrahedronFixture

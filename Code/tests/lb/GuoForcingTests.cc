@@ -20,10 +20,10 @@ namespace hemelb::tests
     using fourcube =  helpers::FourCubeBasedTestFixture<>;
     class GuoForcingTests : public fourcube
     {
-        using LatticeType = lb::lattices::D3Q19;
+        using LatticeType = lb::D3Q19;
         using Kernel = lb::kernels::GuoForcingLBGK<LatticeType>;
         using HydroVars = Kernel::KHydroVars;
-        //using Lattice = lb::lattices::Lattice<LatticeType>;
+        //using Lattice = lb::Lattice<LatticeType>;
 
         std::unique_ptr<lb::MacroscopicPropertyCache> propertyCache;
         Approx apprx = Approx(0.0).margin(1e-8);
@@ -263,7 +263,7 @@ namespace hemelb::tests
             std::default_random_engine e1(rd());
             std::uniform_real_distribution<distribn_t> rdm(-10, 10);
 
-            using LatticeType = lb::lattices::D3Q19;
+            using LatticeType = lb::D3Q19;
             LatticeVelocity const v(rdm(e1), rdm(e1), rdm(e1));
             LatticeForceVector const F(rdm(e1), rdm(e1), rdm(e1));
             LatticeForce sumFi(0);

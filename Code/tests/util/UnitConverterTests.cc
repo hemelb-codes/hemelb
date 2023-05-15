@@ -33,10 +33,10 @@ namespace hemelb
       }
 
       SECTION("TestSimpleStressTensor") {
-	std::vector<distribn_t> fNonEquilibrium(lb::lattices::D3Q15::NUMVECTORS, 0.0);
+	std::vector<distribn_t> fNonEquilibrium(lb::D3Q15::NUMVECTORS, 0.0);
 
 	util::Matrix3D stressTensor;
-	lb::lattices::D3Q15::CalculateStressTensor(densityLatt, tau, fNonEquilibrium.data(), stressTensor);
+	lb::D3Q15::CalculateStressTensor(densityLatt, tau, fNonEquilibrium.data(), stressTensor);
 	util::Matrix3D stressTensorPhys = unitConverter.ConvertFullStressTensorToPhysicalUnits(stressTensor);
 
 	REQUIRE(apprx(pressMmHg) == stressTensorPhys[0][0] / mmHg_TO_PASCAL);
@@ -46,12 +46,12 @@ namespace hemelb
       }
 
       SECTION("TestSimpleTractionVector") {
-	std::vector<distribn_t> fNonEquilibrium(lb::lattices::D3Q15::NUMVECTORS, 0.0);
+	std::vector<distribn_t> fNonEquilibrium(lb::D3Q15::NUMVECTORS, 0.0);
 	util::Vector3D<Dimensionless> wallNormal(0.0);
 	wallNormal[0] = 1.0;
 
 	util::Vector3D<LatticeStress> traction;
-	lb::lattices::D3Q15::CalculateTractionOnAPoint(densityLatt,
+	lb::D3Q15::CalculateTractionOnAPoint(densityLatt,
 						       tau,
 						       fNonEquilibrium.data(),
 						       wallNormal,

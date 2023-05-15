@@ -9,7 +9,6 @@
 
 #include <catch2/catch.hpp>
 
-#include "configuration/SimConfig.h"
 #include "lb/kernels/Kernels.h"
 #include "lb/streamers/Streamers.h"
 #include "lb/lattices/D3Q15.h"
@@ -31,12 +30,12 @@ namespace hemelb::tests
      * Helper class that exposes implementation details to the tests.
      */
     using lb::streamers::VSExtra;
-    class LocalVSExtra : public VSExtra<lb::lattices::D3Q15>
+    class LocalVSExtra : public VSExtra<lb::D3Q15>
     {
     public:
         //typedef hemelb::lb::streamers::VSExtra::UnitVec UnitVec;
         LocalVSExtra(lb::iolets::InOutLet& iolet) :
-                VSExtra<lb::lattices::D3Q15> (iolet)
+                VSExtra<lb::D3Q15> (iolet)
         {
         }
         const UnitVec& GetE1() const
@@ -84,20 +83,19 @@ namespace hemelb::tests
      */
     TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<>, "VirtualSiteIoletStreamerTests") {
 
-        typedef lb::lattices::D3Q15 Lattice;
-        typedef lb::kernels::LBGK<Lattice> Kernel;
-        typedef lb::collisions::Normal<Kernel> Collision;
-        typedef lb::streamers::VirtualSite<Lattice> VirtualSite;
-        typedef lb::iolets::InOutLetCosine InOutLetCosine;
-        typedef lb::streamers::RSHV RSHV;
+        using Lattice = lb::D3Q15;
+        using Kernel = lb::kernels::LBGK<Lattice>;
+        using Collision = lb::collisions::Normal<Kernel>;
+        using VirtualSite = lb::streamers::VirtualSite<Lattice>;
+        using InOutLetCosine = lb::iolets::InOutLetCosine;
+        using RSHV = lb::streamers::RSHV;
 
-        auto Info = [&]() -> const lb::lattices::LatticeInfo& {
+        auto Info = [&]() -> const lb::LatticeInfo& {
             return Lattice::GetLatticeInfo();
         };
 
         auto CheckAllHVUpdated = [&](lb::iolets::BoundaryValues& iolets, LatticeTimeStep expectedT) {
-            VSExtra<Lattice> * extra =
-                    dynamic_cast<VSExtra<Lattice>*> (iolets.GetLocalIolet(0)->GetExtraData());
+            auto * extra = dynamic_cast<VSExtra<Lattice>*> (iolets.GetLocalIolet(0)->GetExtraData());
             for (RSHV::Map::iterator hvPtr = extra->hydroVarsCache.begin();
                  hvPtr != extra->hydroVarsCache.end(); ++hvPtr) {
                 site_t siteGlobalIdx = hvPtr->first;
@@ -301,7 +299,7 @@ namespace hemelb::tests
 
             // All the sites at the outlet plane (x, y, 3) should be in the cache.
             InOutLetCosine& outlet = *GetIolet(outletBoundary);
-            VSExtra<Lattice>* extra = dynamic_cast<VSExtra<Lattice>*> (outlet.GetExtraData());
+            auto* extra = dynamic_cast<VSExtra<Lattice>*> (outlet.GetExtraData());
             REQUIRE(extra != nullptr);
 
             for (unsigned i = 1; i <= 4; ++i) {
@@ -408,9 +406,9 @@ namespace hemelb::tests
 
             // Check that all the vsites have sensible hydro values
             InOutLetCosine* inlet = GetIolet(inletBoundary);
-            VSExtra<Lattice> * inExtra = dynamic_cast<VSExtra<Lattice>*> (inlet->GetExtraData());
+            auto * inExtra = dynamic_cast<VSExtra<Lattice>*> (inlet->GetExtraData());
 
-            for (VirtualSite::Map::iterator vsIt = inExtra->vSites.begin();
+            for (auto vsIt = inExtra->vSites.begin();
                  vsIt != inExtra->vSites.end(); ++vsIt) {
                 site_t vSiteGlobalIdx = vsIt->first;
                 VirtualSite& vSite = vsIt->second;

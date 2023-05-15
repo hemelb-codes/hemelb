@@ -64,7 +64,7 @@ namespace hemelb::geometry
         template<class LatticeData>
         friend class Site; //! Let the inner classes have access to site-related data that's otherwise private.
 
-        Domain(const lb::lattices::LatticeInfo& latticeInfo, GmyReadResult& readResult,
+        Domain(const lb::LatticeInfo& latticeInfo, GmyReadResult& readResult,
                const net::IOCommunicator& comms);
 
         ~Domain() noexcept override;
@@ -78,7 +78,7 @@ namespace hemelb::geometry
          * Get the lattice info object for the current lattice
          * @return
          */
-        inline const lb::lattices::LatticeInfo& GetLatticeInfo() const
+        inline const lb::LatticeInfo& GetLatticeInfo() const
         {
           return latticeInfo;
         }
@@ -349,7 +349,7 @@ namespace hemelb::geometry
          * class for the purpose of testing.
          * @return
          */
-        Domain(const lb::lattices::LatticeInfo& latticeInfo, const net::IOCommunicator& comms);
+        Domain(const lb::LatticeInfo& latticeInfo, const net::IOCommunicator& comms);
 
         void SetBasicDetails(Vec16 blocks, U16 blockSize);
 
@@ -493,7 +493,7 @@ namespace hemelb::geometry
         /**
          * Basic lattice variables.
          */
-        const lb::lattices::LatticeInfo& latticeInfo;
+        const lb::LatticeInfo& latticeInfo;
         Vec16 blockCounts;
         U16 blockSize;
         util::Vector3D<site_t> sites;

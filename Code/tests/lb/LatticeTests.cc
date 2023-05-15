@@ -21,7 +21,7 @@ namespace hemelb
     }
 
     TEMPLATE_TEST_CASE("Lattices work as expected", "[lb]",
-		       lb::lattices::D3Q15, lb::lattices::D3Q19, lb::lattices::D3Q27) {
+		       lb::D3Q15, lb::D3Q19, lb::D3Q27) {
       using LatticeType = TestType;
       /*
 	Interface being tested:

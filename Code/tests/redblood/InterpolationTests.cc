@@ -268,7 +268,7 @@ namespace hemelb::tests
 
     TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<>, "VelocityInterpolationTests", "[redblood]") {
       
-      using D3Q15 = lb::lattices::D3Q15;
+      using D3Q15 = lb::D3Q15;
       using LBGK = lb::kernels::LBGK<D3Q15>;
       using GuoForcingLBGK = lb::kernels::GuoForcingLBGK<D3Q15>;
       //     CPPUNIT_TEST_SUITE (VelocityInterpolationTests);

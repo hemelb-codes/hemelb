@@ -8,14 +8,8 @@
 
 #include "lb/lattices/D3Q19.h"
 
-namespace hemelb
+namespace hemelb::lb::kernels::momentBasis
 {
-  namespace lb
-  {
-    namespace kernels
-    {
-      namespace momentBasis
-      {
         /**
          *  Class implementing the Multiple Relaxation Time (MRT) moment basis presented in in d'Humieres et al. (2002)
          *  "Multiple�relaxation�time lattice Boltzmann models in three dimensions" for the D3Q19 lattice
@@ -26,7 +20,7 @@ namespace hemelb
             /**
              * The lattice that suits this basis.
              */
-            typedef lattices::D3Q19 Lattice;
+            using Lattice = D3Q19;
 
             /** Moments can be separated into two groups: a) hydrodynamic (conserved) and b) kinetic / ghost (non-conserved). */
             static const unsigned NUM_KINETIC_MOMENTS = 15;
@@ -56,7 +50,4 @@ namespace hemelb
                                              distribn_t tau);
         };
       }
-    }
-  }
-}
 #endif //HEMELB_LB_KERNELS_MOMENTBASIS_DHUMIERESD3Q19MRTBASIS_H

@@ -54,11 +54,11 @@ namespace hemelb
       net = new net::Net(Comms());
       latticeData = FourCubeLatticeData::Create(Comms(), 6, 5); // The 5 here is to match the topology size in the MPICommsMock
       domain = &latticeData->GetDomain();
-      LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(*latticeData);
+      LbTestsHelper::InitialiseAnisotropicTestData<lb::D3Q15>(*latticeData);
       latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
       cache = new lb::MacroscopicPropertyCache(*state, *domain);
       cache->densityCache.SetRefreshFlag();
-      LbTestsHelper::UpdatePropertyCache<lb::lattices::D3Q15>(*latticeData, *cache, *state);
+      LbTestsHelper::UpdatePropertyCache<lb::D3Q15>(*latticeData, *cache, *state);
       incompChecker = new IncompressibilityCheckerMock(domain, net, state, *cache, *realTimers, 10.0);
       reporter = new Reporter("mock_path", "exampleinputfile");
       reporter->AddReportable(incompChecker);

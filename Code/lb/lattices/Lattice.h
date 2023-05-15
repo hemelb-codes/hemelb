@@ -18,7 +18,7 @@
 #include "util/Vector3D.h"
 #include "util/Matrix3D.h"
 
-namespace hemelb::lb::lattices
+namespace hemelb::lb
 {
     namespace detail {
         // "Array slice": given an array of Vec3D, create an array

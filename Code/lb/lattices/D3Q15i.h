@@ -8,7 +8,7 @@
 #include "lb/lattices/Lattice.h"
 #include "lb/lattices/D3Q15.h"
 
-namespace hemelb::lb::lattices {
+namespace hemelb::lb {
     // Use inheritance rather than an alias to get a nicer name when compiling/debugging.
     struct D3Q15i : Lattice<
             15,

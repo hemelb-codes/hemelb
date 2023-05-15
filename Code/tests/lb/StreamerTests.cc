@@ -27,7 +27,7 @@ namespace hemelb::tests
     // to have been streamed there.
     
     TEST_CASE_METHOD(public helpers::FourCubeBasedTestFixture<>, "StreamerTests") {
-      using LATTICE = lb::lattices::D3Q15;
+      using LATTICE = lb::D3Q15;
       using KERNEL = lb::kernels::LBGK<LATTICE>;
       using COLLISION = lb::collisions::Normal<KERNEL>;
       constexpr auto NUMVECTORS = LATTICE::NUMVECTORS;

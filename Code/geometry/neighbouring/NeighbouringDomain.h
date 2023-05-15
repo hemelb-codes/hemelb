@@ -32,7 +32,7 @@ namespace hemelb
           using NeighbouringSite = Site<NeighbouringDomain>;
           using ConstNeighbouringSite = Site<const NeighbouringDomain>;
 
-          NeighbouringDomain(const lb::lattices::LatticeInfo& latticeInfo);
+          NeighbouringDomain(const lb::LatticeInfo& latticeInfo);
 
           void SaveSite(site_t index,
                         const std::vector<distribn_t> &distances,
@@ -90,7 +90,7 @@ namespace hemelb
           std::map<site_t, std::vector<distribn_t> > distanceToWall; //! Hold the distance to the wall for each fluid site and direction
           std::map<site_t, util::Vector3D<distribn_t> > wallNormalAtSite; //! Holds the wall normal near the fluid site, where appropriate
           std::map<site_t, SiteData> siteData; //! Holds the SiteData for each site.
-          const lb::lattices::LatticeInfo& latticeInfo;
+          const lb::LatticeInfo& latticeInfo;
       };
 
       //template <class DomainT>

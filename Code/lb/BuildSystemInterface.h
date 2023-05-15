@@ -12,10 +12,8 @@
 #include "lb/collisions/Collisions.h"
 #include "lb/streamers/Streamers.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
     /**
      * The names of the following classes must correspond to options given for the CMake
      * HEMELB_KERNEL parameter.
@@ -24,7 +22,7 @@ namespace hemelb
     class LBGK
     {
       public:
-        typedef kernels::LBGK<Lattice> Type;
+        using Type = kernels::LBGK<Lattice>;
     };
 
     /**
@@ -34,7 +32,7 @@ namespace hemelb
     class GuoForcingLBGK
     {
       public:
-        typedef lb::kernels::GuoForcingLBGK<LATTICE> Type;
+        using Type = lb::kernels::GuoForcingLBGK<LATTICE>;
     };
 
     /**
@@ -44,7 +42,7 @@ namespace hemelb
     class EntropicAnsumali
     {
       public:
-        typedef kernels::EntropicAnsumali<Lattice> Type;
+        using Type = kernels::EntropicAnsumali<Lattice>;
     };
 
     /**
@@ -54,7 +52,7 @@ namespace hemelb
     class EntropicChik
     {
       public:
-        typedef kernels::EntropicChik<Lattice> Type;
+        using Type = kernels::EntropicChik<Lattice>;
     };
 
     /**
@@ -66,24 +64,24 @@ namespace hemelb
     };
 
     template<>
-    class MRT<lattices::D3Q15>
+    class MRT<D3Q15>
     {
       public:
-        typedef kernels::MRT<kernels::momentBasis::DHumieresD3Q15MRTBasis> Type;
+        using Type = kernels::MRT<kernels::momentBasis::DHumieresD3Q15MRTBasis>;
     };
 
     template<>
-    class MRT<lattices::D3Q19>
+    class MRT<D3Q19>
     {
       public:
-        typedef kernels::MRT<kernels::momentBasis::DHumieresD3Q19MRTBasis> Type;
+        using Type = kernels::MRT<kernels::momentBasis::DHumieresD3Q19MRTBasis>;
     };
 
     template<class Lattice>
     class TRT
     {
       public:
-        typedef kernels::TRT<Lattice> Type;
+        using Type = kernels::TRT<Lattice>;
     };
 
     /**
@@ -93,7 +91,7 @@ namespace hemelb
     class NNCY
     {
       public:
-        typedef kernels::LBGKNN<kernels::rheologyModels::CarreauYasudaRheologyModelHumanFit, Lattice> Type;
+        using Type = kernels::LBGKNN<kernels::rheologyModels::CarreauYasudaRheologyModelHumanFit, Lattice>;
     };
 
     /**
@@ -103,7 +101,7 @@ namespace hemelb
     class NNCYMOUSE
     {
       public:
-        typedef kernels::LBGKNN<kernels::rheologyModels::CarreauYasudaRheologyModelMouseFit, Lattice> Type;
+        using Type = kernels::LBGKNN<kernels::rheologyModels::CarreauYasudaRheologyModelMouseFit, Lattice>;
     };
 
     /**
@@ -113,7 +111,7 @@ namespace hemelb
     class NNC
     {
       public:
-        typedef kernels::LBGKNN<kernels::rheologyModels::CassonRheologyModel, Lattice> Type;
+        using Type = kernels::LBGKNN<kernels::rheologyModels::CassonRheologyModel, Lattice>;
     };
 
     /**
@@ -123,7 +121,7 @@ namespace hemelb
     class NNTPL
     {
       public:
-        typedef kernels::LBGKNN<kernels::rheologyModels::TruncatedPowerLawRheologyModel, Lattice> Type;
+        using Type = kernels::LBGKNN<kernels::rheologyModels::TruncatedPowerLawRheologyModel, Lattice>;
     };
 
     /**
@@ -137,7 +135,7 @@ namespace hemelb
     class BFL
     {
       public:
-        typedef typename streamers::BouzidiFirdaousLallemand<Collision>::Type Type;
+        using Type = typename streamers::BouzidiFirdaousLallemand<Collision>::Type;
     };
     /**
      * The Guo Zheng and Shi mode-extrapolation boundary condition.
@@ -146,7 +144,7 @@ namespace hemelb
     class GZS
     {
       public:
-        typedef typename streamers::GuoZhengShi<Collision>::Type Type;
+        using Type = typename streamers::GuoZhengShi<Collision>::Type;
     };
     /**
      * The simple bounce back boundary condition.
@@ -155,7 +153,7 @@ namespace hemelb
     class SIMPLEBOUNCEBACK
     {
       public:
-        typedef typename streamers::SimpleBounceBack<Collision>::Type Type;
+        using Type = typename streamers::SimpleBounceBack<Collision>::Type;
     };
     /**
      * The Junk & Yang 2005 boundary condition.
@@ -164,7 +162,7 @@ namespace hemelb
     class JUNKYANG
     {
       public:
-        typedef typename streamers::JunkYang<Collision>::Type Type;
+        using Type = typename streamers::JunkYang<Collision>::Type;
     };
 
     /**
@@ -179,7 +177,7 @@ namespace hemelb
     class NASHZEROTHORDERPRESSUREIOLET
     {
       public:
-        typedef typename streamers::NashZerothOrderPressureIolet<Collision>::Type Type;
+        using Type = typename streamers::NashZerothOrderPressureIolet<Collision>::Type;
     };
     /**
      * The inlet/outlet condition based on Ladd's modified bounce-back on
@@ -188,7 +186,7 @@ namespace hemelb
     template<class Collision>
     struct LADDIOLET
     {
-        typedef typename streamers::LaddIolet<Collision>::Type Type;
+        using Type = typename streamers::LaddIolet<Collision>::Type;
     };
 
     /**
@@ -202,7 +200,7 @@ namespace hemelb
     class NASHZEROTHORDERPRESSURESBB
     {
       public:
-        typedef typename streamers::NashZerothOrderPressureIoletSBB<Collision>::Type Type;
+        using Type = typename streamers::NashZerothOrderPressureIoletSBB<Collision>::Type;
     };
 
     /**
@@ -211,7 +209,7 @@ namespace hemelb
     template<class Collision>
     struct LADDIOLETSBB
     {
-        typedef typename streamers::LaddIoletSBB<Collision>::Type Type;
+        using Type = typename streamers::LaddIoletSBB<Collision>::Type;
     };
 
     /**
@@ -221,7 +219,7 @@ namespace hemelb
     class NASHZEROTHORDERPRESSUREBFL
     {
       public:
-        typedef typename streamers::NashZerothOrderPressureIoletBFL<Collision>::Type Type;
+        using Type = typename streamers::NashZerothOrderPressureIoletBFL<Collision>::Type;
     };
 
     /**
@@ -230,7 +228,7 @@ namespace hemelb
     template<class Collision>
     struct LADDIOLETBFL
     {
-        typedef typename streamers::LaddIoletBFL<Collision>::Type Type;
+        using Type = typename streamers::LaddIoletBFL<Collision>::Type;
     };
     /**
      * Nash in/outlet + GZS
@@ -239,7 +237,7 @@ namespace hemelb
     class NASHZEROTHORDERPRESSUREGZS
     {
       public:
-        typedef typename streamers::NashZerothOrderPressureIoletGZS<Collision>::Type Type;
+        using Type = typename streamers::NashZerothOrderPressureIoletGZS<Collision>::Type;
     };
 
     /**
@@ -248,7 +246,7 @@ namespace hemelb
     template<class Collision>
     struct LADDIOLETGZS
     {
-        typedef typename streamers::LaddIoletGZS<Collision>::Type Type;
+        using Type = typename streamers::LaddIoletGZS<Collision>::Type;
     };
 
     /**
@@ -257,9 +255,8 @@ namespace hemelb
     template<class Collision>
     struct VIRTUALSITEIOLETSBB
     {
-        typedef typename streamers::VirtualSiteIolet<Collision> Type;
+        using Type = typename streamers::VirtualSiteIolet<Collision>;
     };
   }
-}
 
 #endif /* HEMELB_LB_BUILDSYSTEMINTERFACE_H */

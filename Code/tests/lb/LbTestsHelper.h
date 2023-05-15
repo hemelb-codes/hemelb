@@ -130,7 +130,7 @@ namespace hemelb::tests::LbTestsHelper
         }
     }
 
-    //using DISTS = distribn_t[lb::lattices::D3Q15::NUMVECTORS];
+    //using DISTS = distribn_t[lb::D3Q15::NUMVECTORS];
     template<typename Kernel>
     void CompareHydros(const distribn_t expectedDensity,
                        const util::Vector3D<distribn_t>& expectedMomentum,
@@ -144,7 +144,7 @@ namespace hemelb::tests::LbTestsHelper
         REQUIRE(ApproxVector<distribn_t>(expectedMomentum).Margin(allowedError) == hydroVars.momentum);
 
         // Compare equilibrium f
-        for (unsigned int ii = 0; ii < lb::lattices::D3Q15::NUMVECTORS; ++ii) {
+        for (unsigned int ii = 0; ii < lb::D3Q15::NUMVECTORS; ++ii) {
             REQUIRE(Approx(expectedFEq[ii]).margin(allowedError) == hydroVars.GetFEq().f[ii]);
         }
     }

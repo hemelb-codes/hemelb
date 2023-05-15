@@ -8,13 +8,7 @@
 
 #include "lb/lattices/D3Q15.h"
 
-namespace hemelb
-{
-  namespace lb
-  {
-    namespace kernels
-    {
-      namespace momentBasis
+namespace hemelb::lb::kernels::momentBasis
       {
         /**
          *  Class implementing the Multiple Relaxation Time (MRT) moment basis presented in in d'Humieres et al. (2002)
@@ -26,7 +20,7 @@ namespace hemelb
             /**
              * The lattice that suits this basis.
              */
-            typedef lattices::D3Q15 Lattice;
+            using Lattice = D3Q15;
 
             /** Moments can be separated into two groups: a) hydrodynamic (conserved) and b) ghost (non-conserved). */
             static const unsigned NUM_KINETIC_MOMENTS = 11;
@@ -43,8 +37,8 @@ namespace hemelb
              * @param velDistributions velocity distributions vector
              * @param moments equivalent vector in the moment space
              */
-            static void ProjectVelsIntoMomentSpace(const distribn_t * const velDistributions,
-                                                   distribn_t * const moments);
+            static void ProjectVelsIntoMomentSpace(const distribn_t * velDistributions,
+                                                   distribn_t * moments);
 
             /**
              * Sets up the MRT collision matrix \hat{S}
@@ -56,7 +50,4 @@ namespace hemelb
                                              distribn_t tau);
         };
       }
-    }
-  }
-}
 #endif //HEMELB_LB_KERNELS_MOMENTBASIS_DHUMIERESD3Q15MRTBASIS_H

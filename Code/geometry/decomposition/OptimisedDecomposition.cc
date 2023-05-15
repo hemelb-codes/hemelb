@@ -14,7 +14,7 @@ namespace hemelb::geometry::decomposition
 {
       OptimisedDecomposition::OptimisedDecomposition(
           reporting::Timers& timers, net::MpiCommunicator& comms, const GmyReadResult& geometry,
-          const lb::lattices::LatticeInfo& latticeInfo, const std::vector<proc_t>& procForEachBlock,
+          const lb::LatticeInfo& latticeInfo, const std::vector<proc_t>& procForEachBlock,
           const std::vector<site_t>& fluidSitesOnEachBlock) :
           timers(timers), comms(comms), geometry(geometry), latticeInfo(latticeInfo),
               procForEachBlock(procForEachBlock), fluidSitesPerBlock(fluidSitesOnEachBlock)
@@ -624,11 +624,11 @@ namespace hemelb::geometry::decomposition
               auto blockCoords = geometry.GetBlockCoordinatesFromBlockId(*it).as<int>();
               // Iterate over every direction we might need (except 0 as we obviously already have
               // that block in the list).
-              for (Direction direction = 1; direction < lb::lattices::D3Q27::NUMVECTORS;
+              for (Direction direction = 1; direction < lb::D3Q27::NUMVECTORS;
                   ++direction)
               {
                 // Calculate the putative neighbour's coordinates...
-                auto neighbourCoords = (blockCoords + lb::lattices::D3Q27::VECTORS[direction]).as<U16>();
+                auto neighbourCoords = (blockCoords + lb::D3Q27::VECTORS[direction]).as<U16>();
                 // If the neighbour is a real block...
                 if (geometry.AreBlockCoordinatesValid(neighbourCoords))
                 {

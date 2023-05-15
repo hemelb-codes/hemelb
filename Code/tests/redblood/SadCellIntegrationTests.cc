@@ -16,17 +16,15 @@
 #include "redblood/CellController.h"
 #include "tests/helpers/FolderTestFixture.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace redblood;
 
     TEST_CASE_METHOD(helpers::FolderTestFixture,
 		     "SadCellIntegrationTests", "[redblood][.long]") {
-      typedef Traits<>::Reinstantiate<lb::lattices::D3Q19, lb::GuoForcingLBGK>::Type Traits;
-      typedef hemelb::redblood::CellController<Traits> CellControl;
-      typedef SimulationMaster<Traits> MasterSim;
+      using Traits = Traits<>::Reinstantiate<lb::D3Q19, hemelb::lb::GuoForcingLBGK>::Type;
+      using CellControl = hemelb::redblood::CellController<Traits>;
+      using MasterSim = SimulationMaster<Traits>;
 
       redblood::KruegerMeshIO msh_io = {};
       redblood::VTKMeshIO vtk_io = {};
@@ -96,7 +94,7 @@ namespace hemelb
 
 	controller->AddCellChangeListener([&vtk_io, &converter](const hemelb::redblood::CellContainer &cells) {
 	    static int iter = 0;
-	    for (auto cell : cells) {
+	    for (auto const& cell : cells) {
 	      if(iter % 1000 == 0) {
 		std::stringstream filename;
 		filename << cell->GetTag() << "_t_" << iter << ".vtp";
@@ -119,5 +117,4 @@ namespace hemelb
       }
     }
 
-  } // namespace tests
-} // namespace hemelb
+}

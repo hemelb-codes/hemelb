@@ -3,7 +3,6 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include <cstring>
 #include <sstream>
 
 #include "lb/kernels/Kernels.h"
@@ -13,20 +12,17 @@
 
 #include "tests/lb/LbTestsHelper.h"
 
-#include "tests/helpers/FourCubeLatticeData.h"
 #include "tests/helpers/FourCubeBasedTestFixture.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     // File contains tests for the functionality of the
     // lattice-Boltzmann kernels. This includes the functions for
     // calculating hydrodynamic variables and for performing
     // collisions.
     template <typename T>
     struct CollisionTester : public helpers::FourCubeBasedTestFixture<> {
-      using LATTICE = lb::lattices::D3Q15;
+      using LATTICE = lb::D3Q15;
       static constexpr auto NV = LATTICE::NUMVECTORS;
       using KERNEL = T;
       using HYDRO = lb::kernels::HydroVars<KERNEL>;
@@ -65,13 +61,13 @@ namespace hemelb
       }
     };
     template<>
-    void CollisionTester<lb::kernels::EntropicAnsumali<lb::lattices::D3Q15>>::make_feq(const distribn_t& density, const VEC& momentum, DISTS& feq) const {
+    void CollisionTester<lb::kernels::EntropicAnsumali<lb::D3Q15>>::make_feq(const distribn_t& density, const VEC& momentum, DISTS& feq) const {
       LbTestsHelper::CalculateAnsumaliEntropicEqmF<LATTICE>(density,
 							    momentum,
 							    feq);
     }
     template<>
-    void CollisionTester<lb::kernels::EntropicAnsumali<lb::lattices::D3Q15>>::make_fpostcol(const distribn_t* feq, DISTS& fpc) const {
+    void CollisionTester<lb::kernels::EntropicAnsumali<lb::D3Q15>>::make_fpostcol(const distribn_t* feq, DISTS& fpc) const {
       LbTestsHelper::CalculateEntropicCollision<LATTICE>(f_original,
 							 feq,
 							 lbmParams.GetTau(),
@@ -80,13 +76,13 @@ namespace hemelb
     }
 
     template<>
-    void CollisionTester<lb::kernels::EntropicChik<lb::lattices::D3Q15>>::make_feq(const distribn_t& density, const VEC& momentum, DISTS& feq) const {
+    void CollisionTester<lb::kernels::EntropicChik<lb::D3Q15>>::make_feq(const distribn_t& density, const VEC& momentum, DISTS& feq) const {
       LATTICE::CalculateEntropicFeqChik(density,
 					momentum,
 					feq);
     }
     template<>
-    void CollisionTester<lb::kernels::EntropicChik<lb::lattices::D3Q15>>::make_fpostcol(const distribn_t* feq, DISTS& fpc) const {
+    void CollisionTester<lb::kernels::EntropicChik<lb::D3Q15>>::make_fpostcol(const distribn_t* feq, DISTS& fpc) const {
       LbTestsHelper::CalculateEntropicCollision<LATTICE>(f_original,
 							 feq,
 							 lbmParams.GetTau(),
@@ -95,23 +91,23 @@ namespace hemelb
     }
 
     template<>
-    void CollisionTester<lb::kernels::LBGK<lb::lattices::D3Q15>>::make_feq(const distribn_t& density, const VEC& momentum, DISTS& feq) const {
-      LbTestsHelper::CalculateLBGKEqmF<lb::lattices::D3Q15>(density,
+    void CollisionTester<lb::kernels::LBGK<lb::D3Q15>>::make_feq(const distribn_t& density, const VEC& momentum, DISTS& feq) const {
+      LbTestsHelper::CalculateLBGKEqmF<lb::D3Q15>(density,
 							    momentum,
 							    feq);
     }
     template<>
-    void CollisionTester<lb::kernels::LBGK<lb::lattices::D3Q15>>::make_fpostcol(const distribn_t* feq, DISTS& fpc) const {
-      LbTestsHelper::CalculateLBGKCollision<lb::lattices::D3Q15>(f_original,
+    void CollisionTester<lb::kernels::LBGK<lb::D3Q15>>::make_fpostcol(const distribn_t* feq, DISTS& fpc) const {
+      LbTestsHelper::CalculateLBGKCollision<lb::D3Q15>(f_original,
 								 feq,
 								 lbmParams.GetOmega(),
 								 fpc);
     }
 
     TEMPLATE_TEST_CASE_METHOD(CollisionTester, "KernelTests - Ansumali & Chikatamarla entropic, LBGK calculations and collision", "[lb][kernels]",
-			      lb::kernels::EntropicAnsumali<lb::lattices::D3Q15>,
-			      lb::kernels::EntropicChik<lb::lattices::D3Q15>,
-			      lb::kernels::LBGK<lb::lattices::D3Q15>) {
+			      lb::kernels::EntropicAnsumali<lb::D3Q15>,
+			      lb::kernels::EntropicChik<lb::D3Q15>,
+			      lb::kernels::LBGK<lb::D3Q15>) {
       using Fix = CollisionTester<TestType>;
 
       SECTION("use the function that calculates density, momentum and f_eq") {
@@ -140,7 +136,7 @@ namespace hemelb
     }
 
     TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<>, "LBGKNNCalculationsAndCollision") {
-      using LATTICE = lb::lattices::D3Q15;
+      using LATTICE = lb::D3Q15;
       static constexpr auto NV = LATTICE::NUMVECTORS;
       using RHEO_MODEL = lb::kernels::rheologyModels::CarreauYasudaRheologyModelHumanFit;
       using KERNEL = lb::kernels::LBGKNN<RHEO_MODEL, LATTICE>;
@@ -214,7 +210,7 @@ namespace hemelb
 						  expectedMomentum0,
 						  expectedFEq0);
 	DISTS expectedFEq1;
-	LbTestsHelper::CalculateLBGKEqmF<lb::lattices::D3Q15>(expectedDensity1,
+	LbTestsHelper::CalculateLBGKEqmF<lb::D3Q15>(expectedDensity1,
 							      expectedMomentum1,
 							      expectedFEq1);
 
@@ -283,7 +279,7 @@ namespace hemelb
 						       expectedPostCollision1);
 
 	// Compare.
-	for (unsigned int ii = 0; ii < lb::lattices::D3Q15::NUMVECTORS; ++ii) {
+	for (unsigned int ii = 0; ii < lb::D3Q15::NUMVECTORS; ++ii) {
 	  REQUIRE(apprx(expectedPostCollision0[ii]) == hydroVars0[set].GetFPostCollision()[ii]);
 	  REQUIRE(apprx(expectedPostCollision1[ii]) == hydroVars1[set].GetFPostCollision()[ii]);
 	}
@@ -352,13 +348,12 @@ namespace hemelb
 	}
       }
     };
-    using fix15 = MRTTestFixture<lb::lattices::D3Q15, lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>;
+    using fix15 = MRTTestFixture<lb::D3Q15, lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>;
     TEST_CASE_METHOD(fix15, "MRT with constant relaxation time equals LBGK (15 velocity)") {
     }
-    using fix19 = MRTTestFixture<lb::lattices::D3Q19, lb::kernels::momentBasis::DHumieresD3Q19MRTBasis>;
+    using fix19 = MRTTestFixture<lb::D3Q19, lb::kernels::momentBasis::DHumieresD3Q19MRTBasis>;
     TEST_CASE_METHOD(fix19, "MRT with constant relaxation time equals LBGK (19 velocity)") {
     }
 
-  }
 }
 

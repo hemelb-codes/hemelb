@@ -26,7 +26,7 @@ namespace hemelb
 
     TEST_CASE_METHOD(helpers::FolderTestFixture, "Fedosov validation tests", "[redblood][.long]") {
 
-      typedef Traits<>::Reinstantiate<lb::lattices::D3Q19, lb::GuoForcingLBGK>::Type Traits;
+      typedef Traits<>::Reinstantiate<lb::D3Q19, lb::GuoForcingLBGK>::Type Traits;
       typedef hemelb::redblood::CellController<Traits> CellControl;
       typedef SimulationMaster<Traits> MasterSim;
 

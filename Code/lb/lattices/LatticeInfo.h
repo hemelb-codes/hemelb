@@ -11,7 +11,7 @@
 #include "util/Vector3D.h"
 #include "units.h"
 
-namespace hemelb::lb::lattices
+namespace hemelb::lb
 {
     class LatticeInfo
     {
@@ -23,23 +23,23 @@ namespace hemelb::lb::lattices
         ) : numVectors(numberOfVectors)
         {
             if (numberOfVectors > MAX_Q)
-                throw Exception() << "LatticeInfo only supports velocity sets with a maximum of " << MAX_Q << " velocities.";
+                throw (Exception() << "LatticeInfo only supports velocity sets with a maximum of " << MAX_Q << " velocities.");
 
             std::copy(vectors, vectors + numberOfVectors, vectorSet.begin());
             std::copy(inverseVectorIndicesIn, inverseVectorIndicesIn + numberOfVectors, inverseVectorIndices.begin());
         }
 
-        constexpr unsigned GetNumVectors() const
+        [[nodiscard]] constexpr unsigned GetNumVectors() const
         {
             return numVectors;
         }
 
-        constexpr const util::Vector3D<int>& GetVector(unsigned index) const
+        [[nodiscard]] constexpr const util::Vector3D<int>& GetVector(unsigned index) const
         {
             return vectorSet[index];
         }
 
-        constexpr unsigned GetInverseIndex(unsigned index) const
+        [[nodiscard]] constexpr unsigned GetInverseIndex(unsigned index) const
         {
             return inverseVectorIndices[index];
         }

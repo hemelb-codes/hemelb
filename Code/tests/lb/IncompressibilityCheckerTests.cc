@@ -13,12 +13,10 @@
 #include "tests/helpers/FourCubeLatticeData.h"
 #include "tests/helpers/FourCubeBasedTestFixture.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<>, "IncompressibilityCheckerTests") {
-      using LATTICE = lb::lattices::D3Q15;
+      using LATTICE = lb::D3Q15;
 
       LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(*latDat);
 
@@ -142,5 +140,4 @@ namespace hemelb
       }
 
     }
-  }
 }

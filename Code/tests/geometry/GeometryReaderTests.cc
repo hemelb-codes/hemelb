@@ -26,7 +26,7 @@ namespace hemelb
     TEST_CASE_METHOD(helpers::FolderTestFixture, "GeometryReaderTests") {
       auto timings = std::make_unique<reporting::Timers>(Comms());
       
-      auto reader = std::make_unique<geometry::GeometryReader>(lb::lattices::D3Q15::GetLatticeInfo(),
+      auto reader = std::make_unique<geometry::GeometryReader>(lb::D3Q15::GetLatticeInfo(),
 							       *timings,
 							       Comms());
       CopyResourceToTempdir("four_cube.xml");

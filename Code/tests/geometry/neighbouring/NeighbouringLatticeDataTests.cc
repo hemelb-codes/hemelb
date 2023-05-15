@@ -27,14 +27,14 @@ namespace hemelb
       }
 
       SECTION("TestInsertAndRetrieveDistance") {
-	for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1; direction++)
+	for (unsigned int direction = 0; direction < lb::D3Q15::NUMVECTORS - 1; direction++)
 	  {
-	    dom.GetCutDistances(dummyId)[direction]=exampleSite.GetWallDistance < lb::lattices::D3Q15 > (direction + 1);
+	    dom.GetCutDistances(dummyId)[direction]=exampleSite.GetWallDistance < lb::D3Q15 > (direction + 1);
 	  }
 
-	for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1; direction++)
+	for (unsigned int direction = 0; direction < lb::D3Q15::NUMVECTORS - 1; direction++)
 	  {
-	    REQUIRE(exampleSite.GetWallDistance < lb::lattices::D3Q15 > (direction + 1) == dom.GetCutDistance<lb::lattices::D3Q15>(dummyId, direction + 1));
+	    REQUIRE(exampleSite.GetWallDistance < lb::D3Q15 > (direction + 1) == dom.GetCutDistance<lb::D3Q15>(dummyId, direction + 1));
 	  }
       }
       
@@ -45,32 +45,32 @@ namespace hemelb
 
       SECTION("TestInsertAndRetrieveDistributions") {
 	std::vector<distribn_t> distribution;
-	for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++)
+	for (unsigned int direction = 0; direction < lb::D3Q15::NUMVECTORS; direction++)
 	  {
-	    distribution.push_back(exampleSite.GetFOld<lb::lattices::D3Q15>()[direction]);
+	    distribution.push_back(exampleSite.GetFOld<lb::D3Q15>()[direction]);
 	  }
 
 	data.GetDistribution(dummyId) = distribution;
 
-	for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++)
+	for (unsigned int direction = 0; direction < lb::D3Q15::NUMVECTORS; direction++)
 	  {
-	    REQUIRE(exampleSite.GetFOld<lb::lattices::D3Q15>()[direction] ==
-		    data.GetFOld(dummyId * lb::lattices::D3Q15::NUMVECTORS)[direction]);
+	    REQUIRE(exampleSite.GetFOld<lb::D3Q15>()[direction] ==
+		    data.GetFOld(dummyId * lb::D3Q15::NUMVECTORS)[direction]);
 	  }
       }
 
       SECTION("TestNeighbouringSite") {
 
 	std::vector<distribn_t> distances;
-	for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1; direction++)
+	for (unsigned int direction = 0; direction < lb::D3Q15::NUMVECTORS - 1; direction++)
 	  {
-	    distances.push_back(exampleSite.GetWallDistance < lb::lattices::D3Q15 > (direction + 1));
+	    distances.push_back(exampleSite.GetWallDistance < lb::D3Q15 > (direction + 1));
 	  }
 
 	std::vector<distribn_t> distribution;
-	for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++)
+	for (unsigned int direction = 0; direction < lb::D3Q15::NUMVECTORS; direction++)
 	  {
-	    distribution.push_back(exampleSite.GetFOld<lb::lattices::D3Q15>()[direction]);
+	    distribution.push_back(exampleSite.GetFOld<lb::D3Q15>()[direction]);
 	  }
 	data.SaveSite(dummyId,
 		      distribution,
@@ -80,16 +80,16 @@ namespace hemelb
 
 	auto neighbouringSite = data.GetSite(dummyId);
 	REQUIRE(exampleSite.GetSiteData() == neighbouringSite.GetSiteData());
-	for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1; direction++)
+	for (unsigned int direction = 0; direction < lb::D3Q15::NUMVECTORS - 1; direction++)
 	  {
-	    REQUIRE(exampleSite.GetWallDistance < lb::lattices::D3Q15 > (direction + 1)
-		    == neighbouringSite.GetWallDistance<lb::lattices::D3Q15>(direction + 1));
+	    REQUIRE(exampleSite.GetWallDistance < lb::D3Q15 > (direction + 1)
+		    == neighbouringSite.GetWallDistance<lb::D3Q15>(direction + 1));
 	  }
 	REQUIRE(exampleSite.GetWallNormal() == neighbouringSite.GetWallNormal());
-	for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++)
+	for (unsigned int direction = 0; direction < lb::D3Q15::NUMVECTORS; direction++)
 	  {
-	    REQUIRE(exampleSite.GetFOld<lb::lattices::D3Q15>()[direction]
-		    == neighbouringSite.GetFOld<lb::lattices::D3Q15>()[direction]);
+	    REQUIRE(exampleSite.GetFOld<lb::D3Q15>()[direction]
+		    == neighbouringSite.GetFOld<lb::D3Q15>()[direction]);
 	  }
       }
     }

@@ -15,7 +15,7 @@
 
 namespace hemelb::geometry
 {
-        Domain::Domain(const lb::lattices::LatticeInfo& latticeInfo,
+        Domain::Domain(const lb::LatticeInfo& latticeInfo,
                        const net::IOCommunicator& comms_) :
                 latticeInfo(latticeInfo),
                 shared_counts(comms_, 0),
@@ -23,7 +23,7 @@ namespace hemelb::geometry
         {
         }
 
-        Domain::Domain(const lb::lattices::LatticeInfo& latticeInfo,
+        Domain::Domain(const lb::LatticeInfo& latticeInfo,
                        GmyReadResult& readResult, const net::IOCommunicator& comms_) :
                 latticeInfo(latticeInfo), shared_counts(comms_, 0),
                 neighbouringData(new neighbouring::NeighbouringDomain(latticeInfo)),

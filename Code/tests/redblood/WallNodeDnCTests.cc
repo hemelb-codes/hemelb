@@ -21,7 +21,7 @@ namespace hemelb
 	
       LatticeDistance const cutoff = 3.0;
       LatticeDistance const halo = 0.5;
-      using Lattice = lb::lattices::D3Q15;
+      using Lattice = lb::D3Q15;
 
       std::unique_ptr<tests::FourCubeLatticeData> latticeData(FourCubeLatticeData::Create(Comms(), 27 + 2));
       auto& dom = latticeData->GetDomain();

@@ -64,7 +64,7 @@ namespace hemelb::geometry
             gmy::WallNormalAvailability::NOT_AVAILABLE,
             gmy::WallNormalAvailability::AVAILABLE>;
 
-    GeometryReader::GeometryReader(const lb::lattices::LatticeInfo& latticeInfo,
+    GeometryReader::GeometryReader(const lb::LatticeInfo& latticeInfo,
                                    reporting::Timers &atimings, net::IOCommunicator ioComm) :
             latticeInfo(latticeInfo), computeComms(std::move(ioComm)), timings(atimings)
     {

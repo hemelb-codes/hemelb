@@ -13,7 +13,7 @@ namespace hemelb
     namespace neighbouring
     {
 
-      NeighbouringDomain::NeighbouringDomain(const lb::lattices::LatticeInfo& latticeInfo) :
+      NeighbouringDomain::NeighbouringDomain(const lb::LatticeInfo& latticeInfo) :
           distanceToWall(), wallNormalAtSite(), siteData(),
               latticeInfo(latticeInfo)
       {

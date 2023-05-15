@@ -76,7 +76,7 @@ namespace hemelb::configuration {
         // The below could probably be protected/private, but handy for testing.
         [[nodiscard]] std::shared_ptr<lb::SimulationState> BuildSimulationState() const;
         [[nodiscard]] geometry::GmyReadResult ReadGmy(
-                lb::lattices::LatticeInfo const& lat_info,
+                lb::LatticeInfo const& lat_info,
                 reporting::Timers& timings,
                 net::IOCommunicator& ioComms
         ) const;

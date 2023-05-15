@@ -30,7 +30,7 @@ namespace hemelb::geometry
     public:
         using BlockLocation = util::Vector3D<site_t>;
 
-        GeometryReader(const lb::lattices::LatticeInfo&,
+        GeometryReader(const lb::LatticeInfo&,
                        reporting::Timers &timings, net::IOCommunicator ioComm);
         ~GeometryReader();
 
@@ -154,7 +154,7 @@ namespace hemelb::geometry
         static const proc_t READING_GROUP_SIZE = HEMELB_READING_GROUP_SIZE;
 
         //! Info about the connectivity of the lattice.
-        const lb::lattices::LatticeInfo& latticeInfo;
+        const lb::LatticeInfo& latticeInfo;
         //! File accessed to read in the geometry data.
         net::MpiFile file;
         //! Information about the file, to give cues and hints to MPI.

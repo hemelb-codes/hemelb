@@ -135,11 +135,11 @@ namespace hemelb
 	netMock.RequireReceive(&fixtureData.GetSiteType(), 1, 0, "SiteTypeFromSelf");
 
 	netMock.RequireSend(exampleSite.GetWallDistances(),
-			    lb::lattices::D3Q15::NUMVECTORS - 1,
+			    lb::D3Q15::NUMVECTORS - 1,
 			    0,
 			    "WallToSelf");
 	netMock.RequireReceive(exampleSite.GetWallDistances(),
-			       lb::lattices::D3Q15::NUMVECTORS - 1,
+			       lb::D3Q15::NUMVECTORS - 1,
 			       0,
 			       "WallFromSelf");
 	netMock.RequireSend(&exampleSite.GetWallNormal(), 1, 0, "NormalToSelf");
@@ -148,7 +148,7 @@ namespace hemelb
 	netMock.ExpectationsAllCompleted();
 	auto&& transferredSite = data.GetSite(43);
 	REQUIRE(exampleSite.GetSiteData() == transferredSite.GetSiteData());
-	for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1; direction++) {
+	for (unsigned int direction = 0; direction < lb::D3Q15::NUMVECTORS - 1; direction++) {
 	  REQUIRE(exampleSite.GetWallDistances()[direction] == transferredSite.GetWallDistances()[direction]);
 	}
 	REQUIRE(exampleSite.GetWallNormal() == transferredSite.GetWallNormal());
@@ -186,14 +186,14 @@ namespace hemelb
 
 	// It should arrive in the NeighbouringDataManager, from the values sent from the localFieldData
 
-	netMock.RequireSend(const_cast<distribn_t*> (exampleSite.GetFOld<lb::lattices::D3Q15> ()),
-			    lb::lattices::D3Q15::NUMVECTORS,
+	netMock.RequireSend(const_cast<distribn_t*> (exampleSite.GetFOld<lb::D3Q15> ()),
+			    lb::D3Q15::NUMVECTORS,
 			    0,
 			    "IntersectionDataToSelf");
 
-	std::vector<distribn_t> receivedFOld(lb::lattices::D3Q15::NUMVECTORS, 53.0);
+	std::vector<distribn_t> receivedFOld(lb::D3Q15::NUMVECTORS, 53.0);
 	netMock.RequireReceive(&(receivedFOld[0]),
-			       lb::lattices::D3Q15::NUMVECTORS,
+			       lb::D3Q15::NUMVECTORS,
 			       0,
 			       "IntersectionDataFromSelf");
 
@@ -201,8 +201,8 @@ namespace hemelb
 	netMock.ExpectationsAllCompleted();
 
 	auto&& transferredSite = data.GetSite(targetGlobalOneDIdx);
-	for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++) {
-	  REQUIRE(receivedFOld[direction] == transferredSite.GetFOld<lb::lattices::D3Q15> ()[direction]);
+	for (unsigned int direction = 0; direction < lb::D3Q15::NUMVECTORS; direction++) {
+	  REQUIRE(receivedFOld[direction] == transferredSite.GetFOld<lb::D3Q15> ()[direction]);
 	}
       }
 
@@ -233,13 +233,13 @@ namespace hemelb
 	auto exampleSite = latDat->GetSite(targetLocalIdx);
 	// It should arrive in the NeighbouringDataManager, from the values sent from the localFieldData
 
-	netMock.RequireSend(const_cast<distribn_t*> (exampleSite.GetFOld<lb::lattices::D3Q15> ()),
-			    lb::lattices::D3Q15::NUMVECTORS,
+	netMock.RequireSend(const_cast<distribn_t*> (exampleSite.GetFOld<lb::D3Q15> ()),
+			    lb::D3Q15::NUMVECTORS,
 			    0,
 			    "IntersectionDataToSelf");
-	std::vector<distribn_t> receivedFOld(lb::lattices::D3Q15::NUMVECTORS, 53.0);
+	std::vector<distribn_t> receivedFOld(lb::D3Q15::NUMVECTORS, 53.0);
 	netMock.RequireReceive(&(receivedFOld[0]),
-			       lb::lattices::D3Q15::NUMVECTORS,
+			       lb::D3Q15::NUMVECTORS,
 			       0,
 			       "IntersectionDataFromSelf");
 
@@ -251,8 +251,8 @@ namespace hemelb
 	netMock.ExpectationsAllCompleted();
 
 	auto&& transferredSite = data.GetSite(targetGlobalOneDIdx);
-	for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++) {
-	  REQUIRE(receivedFOld[direction] == transferredSite.GetFOld<lb::lattices::D3Q15> ()[direction]);
+	for (unsigned int direction = 0; direction < lb::D3Q15::NUMVECTORS; direction++) {
+	  REQUIRE(receivedFOld[direction] == transferredSite.GetFOld<lb::D3Q15> ()[direction]);
 	}
       }
 

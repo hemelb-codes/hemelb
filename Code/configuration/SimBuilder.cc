@@ -39,7 +39,7 @@ namespace hemelb::configuration {
         return std::make_shared<lb::SimulationState>(config.GetTimeStepLength(), config.GetTotalTimeSteps());
     }
 
-    geometry::GmyReadResult SimBuilder::ReadGmy(lb::lattices::LatticeInfo const& lat_info, reporting::Timers& timings, net::IOCommunicator& ioComms) const {
+    geometry::GmyReadResult SimBuilder::ReadGmy(lb::LatticeInfo const& lat_info, reporting::Timers& timings, net::IOCommunicator& ioComms) const {
         geometry::GeometryReader reader(lat_info,
                                         timings,
                                         ioComms);

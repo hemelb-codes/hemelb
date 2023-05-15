@@ -164,7 +164,7 @@ namespace hemelb::tests::helpers
         return LatticeDataAccess(&latDat).GetFNew<LATTICE>(_pos);
     }
 
-    template<class LATTICE = lb::lattices::D3Q15>
+    template<class LATTICE = lb::D3Q15>
     std::tuple<Dimensionless, PhysicalVelocity,
             std::function<Dimensionless(PhysicalVelocity const &)>,
             std::function<Dimensionless(PhysicalVelocity const &)> > makeLinearProfile(

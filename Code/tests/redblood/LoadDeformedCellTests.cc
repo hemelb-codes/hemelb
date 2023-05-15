@@ -23,7 +23,7 @@ namespace hemelb::tests
     using namespace redblood;
     TEST_CASE_METHOD(helpers::FolderTestFixture, "LoadDeformedCellTests") {
 
-      using Traits = Traits<>::Reinstantiate<lb::lattices::D3Q19, lb::GuoForcingLBGK>::Type;
+      using Traits = Traits<>::Reinstantiate<lb::D3Q19, lb::GuoForcingLBGK>::Type;
       using CellControl = hemelb::redblood::CellController<Traits>;
       using MasterSim = SimulationMaster<Traits>;
 
