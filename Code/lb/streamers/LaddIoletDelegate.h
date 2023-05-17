@@ -24,7 +24,7 @@ namespace hemelb::lb::streamers
         {
         }
 
-        inline void StreamLink(const LbmParameters* lbmParams,
+        void StreamLink(const LbmParameters* lbmParams,
                                geometry::FieldData& latticeData,
                                const geometry::Site<geometry::Domain>& site,
                                HydroVars<typename CollisionType::CKernel>& hydroVars,
@@ -41,8 +41,7 @@ namespace hemelb::lb::streamers
             // link and a1_i = w_1 / cs2
 
             int boundaryId = site.GetIoletId();
-            iolets::InOutLetVelocity* iolet =
-                    dynamic_cast<iolets::InOutLetVelocity*>(bValues->GetLocalIolet(boundaryId));
+            auto iolet = dynamic_cast<InOutLetVelocity*>(bValues->GetLocalIolet(boundaryId));
             LatticePosition sitePos(site.GetGlobalSiteCoords());
 
             LatticePosition halfWay(sitePos);
@@ -64,7 +63,7 @@ namespace hemelb::lb::streamers
                     hydroVars.GetFPostCollision()[ii] - correction;
         }
     private:
-        iolets::BoundaryValues* bValues;
+        BoundaryValues* bValues;
     };
 
 }

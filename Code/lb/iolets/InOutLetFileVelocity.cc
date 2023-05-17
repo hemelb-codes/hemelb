@@ -12,7 +12,7 @@
 #include <cmath>
 #include <algorithm>
 
-namespace hemelb::lb::iolets
+namespace hemelb::lb
 {
     InOutLetFileVelocity::InOutLetFileVelocity() :
             units(nullptr)

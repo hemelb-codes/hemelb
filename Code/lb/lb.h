@@ -75,8 +75,8 @@ namespace hemelb::lb
          * Second constructor.
          *
          */
-        void Initialise(iolets::BoundaryValues* iInletValues,
-                        iolets::BoundaryValues* iOutletValues);
+        void Initialise(BoundaryValues* iInletValues,
+                        BoundaryValues* iOutletValues);
 
         void SetInitialConditions(lb::InitialCondition const& ic_conf, const net::IOCommunicator& ioComms);
 
@@ -132,7 +132,7 @@ namespace hemelb::lb
         net::Net* mNet;
         geometry::FieldData* mLatDat;
         SimulationState* mState;
-        iolets::BoundaryValues *mInletValues = nullptr,
+        BoundaryValues *mInletValues = nullptr,
                 *mOutletValues = nullptr;
 
         LbmParameters mParams;

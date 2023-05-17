@@ -7,18 +7,14 @@
 #define HEMELB_LB_IOLETS_INOUTLETPARABOLICVELOCITY_H
 #include "lb/iolets/InOutLetVelocity.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace iolets
-    {
       class InOutLetParabolicVelocity : public InOutLetVelocity
       {
         public:
           InOutLetParabolicVelocity();
           ~InOutLetParabolicVelocity() override = default;
-          InOutLet* clone() const override;
+          [[nodiscard]] InOutLet* clone() const override;
           LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTimeStep t) const override;
 
           const LatticeSpeed& GetMaxSpeed() const
@@ -39,7 +35,5 @@ namespace hemelb
           LatticeSpeed maxSpeed;
           unsigned int warmUpLength;
       };
-    }
-  }
 }
 #endif // HEMELB_LB_IOLETS_INOUTLETPARABOLICVELOCITY_H

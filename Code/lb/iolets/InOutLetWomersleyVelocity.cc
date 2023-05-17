@@ -6,12 +6,8 @@
 #include "configuration/SimConfig.h"
 #include "util/Bessel.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace iolets
-    {
       const InOutLetWomersleyVelocity::Complex InOutLetWomersleyVelocity::i = Complex(0, 1);
       const InOutLetWomersleyVelocity::Complex InOutLetWomersleyVelocity::iPowThreeHalves =
           pow(i, 1.5);
@@ -72,5 +68,3 @@ namespace hemelb
         womersleyNumber = womNumber;
       }
     }
-  }
-}

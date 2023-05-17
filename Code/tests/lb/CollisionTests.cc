@@ -34,7 +34,7 @@ namespace hemelb::tests
       lb::HydroVars<lb::LBGK<lb::D3Q15> > hydroVars(fOld);
 
       SECTION ("TestNonZeroVelocityEquilibriumFixedDensity") {
-	lb::iolets::BoundaryValues inletBoundary = BuildIolets(geometry::INLET_TYPE);
+	lb::BoundaryValues inletBoundary = BuildIolets(geometry::INLET_TYPE);
 	initParams.boundaryObject = &inletBoundary;
 
 	lb::NonZeroVelocityEquilibriumFixedDensity<lb::LBGK<lb::D3Q15> >
@@ -80,7 +80,7 @@ namespace hemelb::tests
       }
 
       SECTION("TestZeroVelocityEquilibriumFixedDensity") {
-	lb::iolets::BoundaryValues outletBoundary = BuildIolets(geometry::OUTLET_TYPE);
+	lb::BoundaryValues outletBoundary = BuildIolets(geometry::OUTLET_TYPE);
 	initParams.boundaryObject = &outletBoundary;
 
 	lb::ZeroVelocityEquilibriumFixedDensity<lb::LBGK<lb::D3Q15> >

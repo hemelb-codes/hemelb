@@ -12,12 +12,8 @@
 #include "log/Logger.h"
 #include "lb/iolets/BoundaryCommunicator.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace iolets
-    {
       namespace multiscale_constants
       {
         const PhysicalPressure HEMELB_MULTISCALE_REFERENCE_PRESSURE = 0.0;
@@ -100,8 +96,6 @@ namespace hemelb
           multiscale::SharedValue<PhysicalPressure> maxPressure;
           mutable multiscale::SharedValue<PhysicalVelocity> velocity;
       };
-    }
-  }
 }
 
 #endif /* HEMELB_LB_IOLETS_INOUTLETMULTISCALE_H */

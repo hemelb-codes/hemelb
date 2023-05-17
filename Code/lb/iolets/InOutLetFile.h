@@ -11,12 +11,8 @@
 
 #include "lb/iolets/InOutLet.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace iolets
-    {
 
       /*
        * Template values are chosen to be tUpdatePeriod = 0 and tComms = false
@@ -31,8 +27,8 @@ namespace hemelb
       {
         public:
           InOutLetFile();
-          virtual ~InOutLetFile() override = default;
-          InOutLet* clone() const override;
+          ~InOutLetFile() override = default;
+          [[nodiscard]] InOutLet* clone() const override;
           void Reset(SimulationState& state) override;
 
           inline const std::filesystem::path& GetFilePath()
@@ -67,8 +63,6 @@ namespace hemelb
           std::vector<DataPair> file_data_lat;
       };
 
-    }
-  }
 }
 
 #endif /* HEMELB_LB_IOLETS_INOUTLETFILE_H */

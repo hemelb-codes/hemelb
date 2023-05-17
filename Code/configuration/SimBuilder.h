@@ -27,7 +27,7 @@
 #endif
 
 namespace hemelb::extraction { class PropertyActor; }
-namespace hemelb::lb::iolets {
+namespace hemelb::lb {
     class InOutLet;
 }
 namespace hemelb::net {
@@ -43,7 +43,7 @@ namespace hemelb::configuration {
     // This class converters the SimConfig into a ready-to-run simulation.
     class SimBuilder {
     public:
-        using IoletPtr = util::clone_ptr<lb::iolets::InOutLet>;
+        using IoletPtr = util::clone_ptr<lb::InOutLet>;
 
     protected:
         SimConfig config;
@@ -91,7 +91,7 @@ namespace hemelb::configuration {
         [[nodiscard]] IoletPtr BuildParabolicVelocityIolet(ParabolicVelocityIoletConfig const&) const;
         [[nodiscard]] IoletPtr BuildWomersleyVelocityIolet(WomersleyVelocityIoletConfig const&) const;
         [[nodiscard]] IoletPtr BuildFileVelocityIolet(FileVelocityIoletConfig const&) const;
-        void BuildBaseIolet(IoletConfigBase const& conf, lb::iolets::InOutLet* obj) const;
+        void BuildBaseIolet(IoletConfigBase const& conf, lb::InOutLet* obj) const;
         [[nodiscard]] std::shared_ptr<redblood::FlowExtension> BuildFlowExtension(FlowExtensionConfig const& conf) const;
 
         [[nodiscard]] std::shared_ptr<net::IteratedAction> BuildColloidController() const;
@@ -175,7 +175,7 @@ namespace hemelb::configuration {
 
         maybe_register_actor(lbm, 1);
 
-        control.inletValues = std::make_shared<lb::iolets::BoundaryValues>(
+        control.inletValues = std::make_shared<lb::BoundaryValues>(
                 geometry::INLET_TYPE,
                 *control.domainData,
                 BuildIolets(config.GetInlets()),
@@ -185,7 +185,7 @@ namespace hemelb::configuration {
         );
         maybe_register_actor(control.inletValues, 1);
 
-        control.outletValues = std::make_shared<lb::iolets::BoundaryValues>(
+        control.outletValues = std::make_shared<lb::BoundaryValues>(
                 geometry::OUTLET_TYPE,
                 *control.domainData,
                 BuildIolets(config.GetOutlets()),
@@ -269,7 +269,7 @@ namespace hemelb::configuration {
     }
 
 #ifdef HEMELB_BUILD_RBC
-    inline redblood::CountedIoletView MakeCountedIoletView(lb::iolets::BoundaryValues const& iolets) {
+    inline redblood::CountedIoletView MakeCountedIoletView(lb::BoundaryValues const& iolets) {
         return {
                 [&]() { return iolets.GetGlobalIoletCount(); },
                 [&](unsigned i) { return iolets.GetGlobalIolet(i); }

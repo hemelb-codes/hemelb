@@ -150,7 +150,7 @@ namespace hemelb::lb
           std::vector<std::pair<site_t, site_t> > siteRanges;
 
           // The array with the imposed density at each boundary.
-          iolets::BoundaryValues* boundaryObject;
+          BoundaryValues* boundaryObject;
 
           // The lattice data object. Currently only used for accessing the boundary id
           // of each site next to an inlet or an outlet.

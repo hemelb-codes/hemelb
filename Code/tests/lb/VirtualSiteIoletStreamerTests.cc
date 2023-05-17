@@ -33,7 +33,7 @@ namespace hemelb::tests
     {
     public:
         //typedef hemelb::lb::streamers::VSExtra::UnitVec UnitVec;
-        LocalVSExtra(lb::iolets::InOutLet& iolet) :
+        LocalVSExtra(lb::InOutLet& iolet) :
                 VSExtra<lb::D3Q15> (iolet)
         {
         }
@@ -64,10 +64,10 @@ namespace hemelb::tests
         return 1.045 + Dot(gradRho, pos);
     }
 
-    using lb::iolets::InOutLetCosine;
-    static InOutLetCosine* GetIolet(lb::iolets::BoundaryValues& iolets)
+    using lb::InOutLetCosine;
+    static InOutLetCosine* GetIolet(lb::BoundaryValues& iolets)
     {
-        auto ans = dynamic_cast<lb::iolets::InOutLetCosine*> (iolets.GetLocalIolet(0));
+        auto ans = dynamic_cast<lb::InOutLetCosine*> (iolets.GetLocalIolet(0));
         REQUIRE(ans != nullptr);
         return ans;
     }
@@ -86,14 +86,14 @@ namespace hemelb::tests
         using Kernel = lb::LBGK<Lattice>;
         using Collision = lb::Normal<Kernel>;
         using VirtualSite = lb::streamers::VirtualSite<Lattice>;
-        using InOutLetCosine = lb::iolets::InOutLetCosine;
+        using InOutLetCosine = lb::InOutLetCosine;
         using RSHV = lb::streamers::RSHV;
 
         auto Info = [&]() -> const lb::LatticeInfo& {
             return Lattice::GetLatticeInfo();
         };
 
-        auto CheckAllHVUpdated = [&](lb::iolets::BoundaryValues& iolets, LatticeTimeStep expectedT) {
+        auto CheckAllHVUpdated = [&](lb::BoundaryValues& iolets, LatticeTimeStep expectedT) {
             auto * extra = dynamic_cast<VSExtra<Lattice>*> (iolets.GetLocalIolet(0)->GetExtraData());
             for (auto& [siteGlobalIdx, hv] : extra->hydroVarsCache) {
                 LatticeVector sitePos;

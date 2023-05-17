@@ -25,7 +25,7 @@ namespace hemelb::redblood {
     //! BoundaryValues objects to get at iolets, so create a simple ,
     //! type-erased wrapper which accesses them with the same style.
     class CountedIoletView {
-        using Getter = std::function<lb::iolets::InOutLet const* (unsigned)>;
+        using Getter = std::function<lb::InOutLet const* (unsigned)>;
         using Counter = std::function<unsigned()>;
 
         Counter counter;
@@ -42,7 +42,7 @@ namespace hemelb::redblood {
             return counter();
         }
         // Invoke the getter
-        inline lb::iolets::InOutLet const* GetIolet(unsigned i) const {
+        inline lb::InOutLet const* GetIolet(unsigned i) const {
             return getter(i);
         }
     };
@@ -68,7 +68,7 @@ namespace hemelb::redblood {
         Node2NodeForce build_node2node_force(configuration::NodeForceConfig const&) const;
         CompositeRBCInserter build_single_inlet_rbc_inserter(
                 std::vector<configuration::CellInserterConfig> const& ci_confs,
-                lb::iolets::InOutLet const& inlet,
+                lb::InOutLet const& inlet,
                 TemplateCellContainer const& templateCells
         ) const;
 

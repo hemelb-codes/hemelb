@@ -7,12 +7,8 @@
 #define HEMELB_LB_IOLETS_INOUTLETVELOCITY_H
 #include "lb/iolets/InOutLet.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace iolets
-    {
       class InOutLetVelocity : public InOutLet
       {
         public:
@@ -49,7 +45,5 @@ namespace hemelb
         protected:
           LatticeDistance radius;
       };
-    }
-  }
 }
 #endif // HEMELB_LB_IOLETS_INOUTLETVELOCITY_H

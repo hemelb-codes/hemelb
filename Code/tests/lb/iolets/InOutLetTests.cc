@@ -15,7 +15,7 @@
 
 namespace hemelb::tests
 {
-    using namespace lb::iolets;
+    //using namespace lb::iolets;
     using resources::Resource;
 
     class UncheckedSimConfig : public configuration::SimConfig {
@@ -33,7 +33,7 @@ namespace hemelb::tests
         }
     };
 
-    class ConcreteIolet : public InOutLet {
+    class ConcreteIolet : public lb::InOutLet {
         [[nodiscard]] InOutLet* clone() const override
         {
             return new ConcreteIolet(*this);
@@ -64,7 +64,7 @@ namespace hemelb::tests
             auto& converter = *builder.GetUnitConverter();
 
             auto cosineConfig = config.GetInlets()[0];
-            auto cosine = util::clone_dynamic_cast<InOutLetCosine>(builder.BuildIolet(cosineConfig));
+            auto cosine = util::clone_dynamic_cast<lb::InOutLetCosine>(builder.BuildIolet(cosineConfig));
 
             lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
                                                             config.GetTotalTimeSteps());
@@ -93,7 +93,7 @@ namespace hemelb::tests
 
             REQUIRE(util::Vector3D<Dimensionless>(0.0, 0.0, 1.0) == cosine->GetNormal());
 
-            // Set an approriate target value for the density, the maximum.
+            // Set an appropriate target value for the density, the maximum.
             LatticeDensity targetMeanDensity = converter.ConvertPressureToLatticeUnits(80.1) / Cs2;
             // Check that the cosine formula correctly produces mean value
             REQUIRE(Approx(targetMeanDensity) == cosine->GetDensityMean());
@@ -114,7 +114,7 @@ namespace hemelb::tests
             lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
                                                             config.GetTotalTimeSteps());
             auto fileConfig = config.GetInlets()[0];
-            auto file = util::clone_dynamic_cast<InOutLetFile>(builder.BuildIolet(fileConfig));
+            auto file = util::clone_dynamic_cast<lb::InOutLetFile>(builder.BuildIolet(fileConfig));
             // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
             file->Initialise(&converter);
             file->Reset(state);
@@ -138,13 +138,13 @@ namespace hemelb::tests
         }
 
         SECTION("TestParabolicVelocityConstruct") {
-            // Bootstrap ourselves a in inoutlet, by loading config.xml.
+            // Bootstrap ourselves an inoutlet, by loading config.xml.
             UncheckedSimConfig config(Resource("config-velocity-iolet.xml").Path());
             configuration::SimBuilder builder(config);
             auto& converter = *builder.GetUnitConverter();
 
             auto p_vel_config = config.GetInlets()[0];
-            auto p_vel = util::clone_dynamic_cast<InOutLetParabolicVelocity>(builder.BuildIolet(p_vel_config));
+            auto p_vel = util::clone_dynamic_cast<lb::InOutLetParabolicVelocity>(builder.BuildIolet(p_vel_config));
             REQUIRE(p_vel != nullptr);
 
             // Bootstrap ourselves a unit converter, which the cosine needs in initialisation
@@ -178,7 +178,7 @@ namespace hemelb::tests
             auto& converter = *builder.GetUnitConverter();
 
             auto womersVelConfig = config.GetInlets()[0];
-            auto womersVel = util::clone_dynamic_cast<InOutLetWomersleyVelocity>(builder.BuildIolet(womersVelConfig));
+            auto womersVel = util::clone_dynamic_cast<lb::InOutLetWomersleyVelocity>(builder.BuildIolet(womersVelConfig));
 
             // Bootstrap ourselves a unit converter, which the cosine needs in initialisation
             lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
@@ -248,7 +248,7 @@ namespace hemelb::tests
             auto& converter = *builder.GetUnitConverter();
 
             auto fileVelConfig = config.GetInlets()[0];
-            auto fileVel = util::clone_dynamic_cast<InOutLetFileVelocity>(builder.BuildIolet(fileVelConfig));
+            auto fileVel = util::clone_dynamic_cast<lb::InOutLetFileVelocity>(builder.BuildIolet(fileVelConfig));
 
             lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
                                                             config.GetTotalTimeSteps());
@@ -303,7 +303,7 @@ namespace hemelb::tests
             PhysicalPosition c(7.77438796, 9.21293516, 9.87122463);
             iolet.SetPosition(units.ConvertPositionToLatticeUnits(c));
             iolet.Initialise(&units);
-            IoletExtraData extra(iolet);
+            lb::IoletExtraData extra(iolet);
             iolet.SetExtraData(&extra);
 
             // Convert the centre to iolet coords

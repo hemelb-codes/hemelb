@@ -11,17 +11,10 @@
 #include "util/UnitConverter.h"
 #include "lb/SimulationState.h"
 
-namespace hemelb
+namespace hemelb::redblood { class FlowExtension; }
+
+namespace hemelb::lb
 {
-  namespace redblood {
-    class FlowExtension;
-  }
-
-  namespace lb
-  {
-    namespace iolets
-    {
-
       //forward declare boundary comms class
       class BoundaryComms;
       class BoundaryCommunicator;
@@ -71,7 +64,7 @@ namespace hemelb
            * Copy the InOutLet.
            * @return Pointer to new IOLet.
            */
-          virtual InOutLet* clone() const = 0;
+          [[nodiscard]] virtual InOutLet* clone() const = 0;
 
           /***
            * This is a castable? virtual method, which is perhaps an anti-pattern
@@ -211,8 +204,6 @@ namespace hemelb
           friend class IoletExtraData;
       };
 
-    }
-  }
 }
 
 #endif /* HEMELB_LB_IOLETS_INOUTLET_H */

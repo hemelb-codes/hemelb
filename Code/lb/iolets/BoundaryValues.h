@@ -13,12 +13,12 @@
 #include "lb/iolets/BoundaryCommunicator.h"
 #include "util/clone_ptr.h"
 
-namespace hemelb::lb::iolets
+namespace hemelb::lb
 {
 
     class BoundaryValues : public net::IteratedAction
     {
-        using IoletPtr = util::clone_ptr<iolets::InOutLet>;
+        using IoletPtr = util::clone_ptr<InOutLet>;
     public:
         BoundaryValues(geometry::SiteType ioletType, geometry::Domain const& latticeData,
                        const std::vector<IoletPtr>& iolets,
@@ -40,19 +40,19 @@ namespace hemelb::lb::iolets
 
         // Borrow the pointer to an Iolet - this object still owns
         // the value.
-        inline iolets::InOutLet* GetLocalIolet(unsigned int index)
+        inline InOutLet* GetLocalIolet(unsigned int index)
         {
             return iolets[localIoletIDs[index]].get();
         }
-        inline iolets::InOutLet const* GetLocalIolet(unsigned int index) const
+        inline InOutLet const* GetLocalIolet(unsigned int index) const
         {
             return iolets[localIoletIDs[index]].get();
         }
-        inline iolets::InOutLet const* GetGlobalIolet(unsigned int index) const
+        inline InOutLet const* GetGlobalIolet(unsigned int index) const
         {
             return iolets[index].get();
         }
-        inline iolets::InOutLet* GetGlobalIolet(unsigned int index)
+        inline InOutLet* GetGlobalIolet(unsigned int index)
         {
             return iolets[index].get();
         }
@@ -76,7 +76,7 @@ namespace hemelb::lb::iolets
     private:
         bool IsIoletOnThisProc(geometry::Domain const& latticeData, int boundaryId);
         std::vector<int> GatherProcList(bool hasBoundary);
-        void HandleComms(iolets::InOutLet* iolet);
+        void HandleComms(InOutLet* iolet);
         geometry::SiteType ioletType;
         // All inlets/outlets in the simulation.
         // (Has to be a vector of pointers for InOutLet polymorphism)

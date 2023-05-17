@@ -72,8 +72,8 @@ namespace hemelb
 #     endif
     protected:
 
-      std::shared_ptr<lb::iolets::BoundaryValues> inletValues;
-      std::shared_ptr<lb::iolets::BoundaryValues> outletValues;
+      std::shared_ptr<lb::BoundaryValues> inletValues;
+      std::shared_ptr<lb::BoundaryValues> outletValues;
       virtual void DoTimeStep();
 
       /* The next quantities are protected because they are used by MultiscaleSimulationMaster */

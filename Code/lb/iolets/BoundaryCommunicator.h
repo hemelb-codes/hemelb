@@ -8,12 +8,8 @@
 
 #include "net/MpiCommunicator.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace iolets
-    {
       class BoundaryCommunicator : public net::MpiCommunicator
       {
         public:
@@ -21,8 +17,6 @@ namespace hemelb
           bool IsCurrentProcTheBCProc() const;
           int GetBCProcRank() const;
       };
-    }
-  }
 }
 
 #endif // HEMELB_LB_IOLETS_BOUNDARYCOMMUNICATOR_H

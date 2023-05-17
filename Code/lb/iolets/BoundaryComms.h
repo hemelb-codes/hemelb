@@ -11,12 +11,8 @@
 #include "util/UnitConverter.h"
 #include "lb/iolets/BoundaryCommunicator.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace iolets
-    {
 
       class BoundaryComms
       {
@@ -59,8 +55,6 @@ namespace hemelb
           SimulationState* mState;
       };
 
-    }
-  }
 }
 
 #endif /* HEMELB_LB_IOLETS_BOUNDARYCOMMS_H */

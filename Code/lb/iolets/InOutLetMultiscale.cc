@@ -10,12 +10,8 @@
 #include "lb/iolets/BoundaryComms.h"
 #include "lb/iolets/BoundaryValues.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace iolets
-    {
 
       InOutLetMultiscale::InOutLetMultiscale() :
           multiscale::Intercommunicand(), InOutLet(), units(nullptr), numberOfFieldPoints(1),
@@ -160,6 +156,4 @@ namespace hemelb
                                                                                 maxPressure.GetPayload());
         }
       }
-    }
-  }
 }

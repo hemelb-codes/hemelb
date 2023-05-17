@@ -4,7 +4,7 @@
 // license in the file LICENSE.
 #include "lb/iolets/InOutLet.h"
 
-namespace hemelb::lb::iolets
+namespace hemelb::lb
 {
     void InOutLet::DoComms(const BoundaryCommunicator& bcComms, const LatticeTimeStep timeStep)
     {

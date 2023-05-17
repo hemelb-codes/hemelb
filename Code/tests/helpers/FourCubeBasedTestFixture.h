@@ -35,8 +35,8 @@ namespace hemelb
             ~FourCubeBasedTestFixtureBase();
 
         protected:
-            lb::iolets::BoundaryValues BuildIolets(geometry::SiteType tp) const;
-            lb::iolets::BoundaryValues BuildIolets(geometry::SiteType tp, std::vector<configuration::IoletConfig> const& conf) const;
+            lb::BoundaryValues BuildIolets(geometry::SiteType tp) const;
+            lb::BoundaryValues BuildIolets(geometry::SiteType tp, std::vector<configuration::IoletConfig> const& conf) const;
             std::unique_ptr<FourCubeLatticeData> latDat;
             // Non-owning ptr (owned by latDat)
             FourCubeDomain* dom;

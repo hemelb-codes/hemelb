@@ -114,8 +114,8 @@ namespace hemelb::lb
     }
 
     template<class TRAITS>
-    void LBM<TRAITS>::Initialise(iolets::BoundaryValues* iInletValues,
-                                 iolets::BoundaryValues* iOutletValues)
+    void LBM<TRAITS>::Initialise(BoundaryValues* iInletValues,
+                                 BoundaryValues* iOutletValues)
     {
       mInletValues = iInletValues;
       mOutletValues = iOutletValues;

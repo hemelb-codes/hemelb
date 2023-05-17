@@ -18,7 +18,6 @@
 
 namespace hemelb::lb::streamers
 {
-    using iolets::InOutLet;
 
     // Hydrodynamic variables at real sites needed to compute virtual site data.
     struct RSHV
@@ -35,10 +34,10 @@ namespace hemelb::lb::streamers
     };
 
     // Hydrodynamic variables at virtual sites.
-    template<class LatticeType>
+    template<lattice_type LatticeType>
     struct VSHV : public RSHV
     {
-        distribn_t fPostColl[LatticeType::NUMVECTORS];
+        typename LatticeType::FArray fPostColl;
     };
 
     // Forward declaration
@@ -47,11 +46,11 @@ namespace hemelb::lb::streamers
 
     // Extra data attached to each Iolet to enable virtual site BCs.
     template<class LatticeType>
-    class VSExtra : public iolets::IoletExtraData
+    class VSExtra : public IoletExtraData
     {
     public:
         VSExtra(InOutLet& iolet) :
-                iolets::IoletExtraData(iolet)
+                IoletExtraData(iolet)
         {
 
         }

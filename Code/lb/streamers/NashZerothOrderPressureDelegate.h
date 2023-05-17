@@ -8,18 +8,14 @@
 #include "util/utilityFunctions.h"
 #include "lb/streamers/BaseStreamerDelegate.h"
 
-namespace hemelb
+namespace hemelb::lb::streamers
 {
-  namespace lb
-  {
-    namespace streamers
-    {
       template<typename CollisionImpl>
       class NashZerothOrderPressureDelegate : public BaseStreamerDelegate<CollisionImpl>
       {
         public:
-          typedef CollisionImpl CollisionType;
-          typedef typename CollisionType::CKernel::LatticeType LatticeType;
+          using CollisionType = CollisionImpl;
+          using LatticeType = typename CollisionType::CKernel::LatticeType;
 
           NashZerothOrderPressureDelegate(CollisionType& delegatorCollider,
                                           InitParams& initParams) :
@@ -63,10 +59,8 @@ namespace hemelb
           }
         protected:
           CollisionType& collider;
-          iolets::BoundaryValues& iolet;
+          BoundaryValues& iolet;
       };
-    }
-  }
 }
 
 #endif // HEMELB_LB_STREAMERS_NASHZEROTHORDERPRESSUREDELEGATE_H

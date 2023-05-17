@@ -5,12 +5,8 @@
 #include "lb/iolets/InOutLetParabolicVelocity.h"
 #include "configuration/SimConfig.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace iolets
-    {
       InOutLetParabolicVelocity::InOutLetParabolicVelocity() :
           maxSpeed(0.), warmUpLength(0)
       {
@@ -43,6 +39,4 @@ namespace hemelb
         // Brackets to ensure that the scalar multiplies are done before vector * scalar.
         return normal * (max * (1. - rSq));
       }
-    }
-  }
 }

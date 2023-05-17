@@ -8,12 +8,8 @@
 #include <map>
 #include "lb/iolets/InOutLetVelocity.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace iolets
-    {
 
       class InOutLetFileVelocity : public InOutLetVelocity
       {
@@ -22,7 +18,7 @@ namespace hemelb
 
 	  ~InOutLetFileVelocity() override = default;
 
-          InOutLet* clone() const override;
+          [[nodiscard]] InOutLet* clone() const override;
 
 	  void Reset(SimulationState &state) override
           {
@@ -62,6 +58,4 @@ namespace hemelb
       };
 
     }
-  }
-}
 #endif /* HEMELB_LB_IOLETS_INOUTLETFILEVELOCITY_H */

@@ -5,12 +5,8 @@
 
 #include "lb/iolets/BoundaryCommunicator.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace iolets
-    {
 
       BoundaryCommunicator::BoundaryCommunicator(const net::MpiCommunicator& parent) :
           MpiCommunicator(parent.Duplicate())
@@ -25,6 +21,4 @@ namespace hemelb
       {
         return 0;
       }
-    }
-  }
 }

@@ -10,12 +10,8 @@
 #include "log/Logger.h"
 #include "configuration/SimConfig.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace iolets
-    {
       InOutLetFile::InOutLetFile() :
           InOutLet(), densityTable(0)
       {
@@ -24,9 +20,7 @@ namespace hemelb
 
       InOutLet* InOutLetFile::clone() const
       {
-        InOutLetFile* copy = new InOutLetFile(*this);
-
-        return copy;
+        return new InOutLetFile(*this);
       }
 
         auto less_time = [](std::pair<LatticeTime, LatticeDensity> const& l, std::pair<LatticeTime, LatticeDensity>  const& r) {
@@ -37,7 +31,7 @@ namespace hemelb
         void InOutLetFile::Initialise(const util::UnitConverter* unitConverter)
         {
             if (!std::filesystem::exists(pressureFilePath))
-                throw Exception() << "File does not exist: " << pressureFilePath;
+                throw (Exception() << "File does not exist: " << pressureFilePath);
 
             // First read in values from file, keeping sorted by time and unique for time.
             std::ifstream datafile(pressureFilePath);
@@ -68,8 +62,8 @@ namespace hemelb
 
             // Check if last point's value matches the first
             if (file_data_lat.back().second != file_data_lat.front().second)
-                throw Exception() << "Last point's value does not match the first point's value in "
-                                  << pressureFilePath;
+                throw (Exception() << "Last point's value does not match the first point's value in "
+                                   << pressureFilePath);
         }
 
         // This interpolates between points to generate a cycle
@@ -118,5 +112,3 @@ namespace hemelb
         }
 
     }
-  }
-}

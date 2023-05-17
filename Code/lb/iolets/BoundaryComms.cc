@@ -8,12 +8,8 @@
 #include "net/IOCommunicator.h"
 #include "util/utilityFunctions.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace iolets
-    {
 
       BoundaryComms::BoundaryComms(SimulationState* iSimState, std::vector<int> &iProcsList,
                                    const BoundaryCommunicator& boundaryComm, bool iHasBoundary) :
@@ -99,6 +95,4 @@ namespace hemelb
         }
       }
 
-    }
-  }
 }

@@ -8,12 +8,8 @@
 
 #include "lb/iolets/InOutLet.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace iolets
-    {
 
       /*
        * Template values are chosen to be tUpdatePeriod = 1 and tComms = false
@@ -25,7 +21,7 @@ namespace hemelb
         public:
           InOutLetCosine();
           ~InOutLetCosine() override = default;
-          InOutLet* clone() const override;
+          [[nodiscard]] InOutLet* clone() const override;
           void Reset(SimulationState &state) override
           {
             //pass;
@@ -110,8 +106,6 @@ namespace hemelb
           unsigned int warmUpLength;
       };
 
-    }
-  }
 }
 
 #endif /* HEMELB_LB_IOLETS_INOUTLETCOSINE_H */

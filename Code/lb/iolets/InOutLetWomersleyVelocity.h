@@ -8,12 +8,8 @@
 #include "lb/iolets/InOutLetVelocity.h"
 #include <complex>
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace iolets
-    {
       /**
        * This class implements the InOutLetVelocity interface. It imposes a Womersley velocity profile
        * at a given inlet/outlet of a simulation of laminar flow in a cylinder of radius R and zero
@@ -39,7 +35,7 @@ namespace hemelb
            *
            * @return copy of the current iolet
            */
-          InOutLet* clone() const override;
+          [[nodiscard]] InOutLet* clone() const override;
 
           /**
            * Get Womersley velocity for a given time and position.
@@ -100,7 +96,5 @@ namespace hemelb
           LatticeTime period; ///< See class documentation
           double womersleyNumber; ///< See class documentation
       };
-    }
-  }
 }
 #endif // HEMELB_LB_IOLETS_INOUTLETWOMERSLEYVELOCITY_H

@@ -100,7 +100,7 @@ namespace hemelb::configuration {
         );
     }
     auto SimBuilder::BuildCosinePressureIolet(const CosinePressureIoletConfig& ic) const -> IoletPtr {
-        auto ans = util::make_clone_ptr<lb::iolets::InOutLetCosine>();
+        auto ans = util::make_clone_ptr<lb::InOutLetCosine>();
         BuildBaseIolet(ic, ans.get());
 
         // Amplitude is a pressure DIFFERENCE (no use of REFERENCE_PRESSURE)
@@ -113,14 +113,14 @@ namespace hemelb::configuration {
     }
 
     auto SimBuilder::BuildFilePressureIolet(const FilePressureIoletConfig & ic) const -> IoletPtr {
-        auto ans = util::make_clone_ptr<lb::iolets::InOutLetFile>();
+        auto ans = util::make_clone_ptr<lb::InOutLetFile>();
         BuildBaseIolet(ic, ans.get());
         ans->SetFilePath(ic.file_path);
         return ans;
     }
 
     auto SimBuilder::BuildMultiscalePressureIolet(const MultiscalePressureIoletConfig & ic) const -> IoletPtr {
-        auto ans = util::make_clone_ptr<lb::iolets::InOutLetMultiscale>();
+        auto ans = util::make_clone_ptr<lb::InOutLetMultiscale>();
         BuildBaseIolet(ic, ans.get());
         ans->GetPressureReference() = ic.pressure_reference_mmHg;
         ans->GetVelocityReference() = ic.velocity_reference_ms;
@@ -129,7 +129,7 @@ namespace hemelb::configuration {
     }
 
     auto SimBuilder::BuildParabolicVelocityIolet(const ParabolicVelocityIoletConfig& ic) const -> IoletPtr {
-        auto ans = util::make_clone_ptr<lb::iolets::InOutLetParabolicVelocity>();
+        auto ans = util::make_clone_ptr<lb::InOutLetParabolicVelocity>();
         BuildBaseIolet(ic, ans.get());
         ans->SetRadius(unit_converter->ConvertDistanceToLatticeUnits(ic.radius_m));
         ans->SetMaxSpeed(unit_converter->ConvertSpeedToLatticeUnits(ic.max_speed_ms));
@@ -137,7 +137,7 @@ namespace hemelb::configuration {
     }
 
     auto SimBuilder::BuildWomersleyVelocityIolet(const WomersleyVelocityIoletConfig& ic) const -> IoletPtr {
-        auto ans = util::make_clone_ptr<lb::iolets::InOutLetWomersleyVelocity>();
+        auto ans = util::make_clone_ptr<lb::InOutLetWomersleyVelocity>();
         BuildBaseIolet(ic, ans.get());
         ans->SetRadius(unit_converter->ConvertDistanceToLatticeUnits(ic.radius_m));
         ans->SetPressureGradientAmplitude(unit_converter->ConvertPressureGradientToLatticeUnits(ic.pgrad_amp_mmHgm));
@@ -147,7 +147,7 @@ namespace hemelb::configuration {
     }
 
     auto SimBuilder::BuildFileVelocityIolet(const FileVelocityIoletConfig &ic) const -> IoletPtr {
-        auto ans = util::make_clone_ptr<lb::iolets::InOutLetFileVelocity>();
+        auto ans = util::make_clone_ptr<lb::InOutLetFileVelocity>();
         BuildBaseIolet(ic, ans.get());
         ans->SetFilePath(ic.file_path);
         ans->SetRadius(unit_converter->ConvertDistanceToLatticeUnits(ic.radius_m));
@@ -155,7 +155,7 @@ namespace hemelb::configuration {
     }
 
     void SimBuilder::BuildBaseIolet(IoletConfigBase const& conf,
-                                        lb::iolets::InOutLet* obj) const
+                                        lb::InOutLet* obj) const
     {
         obj->SetPosition(unit_converter->ConvertPositionToLatticeUnits(conf.position));
         obj->SetNormal(conf.normal);

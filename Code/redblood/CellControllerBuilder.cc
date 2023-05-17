@@ -190,7 +190,7 @@ namespace hemelb::redblood {
 
     CompositeRBCInserter CellControllerBuilder::build_single_inlet_rbc_inserter(
             std::vector<configuration::CellInserterConfig> const& ci_confs,
-            lb::iolets::InOutLet const& inlet,
+            lb::InOutLet const& inlet,
             TemplateCellContainer const& templateCells
     ) const {
         CompositeRBCInserter composite;

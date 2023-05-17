@@ -35,10 +35,9 @@ namespace hemelb::lb::streamers
         {
             // Want to loop over each site this streamer is responsible for,
             // as specified in the siteRanges.
-            for (std::vector<std::pair<site_t, site_t> >::iterator rangeIt =
-                initParams.siteRanges.begin(); rangeIt != initParams.siteRanges.end(); ++rangeIt)
+            for (auto [first, last]: initParams.siteRanges)
             {
-              for (site_t localIndex = rangeIt->first; localIndex < rangeIt->second; ++localIndex)
+              for (site_t localIndex = first; localIndex < last; ++localIndex)
               {
                 geometry::Site<const geometry::Domain> localSite =
                     initParams.latDat->GetSite(localIndex);
@@ -166,8 +165,7 @@ namespace hemelb::lb::streamers
               if (site.HasIolet(i))
               {
                 int boundaryId = site.GetIoletId();
-                iolets::InOutLetVelocity* iolet =
-                    dynamic_cast<iolets::InOutLetVelocity*>(bValues->GetLocalIolet(boundaryId));
+                auto iolet = dynamic_cast<InOutLetVelocity*>(bValues->GetLocalIolet(boundaryId));
                 if (iolet == nullptr)
                 {
                   // SBB
@@ -313,7 +311,7 @@ namespace hemelb::lb::streamers
         // the collision
         CollisionType collider;
         const geometry::neighbouring::NeighbouringDomain& neighbouringLatticeData;
-        iolets::BoundaryValues* bValues;
+        BoundaryValues* bValues;
         SimpleBounceBackDelegate<CollisionType> bbDelegate;
     };
 

@@ -53,7 +53,7 @@ namespace hemelb::lb
 
         private:
           KernelType kernel;
-          iolets::BoundaryValues* boundaryObject;
+          BoundaryValues* boundaryObject;
       };
 
 }

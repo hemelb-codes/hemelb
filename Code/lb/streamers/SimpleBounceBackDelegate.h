@@ -9,19 +9,15 @@
 #include "lb/streamers/BaseStreamerDelegate.h"
 #include "lb/streamers/SimpleCollideAndStream.h"
 
-namespace hemelb
+namespace hemelb::lb::streamers
 {
-  namespace lb
-  {
-    namespace streamers
-    {
 
       template<typename CollisionImpl>
       class SimpleBounceBackDelegate : public BaseStreamerDelegate<CollisionImpl>
       {
         public:
-          typedef CollisionImpl CollisionType;
-          typedef typename CollisionType::CKernel::LatticeType LatticeType;
+          using CollisionType = CollisionImpl;
+          using LatticeType = typename CollisionType::CKernel::LatticeType;
 
           static inline site_t GetBBIndex(site_t siteIndex, int direction)
           {
@@ -33,7 +29,7 @@ namespace hemelb
           {
           }
 
-          inline void StreamLink(const LbmParameters* lbmParams,
+          void StreamLink(const LbmParameters* lbmParams,
                                  geometry::FieldData& latticeData,
                                  const geometry::Site<geometry::Domain>& site,
                                  HydroVars<typename CollisionType::CKernel>& hydroVars,
@@ -46,8 +42,6 @@ namespace hemelb
 
       };
 
-    }
-  }
 }
 
 #endif /* HEMELB_LB_STREAMERS_SIMPLEBOUNCEBACKDELEGATE_H */

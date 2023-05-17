@@ -8,7 +8,7 @@
 #include "util/utilityFunctions.h"
 #include <algorithm>
 
-namespace hemelb::lb::iolets
+namespace hemelb::lb
 {
       BoundaryValues::BoundaryValues(geometry::SiteType ioletType,
                                      geometry::Domain const& latticeData,
@@ -113,7 +113,7 @@ namespace hemelb::lb::iolets
         }
       }
 
-      void BoundaryValues::HandleComms(iolets::InOutLet* iolet)
+      void BoundaryValues::HandleComms(InOutLet* iolet)
       {
 
         if (iolet->IsCommsRequired())

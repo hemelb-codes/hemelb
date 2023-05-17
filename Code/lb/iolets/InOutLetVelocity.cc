@@ -5,12 +5,8 @@
 #include "lb/iolets/InOutLetVelocity.h"
 #include "configuration/SimConfig.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace iolets
-    {
       InOutLetVelocity::InOutLetVelocity() :
           radius(0.)
       {
@@ -28,6 +24,4 @@ namespace hemelb
       {
         return 1.0;
       }
-    }
-  }
 }

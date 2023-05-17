@@ -6,6 +6,7 @@
 #include "tests/helpers/FolderTestFixture.h"
 #include "tests/redblood/Fixtures.h"
 #include "tests/redblood/parallel/ParallelFixtures.h"
+#include "lb/iolets/InOutLet.h"
 
 namespace hemelb::tests
 {
@@ -167,7 +168,7 @@ namespace hemelb::tests
         auto rbcConf = simConf->GetRBCConfig();
 
         auto meshes = [&]() {
-            using IoletPtr = util::clone_ptr<lb::iolets::InOutLet>;
+            using IoletPtr = util::clone_ptr<lb::InOutLet>;
             auto ccb = redblood::CellControllerBuilder(builder.GetUnitConverter());
             auto inlets = builder.BuildIolets(simConf->GetInlets());
             auto outlets = builder.BuildIolets(simConf->GetOutlets());

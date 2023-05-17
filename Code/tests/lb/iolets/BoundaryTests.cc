@@ -13,7 +13,7 @@
 
 namespace hemelb::tests
 {
-    using namespace hemelb::lb::iolets;
+    using namespace hemelb::lb;
     using namespace resources;
 
     // Class asserting behaviour of boundary-collection objects and
@@ -58,7 +58,7 @@ namespace hemelb::tests
             auto fileInletConfig = configuration::SimConfig::New(Resource("config_file_inlet.xml").Path());
 
             // Reloading simState to ensure the time step size from config_file_inlet.xml is indeed used in HemeLB.
-            simState = std::make_unique<lb::SimulationState>(
+            simState = std::make_unique<SimulationState>(
                     fileInletConfig->GetTimeStepLength(),
                     fileInletConfig->GetTotalTimeSteps()
             );

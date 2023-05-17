@@ -20,7 +20,6 @@
 
 namespace hemelb::lb::streamers
 {
-      using iolets::InOutLet;
 
       template<class CollisionImpl>
       class VirtualSiteIolet : public BaseStreamer<VirtualSiteIolet<CollisionImpl> >
@@ -36,7 +35,7 @@ namespace hemelb::lb::streamers
           CollisionType collider;
           SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
           SimpleBounceBackDelegate<CollisionType> wallLinkDelegate;
-          iolets::BoundaryValues* bValues;
+          BoundaryValues* bValues;
           const geometry::neighbouring::NeighbouringDomain& neighbouringLatticeData;
 
           // These will store a map from localIdx => (iolet, vsite, direction) triples

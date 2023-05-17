@@ -9,12 +9,8 @@
 #include "geometry/Domain.h"
 #include "lb/kernels/BaseKernel.h"
 
-namespace hemelb
+namespace hemelb::lb::streamers
 {
-  namespace lb
-  {
-    namespace streamers
-    {
       /**
        * Base class for Streamer delegates.
        *
@@ -40,16 +36,15 @@ namespace hemelb
       class BaseStreamerDelegate
       {
         public:
-          typedef CollisionImpl CollisionType;
-          typedef typename CollisionType::CKernel::LatticeType LatticeType;
+          using CollisionType = CollisionImpl;
+          using LatticeType = typename CollisionType::CKernel::LatticeType;
 
         protected:
           /**
            * Protected default ctor to make life a bit easier for subclasses.
            */
-          BaseStreamerDelegate()
-          {
-          }
+          BaseStreamerDelegate() = default;
+
         public:
           /**
            * Perform the streaming operation from site along direction
@@ -61,7 +56,7 @@ namespace hemelb
            * @param hydroVars
            * @param direction
            */
-          inline void StreamLink(const LbmParameters* lbmParams,
+          void StreamLink(const LbmParameters* lbmParams,
                                  geometry::FieldData& latticeData,
                                  const geometry::Site<geometry::Domain>& site,
                                  HydroVars<typename CollisionType::CKernel>& hydroVars,
@@ -76,15 +71,13 @@ namespace hemelb
            * @param site
            * @param direction
            */
-          inline void PostStepLink(geometry::FieldData& latticeData,
+          void PostStepLink(geometry::FieldData& latticeData,
                                    const geometry::Site<geometry::FieldData>& site,
                                    const Direction& direction)
           {
           }
       };
 
-    }
-  }
 }
 
 #endif /* HEMELB_LB_STREAMERS_BASESTREAMERDELEGATE_H */

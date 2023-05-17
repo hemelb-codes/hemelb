@@ -33,11 +33,11 @@ namespace hemelb::tests::helpers
 
     FourCubeBasedTestFixtureBase::~FourCubeBasedTestFixtureBase() {}
 
-    lb::iolets::BoundaryValues FourCubeBasedTestFixtureBase::BuildIolets(
+    lb::BoundaryValues FourCubeBasedTestFixtureBase::BuildIolets(
             geometry::SiteType tp,
             std::vector<configuration::IoletConfig> const& conf
     ) const {
-        return lb::iolets::BoundaryValues(tp,
+        return lb::BoundaryValues(tp,
                                           *dom,
                                           simBuilder->BuildIolets(conf),
                                           simState.get(),
@@ -45,7 +45,7 @@ namespace hemelb::tests::helpers
                                           *unitConverter);
     }
 
-    lb::iolets::BoundaryValues FourCubeBasedTestFixtureBase::BuildIolets(
+    lb::BoundaryValues FourCubeBasedTestFixtureBase::BuildIolets(
             geometry::SiteType tp
     ) const {
         REQUIRE((tp == geometry::INLET_TYPE || tp == geometry::OUTLET_TYPE));
