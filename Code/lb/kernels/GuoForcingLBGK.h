@@ -13,7 +13,7 @@
 #include "lb/kernels/BaseKernel.h"
 #include "lb/LbmParameters.h"
 
-namespace hemelb::lb::kernels
+namespace hemelb::lb
 {
     /**
        * Implements the LBGK single-relaxation time kernel, including Guo Forcing

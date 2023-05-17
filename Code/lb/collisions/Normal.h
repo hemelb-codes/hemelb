@@ -24,19 +24,19 @@ namespace hemelb
         public:
           typedef KernelType CKernel;
 
-          Normal(kernels::InitParams& initParams) :
+          Normal(InitParams& initParams) :
               kernel(initParams)
           {
           }
 
-          inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars,
+          inline void DoCalculatePreCollision(HydroVars<KernelType>& hydroVars,
                                               const geometry::Site<geometry::Domain>& site)
           {
             kernel.CalculateDensityMomentumFeq(hydroVars, site.GetIndex());
           }
 
           inline void DoCollide(const LbmParameters* lbmParams,
-                                kernels::HydroVars<KernelType>& iHydroVars)
+                                HydroVars<KernelType>& iHydroVars)
           {
             kernel.Collide(lbmParams, iHydroVars);
           }

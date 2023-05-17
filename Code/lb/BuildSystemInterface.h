@@ -18,111 +18,50 @@ namespace hemelb::lb
      * The names of the following classes must correspond to options given for the CMake
      * HEMELB_KERNEL parameter.
      */
-    template<class Lattice>
-    class LBGK
-    {
-      public:
-        using Type = kernels::LBGK<Lattice>;
-    };
 
-    /**
-     * LBGK with GuoForcing
-     */
-    template<class LATTICE>
-    class GuoForcingLBGK
-    {
-      public:
-        using Type = lb::kernels::GuoForcingLBGK<LATTICE>;
-    };
-
-    /**
-     * The entropic implementation by Ansumali et al.
-     */
-    template<class Lattice>
-    class EntropicAnsumali
-    {
-      public:
-        using Type = kernels::EntropicAnsumali<Lattice>;
-    };
-
-    /**
-     * The entropic implementation by Chikatamarla et al.
-     */
-    template<class Lattice>
-    class EntropicChik
-    {
-      public:
-        using Type = kernels::EntropicChik<Lattice>;
-    };
 
     /**
      * MRT currently we only have DHumieres implementation, on D3Q15 and D3Q19 lattices.
+     * The main template requires an MRT basis as its parameter - use a small traits class to look this up.
      */
-    template<class Lattice>
-    class MRT
-    {
-    };
-
-    template<>
-    class MRT<D3Q15>
-    {
-      public:
-        using Type = kernels::MRT<kernels::momentBasis::DHumieresD3Q15MRTBasis>;
-    };
-
-    template<>
-    class MRT<D3Q19>
-    {
-      public:
-        using Type = kernels::MRT<kernels::momentBasis::DHumieresD3Q19MRTBasis>;
-    };
-
-    template<class Lattice>
-    class TRT
-    {
-      public:
-        using Type = kernels::TRT<Lattice>;
-    };
+     namespace detail {
+         template<lattice_type L>
+         struct mrt_basis;
+         template<>
+         struct mrt_basis<D3Q15> {
+             using type = DHumieresD3Q15MRTBasis;
+         };
+         template<>
+         struct mrt_basis<D3Q19> {
+             using type = DHumieresD3Q19MRTBasis;
+         };
+     }
+    template<lattice_type L>
+    using MRT = MRT<typename detail::mrt_basis<L>::type>;
 
     /**
      * Non-Newtonian kernel with Carreau-Yasuda rheology model.
      */
-    template<class Lattice>
-    class NNCY
-    {
-      public:
-        using Type = kernels::LBGKNN<kernels::rheologyModels::CarreauYasudaRheologyModelHumanFit, Lattice>;
-    };
+    template<lattice_type Lattice>
+    using NNCY = LBGKNN<CarreauYasudaRheologyModelHumanFit, Lattice>;
 
     /**
      * Non-Newtonian kernel with Carreau-Yasuda rheology model fitted to experimental data on murine blood viscosity.
      */
-    template<class Lattice>
-    class NNCYMOUSE
-    {
-      public:
-        using Type = kernels::LBGKNN<kernels::rheologyModels::CarreauYasudaRheologyModelMouseFit, Lattice>;
-    };
+    template<lattice_type Lattice>
+    using NNCYMOUSE = LBGKNN<CarreauYasudaRheologyModelMouseFit, Lattice>;
 
     /**
      * Non-Newtonian kernel with Casson rheology model.
      */
-    template<class Lattice>
-    class NNC
-    {
-      public:
-        using Type = kernels::LBGKNN<kernels::rheologyModels::CassonRheologyModel, Lattice>;
-    };
+    template<lattice_type Lattice>
+    using NNC = LBGKNN<CassonRheologyModel, Lattice>;
 
     /**
      * Non-Newtonian kernel with truncated power law rheology model.
      */
-    template<class Lattice>
-    class NNTPL
-    {
-      public:
-        using Type = kernels::LBGKNN<kernels::rheologyModels::TruncatedPowerLawRheologyModel, Lattice>;
-    };
+    template<lattice_type Lattice>
+    using NNTPL = LBGKNN<TruncatedPowerLawRheologyModel, Lattice>;
 
     /**
      * The following classes have names corresponding to the options given in the build system for

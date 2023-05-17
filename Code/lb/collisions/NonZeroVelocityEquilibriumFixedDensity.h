@@ -20,15 +20,15 @@ namespace hemelb
           NonZeroVelocityEquilibriumFixedDensity<KernelType>, KernelType>
       {
         public:
-          typedef KernelType CKernel;
+          using CKernel = KernelType;
 
-          NonZeroVelocityEquilibriumFixedDensity(kernels::InitParams& initParams) :
+          NonZeroVelocityEquilibriumFixedDensity(InitParams& initParams) :
               kernel(initParams), boundaryObject(initParams.boundaryObject)
           {
 
           }
 
-          inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars,
+          inline void DoCalculatePreCollision(HydroVars<KernelType>& hydroVars,
                                               const geometry::Site<geometry::Domain>& site)
           {
             CKernel::LatticeType::CalculateDensityAndMomentum(hydroVars.f,
@@ -46,7 +46,7 @@ namespace hemelb
           }
 
           inline void DoCollide(const LbmParameters* lbmParams,
-                                kernels::HydroVars<KernelType>& iHydroVars)
+                                HydroVars<KernelType>& iHydroVars)
           {
             for (Direction direction = 0; direction < CKernel::LatticeType::NUMVECTORS; ++direction)
             {

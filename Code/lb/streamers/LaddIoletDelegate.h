@@ -18,7 +18,7 @@ namespace hemelb::lb::streamers
         using CollisionType = CollisionImpl;
         using LatticeType = typename CollisionType::CKernel::LatticeType;
 
-        LaddIoletDelegate(CollisionType& delegatorCollider, kernels::InitParams& initParams) :
+        LaddIoletDelegate(CollisionType& delegatorCollider, InitParams& initParams) :
                 SimpleBounceBackDelegate<CollisionType>(delegatorCollider, initParams),
                 bValues(initParams.boundaryObject)
         {
@@ -27,7 +27,7 @@ namespace hemelb::lb::streamers
         inline void StreamLink(const LbmParameters* lbmParams,
                                geometry::FieldData& latticeData,
                                const geometry::Site<geometry::Domain>& site,
-                               kernels::HydroVars<typename CollisionType::CKernel>& hydroVars,
+                               HydroVars<typename CollisionType::CKernel>& hydroVars,
                                const Direction& ii)
         {
             // Translating from Ladd, J. Fluid Mech. "Numerical simulations

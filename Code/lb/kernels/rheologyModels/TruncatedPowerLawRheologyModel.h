@@ -8,14 +8,12 @@
 
 #include "lb/kernels/rheologyModels/AbstractRheologyModel.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace kernels
+    class TruncatedPowerLawRheologyModel : public AbstractRheologyModel<
+            TruncatedPowerLawRheologyModel>
     {
-      namespace rheologyModels
-      {
+    public:
         /*
          * GAMMA_{ZERO,INF} are computed with the power-law formula: nu = m * gamma^{n-1} for
          * given values of nu_{max,min}, m, and n.
@@ -25,33 +23,26 @@ namespace hemelb
 
         static constexpr double N_CONSTANT = 0.5; // dimensionless, n<1 shear thinning, n>1 shear thickening, n=1 Newtonian with nu=M_CONSTANT
 
-        class TruncatedPowerLawRheologyModel : public AbstractRheologyModel<
-            TruncatedPowerLawRheologyModel>
-        {
-          public:
 	    TruncatedPowerLawRheologyModel(InitParams& initParams);
 
-            /*
-             *  Compute nu for a given shear rate according to the truncated power-law:
-             *
-             *        { M_CONSTANT * GAMMA_ZERO^{N_CONSTANT - 1},  if iShearRate<GAMMA_ZERO
-             *  eta = { M_CONSTANT *  GAMMA_INF^{N_CONSTANT - 1},  if iShearRate>GAMMA_INF
-             *        { M_CONSTANT * iShearRate^{N_CONSTANT - 1},  otherwise
-             *
-             *  @param iShearRate local shear rate value (s^{-1}).
-             *  @param iDensity local density. TODO at the moment this value is not used
-             *         in any subclass.
-             *
-             *  @return dynamic viscosity (Pa s).
-             */
-            double CalculateViscosityForShearRate(const double &iShearRate,
-						  const distribn_t &iDensity) const;
-	private:
-	  PhysicalDynamicViscosity M_CONSTANT;
-        };
-      }
-    }
-  }
+        /*
+         *  Compute nu for a given shear rate according to the truncated power-law:
+         *
+         *        { M_CONSTANT * GAMMA_ZERO^{N_CONSTANT - 1},  if iShearRate<GAMMA_ZERO
+         *  eta = { M_CONSTANT *  GAMMA_INF^{N_CONSTANT - 1},  if iShearRate>GAMMA_INF
+         *        { M_CONSTANT * iShearRate^{N_CONSTANT - 1},  otherwise
+         *
+         *  @param iShearRate local shear rate value (s^{-1}).
+         *  @param iDensity local density. TODO at the moment this value is not used
+         *         in any subclass.
+         *
+         *  @return dynamic viscosity (Pa s).
+         */
+        double CalculateViscosityForShearRate(const double &iShearRate,
+                                              const distribn_t &iDensity) const;
+    private:
+        PhysicalDynamicViscosity M_CONSTANT;
+    };
 }
 
 #endif /* HEMELB_LB_KERNELS_RHEOLOGYMODELS_TRUNCATEDPOWERLAWRHEOLOGYMODEL_H */

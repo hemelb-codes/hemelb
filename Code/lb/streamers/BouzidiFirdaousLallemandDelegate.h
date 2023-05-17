@@ -36,7 +36,7 @@ namespace hemelb
 
         public:
           BouzidiFirdaousLallemandDelegate(CollisionType& delegatorCollider,
-                                           kernels::InitParams& initParams) :
+                                           InitParams& initParams) :
               bbDelegate(delegatorCollider, initParams)
           {
           }
@@ -44,7 +44,7 @@ namespace hemelb
           inline void StreamLink(const LbmParameters* lbmParams,
                                  geometry::FieldData& latticeData,
                                  const geometry::Site<geometry::FieldData>& site,
-                                 kernels::HydroVars<typename CollisionType::CKernel>& hydroVars,
+                                 HydroVars<typename CollisionType::CKernel>& hydroVars,
                                  const Direction& direction)
           {
             site_t invDirection = LatticeType::INVERSEDIRECTIONS[direction];

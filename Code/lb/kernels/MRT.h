@@ -11,7 +11,7 @@
 #include <cassert>
 #include <cmath>
 
-namespace hemelb::lb::kernels
+namespace hemelb::lb
 {
     // Forward declaration needed by the struct
     template<moment_basis> class MRT;
@@ -25,7 +25,7 @@ namespace hemelb::lb::kernels
     };
 
     /**
-     * This class implements the Multiple Relaxation Time (MRT) collision operator.
+     * This class implements the MRT collision operator.
      *
      *  \Omega(f) = - M^{-1} * \hat{S} * M (f - f_{eq})
      *            = - M^T * (M * M^T)^{-1} * \hat{S} * m_{neq}
@@ -153,4 +153,4 @@ namespace hemelb::lb::kernels
       };
 }
 
-#endif /* HEMELB_LB_STREAMERS_MRT_H */
+#endif

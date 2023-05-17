@@ -22,7 +22,7 @@ namespace hemelb
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
           NashZerothOrderPressureDelegate(CollisionType& delegatorCollider,
-                                          kernels::InitParams& initParams) :
+                                          InitParams& initParams) :
               collider(delegatorCollider), iolet(*initParams.boundaryObject)
           {
           }
@@ -30,7 +30,7 @@ namespace hemelb
           inline void StreamLink(const LbmParameters* lbmParams,
                                  geometry::FieldData& latticeData,
                                  const geometry::Site<geometry::FieldData>& site,
-                                 kernels::HydroVars<typename CollisionType::CKernel>& hydroVars,
+                                 HydroVars<typename CollisionType::CKernel>& hydroVars,
                                  const Direction& direction)
           {
             int boundaryId = site.GetIoletId();
@@ -49,7 +49,7 @@ namespace hemelb
             // TODO having to give 0 as an argument is also ugly.
             // TODO it's ugly that we have to give hydroVars a nonsense distribution vector
             // that doesn't get used.
-            kernels::HydroVars<typename CollisionType::CKernel> ghostHydrovars(site);
+            HydroVars<typename CollisionType::CKernel> ghostHydrovars(site);
 
             ghostHydrovars.density = ghostDensity;
             ghostHydrovars.momentum = ioletNormal * component * ghostDensity;

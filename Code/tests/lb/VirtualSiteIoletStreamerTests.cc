@@ -83,7 +83,7 @@ namespace hemelb::tests
     TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<>, "VirtualSiteIoletStreamerTests") {
 
         using Lattice = lb::D3Q15;
-        using Kernel = lb::kernels::LBGK<Lattice>;
+        using Kernel = lb::LBGK<Lattice>;
         using Collision = lb::collisions::Normal<Kernel>;
         using VirtualSite = lb::streamers::VirtualSite<Lattice>;
         using InOutLetCosine = lb::iolets::InOutLetCosine;

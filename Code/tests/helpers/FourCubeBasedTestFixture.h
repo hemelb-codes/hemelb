@@ -40,7 +40,7 @@ namespace hemelb
             std::unique_ptr<FourCubeLatticeData> latDat;
             // Non-owning ptr (owned by latDat)
             FourCubeDomain* dom;
-            lb::kernels::InitParams initParams;
+            lb::InitParams initParams;
             site_t numSites;
             lb::LbmParameters lbmParams;
             std::unique_ptr<configuration::SimConfig> simConfig;

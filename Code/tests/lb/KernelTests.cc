@@ -26,7 +26,7 @@ namespace hemelb::tests
         static constexpr auto NV = LATTICE::NUMVECTORS;
         using KERNEL = KernelT;
         static_assert(std::same_as<typename KERNEL::LatticeType, LATTICE>);
-        using HYDRO = lb::kernels::HydroVars<KERNEL>;
+        using HYDRO = lb::HydroVars<KERNEL>;
         using DISTS = std::array<distribn_t, NV>;
         using VEC = util::Vector3D<distribn_t>;
         using mut_span = typename LATTICE::mut_span;
@@ -68,13 +68,13 @@ namespace hemelb::tests
     };
 
     template<>
-    void CollisionTester<lb::kernels::EntropicAnsumali<lb::D3Q15>>::make_feq(const distribn_t& density, const VEC& momentum, mut_span feq) const {
+    void CollisionTester<lb::EntropicAnsumali<lb::D3Q15>>::make_feq(const distribn_t& density, const VEC& momentum, mut_span feq) const {
         LbTestsHelper::CalculateAnsumaliEntropicEqmF<LATTICE>(density,
                                                               momentum,
                                                               feq);
     }
     template<>
-    void CollisionTester<lb::kernels::EntropicAnsumali<lb::D3Q15>>::make_fpostcol(const_span feq, mut_span fpc) const {
+    void CollisionTester<lb::EntropicAnsumali<lb::D3Q15>>::make_fpostcol(const_span feq, mut_span fpc) const {
       LbTestsHelper::CalculateEntropicCollision<LATTICE>(f_original,
 							 feq,
 							 lbmParams.GetTau(),
@@ -83,13 +83,13 @@ namespace hemelb::tests
     }
 
     template<>
-    void CollisionTester<lb::kernels::EntropicChik<lb::D3Q15>>::make_feq(const distribn_t& density, const VEC& momentum, mut_span feq) const {
+    void CollisionTester<lb::EntropicChik<lb::D3Q15>>::make_feq(const distribn_t& density, const VEC& momentum, mut_span feq) const {
       LATTICE::CalculateEntropicFeqChik(density,
 					momentum,
 					feq);
     }
     template<>
-    void CollisionTester<lb::kernels::EntropicChik<lb::D3Q15>>::make_fpostcol(const_span feq, mut_span fpc) const {
+    void CollisionTester<lb::EntropicChik<lb::D3Q15>>::make_fpostcol(const_span feq, mut_span fpc) const {
       LbTestsHelper::CalculateEntropicCollision<LATTICE>(f_original,
 							 feq,
 							 lbmParams.GetTau(),
@@ -98,13 +98,13 @@ namespace hemelb::tests
     }
 
     template<>
-    void CollisionTester<lb::kernels::LBGK<lb::D3Q15>>::make_feq(const distribn_t& density, const VEC& momentum, mut_span feq) const {
+    void CollisionTester<lb::LBGK<lb::D3Q15>>::make_feq(const distribn_t& density, const VEC& momentum, mut_span feq) const {
       LbTestsHelper::CalculateLBGKEqmF<lb::D3Q15>(density,
 							    momentum,
 							    feq);
     }
     template<>
-    void CollisionTester<lb::kernels::LBGK<lb::D3Q15>>::make_fpostcol(const_span feq, mut_span fpc) const {
+    void CollisionTester<lb::LBGK<lb::D3Q15>>::make_fpostcol(const_span feq, mut_span fpc) const {
       LbTestsHelper::CalculateLBGKCollision<lb::D3Q15>(f_original,
 								 feq,
 								 lbmParams.GetOmega(),
@@ -112,9 +112,9 @@ namespace hemelb::tests
     }
 
     TEMPLATE_TEST_CASE_METHOD(CollisionTester, "KernelTests - Ansumali & Chikatamarla entropic, LBGK calculations and collision", "[lb][kernels]",
-                              lb::kernels::EntropicAnsumali<lb::D3Q15>,
-                              lb::kernels::EntropicChik<lb::D3Q15>,
-                              lb::kernels::LBGK<lb::D3Q15>) {
+                              lb::EntropicAnsumali<lb::D3Q15>,
+                              lb::EntropicChik<lb::D3Q15>,
+                              lb::LBGK<lb::D3Q15>) {
         using Fix = CollisionTester<TestType>;
 
         SECTION("use the function that calculates density, momentum and f_eq") {
@@ -145,9 +145,9 @@ namespace hemelb::tests
     TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<>, "LBGKNNCalculationsAndCollision") {
       using LATTICE = lb::D3Q15;
       static constexpr auto NV = LATTICE::NUMVECTORS;
-      using RHEO_MODEL = lb::kernels::rheologyModels::CarreauYasudaRheologyModelHumanFit;
-      using KERNEL = lb::kernels::LBGKNN<RHEO_MODEL, LATTICE>;
-      using HYDRO = lb::kernels::HydroVars<KERNEL>;
+      using RHEO_MODEL = lb::CarreauYasudaRheologyModelHumanFit;
+      using KERNEL = lb::LBGKNN<RHEO_MODEL, LATTICE>;
+      using HYDRO = lb::HydroVars<KERNEL>;
       using DISTS = distribn_t[NV];
       using VEC = util::Vector3D<distribn_t>;
       const distribn_t numTolerance = 1e-10;
@@ -298,8 +298,8 @@ namespace hemelb::tests
         using LATTICE = L;
         static constexpr auto NV = LATTICE::NUMVECTORS;
         using BASIS = B;
-        using KERNEL = lb::kernels::MRT<BASIS>;
-        using HYDRO = lb::kernels::HydroVars<KERNEL>;
+        using KERNEL = lb::MRT<BASIS>;
+        using HYDRO = lb::HydroVars<KERNEL>;
         using DISTS = distribn_t[NV];
         using VEC = util::Vector3D<distribn_t>;
 
@@ -356,13 +356,13 @@ namespace hemelb::tests
         }
     };
 
-    using fix15 = MRTTestFixture<lb::D3Q15, lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>;
+    using fix15 = MRTTestFixture<lb::D3Q15, lb::DHumieresD3Q15MRTBasis>;
     TEST_CASE_METHOD(fix15, "MRT with constant relaxation time equals LBGK (15 velocity)") {
         auto& actual = BASIS::BASIS_TIMES_BASIS_TRANSPOSED;
         auto expected = std::array<double, 11>{ 18., 360., 40., 40., 40., 12., 4., 8., 8., 8., 8. };
         REQUIRE(std::equal(actual.begin(), actual.end(), expected.begin()));
     }
-    using fix19 = MRTTestFixture<lb::D3Q19, lb::kernels::momentBasis::DHumieresD3Q19MRTBasis>;
+    using fix19 = MRTTestFixture<lb::D3Q19, lb::DHumieresD3Q19MRTBasis>;
     TEST_CASE_METHOD(fix19, "MRT with constant relaxation time equals LBGK (19 velocity)") {
         auto& actual = BASIS::BASIS_TIMES_BASIS_TRANSPOSED;
         auto expected = std::array<double, 15>{ 2394, 252, 40, 40, 40, 36, 72, 12, 24, 4, 4, 4, 8, 8, 8 };

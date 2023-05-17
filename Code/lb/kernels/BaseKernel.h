@@ -16,7 +16,7 @@
 #include "geometry/SiteData.h"
 #include "util/Vector3D.h"
 
-namespace hemelb::lb::kernels
+namespace hemelb::lb
 {
 
     template <class LatticeType>
@@ -35,7 +35,7 @@ namespace hemelb::lb::kernels
         using const_span = typename LatticeType::const_span;
         using mut_span = typename LatticeType::mut_span;
 
-        template<lattice_type> friend class Entropic;
+        template<lattice_type> friend class EntropicBase;
         template<lattice_type> friend class EntropicAnsumali;
         template<lattice_type> friend class EntropicChik;
         template<lattice_type> friend class LBGK;

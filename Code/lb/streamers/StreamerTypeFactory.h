@@ -39,7 +39,7 @@ namespace hemelb
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
         public:
-          WallStreamerTypeFactory(kernels::InitParams& initParams) :
+          WallStreamerTypeFactory(InitParams& initParams) :
               collider(initParams), bulkLinkDelegate(collider, initParams),
                   wallLinkDelegate(collider, initParams)
           {
@@ -54,7 +54,7 @@ namespace hemelb
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
               geometry::Site<geometry::FieldData> site = latDat.GetSite(siteIndex);
-              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site);
+              HydroVars<typename CollisionType::CKernel> hydroVars(site);
 
               ///< @todo #126 This value of tau will be updated by some kernels
               //within the collider code (e.g. LBGKNN). It would be nicer if
@@ -128,7 +128,7 @@ namespace hemelb
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
         public:
-          IoletStreamerTypeFactory(kernels::InitParams& initParams) :
+          IoletStreamerTypeFactory(InitParams& initParams) :
               collider(initParams), bulkLinkDelegate(collider, initParams),
                   ioletLinkDelegate(collider, initParams)
           {
@@ -143,7 +143,7 @@ namespace hemelb
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
               geometry::Site<geometry::FieldData> site = latDat.GetSite(siteIndex);
-              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site);
+              HydroVars<typename CollisionType::CKernel> hydroVars(site);
 
               ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
               hydroVars.tau = lbmParams->GetTau();
@@ -216,7 +216,7 @@ namespace hemelb
           IoletLinkImpl ioletLinkDelegate;
 
         public:
-          WallIoletStreamerTypeFactory(kernels::InitParams& initParams) :
+          WallIoletStreamerTypeFactory(InitParams& initParams) :
               collider(initParams), bulkLinkDelegate(collider, initParams),
                   wallLinkDelegate(collider, initParams), ioletLinkDelegate(collider, initParams)
           {
@@ -231,7 +231,7 @@ namespace hemelb
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
               geometry::Site<geometry::FieldData> site = latDat.GetSite(siteIndex);
-              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site);
+              HydroVars<typename CollisionType::CKernel> hydroVars(site);
 
               ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
               hydroVars.tau = lbmParams->GetTau();

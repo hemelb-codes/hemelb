@@ -9,7 +9,7 @@
 #include "lb/lattices/D3Q15.h"
 #include "lb/kernels/momentBasis/basis_helpers.h"
 
-namespace hemelb::lb::kernels::momentBasis
+namespace hemelb::lb
 {
     /**
      *  Class implementing the Multiple Relaxation Time (MRT) moment basis presented in in d'Humieres et al. (2002)

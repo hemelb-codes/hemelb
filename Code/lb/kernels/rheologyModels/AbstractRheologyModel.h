@@ -8,18 +8,12 @@
 
 #include "constants.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
     class LbmParameters;
 
-    namespace kernels
-    {
-      struct InitParams;
+    struct InitParams;
 
-      namespace rheologyModels
-      {
 	// To satisfy the RheologyModel concept, a class must:
 	//
 	// - inherit from this with CRTP (i.e. `class R : public AbstractRheologyModel<R>`)
@@ -66,9 +60,5 @@ namespace hemelb
             AbstractRheologyModel() = default;
         };
 
-      }
-    }
-  }
 }
-
 #endif /* HEMELB_LB_KERNELS_RHEOLOGYMODELS_ABSTRACTRHEOLOGYMODEL_H */

@@ -11,18 +11,18 @@
 #include "lb/LbmParameters.h"
 #include "util/utilityFunctions.h"
 
-namespace hemelb::lb::kernels
+namespace hemelb::lb
 {
     /**
-     * Entropic: an incomplete kernel implementation that includes some common elements for implementations of
+     * EntropicBase: an incomplete kernel implementation that includes some common elements for implementations of
      * entropic LB.
      */
     template<lattice_type LatticeType>
-    class Entropic
+    class EntropicBase
     {
     public:
         /**
-           * Performs the Entropic LB collision (using alpha as a relaxation parameter)
+           * Performs the entropic LB collision (using alpha as a relaxation parameter)
            * @param lbmParams
            * @param hydroVars
            */
@@ -48,7 +48,7 @@ namespace hemelb::lb::kernels
          * Constructs the alpha array.
          * @param initParams
          */
-        Entropic(InitParams* initParams) : oldAlpha(initParams->latDat->GetLocalFluidSiteCount())
+        EntropicBase(InitParams* initParams) : oldAlpha(initParams->latDat->GetLocalFluidSiteCount())
         {
             // Initialises the value of alpha to 2.0 for every site.
             std::fill(oldAlpha.begin(), oldAlpha.end(), 2.0);

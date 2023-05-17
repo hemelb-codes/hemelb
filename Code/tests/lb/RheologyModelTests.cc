@@ -13,7 +13,7 @@ namespace hemelb
 {
   namespace tests
   {
-    using namespace lb::kernels::rheologyModels;
+    using namespace lb;
 
     // Tests for the functionality of the non-Newtonian rheology models.
     //
@@ -43,7 +43,7 @@ namespace hemelb
       const std::vector<distribn_t> shearRates{1e-4, 1e-2, 1, 1e2, 1e4};
       // Ensure we are using coarsegrained blood parameters
       const lb::LbmParameters lbp{1.0, 1.0, DEFAULT_FLUID_DENSITY_Kg_per_m3, 0.004};
-      lb::kernels::InitParams ip;
+      lb::InitParams ip;
       ip.lbmParams = &lbp;
 
       SECTION("CarreauYasuda") {

@@ -11,7 +11,7 @@
 #include "util/utilityFunctions.h"
 #include "lb/kernels/BaseKernel.h"
 
-namespace hemelb::lb::kernels
+namespace hemelb::lb
 {
     /**
      * TRT: This class implements a two-relaxation time kernel.

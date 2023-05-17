@@ -8,25 +8,16 @@
 #include "lb/LbmParameters.h"
 #include "util/utilityFunctions.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace kernels
-    {
-      namespace rheologyModels
-      {
-	TruncatedPowerLawRheologyModel::TruncatedPowerLawRheologyModel(InitParams& initParams) : M_CONSTANT(initParams.lbmParams->GetEta()) {
-	}
-        double TruncatedPowerLawRheologyModel::CalculateViscosityForShearRate(
-            const double &iShearRate, const distribn_t &iDensity) const
-        {
-          // Don't allow shear rates outside [GAMMA_ZERO, GAMMA_INF]
-          double gamma = util::NumericalFunctions::enforceBounds(iShearRate, GAMMA_ZERO, GAMMA_INF);
-          return M_CONSTANT * pow(gamma, N_CONSTANT - 1);
-        }
-      }
+    TruncatedPowerLawRheologyModel::TruncatedPowerLawRheologyModel(InitParams& initParams) : M_CONSTANT(initParams.lbmParams->GetEta()) {
     }
-  }
+    double TruncatedPowerLawRheologyModel::CalculateViscosityForShearRate(
+            const double &iShearRate, const distribn_t &iDensity) const
+    {
+        // Don't allow shear rates outside [GAMMA_ZERO, GAMMA_INF]
+        double gamma = util::NumericalFunctions::enforceBounds(iShearRate, GAMMA_ZERO, GAMMA_INF);
+        return M_CONSTANT * pow(gamma, N_CONSTANT - 1);
+    }
 }
 

@@ -21,7 +21,7 @@ namespace hemelb::tests
     class GuoForcingTests : public fourcube
     {
         using LatticeType = lb::D3Q19;
-        using Kernel = lb::kernels::GuoForcingLBGK<LatticeType>;
+        using Kernel = lb::GuoForcingLBGK<LatticeType>;
         using HydroVars = Kernel::KHydroVars;
         //using Lattice = lb::Lattice<LatticeType>;
 

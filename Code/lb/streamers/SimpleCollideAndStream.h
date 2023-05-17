@@ -30,7 +30,7 @@ namespace hemelb
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
         public:
-          SimpleCollideAndStream(kernels::InitParams& initParams) :
+          SimpleCollideAndStream(InitParams& initParams) :
               collider(initParams), bulkLinkDelegate(collider, initParams)
           {
 
@@ -45,7 +45,7 @@ namespace hemelb
             {
               geometry::Site<geometry::FieldData> site = latDat.GetSite(siteIndex);
 
-              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site);
+              HydroVars<typename CollisionType::CKernel> hydroVars(site);
 
               ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
               hydroVars.tau = lbmParams->GetTau();

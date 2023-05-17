@@ -6,14 +6,8 @@
 #include "lb/kernels/rheologyModels/CarreauYasudaRheologyModel.h"
 #include <cmath>
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace kernels
-    {
-      namespace rheologyModels
-      {
 
         template<class CYFIT>
         double CarreauYasudaRheologyModel<CYFIT>::CalculateViscosityForShearRate(
@@ -29,7 +23,4 @@ namespace hemelb
 
         template class CarreauYasudaRheologyModel<HumanCYFit>;
         template class CarreauYasudaRheologyModel<MouseCYFit>;
-      }
-    }
-  }
 }

@@ -28,7 +28,7 @@ namespace hemelb::lb::streamers
         using LatticeType = typename CollisionType::CKernel::LatticeType;
         using const_span = typename LatticeType::const_span;
 
-        GuoZhengShiDelegate(CollisionType& delegatorCollider, kernels::InitParams& initParams) :
+        GuoZhengShiDelegate(CollisionType& delegatorCollider, InitParams& initParams) :
               collider(delegatorCollider),
                   neighbouringLatticeData(initParams.latDat->GetNeighbouringData()),
                   bValues(initParams.boundaryObject), bbDelegate(delegatorCollider, initParams)
@@ -124,7 +124,7 @@ namespace hemelb::lb::streamers
           inline void StreamLink(const LbmParameters* lbmParams,
                                  geometry::FieldData& latDat,
                                  const geometry::Site<geometry::FieldData>& site,
-                                 kernels::HydroVars<typename CollisionType::CKernel>& hydroVars,
+                                 HydroVars<typename CollisionType::CKernel>& hydroVars,
                                  const Direction& iPrime)
           {
             Direction i = LatticeType::INVERSEDIRECTIONS[iPrime];
@@ -139,8 +139,8 @@ namespace hemelb::lb::streamers
             // between the nearest fluid site and the solid site inside the wall.
             // Then 0 = velocityWall * wallDistance + velocityFluid * (1 - wallDistance)
             // Hence velocityWall = velocityFluid * (1 - 1/wallDistance)
-            kernels::FVector<LatticeType> fWall;
-            kernels::HydroVars<typename CollisionType::CKernel> hydroVarsWall(fWall);
+            FVector<LatticeType> fWall;
+            HydroVars<typename CollisionType::CKernel> hydroVarsWall(fWall);
 
             hydroVarsWall.density = hydroVars.density;
             hydroVarsWall.tau = hydroVars.tau;

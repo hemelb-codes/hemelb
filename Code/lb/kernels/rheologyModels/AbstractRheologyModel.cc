@@ -7,14 +7,8 @@
 #include "lb/kernels/rheologyModels/RheologyModels.h"
 #include "lb/LbmParameters.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace kernels
-    {
-      namespace rheologyModels
-      {
         template<class tRheologyImplementation>
         double AbstractRheologyModel<tRheologyImplementation>::CalculateTauForShearRate(
             const double &iShearRate, const distribn_t &iDensity, const LbmParameters& lbParams) const
@@ -33,7 +27,4 @@ namespace hemelb
         template class AbstractRheologyModel<TruncatedPowerLawRheologyModel>;
         template class AbstractRheologyModel<CarreauYasudaRheologyModel<HumanCYFit> >;
         template class AbstractRheologyModel<CarreauYasudaRheologyModel<MouseCYFit> >;
-      }
-    }
-  }
 }

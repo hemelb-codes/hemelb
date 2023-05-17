@@ -20,7 +20,7 @@ namespace hemelb
       template<typename CollisionImpl>
       struct NoIoletLink : BaseStreamerDelegate<CollisionImpl>
       {
-          NoIoletLink(CollisionImpl& collider, kernels::InitParams& initParams)
+          NoIoletLink(CollisionImpl& collider, InitParams& initParams)
           {
           }
       };

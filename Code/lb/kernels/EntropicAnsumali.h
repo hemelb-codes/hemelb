@@ -13,7 +13,7 @@
 #include "lb/HFunction.h"
 #include "util/utilityFunctions.h"
 
-namespace hemelb::lb::kernels
+namespace hemelb::lb
 {
     // We have to declare this up here in order for it to be used as a template parameter in the
     // following declaration. Moving the template specialisation to the bottom of the file would
@@ -29,12 +29,12 @@ namespace hemelb::lb::kernels
     };
 
     /**
-     * Entropic: This class implements the entropic kernel as according to Anusmali et al, a modification to the standard
+     * EntropicBase: This class implements the entropic kernel as according to Anusmali et al, a modification to the standard
      * LBGK kernel which ensures the increase of entropy.
      */
     template<lattice_type LatticeType>
     class EntropicAnsumali : public BaseKernel<EntropicAnsumali<LatticeType>, LatticeType>,
-                             public Entropic<LatticeType>
+                             public EntropicBase<LatticeType>
     {
     public:
         /**
@@ -42,7 +42,7 @@ namespace hemelb::lb::kernels
          * @param initParams
          */
         EntropicAnsumali(InitParams& initParams) :
-                Entropic<LatticeType>(&initParams)
+                EntropicBase<LatticeType>(&initParams)
         {
         }
 

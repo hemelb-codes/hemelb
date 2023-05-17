@@ -147,7 +147,7 @@ namespace hemelb::tests::LbTestsHelper
     void CompareHydros(const distribn_t expectedDensity,
                        const util::Vector3D<distribn_t>& expectedMomentum,
                        const_span<typename Kernel::LatticeType> expectedFEq,
-                       lb::kernels::HydroVars<Kernel> &hydroVars,
+                       lb::HydroVars<Kernel> &hydroVars,
                        distribn_t allowedError)
     {
         // Compare density

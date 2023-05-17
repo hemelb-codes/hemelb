@@ -11,10 +11,8 @@
 #include "lb/kernels/BaseKernel.h"
 #include "geometry/Domain.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
     namespace kernels
     {
       template<typename>
@@ -42,14 +40,14 @@ namespace hemelb
         public:
           typedef KernelImpl CKernel;
 
-          inline void CalculatePreCollision(kernels::HydroVars<KernelImpl>& hydroVars,
+          inline void CalculatePreCollision(HydroVars<KernelImpl>& hydroVars,
                                             const geometry::Site<geometry::FieldData>& site)
           {
             static_cast<CollisionImpl*>(this)->DoCalculatePreCollision(hydroVars, site);
           }
 
           inline void Collide(const LbmParameters* lbmParams,
-                              kernels::HydroVars<KernelImpl>& hydroVars)
+                              HydroVars<KernelImpl>& hydroVars)
           {
             static_cast<CollisionImpl*>(this)->DoCollide(lbmParams, hydroVars);
           }
@@ -58,6 +56,5 @@ namespace hemelb
 
     }
   }
-}
 
 #endif /* HEMELB_LB_COLLISIONS_BASECOLLISION_H */

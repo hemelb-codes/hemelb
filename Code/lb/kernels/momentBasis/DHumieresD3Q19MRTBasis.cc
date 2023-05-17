@@ -5,7 +5,7 @@
 
 #include "lb/kernels/momentBasis/DHumieresD3Q19MRTBasis.h"
 
-namespace hemelb::lb::kernels::momentBasis
+namespace hemelb::lb
 {
 
     auto DHumieresD3Q19MRTBasis::SetUpCollisionMatrix(distribn_t tau) -> std::array <distribn_t, NUMMOMENTS>

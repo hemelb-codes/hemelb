@@ -38,7 +38,7 @@ namespace hemelb::lb
     }
 
     template<class TRAITS>
-    void LBM<TRAITS>::InitInitParamsSiteRanges(kernels::InitParams& initParams, unsigned& state)
+    void LBM<TRAITS>::InitInitParamsSiteRanges(InitParams& initParams, unsigned& state)
     {
       auto& dom = mLatDat->GetDomain();
       initParams.siteRanges.resize(2);
@@ -56,7 +56,7 @@ namespace hemelb::lb
     }
 
     template<class TRAITS>
-    void LBM<TRAITS>::AdvanceInitParamsSiteRanges(kernels::InitParams& initParams, unsigned& state)
+    void LBM<TRAITS>::AdvanceInitParamsSiteRanges(InitParams& initParams, unsigned& state)
     {
       auto& dom = mLatDat->GetDomain();
       initParams.siteRanges[0].first += dom.GetMidDomainCollisionCount(state);
@@ -84,7 +84,7 @@ namespace hemelb::lb
       // It'd be nice to do this with something like
       // MidFluidCollision = new ConvergenceCheckingWrapper(new WhateverMidFluidCollision());
 
-      kernels::InitParams initParams = kernels::InitParams();
+      auto initParams = InitParams();
       initParams.latDat = &mLatDat->GetDomain();
       initParams.lbmParams = &mParams;
       initParams.neighbouringDataManager = neighbouringDataManager;

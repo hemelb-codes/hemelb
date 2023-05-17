@@ -9,7 +9,7 @@
 #include <array>
 #include <numeric>
 
-namespace hemelb::lb::kernels::momentBasis {
+namespace hemelb::lb {
 
     template<typename T, std::size_t NUM_MOMS, std::size_t NUM_VELS>
     struct moment_traits {

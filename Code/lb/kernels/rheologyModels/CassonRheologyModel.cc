@@ -7,24 +7,15 @@
 #include "util/utilityFunctions.h"
 #include <cmath>
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace kernels
+    double CassonRheologyModel::CalculateViscosityForShearRate(const double &iShearRate,
+                                                               const distribn_t &iDensity) const
     {
-      namespace rheologyModels
-      {
-        double CassonRheologyModel::CalculateViscosityForShearRate(const double &iShearRate,
-                                                                   const distribn_t &iDensity) const
-        {
-          double k0_k1_gamma = K0 + K1 * std::sqrt(iShearRate);
-          double eta = (k0_k1_gamma * k0_k1_gamma) / iShearRate;
+        double k0_k1_gamma = K0 + K1 * std::sqrt(iShearRate);
+        double eta = (k0_k1_gamma * k0_k1_gamma) / iShearRate;
 
-          // In the Casson rheology model, viscosity tends to infinity as shear rate goes to zero. Bound it.
-	  return util::NumericalFunctions::min(eta, CASSON_MAX_VISCOSITY);
-        }
-      }
+        // In the Casson rheology model, viscosity tends to infinity as shear rate goes to zero. Bound it.
+        return util::NumericalFunctions::min(eta, CASSON_MAX_VISCOSITY);
     }
-  }
 }

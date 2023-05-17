@@ -94,7 +94,7 @@ namespace hemelb::lb::streamers
             *this = rhs;
         }
 
-        VirtualSite(kernels::InitParams& initParams, VSExtra<LatticeType>& extra,
+        VirtualSite(InitParams& initParams, VSExtra<LatticeType>& extra,
                     const LatticeVector& location) :
                 sumQiSq(0.)
         {

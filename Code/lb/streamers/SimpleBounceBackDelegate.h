@@ -29,14 +29,14 @@ namespace hemelb
           }
 
           SimpleBounceBackDelegate(CollisionType& delegatorCollider,
-                                   kernels::InitParams& initParams)
+                                   InitParams& initParams)
           {
           }
 
           inline void StreamLink(const LbmParameters* lbmParams,
                                  geometry::FieldData& latticeData,
                                  const geometry::Site<geometry::Domain>& site,
-                                 kernels::HydroVars<typename CollisionType::CKernel>& hydroVars,
+                                 HydroVars<typename CollisionType::CKernel>& hydroVars,
                                  const Direction& direction)
           {
             // Propagate the outgoing post-collisional f into the opposite direction.

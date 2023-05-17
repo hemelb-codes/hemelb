@@ -11,7 +11,7 @@
 #include "lb/kernels/Entropic.h"
 #include "lb/kernels/BaseKernel.h"
 
-namespace hemelb::lb::kernels
+namespace hemelb::lb
 {
     // We have to declare this up here in order for it to be used as a template parameter in the
     // following declaration. Moving the template specialisation to the bottom of the file would
@@ -31,7 +31,7 @@ namespace hemelb::lb::kernels
      */
     template<lattice_type LatticeType>
     class EntropicChik : public BaseKernel<EntropicChik<LatticeType>, LatticeType>,
-                         public Entropic<LatticeType>
+                         public EntropicBase<LatticeType>
     {
     public:
         /**
@@ -39,7 +39,7 @@ namespace hemelb::lb::kernels
          * @param initParams
          */
         EntropicChik(InitParams& initParams) :
-                Entropic<LatticeType>(&initParams)
+                EntropicBase<LatticeType>(&initParams)
         {
         }
 

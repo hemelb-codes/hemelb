@@ -28,7 +28,7 @@ namespace hemelb
        *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
        *  - PostStep(const site_t, const site_t, const LbmParameters*,
        *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
-       *  - Reset(kernels::InitParams* init)
+       *  - Reset(InitParams* init)
        *
        * The following must be implemented by concrete streamers (which derive from this class
        * using the CRTP).
@@ -38,7 +38,7 @@ namespace hemelb
        *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
        *  - DoPostStep(const site_t, const site_t, const LbmParameters*,
        *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
-       *  - DoReset(kernels::InitParams* init)
+       *  - DoReset(InitParams* init)
        *
        * The design is to for the streamers to be pretty dumb and for them to
        * basically just control iteration over the sites and directions while
@@ -81,7 +81,7 @@ namespace hemelb
           template<class LatticeType>
           inline static void UpdateMinsAndMaxes(
               const geometry::Site<geometry::Domain>& site,
-              const kernels::HydroVarsBase<LatticeType>& hydroVars, const LbmParameters* lbmParams,
+              const HydroVarsBase<LatticeType>& hydroVars, const LbmParameters* lbmParams,
               lb::MacroscopicPropertyCache& propertyCache)
           {
             if (propertyCache.densityCache.RequiresRefresh())

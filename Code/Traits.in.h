@@ -28,7 +28,7 @@ namespace hemelb
     struct Traits
     {
         using Lattice = LATTICE;
-        using Kernel = typename KERNEL<Lattice>::Type;
+        using Kernel = KERNEL<Lattice>;
         using Collision = COLLISION<Kernel>;
         using Streamer = STREAMER<Collision>;
         using WallBoundary = typename WALL_BOUNDARY<Collision>::Type;

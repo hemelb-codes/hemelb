@@ -13,14 +13,8 @@
 // inheritance or similar) because CalculateViscosityForShearRate is performance
 // critical and we want as much arithmetic done at compile time as possible.
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace kernels
-    {
-      namespace rheologyModels
-      {
 
         template<class CYFIT>
         class CarreauYasudaRheologyModel : public AbstractRheologyModel<
@@ -60,9 +54,6 @@ namespace hemelb
 
         using CarreauYasudaRheologyModelHumanFit = CarreauYasudaRheologyModel<HumanCYFit>;
         using CarreauYasudaRheologyModelMouseFit = CarreauYasudaRheologyModel<MouseCYFit>;
-      }
-    }
-  }
 }
 
 #endif /* HEMELB_LB_KERNELS_RHEOLOGYMODELS_CARREAUYASUDARHEOLOGYMODEL_H */

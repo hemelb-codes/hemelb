@@ -36,7 +36,7 @@ namespace hemelb::redblood
       {
       };
       template<class LATTICE>
-      struct HasForce<lb::kernels::GuoForcingLBGK<LATTICE> > : public std::true_type
+      struct HasForce<lb::GuoForcingLBGK<LATTICE> > : public std::true_type
       {
       };
 

@@ -6,7 +6,7 @@
 #include <cassert>
 #include "lb/kernels/momentBasis/DHumieresD3Q15MRTBasis.h"
 
-namespace hemelb::lb::kernels::momentBasis
+namespace hemelb::lb
 {
     auto DHumieresD3Q15MRTBasis::SetUpCollisionMatrix(distribn_t tau) -> std::array<distribn_t, NUMMOMENTS>
     {

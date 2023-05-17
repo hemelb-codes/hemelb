@@ -54,7 +54,7 @@ namespace hemelb::lb::streamers
           VSiteByLocalIdxMultiMap vsByLocalIdx;
 
         public:
-          VirtualSiteIolet(kernels::InitParams& initParams) :
+          VirtualSiteIolet(InitParams& initParams) :
               collider(initParams), bulkLinkDelegate(collider, initParams),
                   wallLinkDelegate(collider, initParams), bValues(initParams.boundaryObject),
                   neighbouringLatticeData(initParams.latDat->GetNeighbouringData())
@@ -141,7 +141,7 @@ namespace hemelb::lb::streamers
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
               auto&& site = latDat.GetSite(siteIndex);
-              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site);
+              HydroVars<typename CollisionType::CKernel> hydroVars(site);
 
               ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
               hydroVars.tau = lbmParams->GetTau();

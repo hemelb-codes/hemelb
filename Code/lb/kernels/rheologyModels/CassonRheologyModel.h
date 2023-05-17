@@ -8,23 +8,17 @@
 
 #include "lb/kernels/rheologyModels/AbstractRheologyModel.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace kernels
-    {
-      namespace rheologyModels
-      {
-        // Casson model constants
-        static const double K0 = 0.1937; // Pa^{1/2}
-        static const double K1 = 0.055; // (Pa*s)^{1/2}
-
-        static const double CASSON_MAX_VISCOSITY = 0.16; // Pa*s
-
         class CassonRheologyModel : public AbstractRheologyModel<CassonRheologyModel>
         {
           public:
+            // Casson model constants
+            static constexpr double K0 = 0.1937; // Pa^{1/2}
+            static constexpr double K1 = 0.055; // (Pa*s)^{1/2}
+
+            static constexpr double CASSON_MAX_VISCOSITY = 0.16; // Pa*s
+
             // Satisfy RheologyModel concept
             inline CassonRheologyModel(const InitParams&) {}
             /*
@@ -42,9 +36,6 @@ namespace hemelb
             double CalculateViscosityForShearRate(const double &iShearRate,
 						  const distribn_t &iDensity) const;
         };
-      }
-    }
-  }
 }
 
 #endif /* HEMELB_LB_KERNELS_RHEOLOGYMODELS_CASSONRHEOLOGYMODEL_H */

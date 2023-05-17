@@ -31,13 +31,13 @@ namespace hemelb::tests
       // Initialise the fOld and the hydro vars.
       distribn_t fOld[lb::D3Q15::NUMVECTORS];
       LbTestsHelper::InitialiseAnisotropicTestData<lb::D3Q15>(0, fOld);
-      lb::kernels::HydroVars<lb::kernels::LBGK<lb::D3Q15> > hydroVars(fOld);
+      lb::HydroVars<lb::LBGK<lb::D3Q15> > hydroVars(fOld);
 
       SECTION ("TestNonZeroVelocityEquilibriumFixedDensity") {
 	lb::iolets::BoundaryValues inletBoundary = BuildIolets(geometry::INLET_TYPE);
 	initParams.boundaryObject = &inletBoundary;
 
-	lb::collisions::NonZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK<lb::D3Q15> >
+	lb::collisions::NonZeroVelocityEquilibriumFixedDensity<lb::LBGK<lb::D3Q15> >
 	  nonZeroVFixedDensityILet(initParams);
 
 	// Test the pre-collision step, which should calculate the correct
@@ -83,7 +83,7 @@ namespace hemelb::tests
 	lb::iolets::BoundaryValues outletBoundary = BuildIolets(geometry::OUTLET_TYPE);
 	initParams.boundaryObject = &outletBoundary;
 
-	lb::collisions::ZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK<lb::D3Q15> >
+	lb::collisions::ZeroVelocityEquilibriumFixedDensity<lb::LBGK<lb::D3Q15> >
 	  zeroVFixedDensityOLet(initParams);
 
 	// Test the pre-collision step, which should calculate the
@@ -119,7 +119,7 @@ namespace hemelb::tests
       }
 
       SECTION("TestZeroVelocityEquilibrium") {
-	lb::collisions::ZeroVelocityEquilibrium<lb::kernels::LBGK<lb::D3Q15> > zeroVEqm(initParams);
+	lb::collisions::ZeroVelocityEquilibrium<lb::LBGK<lb::D3Q15> > zeroVEqm(initParams);
 
 	// Test the pre-collision step, which should calculate the
 	// correct post-collisional density, velocity and equilibrium
@@ -157,7 +157,7 @@ namespace hemelb::tests
       }
 
       SECTION("TestNormal") {
-	lb::collisions::Normal<lb::kernels::LBGK<lb::D3Q15> > normal(initParams);
+	lb::collisions::Normal<lb::LBGK<lb::D3Q15> > normal(initParams);
 
 	// Test the pre-collision step, which should calculate the
 	// correct post-collisional density, velocity and equilibrium
@@ -185,9 +185,9 @@ namespace hemelb::tests
 	// Next, compare the collision function itself. The result
 	// should be the equilibrium distribution.  Make a copy for
 	// the second collision to compare against.
-	lb::kernels::HydroVars<lb::kernels::LBGK<lb::D3Q15> > hydroVarsCopy(hydroVars);
+	lb::HydroVars<lb::LBGK<lb::D3Q15> > hydroVarsCopy(hydroVars);
 
-	lb::kernels::LBGK<lb::D3Q15> lbgk(initParams);
+	lb::LBGK<lb::D3Q15> lbgk(initParams);
 	lbgk.Collide(&lbmParams, hydroVars);
 	normal.Collide(&lbmParams, hydroVarsCopy);
 

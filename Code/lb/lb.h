@@ -87,8 +87,8 @@ namespace hemelb::lb
 
         void InitCollisions();
         // The following function pair simplify initialising the site ranges for each collider object.
-        void InitInitParamsSiteRanges(kernels::InitParams& initParams, unsigned& state);
-        void AdvanceInitParamsSiteRanges(kernels::InitParams& initParams, unsigned& state);
+        void InitInitParamsSiteRanges(InitParams& initParams, unsigned& state);
+        void AdvanceInitParamsSiteRanges(InitParams& initParams, unsigned& state);
         /**
          * Ensure that the BoundaryValues objects have all necessary fields populated.
          */

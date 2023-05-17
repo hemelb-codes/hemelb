@@ -11,13 +11,10 @@
 #include <cassert>
 #include <cmath>
 
-namespace hemelb::lb::kernels
+namespace hemelb::lb
 {
-    namespace rheologyModels
-    {
-        template<class tRheologyImplementation>
-        class AbstractRheologyModel;
-    }
+    template<class tRheologyImplementation>
+    class AbstractRheologyModel;
 
     namespace detail
     {
@@ -43,7 +40,7 @@ namespace hemelb::lb::kernels
 	// One might like to check these in AbstractRheologyModel, but
 	// the derived class is incomplete at that point so can't
 	// check its traits there.
-	static_assert(std::is_base_of<rheologyModels::AbstractRheologyModel<tRheologyModel>, tRheologyModel>::value,
+	static_assert(std::is_base_of<AbstractRheologyModel<tRheologyModel>, tRheologyModel>::value,
 		      "tRheologyModel must inherit AbstractRheologyModel via CRTP");
 	static_assert(std::is_constructible<tRheologyModel, const InitParams>::value,
 		      "tRheologyModel must be constructable from InitParams");

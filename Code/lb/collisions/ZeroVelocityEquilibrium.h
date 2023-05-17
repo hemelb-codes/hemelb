@@ -26,13 +26,13 @@ namespace hemelb
         public:
           typedef KernelType CKernel;
 
-          ZeroVelocityEquilibrium(kernels::InitParams& initParams) :
+          ZeroVelocityEquilibrium(InitParams& initParams) :
               BaseCollision<ZeroVelocityEquilibrium<KernelType>, KernelType>(), kernel(initParams)
           {
 
           }
 
-          inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars,
+          inline void DoCalculatePreCollision(HydroVars<KernelType>& hydroVars,
                                               const geometry::Site<geometry::Domain>& site)
           {
             hydroVars.density = 0.0;
@@ -48,7 +48,7 @@ namespace hemelb
           }
 
           inline void DoCollide(const LbmParameters* lbmParams,
-                                kernels::HydroVars<KernelType>& iHydroVars)
+                                HydroVars<KernelType>& iHydroVars)
           {
             for (Direction direction = 0; direction < CKernel::LatticeType::NUMVECTORS; ++direction)
             {

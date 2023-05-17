@@ -28,7 +28,7 @@ namespace hemelb::tests
     
     TEST_CASE_METHOD(public helpers::FourCubeBasedTestFixture<>, "StreamerTests") {
       using LATTICE = lb::D3Q15;
-      using KERNEL = lb::kernels::LBGK<LATTICE>;
+      using KERNEL = lb::LBGK<LATTICE>;
       using COLLISION = lb::collisions::Normal<KERNEL>;
       constexpr auto NUMVECTORS = LATTICE::NUMVECTORS;
       auto propertyCache = std::make_unique<lb::MacroscopicPropertyCache>(*simState, *dom);
@@ -72,7 +72,7 @@ namespace hemelb::tests
 								    streamerFOld);
 
 	      // Calculate what the value streamed to site streamedToSite should be.
-	      lb::kernels::HydroVars<KERNEL> streamerHydroVars(streamerFOld);
+	      lb::HydroVars<KERNEL> streamerHydroVars(streamerFOld);
 	      normalCollision->CalculatePreCollision(streamerHydroVars, streamedSite);
 
 	      normalCollision->Collide(&lbmParams, streamerHydroVars);
@@ -128,7 +128,7 @@ namespace hemelb::tests
 								      streamerFOld);
 
 		// Calculate what the value streamed to site streamedToSite should be.
-		lb::kernels::HydroVars<KERNEL> streamerHydroVars(streamerFOld);
+		lb::HydroVars<KERNEL> streamerHydroVars(streamerFOld);
 		normalCollision->CalculatePreCollision(streamerHydroVars, streamerSite);
 
 		normalCollision->Collide(&lbmParams, streamerHydroVars);
@@ -162,7 +162,7 @@ namespace hemelb::tests
 		LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(streamedToSite,
 								      streamedToSiteFOld);
 
-		lb::kernels::HydroVars<KERNEL> hydroVars(streamedToSiteFOld);
+		lb::HydroVars<KERNEL> hydroVars(streamedToSiteFOld);
 
 		normalCollision->CalculatePreCollision(hydroVars, streamedSite);
 
@@ -184,7 +184,7 @@ namespace hemelb::tests
 		  LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(awayFromWallIndex,
 									awayFromWallFOld);
 
-		  lb::kernels::HydroVars<KERNEL> awayFromWallsHydroVars(awayFromWallFOld);
+		  lb::HydroVars<KERNEL> awayFromWallsHydroVars(awayFromWallFOld);
 
 		  normalCollision->CalculatePreCollision(awayFromWallsHydroVars, awayFromWallSite);
 
@@ -294,7 +294,7 @@ namespace hemelb::tests
 								    streamerFOld);
 
 	      // Calculate what the value streamed to site streamedToSite should be.
-	      lb::kernels::HydroVars<KERNEL> streamerHydroVars(streamerFOld);
+	      lb::HydroVars<KERNEL> streamerHydroVars(streamerFOld);
 	      normalCollision->CalculatePreCollision(streamerHydroVars, streamedSite);
 
 	      normalCollision->Collide(&lbmParams, streamerHydroVars);
@@ -314,7 +314,7 @@ namespace hemelb::tests
 	      distribn_t streamerToSiteFOld[NUMVECTORS];
 	      LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(streamedToSite,
 								    streamerToSiteFOld);
-	      lb::kernels::HydroVars<KERNEL> hydroVars(streamerToSiteFOld);
+	      lb::HydroVars<KERNEL> hydroVars(streamerToSiteFOld);
 	      normalCollision->CalculatePreCollision(hydroVars, streamedSite);
 
 	      // Simulate post-collision using the collision operator.
@@ -369,7 +369,7 @@ namespace hemelb::tests
 	  distribn_t streamerFOld[NUMVECTORS];
 	  LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(chosenSite,
 								streamerFOld);
-	  lb::kernels::HydroVars<KERNEL> streamerHydroVars(streamerFOld);
+	  lb::HydroVars<KERNEL> streamerHydroVars(streamerFOld);
 	  normalCollision->CalculatePreCollision(streamerHydroVars, streamer);
 	  normalCollision->Collide(&lbmParams, streamerHydroVars);
 
@@ -399,7 +399,7 @@ namespace hemelb::tests
 		  distribn_t nextSiteOutFOld[NUMVECTORS];
 		  LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(nextSiteAwayFromWall,
 									nextSiteOutFOld);
-		  lb::kernels::HydroVars<KERNEL> nextSiteOutHydroVars(nextSiteOutFOld);
+		  lb::HydroVars<KERNEL> nextSiteOutHydroVars(nextSiteOutFOld);
 		  normalCollision->CalculatePreCollision(nextSiteOutHydroVars, nextSiteAway);
 
 		  LatticeVelocity velocityEstimate2 = nextSiteOutHydroVars.momentum
@@ -583,7 +583,7 @@ namespace hemelb::tests
 								    streamerFOld);
 
 	      // Calculate what the value streamed to site streamedToSite should be.
-	      lb::kernels::HydroVars<KERNEL> streamerHydroVars(streamerFOld);
+	      lb::HydroVars<KERNEL> streamerHydroVars(streamerFOld);
 	      normalCollision->CalculatePreCollision(streamerHydroVars, streamedSite);
 
 	      normalCollision->Collide(&lbmParams, streamerHydroVars);
@@ -602,7 +602,7 @@ namespace hemelb::tests
 	      // Initialise streamedToSiteFOld with the original data
 	      distribn_t streamerToSiteFOld[NUMVECTORS];
 	      LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(streamedToSite, streamerToSiteFOld);
-	      lb::kernels::HydroVars<KERNEL> hydroVars(streamerToSiteFOld);
+	      lb::HydroVars<KERNEL> hydroVars(streamerToSiteFOld);
 	      normalCollision->CalculatePreCollision(hydroVars, streamedSite);
 
 	      // Simulate post-collision using the collision operator.
@@ -664,7 +664,7 @@ namespace hemelb::tests
 	    LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(chosenSite,
 								  streamerFOld);
 
-	    lb::kernels::HydroVars<KERNEL> streamerHydroVars(streamerFOld);
+	    lb::HydroVars<KERNEL> streamerHydroVars(streamerFOld);
 	    normalCollision->CalculatePreCollision(streamerHydroVars, streamer);
 	    normalCollision->Collide(&lbmParams, streamerHydroVars);
 
@@ -764,7 +764,7 @@ namespace hemelb::tests
 	    LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(chosenSite,
 								  streamerFOld);
 	    
-	    lb::kernels::HydroVars<KERNEL> streamerHydroVars(streamerFOld);
+	    lb::HydroVars<KERNEL> streamerHydroVars(streamerFOld);
 	    normalCollision->CalculatePreCollision(streamerHydroVars, streamer);
 	    normalCollision->Collide(&lbmParams, streamerHydroVars);
 
