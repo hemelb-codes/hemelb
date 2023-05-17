@@ -7,8 +7,8 @@
 #define HEMELB_LB_BUILDSYSTEMINTERFACE_H
 
 #include "lb/kernels/Kernels.h"
-#include "lb/kernels/momentBasis/MomentBases.h"
-#include "lb/kernels/rheologyModels/RheologyModels.h"
+#include "lb/kernels/MomentBases.h"
+#include "lb/kernels/RheologyModels.h"
 #include "lb/collisions/Collisions.h"
 #include "lb/streamers/Streamers.h"
 

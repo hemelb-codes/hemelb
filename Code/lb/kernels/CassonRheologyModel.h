@@ -3,10 +3,10 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_LB_KERNELS_RHEOLOGYMODELS_CASSONRHEOLOGYMODEL_H
-#define HEMELB_LB_KERNELS_RHEOLOGYMODELS_CASSONRHEOLOGYMODEL_H
+#ifndef HEMELB_LB_KERNELS_CASSONRHEOLOGYMODEL_H
+#define HEMELB_LB_KERNELS_CASSONRHEOLOGYMODEL_H
 
-#include "lb/kernels/rheologyModels/AbstractRheologyModel.h"
+#include "lb/kernels/AbstractRheologyModel.h"
 
 namespace hemelb::lb
 {
@@ -38,4 +38,4 @@ namespace hemelb::lb
         };
 }
 
-#endif /* HEMELB_LB_KERNELS_RHEOLOGYMODELS_CASSONRHEOLOGYMODEL_H */
+#endif /* HEMELB_LB_KERNELS_CASSONRHEOLOGYMODEL_H */

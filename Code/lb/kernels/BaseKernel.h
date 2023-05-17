@@ -11,7 +11,7 @@
 #include "lb/concepts.h"
 #include "lb/lattices/Lattice.h"
 #include "lb/iolets/BoundaryValues.h"
-#include "lb/kernels/rheologyModels/RheologyModels.h"
+#include "lb/kernels/RheologyModels.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "geometry/SiteData.h"
 #include "util/Vector3D.h"

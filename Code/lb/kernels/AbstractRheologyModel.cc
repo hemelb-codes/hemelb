@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "lb/kernels/rheologyModels/AbstractRheologyModel.h"
-#include "lb/kernels/rheologyModels/RheologyModels.h"
+#include "lb/kernels/AbstractRheologyModel.h"
+#include "lb/kernels/RheologyModels.h"
 #include "lb/LbmParameters.h"
 
 namespace hemelb::lb

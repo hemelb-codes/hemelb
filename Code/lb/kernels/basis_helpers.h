@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_LB_KERNELS_MOMENTBASIS_BASIS_HELPERS_H
-#define HEMELB_LB_KERNELS_MOMENTBASIS_BASIS_HELPERS_H
+#ifndef HEMELB_LB_KERNELS_BASIS_HELPERS_H
+#define HEMELB_LB_KERNELS_BASIS_HELPERS_H
 
 #include <array>
 #include <numeric>

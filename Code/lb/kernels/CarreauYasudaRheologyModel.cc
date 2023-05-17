@@ -3,7 +3,7 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "lb/kernels/rheologyModels/CarreauYasudaRheologyModel.h"
+#include "lb/kernels/CarreauYasudaRheologyModel.h"
 #include <cmath>
 
 namespace hemelb::lb

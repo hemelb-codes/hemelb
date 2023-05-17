@@ -3,11 +3,11 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_LB_KERNELS_MOMENTBASIS_DHUMIERESD3Q15MRTBASIS_H
-#define HEMELB_LB_KERNELS_MOMENTBASIS_DHUMIERESD3Q15MRTBASIS_H
+#ifndef HEMELB_LB_KERNELS_DHUMIERESD3Q15MRTBASIS_H
+#define HEMELB_LB_KERNELS_DHUMIERESD3Q15MRTBASIS_H
 
 #include "lb/lattices/D3Q15.h"
-#include "lb/kernels/momentBasis/basis_helpers.h"
+#include "lb/kernels/basis_helpers.h"
 
 namespace hemelb::lb
 {
@@ -66,4 +66,4 @@ namespace hemelb::lb
         static std::array<distribn_t, NUMMOMENTS> SetUpCollisionMatrix(distribn_t tau);
     };
 }
-#endif //HEMELB_LB_KERNELS_MOMENTBASIS_DHUMIERESD3Q15MRTBASIS_H
+#endif //HEMELB_LB_KERNELS_DHUMIERESD3Q15MRTBASIS_H

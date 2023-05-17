@@ -3,8 +3,7 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include <cassert>
-#include "lb/kernels/momentBasis/DHumieresD3Q15MRTBasis.h"
+#include "lb/kernels/DHumieresD3Q15MRTBasis.h"
 
 namespace hemelb::lb
 {

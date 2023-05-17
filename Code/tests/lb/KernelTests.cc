@@ -6,9 +6,9 @@
 #include <sstream>
 
 #include "lb/kernels/Kernels.h"
-#include "lb/kernels/rheologyModels/RheologyModels.h"
-#include "lb/kernels/momentBasis/DHumieresD3Q15MRTBasis.h"
-#include "lb/kernels/momentBasis/DHumieresD3Q19MRTBasis.h"
+#include "lb/kernels/RheologyModels.h"
+#include "lb/kernels/DHumieresD3Q15MRTBasis.h"
+#include "lb/kernels/DHumieresD3Q19MRTBasis.h"
 
 #include "tests/lb/LbTestsHelper.h"
 

@@ -5,7 +5,7 @@
 
 
 #include <catch2/catch.hpp>
-#include "lb/kernels/rheologyModels/RheologyModels.h"
+#include "lb/kernels/RheologyModels.h"
 #include "lb/kernels/BaseKernel.h"
 #include "lb/LbmParameters.h"
 

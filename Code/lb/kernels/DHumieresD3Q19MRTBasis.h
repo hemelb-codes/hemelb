@@ -3,11 +3,11 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_LB_KERNELS_MOMENTBASIS_DHUMIERESD3Q19MRTBASIS_H
-#define HEMELB_LB_KERNELS_MOMENTBASIS_DHUMIERESD3Q19MRTBASIS_H
+#ifndef HEMELB_LB_KERNELS_DHUMIERESD3Q19MRTBASIS_H
+#define HEMELB_LB_KERNELS_DHUMIERESD3Q19MRTBASIS_H
 
 #include "lb/lattices/D3Q19.h"
-#include "lb/kernels/momentBasis/basis_helpers.h"
+#include "lb/kernels/basis_helpers.h"
 
 namespace hemelb::lb
 {
@@ -73,4 +73,4 @@ namespace hemelb::lb
     };
 
 }
-#endif //HEMELB_LB_KERNELS_MOMENTBASIS_DHUMIERESD3Q19MRTBASIS_H
+#endif //HEMELB_LB_KERNELS_DHUMIERESD3Q19MRTBASIS_H

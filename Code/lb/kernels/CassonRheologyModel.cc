@@ -3,7 +3,7 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "lb/kernels/rheologyModels/CassonRheologyModel.h"
+#include "lb/kernels/CassonRheologyModel.h"
 #include "util/utilityFunctions.h"
 #include <cmath>
 

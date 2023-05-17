@@ -3,10 +3,10 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_LB_KERNELS_RHEOLOGYMODELS_CARREAUYASUDARHEOLOGYMODEL_H
-#define HEMELB_LB_KERNELS_RHEOLOGYMODELS_CARREAUYASUDARHEOLOGYMODEL_H
+#ifndef HEMELB_LB_KERNELS_CARREAUYASUDARHEOLOGYMODEL_H
+#define HEMELB_LB_KERNELS_CARREAUYASUDARHEOLOGYMODEL_H
 
-#include "lb/kernels/rheologyModels/AbstractRheologyModel.h"
+#include "lb/kernels/AbstractRheologyModel.h"
 
 namespace hemelb::lb
 {
@@ -50,4 +50,4 @@ namespace hemelb::lb
     using CarreauYasudaRheologyModelMouseFit = CarreauYasudaRheologyModel<MouseCYFit>;
 }
 
-#endif /* HEMELB_LB_KERNELS_RHEOLOGYMODELS_CARREAUYASUDARHEOLOGYMODEL_H */
+#endif /* HEMELB_LB_KERNELS_CARREAUYASUDARHEOLOGYMODEL_H */

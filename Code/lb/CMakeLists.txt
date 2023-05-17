@@ -11,9 +11,9 @@ add_library(hemelb_lb OBJECT
   iolets/InOutLetVelocity.cc
   iolets/InOutLetParabolicVelocity.cc iolets/InOutLetWomersleyVelocity.cc iolets/InOutLetFileVelocity.cc
   IncompressibilityChecker.cc
-  kernels/momentBasis/DHumieresD3Q15MRTBasis.cc kernels/momentBasis/DHumieresD3Q19MRTBasis.cc
-  kernels/rheologyModels/AbstractRheologyModel.cc kernels/rheologyModels/CarreauYasudaRheologyModel.cc 
-  kernels/rheologyModels/CassonRheologyModel.cc kernels/rheologyModels/TruncatedPowerLawRheologyModel.cc
+        kernels/DHumieresD3Q15MRTBasis.cc kernels/DHumieresD3Q19MRTBasis.cc
+  kernels/AbstractRheologyModel.cc kernels/CarreauYasudaRheologyModel.cc
+  kernels/CassonRheologyModel.cc kernels/TruncatedPowerLawRheologyModel.cc
   MacroscopicPropertyCache.cc SimulationState.cc StabilityTester.cc
   InitialCondition.cc
   )
