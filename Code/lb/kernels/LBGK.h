@@ -13,63 +13,58 @@
 #include "lb/kernels/BaseKernel.h"
 #include "lb/LbmParameters.h"
 
-namespace hemelb
+namespace hemelb::lb::kernels
 {
-  namespace lb
-  {
-    namespace kernels
+    /**
+     * LBGK: This class implements the LBGK single-relaxation time kernel.
+     */
+    template<lattice_type LatticeType>
+    class LBGK : public BaseKernel<LBGK<LatticeType>, LatticeType>
     {
-      /**
-       * LBGK: This class implements the LBGK single-relaxation time kernel.
-       */
-      template<class LatticeType>
-      class LBGK : public BaseKernel<LBGK<LatticeType>, LatticeType>
-      {
-        public:
-          LBGK(InitParams& initParams)
-          {
-          }
+    public:
+        using Base = BaseKernel<LBGK<LatticeType>, LatticeType>;
+        using typename Base::KHydroVars;
+        using typename Base::LatticeType;
 
-          inline void DoCalculateDensityMomentumFeq(HydroVars<LBGK<LatticeType> >& hydroVars,
-                                                    site_t index)
-          {
+        LBGK(InitParams& initParams)
+        {
+        }
+
+        void DoCalculateDensityMomentumFeq(KHydroVars& hydroVars,
+                                           site_t index)
+        {
             LatticeType::CalculateDensityMomentumFEq(hydroVars.f,
                                                      hydroVars.density,
                                                      hydroVars.momentum,
                                                      hydroVars.velocity,
-                                                     hydroVars.f_eq.f);
+                                                     hydroVars.f_eq);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {
-              hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
+                hydroVars.f_neq[ii] = hydroVars.f[ii] - hydroVars.f_eq[ii];
             }
-          }
+        }
 
-          inline void DoCalculateFeq(HydroVars<LBGK>& hydroVars, site_t index)
-          {
+        void DoCalculateFeq(KHydroVars& hydroVars, site_t index)
+        {
             LatticeType::CalculateFeq(hydroVars.density,
                                       hydroVars.momentum,
-                                      hydroVars.f_eq.f);
+                                      hydroVars.f_eq);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {
-              hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
+                hydroVars.f_neq[ii] = hydroVars.f[ii] - hydroVars.f_eq[ii];
             }
-          }
+        }
 
-          inline void DoCollide(const LbmParameters* const lbmParams, HydroVars<LBGK>& hydroVars)
-          {
+        void DoCollide(const LbmParameters* const lbmParams, KHydroVars& hydroVars)
+        {
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
-              hydroVars.SetFPostCollision(direction,
-                                          hydroVars.f[direction]
-                                              + hydroVars.f_neq.f[direction]
-                                                  * lbmParams->GetOmega());
-          }
-
-      };
-
-    }
-  }
+                hydroVars.SetFPostCollision(direction,
+                                            hydroVars.f[direction]
+                                            + hydroVars.f_neq[direction]
+                                              * lbmParams->GetOmega());
+        }
+    };
 }
-
 #endif /* HEMELB_LB_KERNELS_LBGK_H */

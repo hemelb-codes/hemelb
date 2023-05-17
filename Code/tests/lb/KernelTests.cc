@@ -20,54 +20,61 @@ namespace hemelb::tests
     // lattice-Boltzmann kernels. This includes the functions for
     // calculating hydrodynamic variables and for performing
     // collisions.
-    template <typename T>
+    template <typename KernelT>
     struct CollisionTester : public helpers::FourCubeBasedTestFixture<> {
-      using LATTICE = lb::D3Q15;
-      static constexpr auto NV = LATTICE::NUMVECTORS;
-      using KERNEL = T;
-      using HYDRO = lb::kernels::HydroVars<KERNEL>;
-      using DISTS = distribn_t[NV];
-      using VEC = util::Vector3D<distribn_t>;
-      const distribn_t allowedError = 1e-10;
-      KERNEL kernel;
-      DISTS f_original;
-      CollisionTester() : kernel(initParams) {
-	// Initialise the original f distribution to something asymmetric.
-	LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(0, f_original);
-      }
-      void make_feq(const distribn_t& density, const VEC& momentum, DISTS& feq) const;
-      void make_fpostcol(const distribn_t* feq, DISTS& fpc) const;
-      void do_tests(HYDRO& hydroVars, const distribn_t& expectedDensity, const VEC& expectedMomentum) {
-	DISTS expectedFEq;
-	make_feq(expectedDensity, expectedMomentum, expectedFEq);
+        using LATTICE = lb::D3Q15;
+        static constexpr auto NV = LATTICE::NUMVECTORS;
+        using KERNEL = KernelT;
+        static_assert(std::same_as<typename KERNEL::LatticeType, LATTICE>);
+        using HYDRO = lb::kernels::HydroVars<KERNEL>;
+        using DISTS = std::array<distribn_t, NV>;
+        using VEC = util::Vector3D<distribn_t>;
+        using mut_span = typename LATTICE::mut_span;
+        using const_span = typename LATTICE::const_span;
+        const distribn_t allowedError = 1e-10;
+        KERNEL kernel;
+        DISTS f_original;
 
-	// Now compare the expected and actual values
-	LbTestsHelper::CompareHydros(expectedDensity,
+        CollisionTester() : kernel(initParams) {
+            // Initialise the original f distribution to something asymmetric.
+            LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(0, f_original.data());
+        }
+
+        void make_feq(const distribn_t& density, const VEC& momentum, mut_span feq) const;
+        void make_fpostcol(const_span feq, mut_span fpc) const;
+
+        void do_tests(HYDRO& hydroVars, const distribn_t& expectedDensity, const VEC& expectedMomentum) {
+            DISTS expectedFEq;
+            make_feq(expectedDensity, expectedMomentum, expectedFEq);
+
+            // Now compare the expected and actual values
+            LbTestsHelper::CompareHydros(expectedDensity,
 				     expectedMomentum,
 				     expectedFEq,
 				     hydroVars,
 				     allowedError);
-	// Do the collision and test the result.
-	kernel.DoCollide(&lbmParams, hydroVars);
+            // Do the collision and test the result.
+            kernel.DoCollide(&lbmParams, hydroVars);
 
-	// Get the expected post-collision densities.
-	DISTS expectedPostCollision;
-	make_fpostcol(hydroVars.GetFEq().f, expectedPostCollision);
+            // Get the expected post-collision densities.
+            DISTS expectedPostCollision;
+            make_fpostcol(hydroVars.GetFEq(), expectedPostCollision);
 
-	// Compare.
-	for (unsigned int ii = 0; ii < NV; ++ii) {
-	  REQUIRE(Approx(expectedPostCollision[ii]).margin(allowedError) == hydroVars.GetFPostCollision()[ii]);
-	}
-      }
+            // Compare.
+            for (unsigned int ii = 0; ii < NV; ++ii) {
+                REQUIRE(Approx(expectedPostCollision[ii]).margin(allowedError) == hydroVars.GetFPostCollision()[ii]);
+            }
+        }
     };
+
     template<>
-    void CollisionTester<lb::kernels::EntropicAnsumali<lb::D3Q15>>::make_feq(const distribn_t& density, const VEC& momentum, DISTS& feq) const {
-      LbTestsHelper::CalculateAnsumaliEntropicEqmF<LATTICE>(density,
-							    momentum,
-							    feq);
+    void CollisionTester<lb::kernels::EntropicAnsumali<lb::D3Q15>>::make_feq(const distribn_t& density, const VEC& momentum, mut_span feq) const {
+        LbTestsHelper::CalculateAnsumaliEntropicEqmF<LATTICE>(density,
+                                                              momentum,
+                                                              feq);
     }
     template<>
-    void CollisionTester<lb::kernels::EntropicAnsumali<lb::D3Q15>>::make_fpostcol(const distribn_t* feq, DISTS& fpc) const {
+    void CollisionTester<lb::kernels::EntropicAnsumali<lb::D3Q15>>::make_fpostcol(const_span feq, mut_span fpc) const {
       LbTestsHelper::CalculateEntropicCollision<LATTICE>(f_original,
 							 feq,
 							 lbmParams.GetTau(),
@@ -76,13 +83,13 @@ namespace hemelb::tests
     }
 
     template<>
-    void CollisionTester<lb::kernels::EntropicChik<lb::D3Q15>>::make_feq(const distribn_t& density, const VEC& momentum, DISTS& feq) const {
+    void CollisionTester<lb::kernels::EntropicChik<lb::D3Q15>>::make_feq(const distribn_t& density, const VEC& momentum, mut_span feq) const {
       LATTICE::CalculateEntropicFeqChik(density,
 					momentum,
 					feq);
     }
     template<>
-    void CollisionTester<lb::kernels::EntropicChik<lb::D3Q15>>::make_fpostcol(const distribn_t* feq, DISTS& fpc) const {
+    void CollisionTester<lb::kernels::EntropicChik<lb::D3Q15>>::make_fpostcol(const_span feq, mut_span fpc) const {
       LbTestsHelper::CalculateEntropicCollision<LATTICE>(f_original,
 							 feq,
 							 lbmParams.GetTau(),
@@ -91,13 +98,13 @@ namespace hemelb::tests
     }
 
     template<>
-    void CollisionTester<lb::kernels::LBGK<lb::D3Q15>>::make_feq(const distribn_t& density, const VEC& momentum, DISTS& feq) const {
+    void CollisionTester<lb::kernels::LBGK<lb::D3Q15>>::make_feq(const distribn_t& density, const VEC& momentum, mut_span feq) const {
       LbTestsHelper::CalculateLBGKEqmF<lb::D3Q15>(density,
 							    momentum,
 							    feq);
     }
     template<>
-    void CollisionTester<lb::kernels::LBGK<lb::D3Q15>>::make_fpostcol(const distribn_t* feq, DISTS& fpc) const {
+    void CollisionTester<lb::kernels::LBGK<lb::D3Q15>>::make_fpostcol(const_span feq, mut_span fpc) const {
       LbTestsHelper::CalculateLBGKCollision<lb::D3Q15>(f_original,
 								 feq,
 								 lbmParams.GetOmega(),
@@ -105,21 +112,21 @@ namespace hemelb::tests
     }
 
     TEMPLATE_TEST_CASE_METHOD(CollisionTester, "KernelTests - Ansumali & Chikatamarla entropic, LBGK calculations and collision", "[lb][kernels]",
-			      lb::kernels::EntropicAnsumali<lb::D3Q15>,
-			      lb::kernels::EntropicChik<lb::D3Q15>,
-			      lb::kernels::LBGK<lb::D3Q15>) {
-      using Fix = CollisionTester<TestType>;
+                              lb::kernels::EntropicAnsumali<lb::D3Q15>,
+                              lb::kernels::EntropicChik<lb::D3Q15>,
+                              lb::kernels::LBGK<lb::D3Q15>) {
+        using Fix = CollisionTester<TestType>;
 
-      SECTION("use the function that calculates density, momentum and f_eq") {
-	typename Fix::HYDRO hydroVars(this->f_original);
-      	// Calculate density, momentum, equilibrium f.
-      	this->kernel.CalculateDensityMomentumFeq(hydroVars, 0);
+        SECTION("use the function that calculates density, momentum and f_eq") {
+            typename Fix::HYDRO hydroVars(this->f_original);
+            // Calculate density, momentum, equilibrium f.
+            this->kernel.CalculateDensityMomentumFeq(hydroVars, 0);
 
-      	// Calculate expected values
-      	distribn_t expectedDensity = 12.0; // (sum 1 to 15) / 10
-      	auto expectedMomentum = LbTestsHelper::CalculateMomentum<typename Fix::LATTICE>(hydroVars.f);
-	this->do_tests(hydroVars, expectedDensity, expectedMomentum);
-      }
+            // Calculate expected values
+            distribn_t expectedDensity = 12.0; // (sum 1 to 15) / 10
+            auto expectedMomentum = LbTestsHelper::CalculateMomentum<typename Fix::LATTICE>(hydroVars.f);
+            this->do_tests(hydroVars, expectedDensity, expectedMomentum);
+        }
 
       SECTION("use the function that leaves density and momentum and  calculates f_eq") {
       	typename Fix::HYDRO hydroVars(this->f_original);
@@ -269,12 +276,12 @@ namespace hemelb::tests
 	distribn_t localOmega1 = -1.0 / computedTau1;
 
 	LbTestsHelper::CalculateLBGKCollision<LATTICE>(f_original[set],
-						       hydroVars0[set].GetFEq().f,
+						       hydroVars0[set].GetFEq(),
 						       localOmega0,
 						       expectedPostCollision0);
 
 	LbTestsHelper::CalculateLBGKCollision<LATTICE>(f_original[set],
-						       hydroVars1[set].GetFEq().f,
+						       hydroVars1[set].GetFEq(),
 						       localOmega1,
 						       expectedPostCollision1);
 
@@ -288,71 +295,78 @@ namespace hemelb::tests
 
     template <typename L, typename B>
     struct MRTTestFixture : public helpers::FourCubeBasedTestFixture<> {
-      using LATTICE = L;
-      static constexpr auto NV = LATTICE::NUMVECTORS;
-      using BASIS = B;
-      using KERNEL = lb::kernels::MRT<BASIS>;
-      using HYDRO = lb::kernels::HydroVars<KERNEL>;
-      using DISTS = distribn_t[NV];
-      using VEC = util::Vector3D<distribn_t>;
+        using LATTICE = L;
+        static constexpr auto NV = LATTICE::NUMVECTORS;
+        using BASIS = B;
+        using KERNEL = lb::kernels::MRT<BASIS>;
+        using HYDRO = lb::kernels::HydroVars<KERNEL>;
+        using DISTS = distribn_t[NV];
+        using VEC = util::Vector3D<distribn_t>;
 
-      MRTTestFixture() {
-	const distribn_t allowedError = 1e-10;
-	KERNEL mrtLbgkEquivalentKernel(initParams);
+        MRTTestFixture() {
+            const distribn_t allowedError = 1e-10;
+            KERNEL mrtLbgkEquivalentKernel(initParams);
 
-	// Simulate LBGK by relaxing all the MRT modes to equilibrium
-	// with the same time constant.
-	std::vector<distribn_t> relaxationParameters;
-	distribn_t oneOverTau = 1.0 / lbmParams.GetTau();
-	relaxationParameters.resize(BASIS::NUM_KINETIC_MOMENTS, oneOverTau);
-	mrtLbgkEquivalentKernel.SetMrtRelaxationParameters(relaxationParameters);
+            // Simulate LBGK by relaxing all the MRT modes to equilibrium
+            // with the same time constant.
+            std::array<distribn_t, BASIS::NUMMOMENTS> relaxationParameters;
+            distribn_t oneOverTau = 1.0 / lbmParams.GetTau();
+            std::fill(relaxationParameters.begin(), relaxationParameters.end(), oneOverTau);
+            mrtLbgkEquivalentKernel.SetMrtRelaxationParameters(relaxationParameters);
 
-	// Initialise the original f distribution to something asymmetric.
-	DISTS f_original;
-	LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(0, f_original);
-	HYDRO hydroVars0(f_original);
+            // Initialise the original f distribution to something asymmetric.
+            DISTS f_original;
+            LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(0, f_original);
+            HYDRO hydroVars0(f_original);
 
-	// Calculate density, momentum, equilibrium f.
-	mrtLbgkEquivalentKernel.CalculateDensityMomentumFeq(hydroVars0, 0);
+            // Calculate density, momentum, equilibrium f.
+            mrtLbgkEquivalentKernel.CalculateDensityMomentumFeq(hydroVars0, 0);
 
-	// Calculate expected values for the configuration of the MRT
-	// kernel equivalent to LBGK.
-	distribn_t expectedDensity0;
-	VEC expectedMomentum0;
-	DISTS expectedFEq0;
-	LbTestsHelper::CalculateRhoMomentum<LATTICE>(hydroVars0.f, expectedDensity0, expectedMomentum0);
-	LbTestsHelper::CalculateLBGKEqmF<LATTICE>(expectedDensity0,
-						  expectedMomentum0,
-						  expectedFEq0);
+            // Calculate expected values for the configuration of the MRT
+            // kernel equivalent to LBGK.
+            distribn_t expectedDensity0;
+            VEC expectedMomentum0;
+            DISTS expectedFEq0;
+            LbTestsHelper::CalculateRhoMomentum<LATTICE>(hydroVars0.f, expectedDensity0, expectedMomentum0);
+            LbTestsHelper::CalculateLBGKEqmF<LATTICE>(expectedDensity0,
+                                                      expectedMomentum0,
+                                                      expectedFEq0);
 
-	// Now compare the expected and actual values.
-	LbTestsHelper::CompareHydros(expectedDensity0,
-				     expectedMomentum0,
-				     expectedFEq0,
-				     hydroVars0,
-				     allowedError);
+            // Now compare the expected and actual values.
+            LbTestsHelper::CompareHydros(expectedDensity0,
+                                         expectedMomentum0,
+                                         expectedFEq0,
+                                         hydroVars0,
+                                         allowedError);
 
-	// Do the MRT collision.
-	mrtLbgkEquivalentKernel.DoCollide(&lbmParams, hydroVars0);
+            // Do the MRT collision.
+            mrtLbgkEquivalentKernel.DoCollide(&lbmParams, hydroVars0);
 
-	// Get the expected post-collision velocity distributions with LBGK.
-	DISTS expectedPostCollision0;
-	LbTestsHelper::CalculateLBGKCollision<LATTICE>(f_original,
-						       hydroVars0.GetFEq().f,
-						       lbmParams.GetOmega(),
-						       expectedPostCollision0);
+            // Get the expected post-collision velocity distributions with LBGK.
+            DISTS expectedPostCollision0;
+            LbTestsHelper::CalculateLBGKCollision<LATTICE>(f_original,
+                                                           hydroVars0.GetFEq(),
+                                                           lbmParams.GetOmega(),
+                                                           expectedPostCollision0);
 
-	// Compare.
-	for (unsigned int ii = 0; ii < NV; ++ii) {
-	  REQUIRE(Approx(expectedPostCollision0[ii]).margin(allowedError) == hydroVars0.GetFPostCollision()[ii]);
-	}
-      }
+            // Compare.
+            for (unsigned int ii = 0; ii < NV; ++ii) {
+                REQUIRE(Approx(expectedPostCollision0[ii]).margin(allowedError) == hydroVars0.GetFPostCollision()[ii]);
+            }
+        }
     };
+
     using fix15 = MRTTestFixture<lb::D3Q15, lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>;
     TEST_CASE_METHOD(fix15, "MRT with constant relaxation time equals LBGK (15 velocity)") {
+        auto& actual = BASIS::BASIS_TIMES_BASIS_TRANSPOSED;
+        auto expected = std::array<double, 11>{ 18., 360., 40., 40., 40., 12., 4., 8., 8., 8., 8. };
+        REQUIRE(std::equal(actual.begin(), actual.end(), expected.begin()));
     }
     using fix19 = MRTTestFixture<lb::D3Q19, lb::kernels::momentBasis::DHumieresD3Q19MRTBasis>;
     TEST_CASE_METHOD(fix19, "MRT with constant relaxation time equals LBGK (19 velocity)") {
+        auto& actual = BASIS::BASIS_TIMES_BASIS_TRANSPOSED;
+        auto expected = std::array<double, 15>{ 2394, 252, 40, 40, 40, 36, 72, 12, 24, 4, 4, 4, 8, 8, 8 };
+        REQUIRE(std::equal(actual.begin(), actual.end(), expected.begin()));
     }
 
 }

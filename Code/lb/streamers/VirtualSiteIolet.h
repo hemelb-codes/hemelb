@@ -18,12 +18,8 @@
 #include "lb/streamers/VirtualSite.h"
 #include "log/Logger.h"
 
-namespace hemelb
+namespace hemelb::lb::streamers
 {
-  namespace lb
-  {
-    namespace streamers
-    {
       using iolets::InOutLet;
 
       template<class CollisionImpl>
@@ -31,11 +27,11 @@ namespace hemelb
       {
         public:
 
-          typedef CollisionImpl CollisionType;
-          typedef typename CollisionType::CKernel::LatticeType LatticeType;
+          using CollisionType = CollisionImpl;
+          using LatticeType = typename CollisionType::CKernel::LatticeType;
 
         private:
-          typedef VirtualSite<LatticeType> VSiteType;
+          using VSiteType = VirtualSite<LatticeType>;
 
           CollisionType collider;
           SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
@@ -75,10 +71,9 @@ namespace hemelb
             auto& lattice = LatticeType::GetLatticeInfo();
             // Want to loop over each site this streamer is responsible for,
             // as specified in the siteRanges.
-            for (std::vector<std::pair<site_t, site_t> >::iterator rangeIt =
-                initParams.siteRanges.begin(); rangeIt != initParams.siteRanges.end(); ++rangeIt)
+            for (auto [start, end]: initParams.siteRanges)
             {
-              for (site_t siteIdx = rangeIt->first; siteIdx < rangeIt->second; ++siteIdx)
+              for (site_t siteIdx = start; siteIdx < end; ++siteIdx)
               {
                 geometry::Site<const geometry::Domain> site =
                     initParams.latDat->GetSite(siteIdx);
@@ -449,7 +444,7 @@ namespace hemelb
 
             auto neigh =
                 latDat.GetNeighbouringData().GetSite(globalIdx);
-            const distribn_t* fOld = neigh.GetFOld<LatticeType>();
+            auto fOld = neigh.GetFOld<LatticeType>();
             LatticeType::CalculateDensityAndMomentum(fOld, ans.rho, ans.u);
             if (LatticeType::IsLatticeCompressible())
             {
@@ -460,7 +455,5 @@ namespace hemelb
           }
       };
     }
-  }
-}
 
 #endif /* HEMELB_LB_STREAMERS_VIRTUALSITEIOLET_H */

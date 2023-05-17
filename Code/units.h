@@ -7,6 +7,7 @@
 #define HEMELB_UNITS_H
 
 #include <cstdint>
+#include <span>
 #include "util/Vector3D.h"
 
 namespace hemelb
@@ -23,6 +24,12 @@ namespace hemelb
   typedef double distribn_t;
   typedef unsigned Direction;
   typedef uint64_t sitedata_t;
+
+  // Span over a contiguous range of distribution-ish values
+  template <std::size_t N = std::dynamic_extent>
+  using ConstDistSpan = std::span<const distribn_t, N>;
+  template <std::size_t N = std::dynamic_extent>
+  using MutDistSpan = std::span<distribn_t, N>;
 
   // types used to represent domain size in blocks and for octree operations
   using U16 = std::uint16_t;

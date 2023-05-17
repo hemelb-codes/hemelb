@@ -11,10 +11,8 @@
 
 #include "tests/lb/LbTestsHelper.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
 
     Approx apprx(double x) {
       return Approx(x).margin(1e-10);
@@ -228,11 +226,11 @@ namespace hemelb
       */
       {
 	// Test 1: non equilibrium distribution function equals to 0 and wall normal (1,0,0). Result should be (pressure, 0, 0)
-	std::vector<distribn_t> nonEquilibriumF(LatticeType::NUMVECTORS, 0.0);
-	LatticeDensity density = 3.0;
+	auto nonEquilibriumF = LbTestsHelper::ZeroArray<LatticeType>();
+    LatticeDensity density = 3.0;
 	util::Vector3D<Dimensionless> wallNormal(1, 0, 0);
 	util::Vector3D<LatticeStress> traction;
-	LatticeType::CalculateTractionOnAPoint(density, 1.0, nonEquilibriumF.data(), wallNormal, traction);
+	LatticeType::CalculateTractionOnAPoint(density, 1.0, nonEquilibriumF, wallNormal, traction);
 
 	REQUIRE(traction[0] == (density - 1) * Cs2);
 	REQUIRE(traction[1] == 0.0);
@@ -241,7 +239,7 @@ namespace hemelb
 	util::Vector3D<LatticeStress> tangentialComponentTraction;
 	LatticeType::CalculateTangentialProjectionTraction(density,
 							   1.0,
-							   nonEquilibriumF.data(),
+							   nonEquilibriumF,
 							   wallNormal,
 							   tangentialComponentTraction);
 
@@ -264,7 +262,7 @@ namespace hemelb
 	 * be diagonal with (p + 1 - 1/(2*tau)) in the first two entries of the diagonal and p in the last one, where p
 	 * is the pressure. The contribution of directions (1,1,1) and (-1,-1,-1) should cancel out.
 	 */
-	std::vector<distribn_t> nonEquilibriumF(LatticeType::NUMVECTORS, 0.0);
+	auto nonEquilibriumF = LbTestsHelper::ZeroArray<LatticeType>();
 	nonEquilibriumF[1] = 1.0;
 	nonEquilibriumF[3] = 1.0;
 	nonEquilibriumF[7] = 2.0;
@@ -273,35 +271,33 @@ namespace hemelb
 	LatticeDensity density = 6.0;
 	distribn_t tau = 0.75;
 
-	util::Vector3D<Dimensionless> wallNormal(1.0, 0.0, 0.0);
 	util::Matrix3D stressTensor;
-	LatticeType::CalculateStressTensor(density, tau, nonEquilibriumF.data(), stressTensor);
+	LatticeType::CalculateStressTensor(density, tau, nonEquilibriumF, stressTensor);
 
 	for (unsigned rowIndex = 0; rowIndex < 3; ++rowIndex)
-	  {
-	    for (unsigned columnIndex = 0; columnIndex < 3; ++columnIndex)
-	      {
-		if (rowIndex == columnIndex)
-                  {
-                    if (rowIndex != 2)
-		      {
-			REQUIRE( (density - 1) * Cs2 + 1 - 1 / (2 * tau)
-				 == stressTensor[rowIndex][columnIndex]);
-		      }
-                    else
-		      {
-			REQUIRE( (density - 1) * Cs2 == stressTensor[rowIndex][columnIndex]);
-		      }
-                  }
-		else
-                  {
-                    REQUIRE(0.0 == stressTensor[rowIndex][columnIndex]);
-                  }
-	      }
-	  }
+    {
+        for (unsigned columnIndex = 0; columnIndex < 3; ++columnIndex)
+        {
+            if (rowIndex == columnIndex)
+            {
+                if (rowIndex != 2)
+                {
+                    REQUIRE( (density - 1) * Cs2 + 1 - 1 / (2 * tau)
+                             == stressTensor[rowIndex][columnIndex]);
+                }
+                else
+                {
+                    REQUIRE( (density - 1) * Cs2 == stressTensor[rowIndex][columnIndex]);
+                }
+            }
+            else
+            {
+                REQUIRE(0.0 == stressTensor[rowIndex][columnIndex]);
+            }
+        }
+    }
       }
     }
 
-  }
 }
 

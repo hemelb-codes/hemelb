@@ -24,7 +24,8 @@ namespace hemelb
     class HFunction
     {
       public:
-        HFunction(const distribn_t* lF, const distribn_t* lFEq) :
+        using const_span = typename LatticeType::const_span;
+        HFunction(const_span lF, const_span lFEq) :
             mF(lF), mFEq(lFEq)
         {
 
@@ -67,8 +68,8 @@ namespace hemelb
         }
 
       private:
-        const distribn_t* mF;
-        const distribn_t* mFEq;
+        const_span mF;
+        const_span mFEq;
 
         void CalculateFalphaAndHInternal(const double alpha, double* fAlpha, double &H)
         {

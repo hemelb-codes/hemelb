@@ -22,10 +22,22 @@
 
 namespace hemelb::tests::LbTestsHelper
 {
+    template <typename LatticeType>
+    auto ZeroArray() {
+        std::array<distribn_t, LatticeType::NUMVECTORS> ans;
+        std::fill(ans.begin(), ans.end(), 0.0);
+        return ans;
+    }
+
+    template<typename Lattice>
+    using const_span = typename Lattice::const_span;
+    template<typename Lattice>
+    using mut_span = typename Lattice::mut_span;
+
     using Vec = util::Vector3D<distribn_t>;
 
     template<typename Lattice>
-    void CalculateRhoMomentum(const distribn_t f[Lattice::NUMVECTORS], distribn_t& rho,  Vec& v)
+    void CalculateRhoMomentum(const_span<Lattice> f, distribn_t& rho,  Vec& v)
     {
         rho = 0.0;
         v = {0.0, 0.0, 0.0};
@@ -37,7 +49,7 @@ namespace hemelb::tests::LbTestsHelper
     }
 
     template<typename Lattice>
-    Vec CalculateMomentum(const distribn_t f[Lattice::NUMVECTORS])
+    Vec CalculateMomentum(const_span<Lattice> f)
     {
         auto v = Vec::Zero();
         for (unsigned int ii = 0; ii < Lattice::NUMVECTORS; ++ii) {
@@ -49,7 +61,7 @@ namespace hemelb::tests::LbTestsHelper
     template<typename Lattice>
     void CalculateAnsumaliEntropicEqmF(distribn_t density,
                                        const Vec& momentum,
-                                       distribn_t f[Lattice::NUMVECTORS])
+                                       mut_span<Lattice> f)
     {
         // Calculate velocity.
         auto velocity = momentum / density;
@@ -77,7 +89,7 @@ namespace hemelb::tests::LbTestsHelper
     template<typename Lattice>
     void CalculateLBGKEqmF(distribn_t density,
                            const util::Vector3D<distribn_t>& momentum,
-                           distribn_t f[Lattice::NUMVECTORS])
+                           mut_span<Lattice> f)
     {
         for (unsigned int ii = 0; ii < Lattice::NUMVECTORS; ++ii)
         {
@@ -102,11 +114,11 @@ namespace hemelb::tests::LbTestsHelper
     }
 
     template<typename Lattice>
-    void CalculateEntropicCollision(const distribn_t f[Lattice::NUMVECTORS],
-                                    const distribn_t f_eq[Lattice::NUMVECTORS],
+    void CalculateEntropicCollision(const_span<Lattice> f,
+                                    const_span<Lattice> f_eq,
                                     distribn_t tau,
                                     distribn_t beta,
-                                    distribn_t f_collided[Lattice::NUMVECTORS])
+                                    mut_span<Lattice> f_collided)
     {
         lb::HFunction<Lattice> HFunc(f, f_eq);
 
@@ -119,10 +131,10 @@ namespace hemelb::tests::LbTestsHelper
     }
 
     template<typename Lattice>
-    void CalculateLBGKCollision(const distribn_t f[Lattice::NUMVECTORS],
-                                const distribn_t f_eq[Lattice::NUMVECTORS],
+    void CalculateLBGKCollision(const_span<Lattice> f,
+                                const_span<Lattice> f_eq,
                                 distribn_t omega,
-                                distribn_t f_collided[Lattice::NUMVECTORS])
+                                mut_span<Lattice> f_collided)
     {
         for (unsigned int ii = 0; ii < Lattice::NUMVECTORS; ++ii)
         {
@@ -134,7 +146,7 @@ namespace hemelb::tests::LbTestsHelper
     template<typename Kernel>
     void CompareHydros(const distribn_t expectedDensity,
                        const util::Vector3D<distribn_t>& expectedMomentum,
-                       const distribn_t (&expectedFEq)[Kernel::LatticeType::NUMVECTORS],
+                       const_span<typename Kernel::LatticeType> expectedFEq,
                        lb::kernels::HydroVars<Kernel> &hydroVars,
                        distribn_t allowedError)
     {
@@ -145,7 +157,7 @@ namespace hemelb::tests::LbTestsHelper
 
         // Compare equilibrium f
         for (unsigned int ii = 0; ii < lb::D3Q15::NUMVECTORS; ++ii) {
-            REQUIRE(Approx(expectedFEq[ii]).margin(allowedError) == hydroVars.GetFEq().f[ii]);
+            REQUIRE(Approx(expectedFEq[ii]).margin(allowedError) == hydroVars.GetFEq()[ii]);
         }
     }
 

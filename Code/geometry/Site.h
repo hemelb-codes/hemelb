@@ -6,6 +6,8 @@
 #ifndef HEMELB_GEOMETRY_SITE_H
 #define HEMELB_GEOMETRY_SITE_H
 
+#include <span>
+
 #include "units.h"
 #include "geometry/SiteData.h"
 #include "util/Vector3D.h"
@@ -189,9 +191,9 @@ namespace hemelb::geometry
         }
 
         template<typename LatticeType>
-        const distribn_t* GetFOld() const
+        auto GetFOld() const
         {
-          return m_fieldData->GetFOld(index * LatticeType::NUMVECTORS);
+            return ConstDistSpan<LatticeType::NUMVECTORS>{m_fieldData->GetFOld(index * LatticeType::NUMVECTORS), LatticeType::NUMVECTORS};
         }
 
         // Non-templated version of GetFOld, for when you haven't got a lattice type handy
@@ -202,13 +204,18 @@ namespace hemelb::geometry
 
         // Note that for const qualified field_type, dists are const too.
         template<typename LatticeType>
-        auto* GetFOld()
+        auto GetFOld()
         {
-            return m_fieldData->GetFOld(index * LatticeType::NUMVECTORS);
+            auto ptr = m_fieldData->GetFOld(index * LatticeType::NUMVECTORS);
+            // To correctly return the Const/Mut span
+            return std::span<
+                    typename std::pointer_traits<decltype(ptr)>::element_type,
+                    LatticeType::NUMVECTORS
+            >{ptr, LatticeType::NUMVECTORS};
         }
 
         // Non-templated version of GetFOld, for when you haven't got a lattice type handy
-        auto* GetFOld(int numvectors)
+        auto GetFOld(int numvectors)
         {
             return m_fieldData->GetFOld(index * numvectors);
         }

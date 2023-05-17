@@ -7,6 +7,7 @@
 #define HEMELB_LB_LATTICES_LATTICE_H
 
 #include <cmath>
+#include <span>
 #ifdef HEMELB_USE_SSE3
 #include <immintrin.h>
 #endif
@@ -74,6 +75,8 @@ namespace hemelb::lb
     class Lattice
     {
     public:
+        using FArray = std::array<distribn_t, Q>;
+
         static constexpr Direction NUMVECTORS = Q;
 
         static constexpr std::array<util::Vector3D<int>, Q> VECTORS = V;
@@ -82,16 +85,19 @@ namespace hemelb::lb
         static constexpr std::array<int, Q> CZ = detail::get_component<int>(V, 2);
 
         alignas(16) static constexpr std::array<util::Vector3D<distribn_t>, Q> CD = detail::array_as<distribn_t>(V);
-        alignas(16) static constexpr std::array<distribn_t, Q> CXD = detail::get_component<distribn_t>(V, 0);
-        alignas(16) static constexpr std::array<distribn_t, Q> CYD = detail::get_component<distribn_t>(V, 1);
-        alignas(16) static constexpr std::array<distribn_t, Q> CZD = detail::get_component<distribn_t>(V, 2);
+        alignas(16) static constexpr FArray CXD = detail::get_component<distribn_t>(V, 0);
+        alignas(16) static constexpr FArray CYD = detail::get_component<distribn_t>(V, 1);
+        alignas(16) static constexpr FArray CZD = detail::get_component<distribn_t>(V, 2);
 
-        alignas(16) static constexpr std::array<distribn_t, Q> EQMWEIGHTS = W;
+        alignas(16) static constexpr FArray EQMWEIGHTS = W;
         // The index of the inverse direction of each discrete velocity vector
         static constexpr std::array<Direction, Q> INVERSEDIRECTIONS = detail::compute_inverses(V);
 
+        using mut_span = MutDistSpan<Q>;
+        using const_span = ConstDistSpan<Q>;
+
 #ifdef HEMELB_USE_SSE3
-        inline static void CalculateDensityAndMomentum(const distribn_t f[],
+        inline static void CalculateDensityAndMomentum(const_span f,
                                                        distribn_t &density,
                                                        util::Vector3D<distribn_t>& momentum) {
             CalculateDensityAndMomentum(f, density, momentum.x(), momentum.y(), momentum.z());
@@ -110,7 +116,7 @@ namespace hemelb::lb
          * @param momentum_y
          * @param momentum_z
          */
-        inline static void CalculateDensityAndMomentum(const distribn_t f[],
+        inline static void CalculateDensityAndMomentum(const_span f,
                                                        distribn_t &density,
                                                        distribn_t &momentum_x,
                                                        distribn_t &momentum_y,
@@ -172,7 +178,7 @@ namespace hemelb::lb
           }
 
 #else
-        inline static void CalculateDensityAndMomentum(const distribn_t f[],
+        inline static void CalculateDensityAndMomentum(const_span f,
                                                        distribn_t &density,
                                                        LatticeMomentum& momentum) {
             density = 0.0;
@@ -197,7 +203,7 @@ namespace hemelb::lb
            * @param force_y
            * @param force_z
            */
-          inline static void CalculateDensityAndMomentum(const distribn_t f[],
+          inline static void CalculateDensityAndMomentum(const_span f,
                                                          const LatticeForceVector& force,
                                                          distribn_t &density,
                                                          LatticeMomentum& momentum)
@@ -208,7 +214,7 @@ namespace hemelb::lb
           }
 
         inline static void CalculateFeq(const distribn_t density, const LatticeMomentum& momentum,
-                                        distribn_t f_eq[]) {
+                                        mut_span f_eq) {
             CalculateFeq(density, momentum.x(), momentum.y(), momentum.z(), f_eq);
         }
 
@@ -231,7 +237,7 @@ namespace hemelb::lb
                                  const distribn_t &momentum_x,
                                  const distribn_t &momentum_y,
                                  const distribn_t &momentum_z,
-                                 distribn_t f_eq[])
+                                 mut_span f_eq)
         {
             // f_eq[i] = EQMWEIGHTS[i]
             //            * (density - (3. / 2.) * momentumMagnitudeSquared/ DENSITY // Note this line invariant over i loop
@@ -325,7 +331,7 @@ namespace hemelb::lb
            */
           inline static void CalculateFeq(const distribn_t &density, const distribn_t &momentum_x,
                                           const distribn_t &momentum_y,
-                                          const distribn_t &momentum_z, distribn_t f_eq[])
+                                          const distribn_t &momentum_z, mut_span f_eq)
           {
             const distribn_t density_1 = 1. / density;
             const distribn_t momentumMagnitudeSquared = momentum_x * momentum_x
@@ -354,7 +360,7 @@ namespace hemelb::lb
         inline static void CalculateForceDistribution(const distribn_t &tau,
                                                       const LatticeVelocity& velocity,
                                                       const LatticeForceVector& force,
-                                                      distribn_t forceDist[])
+                                                      mut_span forceDist)
         {
             CalculateForceDistribution(tau,
                                        velocity.x(), velocity.y(), velocity.z(),
@@ -377,7 +383,7 @@ namespace hemelb::lb
                                                         const LatticeForce &force_x,
                                                         const LatticeForce &force_y,
                                                         const LatticeForce &force_z,
-                                                        distribn_t forceDist[])
+                                                        mut_span forceDist)
           {
 
             auto const invCs2 = 1e0 / Cs2;
@@ -477,10 +483,10 @@ namespace hemelb::lb
           // functions according to the D3Q15 model.  The calculated momentum_x, momentum_y
           // and momentum_z are actually density * velocity, because we are using the
           // compressible model.
-          inline static void CalculateDensityMomentumFEq(const distribn_t f[], distribn_t &density,
+          inline static void CalculateDensityMomentumFEq(const_span f, distribn_t &density,
                                                          util::Vector3D<distribn_t>& momentum,
                                                          LatticeVelocity& velocity,
-                                                         distribn_t f_eq[])
+                                                         mut_span f_eq)
           {
             CalculateDensityAndMomentum(f, density, momentum);
             if constexpr (COMPRESSIBLE) {
@@ -495,12 +501,12 @@ namespace hemelb::lb
           // functions according to the D3Q15 model.  The calculated momentum_x, momentum_y
           // and momentum_z are actually density * velocity, because we are using the
           // compressible model.
-          inline static void CalculateDensityMomentumFEq(const distribn_t f[],
+          inline static void CalculateDensityMomentumFEq(const_span f,
                                                          const LatticeForceVector& force,
                                                          distribn_t &density,
                                                          LatticeMomentum& momentum,
                                                          LatticeVelocity& velocity,
-                                                         distribn_t f_eq[])
+                                                         mut_span f_eq)
           {
               CalculateDensityAndMomentum(f,
                                           force,
@@ -516,7 +522,7 @@ namespace hemelb::lb
           }
 
           // von Mises stress computation given the non-equilibrium distribution functions.
-          inline static void CalculateVonMisesStress(const distribn_t f[], distribn_t &stress,
+          inline static void CalculateVonMisesStress(const_span f, distribn_t &stress,
                                                      const double iStressParameter)
           {
             // Recall that sigma_ij = Sum_l f(l) * C_il * C_jl
@@ -573,7 +579,7 @@ namespace hemelb::lb
            * @param traction traction vector at a given point
            */
           inline static void CalculateTractionOnAPoint(
-              const distribn_t density, const distribn_t tau, const distribn_t fNonEquilibrium[],
+              const distribn_t density, const distribn_t tau, const_span fNonEquilibrium,
               const util::Vector3D<Dimensionless>& wallNormal,
               util::Vector3D<LatticeStress>& traction)
           {
@@ -599,7 +605,7 @@ namespace hemelb::lb
            * @param tractionTangentialComponent tangential projection of the traction vector
            */
           inline static void CalculateTangentialProjectionTraction(
-              const distribn_t density, const distribn_t tau, const distribn_t fNonEquilibrium[],
+              const distribn_t density, const distribn_t tau, const_span fNonEquilibrium,
               const util::Vector3D<Dimensionless>& wallNormal,
               util::Vector3D<LatticeStress>& tractionTangentialComponent)
           {
@@ -633,7 +639,7 @@ namespace hemelb::lb
            * @param stressTensor full stress tensor at a given site
            */
           inline static void CalculateStressTensor(const distribn_t density, const distribn_t tau,
-                                                   const distribn_t fNonEquilibrium[],
+                                                   const_span fNonEquilibrium,
                                                    util::Matrix3D& stressTensor)
           {
             // Initialises the stress tensor to the deviatoric part, i.e. -\Pi^{(neq)}
@@ -659,7 +665,7 @@ namespace hemelb::lb
            * instead).
            */
           inline static void CalculateWallShearStressMagnitude(const distribn_t &density,
-                                                               const distribn_t f[],
+                                                               const_span f,
                                                                const util::Vector3D<double> nor,
                                                                distribn_t &stress,
                                                                const double &iStressParameter)
@@ -706,7 +712,7 @@ namespace hemelb::lb
            * @param f distribution function
            * @return second moment of the distribution function f
            */
-          inline static util::Matrix3D CalculatePiTensor(const distribn_t* const f)
+          inline static util::Matrix3D CalculatePiTensor(const_span f)
           {
             util::Matrix3D ret;
 
@@ -737,7 +743,7 @@ namespace hemelb::lb
           }
 
           inline static distribn_t CalculateShearRate(const distribn_t &iTau,
-                                                      const distribn_t iFNeq[],
+                                                      const_span iFNeq,
                                                       const distribn_t &iDensity)
           {
             distribn_t shear_rate = 0.0;
@@ -767,7 +773,7 @@ namespace hemelb::lb
           // for hydrodynamics. Europhys. Lett. 63(6), 798–804
           inline static void CalculateEntropicFeqAnsumali(const distribn_t &density,
                                                           const LatticeMomentum& momentum,
-                                                          distribn_t f_eq[])
+                                                          mut_span f_eq)
           {
             // Get velocity
             LatticeVelocity velocity = momentum / density;
@@ -813,7 +819,7 @@ namespace hemelb::lb
            */
           inline static void CalculateEntropicFeqChik(const distribn_t &density,
                                                       const LatticeMomentum& momentum,
-                                                      distribn_t f_eq[])
+                                                      mut_span f_eq)
           {
             // Get velocity and the vector with velocity components squared.
             LatticeVelocity velocity = momentum / density;
@@ -899,7 +905,7 @@ namespace hemelb::lb
           inline static distribn_t CalculateStrainRateTensorComponent(const unsigned &iRow,
                                                                       const unsigned &iColumn,
                                                                       const distribn_t &iTau,
-                                                                      const distribn_t iFNeq[],
+                                                                      const_span iFNeq,
                                                                       const distribn_t &iDensity)
           {
             distribn_t strain_rate_tensor_i_j = 0.0;
@@ -956,6 +962,6 @@ namespace hemelb::lb
             return zetaHighOrders;
           }
       };
-}
+};
 
 #endif

@@ -186,7 +186,7 @@ namespace hemelb
 
 	// It should arrive in the NeighbouringDataManager, from the values sent from the localFieldData
 
-	netMock.RequireSend(const_cast<distribn_t*> (exampleSite.GetFOld<lb::D3Q15> ()),
+	netMock.RequireSend(const_cast<distribn_t*> (exampleSite.GetFOld<lb::D3Q15>().data()),
 			    lb::D3Q15::NUMVECTORS,
 			    0,
 			    "IntersectionDataToSelf");
@@ -233,7 +233,7 @@ namespace hemelb
 	auto exampleSite = latDat->GetSite(targetLocalIdx);
 	// It should arrive in the NeighbouringDataManager, from the values sent from the localFieldData
 
-	netMock.RequireSend(const_cast<distribn_t*> (exampleSite.GetFOld<lb::D3Q15> ()),
+	netMock.RequireSend(const_cast<distribn_t*> (exampleSite.GetFOld<lb::D3Q15>().data()),
 			    lb::D3Q15::NUMVECTORS,
 			    0,
 			    "IntersectionDataToSelf");

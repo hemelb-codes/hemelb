@@ -80,7 +80,7 @@ namespace hemelb::redblood
         // Use distribution functions at the beginning of the previous timestep (stored in
         // FNew after the swap at the end of the timestep) in the IBM velocity interpolation.
         // Follows approach in Timm's code
-        auto const fDistribution = latticeData.GetFNew(index * LatticeType::NUMVECTORS);
+        auto const fDistribution = latticeData.GetFNew<LatticeType>(index);
 #else
         auto const fDistribution = site.GetFOld<LatticeType>();
 #endif
@@ -102,7 +102,7 @@ namespace hemelb::redblood
         // Use distribution functions at the beginning of the previous timestep (stored in
         // FNew after the swap at the end of the timestep) in the IBM velocity interpolation.
         // Follows approach in Timm's code
-        auto const fDistribution = latticeData.GetFNew(index * LatticeType::NUMVECTORS);
+        auto const fDistribution = latticeData.GetFNew<LatticeType>(index);
 #else
         auto const fDistribution = domainData.GetSite(index).template GetFOld<LatticeType>();
 #endif

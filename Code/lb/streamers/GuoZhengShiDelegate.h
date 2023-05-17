@@ -12,30 +12,27 @@
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "util/Vector3D.h"
 
-namespace hemelb
+namespace hemelb::lb::streamers
 {
-  namespace lb
-  {
-    namespace streamers
+
+    /**
+     * This class implements the boundary condition described by Guo, Zheng and Shi
+     * in 'An Extrapolation Method for Boundary Conditions in Lattice-Boltzmann method'
+     * Physics of Fluids, 14/6, June 2002, pp 2007-2010.
+     */
+    template<typename CollisionImpl>
+    class GuoZhengShiDelegate : public BaseStreamerDelegate<CollisionImpl>
     {
+    public:
+        using CollisionType = CollisionImpl;
+        using LatticeType = typename CollisionType::CKernel::LatticeType;
+        using const_span = typename LatticeType::const_span;
 
-      /**
-       * This class implements the boundary condition described by Guo, Zheng and Shi
-       * in 'An Extrapolation Method for Boundary Conditions in Lattice-Boltzmann method'
-       * Physics of Fluids, 14/6, June 2002, pp 2007-2010.
-       */
-      template<typename CollisionImpl>
-      class GuoZhengShiDelegate : public BaseStreamerDelegate<CollisionImpl>
-      {
-        public:
-          typedef CollisionImpl CollisionType;
-          typedef typename CollisionType::CKernel::LatticeType LatticeType;
-
-          GuoZhengShiDelegate(CollisionType& delegatorCollider, kernels::InitParams& initParams) :
+        GuoZhengShiDelegate(CollisionType& delegatorCollider, kernels::InitParams& initParams) :
               collider(delegatorCollider),
                   neighbouringLatticeData(initParams.latDat->GetNeighbouringData()),
                   bValues(initParams.boundaryObject), bbDelegate(delegatorCollider, initParams)
-          {
+        {
             // Want to loop over each site this streamer is responsible for,
             // as specified in the siteRanges.
             for (std::vector<std::pair<site_t, site_t> >::iterator rangeIt =
@@ -105,7 +102,7 @@ namespace hemelb
                 }
               }
             }
-          }
+        }
 
           /*
            * The outline of this method is as follows:
@@ -142,7 +139,7 @@ namespace hemelb
             // between the nearest fluid site and the solid site inside the wall.
             // Then 0 = velocityWall * wallDistance + velocityFluid * (1 - wallDistance)
             // Hence velocityWall = velocityFluid * (1 - 1/wallDistance)
-            distribn_t fWall[LatticeType::NUMVECTORS];
+            kernels::FVector<LatticeType> fWall;
             kernels::HydroVars<typename CollisionType::CKernel> hydroVarsWall(fWall);
 
             hydroVarsWall.density = hydroVars.density;
@@ -218,7 +215,7 @@ namespace hemelb
                 else
                 {
                   // There is a neighbour site to use for standard GZS to calculate u_w2.
-                  const distribn_t *neighbourFOld = GetNeighbourFOld(site, i, latDat);
+                  auto neighbourFOld = GetNeighbourFOld(site, i, latDat);
                   // Now calculate this field information.
                   LatticeVelocity neighbourVelocity;
                   distribn_t neighbourFEq[LatticeType::NUMVECTORS];
@@ -273,7 +270,7 @@ namespace hemelb
             // Calculate equilibrium values
             LatticeType::CalculateFeq(hydroVarsWall.density,
                                       hydroVarsWall.momentum,
-                                      hydroVarsWall.GetFEqPtr());
+                                      hydroVarsWall.GetFEq());
 
             // For the wall site, construct f_old  = f_eq + f_neq
             for (unsigned j = 0; j < LatticeType::NUMVECTORS; ++j)
@@ -288,42 +285,38 @@ namespace hemelb
 
           }
 
-        private:
-          const distribn_t *GetNeighbourFOld(const geometry::Site<geometry::FieldData>& site,
-                                             const Direction& i,
-                                             geometry::FieldData& latDat)
-          {
-            const distribn_t* neighbourFOld;
+    private:
+        const_span GetNeighbourFOld(const geometry::Site<geometry::FieldData>& site,
+                                    const Direction& i,
+                                    geometry::FieldData& latDat)
+        {
             auto&& domain = latDat.GetDomain();
             // Find the neighbour's global location and which proc it's on.
-            LatticeVector neighbourGlobalLocation = site.GetGlobalSiteCoords()
-                + LatticeVector(LatticeType::CX[i], LatticeType::CY[i], LatticeType::CZ[i]);
+            LatticeVector neighbourGlobalLocation = site.GetGlobalSiteCoords() + LatticeType::VECTORS[i];
             proc_t neighbourProcessor = domain.GetProcIdFromGlobalCoords(neighbourGlobalLocation);
             if (neighbourProcessor == domain.GetLocalRank())
             {
-              // If it's local, get a Site object for it.
-              geometry::Site<geometry::FieldData> nextSiteOut =
-                  latDat.GetSite(domain.GetContiguousSiteId(neighbourGlobalLocation));
-              neighbourFOld = nextSiteOut.GetFOld<LatticeType>();
+                // If it's local, get a Site object for it.
+                geometry::Site<geometry::FieldData> nextSiteOut =
+                        latDat.GetSite(domain.GetContiguousSiteId(neighbourGlobalLocation));
+                return nextSiteOut.GetFOld<LatticeType>();
             }
             else
             {
-              auto neighbourSite =
-                      latDat.GetNeighbouringData().GetSite(domain.GetGlobalNoncontiguousSiteIdFromGlobalCoords(neighbourGlobalLocation));
-              neighbourFOld = neighbourSite.GetFOld<LatticeType>();
+                auto neighbourSite = latDat.GetNeighbouringData().GetSite(
+                        domain.GetGlobalNoncontiguousSiteIdFromGlobalCoords(neighbourGlobalLocation)
+                );
+                return neighbourSite.GetFOld<LatticeType>();
             }
-            return neighbourFOld;
+        }
 
-          }
-          // the collision
-          CollisionType collider;
-          const geometry::neighbouring::NeighbouringDomain& neighbouringLatticeData;
-          iolets::BoundaryValues* bValues;
-          SimpleBounceBackDelegate<CollisionType> bbDelegate;
-      };
+        // the collision
+        CollisionType collider;
+        const geometry::neighbouring::NeighbouringDomain& neighbouringLatticeData;
+        iolets::BoundaryValues* bValues;
+        SimpleBounceBackDelegate<CollisionType> bbDelegate;
+    };
 
-    }
-  }
 }
 
 #endif /* HEMELB_LB_STREAMERS_GUOZHENGSHIDELEGATE_H */

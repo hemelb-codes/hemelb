@@ -5,16 +5,16 @@
 
 #include <catch2/catch.hpp>
 
+#include "tests/lb/LbTestsHelper.h"
+
 #include "util/UnitConverter.h"
 #include "util/Matrix3D.h"
 #include "constants.h"
 #include "lb/lattices/Lattice.h"
 #include "lb/lattices/D3Q15.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace hemelb::util;
 
     TEST_CASE("UnitConverterTests") {
@@ -33,10 +33,10 @@ namespace hemelb
       }
 
       SECTION("TestSimpleStressTensor") {
-	std::vector<distribn_t> fNonEquilibrium(lb::D3Q15::NUMVECTORS, 0.0);
+	auto fNonEquilibrium = LbTestsHelper::ZeroArray<lb::D3Q15>();
 
 	util::Matrix3D stressTensor;
-	lb::D3Q15::CalculateStressTensor(densityLatt, tau, fNonEquilibrium.data(), stressTensor);
+	lb::D3Q15::CalculateStressTensor(densityLatt, tau, fNonEquilibrium, stressTensor);
 	util::Matrix3D stressTensorPhys = unitConverter.ConvertFullStressTensorToPhysicalUnits(stressTensor);
 
 	REQUIRE(apprx(pressMmHg) == stressTensorPhys[0][0] / mmHg_TO_PASCAL);
@@ -46,14 +46,14 @@ namespace hemelb
       }
 
       SECTION("TestSimpleTractionVector") {
-	std::vector<distribn_t> fNonEquilibrium(lb::D3Q15::NUMVECTORS, 0.0);
+    auto fNonEquilibrium = LbTestsHelper::ZeroArray<lb::D3Q15>();
 	util::Vector3D<Dimensionless> wallNormal(0.0);
 	wallNormal[0] = 1.0;
 
 	util::Vector3D<LatticeStress> traction;
 	lb::D3Q15::CalculateTractionOnAPoint(densityLatt,
 						       tau,
-						       fNonEquilibrium.data(),
+						       fNonEquilibrium,
 						       wallNormal,
 						       traction);
 	util::Vector3D<PhysicalStress> tractionPhys = unitConverter.ConvertTractionToPhysicalUnits(traction,
@@ -65,5 +65,4 @@ namespace hemelb
       }
 
     }
-  }
 }

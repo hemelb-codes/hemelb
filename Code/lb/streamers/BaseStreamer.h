@@ -105,7 +105,7 @@ namespace hemelb
               else
               {
                 LatticeType::CalculateWallShearStressMagnitude(hydroVars.density,
-                                                               hydroVars.GetFNeq().f,
+                                                               hydroVars.GetFNeq(),
                                                                site.GetWallNormal(),
                                                                stress,
                                                                lbmParams->GetStressParameter());
@@ -117,7 +117,7 @@ namespace hemelb
             if (propertyCache.vonMisesStressCache.RequiresRefresh())
             {
               distribn_t stress;
-              StreamerImpl::CollisionType::CKernel::LatticeType::CalculateVonMisesStress(hydroVars.GetFNeq().f,
+              StreamerImpl::CollisionType::CKernel::LatticeType::CalculateVonMisesStress(hydroVars.GetFNeq(),
                                                                                          stress,
                                                                                          lbmParams->GetStressParameter());
 
@@ -128,7 +128,7 @@ namespace hemelb
             {
               distribn_t shear_rate =
                   StreamerImpl::CollisionType::CKernel::LatticeType::CalculateShearRate(hydroVars.tau,
-                                                                                        hydroVars.GetFNeq().f,
+                                                                                        hydroVars.GetFNeq(),
                                                                                         hydroVars.density);
 
               propertyCache.shearRateCache.Put(site.GetIndex(), shear_rate);
@@ -139,7 +139,7 @@ namespace hemelb
               util::Matrix3D stressTensor;
               StreamerImpl::CollisionType::CKernel::LatticeType::CalculateStressTensor(hydroVars.density,
                                                                                        hydroVars.tau,
-                                                                                       hydroVars.GetFNeq().f,
+                                                                                       hydroVars.GetFNeq(),
                                                                                        stressTensor);
 
               propertyCache.stressTensorCache.Put(site.GetIndex(), stressTensor);
@@ -158,7 +158,7 @@ namespace hemelb
               {
                 LatticeType::CalculateTractionOnAPoint(hydroVars.density,
                                                        hydroVars.tau,
-                                                       hydroVars.GetFNeq().f,
+                                                       hydroVars.GetFNeq(),
                                                        site.GetWallNormal(),
                                                        tractionOnAPoint);
               }
@@ -179,7 +179,7 @@ namespace hemelb
               {
                 LatticeType::CalculateTangentialProjectionTraction(hydroVars.density,
                                                                    hydroVars.tau,
-                                                                   hydroVars.GetFNeq().f,
+                                                                   hydroVars.GetFNeq(),
                                                                    site.GetWallNormal(),
                                                                    tangentialProjectionTractionOnAPoint);
               }

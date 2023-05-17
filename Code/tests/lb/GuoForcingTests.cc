@@ -56,23 +56,24 @@ namespace hemelb::tests
         {
             // Create fake density and compute resulting momentum and velocity
             // velocity is not yet corrected for forces
-            distribn_t f[LatticeType::NUMVECTORS];
-            PhysicalVelocity expected_momentum(0, 0, 0);
-            PhysicalDensity expected_density(0);
-            for (size_t i(0); i < LatticeType::NUMVECTORS; ++i) {
-                f[i] = distribn_t(std::rand()) / distribn_t(RAND_MAX);
-                expected_density += f[i];
-                expected_momentum += LatticeType::VECTORS[i].as<PhysicalSpeed>() * f[i];
-            }
-            // ensures that functions take const value
-            distribn_t const * const const_f = f;
+            auto const [f, expected_density, expected_momentum] = []() {
+                typename LatticeType::FArray f;
+                PhysicalVelocity expected_momentum(0, 0, 0);
+                PhysicalDensity expected_density(0);
+                for (size_t i(0); i < LatticeType::NUMVECTORS; ++i) {
+                    f[i] = distribn_t(std::rand()) / distribn_t(RAND_MAX);
+                    expected_density += f[i];
+                    expected_momentum += LatticeType::VECTORS[i].as<PhysicalSpeed>() * f[i];
+                }
+                return std::make_tuple(f, expected_density, expected_momentum);
+            }();
 
             PhysicalVelocity const force(1, 2, 3);
             PhysicalVelocity momentum(0, 0, 0);
             PhysicalDensity density(0);
 
             // Check when forces are zero
-            LatticeType::CalculateDensityAndMomentum(const_f,
+            LatticeType::CalculateDensityAndMomentum(f,
                                                      LatticeForceVector::Zero(),
                                                      density,
                                                      momentum);
@@ -80,7 +81,7 @@ namespace hemelb::tests
             REQUIRE(momentum == apprx_vec(expected_momentum));
 
             // Check when forces are not zero
-            LatticeType::CalculateDensityAndMomentum(const_f,
+            LatticeType::CalculateDensityAndMomentum(f,
                                                      force,
                                                      density,
                                                      momentum);
@@ -92,11 +93,12 @@ namespace hemelb::tests
         void testCalculateDensityMomentumFEq()
         {
             LatticeForceVector const force(1, 2, 3);
-            distribn_t f[LatticeType::NUMVECTORS];
-            for (size_t i(0); i < LatticeType::NUMVECTORS; ++i)
-                f[i] = distribn_t(std::rand()) / distribn_t(RAND_MAX);
-            // ensures that functions take const value
-            distribn_t const * const const_f = f;
+            auto const f = [&]() {
+                typename LatticeType::FArray f;
+                for (size_t i = 0; i < LatticeType::NUMVECTORS; ++i)
+                    f[i] = distribn_t(std::rand()) / distribn_t(RAND_MAX);
+                return f;
+            }();
 
             PhysicalVelocity noforce_momentum(0, 0, 0), force_momentum(0, 0, 0);
             PhysicalVelocity noforce_velocity(0, 0, 0), force_velocity(0, 0, 0);
@@ -105,13 +107,13 @@ namespace hemelb::tests
                     feq[LatticeType::NUMVECTORS];
 
             // Compute without force
-            LatticeType::CalculateDensityMomentumFEq(const_f,
+            LatticeType::CalculateDensityMomentumFEq(f,
                                                      noforce_density,
                                                      noforce_momentum,
                                                      noforce_velocity,
                                                      noforce_feq);
             // Compute with forces
-            LatticeType::CalculateDensityMomentumFEq(const_f,
+            LatticeType::CalculateDensityMomentumFEq(f,
                                                      force,
                                                      force_density,
                                                      force_momentum,
@@ -314,7 +316,7 @@ namespace hemelb::tests
             // Get collided distributions at this site
             // Will compare zero and non-zero forces, to make sure they are different
             // Assumes collides works, since tested in TestDoCollide
-            distribn_t withForce[LatticeType::NUMVECTORS], withoutForce[LatticeType::NUMVECTORS];
+            LatticeType::FArray withForce, withoutForce;
             FPostCollision(site.GetFOld<LatticeType>(), site.GetForce(), withForce);
             FPostCollision(site.GetFOld<LatticeType>(), LatticeForceVector(0, 0, 0), withoutForce);
 
@@ -382,7 +384,6 @@ namespace hemelb::tests
             const distribn_t inv_cs2(3e0);
             const distribn_t inv_cs4(9e0);
             const distribn_t prefactor(1. - 0.5 / _tau);
-            LatticeVelocity result(0, 0, 0);
             for (size_t i(0); i < LatticeType::NUMVECTORS; ++i)
             {
                 LatticeVelocity const ei(LatticeType::CX[i], LatticeType::CY[i], LatticeType::CZ[i]);
@@ -392,8 +393,8 @@ namespace hemelb::tests
             }
         }
 
-        void FPostCollision(distribn_t const *_f, LatticeForceVector const &_force,
-                            distribn_t _fout[])
+        void FPostCollision(LatticeType::const_span _f, LatticeForceVector const &_force,
+                            LatticeType::mut_span _fout)
         {
             HydroVars hydroVars(_f, _force);
             Kernel kernel(initParams);
@@ -401,9 +402,9 @@ namespace hemelb::tests
             kernel.DoCalculateDensityMomentumFeq(hydroVars, 999999);
             kernel.DoCollide(&lbmParams, hydroVars);
 
-            std::copy(hydroVars.GetFPostCollision().f,
-                      hydroVars.GetFPostCollision().f + LatticeType::NUMVECTORS,
-                      _fout);
+            std::copy(hydroVars.GetFPostCollision().begin(),
+                      hydroVars.GetFPostCollision().end(),
+                      _fout.begin());
         }
 
     };

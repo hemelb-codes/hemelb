@@ -5,7 +5,6 @@
 
 #include <iostream>
 #include <memory>
-#include <sstream>
 
 #include <catch2/catch.hpp>
 
@@ -38,15 +37,15 @@ namespace hemelb::tests
                 VSExtra<lb::D3Q15> (iolet)
         {
         }
-        const UnitVec& GetE1() const
+        [[nodiscard]] const UnitVec& GetE1() const
         {
             return e1;
         }
-        const UnitVec& GetE2() const
+        [[nodiscard]] const UnitVec& GetE2() const
         {
             return e2;
         }
-        const UnitVec& GetE3() const
+        [[nodiscard]] const UnitVec& GetE3() const
         {
             return n;
         }
@@ -96,12 +95,9 @@ namespace hemelb::tests
 
         auto CheckAllHVUpdated = [&](lb::iolets::BoundaryValues& iolets, LatticeTimeStep expectedT) {
             auto * extra = dynamic_cast<VSExtra<Lattice>*> (iolets.GetLocalIolet(0)->GetExtraData());
-            for (RSHV::Map::iterator hvPtr = extra->hydroVarsCache.begin();
-                 hvPtr != extra->hydroVarsCache.end(); ++hvPtr) {
-                site_t siteGlobalIdx = hvPtr->first;
+            for (auto& [siteGlobalIdx, hv] : extra->hydroVarsCache) {
                 LatticeVector sitePos;
                 dom->GetGlobalCoordsFromGlobalNoncontiguousSiteId(siteGlobalIdx, sitePos);
-                RSHV& hv = hvPtr->second;
                 REQUIRE(expectedT == hv.t);
                 REQUIRE(apprx(GetDensity(sitePos)) == hv.rho);
                 LatticeVelocity u = GetVelocity(sitePos);
@@ -129,7 +125,7 @@ namespace hemelb::tests
                         LatticeVector pos(i, j, k);
                         site_t siteIdx = dom->GetContiguousSiteId(pos);
                         //geometry::Site < geometry::domain_type > site = latDat->GetSite(siteIdx);
-                        distribn_t* fOld = latDat->GetFNew(siteIdx * Lattice::NUMVECTORS);
+                        auto fOld = Lattice::mut_span{latDat->GetFNew(siteIdx * Lattice::NUMVECTORS), Lattice::NUMVECTORS};
                         LatticeDensity rho = GetDensity(pos);
                         LatticeVelocity u = GetVelocity(pos);
                         u *= rho;
@@ -315,9 +311,8 @@ namespace hemelb::tests
             }
 
             // And the reverse is true: every cache entry should be a site at the outlet plane
-            for (RSHV::Map::iterator hvPtr = extra->hydroVarsCache.begin();
-                 hvPtr != extra->hydroVarsCache.end(); ++hvPtr) {
-                site_t globalIdx = hvPtr->first;
+            for (auto& hvPtr : extra->hydroVarsCache) {
+                site_t globalIdx = hvPtr.first;
                 LatticeVector pos;
                 dom->GetGlobalCoordsFromGlobalNoncontiguousSiteId(globalIdx, pos);
                 REQUIRE(hemelb::util::NumericalFunctions::IsInRange<LatticeCoordinate>(pos.x(),
@@ -408,11 +403,7 @@ namespace hemelb::tests
             InOutLetCosine* inlet = GetIolet(inletBoundary);
             auto * inExtra = dynamic_cast<VSExtra<Lattice>*> (inlet->GetExtraData());
 
-            for (auto vsIt = inExtra->vSites.begin();
-                 vsIt != inExtra->vSites.end(); ++vsIt) {
-                site_t vSiteGlobalIdx = vsIt->first;
-                VirtualSite& vSite = vsIt->second;
-
+            for (auto& [vSiteGlobalIdx, vSite] : inExtra->vSites) {
                 REQUIRE(LatticeTimeStep(1) == vSite.hv.t);
                 REQUIRE(apprx(LatticeDensity(1.045)) == vSite.hv.rho);
 
@@ -424,13 +415,9 @@ namespace hemelb::tests
             }
 
             InOutLetCosine* outlet = GetIolet(outletBoundary);
-            VSExtra<Lattice> * outExtra = dynamic_cast<VSExtra<Lattice>*> (outlet->GetExtraData());
+            auto outExtra = dynamic_cast<VSExtra<Lattice>*> (outlet->GetExtraData());
 
-            for (VirtualSite::Map::iterator vsIt = outExtra->vSites.begin();
-                 vsIt != outExtra->vSites.end(); ++vsIt) {
-                site_t vSiteGlobalIdx = vsIt->first;
-                VirtualSite& vSite = vsIt->second;
-
+            for (auto& [vSiteGlobalIdx, vSite] : outExtra->vSites) {
                 REQUIRE(LatticeTimeStep(1) == vSite.hv.t);
                 REQUIRE(apprx(LatticeDensity(0.995)) == vSite.hv.rho);
 

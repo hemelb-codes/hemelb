@@ -8,156 +8,137 @@
 
 #include <cstdlib>
 #include "constants.h"
+#include "lb/concepts.h"
+#include "lb/lattices/Lattice.h"
 #include "lb/iolets/BoundaryValues.h"
 #include "lb/kernels/rheologyModels/RheologyModels.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "geometry/SiteData.h"
 #include "util/Vector3D.h"
 
-namespace hemelb
+namespace hemelb::lb::kernels
 {
-  namespace lb
-  {
-    namespace kernels
+
+    template <class LatticeType>
+    using FVector = std::array<distribn_t, LatticeType::NUMVECTORS>;
+
+    /**
+     * HydroVars: struct for storing all of the hydrodynamics variables for doing the
+     * colliding and streaming of Lattice-Boltzmann.
+     *
+     * This base is needed by all kernels. The primary template class should be used
+     * and can be specialised for those kernels that need extra data/behaviour.
+     */
+    template<lattice_type LatticeType>
+    struct HydroVarsBase
     {
+        using const_span = typename LatticeType::const_span;
+        using mut_span = typename LatticeType::mut_span;
 
-      /**
-       * HydroVars: struct for storing all of the hydrodynamics variables for doing the
-       * colliding and streaming of Lattice-Boltzmann.
-       *
-       * This is specialised to each kernel implementation using a traits-type mechanism.
-       * (Google for 'CRTP traits'). Each kernel implementation can also specialise this template.
-       */
+        template<lattice_type> friend class Entropic;
+        template<lattice_type> friend class EntropicAnsumali;
+        template<lattice_type> friend class EntropicChik;
+        template<lattice_type> friend class LBGK;
+        template<class rheologyModel, lattice_type> friend class LBGKNN;
+        template<moment_basis> friend class MRT;
+        template<lattice_type> friend class TRT;
 
-      template<class LatticeType>
-      struct FVector
-      {
-        public:
-          distribn_t f[LatticeType::NUMVECTORS];
+        HydroVarsBase(const_span s) : f(s) {
+        }
 
-          inline distribn_t& operator[](unsigned index)
-          {
-            return f[index];
-          }
+        HydroVarsBase(const distribn_t* const f) :
+                f(f, LatticeType::NUMVECTORS)
+        {
+        }
+        template<class DataSource>
+        HydroVarsBase(geometry::Site<DataSource> const &_site) :
+                f(_site.template GetFOld<LatticeType>())
+        {
+        }
 
-          inline const distribn_t& operator[](unsigned index) const
-          {
-            return f[index];
-          }
-      };
+        distribn_t density, tau;
+        util::Vector3D<distribn_t> momentum;
+        util::Vector3D<distribn_t> velocity;
 
-      template<class LatticeType>
-      struct HydroVarsBase
-      {
-          template<class LatticeImpl> friend class Entropic;
-          template<class LatticeImpl> friend class EntropicAnsumali;
-          template<class LatticeImpl> friend class EntropicChik;
-          template<class LatticeImpl> friend class LBGK;
-          template<class rheologyModel, class LatticeImpl> friend class LBGKNN;
-          template<class LatticeImpl> friend class MRT;
-          template<class LatticeImpl> friend class TRT;
+        const_span f;
 
-        protected:
-          HydroVarsBase(const distribn_t* const f) :
-              f(f)
-          {
-          }
-          template<class DataSource>
-          HydroVarsBase(geometry::Site<DataSource> const &_site) :
-              f(_site.template GetFOld<LatticeType>())
-          {
-          }
-
-        public:
-          distribn_t density, tau;
-          util::Vector3D<distribn_t> momentum;
-          util::Vector3D<distribn_t> velocity;
-
-          const distribn_t* const f;
-
-          inline const FVector<LatticeType>& GetFEq() const
-          {
+        mut_span GetFEq()
+        {
             return f_eq;
-          }
+        }
+        const_span GetFEq() const
+        {
+            return f_eq;
+        }
 
-          inline void SetFEq(Direction i, distribn_t val)
-          {
+        void SetFEq(Direction i, distribn_t val)
+        {
             f_eq[i] = val;
-          }
+        }
 
-          inline distribn_t* GetFEqPtr()
-          {
+        distribn_t* GetFEqPtr()
+        {
             return f_eq.f;
-          }
+        }
 
-          inline const FVector<LatticeType>& GetFNeq() const
-          {
+        const FVector<LatticeType>& GetFNeq() const
+        {
             return f_neq;
-          }
-          // This is necessary as some of the streamers need the post-collision distribution.
-          // It is calculated by collisions and kernels.
-          inline void SetFNeq(Direction direction, distribn_t value)
-          {
+        }
+
+        // This is necessary as some of the streamers need the post-collision distribution.
+        // It is calculated by collisions and kernels.
+        void SetFNeq(Direction direction, distribn_t value)
+        {
             f_neq[direction] = value;
-          }
+        }
 
-          inline distribn_t* GetFNeqPtr()
-          {
-            return f_neq.f;
-          }
+        distribn_t* GetFNeqPtr()
+        {
+            return f_neq.data();
+        }
 
-          // This is necessary as some of the streamers need the post-collision distribution.
-          // It is calculated by collisions and kernels.
-          inline void SetFPostCollision(Direction direction, distribn_t value)
-          {
+        // This is necessary as some of the streamers need the post-collision distribution.
+        // It is calculated by collisions and kernels.
+        void SetFPostCollision(Direction direction, distribn_t value)
+        {
             fPostCollision[direction] = value;
-          }
+        }
 
-          inline const FVector<LatticeType>& GetFPostCollision()
-          {
+        const FVector<LatticeType>& GetFPostCollision()
+        {
             return fPostCollision;
-          }
+        }
 
-        protected:
-          FVector<LatticeType> f_eq, f_neq, fPostCollision;
-      };
+    protected:
+        FVector<LatticeType> f_eq, f_neq, fPostCollision;
+    };
 
-      template<typename KernelImpl>
-      struct HydroVars : HydroVarsBase<typename KernelImpl::LatticeType>
-      {
-        public:
-          template<class DataSource>
-          HydroVars(geometry::Site<DataSource> const &_site) :
-              HydroVarsBase<typename KernelImpl::LatticeType>(_site)
-          {
-          }
+    /// This exists to be specialised for some kernels that need extra members.
+    template <typename KernelImpl>
+    struct HydroVars : HydroVarsBase<typename KernelImpl::LatticeType>
+    {
+        using HydroVarsBase<typename KernelImpl::LatticeType>::HydroVarsBase;
+    };
 
-          HydroVars(const distribn_t* const f) :
-              HydroVarsBase<typename KernelImpl::LatticeType>(f)
-          {
-          }
-      };
-
-      /**
-       * InitParams: struct for passing variables into streaming, collision and kernel operators
-       * to initialise them.
-       *
-       * When a newly-developed kernel, collider or streamer requires extra parameters to be
-       * passed in for initialisation, it's annoying to have to change the constructors in
-       * multiple places to make them all consistent (so that higher-up code can seamlessly
-       * construct one kind or another).
-       *
-       * Instead, new parameters can be added to this single object, which should be the only
-       * constructor argument used by any kernel / collision / streaming implementation.
-       */
-      struct InitParams
-      {
+    /**
+     * InitParams: struct for passing variables into streaming, collision and kernel operators
+     * to initialise them.
+     *
+     * When a newly-developed kernel, collider or streamer requires extra parameters to be
+     * passed in for initialisation, it's annoying to have to change the constructors in
+     * multiple places to make them all consistent (so that higher-up code can seamlessly
+     * construct one kind or another).
+     *
+     * Instead, new parameters can be added to this single object, which should be the only
+     * constructor argument used by any kernel / collision / streaming implementation.
+     */
+    struct InitParams
+    {
         public:
 
           // Assume the first site to be used in the kernel is the first site in the core, unless otherwise specified
-          InitParams()
-          {
-          }
+          InitParams() = default;
 
           // The number of sites using this kernel instance.
           site_t siteCount;
@@ -182,52 +163,50 @@ namespace hemelb
           // The neighbouring data manager, for kernels / collisions / streamers that
           // require data from other cores.
           geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
-      };
+    };
 
-      /**
-       * BaseKernel: inheritable base class for the kernel. The public interface here define the
-       * complete interface usable by collision operators:
-       *  - Constructor(InitParams&)
-       *  - KHydroVars, the type name for the kernel's hydrodynamic variable object.
-       *  - LatticeType, the type of lattice being used (D3Q15, D3Q19 etc)
-       *  - CalculateDensityMomentumFeq(KHydroVars&, site_t) for calculating
-       *      the density, momentum and equilibrium distribution
-       *  - Collide(const LbmParameters*, KHydroVars& hydroVars, unsigned int directionIndex)
-       *  - Reset(InitParams*)
-       *
-       * The following must be implemented must be kernels (which derive from this class
-       * using the CRTP).
-       *  - Constructor(InitParams&)
-       *  - DoCalculateDensityMomentumFeq(KHydroVars&, site_t)
-       *  - DoCollide(const LbmParameters*, KHydroVars&, unsigned int) returns distibn_t
-       *  - DoReset(InitParams*)
-       */
-      template<typename KernelImpl, typename LatticeImpl>
-      class BaseKernel
-      {
-        public:
-          typedef HydroVars<KernelImpl> KHydroVars;
-          typedef LatticeImpl LatticeType;
+    /**
+     * BaseKernel: inheritable base class for the kernel. The public interface here define the
+     * complete interface usable by collision operators:
+     *  - Constructor(InitParams&)
+     *  - KHydroVars, the type name for the kernel's hydrodynamic variable object.
+     *  - LatticeType, the type of lattice being used (D3Q15, D3Q19 etc)
+     *  - CalculateDensityMomentumFeq(KHydroVars&, site_t) for calculating
+     *      the density, momentum and equilibrium distribution
+     *  - Collide(const LbmParameters*, KHydroVars& hydroVars, unsigned int directionIndex)
+     *  - Reset(InitParams*)
+     *
+     * The following must be implemented must be kernels (which derive from this class
+     * using the CRTP).
+     *  - Constructor(InitParams&)
+     *  - DoCalculateDensityMomentumFeq(KHydroVars&, site_t)
+     *  - DoCollide(const LbmParameters*, KHydroVars&, unsigned int) returns distibn_t
+     *  - DoReset(InitParams*)
+     */
+    template <typename KernelImpl, lattice_type LatticeImpl>
+    class BaseKernel
+    {
+    public:
+        using KHydroVars = HydroVars<KernelImpl>;
+        using LatticeType = LatticeImpl;
 
-          inline void CalculateDensityMomentumFeq(KHydroVars& hydroVars, site_t index)
-          {
+        inline void CalculateDensityMomentumFeq(KHydroVars& hydroVars, site_t index)
+        {
             static_cast<KernelImpl*>(this)->DoCalculateDensityMomentumFeq(hydroVars, index);
-          }
+        }
 
-          inline void CalculateFeq(KHydroVars& hydroVars, site_t index)
-          {
+        inline void CalculateFeq(KHydroVars& hydroVars, site_t index)
+        {
             static_cast<KernelImpl*>(this)->DoCalculateFeq(hydroVars, index);
-          }
+        }
 
-          inline void Collide(const LbmParameters* lbmParams, KHydroVars& hydroVars)
-          {
+        inline void Collide(const LbmParameters* lbmParams, KHydroVars& hydroVars)
+        {
             static_cast<KernelImpl*>(this)->DoCollide(lbmParams, hydroVars);
-          }
+        }
 
-      };
+    };
 
-    }
-  }
 }
 
 #endif /* HEMELB_LB_KERNELS_BASEKERNEL_H */

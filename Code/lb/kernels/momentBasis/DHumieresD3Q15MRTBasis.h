@@ -7,47 +7,63 @@
 #define HEMELB_LB_KERNELS_MOMENTBASIS_DHUMIERESD3Q15MRTBASIS_H
 
 #include "lb/lattices/D3Q15.h"
+#include "lb/kernels/momentBasis/basis_helpers.h"
 
 namespace hemelb::lb::kernels::momentBasis
-      {
+{
+    /**
+     *  Class implementing the Multiple Relaxation Time (MRT) moment basis presented in in d'Humieres et al. (2002)
+     *  "Multiple�relaxation�time lattice Boltzmann models in three dimensions" for the D3Q15 lattice
+     */
+    class DHumieresD3Q15MRTBasis
+    {
+    public:
         /**
-         *  Class implementing the Multiple Relaxation Time (MRT) moment basis presented in in d'Humieres et al. (2002)
-         *  "Multiple�relaxation�time lattice Boltzmann models in three dimensions" for the D3Q15 lattice
+         * The lattice that suits this basis.
          */
-        class DHumieresD3Q15MRTBasis
-        {
-          public:
-            /**
-             * The lattice that suits this basis.
-             */
-            using Lattice = D3Q15;
+        using Lattice = D3Q15;
 
-            /** Moments can be separated into two groups: a) hydrodynamic (conserved) and b) ghost (non-conserved). */
-            static const unsigned NUM_KINETIC_MOMENTS = 11;
+        /**
+         * Moments can be separated into two groups:
+         * a) conserved (density and momentum) and
+         * b) non-conserved (stress, kinetic/ghost modes).
+         */
+        static constexpr unsigned NUMMOMENTS = 11;
 
-            /** Matrix used to convert from the velocities space to the reduced moment space containing only kinetic moments. */
-            static const double REDUCED_MOMENT_BASIS[NUM_KINETIC_MOMENTS][Lattice::NUMVECTORS];
+        using Traits = moment_traits<distribn_t, NUMMOMENTS, Lattice::NUMVECTORS>;
+        using MatrixType = typename Traits::MatrixType;
 
-            /** Diagonal matrix REDUCED_MOMENT_BASIS * REDUCED_MOMENT_BASIS'. See #61 for the MATLAB code used to compute it (in case REDUCED_MOMENT_BASIS is modified). */
-            static const double BASIS_TIMES_BASIS_TRANSPOSED[NUM_KINETIC_MOMENTS];
+        /**
+         * Matrix used to convert from the velocities space to the reduced moment space containing only kinetic moments.
+         * Kinetic moments defined in d'Humieres et al. 2002. To get the matrix below,
+         * columns 8 and 9 are respectively permuted
+         * with columns 14 and 11 to match HemeLB's lattice velocity ordering.
+         *
+         *  See publication for  meaning of e, epsilon, etc.
+         */
+        static constexpr MatrixType REDUCED_MOMENT_BASIS = {{
+            { -2, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1 }, // e
+            { 16, -4, -4, -4, -4, -4, -4, 1, 1, 1, 1, 1, 1, 1, 1 }, // epsilon
+            { 0, -4, 4, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1 }, // q_x
+            { 0, 0, 0, -4, 4, 0, 0, 1, -1, 1, -1, -1, 1, -1, 1 }, // q_y
+            { 0, 0, 0, 0, 0, -4, 4, 1, -1, -1, 1, 1, -1, -1, 1 }, // q_z
+            { 0, 2, 2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0 }, // 3*p_xx
+            { 0, 0, 0, 1, 1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0 }, // p_ww = p_yy - p_zz
+            { 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1 }, // p_xy
+            { 0, 0, 0, 0, 0, 0, 0, 1, 1, -1, -1, -1, -1, 1, 1 }, // p_yz
+            { 0, 0, 0, 0, 0, 0, 0, 1, 1, -1, -1, 1, 1, -1, -1 }, // p_zx
+            { 0, 0, 0, 0, 0, 0, 0, 1, -1, -1, 1, -1, 1, 1, -1 } // m_xyz
+                                                            }};
 
-            /**
-             * Projects a velocity distributions vector into the (reduced) MRT moment space.
-             *
-             * @param velDistributions velocity distributions vector
-             * @param moments equivalent vector in the moment space
-             */
-            static void ProjectVelsIntoMomentSpace(const distribn_t * velDistributions,
-                                                   distribn_t * moments);
-
-            /**
-             * Sets up the MRT collision matrix \hat{S}
-             *
-             * @param collisionMatrix MRT collision matrix, diagonal
-             * @param tau LB relaxation time used to relax some of the moments
-             */
-            static void SetUpCollisionMatrix(std::vector<distribn_t>& collisionMatrix,
-                                             distribn_t tau);
-        };
-      }
+        /** Diagonal matrix REDUCED_MOMENT_BASIS * REDUCED_MOMENT_BASIS'. */
+        static constexpr auto BASIS_TIMES_BASIS_TRANSPOSED = Traits::DiagSelfProduct(REDUCED_MOMENT_BASIS);
+        /**
+          * Sets up the MRT collision matrix \hat{S}
+          *
+          * @return MRT collision matrix, diagonal
+          * @param tau LB relaxation time used to relax some of the moments
+          */
+        static std::array<distribn_t, NUMMOMENTS> SetUpCollisionMatrix(distribn_t tau);
+    };
+}
 #endif //HEMELB_LB_KERNELS_MOMENTBASIS_DHUMIERESD3Q15MRTBASIS_H

@@ -139,14 +139,26 @@ namespace hemelb::geometry {
             return &m_nextDistributions[distributionIndex];
         }
 
+        template <typename LatticeType>
+        auto GetFNew(site_t site_idx) {
+            constexpr auto Q = LatticeType::NUMVECTORS;
+            return MutDistSpan<Q>{&m_nextDistributions[site_idx * Q], Q};
+        }
+
         /**
          * Get a pointer into the fNew array at the given index. This version of the above lets us
          * use a const version of a domain_type to get a const *.
          * @param distributionIndex
          * @return
          */
-        inline const distribn_t *GetFNew(site_t siteNumber) const {
-            return &m_nextDistributions[siteNumber];
+        inline const distribn_t *GetFNew(site_t distributionIndex) const {
+            return &m_nextDistributions[distributionIndex];
+        }
+
+        template <typename LatticeType>
+        auto GetFNew(site_t site_idx) const {
+            constexpr auto Q = LatticeType::NUMVECTORS;
+            return ConstDistSpan<Q>{&m_nextDistributions[site_idx * Q], Q};
         }
 
         //! Swap the fOld and fNew arrays around.

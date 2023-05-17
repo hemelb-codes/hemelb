@@ -11,37 +11,33 @@
 #include <cassert>
 #include <cmath>
 
-namespace hemelb
+namespace hemelb::lb::kernels
 {
-  namespace lb
-  {
-    namespace kernels
+    namespace rheologyModels
     {
-      namespace rheologyModels
-      {
         template<class tRheologyImplementation>
         class AbstractRheologyModel;
-      }
+    }
 
-      namespace detail
-      {
-	template <typename RHEO>
-	struct has_calc_visc {
-	  using prototype = PhysicalDynamicViscosity (RHEO::*)(const PhysicalRate&, const LatticeDensity&) const;
-	  static constexpr bool value = std::is_same<
-	    prototype,
-	    decltype(&RHEO::CalculateViscosityForShearRate)
-	    >::value;
-	};
-      }
+    namespace detail
+    {
+        template <typename RHEO>
+        struct has_calc_visc {
+            using prototype = PhysicalDynamicViscosity (RHEO::*)(const PhysicalRate&, const LatticeDensity&) const;
+            static constexpr bool value = std::is_same<
+                    prototype,
+                    decltype(&RHEO::CalculateViscosityForShearRate)
+            >::value;
+        };
+    }
 
-      /**
-       * Class extending the original BGK collision operator to support non-Newtonian
-       * fluids. Implements support for relaxation time not constant across the domain.
-       */
-      template<class tRheologyModel, class LatticeType>
-      class LBGKNN : public BaseKernel<LBGKNN<tRheologyModel, LatticeType>, LatticeType>
-      {
+    /**
+     * Class extending the original BGK collision operator to support non-Newtonian
+     * fluids. Implements support for relaxation time not constant across the domain.
+     */
+    template<class tRheologyModel, lattice_type LatticeType>
+    class LBGKNN : public BaseKernel<LBGKNN<tRheologyModel, LatticeType>, LatticeType>
+    {
 	// Eventually these could be made a concept
 	//
 	// One might like to check these in AbstractRheologyModel, but
@@ -70,11 +66,11 @@ namespace hemelb
                                                      hydroVars.density,
                                                      hydroVars.momentum,
                                                      hydroVars.velocity,
-                                                     hydroVars.f_eq.f);
+                                                     hydroVars.f_eq);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {
-              hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
+              hydroVars.f_neq[ii] = hydroVars.f[ii] - hydroVars.f_eq[ii];
             }
 
             // Use the value of tau computed during the previous time step in coming calls to DoCollide
@@ -89,11 +85,11 @@ namespace hemelb
           {
             LatticeType::CalculateFeq(hydroVars.density,
                                       hydroVars.momentum,
-                                      hydroVars.f_eq.f);
+                                      hydroVars.f_eq);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {
-              hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
+              hydroVars.f_neq[ii] = hydroVars.f[ii] - hydroVars.f_eq[ii];
             }
 
             // Use the value of tau computed during the previous time step in coming calls to DoCollide
@@ -112,7 +108,7 @@ namespace hemelb
             {
               hydroVars.SetFPostCollision(direction,
                                           hydroVars.f[direction]
-                                              + hydroVars.GetFNeq().f[direction] * omega);
+                                              + hydroVars.GetFNeq()[direction] * omega);
             }
           }
 
@@ -155,7 +151,7 @@ namespace hemelb
              * wants it in units of s^{-1}
              */
             double shear_rate = LatticeType::CalculateShearRate(localTau,
-                                                                hydroVars.f_neq.f,
+                                                                hydroVars.f_neq,
                                                                 hydroVars.density) / mLbParams.GetTimeStep();
 
             // Update tau
@@ -167,9 +163,7 @@ namespace hemelb
             assert( (!std::isinf(localTau)) );
             assert( (!std::isnan(localTau)) );
           }
-      };
-    }
-  }
+    };
 }
 
-#endif /* HEMELB_LB_STREAMERS_LBGKNN_H */
+#endif

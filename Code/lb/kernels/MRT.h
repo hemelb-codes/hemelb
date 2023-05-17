@@ -11,62 +11,47 @@
 #include <cassert>
 #include <cmath>
 
-namespace hemelb
+namespace hemelb::lb::kernels
 {
-  namespace lb
-  {
-    namespace kernels
+    // Forward declaration needed by the struct
+    template<moment_basis> class MRT;
+
+    template<class MomentBasis>
+    struct HydroVars<MRT<MomentBasis> > : public HydroVarsBase<typename MomentBasis::Lattice>
     {
-      // Forward declaration needed by the struct
-      template<class MomentBasis> class MRT;
+        using HydroVarsBase<typename MomentBasis::Lattice>::HydroVarsBase;
+        /** Equilibrium velocity distribution in the momentum space. */
+        std::array<distribn_t, MomentBasis::NUMMOMENTS> m_neq;
+    };
 
-      template<class MomentBasis>
-      struct HydroVars<MRT<MomentBasis> > : public HydroVarsBase<typename MomentBasis::Lattice>
-      {
-        public:
-          HydroVars(const distribn_t* const f) :
-              HydroVarsBase<typename MomentBasis::Lattice>(f)
-          {
-          }
+    /**
+     * This class implements the Multiple Relaxation Time (MRT) collision operator.
+     *
+     *  \Omega(f) = - M^{-1} * \hat{S} * M (f - f_{eq})
+     *            = - M^T * (M * M^T)^{-1} * \hat{S} * m_{neq}
+     *
+     *  where f is the velocity distribution function, \Omega() is the collision operator,
+     *  M is the momentum space basis, m=Mf is the vector of momentums, \hat{S} is the
+     *  collision matrix, and {m,f}_{eq} and {m,f}_{neq} are the equilibrium and non-equilibrium
+     *  versions of {m,f}.
+     *
+     *  (M * M^T)^{-1} and \hat{S} are diagonal matrices.
+     */
+    template<moment_basis MomentBasis>
+    class MRT : public BaseKernel<MRT<MomentBasis>, typename MomentBasis::Lattice>
+    {
+    public:
+        using LatticeType = typename MomentBasis::Lattice;
+        using MomentType = MomentBasis;
+        using MatrixType = typename MomentBasis::MatrixType;
 
-          /** Equilibrium velocity distribution in the momentum space. */
-          distribn_t m_neq[MomentBasis::NUM_KINETIC_MOMENTS];
-      };
+        static constexpr std::size_t NUMMOMENTS = MomentBasis::NUMMOMENTS;
+        static constexpr std::size_t NUMVECTORS = LatticeType::NUMVECTORS;
 
-      /**
-       * This class implements the Multiple Relaxation Time (MRT) collision operator.
-       *
-       *  \Omega(f) = - M^{-1} * \hat{S} * M (f - f_{eq})
-       *            = - M^T * (M * M^T)^{-1} * \hat{S} * m_{neq}
-       *
-       *  where f is the velocity distribution function, \Omega() is the collision operator,
-       *  M is the momentum space basis, m=Mf is the vector of momentums, \hat{S} is the
-       *  collision matrix, and {m,f}_{eq} and {m,f}_{neq} are the equilibrium and non-equilibrium
-       *  versions of {m,f}.
-       *
-       *  (M * M^T)^{-1} and \hat{S} are diagonal matrices.
-       */
-      template<class MomentBasis>
-      class MRT : public BaseKernel<MRT<MomentBasis>, typename MomentBasis::Lattice>
-      {
-        public:
-
-          MRT(InitParams& initParams)
-          {
-            InitState(initParams);
-
-            // Pre-compute the reduced moment basis divided by the basis times basis transposed.
-            for (Direction direction = 0; direction < MomentBasis::Lattice::NUMVECTORS; ++direction)
-            {
-              for (unsigned momentIndex = 0; momentIndex < MomentBasis::NUM_KINETIC_MOMENTS;
-                  momentIndex++)
-              {
-                normalisedReducedMomentBasis[momentIndex][direction] =
-                    MomentBasis::REDUCED_MOMENT_BASIS[momentIndex][direction]
-                        / MomentBasis::BASIS_TIMES_BASIS_TRANSPOSED[momentIndex];
-              }
-            }
-          }
+        MRT(InitParams& initParams) :
+                collisionMatrixDiagonals(MomentBasis::SetUpCollisionMatrix(initParams.lbmParams->GetTau()))
+        {
+        }
 
           inline void DoCalculateDensityMomentumFeq(HydroVars<MRT>& hydroVars, site_t index)
           {
@@ -74,15 +59,15 @@ namespace hemelb
                                                               hydroVars.density,
                                                               hydroVars.momentum,
                                                               hydroVars.velocity,
-                                                              hydroVars.f_eq.f);
+                                                              hydroVars.f_eq);
 
             for (unsigned int ii = 0; ii < MomentBasis::Lattice::NUMVECTORS; ++ii)
             {
-              hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
+              hydroVars.f_neq[ii] = hydroVars.f[ii] - hydroVars.f_eq[ii];
             }
 
             /** @todo #222 consider computing m_neq directly in the momentum space. See d'Humieres 2002. */
-            MomentBasis::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
+            ProjectVelsIntoMomentSpace(hydroVars.f_neq, hydroVars.m_neq);
           }
 
           inline void DoCalculateFeq(HydroVars<MRT>& hydroVars, site_t index)
@@ -108,51 +93,64 @@ namespace hemelb
                *  - Compute the loop below as a matrix product in DoCalculate*, alternatively we could consider reimplementing DoCollide to work with whole arrays (consider libraries boost::ublas or Armadillo)
                */
               distribn_t collision = 0.;
-              for (unsigned momentIndex = 0; momentIndex < MomentBasis::NUM_KINETIC_MOMENTS;
+              for (unsigned momentIndex = 0; momentIndex < MomentBasis::NUMMOMENTS;
                   momentIndex++)
               {
-                collision += collisionMatrix[momentIndex]
-                    * normalisedReducedMomentBasis[momentIndex][direction]
-                    * hydroVars.m_neq[momentIndex];
+                collision += collisionMatrixDiagonals[momentIndex]
+                             * normalisedReducedMomentBasis[momentIndex][direction]
+                             * hydroVars.m_neq[momentIndex];
               }
               hydroVars.SetFPostCollision(direction, hydroVars.f[direction] - collision);
             }
           }
 
-          inline void DoReset(InitParams* initParams)
-          {
-            InitState(*initParams);
-          }
+        /**
+         *  This method is used in unit testing in order to make an MRT kernel behave as LBGK, regardless of the
+         *  moment basis, by setting all the relaxation parameters to be the same.
+         */
+        void SetMrtRelaxationParameters(ConstDistSpan<NUMMOMENTS> newRelaxationParameters)
+        {
+            std::copy(newRelaxationParameters.begin(), newRelaxationParameters.end(), collisionMatrixDiagonals.begin());
+        }
 
-          /**
-           *  This method is used in unit testing in order to make an MRT kernel behave as LBGK, regardless of the
-           *  moment basis, by setting all the relaxation parameters to be the same.
-           */
-          void SetMrtRelaxationParameters(std::vector<distribn_t>& newRelaxationParameters)
-          {
-            assert(newRelaxationParameters.size() == MomentBasis::NUM_KINETIC_MOMENTS);
-            collisionMatrix = newRelaxationParameters;
-          }
+    private:
+        /**
+         * Projects a velocity distributions vector into the (reduced) MRT moment space.
+         *
+         * @param velDistributions velocity distributions vector
+         * @param moments equivalent vector in the moment space
+         */
+        static void ProjectVelsIntoMomentSpace(ConstDistSpan<NUMVECTORS> velDistributions,
+                                               MutDistSpan<NUMMOMENTS> moments)
+        {
+            for (unsigned momentIndex = 0; momentIndex < NUMMOMENTS; momentIndex++)
+            {
+                moments[momentIndex] = 0.;
+                for (Direction velocityIndex = 0; velocityIndex < NUMVECTORS; velocityIndex++)
+                {
+                    moments[momentIndex] +=
+                            MomentBasis::REDUCED_MOMENT_BASIS[momentIndex][velocityIndex] * velDistributions[velocityIndex];
+                }
+            }
+        }
 
-        private:
-          /** MRT collision matrix (\hat{S}, diagonal). It corresponds to the inverse of the relaxation time for each mode. */
-          std::vector<distribn_t> collisionMatrix;
-
-          double normalisedReducedMomentBasis[MomentBasis::NUM_KINETIC_MOMENTS][MomentBasis::Lattice::NUMVECTORS];
-
-          /**
-           *  Helper method to set/update member variables. Called from the constructor and Reset()
-           *
-           *  @param initParams struct used to store variables required for initialisation of various operators
-           */
-          void InitState(const InitParams& initParams)
-          {
-            MomentBasis::SetUpCollisionMatrix(collisionMatrix, initParams.lbmParams->GetTau());
-          }
-
+        /** MRT collision matrix (\hat{S}, diagonal). It corresponds to the inverse of the relaxation time for each mode. */
+        std::array<distribn_t, NUMMOMENTS> collisionMatrixDiagonals;
+        static constexpr MatrixType Normalise() {
+            // Pre-compute the reduced moment basis divided by the basis times basis transposed.
+            MatrixType ans;
+            for (Direction direction = 0; direction < NUMVECTORS; ++direction)
+            {
+                for (unsigned momentIndex = 0; momentIndex < NUMMOMENTS; ++momentIndex)
+                {
+                    ans[momentIndex][direction] = MomentBasis::REDUCED_MOMENT_BASIS[momentIndex][direction]
+                            / MomentBasis::BASIS_TIMES_BASIS_TRANSPOSED[momentIndex];
+                }
+            }
+            return ans;
+        }
+        static constexpr MatrixType normalisedReducedMomentBasis = Normalise();
       };
-    }
-  }
 }
 
 #endif /* HEMELB_LB_STREAMERS_MRT_H */

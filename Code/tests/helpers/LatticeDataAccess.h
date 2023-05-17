@@ -88,9 +88,9 @@ namespace hemelb::tests::helpers
         // Figure location of distribution in memory using const access to FOld.
         // This way, access is resilient versus (some) changes in memory layout.
         geometry::Site<geometry::FieldData> const site(latDat->GetSite(_pos));
-        distribn_t const * const siteFOld(site.GetFOld<LATTICE>());
+        auto siteFOld = site.GetFOld<LATTICE>();
         distribn_t const * const firstFOld = &latDat->m_currentDistributions[0];
-        size_t const indexFOld(siteFOld - firstFOld);
+        size_t const indexFOld(siteFOld.data() - firstFOld);
         latDat->m_currentDistributions[indexFOld + _dir] = _value;
     }
 
@@ -101,9 +101,9 @@ namespace hemelb::tests::helpers
         // Figure location of distribution in memory using const access to FOld.
         // This way, access is resilient versus (some) changes in memory layout.
         auto site = latDat->GetSite(_pos);
-        distribn_t const * const siteFOld(site.GetFOld<LATTICE>());
+        auto siteFOld = site.GetFOld<LATTICE>();
         distribn_t const * const firstFOld = &latDat->m_currentDistributions[0];
-        size_t const indexFOld(siteFOld - firstFOld);
+        size_t const indexFOld = siteFOld.data() - firstFOld;
         return latDat->GetFNew(indexFOld);
     }
 
@@ -125,12 +125,12 @@ namespace hemelb::tests::helpers
             size_t _i, std::function<Dimensionless(PhysicalVelocity const &)> _function)
     {
         auto&& dom = latDat->GetDomain();
-        for (site_t i(0); i < dom.GetLocalFluidSiteCount(); ++i)
+        for (site_t i = 0; i < dom.GetLocalFluidSiteCount(); ++i)
         {
             auto site = latDat->GetSite(i);
             LatticeVector const pos = site.GetGlobalSiteCoords();
             LatticePosition const pos_real(pos[0], pos[1], pos[2]);
-            distribn_t const * const siteFOld(site.GetFOld<LATTICE>());
+            distribn_t const * const siteFOld = site.GetFOld<LATTICE>().data();
             distribn_t const * const firstFOld = &latDat->m_currentDistributions[0];
             size_t const indexFOld(siteFOld - firstFOld);
             latDat->m_nextDistributions[indexFOld + _i] = latDat->m_currentDistributions[indexFOld + _i] = _function(pos_real);

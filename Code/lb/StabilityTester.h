@@ -120,7 +120,7 @@ namespace hemelb::lb
               if (testerConfig.doConvergenceCheck)
               {
                 distribn_t relativeDifference =
-                    ComputeRelativeDifference(mLatDat->GetFNew(i * LatticeType::NUMVECTORS),
+                    ComputeRelativeDifference(mLatDat->GetFNew<LatticeType>(i),
                                               mLatDat->GetSite(i).GetFOld<LatticeType>());
 
                 if (relativeDifference > testerConfig.convergenceRelativeTolerance)
@@ -148,6 +148,7 @@ namespace hemelb::lb
           timings[hemelb::reporting::Timers::monitoring].Stop();
         }
 
+        using span = typename LatticeType::const_span;
         /**
          * Computes the relative difference between the densities at the beginning and end of a
          * timestep, i.e. |(rho_new - rho_old) / (rho_old - rho_0)|.
@@ -156,8 +157,8 @@ namespace hemelb::lb
          * @param fOld Distribution function at the end of the previous timestep.
          * @return relative difference between the densities computed from fNew and fOld.
          */
-        inline double ComputeRelativeDifference(const distribn_t* fNew,
-                                                const distribn_t* fOld) const
+        inline double ComputeRelativeDifference(span fNew,
+                                                span fOld) const
         {
             distribn_t newDensity;
             LatticeMomentum newMomentum;
