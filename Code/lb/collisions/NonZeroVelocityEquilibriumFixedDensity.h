@@ -9,12 +9,9 @@
 #include "lb/collisions/BaseCollision.h"
 #include "lb/kernels/BaseKernel.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace collisions
-    {
+
       template<typename KernelType>
       class NonZeroVelocityEquilibriumFixedDensity : public BaseCollision<
           NonZeroVelocityEquilibriumFixedDensity<KernelType>, KernelType>
@@ -59,8 +56,6 @@ namespace hemelb
           iolets::BoundaryValues* boundaryObject;
       };
 
-    }
-  }
 }
 
 #endif /* HEMELB_LB_COLLISIONS_NONZEROVELOCITYEQUILIBRIUMFIXEDDENSITY_H */

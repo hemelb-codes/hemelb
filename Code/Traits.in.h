@@ -16,7 +16,7 @@ namespace hemelb
     template <
         typename LATTICE = lb::@HEMELB_LATTICE@,
         template<class> class KERNEL = lb::@HEMELB_KERNEL@,
-        template<class> class COLLISION = lb::collisions::Normal,
+        template<class> class COLLISION = lb::Normal,
         template<class> class STREAMER = lb::streamers::SimpleCollideAndStream,
         template<class> class WALL_BOUNDARY = lb::@HEMELB_WALL_BOUNDARY@,
         template<class> class INLET_BOUNDARY = lb::@HEMELB_INLET_BOUNDARY@,

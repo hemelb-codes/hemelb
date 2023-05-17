@@ -13,13 +13,6 @@
 
 namespace hemelb::lb
 {
-    namespace kernels
-    {
-      template<typename>
-      struct HydroVars;
-    }
-    namespace collisions
-    {
       /**
        * BaseCollision: inheritable base class for the collision operator. The public interface
        * here defines the complete interface usable by streaming operators:
@@ -38,7 +31,7 @@ namespace hemelb::lb
       class BaseCollision
       {
         public:
-          typedef KernelImpl CKernel;
+          using CKernel = KernelImpl;
 
           inline void CalculatePreCollision(HydroVars<KernelImpl>& hydroVars,
                                             const geometry::Site<geometry::FieldData>& site)
@@ -54,7 +47,6 @@ namespace hemelb::lb
 
       };
 
-    }
-  }
+}
 
 #endif /* HEMELB_LB_COLLISIONS_BASECOLLISION_H */

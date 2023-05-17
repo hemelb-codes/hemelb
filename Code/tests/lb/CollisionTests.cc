@@ -37,7 +37,7 @@ namespace hemelb::tests
 	lb::iolets::BoundaryValues inletBoundary = BuildIolets(geometry::INLET_TYPE);
 	initParams.boundaryObject = &inletBoundary;
 
-	lb::collisions::NonZeroVelocityEquilibriumFixedDensity<lb::LBGK<lb::D3Q15> >
+	lb::NonZeroVelocityEquilibriumFixedDensity<lb::LBGK<lb::D3Q15> >
 	  nonZeroVFixedDensityILet(initParams);
 
 	// Test the pre-collision step, which should calculate the correct
@@ -83,7 +83,7 @@ namespace hemelb::tests
 	lb::iolets::BoundaryValues outletBoundary = BuildIolets(geometry::OUTLET_TYPE);
 	initParams.boundaryObject = &outletBoundary;
 
-	lb::collisions::ZeroVelocityEquilibriumFixedDensity<lb::LBGK<lb::D3Q15> >
+	lb::ZeroVelocityEquilibriumFixedDensity<lb::LBGK<lb::D3Q15> >
 	  zeroVFixedDensityOLet(initParams);
 
 	// Test the pre-collision step, which should calculate the
@@ -119,7 +119,7 @@ namespace hemelb::tests
       }
 
       SECTION("TestZeroVelocityEquilibrium") {
-	lb::collisions::ZeroVelocityEquilibrium<lb::LBGK<lb::D3Q15> > zeroVEqm(initParams);
+	lb::ZeroVelocityEquilibrium<lb::LBGK<lb::D3Q15> > zeroVEqm(initParams);
 
 	// Test the pre-collision step, which should calculate the
 	// correct post-collisional density, velocity and equilibrium
@@ -157,7 +157,7 @@ namespace hemelb::tests
       }
 
       SECTION("TestNormal") {
-	lb::collisions::Normal<lb::LBGK<lb::D3Q15> > normal(initParams);
+	lb::Normal<lb::LBGK<lb::D3Q15> > normal(initParams);
 
 	// Test the pre-collision step, which should calculate the
 	// correct post-collisional density, velocity and equilibrium

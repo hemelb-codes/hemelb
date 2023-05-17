@@ -84,7 +84,7 @@ namespace hemelb::tests
 
         using Lattice = lb::D3Q15;
         using Kernel = lb::LBGK<Lattice>;
-        using Collision = lb::collisions::Normal<Kernel>;
+        using Collision = lb::Normal<Kernel>;
         using VirtualSite = lb::streamers::VirtualSite<Lattice>;
         using InOutLetCosine = lb::iolets::InOutLetCosine;
         using RSHV = lb::streamers::RSHV;

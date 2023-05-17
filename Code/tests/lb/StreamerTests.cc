@@ -29,7 +29,7 @@ namespace hemelb::tests
     TEST_CASE_METHOD(public helpers::FourCubeBasedTestFixture<>, "StreamerTests") {
       using LATTICE = lb::D3Q15;
       using KERNEL = lb::LBGK<LATTICE>;
-      using COLLISION = lb::collisions::Normal<KERNEL>;
+      using COLLISION = lb::Normal<KERNEL>;
       constexpr auto NUMVECTORS = LATTICE::NUMVECTORS;
       auto propertyCache = std::make_unique<lb::MacroscopicPropertyCache>(*simState, *dom);
       auto normalCollision = std::make_unique<COLLISION>(initParams);

@@ -322,7 +322,7 @@ namespace hemelb::tests
 
             // Stream that site
             using lb::streamers::SimpleCollideAndStream;
-            using lb::collisions::Normal;
+            using lb::Normal;
             SimpleCollideAndStream<Normal<Kernel> > streamer(initParams);
             streamer.StreamAndCollide(site.GetIndex(), 1, &lbmParams, *latDat, *propertyCache);
 
@@ -352,8 +352,7 @@ namespace hemelb::tests
 
             // Stream that site
             using lb::streamers::SimpleBounceBack;
-            using lb::collisions::Normal;
-            SimpleBounceBack<Normal<Kernel> >::Type streamer(initParams);
+            SimpleBounceBack<lb::Normal<Kernel> >::Type streamer(initParams);
             streamer.StreamAndCollide(site.GetIndex(), 1, &lbmParams, *latDat, *propertyCache);
 
             distribn_t const * const actual = helpers::GetFNew<LatticeType>(*latDat, position);

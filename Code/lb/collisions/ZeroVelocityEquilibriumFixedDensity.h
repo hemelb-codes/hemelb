@@ -9,12 +9,8 @@
 #include "lb/collisions/BaseCollision.h"
 #include "lb/kernels/BaseKernel.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace collisions
-    {
       /**
        * Collision operator that uses an externally imposed density, zero velocity and relaxes
        * fully to equilibrium.
@@ -24,7 +20,7 @@ namespace hemelb
           ZeroVelocityEquilibriumFixedDensity<KernelType>, KernelType>
       {
         public:
-          typedef KernelType CKernel;
+          using CKernel = KernelType;
 
           ZeroVelocityEquilibriumFixedDensity(InitParams& initParams) :
               BaseCollision<ZeroVelocityEquilibriumFixedDensity<KernelType>, KernelType>(),
@@ -57,8 +53,6 @@ namespace hemelb
 
       };
 
-    }
-  }
 }
 
 #endif /* HEMELB_LB_COLLISIONS_ZEROVELOCITYEQUILIBRIUMFIXEDDENSITY_H */

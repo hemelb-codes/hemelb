@@ -9,12 +9,8 @@
 #include "lb/collisions/BaseCollision.h"
 #include "lb/kernels/BaseKernel.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
-    namespace collisions
-    {
       /**
        * Normal collisions - use a formula to relax the distribution towards equilibrium.
        */
@@ -22,7 +18,7 @@ namespace hemelb
       class Normal : public BaseCollision<Normal<KernelType>, KernelType>
       {
         public:
-          typedef KernelType CKernel;
+          using CKernel = KernelType;
 
           Normal(InitParams& initParams) :
               kernel(initParams)
@@ -45,8 +41,6 @@ namespace hemelb
 
       };
 
-    }
-  }
 }
 
 #endif /* HEMELB_LB_COLLISIONS_NORMAL_H */
