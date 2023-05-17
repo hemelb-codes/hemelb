@@ -9,18 +9,18 @@
 namespace hemelb::lb
 {
 
-        template<class CYFIT>
-        double CarreauYasudaRheologyModel<CYFIT>::CalculateViscosityForShearRate(
+    template<CYFit CYFIT>
+    double CarreauYasudaRheologyModel<CYFIT>::CalculateViscosityForShearRate(
             const double &iShearRate, const distribn_t &iDensity) const
-        {
-	  constexpr double exponent = (CYFIT::N - 1.0) / CYFIT::A;
-          double eta = CYFIT::ETA_INF
-              + (CYFIT::ETA_ZERO - CYFIT::ETA_INF)
-                  * pow( (1.0 + pow(CYFIT::LAMBDA * iShearRate, CYFIT::A)),
-                        exponent);
-	  return eta;
-        }
+    {
+        constexpr double exponent = (CYFIT.N - 1.0) / CYFIT.A;
+        double eta = CYFIT.ETA_INF
+                     + (CYFIT.ETA_ZERO - CYFIT.ETA_INF)
+                       * pow( (1.0 + pow(CYFIT.LAMBDA * iShearRate, CYFIT.A)),
+                              exponent);
+        return eta;
+    }
 
-        template class CarreauYasudaRheologyModel<HumanCYFit>;
-        template class CarreauYasudaRheologyModel<MouseCYFit>;
+    template class CarreauYasudaRheologyModel<HumanCYFit>;
+    template class CarreauYasudaRheologyModel<MouseCYFit>;
 }
