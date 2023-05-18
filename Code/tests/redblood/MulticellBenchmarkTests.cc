@@ -8,7 +8,6 @@
 #include <catch2/catch.hpp>
 
 #include "SimulationMaster.h"
-#include "lb/BuildSystemInterface.h"
 #include "Traits.h"
 #include "redblood/Mesh.h"
 #include "redblood/MeshIO.h"

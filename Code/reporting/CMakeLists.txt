@@ -5,13 +5,3 @@
 
 add_library(hemelb_reporting OBJECT BuildInfo.cc Reporter.cc Timers.cc Dict.cc)
 target_link_libraries(hemelb_reporting PRIVATE CTemplate::CTemplate)
-
-# Ah CMake... We can only reference a variable in configure file and
-# var names are case sensitive. We also can't use generator
-# expressions at configure time because of multiconfig stuff.
-string(TOUPPER ${CMAKE_BUILD_TYPE} BUILD_TYPE)
-
-configure_file (
-  "${PROJECT_SOURCE_DIR}/reporting/BuildInfo.h.in"
-  "${PROJECT_BINARY_DIR}/reporting/BuildInfo.h"
-  )

@@ -8,15 +8,12 @@
 
 #include <cmath>
 #include <type_traits>
+#include "build_info.h"
 #include "units.h"
 #include "constants.h"
 
-namespace hemelb
+namespace hemelb::redblood::stencil
 {
-  namespace redblood
-  {
-    namespace stencil
-    {
       //! Constant to name stencils without referring to type
       //! Useful to create factories
       enum class types
@@ -27,6 +24,7 @@ namespace hemelb
         THREE_POINT,
         TWO_POINT
       };
+
       //! Four point stencil
       struct FourPoint;
       //! Approximation to the four-point stencil
@@ -113,8 +111,24 @@ namespace hemelb
       HEMELB_STENCIL_MACRO(ThreePoint, threePoint, 3);
       HEMELB_STENCIL_MACRO(TwoPoint, twoPoint, 2);
 #undef HEMELB_STENCIL_MACRO
-    }
-  }
+
+      namespace detail {
+          consteval auto get_default_stencil() {
+              constexpr auto NAME = build_info::STENCIL;
+              if constexpr (NAME == ct_string{"FourPoint"}) {
+                  return FourPoint{};
+              } else if constexpr (NAME == ct_string{"CosineApprox"}) {
+                  return CosineApprox{};
+              } else if constexpr (NAME == ct_string{"ThreePoint"}) {
+                  return ThreePoint{};
+              } else if constexpr (NAME == ct_string{"TwoPoint"}) {
+                  return TwoPoint{};
+              } else {
+                  throw "Configured with invalid STENCIL";
+              }
+          }
+      }
+      using DefaultStencil = decltype(detail::get_default_stencil());
 }
 
 #endif

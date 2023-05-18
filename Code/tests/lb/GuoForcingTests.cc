@@ -9,7 +9,7 @@
 
 #include "lb/lattices/D3Q19.h"
 #include "lb/lattices/Lattice.h"
-#include "lb/streamers/Streamers.h"
+#include "lb/Streamers.h"
 #include "lb/kernels/GuoForcingLBGK.h"
 #include "tests/helpers/FourCubeBasedTestFixture.h"
 #include "tests/helpers/LatticeDataAccess.h"
@@ -22,7 +22,8 @@ namespace hemelb::tests
     {
         using LatticeType = lb::D3Q19;
         using Kernel = lb::GuoForcingLBGK<LatticeType>;
-        using HydroVars = Kernel::KHydroVars;
+        using VarsType = Kernel::VarsType;
+        using Collision = lb::Normal<Kernel>;
         //using Lattice = lb::Lattice<LatticeType>;
 
         std::unique_ptr<lb::MacroscopicPropertyCache> propertyCache;
@@ -47,7 +48,7 @@ namespace hemelb::tests
             size_t const nFluidSites = dom->GetLocalFluidSiteCount();
             for (size_t i(1); i < nFluidSites; i <<= 1) {
                 // REQUIRE(helpers::is_zero(HydroVars(latDat->GetSite(i)).force - GetMeAForce(i)));
-                REQUIRE(HydroVars(latDat->GetSite(i)).force == apprx_vec(GetMeAForce(i)));
+                REQUIRE(VarsType(latDat->GetSite(i)).force == apprx_vec(GetMeAForce(i)));
             }
         }
 
@@ -265,7 +266,6 @@ namespace hemelb::tests
             std::default_random_engine e1(rd());
             std::uniform_real_distribution<distribn_t> rdm(-10, 10);
 
-            using LatticeType = lb::D3Q19;
             LatticeVelocity const v(rdm(e1), rdm(e1), rdm(e1));
             LatticeForceVector const F(rdm(e1), rdm(e1), rdm(e1));
             LatticeForce sumFi(0);
@@ -284,7 +284,7 @@ namespace hemelb::tests
         {
             distribn_t f[LatticeType::NUMVECTORS], Fi[LatticeType::NUMVECTORS];
             LatticeForceVector const force(1, 4, 8);
-            HydroVars hydroVars(f, force);
+            VarsType hydroVars(f, force);
             for (size_t i = 0; i < LatticeType::NUMVECTORS; ++i) {
                 f[i] = distribn_t(std::rand()) / distribn_t(RAND_MAX);
                 hydroVars.SetFNeq(i, distribn_t(std::rand()) / distribn_t(RAND_MAX));
@@ -294,7 +294,7 @@ namespace hemelb::tests
             ForceDistribution(hydroVars.velocity, lbmParams.GetTau(), hydroVars.force, Fi);
 
             Kernel kernel(initParams);
-            kernel.DoCollide(&lbmParams, hydroVars);
+            kernel.Collide(&lbmParams, hydroVars);
             for (size_t i = 0; i < LatticeType::NUMVECTORS; ++i) {
                 REQUIRE(
                         hydroVars.GetFPostCollision()[i] ==
@@ -322,8 +322,7 @@ namespace hemelb::tests
 
             // Stream that site
             using lb::streamers::SimpleCollideAndStream;
-            using lb::Normal;
-            SimpleCollideAndStream<Normal<Kernel> > streamer(initParams);
+            SimpleCollideAndStream<Collision> streamer(initParams);
             streamer.StreamAndCollide(site.GetIndex(), 1, &lbmParams, *latDat, *propertyCache);
 
             // Now check streaming worked correctly
@@ -351,8 +350,8 @@ namespace hemelb::tests
             FPostCollision(site.GetFOld<LatticeType>(), LatticeForceVector(0, 0, 0), withoutForce);
 
             // Stream that site
-            using lb::streamers::SimpleBounceBack;
-            SimpleBounceBack<lb::Normal<Kernel> >::Type streamer(initParams);
+            using SBB = lb::streamers::WallStreamerTypeFactory<Collision, lb::streamers::SimpleBounceBackDelegate<Collision>>;
+            SBB streamer(initParams);
             streamer.StreamAndCollide(site.GetIndex(), 1, &lbmParams, *latDat, *propertyCache);
 
             distribn_t const * const actual = helpers::GetFNew<LatticeType>(*latDat, position);
@@ -395,11 +394,11 @@ namespace hemelb::tests
         void FPostCollision(LatticeType::const_span _f, LatticeForceVector const &_force,
                             LatticeType::mut_span _fout)
         {
-            HydroVars hydroVars(_f, _force);
+            VarsType hydroVars(_f, _force);
             Kernel kernel(initParams);
             // Index is never used ... so give a fake value
-            kernel.DoCalculateDensityMomentumFeq(hydroVars, 999999);
-            kernel.DoCollide(&lbmParams, hydroVars);
+            kernel.CalculateDensityMomentumFeq(hydroVars, 999999);
+            kernel.Collide(&lbmParams, hydroVars);
 
             std::copy(hydroVars.GetFPostCollision().begin(),
                       hydroVars.GetFPostCollision().end(),

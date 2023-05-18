@@ -6,10 +6,8 @@
 #include "reporting/Dict.h"
 #include <ctemplate/template.h>
 
-namespace hemelb
+namespace hemelb::reporting
 {
-  namespace reporting
-  {
     namespace
     {
       void RealDeleter(ctemplate::TemplateDictionary* ptr)
@@ -48,7 +46,12 @@ namespace hemelb
     {
       raw->SetIntValue(variable, value);
     }
-    
+
+    void Dict::SetBoolValue(const std::string& variable, bool value)
+    {
+        raw->SetValue(variable, value ? "ON" : "OFF");
+    }
+
     template <typename T>
     void Dict::SetFormattedValue(const std::string& variable, const char* format, const T& value)
     {
@@ -58,5 +61,4 @@ namespace hemelb
     template 
     void Dict::SetFormattedValue<double>(const std::string& variable, const char* format, const double& value);
 
-  }
 }

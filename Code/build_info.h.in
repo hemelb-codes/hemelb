@@ -1,0 +1,37 @@
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
+
+#ifndef HEMELB_BUILD_INFO_H_IN
+#define HEMELB_BUILD_INFO_H_IN
+
+#include "util/ct_string.h"
+
+namespace hemelb {
+    class build_info {
+        static constexpr bool ON = true;
+        static constexpr bool OFF = false;
+
+    public:
+
+        // See note below in namespace scope
+#ifndef NDEBUG
+        static constexpr bool DEBUG = false;
+#else
+        static constexpr bool DEBUG = true;
+#endif
+
+        static constexpr ct_string REVISION_HASH = "${HEMELB_REVISION_NUMBER}";
+        static constexpr ct_string BUILD_TYPE = "${CMAKE_BUILD_TYPE}";
+        static constexpr ct_string OPTIMISATION = "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${BUILD_TYPE}}";
+        static constexpr ct_string BUILD_TIME = "${HEMELB_BUILD_TIME}";
+
+${conf_global}
+${conf_hemelb}
+    };
+
+    // Have this unpleasantness to allow use in `if constexpr(DEBUG) { }`
+    constexpr auto DEBUG = build_info::DEBUG;
+}
+#endif

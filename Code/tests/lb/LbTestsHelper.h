@@ -12,8 +12,8 @@
 #include <catch2/catch.hpp>
 
 #include "constants.h"
+#include "lb/concepts.h"
 #include "lb/HFunction.h"
-#include "lb/kernels/BaseKernel.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "lb/lattices/D3Q15.h"
 
@@ -22,21 +22,21 @@
 
 namespace hemelb::tests::LbTestsHelper
 {
-    template <typename LatticeType>
+    template <lb::lattice_type LatticeType>
     auto ZeroArray() {
         std::array<distribn_t, LatticeType::NUMVECTORS> ans;
         std::fill(ans.begin(), ans.end(), 0.0);
         return ans;
     }
 
-    template<typename Lattice>
+    template<lb::lattice_type Lattice>
     using const_span = typename Lattice::const_span;
-    template<typename Lattice>
+    template<lb::lattice_type Lattice>
     using mut_span = typename Lattice::mut_span;
 
     using Vec = util::Vector3D<distribn_t>;
 
-    template<typename Lattice>
+    template<lb::lattice_type Lattice>
     void CalculateRhoMomentum(const_span<Lattice> f, distribn_t& rho,  Vec& v)
     {
         rho = 0.0;
@@ -48,7 +48,7 @@ namespace hemelb::tests::LbTestsHelper
         }
     }
 
-    template<typename Lattice>
+    template<lb::lattice_type Lattice>
     Vec CalculateMomentum(const_span<Lattice> f)
     {
         auto v = Vec::Zero();
@@ -58,7 +58,7 @@ namespace hemelb::tests::LbTestsHelper
         return v;
     }
 
-    template<typename Lattice>
+    template<lb::lattice_type Lattice>
     void CalculateAnsumaliEntropicEqmF(distribn_t density,
                                        const Vec& momentum,
                                        mut_span<Lattice> f)
@@ -86,7 +86,7 @@ namespace hemelb::tests::LbTestsHelper
         }
     }
 
-    template<typename Lattice>
+    template<lb::lattice_type Lattice>
     void CalculateLBGKEqmF(distribn_t density,
                            const util::Vector3D<distribn_t>& momentum,
                            mut_span<Lattice> f)
@@ -113,7 +113,7 @@ namespace hemelb::tests::LbTestsHelper
         }
     }
 
-    template<typename Lattice>
+    template<lb::lattice_type Lattice>
     void CalculateEntropicCollision(const_span<Lattice> f,
                                     const_span<Lattice> f_eq,
                                     distribn_t tau,
@@ -130,7 +130,7 @@ namespace hemelb::tests::LbTestsHelper
         }
     }
 
-    template<typename Lattice>
+    template<lb::lattice_type Lattice>
     void CalculateLBGKCollision(const_span<Lattice> f,
                                 const_span<Lattice> f_eq,
                                 distribn_t omega,
@@ -143,11 +143,11 @@ namespace hemelb::tests::LbTestsHelper
     }
 
     //using DISTS = distribn_t[lb::D3Q15::NUMVECTORS];
-    template<typename Kernel>
+    template<typename VarsType>
     void CompareHydros(const distribn_t expectedDensity,
-                       const util::Vector3D<distribn_t>& expectedMomentum,
-                       const_span<typename Kernel::LatticeType> expectedFEq,
-                       lb::HydroVars<Kernel> &hydroVars,
+                       const LatticeMomentum& expectedMomentum,
+                       typename VarsType::const_span expectedFEq,
+                       VarsType& hydroVars,
                        distribn_t allowedError)
     {
         // Compare density
@@ -161,7 +161,7 @@ namespace hemelb::tests::LbTestsHelper
         }
     }
 
-    template<typename LatticeType>
+    template<lb::lattice_type LatticeType>
     void InitialiseAnisotropicTestData(site_t site, distribn_t* distribution)
     {
         for (unsigned int direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
@@ -170,7 +170,7 @@ namespace hemelb::tests::LbTestsHelper
         }
     }
 
-    template<typename LatticeType>
+    template<lb::lattice_type LatticeType>
     void InitialiseAnisotropicTestData(FourCubeLatticeData& latticeData)
     {
         auto&& dom = latticeData.GetDomain();
@@ -191,7 +191,7 @@ namespace hemelb::tests::LbTestsHelper
      * @param cache
      * @param simState
      */
-    template<typename Lattice>
+    template<lb::lattice_type Lattice>
     void UpdatePropertyCache(geometry::FieldData& latDat,
                              lb::MacroscopicPropertyCache& cache,
                              lb::SimulationState& simState)
@@ -229,7 +229,7 @@ namespace hemelb::tests::LbTestsHelper
      * @param latticeData Lattice object
      * @param wallDistance Distance to the wall in lattice units and in [0,1)
      */
-    template<typename Lattice>
+    template<lb::lattice_type Lattice>
     void SetWallAndIoletDistances(FourCubeLatticeData& latticeData, distribn_t wallDistance)
     {
         assert(wallDistance >= 0);

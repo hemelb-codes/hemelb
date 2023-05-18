@@ -8,10 +8,11 @@
 
 #include <catch2/catch.hpp>
 
-#include "lb/kernels/Kernels.h"
-#include "lb/streamers/Streamers.h"
+#include "lb/Kernels.h"
+#include "lb/Streamers.h"
 #include "lb/lattices/D3Q15.h"
 #include "lb/iolets/InOutLets.h"
+#include "lb/streamers/VirtualSiteIolet.h"
 #include "geometry/SiteData.h"
 #include "util/utilityFunctions.h"
 
@@ -337,7 +338,7 @@ namespace hemelb::tests
             site_t offset = 0;
             offset += dom->GetMidDomainCollisionCount(0);
             offset += dom->GetMidDomainCollisionCount(1);
-            inletStreamer.DoStreamAndCollide(offset,
+            inletStreamer.StreamAndCollide(offset,
                                              dom->GetMidDomainCollisionCount(2),
                                              &lbmParams,
                                              *latDat ,
@@ -372,28 +373,28 @@ namespace hemelb::tests
             offset = 0;
             offset += dom->GetMidDomainCollisionCount(0);
             offset += dom->GetMidDomainCollisionCount(1);
-            inletStreamer.DoPostStep(offset,
+            inletStreamer.PostStep(offset,
                                      dom->GetMidDomainCollisionCount(2),
                                      &lbmParams,
                                      latDat.get(),
                                      propertyCache);
             offset += dom->GetMidDomainCollisionCount(2);
 
-            outletStreamer.DoPostStep(offset,
+            outletStreamer.PostStep(offset,
                                       dom->GetMidDomainCollisionCount(3),
                                       &lbmParams,
                                       latDat.get(),
                                       propertyCache);
             offset += dom->GetMidDomainCollisionCount(3);
 
-            inletStreamer.DoPostStep(offset,
+            inletStreamer.PostStep(offset,
                                      dom->GetMidDomainCollisionCount(4),
                                      &lbmParams,
                                      latDat.get(),
                                      propertyCache);
             offset += dom->GetMidDomainCollisionCount(4);
 
-            outletStreamer.DoPostStep(offset,
+            outletStreamer.PostStep(offset,
                                       dom->GetMidDomainCollisionCount(5),
                                       &lbmParams,
                                       latDat.get(),

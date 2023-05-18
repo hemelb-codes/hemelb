@@ -6,8 +6,9 @@
 #ifndef HEMELB_LB_STREAMERS_GUOZHENGSHIDELEGATE_H
 #define HEMELB_LB_STREAMERS_GUOZHENGSHIDELEGATE_H
 
+#include "lb/iolets/BoundaryValues.h"
 #include "lb/iolets/InOutLetVelocity.h"
-#include "lb/streamers/BaseStreamerDelegate.h"
+#include "lb/streamers/LinkStreamer.h"
 #include "geometry/neighbouring/RequiredSiteInformation.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "util/Vector3D.h"
@@ -21,7 +22,7 @@ namespace hemelb::lb::streamers
      * Physics of Fluids, 14/6, June 2002, pp 2007-2010.
      */
     template<typename CollisionImpl>
-    class GuoZhengShiDelegate : public BaseStreamerDelegate<CollisionImpl>
+    class GuoZhengShiDelegate
     {
     public:
         using CollisionType = CollisionImpl;
@@ -103,29 +104,29 @@ namespace hemelb::lb::streamers
             }
         }
 
-          /*
-           * The outline of this method is as follows:
-           *
-           * if (wallDistance < 0.75)
-           *   if (site.HasIolet(i))
-           *     if (is not velocity iolet)
-           *       Do SBB
-           *     else
-           *       Do Modified GZS2
-           *   else
-           *     if (site.HasWall(i))
-           *       Do SBB
-           *     else
-           *       Do Regular GZS2
-           * else
-           *   Do GZS1
-           */
-          inline void StreamLink(const LbmParameters* lbmParams,
-                                 geometry::FieldData& latDat,
-                                 const geometry::Site<geometry::FieldData>& site,
-                                 HydroVars<typename CollisionType::CKernel>& hydroVars,
-                                 const Direction& iPrime)
-          {
+        /*
+         * The outline of this method is as follows:
+         *
+         * if (wallDistance < 0.75)
+         *   if (site.HasIolet(i))
+         *     if (is not velocity iolet)
+         *       Do SBB
+         *     else
+         *       Do Modified GZS2
+         *   else
+         *     if (site.HasWall(i))
+         *       Do SBB
+         *     else
+         *       Do Regular GZS2
+         * else
+         *   Do GZS1
+         */
+        void StreamLink(const LbmParameters* lbmParams,
+                        geometry::FieldData& latDat,
+                        const geometry::Site<geometry::FieldData>& site,
+                        HydroVars<typename CollisionType::CKernel>& hydroVars,
+                        const Direction& iPrime)
+        {
             Direction i = LatticeType::INVERSEDIRECTIONS[iPrime];
             // Get the distance to the boundary.
             double wallDistance = site.GetWallDistance<LatticeType>(iPrime);
@@ -283,6 +284,11 @@ namespace hemelb::lb::streamers
 
           }
 
+        void PostStepLink(geometry::FieldData&,
+                          const geometry::Site<geometry::FieldData>&,
+                          const Direction&) {
+            // Nothing to do
+        }
     private:
         const_span GetNeighbourFOld(const geometry::Site<geometry::FieldData>& site,
                                     const Direction& i,

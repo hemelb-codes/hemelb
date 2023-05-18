@@ -8,74 +8,62 @@
 
 #include "lb/streamers/BaseStreamer.h"
 #include "lb/streamers/SimpleCollideAndStreamDelegate.h"
-#include "lb/kernels/BaseKernel.h"
 #include "lb/HFunction.h"
 
-namespace hemelb
+namespace hemelb::lb::streamers
 {
-  namespace lb
-  {
-    namespace streamers
+
+    template<typename CollisionImpl>
+    class SimpleCollideAndStream : public BaseStreamer
     {
+    public:
+        using CollisionType = CollisionImpl;
 
-      template<typename CollisionImpl>
-      class SimpleCollideAndStream : public BaseStreamer<SimpleCollideAndStream<CollisionImpl> >
-      {
-        public:
-          typedef CollisionImpl CollisionType;
+    private:
+        CollisionType collider;
+        SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
+        static_assert(LinkStreamer<SimpleCollideAndStreamDelegate<CollisionType>>);
+        using LatticeType = typename CollisionType::CKernel::LatticeType;
 
-        private:
-          CollisionType collider;
-          SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
-          typedef typename CollisionType::CKernel::LatticeType LatticeType;
+    public:
+        SimpleCollideAndStream(InitParams& initParams) :
+                collider(initParams), bulkLinkDelegate(collider, initParams)
+        {
+        }
 
-        public:
-          SimpleCollideAndStream(InitParams& initParams) :
-              collider(initParams), bulkLinkDelegate(collider, initParams)
-          {
-
-          }
-
-          inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
-                                         const LbmParameters* lbmParams,
-                                         geometry::FieldData& latDat,
-                                         lb::MacroscopicPropertyCache& propertyCache)
-          {
+        void StreamAndCollide(const site_t firstIndex, const site_t siteCount,
+                              const LbmParameters* lbmParams,
+                              geometry::FieldData& latDat,
+                              lb::MacroscopicPropertyCache& propertyCache)
+        {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              geometry::Site<geometry::FieldData> site = latDat.GetSite(siteIndex);
+                geometry::Site<geometry::FieldData> site = latDat.GetSite(siteIndex);
 
-              HydroVars<typename CollisionType::CKernel> hydroVars(site);
+                HydroVars<typename CollisionType::CKernel> hydroVars(site);
 
-              ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
-              hydroVars.tau = lbmParams->GetTau();
+                ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
+                hydroVars.tau = lbmParams->GetTau();
 
-              collider.CalculatePreCollision(hydroVars, site);
+                collider.CalculatePreCollision(hydroVars, site);
 
-              collider.Collide(lbmParams, hydroVars);
+                collider.Collide(lbmParams, hydroVars);
 
-              for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ii++)
-              {
-                bulkLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
-              }
+                for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ii++)
+                {
+                    bulkLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
+                }
 
-              BaseStreamer<SimpleCollideAndStream>::template UpdateMinsAndMaxes(site,
-                                                                                               hydroVars,
-                                                                                               lbmParams,
-                                                                                               propertyCache);
+                UpdateMinsAndMaxes(site, hydroVars, lbmParams, propertyCache);
             }
-          }
+        }
 
-          inline void DoPostStep(const site_t iFirstIndex, const site_t iSiteCount,
-                                 const LbmParameters* iLbmParams, geometry::FieldData& bLatDat,
-                                 lb::MacroscopicPropertyCache& propertyCache)
-          {
+        void PostStep(const site_t iFirstIndex, const site_t iSiteCount,
+                      const LbmParameters* iLbmParams, geometry::FieldData& bLatDat,
+                      lb::MacroscopicPropertyCache& propertyCache)
+        {
+        }
 
-          }
-
-      };
-    }
-  }
+    };
 }
-
-#endif /* HEMELB_LB_STREAMERS_SIMPLECOLLIDEANDSTREAM */
+#endif

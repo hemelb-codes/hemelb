@@ -6,13 +6,11 @@
 #ifndef HEMELB_LB_KERNELS_ABSTRACTRHEOLOGYMODEL_H
 #define HEMELB_LB_KERNELS_ABSTRACTRHEOLOGYMODEL_H
 
-#include "constants.h"
+#include "units.h"
 
 namespace hemelb::lb
 {
     class LbmParameters;
-
-    struct InitParams;
 
 	// To satisfy the RheologyModel concept, a class must:
 	//

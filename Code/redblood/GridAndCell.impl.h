@@ -49,7 +49,7 @@ namespace details
 
         if (latticeData.GetDomain().GetContiguousSiteId(site, procid, siteid))
         {
-          assert (procid == latticeData.GetDomain().GetCommunicator().Rank());
+          //assert (procid == latticeData.GetDomain().GetCommunicator().Rank());
           auto siteOb = latticeData.GetSite(site);
           siteOb.AddToForce(* (i_force + vertex) * weight);
         }

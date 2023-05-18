@@ -7,39 +7,39 @@
 #define HEMELB_LB_COLLISIONS_NORMAL_H
 
 #include "lb/collisions/BaseCollision.h"
-#include "lb/kernels/BaseKernel.h"
 
 namespace hemelb::lb
 {
-      /**
-       * Normal collisions - use a formula to relax the distribution towards equilibrium.
-       */
-      template<typename KernelType>
-      class Normal : public BaseCollision<Normal<KernelType>, KernelType>
-      {
-        public:
-          using CKernel = KernelType;
+    /**
+     * Normal collisions - use a formula to relax the distribution towards equilibrium.
+     */
+    template<kernel_type K>
+    class Normal : public BaseCollision<Normal<K>, K>
+    {
+    public:
+        using KernelType = K;
+        using LatticeType = typename KernelType::LatticeType;
+        using VarsType = typename KernelType::VarsType;
 
-          Normal(InitParams& initParams) :
-              kernel(initParams)
-          {
-          }
+        Normal(InitParams& initParams) :
+                kernel(initParams)
+        {
+        }
 
-          inline void DoCalculatePreCollision(HydroVars<KernelType>& hydroVars,
-                                              const geometry::Site<geometry::Domain>& site)
-          {
+        inline void DoCalculatePreCollision(VarsType& hydroVars,
+                                            const geometry::Site<geometry::Domain>& site)
+        {
             kernel.CalculateDensityMomentumFeq(hydroVars, site.GetIndex());
-          }
+        }
 
-          inline void DoCollide(const LbmParameters* lbmParams,
-                                HydroVars<KernelType>& iHydroVars)
-          {
+        inline void DoCollide(const LbmParameters* lbmParams,
+                              VarsType& iHydroVars)
+        {
             kernel.Collide(lbmParams, iHydroVars);
-          }
+        }
 
-          KernelType kernel;
-
-      };
+        KernelType kernel;
+    };
 
 }
 

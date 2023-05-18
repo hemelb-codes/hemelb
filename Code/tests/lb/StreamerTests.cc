@@ -4,12 +4,11 @@
 // license in the file LICENSE.
 
 #include <iostream>
-#include <sstream>
 
 #include <catch2/catch.hpp>
 
-#include "lb/kernels/Kernels.h"
-#include "lb/streamers/Streamers.h"
+#include "lb/Kernels.h"
+#include "lb/Streamers.h"
 #include "geometry/SiteData.h"
 
 #include "tests/helpers/FourCubeBasedTestFixture.h"
@@ -25,20 +24,20 @@ namespace hemelb::tests
     // collision operators are correct (as they're tested elsewhere),
     // then compare the post-streamed values with the values we expect
     // to have been streamed there.
-    
+    using namespace lb::streamers;
     TEST_CASE_METHOD(public helpers::FourCubeBasedTestFixture<>, "StreamerTests") {
-      using LATTICE = lb::D3Q15;
-      using KERNEL = lb::LBGK<LATTICE>;
-      using COLLISION = lb::Normal<KERNEL>;
-      constexpr auto NUMVECTORS = LATTICE::NUMVECTORS;
-      auto propertyCache = std::make_unique<lb::MacroscopicPropertyCache>(*simState, *dom);
-      auto normalCollision = std::make_unique<COLLISION>(initParams);
-      auto apprx = [&](double x) {
-	return Approx(x).margin(allowedError);
-      };
+        using LATTICE = lb::D3Q15;
+        using KERNEL = lb::LBGK<LATTICE>;
+        using COLLISION = lb::Normal<KERNEL>;
+        constexpr auto NUMVECTORS = LATTICE::NUMVECTORS;
+        auto propertyCache = std::make_unique<lb::MacroscopicPropertyCache>(*simState, *dom);
+        auto normalCollision = std::make_unique<COLLISION>(initParams);
+        auto apprx = [&](double x) {
+            return Approx(x).margin(allowedError);
+        };
 
       SECTION("SimpleCollideAndStream") {
-	lb::streamers::SimpleCollideAndStream<COLLISION> simpleCollideAndStream(initParams);
+	SimpleCollideAndStream<COLLISION> simpleCollideAndStream(initParams);
 
 	// Initialise fOld in the lattice data. We choose values so
 	// that each site has an anisotropic distribution function,
@@ -86,12 +85,14 @@ namespace hemelb::tests
 	}
       }
 
-      SECTION("BouzidiFirdaousLallemand") {
-	// Initialise fOld in the lattice data. We choose values so
+        SECTION("BouzidiFirdaousLallemand") {
+    using BFL = WallStreamerTypeFactory<COLLISION, BouzidiFirdaousLallemandDelegate<COLLISION>>;
+    // Initialise fOld in the lattice data. We choose values so
 	// that each site has an anisotropic distribution function,
 	// and that each site's function is distinguishable.
 	LbTestsHelper::InitialiseAnisotropicTestData<LATTICE>(*latDat);
-	lb::streamers::BouzidiFirdaousLallemand<COLLISION>::Type bfl(initParams);
+
+	BFL bfl(initParams);
 
 	bfl.StreamAndCollide(0,
 				     dom->GetLocalFluidSiteCount(),
@@ -220,6 +221,7 @@ namespace hemelb::tests
       }
 
       SECTION("TestSimpleBounceBack") {
+    using SBB = WallStreamerTypeFactory<COLLISION, SimpleBounceBackDelegate<COLLISION>>;
 	// Initialise fOld in the lattice data. We choose values so
 	// that each site has an anisotropic distribution function,
 	// and that each site's function is distinguishable.
@@ -235,7 +237,7 @@ namespace hemelb::tests
 	site_t offset = 0;
 
 	// Mid-Fluid sites use simple collide and stream
-	lb::streamers::SimpleCollideAndStream<COLLISION > simpleCollideAndStream(initParams);
+	SimpleCollideAndStream<COLLISION > simpleCollideAndStream(initParams);
 
 	simpleCollideAndStream.StreamAndCollide(offset,
 							dom->GetMidDomainCollisionCount(0),
@@ -245,7 +247,7 @@ namespace hemelb::tests
 	offset += dom->GetMidDomainCollisionCount(0);
 
 	// Wall sites use simple bounce back
-	lb::streamers::SimpleBounceBack<COLLISION>::Type simpleBounceBack(initParams);
+	SBB simpleBounceBack(initParams);
 
 	simpleBounceBack.StreamAndCollide(offset,
 						  dom->GetMidDomainCollisionCount(1),
@@ -331,7 +333,8 @@ namespace hemelb::tests
       }
 
       SECTION("GuoZhengShi") {
-	lb::streamers::GuoZhengShi<COLLISION>::Type guoZhengShi(initParams);
+    using GZS = WallStreamerTypeFactory<COLLISION, GuoZhengShiDelegate<COLLISION>>;
+	GZS guoZhengShi(initParams);
 
 	for (double assignedWallDistance = 0.4;
 	     assignedWallDistance < 1.0;
@@ -512,7 +515,7 @@ namespace hemelb::tests
 	site_t offset = 0;
 
 	// Mid-Fluid sites use simple collide and stream
-	lb::streamers::SimpleCollideAndStream<COLLISION> simpleCollideAndStream(initParams);
+	SimpleCollideAndStream<COLLISION> simpleCollideAndStream(initParams);
 
 	simpleCollideAndStream.StreamAndCollide(offset,
 							dom->GetMidDomainCollisionCount(0),
@@ -525,7 +528,7 @@ namespace hemelb::tests
 	initParams.siteRanges.push_back(std::pair<site_t, site_t>(offset,
 								  offset
 								  + dom->GetMidDomainCollisionCount(1)));
-	lb::streamers::JunkYang<COLLISION>::Type junkYang(initParams);
+	JunkYangFactory<COLLISION> junkYang(initParams);
 
 	junkYang.StreamAndCollide(offset,
 					  dom->GetMidDomainCollisionCount(1),
@@ -620,12 +623,13 @@ namespace hemelb::tests
 	}
       }
 
-      SECTION("NashZerothOrderPressureIolet") {
-          auto inletBoundary = BuildIolets(geometry::INLET_TYPE);
+        SECTION("NashZerothOrderPressureIolet") {
+            using N0P = IoletStreamerTypeFactory<COLLISION, NashZerothOrderPressureDelegate<COLLISION>>;
+            auto inletBoundary = BuildIolets(geometry::INLET_TYPE);
 
 	initParams.boundaryObject = &inletBoundary;
 
-	lb::streamers::NashZerothOrderPressureIolet<COLLISION>::Type ioletCollider(initParams);
+	N0P ioletCollider(initParams);
 	    
 	for (double assignedWallDistance = 0.4;
 	     assignedWallDistance < 1.0;
@@ -718,11 +722,13 @@ namespace hemelb::tests
       }
 
       SECTION("NashZerothOrderPressureBB") {
-          auto inletBoundary = BuildIolets(geometry::INLET_TYPE);
+            using NashSBB = WallIoletStreamerTypeFactory<COLLISION, SimpleBounceBackDelegate<COLLISION>, NashZerothOrderPressureDelegate<COLLISION>>;
+
+            auto inletBoundary = BuildIolets(geometry::INLET_TYPE);
 
 	initParams.boundaryObject = &inletBoundary;
 
-	lb::streamers::NashZerothOrderPressureIoletSBB<COLLISION>::Type ioletCollider(initParams);
+	NashSBB ioletCollider(initParams);
 
 	for (double assignedIoletDistance = 0.4;
 	     assignedIoletDistance < 1.0;

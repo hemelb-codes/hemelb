@@ -6,7 +6,6 @@
 #ifndef HEMELB_GEOMETRY_DOMAIN_H
 #define HEMELB_GEOMETRY_DOMAIN_H
 
-#include <cassert>
 #include <memory>
 #include <map>
 #include <vector>

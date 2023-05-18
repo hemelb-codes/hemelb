@@ -8,7 +8,7 @@
 
 #include "constants.h"
 #include "lb/LbmParameters.h"
-#include "lb/kernels/BaseKernel.h"
+#include "lb/HydroVars.h"
 #include "geometry/Domain.h"
 
 namespace hemelb::lb

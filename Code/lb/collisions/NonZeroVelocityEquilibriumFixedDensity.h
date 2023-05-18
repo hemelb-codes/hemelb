@@ -7,7 +7,7 @@
 #define HEMELB_LB_COLLISIONS_NONZEROVELOCITYEQUILIBRIUMFIXEDDENSITY_H
 
 #include "lb/collisions/BaseCollision.h"
-#include "lb/kernels/BaseKernel.h"
+#include "lb/iolets/BoundaryValues.h"
 
 namespace hemelb::lb
 {

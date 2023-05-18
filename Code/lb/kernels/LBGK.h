@@ -6,11 +6,8 @@
 #ifndef HEMELB_LB_KERNELS_LBGK_H
 #define HEMELB_LB_KERNELS_LBGK_H
 
-#include <cstdlib>
-#include <cmath>
-#include "lb/HFunction.h"
-#include "util/utilityFunctions.h"
-#include "lb/kernels/BaseKernel.h"
+#include "lb/concepts.h"
+#include "lb/HydroVars.h"
 #include "lb/LbmParameters.h"
 
 namespace hemelb::lb
@@ -18,19 +15,18 @@ namespace hemelb::lb
     /**
      * LBGK: This class implements the LBGK single-relaxation time kernel.
      */
-    template<lattice_type LatticeType>
-    class LBGK : public BaseKernel<LBGK<LatticeType>, LatticeType>
+    template<lattice_type L>
+    class LBGK
     {
     public:
-        using Base = BaseKernel<LBGK<LatticeType>, LatticeType>;
-        using typename Base::KHydroVars;
-        using typename Base::LatticeType;
+        using LatticeType = L;
+        using VarsType = HydroVars<LBGK>;
 
         LBGK(InitParams& initParams)
         {
         }
 
-        void DoCalculateDensityMomentumFeq(KHydroVars& hydroVars,
+        void CalculateDensityMomentumFeq(VarsType& hydroVars,
                                            site_t index)
         {
             LatticeType::CalculateDensityMomentumFEq(hydroVars.f,
@@ -45,7 +41,7 @@ namespace hemelb::lb
             }
         }
 
-        void DoCalculateFeq(KHydroVars& hydroVars, site_t index)
+        void CalculateFeq(VarsType& hydroVars, site_t index)
         {
             LatticeType::CalculateFeq(hydroVars.density,
                                       hydroVars.momentum,
@@ -57,7 +53,7 @@ namespace hemelb::lb
             }
         }
 
-        void DoCollide(const LbmParameters* const lbmParams, KHydroVars& hydroVars)
+        void Collide(const LbmParameters* const lbmParams, VarsType& hydroVars)
         {
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
                 hydroVars.SetFPostCollision(direction,

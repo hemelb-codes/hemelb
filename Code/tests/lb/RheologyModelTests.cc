@@ -6,7 +6,6 @@
 
 #include <catch2/catch.hpp>
 #include "lb/kernels/RheologyModels.h"
-#include "lb/kernels/BaseKernel.h"
 #include "lb/LbmParameters.h"
 
 namespace hemelb

@@ -12,7 +12,7 @@
 #include "extraction/IterableDataSource.h"
 #include "extraction/InputField.h"
 #include "io/readers/XdrMemReader.h"
-#include "lb/lattices/Lattices.h"
+#include "lb/Lattices.h"
 #include "net/mpi.h"
 #include "net/MpiFile.h"
 #include "net/IOCommunicator.h"

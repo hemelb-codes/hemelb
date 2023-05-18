@@ -10,6 +10,7 @@
 
 namespace hemelb::lb
 {
+    struct InitParams;
 
     // Hold parameters defining a fit of the Carreau-Yasuda model.
     // Needs to be literal so it can be NTTP

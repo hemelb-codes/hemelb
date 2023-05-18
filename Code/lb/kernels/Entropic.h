@@ -6,9 +6,14 @@
 #ifndef HEMELB_LB_KERNELS_ENTROPIC_H
 #define HEMELB_LB_KERNELS_ENTROPIC_H
 
-#include "lb/kernels/BaseKernel.h"
+#include <algorithm>
+#include <vector>
+
+#include "units.h"
+#include "lb/concepts.h"
 #include "lb/HFunction.h"
 #include "lb/LbmParameters.h"
+#include "geometry/Domain.h"
 #include "util/utilityFunctions.h"
 
 namespace hemelb::lb
@@ -27,7 +32,7 @@ namespace hemelb::lb
            * @param hydroVars
            */
         template<typename HydroVarsType>
-        inline void DoCollide(const LbmParameters* const lbmParams, HydroVarsType& hydroVars)
+        void Collide(const LbmParameters* const lbmParams, HydroVarsType& hydroVars)
         {
             distribn_t alpha = CalculateAlpha(lbmParams->GetTau(),
                                               hydroVars,
@@ -93,7 +98,7 @@ namespace hemelb::lb
                 2.0 :
                 prevAlpha);
 
-              return (hemelb::util::NumericalMethods::NewtonRaphson(&HFunc, prevAlpha, 1.0E-6));
+              return (util::NumericalMethods::NewtonRaphson(&HFunc, prevAlpha, 1.0E-6));
             }
             else
             {
@@ -123,7 +128,7 @@ namespace hemelb::lb
                 return 2.0;
               }
 
-              return (hemelb::util::NumericalMethods::Brent(&HFunc,
+              return (util::NumericalMethods::Brent(&HFunc,
                                                             alphaLower,
                                                             HLower,
                                                             alphaHigher,

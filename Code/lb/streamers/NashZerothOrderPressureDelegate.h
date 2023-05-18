@@ -6,16 +6,16 @@
 #define HEMELB_LB_STREAMERS_NASHZEROTHORDERPRESSUREDELEGATE_H
 
 #include "util/utilityFunctions.h"
-#include "lb/streamers/BaseStreamerDelegate.h"
+#include "lb/streamers/LinkStreamer.h"
 
 namespace hemelb::lb::streamers
 {
-      template<typename CollisionImpl>
-      class NashZerothOrderPressureDelegate : public BaseStreamerDelegate<CollisionImpl>
-      {
-        public:
-          using CollisionType = CollisionImpl;
-          using LatticeType = typename CollisionType::CKernel::LatticeType;
+    template<typename CollisionImpl>
+    class NashZerothOrderPressureDelegate
+    {
+    public:
+        using CollisionType = CollisionImpl;
+        using LatticeType = typename CollisionType::CKernel::LatticeType;
 
           NashZerothOrderPressureDelegate(CollisionType& delegatorCollider,
                                           InitParams& initParams) :
@@ -23,19 +23,19 @@ namespace hemelb::lb::streamers
           {
           }
 
-          inline void StreamLink(const LbmParameters* lbmParams,
-                                 geometry::FieldData& latticeData,
-                                 const geometry::Site<geometry::FieldData>& site,
-                                 HydroVars<typename CollisionType::CKernel>& hydroVars,
-                                 const Direction& direction)
-          {
+        void StreamLink(const LbmParameters* lbmParams,
+                        geometry::FieldData& latticeData,
+                        const geometry::Site<geometry::FieldData>& site,
+                        HydroVars<typename CollisionType::CKernel>& hydroVars,
+                        const Direction& direction)
+        {
             int boundaryId = site.GetIoletId();
 
             // Set the density at the "ghost" site to be the density of the iolet.
             distribn_t ghostDensity = iolet.GetBoundaryDensity(boundaryId);
 
             // Calculate the velocity at the ghost site, as the component normal to the iolet.
-	    auto ioletNormal = iolet.GetLocalIolet(boundaryId)->GetNormal().template as<float>();
+            auto ioletNormal = iolet.GetLocalIolet(boundaryId)->GetNormal().template as<float>();
 
             // Note that the division by density compensates for the fact that v_x etc have momentum
             // not velocity.
@@ -56,11 +56,19 @@ namespace hemelb::lb::streamers
 
             *latticeData.GetFNew(site.GetIndex() * LatticeType::NUMVECTORS + unstreamed) =
                 ghostHydrovars.GetFEq()[unstreamed];
-          }
-        protected:
-          CollisionType& collider;
-          BoundaryValues& iolet;
-      };
+        }
+
+        void PostStepLink(geometry::FieldData& latticeData,
+                          const geometry::Site<geometry::FieldData>& site,
+                          const Direction& direction)
+        {
+            // Nothing to do :)
+        }
+
+    protected:
+        CollisionType& collider;
+        BoundaryValues& iolet;
+    };
 }
 
 #endif // HEMELB_LB_STREAMERS_NASHZEROTHORDERPRESSUREDELEGATE_H

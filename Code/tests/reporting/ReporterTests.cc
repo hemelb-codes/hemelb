@@ -8,6 +8,7 @@
 #include <catch2/catch.hpp>
 #include <ctemplate/template.h>
 
+#include "build_info.h"
 #include "lb/IncompressibilityChecker.h"
 #include "lb/IncompressibilityChecker.hpp"
 #include "reporting/BuildInfo.h"
@@ -21,10 +22,8 @@
 #include "tests/lb/LbTestsHelper.h"
 #include "tests/reporting/Mocks.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace hemelb::reporting;
 
     using TimersMock = TimersBase<ClockMock, MPICommsMock>;
@@ -50,7 +49,7 @@ namespace hemelb
       mockTimers = new TimersMock(Comms());
       realTimers = new reporting::Timers(Comms());
       buildInfo = new reporting::BuildInfo();
-      state = new hemelb::lb::SimulationState(0.0001, 1000);
+      state = new lb::SimulationState(0.0001, 1000);
       net = new net::Net(Comms());
       latticeData = FourCubeLatticeData::Create(Comms(), 6, 5); // The 5 here is to match the topology size in the MPICommsMock
       domain = &latticeData->GetDomain();
@@ -116,8 +115,8 @@ namespace hemelb
 	AssertTemplate("", "{{#UNSTABLE}} unstable{{/UNSTABLE}}");
 	AssertTemplate("R0S64 R1S1000 R2S2000 R3S3000 R4S4000 ",
 		       "{{#PROCESSOR}}R{{RANK}}S{{SITES}} {{/PROCESSOR}}");
-	AssertTemplate(hemelb::reporting::mercurial_revision_number, "{{#BUILD}}{{REVISION}}{{/BUILD}}");
-	AssertTemplate(hemelb::reporting::build_time, "{{#BUILD}}{{TIME}}{{/BUILD}}");
+	AssertTemplate(build_info::REVISION_HASH, "{{#BUILD}}{{REVISION}}{{/BUILD}}");
+	AssertTemplate(build_info::BUILD_TIME, "{{#BUILD}}{{TIME}}{{/BUILD}}");
 	AssertValue("0.000100", "TIME_STEP_LENGTH");
 	AssertValue("1000", "TOTAL_TIME_STEPS");
 	AssertValue("1000", "STEPS");
@@ -134,5 +133,4 @@ namespace hemelb
       delete net;
       delete buildInfo;
     }
-  }
 }

@@ -6,7 +6,7 @@
 #include <string>
 
 #include "configuration/SimConfig.h"
-#include "reporting/BuildInfo.h"
+#include "build_info.h"
 
 namespace hemelb::configuration
 {
@@ -193,9 +193,9 @@ namespace hemelb::configuration
       std::string hemeIoletBC;
 
       if (ioletTypeName == "inlet")
-        hemeIoletBC = reporting::inlet_boundary_condition;
+        hemeIoletBC = build_info::INLET_BOUNDARY.str();
       else if (ioletTypeName == "outlet")
-        hemeIoletBC = reporting::outlet_boundary_condition;
+        hemeIoletBC = build_info::OUTLET_BOUNDARY.str();
       else
         throw Exception() << "Unexpected element name '" << ioletTypeName
             << "'. Expected 'inlet' or 'outlet'";

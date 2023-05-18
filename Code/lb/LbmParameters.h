@@ -7,12 +7,21 @@
 #define HEMELB_LB_LBMPARAMETERS_H
 
 #include <cmath>
-#include "constants.h"
 #include <vector>
-#include <cassert>
+
+#include "constants.h"
+
+namespace hemelb::geometry {
+    class Domain;
+    namespace neighbouring {
+        class NeighbouringDataManager;
+    }
+}
 
 namespace hemelb::lb
 {
+    class BoundaryValues;
+
     enum StressTypes
     {
       VonMises = 0,
@@ -114,7 +123,48 @@ namespace hemelb::lb
         distribn_t stressParameter;
         distribn_t beta; ///< Viscous dissipation in ELBM
     };
+/**
+     * InitParams: struct for passing variables into streaming, collision and kernel operators
+     * to initialise them.
+     *
+     * When a newly-developed kernel, collider or streamer requires extra parameters to be
+     * passed in for initialisation, it's annoying to have to change the constructors in
+     * multiple places to make them all consistent (so that higher-up code can seamlessly
+     * construct one kind or another).
+     *
+     * Instead, new parameters can be added to this single object, which should be the only
+     * constructor argument used by any kernel / collision / streaming implementation.
+     */
+    struct InitParams {
+    public:
 
+        // Assume the first site to be used in the kernel is the first site in the core, unless otherwise specified
+        InitParams() = default;
+
+        // The number of sites using this kernel instance.
+        site_t siteCount;
+
+        // Each streamer is responsible for updating certain types of sites. These are arranged such they are largely
+        // contiguous in memory (the local contiguous site id). This data structure refers to which of those are handled
+        // by the current streamer. These are given as a collection of contiguous site ids, running from e.g.
+        // siteRanges[0].first to siteRanges[0].second-1 (inclusive).
+        std::vector<std::pair<site_t, site_t> > siteRanges;
+
+        // The array with the imposed density at each boundary.
+        BoundaryValues *boundaryObject;
+
+        // The lattice data object. Currently only used for accessing the boundary id
+        // of each site next to an inlet or an outlet.
+        const geometry::Domain *latDat;
+
+        // The LB parameters object. Currently only used in LBGKNN to access the current
+        // time step.
+        const LbmParameters *lbmParams;
+
+        // The neighbouring data manager, for kernels / collisions / streamers that
+        // require data from other cores.
+        geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
+    };
 }
 
 #endif //HEMELB_LB_LBMPARAMETERS_H

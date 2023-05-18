@@ -9,81 +9,51 @@
 #include <cmath>
 
 #include "geometry/Domain.h"
+#include "lb/concepts.h"
+#include "lb/HydroVars.h"
 #include "lb/LbmParameters.h"
-#include "lb/kernels/BaseKernel.h"
 #include "lb/MacroscopicPropertyCache.h"
 
-namespace hemelb
+namespace hemelb::lb::streamers
 {
-  namespace lb
-  {
-    namespace streamers
+    /**
+     * BaseStreamer: inheritable base class for the streaming operator. The public interface
+     * here defines the complete interface usable by external code.
+     *  - Constructor(InitParams&)
+     *  - StreamAndCollide(const site_t, const site_t, const LbmParameters*,
+     *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
+     *  - PostStep(const site_t, const site_t, const LbmParameters*,
+     *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
+     *  - Reset(InitParams* init)
+     *
+     * The following must be implemented by concrete streamers (which derive from this class
+     * using the CRTP).
+     *  - typedef for CollisionType, the type of the collider operation.
+     *  - Constructor(InitParams&)
+     *  - DoStreamAndCollide(const site_t, const site_t, const LbmParameters*,
+     *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
+     *  - DoPostStep(const site_t, const site_t, const LbmParameters*,
+     *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
+     *  - DoReset(InitParams* init)
+     *
+     * The design is to for the streamers to be pretty dumb and for them to
+     * basically just control iteration over the sites and directions while
+     * delegating the logic of actually streaming to some other classes
+     * (e.g. BouzidiFirdaousLallemand delegates bulk link streaming to
+     * SimpleCollideAndStreamDelegate and wall link streaming to BFLDelagate,
+     * which uses SimpleBounceBackDelegate in the cases where it can't handle
+     * because two opposite links are both wall links).
+     */
+    class BaseStreamer
     {
-
-      /**
-       * BaseStreamer: inheritable base class for the streaming operator. The public interface
-       * here defines the complete interface usable by external code.
-       *  - Constructor(InitParams&)
-       *  - StreamAndCollide(const site_t, const site_t, const LbmParameters*,
-       *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
-       *  - PostStep(const site_t, const site_t, const LbmParameters*,
-       *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
-       *  - Reset(InitParams* init)
-       *
-       * The following must be implemented by concrete streamers (which derive from this class
-       * using the CRTP).
-       *  - typedef for CollisionType, the type of the collider operation.
-       *  - Constructor(InitParams&)
-       *  - DoStreamAndCollide(const site_t, const site_t, const LbmParameters*,
-       *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
-       *  - DoPostStep(const site_t, const site_t, const LbmParameters*,
-       *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
-       *  - DoReset(InitParams* init)
-       *
-       * The design is to for the streamers to be pretty dumb and for them to
-       * basically just control iteration over the sites and directions while
-       * delegating the logic of actually streaming to some other classes
-       * (e.g. BouzidiFirdaousLallemand delegates bulk link streaming to
-       * SimpleCollideAndStreamDelegate and wall link streaming to BFLDelagate,
-       * which uses SimpleBounceBackDelegate in the cases where it can't handle
-       * because two opposite links are both wall links).
-       */
-      template<typename StreamerImpl>
-      class BaseStreamer
-      {
-        public:
-          inline void StreamAndCollide(const site_t firstIndex, const site_t siteCount,
-                                       const LbmParameters* lbmParams,
-                                       geometry::FieldData& latDat,
-                                       lb::MacroscopicPropertyCache& propertyCache)
-          {
-              static_cast<StreamerImpl*>(this)->DoStreamAndCollide(firstIndex,
-                                                                            siteCount,
-                                                                            lbmParams,
-                                                                            latDat,
-                                                                            propertyCache);
-          }
-
-          inline void PostStep(const site_t firstIndex, const site_t siteCount,
-                               const LbmParameters* lbmParams, geometry::FieldData& latDat,
-                               lb::MacroscopicPropertyCache& propertyCache)
-          {
-              // The template parameter is required because we're using the CRTP to call a
-              // metaprogrammed method of the implementation class.
-              static_cast<StreamerImpl*>(this)->DoPostStep(firstIndex,
-                                                                    siteCount,
-                                                                    lbmParams,
-                                                                    latDat,
-                                                                    propertyCache);
-          }
-
-        protected:
-          template<class LatticeType>
-          inline static void UpdateMinsAndMaxes(
+    protected:
+        template<lattice_type LatticeType>
+        static void UpdateMinsAndMaxes(
               const geometry::Site<geometry::Domain>& site,
               const HydroVarsBase<LatticeType>& hydroVars, const LbmParameters* lbmParams,
               lb::MacroscopicPropertyCache& propertyCache)
-          {
+        {
+            //static_assert(std::same_as<LatticeType, typename StreamerImpl::CollisionType::CKernel::LatticeType>);
             if (propertyCache.densityCache.RequiresRefresh())
             {
               propertyCache.densityCache.Put(site.GetIndex(), hydroVars.density);
@@ -117,7 +87,7 @@ namespace hemelb
             if (propertyCache.vonMisesStressCache.RequiresRefresh())
             {
               distribn_t stress;
-              StreamerImpl::CollisionType::CKernel::LatticeType::CalculateVonMisesStress(hydroVars.GetFNeq(),
+              LatticeType::CalculateVonMisesStress(hydroVars.GetFNeq(),
                                                                                          stress,
                                                                                          lbmParams->GetStressParameter());
 
@@ -127,7 +97,7 @@ namespace hemelb
             if (propertyCache.shearRateCache.RequiresRefresh())
             {
               distribn_t shear_rate =
-                  StreamerImpl::CollisionType::CKernel::LatticeType::CalculateShearRate(hydroVars.tau,
+                  LatticeType::CalculateShearRate(hydroVars.tau,
                                                                                         hydroVars.GetFNeq(),
                                                                                         hydroVars.density);
 
@@ -137,7 +107,7 @@ namespace hemelb
             if (propertyCache.stressTensorCache.RequiresRefresh())
             {
               util::Matrix3D stressTensor;
-              StreamerImpl::CollisionType::CKernel::LatticeType::CalculateStressTensor(hydroVars.density,
+              LatticeType::CalculateStressTensor(hydroVars.density,
                                                                                        hydroVars.tau,
                                                                                        hydroVars.GetFNeq(),
                                                                                        stressTensor);
@@ -190,8 +160,6 @@ namespace hemelb
             }
           }
       };
-    }
-  }
 }
 
 #endif /* HEMELB_LB_STREAMERS_BASESTREAMER_H */

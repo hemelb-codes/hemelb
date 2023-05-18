@@ -13,18 +13,22 @@
 #include <boost/numeric/ublas/io.hpp>
 
 #include "units.h"
-#include "lb/kernels/BaseKernel.h"
 #include "lb/streamers/BaseStreamer.h"
 
-namespace hemelb
+namespace hemelb::lb::streamers
 {
-  namespace lb
-  {
-    namespace streamers
+    /**
+     * Null implementation of an iolet link delegate.
+     */
+    template<typename CollisionImpl>
+    struct NoIoletLink
     {
-      using namespace boost::numeric;
+        NoIoletLink(CollisionImpl& collider, InitParams& initParams)
+        {
+        }
+    };
 
-      /**
+    /**
        * Template to produce Streamers that can cope with fluid-fluid, fluid-solid
        * (using the Junk&Yang method, see below) and fluid-iolet links. Requires
        * two classes as arguments: 1) the Collision class and 2) a StreamerDelegate
@@ -37,18 +41,25 @@ namespace hemelb
        *
        * M. Junk and Z. Yang "One-point boundary condition for the lattice Boltzmann method", Phys Rev E 72 (2005)
        */
-      template<typename CollisionImpl, typename IoletLinkImpl>
-      class JunkYangFactory : public BaseStreamer<JunkYangFactory<CollisionImpl, IoletLinkImpl> >
-      {
-        public:
-
-          typedef CollisionImpl CollisionType;
-
-          JunkYangFactory(InitParams& initParams) :
+    template<typename CollisionImpl, typename IoletLinkImpl = NoIoletLink<CollisionImpl>>
+    class JunkYangFactory : public BaseStreamer
+    {
+    public:
+        using CollisionType = CollisionImpl;
+        using LatticeType = typename CollisionType::CKernel::LatticeType;
+        static constexpr bool has_iolet = !std::same_as<IoletLinkImpl, NoIoletLink<CollisionImpl>>;
+    private:
+        using matrix = boost::numeric::ublas::matrix<distribn_t>;
+        using identity_matrix = boost::numeric::ublas::identity_matrix<distribn_t>;
+        using permutation_matrix = boost::numeric::ublas::permutation_matrix<std::size_t>;
+        using c_vector = boost::numeric::ublas::c_vector<distribn_t, LatticeType::NUMVECTORS>;
+        using vector = boost::numeric::ublas::vector<distribn_t>;
+    public:
+        JunkYangFactory(InitParams& initParams) :
               collider(initParams), bulkLinkDelegate(collider, initParams),
                   ioletLinkDelegate(collider, initParams), THETA(0.7)/*,
                   domainData(*initParams.latDat)*/
-          {
+        {
             auto& dom = *initParams.latDat;
             for (auto&& [site_begin, site_end]: initParams.siteRanges)
             {
@@ -68,21 +79,20 @@ namespace hemelb
             FactoriseLMatrices();
           }
 
-          ~JunkYangFactory()
-          {
+        ~JunkYangFactory()
+        {
             // Free dynamically allocated permutation matrices.
-            for (std::map<site_t, ublas::permutation_matrix<std::size_t>*>::iterator iter =
-                luPermutationMatrices.begin(); iter != luPermutationMatrices.end(); ++iter)
+            for (auto& luPermutationMatrix : luPermutationMatrices)
             {
-              delete iter->second;
+                delete luPermutationMatrix.second;
             }
-          }
+        }
 
-          inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
-                                         const LbmParameters* lbmParams,
-                                         geometry::FieldData& latticeData,
-                                         lb::MacroscopicPropertyCache& propertyCache)
-          {
+        void StreamAndCollide(const site_t firstIndex, const site_t siteCount,
+                              const LbmParameters* lbmParams,
+                              geometry::FieldData& latticeData,
+                              lb::MacroscopicPropertyCache& propertyCache)
+        {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
               assert(latticeData.GetSite(siteIndex).IsWall());
@@ -108,7 +118,11 @@ namespace hemelb
                 }
                 else if (site.HasIolet(direction))
                 {
-                  ioletLinkDelegate.StreamLink(lbmParams, latticeData, site, hydroVars, direction);
+                    if constexpr (has_iolet) {
+                        ioletLinkDelegate.StreamLink(lbmParams, latticeData, site, hydroVars, direction);
+                    } else {
+                        throw (Exception() << "No iolet type configured but iolet link encountered");
+                    }
                 }
                 else
                 {
@@ -121,8 +135,7 @@ namespace hemelb
               // TODO: Ideally, this should be done in the loop over directions above
               // but the f's are permuted by the below making it tricky.
               unsigned index = 0;
-              for (std::set<Direction>::const_iterator incomingVelocityIter =
-                  incomingVelocities[siteIndex].begin();
+              for (auto incomingVelocityIter = incomingVelocities[siteIndex].begin();
                   incomingVelocityIter != incomingVelocities[siteIndex].end();
                   ++incomingVelocityIter, ++index)
               {
@@ -135,8 +148,7 @@ namespace hemelb
                 fOld[siteIndex](index) = site.GetFOld<LatticeType>()[*incomingVelocityIter];
               }
 
-              for (std::set<Direction>::const_iterator outgoingVelocityIter =
-                  outgoingVelocities[siteIndex].begin();
+              for (auto outgoingVelocityIter = outgoingVelocities[siteIndex].begin();
                   outgoingVelocityIter != outgoingVelocities[siteIndex].end();
                   ++outgoingVelocityIter, ++index)
               {
@@ -145,40 +157,39 @@ namespace hemelb
                 fOld[siteIndex](index) = site.GetFOld<LatticeType>()[*outgoingVelocityIter];
               }
 
-                BaseStreamer<JunkYangFactory>::template UpdateMinsAndMaxes(site,
+                UpdateMinsAndMaxes(site,
                                                                            hydroVars,
                                                                            lbmParams,
                                                                            propertyCache);
             }
 
-          }
+        }
 
-          inline void DoPostStep(const site_t firstIndex, const site_t siteCount,
-                                 const LbmParameters* lbmParams, geometry::FieldData& latticeData,
-                                 lb::MacroscopicPropertyCache& propertyCache)
-          {
+        void PostStep(const site_t firstIndex, const site_t siteCount,
+                      const LbmParameters* lbmParams, geometry::FieldData& latticeData,
+                      lb::MacroscopicPropertyCache& propertyCache)
+        {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
               assert(latticeData.GetSite(siteIndex).IsWall());
               assert(lMatrices.find(siteIndex) != lMatrices.end());
               assert(luPermutationMatrices.find(siteIndex) != luPermutationMatrices.end());
 
-              ublas::vector<distribn_t> rVector;
+              vector rVector;
               AssembleRVector(siteIndex, latticeData,rVector);
 
               // assemble RHS
-              ublas::vector<distribn_t> systemRHS = fPostCollisionInverseDir[siteIndex] - rVector;
+              vector systemRHS = fPostCollisionInverseDir[siteIndex] - rVector;
 
               // lu_substitue will overwrite the RHS with the solution
-              ublas::vector<distribn_t> &systemSolution = systemRHS;
+              vector &systemSolution = systemRHS;
               lu_substitute(lMatrices[siteIndex],
                             *luPermutationMatrices[siteIndex],
                             systemSolution);
 
               // Update the distribution function for incoming velocities with the solution of the linear system
               unsigned index = 0;
-              for (std::set<Direction>::const_iterator incomingVelocityIter =
-                  incomingVelocities[siteIndex].begin();
+              for (auto incomingVelocityIter = incomingVelocities[siteIndex].begin();
                   incomingVelocityIter != incomingVelocities[siteIndex].end();
                   ++incomingVelocityIter, ++index)
               {
@@ -187,23 +198,18 @@ namespace hemelb
               }
 
               auto&& site = latticeData.GetSite(siteIndex);
-              for (std::set<Direction>::const_iterator outgoingVelocityIter =
-                  outgoingVelocities[siteIndex].begin();
-                  outgoingVelocityIter != outgoingVelocities[siteIndex].end();
-                  ++outgoingVelocityIter)
+              for (unsigned int outgoingVelocityIter : outgoingVelocities[siteIndex])
               {
-                if (site.HasIolet(*outgoingVelocityIter))
-                {
-                  ioletLinkDelegate.PostStepLink(latticeData, site, *outgoingVelocityIter);
-                }
-
+                  if constexpr (has_iolet) {
+                      if (site.HasIolet(outgoingVelocityIter)) {
+                          ioletLinkDelegate.PostStepLink(latticeData, site, outgoingVelocityIter);
+                      }
+                  }
               }
             }
-          }
+        }
 
-        private:
-
-          typedef typename CollisionType::CKernel::LatticeType LatticeType;
+    private:
           CollisionType collider;
           SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
           IoletLinkImpl ioletLinkDelegate;
@@ -223,22 +229,22 @@ namespace hemelb
           std::map<site_t, std::set<Direction> > outgoingVelocities;
 
           //! Map containing the K matrices used to assemble both the left-hand- and the right-hand-side of the linear systems for each site
-          std::map<site_t, ublas::matrix<distribn_t> > kMatrices;
+          std::map<site_t, matrix> kMatrices;
           //! Map containing the linear system left-hand-sides for each site
-          std::map<site_t, ublas::matrix<distribn_t> > lMatrices;
+          std::map<site_t, matrix > lMatrices;
           /**
            * Map containing the permutations generated by the LU factorisation of each linear system. The permutaation matrices are dinamically allocated
            * because there isn't a default constructor for ublas::permutation_matrix (unlike other ublas data structures) and the size is not known until
            * run time.
            */
-          std::map<site_t, ublas::permutation_matrix<std::size_t>*> luPermutationMatrices;
+          std::map<site_t, permutation_matrix*> luPermutationMatrices;
 
           //! Map of postcollision distributions with incoming/outgoing ordering.
-          std::map<site_t, ublas::c_vector<distribn_t, LatticeType::NUMVECTORS> > fPostCollision;
+          std::map<site_t, c_vector > fPostCollision;
           //! Map of postcollision distributions for the inverse directions of those in the incoming set of velocities.
-          std::map<site_t, ublas::vector<distribn_t> > fPostCollisionInverseDir;
+          std::map<site_t, vector > fPostCollisionInverseDir;
           //! Map of distributions in the previous time step with incoming/outgoing ordering.
-          std::map<site_t, ublas::c_vector<distribn_t, LatticeType::NUMVECTORS> > fOld;
+          std::map<site_t, c_vector > fOld;
 
           /**
            * Construct the incoming/outgoing velocity sets for site siteLocalIndex
@@ -287,8 +293,7 @@ namespace hemelb
              *  Assemble K(:, 0:num_incoming_velocities-1)
              */
             unsigned rowIndex = 0;
-            for (std::set<Direction>::const_iterator rowIndexIncomingVelocity =
-                incomingVelocities[contiguousSiteIndex].begin();
+            for (auto rowIndexIncomingVelocity = incomingVelocities[contiguousSiteIndex].begin();
                 rowIndexIncomingVelocity != incomingVelocities[contiguousSiteIndex].end();
                 ++rowIndexIncomingVelocity, ++rowIndex)
             {
@@ -301,8 +306,7 @@ namespace hemelb
                       * LatticeType::CZ[*rowIndexIncomingVelocity];
 
               unsigned columnIndex = 0;
-              for (std::set<Direction>::const_iterator columnIndexIncomingVelocity =
-                  incomingVelocities[contiguousSiteIndex].begin();
+              for (auto columnIndexIncomingVelocity = incomingVelocities[contiguousSiteIndex].begin();
                   columnIndexIncomingVelocity != incomingVelocities[contiguousSiteIndex].end();
                   ++columnIndexIncomingVelocity, ++columnIndex)
               {
@@ -345,7 +349,7 @@ namespace hemelb
               /*
                * Assemble K(:, num_incoming_velocities:num_incoming_velocities+num_outgoing_velocities-1)
                */
-              for (std::set<Direction>::const_iterator columnIndexOutgoingVelocity =
+              for (auto columnIndexOutgoingVelocity =
                   outgoingVelocities[contiguousSiteIndex].begin();
                   columnIndexOutgoingVelocity != outgoingVelocities[contiguousSiteIndex].end();
                   ++columnIndexOutgoingVelocity, ++columnIndex)
@@ -398,9 +402,9 @@ namespace hemelb
           {
             unsigned incomingVelsSetSize = incomingVelocities[siteLocalIndex].size();
 
-            lMatrices[siteLocalIndex] = ublas::identity_matrix<distribn_t>(incomingVelsSetSize)
+            lMatrices[siteLocalIndex] = identity_matrix(incomingVelsSetSize)
                 + THETA
-                    * ublas::subrange(kMatrices[siteLocalIndex],
+                    * subrange(kMatrices[siteLocalIndex],
                                       0,
                                       incomingVelsSetSize,
                                       0,
@@ -412,11 +416,10 @@ namespace hemelb
            */
           inline void FactoriseLMatrices()
           {
-            for (std::map<site_t, ublas::matrix<distribn_t> >::iterator iter = lMatrices.begin();
-                iter != lMatrices.end(); ++iter)
+            for (auto iter = lMatrices.begin(); iter != lMatrices.end(); ++iter)
             {
               luPermutationMatrices[iter->first] =
-                  new ublas::permutation_matrix<std::size_t>(incomingVelocities[iter->first].size());
+                  new permutation_matrix(incomingVelocities[iter->first].size());
               // If this assertion trips, lMatrices[siteLocalIndex] is singular.
               assert(lu_factorize(iter->second, *luPermutationMatrices[iter->first]) == 0);
             }
@@ -432,7 +435,7 @@ namespace hemelb
            */
           inline void AssembleSigmaVector(
               const site_t contiguousSiteIndex,
-              ublas::c_vector<distribn_t, LatticeType::NUMVECTORS>& sigmaVector) // const
+              c_vector& sigmaVector) // const
           {
             assert(fPostCollision.find(contiguousSiteIndex) != fPostCollision.end());
             assert(fOld.find(contiguousSiteIndex) != fOld.end());
@@ -448,15 +451,15 @@ namespace hemelb
            */
           inline void AssembleRVector(const site_t contiguousSiteIndex,
                                       geometry::FieldData const& fieldData,
-                                      ublas::vector<distribn_t>& rVector) //const
+                                      vector& rVector) //const
           {
-            ublas::c_vector<distribn_t, LatticeType::NUMVECTORS> sigmaVector;
+            c_vector sigmaVector;
             AssembleSigmaVector(contiguousSiteIndex, sigmaVector);
 
             unsigned incomingVelsSetSize = incomingVelocities[contiguousSiteIndex].size();
             unsigned outgoingVelsSetSize = outgoingVelocities[contiguousSiteIndex].size();
 
-            ublas::vector<distribn_t> fNew(outgoingVelsSetSize);
+            vector fNew(outgoingVelsSetSize);
 
             /*
              *  Assemble a vector with the updated values of the distribution function for the outgoing velocities,
@@ -464,7 +467,7 @@ namespace hemelb
              */
             assert(fNew.size() == outgoingVelocities[contiguousSiteIndex].size());
             unsigned index = 0;
-            for (std::set<Direction>::const_iterator outgoingDirIter =
+            for (auto outgoingDirIter =
                 outgoingVelocities[contiguousSiteIndex].begin();
                 outgoingDirIter != outgoingVelocities[contiguousSiteIndex].end();
                 ++outgoingDirIter, ++index)
@@ -474,17 +477,13 @@ namespace hemelb
             }
 
             rVector = THETA
-                * ublas::prod(ublas::subrange(kMatrices[contiguousSiteIndex],
+                * prod(subrange(kMatrices[contiguousSiteIndex],
                                               0,
                                               incomingVelsSetSize,
                                               incomingVelsSetSize,
                                               LatticeType::NUMVECTORS),
-                              fNew) + ublas::prod(kMatrices[contiguousSiteIndex], sigmaVector);
+                              fNew) + prod(kMatrices[contiguousSiteIndex], sigmaVector);
           }
       };
-
-    }
-  }
 }
-
 #endif /* HEMELB_LB_STREAMERS_JUNKYANGFACTORY_H */

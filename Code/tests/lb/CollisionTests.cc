@@ -5,7 +5,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "lb/kernels/Kernels.h"
+#include "lb/Kernels.h"
 #include "util/UnitConverter.h"
 
 #include "tests/helpers/FourCubeBasedTestFixture.h"

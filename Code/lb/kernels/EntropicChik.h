@@ -6,10 +6,9 @@
 #ifndef HEMELB_LB_KERNELS_ENTROPICCHIK_H
 #define HEMELB_LB_KERNELS_ENTROPICCHIK_H
 
-#include <cstdlib>
-
+#include "lb/concepts.h"
 #include "lb/kernels/Entropic.h"
-#include "lb/kernels/BaseKernel.h"
+#include "lb/HydroVars.h"
 
 namespace hemelb::lb
 {
@@ -29,17 +28,19 @@ namespace hemelb::lb
     /**
      * EntropicChik: This class implements the entropic kernel, as per Chitakamarla et al.
      */
-    template<lattice_type LatticeType>
-    class EntropicChik : public BaseKernel<EntropicChik<LatticeType>, LatticeType>,
-                         public EntropicBase<LatticeType>
+    template<lattice_type L>
+    class EntropicChik : public EntropicBase<L>
     {
     public:
+        using Base = EntropicBase<L>;
+        using LatticeType = L;
+        using VarsType = HydroVars<EntropicChik>;
+
         /**
          * Constructor, passes parameters onto the base class.
          * @param initParams
          */
-        EntropicChik(InitParams& initParams) :
-                EntropicBase<LatticeType>(&initParams)
+        EntropicChik(InitParams& initParams) : Base(&initParams)
         {
         }
 
@@ -49,8 +50,7 @@ namespace hemelb::lb
          * @param hydroVars
          * @param index, the current lattice site index.
          */
-        inline void DoCalculateDensityMomentumFeq(
-                HydroVars<EntropicChik<LatticeType> >& hydroVars, site_t index)
+        void CalculateDensityMomentumFeq(VarsType& hydroVars, site_t index)
         {
             hydroVars.index = index;
             LatticeType::CalculateDensityAndMomentum(hydroVars.f,
@@ -72,7 +72,7 @@ namespace hemelb::lb
          * @param hydroVars
          * @param index The current lattice site index.
          */
-        inline void DoCalculateFeq(HydroVars<EntropicChik<LatticeType> >& hydroVars, site_t index)
+        void CalculateFeq(VarsType& hydroVars, site_t index)
         {
             hydroVars.index = index;
             LatticeType::CalculateEntropicFeqChik(hydroVars.density,
@@ -85,7 +85,6 @@ namespace hemelb::lb
             }
         }
     };
-
 }
 
 #endif /* HEMELB_LB_KERNELS_ENTROPICANSUMALI_H */

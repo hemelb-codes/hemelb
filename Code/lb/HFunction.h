@@ -7,20 +7,18 @@
 #define HEMELB_LB_HFUNCTION_H
 
 #include <cmath>
-#include <cstdlib>
 
 #include "constants.h"
+#include "lb/concepts.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
     /*
      * The HFunction class calculates the H function as the name suggests
      * It is a class as the Newton-Raphson function in util takes in an object
      * with an overloaded () operator.
      */
-    template<class LatticeType>
+    template<lattice_type LatticeType>
     class HFunction
     {
       public:
@@ -95,7 +93,6 @@ namespace hemelb
         }
     };
 
-  }
 }
 
 #endif /* HEMELB_LB_HFUNCTION_H */

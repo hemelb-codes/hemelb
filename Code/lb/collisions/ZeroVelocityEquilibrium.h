@@ -7,7 +7,6 @@
 #define HEMELB_LB_COLLISIONS_ZEROVELOCITYEQUILIBRIUM_H
 
 #include "lb/collisions/BaseCollision.h"
-#include "lb/kernels/BaseKernel.h"
 
 namespace hemelb::lb
 {

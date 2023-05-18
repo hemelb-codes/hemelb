@@ -18,10 +18,8 @@
 #include "tests/helpers/LatticeDataAccess.h"
 #include "tests/helpers/FolderTestFixture.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace redblood;
 
     template <typename STENCIL>
@@ -193,5 +191,4 @@ namespace hemelb
 	REQUIRE(da.z() + db.z() == approx(0));
       }
     }
-  }
 }

@@ -339,8 +339,8 @@ namespace hemelb::tests
 	  REQUIRE(actual == ApproxV(momentum / density));
 
 	  // Check against Kernel + HydroVars implementation
-	  typename KERNEL::KHydroVars hydroVars(site);
-	  kernel.DoCalculateDensityMomentumFeq(hydroVars, site.GetIndex());
+	  typename KERNEL::VarsType hydroVars(site);
+	  kernel.CalculateDensityMomentumFeq(hydroVars, site.GetIndex());
 
 	  REQUIRE((actual ==  ApproxV(hydroVars.velocity)));
 	}

@@ -7,7 +7,7 @@
 #define HEMELB_SIMULATIONMASTER_H
 #include <memory>
 
-#include "lb/lattices/Lattices.h"
+#include "lb/Lattices.h"
 #include "lb/lb.hpp"
 #include "lb/StabilityTester.h"
 #include "net/net.h"

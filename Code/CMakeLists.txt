@@ -114,7 +114,10 @@ configure_file (
   "${PROJECT_SOURCE_DIR}/resources/path_parameters.h.in"
   "${PROJECT_BINARY_DIR}/resources/path_parameters.h"
   )
-configure_file("Traits.in.h" "${PROJECT_BINARY_DIR}/Traits.h")
+
+pass_get_defines(GLOBAL conf_global)
+pass_get_defines(HEMELB conf_hemelb)
+configure_file(build_info.h.in build_info.h)
 
 # add the binary tree to the search path for include files
 # so that we will find TutorialConfig.h

@@ -4,12 +4,10 @@
 // license in the file LICENSE.
 
 #include "redblood/RBCFile.h"
-#include "reporting/BuildInfo.h"
+#include "build_info.h"
 
-namespace hemelb
+namespace hemelb::redblood
 {
-  namespace redblood
-  {
 
     void RBCFile::createH5MD(hid_t file, const std::string & name)
     {
@@ -100,7 +98,7 @@ namespace hemelb
         throw;
 
       // Create a dataspace for the creator version attribute
-      dims = hemelb::reporting::mercurial_revision_number.length();
+      dims = build_info::REVISION_HASH.length();
       if ( (space = H5Screate_simple(1, &dims, nullptr)) < 0)
         throw;
 
@@ -109,7 +107,7 @@ namespace hemelb
         throw;
 
       // Write the creator version attribute
-      if ( (error = H5Awrite(attr, H5T_C_S1, hemelb::reporting::mercurial_revision_number.c_str()))
+      if ( (error = H5Awrite(attr, H5T_C_S1, build_info::REVISION_HASH.c_str()))
           < 0)
         throw;
 
@@ -145,5 +143,4 @@ namespace hemelb
 
     }
 
-  }
 }

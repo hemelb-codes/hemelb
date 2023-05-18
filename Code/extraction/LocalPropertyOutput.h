@@ -8,7 +8,7 @@
 
 #include "extraction/IterableDataSource.h"
 #include "extraction/PropertyOutputFile.h"
-#include "lb/lattices/Lattices.h"
+#include "lb/Lattices.h"
 #include "net/mpi.h"
 #include "net/MpiFile.h"
 

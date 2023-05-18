@@ -5,7 +5,7 @@
 
 #include <sstream>
 
-#include "lb/kernels/Kernels.h"
+#include "lb/Kernels.h"
 #include "lb/kernels/RheologyModels.h"
 #include "lb/kernels/DHumieresD3Q15MRTBasis.h"
 #include "lb/kernels/DHumieresD3Q19MRTBasis.h"
@@ -54,7 +54,7 @@ namespace hemelb::tests
 				     hydroVars,
 				     allowedError);
             // Do the collision and test the result.
-            kernel.DoCollide(&lbmParams, hydroVars);
+            kernel.Collide(&lbmParams, hydroVars);
 
             // Get the expected post-collision densities.
             DISTS expectedPostCollision;
@@ -265,8 +265,8 @@ namespace hemelb::tests
 	// Test part 3: Collision depends on the local relaxation time
 	// 
 	// Do the collision and test the result.
-	lbgknn0.DoCollide(&lbmParams, hydroVars0[set]);
-	lbgknn1.DoCollide(&lbmParams, hydroVars1[set]);
+	lbgknn0.Collide(&lbmParams, hydroVars0[set]);
+	lbgknn1.Collide(&lbmParams, hydroVars1[set]);
 
 	// Get the expected post-collision densities.
 	DISTS expectedPostCollision0;
@@ -340,7 +340,7 @@ namespace hemelb::tests
                                          allowedError);
 
             // Do the MRT collision.
-            mrtLbgkEquivalentKernel.DoCollide(&lbmParams, hydroVars0);
+            mrtLbgkEquivalentKernel.Collide(&lbmParams, hydroVars0);
 
             // Get the expected post-collision velocity distributions with LBGK.
             DISTS expectedPostCollision0;

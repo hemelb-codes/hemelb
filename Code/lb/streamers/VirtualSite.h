@@ -14,7 +14,6 @@
 #include "util/Vector3D.h"
 #include "lb/iolets/InOutLet.h"
 #include "lb/lattices/LatticeInfo.h"
-#include "lb/kernels/BaseKernel.h"
 
 namespace hemelb::lb::streamers
 {

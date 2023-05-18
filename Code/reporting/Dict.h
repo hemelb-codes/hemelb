@@ -8,16 +8,15 @@
 
 #include <memory>
 #include <string>
+#include "util/ct_string.h"
 
 // Forward declare
 namespace ctemplate {
   class TemplateDictionary;
 }
 
-namespace hemelb
+namespace hemelb::reporting
 {
-  namespace reporting
-  {
     // Minimal wrapper around ctemplate::TemplateDictionary
     // It simply delegates to that instance
     class Dict {
@@ -26,7 +25,11 @@ namespace hemelb
       Dict AddSectionDictionary(const std::string&);
       
       void SetValue(const std::string& variable, const std::string& value);
+      void SetValue(const std::string& variable, is_ct_string_v auto value) {
+          SetValue(variable, value.str());
+      }
       void SetIntValue(const std::string& variable, long value);
+      void SetBoolValue(const std::string& variable, bool value);
 
       template<typename T>
       void SetFormattedValue(const std::string& variable, const char* format, const T& value);
@@ -36,9 +39,8 @@ namespace hemelb
       // Private constructor for wrapping sub dicts
       Dict(ctemplate::TemplateDictionary*);
       // Deleter type (for expressing ownership of the wrapped instance)
-      typedef void (*Deleter)(ctemplate::TemplateDictionary*);
+      using Deleter = void (*)(ctemplate::TemplateDictionary *);
       std::unique_ptr<ctemplate::TemplateDictionary, Deleter> raw;
     };
   }
-}
 #endif

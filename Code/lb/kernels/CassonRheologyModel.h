@@ -10,9 +10,11 @@
 
 namespace hemelb::lb
 {
-        class CassonRheologyModel : public AbstractRheologyModel<CassonRheologyModel>
-        {
-          public:
+    struct InitParams;
+
+    class CassonRheologyModel : public AbstractRheologyModel<CassonRheologyModel>
+    {
+    public:
             // Casson model constants
             static constexpr double K0 = 0.1937; // Pa^{1/2}
             static constexpr double K1 = 0.055; // (Pa*s)^{1/2}
@@ -35,7 +37,7 @@ namespace hemelb::lb
              */
             double CalculateViscosityForShearRate(const double &iShearRate,
 						  const distribn_t &iDensity) const;
-        };
+    };
 }
 
 #endif /* HEMELB_LB_KERNELS_CASSONRHEOLOGYMODEL_H */

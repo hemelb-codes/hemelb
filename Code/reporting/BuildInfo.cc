@@ -4,27 +4,27 @@
 // license in the file LICENSE.
 
 #include "reporting/BuildInfo.h"
+#include "build_info.h"
+
 namespace hemelb::reporting {
 
     void BuildInfo::Report(Dict &dictionary) {
         Dict build = dictionary.AddSectionDictionary("BUILD");
-        build.SetValue("REVISION", mercurial_revision_number);
-        build.SetValue("TYPE", build_type);
-        build.SetValue("OPTIMISATION", optimisation);
-        build.SetValue("USE_SSE3", use_sse3);
-        build.SetValue("TIME", build_time);
-        build.SetValue("READING_GROUP_SIZE", reading_group_size);
-        build.SetValue("LATTICE_TYPE", lattice_type);
-        build.SetValue("KERNEL_TYPE", kernel_type);
-        build.SetValue("WALL_BOUNDARY_CONDITION", wall_boundary_condition);
-        build.SetValue("INLET_BOUNDARY_CONDITION", inlet_boundary_condition);
-        build.SetValue("OUTLET_BOUNDARY_CONDITION", outlet_boundary_condition);
-        build.SetValue("WALL_INLET_BOUNDARY_CONDITION", wall_inlet_boundary_condition);
-        build.SetValue("WALL_OUTLET_BOUNDARY_CONDITION", wall_outlet_boundary_condition);
-        build.SetValue("SEPARATE_CONCERNS", separate_concerns);
-        build.SetValue("ALLTOALL_IMPLEMENTATION", alltoall_impl);
-        build.SetValue("GATHERS_IMPLEMENTATION", gathers_impl);
-        build.SetValue("POINTPOINT_IMPLEMENTATION", point_point_impl);
-        build.SetValue("STENCIL", stencil);
+        build.SetValue("REVISION", build_info::REVISION_HASH);
+        build.SetValue("TYPE", build_info::BUILD_TYPE);
+        build.SetValue("OPTIMISATION", build_info::OPTIMISATION);
+        build.SetBoolValue("USE_SSE3", build_info::USE_SSE3);
+        build.SetValue("TIME", build_info::BUILD_TIME);
+        build.SetValue("READING_GROUP_SIZE", build_info::READING_GROUP_SIZE);
+        build.SetValue("LATTICE_TYPE", build_info::LATTICE);
+        build.SetValue("KERNEL_TYPE", build_info::KERNEL);
+        build.SetValue("WALL_BOUNDARY_CONDITION", build_info::WALL_BOUNDARY);
+        build.SetValue("INLET_BOUNDARY_CONDITION", build_info::INLET_BOUNDARY);
+        build.SetValue("OUTLET_BOUNDARY_CONDITION", build_info::OUTLET_BOUNDARY);
+        build.SetBoolValue("SEPARATE_CONCERNS", build_info::SEPARATE_CONCERNS);
+        build.SetValue("ALLTOALL_IMPLEMENTATION", build_info::ALLTOALL_IMPLEMENTATION);
+        build.SetValue("GATHERS_IMPLEMENTATION", build_info::GATHERS_IMPLEMENTATION);
+        build.SetValue("POINTPOINT_IMPLEMENTATION", build_info::POINTPOINT_IMPLEMENTATION);
+        build.SetValue("STENCIL", build_info::STENCIL);
     }
 }

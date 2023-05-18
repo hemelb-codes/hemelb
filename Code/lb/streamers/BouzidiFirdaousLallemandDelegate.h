@@ -6,14 +6,10 @@
 #ifndef HEMELB_LB_STREAMERS_BOUZIDIFIRDAOUSLALLEMANDDELEGATE_H
 #define HEMELB_LB_STREAMERS_BOUZIDIFIRDAOUSLALLEMANDDELEGATE_H
 
-#include "lb/streamers/BaseStreamerDelegate.h"
+#include "lb/streamers/LinkStreamer.h"
 #include "lb/streamers/SimpleBounceBackDelegate.h"
 
-namespace hemelb
-{
-  namespace lb
-  {
-    namespace streamers
+namespace hemelb::lb::streamers
     {
       /**
        * Implement the boundary condition described in Bouzidi, Firdaous and
@@ -26,7 +22,7 @@ namespace hemelb
        * some circumstances), it has a DoPostStep method.
        */
       template<typename CollisionImpl>
-      class BouzidiFirdaousLallemandDelegate : public BaseStreamerDelegate<CollisionImpl>
+      class BouzidiFirdaousLallemandDelegate
       {
         public:
           typedef CollisionImpl CollisionType;
@@ -93,7 +89,5 @@ namespace hemelb
           }
       };
     }
-  }
-}
 
 #endif /* HEMELB_LB_STREAMERS_BOUZIDIFIRDAOUSLALLEMANDDELEGATE_H */

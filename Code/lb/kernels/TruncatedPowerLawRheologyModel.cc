@@ -3,7 +3,6 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "lb/kernels/BaseKernel.h"
 #include "lb/kernels/TruncatedPowerLawRheologyModel.h"
 #include "lb/LbmParameters.h"
 #include "util/utilityFunctions.h"

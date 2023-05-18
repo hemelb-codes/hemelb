@@ -9,16 +9,20 @@
 #include <cstdlib>
 #include "lb/HFunction.h"
 #include "util/utilityFunctions.h"
-#include "lb/kernels/BaseKernel.h"
 
 namespace hemelb::lb
 {
     /**
      * TRT: This class implements a two-relaxation time kernel.
      */
-    template<lattice_type LatticeType>
-    class TRT : public BaseKernel<TRT<LatticeType>, LatticeType>
+    template<lattice_type L>
+    class TRT
     {
+    public:
+        using LatticeType = L;
+        using VarsType = HydroVars<TRT>;
+
+    private:
         static constexpr Direction FindZeroIndex() {
             for (Direction i = 0; i < LatticeType::NUMVECTORS; ++i) {
                 Direction iBar = LatticeType::INVERSEDIRECTIONS[i];
@@ -27,6 +31,7 @@ namespace hemelb::lb
             }
             return LatticeType::NUMVECTORS;
         }
+
         static constexpr Direction iZero = FindZeroIndex();
         static constexpr bool HasZero = iZero < LatticeType::NUMVECTORS;
         // Odd number => has a zero, so rounding down correct.
@@ -54,7 +59,7 @@ namespace hemelb::lb
         {
         }
 
-        void DoCalculateDensityMomentumFeq(HydroVars<TRT<LatticeType> >& hydroVars, site_t index)
+        void CalculateDensityMomentumFeq(VarsType& hydroVars, site_t index)
         {
             LatticeType::CalculateDensityMomentumFEq(hydroVars.f,
                                                      hydroVars.density,
@@ -72,7 +77,7 @@ namespace hemelb::lb
             }
         }
 
-        void DoCalculateFeq(HydroVars<TRT>& hydroVars, site_t index)
+        void CalculateFeq(VarsType& hydroVars, site_t index)
         {
             LatticeType::CalculateFeq(hydroVars.density,
                                       hydroVars.momentum.x,
@@ -86,7 +91,7 @@ namespace hemelb::lb
             }
         }
 
-        void DoCollide(const LbmParameters* const lbmParams, HydroVars<TRT>& hydroVars)
+        void Collide(const LbmParameters* const lbmParams, VarsType& hydroVars)
         {
             // Note HemeLB defines omega = -1/ tau
             // Magic number determines the other relaxation time

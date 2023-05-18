@@ -24,6 +24,12 @@ namespace hemelb {
             str_[N] = 0;
         }
 
+        constexpr auto size() const {
+            return N;
+        }
+        constexpr auto length() const {
+            return N;
+        }
         constexpr std::string str() const {
             return {str_, N};
         }
@@ -32,12 +38,24 @@ namespace hemelb {
             return str_;
         }
 
-        template<std::size_t M>
-        friend constexpr auto operator<=>(const ct_string &left,
-                                          const ct_string<M> &right) {
-            return left.str().compare(right.str()) <=> 0;
+        constexpr operator std::string() const{
+            return str();
         }
     };
+
+    template <std::size_t M, std::size_t N>
+    constexpr auto operator==(const ct_string<M>& left, const ct_string<N>& right) {
+        return left.str() == right.str();
+    }
+
+    template <std::size_t N>
+    constexpr auto operator==(const ct_string<N>& left, const char* right) {
+        return left.str() == std::string{right};
+    }
+    template <std::size_t N>
+    constexpr auto operator==(const char* left, const ct_string<N> right) {
+        return right == left;
+    }
 
     template<std::size_t N>
     ct_string(const char (&str)[N]) -> ct_string<N - 1>;

@@ -8,7 +8,6 @@
 #include <catch2/catch.hpp>
 
 #include "SimulationMaster.h"
-#include "lb/BuildSystemInterface.h"
 #include "lb/lattices/D3Q19.h"
 #include "Traits.h"
 #include "redblood/Mesh.h"

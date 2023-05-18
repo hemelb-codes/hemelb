@@ -10,6 +10,8 @@
 
 namespace hemelb::lb
 {
+    struct InitParams;
+
     class TruncatedPowerLawRheologyModel : public AbstractRheologyModel<
             TruncatedPowerLawRheologyModel>
     {

@@ -14,7 +14,7 @@
 #include "geometry/neighbouring/RequiredSiteInformation.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "lb/lattices/LatticeInfo.h"
-#include "lb/streamers/BaseStreamerDelegate.h"
+#include "lb/streamers/LinkStreamer.h"
 #include "lb/streamers/VirtualSite.h"
 #include "log/Logger.h"
 
@@ -22,7 +22,7 @@ namespace hemelb::lb::streamers
 {
 
       template<class CollisionImpl>
-      class VirtualSiteIolet : public BaseStreamer<VirtualSiteIolet<CollisionImpl> >
+      class VirtualSiteIolet : public BaseStreamer
       {
         public:
 
@@ -131,7 +131,7 @@ namespace hemelb::lb::streamers
            * links will be done in the post-step as we must ensure that all
            * the data is available to construct virtual sites.
            */
-          inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
+          void StreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::FieldData& latDat,
                                          lb::MacroscopicPropertyCache& propertyCache)
@@ -179,14 +179,14 @@ namespace hemelb::lb::streamers
               cachedHV.u = hydroVars.velocity;
 
               // TODO: Necessary to specify sub-class?
-              BaseStreamer<VirtualSiteIolet>::template UpdateMinsAndMaxes(site,
+              UpdateMinsAndMaxes(site,
                                                                                          hydroVars,
                                                                                          lbmParams,
                                                                                          propertyCache);
             }
           }
 
-          inline void DoPostStep(const site_t firstIndex, const site_t siteCount,
+          void PostStep(const site_t firstIndex, const site_t siteCount,
                                  const LbmParameters* lbmParams, geometry::FieldData* latDat,
                                  lb::MacroscopicPropertyCache& propertyCache)
           {
@@ -288,7 +288,7 @@ namespace hemelb::lb::streamers
           static VSExtra<LatticeType>* GetExtra(InOutLet* iolet)
           {
             // Get the extra data for this iolet
-            VSExtra<LatticeType>* ans = dynamic_cast<VSExtra<LatticeType>*>(iolet->GetExtraData());
+            auto* ans = dynamic_cast<VSExtra<LatticeType>*>(iolet->GetExtraData());
             if (ans == nullptr)
             {
               // panic

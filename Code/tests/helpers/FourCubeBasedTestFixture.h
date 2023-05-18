@@ -12,7 +12,7 @@
 #include <catch2/catch.hpp>
 
 #include "configuration/SimConfig.h"
-#include "lb/collisions/Collisions.h"
+#include "lb/Collisions.h"
 #include "lb/SimulationState.h"
 #include "net/IOCommunicator.h"
 

@@ -15,7 +15,6 @@
 #include "lb/MacroscopicPropertyCache.h"
 #include "util/UnitConverter.h"
 #include "reporting/Timers.h"
-#include "lb/BuildSystemInterface.h"
 #include "Traits.h"
 #include <typeinfo>
 
@@ -107,21 +106,19 @@ namespace hemelb::lb
         std::unique_ptr<tInletWallCollision> mInletWallCollision;
         std::unique_ptr<tOutletWallCollision> mOutletWallCollision;
 
-        template<typename Collision>
-        void StreamAndCollide(Collision& collision, const site_t iFirstIndex,
+        void StreamAndCollide(streamer auto& s, const site_t iFirstIndex,
                               const site_t iSiteCount)
         {
-            collision.StreamAndCollide(iFirstIndex,
+            s.StreamAndCollide(iFirstIndex,
                                                  iSiteCount,
                                                  &mParams,
                                                  *mLatDat,
                                                  propertyCache);
         }
 
-        template<typename Collision>
-        void PostStep(Collision& collision, const site_t iFirstIndex, const site_t iSiteCount)
+        void PostStep(streamer auto& s, const site_t iFirstIndex, const site_t iSiteCount)
         {
-            collision.DoPostStep(iFirstIndex,
+            s.PostStep(iFirstIndex,
                                            iSiteCount,
                                            &mParams,
                                            *mLatDat,

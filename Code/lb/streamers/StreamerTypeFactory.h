@@ -6,16 +6,11 @@
 #ifndef HEMELB_LB_STREAMERS_STREAMERTYPEFACTORY_H
 #define HEMELB_LB_STREAMERS_STREAMERTYPEFACTORY_H
 
-#include "lb/kernels/BaseKernel.h"
 #include "lb/streamers/BaseStreamer.h"
 #include "lb/streamers/SimpleCollideAndStreamDelegate.h"
 
-namespace hemelb
+namespace hemelb::lb::streamers
 {
-  namespace lb
-  {
-    namespace streamers
-    {
       /**
        * Template to produce Streamers that can cope with fluid-fluid and
        * fluid-wall links. Requires two classes as arguments: 1) the Collision
@@ -24,19 +19,18 @@ namespace hemelb
        * It is intended that a simpler metafunction partially specialise this
        * template on WallLinkImpl.
        */
-      template<typename CollisionImpl, typename WallLinkImpl>
-      class WallStreamerTypeFactory : public BaseStreamer<
-          WallStreamerTypeFactory<CollisionImpl, WallLinkImpl> >
+      template<typename CollisionImpl, LinkStreamer WallLinkImpl>
+      class WallStreamerTypeFactory : public BaseStreamer
       {
         public:
-          typedef CollisionImpl CollisionType;
+          using CollisionType = CollisionImpl;
 
         private:
           CollisionType collider;
           SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
           WallLinkImpl wallLinkDelegate;
 
-          typedef typename CollisionType::CKernel::LatticeType LatticeType;
+          using LatticeType = typename CollisionType::CKernel::LatticeType;
 
         public:
           WallStreamerTypeFactory(InitParams& initParams) :
@@ -46,7 +40,7 @@ namespace hemelb
 
           }
 
-          inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
+          inline void StreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::FieldData& latDat,
                                          lb::MacroscopicPropertyCache& propertyCache)
@@ -78,14 +72,14 @@ namespace hemelb
               }
 
               //TODO: Necessary to specify sub-class?
-              BaseStreamer<WallStreamerTypeFactory>::UpdateMinsAndMaxes(site,
+              UpdateMinsAndMaxes(site,
                                                                                                 hydroVars,
                                                                                                 lbmParams,
                                                                                                 propertyCache);
             }
           }
 
-          inline void DoPostStep(const site_t firstIndex, const site_t siteCount,
+          inline void PostStep(const site_t firstIndex, const site_t siteCount,
                                  const LbmParameters* lbmParameters,
                                  geometry::FieldData& latticeData,
                                  lb::MacroscopicPropertyCache& propertyCache)
@@ -105,6 +99,8 @@ namespace hemelb
 
       };
 
+      template <typename Collision, template<typename> typename WallLink>
+      using WallStreamer = WallStreamerTypeFactory<Collision, WallLink<Collision>>;
       /**
        * Template to produce Streamers that can cope with fluid-fluid and
        * fluid-iolet links. Requires two classes as arguments: 1) the Collision
@@ -113,19 +109,18 @@ namespace hemelb
        * It is intended that a simpler metafunction partially specialise this
        * template on IoletLinkImpl.
        */
-      template<typename CollisionImpl, typename IoletLinkImpl>
-      class IoletStreamerTypeFactory : public BaseStreamer<
-          IoletStreamerTypeFactory<CollisionImpl, IoletLinkImpl> >
+      template<typename CollisionImpl, LinkStreamer IoletLinkImpl>
+      class IoletStreamerTypeFactory : public BaseStreamer
       {
         public:
-          typedef CollisionImpl CollisionType;
+          using CollisionType = CollisionImpl;
 
         private:
           CollisionType collider;
           SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
           IoletLinkImpl ioletLinkDelegate;
 
-          typedef typename CollisionType::CKernel::LatticeType LatticeType;
+          using LatticeType = typename CollisionType::CKernel::LatticeType;
 
         public:
           IoletStreamerTypeFactory(InitParams& initParams) :
@@ -135,7 +130,7 @@ namespace hemelb
 
           }
 
-          inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
+          void StreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::FieldData& latDat,
                                          lb::MacroscopicPropertyCache& propertyCache)
@@ -164,15 +159,14 @@ namespace hemelb
                 }
               }
 
-              //TODO: Necessary to specify sub-class?
-              BaseStreamer<IoletStreamerTypeFactory>::template UpdateMinsAndMaxes(site,
+              UpdateMinsAndMaxes(site,
                                                                                                  hydroVars,
                                                                                                  lbmParams,
                                                                                                  propertyCache);
             }
           }
 
-          inline void DoPostStep(const site_t firstIndex, const site_t siteCount,
+          void PostStep(const site_t firstIndex, const site_t siteCount,
                                  const LbmParameters* lbmParameters,
                                  geometry::FieldData& latticeData,
                                  lb::MacroscopicPropertyCache& propertyCache)
@@ -201,13 +195,12 @@ namespace hemelb
        * It is intended that a simpler metafunction partially specialise this
        * template on WallLinkImpl and IoletLinkImpl.
        */
-      template<typename CollisionImpl, typename WallLinkImpl, typename IoletLinkImpl>
-      class WallIoletStreamerTypeFactory : public BaseStreamer<
-          WallIoletStreamerTypeFactory<CollisionImpl, WallLinkImpl, IoletLinkImpl> >
+      template<typename CollisionImpl, LinkStreamer WallLinkImpl, LinkStreamer IoletLinkImpl>
+      class WallIoletStreamerTypeFactory : public BaseStreamer
       {
         public:
-          typedef CollisionImpl CollisionType;
-          typedef typename CollisionType::CKernel::LatticeType LatticeType;
+          using CollisionType = CollisionImpl;
+          using LatticeType = typename CollisionType::CKernel::LatticeType;
 
         private:
           CollisionType collider;
@@ -223,7 +216,7 @@ namespace hemelb
 
           }
 
-          inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
+          void StreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::FieldData& latDat,
                                          lb::MacroscopicPropertyCache& propertyCache)
@@ -257,14 +250,14 @@ namespace hemelb
               }
 
               //TODO: Necessary to specify sub-class?
-              BaseStreamer<WallIoletStreamerTypeFactory>::template UpdateMinsAndMaxes(site,
+              UpdateMinsAndMaxes(site,
                                                                                                      hydroVars,
                                                                                                      lbmParams,
                                                                                                      propertyCache);
             }
           }
 
-          inline void DoPostStep(const site_t firstIndex, const site_t siteCount,
+          void PostStep(const site_t firstIndex, const site_t siteCount,
                                  const LbmParameters* lbmParams, geometry::FieldData& latticeData,
                                  lb::MacroscopicPropertyCache& propertyCache)
           {
@@ -286,7 +279,5 @@ namespace hemelb
 
           }
       };
-    }
-  }
 }
 #endif // HEMELB_LB_STREAMERS_STREAMERTYPEFACTORY_H

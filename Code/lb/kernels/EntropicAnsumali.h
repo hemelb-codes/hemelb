@@ -6,12 +6,9 @@
 #ifndef HEMELB_LB_KERNELS_ENTROPICANSUMALI_H
 #define HEMELB_LB_KERNELS_ENTROPICANSUMALI_H
 
-#include <cstdlib>
-
+#include "lb/concepts.h"
 #include "lb/kernels/Entropic.h"
-#include "lb/kernels/BaseKernel.h"
-#include "lb/HFunction.h"
-#include "util/utilityFunctions.h"
+#include "lb/HydroVars.h"
 
 namespace hemelb::lb
 {
@@ -32,17 +29,20 @@ namespace hemelb::lb
      * EntropicBase: This class implements the entropic kernel as according to Anusmali et al, a modification to the standard
      * LBGK kernel which ensures the increase of entropy.
      */
-    template<lattice_type LatticeType>
-    class EntropicAnsumali : public BaseKernel<EntropicAnsumali<LatticeType>, LatticeType>,
-                             public EntropicBase<LatticeType>
+    template<lattice_type L>
+    class EntropicAnsumali : public EntropicBase<L>
     {
     public:
+        using Base = EntropicBase<L>;
+        using LatticeType = L;
+        using VarsType = HydroVars<EntropicAnsumali>;
+
         /**
          * Constructor, passes parameters onto the base class.
          * @param initParams
          */
         EntropicAnsumali(InitParams& initParams) :
-                EntropicBase<LatticeType>(&initParams)
+                Base(&initParams)
         {
         }
 
@@ -52,8 +52,7 @@ namespace hemelb::lb
          * @param hydroVars
          * @param index The current lattice site index.
          */
-        inline void DoCalculateDensityMomentumFeq(
-                HydroVars<EntropicAnsumali<LatticeType> >& hydroVars, site_t index)
+        void CalculateDensityMomentumFeq(VarsType& hydroVars, site_t index)
         {
             hydroVars.index = index;
             LatticeType::CalculateDensityAndMomentum(hydroVars.f,
@@ -75,8 +74,7 @@ namespace hemelb::lb
          * @param hydroVars
          * @param index The current lattice site index.
          */
-        inline void DoCalculateFeq(HydroVars<EntropicAnsumali<LatticeType> >& hydroVars,
-                                   site_t index)
+        void CalculateFeq(VarsType& hydroVars, site_t index)
         {
             hydroVars.index = index;
             LatticeType::CalculateEntropicFeqAnsumali(hydroVars.density,
