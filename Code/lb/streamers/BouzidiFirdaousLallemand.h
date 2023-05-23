@@ -3,46 +3,47 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_LB_STREAMERS_BOUZIDIFIRDAOUSLALLEMANDDELEGATE_H
-#define HEMELB_LB_STREAMERS_BOUZIDIFIRDAOUSLALLEMANDDELEGATE_H
+#ifndef HEMELB_LB_STREAMERS_BOUZIDIFIRDAOUSLALLEMAND_H
+#define HEMELB_LB_STREAMERS_BOUZIDIFIRDAOUSLALLEMAND_H
 
-#include "lb/streamers/LinkStreamer.h"
-#include "lb/streamers/SimpleBounceBackDelegate.h"
+#include "lb/concepts.h"
+#include "lb/streamers/SimpleBounceBack.h"
 
 namespace hemelb::lb::streamers
+{
+    /**
+     * Implement the boundary condition described in Bouzidi, Firdaous and
+     * Lallemand "Momentum transfer of a Boltzmann-lattice fluid with
+     * boundaries", Phys. Fluids 13, 3452-3459 (2001).
+     *
+     * This is based on the idea of doing interpolated bounce-back.
+     *
+     * Note that since the method requires data from neighbouring sites (in
+     * some circumstances), it has a DoPostStep method.
+     */
+    template<collision_type C>
+    class BouzidiFirdaousLallemandLink
     {
-      /**
-       * Implement the boundary condition described in Bouzidi, Firdaous and
-       * Lallemand "Momentum transfer of a Boltzmann-lattice fluid with
-       * boundaries", Phys. Fluids 13, 3452-3459 (2001).
-       *
-       * This is based on the idea of doing interpolated bounce-back.
-       *
-       * Note that since the method requires data from neighbouring sites (in
-       * some circumstances), it has a DoPostStep method.
-       */
-      template<typename CollisionImpl>
-      class BouzidiFirdaousLallemandDelegate
-      {
-        public:
-          typedef CollisionImpl CollisionType;
-          typedef typename CollisionType::CKernel::LatticeType LatticeType;
-        private:
-          SimpleBounceBackDelegate<CollisionType> bbDelegate;
+    public:
+        using CollisionType = C;
+        using VarsType = typename CollisionType::VarsType;
+        using LatticeType = typename CollisionType::LatticeType;
+    private:
+        BounceBackLink<CollisionType> bbDelegate;
 
-        public:
-          BouzidiFirdaousLallemandDelegate(CollisionType& delegatorCollider,
-                                           InitParams& initParams) :
-              bbDelegate(delegatorCollider, initParams)
-          {
-          }
+    public:
+        BouzidiFirdaousLallemandLink(CollisionType& delegatorCollider,
+                                     InitParams& initParams) :
+                bbDelegate(delegatorCollider, initParams)
+        {
+        }
 
-          inline void StreamLink(const LbmParameters* lbmParams,
-                                 geometry::FieldData& latticeData,
-                                 const geometry::Site<geometry::FieldData>& site,
-                                 HydroVars<typename CollisionType::CKernel>& hydroVars,
-                                 const Direction& direction)
-          {
+        void StreamLink(const LbmParameters* lbmParams,
+                        geometry::FieldData& latticeData,
+                        const geometry::Site<geometry::FieldData>& site,
+                        VarsType& hydroVars,
+                        const Direction& direction)
+        {
             site_t invDirection = LatticeType::INVERSEDIRECTIONS[direction];
             site_t bbDestination = (site.GetIndex() * LatticeType::NUMVECTORS) + invDirection;
             distribn_t q = site.GetWallDistance<LatticeType>(direction);
@@ -64,11 +65,12 @@ namespace hemelb::lb::streamers
                   + (2.0 * q - 1) * hydroVars.GetFPostCollision()[invDirection]) / (2.0 * q);
             }
 
-          }
-          inline void PostStepLink(geometry::FieldData& latticeData,
-                                   const geometry::Site<geometry::FieldData>& site,
-                                   const Direction& direction)
-          {
+        }
+
+        void PostStepLink(geometry::FieldData& latticeData,
+                          const geometry::Site<geometry::FieldData>& site,
+                          const Direction& direction)
+        {
             distribn_t* fNew = latticeData.GetFNew(site.GetIndex() * LatticeType::NUMVECTORS);
             site_t invDirection = LatticeType::INVERSEDIRECTIONS[direction];
             distribn_t q = site.GetWallDistance<LatticeType>(direction);
@@ -86,8 +88,8 @@ namespace hemelb::lb::streamers
               // - fNew[invDirection] is the above-bounced-back fPostColl[direction] for this site.
               fNew[invDirection] = 2.0 * q * fNew[invDirection] + (1.0 - 2.0 * q) * fNew[direction];
             }
-          }
-      };
-    }
+        }
+    };
+}
 
-#endif /* HEMELB_LB_STREAMERS_BOUZIDIFIRDAOUSLALLEMANDDELEGATE_H */
+#endif

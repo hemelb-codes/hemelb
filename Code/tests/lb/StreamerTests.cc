@@ -36,8 +36,8 @@ namespace hemelb::tests
             return Approx(x).margin(allowedError);
         };
 
-      SECTION("SimpleCollideAndStream") {
-	SimpleCollideAndStream<COLLISION> simpleCollideAndStream(initParams);
+      SECTION("BulkStreamer") {
+	BulkStreamer<COLLISION> simpleCollideAndStream(initParams);
 
 	// Initialise fOld in the lattice data. We choose values so
 	// that each site has an anisotropic distribution function,
@@ -86,7 +86,7 @@ namespace hemelb::tests
       }
 
         SECTION("BouzidiFirdaousLallemand") {
-    using BFL = WallStreamerTypeFactory<COLLISION, BouzidiFirdaousLallemandDelegate<COLLISION>>;
+    using BFL = StreamerTypeFactory<BouzidiFirdaousLallemandLink<COLLISION>, NullLink<COLLISION>>;
     // Initialise fOld in the lattice data. We choose values so
 	// that each site has an anisotropic distribution function,
 	// and that each site's function is distinguishable.
@@ -221,7 +221,7 @@ namespace hemelb::tests
       }
 
       SECTION("TestSimpleBounceBack") {
-    using SBB = WallStreamerTypeFactory<COLLISION, SimpleBounceBackDelegate<COLLISION>>;
+    using SBB = StreamerTypeFactory<BounceBackLink<COLLISION>, NullLink<COLLISION>>;
 	// Initialise fOld in the lattice data. We choose values so
 	// that each site has an anisotropic distribution function,
 	// and that each site's function is distinguishable.
@@ -237,7 +237,7 @@ namespace hemelb::tests
 	site_t offset = 0;
 
 	// Mid-Fluid sites use simple collide and stream
-	SimpleCollideAndStream<COLLISION > simpleCollideAndStream(initParams);
+	BulkStreamer<COLLISION > simpleCollideAndStream(initParams);
 
 	simpleCollideAndStream.StreamAndCollide(offset,
 							dom->GetMidDomainCollisionCount(0),
@@ -304,7 +304,7 @@ namespace hemelb::tests
 	      // F_new should be equal to the value that was streamed
 	      // from this other site
 	      // in the same direction as we're streaming from.
-	      INFO("SimpleCollideAndStream, StreamAndCollide");
+	      INFO("BulkStreamer, StreamAndCollide");
 	      REQUIRE(apprx(streamerHydroVars.GetFPostCollision()[streamedDirection]) == streamedToFNew[streamedDirection]);
 	    } else {
 	      // The streamer index shows that no one has streamed to
@@ -333,7 +333,7 @@ namespace hemelb::tests
       }
 
       SECTION("GuoZhengShi") {
-    using GZS = WallStreamerTypeFactory<COLLISION, GuoZhengShiDelegate<COLLISION>>;
+    using GZS = StreamerTypeFactory<GuoZhengShiLink<COLLISION>, NullLink<COLLISION>>;
 	GZS guoZhengShi(initParams);
 
 	for (double assignedWallDistance = 0.4;
@@ -515,7 +515,7 @@ namespace hemelb::tests
 	site_t offset = 0;
 
 	// Mid-Fluid sites use simple collide and stream
-	SimpleCollideAndStream<COLLISION> simpleCollideAndStream(initParams);
+	BulkStreamer<COLLISION> simpleCollideAndStream(initParams);
 
 	simpleCollideAndStream.StreamAndCollide(offset,
 							dom->GetMidDomainCollisionCount(0),
@@ -528,7 +528,7 @@ namespace hemelb::tests
 	initParams.siteRanges.push_back(std::pair<site_t, site_t>(offset,
 								  offset
 								  + dom->GetMidDomainCollisionCount(1)));
-	JunkYangFactory<COLLISION> junkYang(initParams);
+	JunkYangFactory<NullLink<COLLISION>> junkYang(initParams);
 
 	junkYang.StreamAndCollide(offset,
 					  dom->GetMidDomainCollisionCount(1),
@@ -624,7 +624,7 @@ namespace hemelb::tests
       }
 
         SECTION("NashZerothOrderPressureIolet") {
-            using N0P = IoletStreamerTypeFactory<COLLISION, NashZerothOrderPressureDelegate<COLLISION>>;
+            using N0P = StreamerTypeFactory<NullLink<COLLISION>, NashZerothOrderPressureLink<COLLISION>>;
             auto inletBoundary = BuildIolets(geometry::INLET_TYPE);
 
 	initParams.boundaryObject = &inletBoundary;
@@ -721,9 +721,8 @@ namespace hemelb::tests
 	}
       }
 
-      SECTION("NashZerothOrderPressureBB") {
-            using NashSBB = WallIoletStreamerTypeFactory<COLLISION, SimpleBounceBackDelegate<COLLISION>, NashZerothOrderPressureDelegate<COLLISION>>;
-
+        SECTION("NashZerothOrderPressureBB") {
+            using NashSBB = StreamerTypeFactory<BounceBackLink<COLLISION>, NashZerothOrderPressureLink<COLLISION>>;
             auto inletBoundary = BuildIolets(geometry::INLET_TYPE);
 
 	initParams.boundaryObject = &inletBoundary;

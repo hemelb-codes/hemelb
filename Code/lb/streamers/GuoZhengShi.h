@@ -3,12 +3,11 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_LB_STREAMERS_GUOZHENGSHIDELEGATE_H
-#define HEMELB_LB_STREAMERS_GUOZHENGSHIDELEGATE_H
+#ifndef HEMELB_LB_STREAMERS_GUOZHENGSHI_H
+#define HEMELB_LB_STREAMERS_GUOZHENGSHI_H
 
 #include "lb/iolets/BoundaryValues.h"
 #include "lb/iolets/InOutLetVelocity.h"
-#include "lb/streamers/LinkStreamer.h"
 #include "geometry/neighbouring/RequiredSiteInformation.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "util/Vector3D.h"
@@ -21,18 +20,18 @@ namespace hemelb::lb::streamers
      * in 'An Extrapolation Method for Boundary Conditions in Lattice-Boltzmann method'
      * Physics of Fluids, 14/6, June 2002, pp 2007-2010.
      */
-    template<typename CollisionImpl>
-    class GuoZhengShiDelegate
+    template<collision_type C>
+    class GuoZhengShiLink
     {
     public:
-        using CollisionType = CollisionImpl;
-        using LatticeType = typename CollisionType::CKernel::LatticeType;
-        using const_span = typename LatticeType::const_span;
+        using CollisionType = C;
+        using VarsType = typename CollisionType::VarsType;
+        using LatticeType = typename CollisionType::LatticeType;
 
-        GuoZhengShiDelegate(CollisionType& delegatorCollider, InitParams& initParams) :
-              collider(delegatorCollider),
-                  neighbouringLatticeData(initParams.latDat->GetNeighbouringData()),
-                  bValues(initParams.boundaryObject), bbDelegate(delegatorCollider, initParams)
+        GuoZhengShiLink(CollisionType& delegatorCollider, InitParams& initParams) :
+                collider(delegatorCollider),
+                neighbouringLatticeData(initParams.latDat->GetNeighbouringData()),
+                bValues(initParams.boundaryObject), bbDelegate(delegatorCollider, initParams)
         {
             // Want to loop over each site this streamer is responsible for,
             // as specified in the siteRanges.
@@ -124,7 +123,7 @@ namespace hemelb::lb::streamers
         void StreamLink(const LbmParameters* lbmParams,
                         geometry::FieldData& latDat,
                         const geometry::Site<geometry::FieldData>& site,
-                        HydroVars<typename CollisionType::CKernel>& hydroVars,
+                        VarsType& hydroVars,
                         const Direction& iPrime)
         {
             Direction i = LatticeType::INVERSEDIRECTIONS[iPrime];
@@ -140,7 +139,7 @@ namespace hemelb::lb::streamers
             // Then 0 = velocityWall * wallDistance + velocityFluid * (1 - wallDistance)
             // Hence velocityWall = velocityFluid * (1 - 1/wallDistance)
             FVector<LatticeType> fWall;
-            HydroVars<typename CollisionType::CKernel> hydroVarsWall(fWall);
+            VarsType hydroVarsWall(fWall);
 
             hydroVarsWall.density = hydroVars.density;
             hydroVarsWall.tau = hydroVars.tau;
@@ -290,7 +289,7 @@ namespace hemelb::lb::streamers
             // Nothing to do
         }
     private:
-        const_span GetNeighbourFOld(const geometry::Site<geometry::FieldData>& site,
+        auto GetNeighbourFOld(const geometry::Site<geometry::FieldData>& site,
                                     const Direction& i,
                                     geometry::FieldData& latDat)
         {
@@ -318,9 +317,9 @@ namespace hemelb::lb::streamers
         CollisionType collider;
         const geometry::neighbouring::NeighbouringDomain& neighbouringLatticeData;
         BoundaryValues* bValues;
-        SimpleBounceBackDelegate<CollisionType> bbDelegate;
+        BounceBackLink<CollisionType> bbDelegate;
     };
 
 }
 
-#endif /* HEMELB_LB_STREAMERS_GUOZHENGSHIDELEGATE_H */
+#endif

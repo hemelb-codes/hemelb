@@ -3,23 +3,23 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_LB_STREAMERS_LADDIOLETDELEGATE_H
-#define HEMELB_LB_STREAMERS_LADDIOLETDELEGATE_H
+#ifndef HEMELB_LB_STREAMERS_LADDIOLET_H
+#define HEMELB_LB_STREAMERS_LADDIOLET_H
 
-#include "lb/streamers/SimpleBounceBackDelegate.h"
+#include "lb/streamers/SimpleBounceBack.h"
 
 namespace hemelb::lb::streamers
 {
 
     template<typename CollisionImpl>
-    class LaddIoletDelegate : public SimpleBounceBackDelegate<CollisionImpl>
+    class LaddIoletLink : public BounceBackLink<CollisionImpl>
     {
     public:
         using CollisionType = CollisionImpl;
         using LatticeType = typename CollisionType::CKernel::LatticeType;
 
-        LaddIoletDelegate(CollisionType& delegatorCollider, InitParams& initParams) :
-                SimpleBounceBackDelegate<CollisionType>(delegatorCollider, initParams),
+        LaddIoletLink(CollisionType& delegatorCollider, InitParams& initParams) :
+                BounceBackLink<CollisionType>(delegatorCollider, initParams),
                 bValues(initParams.boundaryObject)
         {
         }
@@ -58,8 +58,8 @@ namespace hemelb::lb::streamers
             distribn_t correction = 2. * LatticeType::EQMWEIGHTS[ii]
                                     * Dot(wallMom, LatticeType::VECTORS[ii]) / Cs2;
 
-            * (latticeData.GetFNew(SimpleBounceBackDelegate<CollisionImpl>::GetBBIndex(site.GetIndex(),
-                                                                                       ii))) =
+            * (latticeData.GetFNew(BounceBackLink<CollisionImpl>::GetBBIndex(site.GetIndex(),
+                                                                             ii))) =
                     hydroVars.GetFPostCollision()[ii] - correction;
         }
     private:
@@ -68,4 +68,4 @@ namespace hemelb::lb::streamers
 
 }
 
-#endif /* HEMELB_LB_STREAMERS_LADDIOLETDELEGATE_H */
+#endif

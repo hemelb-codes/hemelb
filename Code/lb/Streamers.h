@@ -8,14 +8,14 @@
 
 #include "build_info.h"
 
-#include "lb/streamers/SimpleCollideAndStream.h"
+#include "lb/streamers/BulkStreamer.h"
 #include "lb/streamers/StreamerTypeFactory.h"
-#include "lb/streamers/SimpleBounceBackDelegate.h"
-#include "lb/streamers/BouzidiFirdaousLallemandDelegate.h"
-#include "lb/streamers/GuoZhengShiDelegate.h"
-#include "lb/streamers/JunkYangFactory.h"
-#include "lb/streamers/NashZerothOrderPressureDelegate.h"
-#include "lb/streamers/LaddIoletDelegate.h"
+#include "lb/streamers/SimpleBounceBack.h"
+#include "lb/streamers/BouzidiFirdaousLallemand.h"
+#include "lb/streamers/GuoZhengShi.h"
+#include "lb/streamers/JunkYang.h"
+#include "lb/streamers/NashZerothOrderPressure.h"
+#include "lb/streamers/LaddIolet.h"
 
 namespace hemelb::lb {
     namespace detail {
@@ -24,13 +24,13 @@ namespace hemelb::lb {
         constexpr auto get_default_wall_streamer(InitParams& i) {
             constexpr auto WALL = build_info::WALL_BOUNDARY;
             if constexpr (WALL == "BFL") {
-                return WallStreamerTypeFactory<C, BouzidiFirdaousLallemandDelegate<C>>{i};
+                return StreamerTypeFactory < BouzidiFirdaousLallemandLink < C >, NullLink < C >> {i};
             } else if constexpr (WALL == "GZS") {
-                return WallStreamerTypeFactory<C, GuoZhengShiDelegate<C>>{i};
+                return StreamerTypeFactory < GuoZhengShiLink < C >, NullLink < C >> {i};
             } else if constexpr (WALL == "SIMPLEBOUNCEBACK") {
-                return WallStreamerTypeFactory<C, SimpleBounceBackDelegate<C>>{i};
+                return StreamerTypeFactory < BounceBackLink < C >, NullLink < C >> {i};
             } else if constexpr (WALL == "JUNKYANG") {
-                return JunkYangFactory<C, NoIoletLink<C> >{i};
+                return JunkYangFactory<NullLink<C> >{i};
             } else {
                 throw (Exception() << "Configured with invalid WALL_BOUNDARY");
             }
@@ -39,14 +39,14 @@ namespace hemelb::lb {
         template <ct_string NAME, typename C>
         constexpr auto get_default_iolet_streamer(InitParams& i) {
             if constexpr (NAME == "NASHZEROTHORDERPRESSUREIOLET") {
-                return IoletStreamerTypeFactory<
-                        C,
-                        NashZerothOrderPressureDelegate<C>
+                return StreamerTypeFactory<
+                        NullLink<C>,
+                        NashZerothOrderPressureLink < C >
                 >{i};
             } else if constexpr (NAME == "LADDIOLET") {
-                return IoletStreamerTypeFactory<
-                        C,
-                        LaddIoletDelegate<C>
+                return StreamerTypeFactory<
+                        NullLink<C>,
+                        LaddIoletLink < C >
                 >{i};
             } else {
                 throw (Exception() << "Configured with invalid IOLET boundary");
@@ -56,7 +56,7 @@ namespace hemelb::lb {
     }
 
     template <typename C>
-    using DefaultStreamer = streamers::SimpleCollideAndStream<C>;
+    using DefaultStreamer = streamers::BulkStreamer<C>;
 
     template <typename C>
     using DefaultWallStreamer = decltype(detail::get_default_wall_streamer<C>(std::declval<InitParams&>()));
@@ -81,10 +81,10 @@ namespace hemelb::lb {
             template <typename> class IoletT // iolet delegate template
     >
     struct CombineWallAndIoletStreamers<
-            streamers::WallStreamerTypeFactory<C, WallT<C>>,
-            streamers::IoletStreamerTypeFactory<C, IoletT<C>>
+            streamers::StreamerTypeFactory<WallT<C>, streamers::NullLink<C>>,
+            streamers::StreamerTypeFactory<streamers::NullLink<C>, IoletT<C>>
     > {
-        using type = streamers::WallIoletStreamerTypeFactory<C, WallT<C>, IoletT<C>>;
+        using type = streamers::StreamerTypeFactory<WallT<C>, IoletT<C>>;
     };
 
     // Junk Yang is different: the pure wall streamer has a special tag type for no-iolet
@@ -93,10 +93,10 @@ namespace hemelb::lb {
             template <typename> class IoletT // iolet delegate template
     >
     struct CombineWallAndIoletStreamers<
-            streamers::JunkYangFactory<C, streamers::NoIoletLink<C> >,
-            streamers::IoletStreamerTypeFactory<C, IoletT<C>>
+            streamers::JunkYangFactory<streamers::NullLink<C> >,
+            streamers::StreamerTypeFactory<streamers::NullLink<C>, IoletT<C>>
     > {
-        using type = streamers::JunkYangFactory<C, IoletT<C>>;
+        using type = streamers::JunkYangFactory<IoletT<C>>;
     };
 }
 #endif /* HEMELB_LB_STREAMERS_H */

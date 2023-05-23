@@ -14,27 +14,26 @@
 #include "geometry/neighbouring/RequiredSiteInformation.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "lb/lattices/LatticeInfo.h"
-#include "lb/streamers/LinkStreamer.h"
 #include "lb/streamers/VirtualSite.h"
 #include "log/Logger.h"
 
 namespace hemelb::lb::streamers
 {
 
-      template<class CollisionImpl>
-      class VirtualSiteIolet : public BaseStreamer
-      {
-        public:
+    template<collision_type C>
+    class VirtualSiteIolet
+    {
+    public:
+        using CollisionType = C;
+        using VarsType = typename CollisionType::VarsType;
+        using LatticeType = typename CollisionType::LatticeType;
 
-          using CollisionType = CollisionImpl;
-          using LatticeType = typename CollisionType::CKernel::LatticeType;
-
-        private:
-          using VSiteType = VirtualSite<LatticeType>;
+    private:
+        using VSiteType = VirtualSite<LatticeType>;
 
           CollisionType collider;
-          SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
-          SimpleBounceBackDelegate<CollisionType> wallLinkDelegate;
+          BulkLink<CollisionType> bulkLinkDelegate;
+          BounceBackLink<CollisionType> wallLinkDelegate;
           BoundaryValues* bValues;
           const geometry::neighbouring::NeighbouringDomain& neighbouringLatticeData;
 
@@ -140,7 +139,7 @@ namespace hemelb::lb::streamers
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
               auto&& site = latDat.GetSite(siteIndex);
-              HydroVars<typename CollisionType::CKernel> hydroVars(site);
+              VarsType hydroVars(site);
 
               ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
               hydroVars.tau = lbmParams->GetTau();
@@ -178,11 +177,10 @@ namespace hemelb::lb::streamers
               cachedHV.rho = hydroVars.density;
               cachedHV.u = hydroVars.velocity;
 
-              // TODO: Necessary to specify sub-class?
-              UpdateMinsAndMaxes(site,
-                                                                                         hydroVars,
-                                                                                         lbmParams,
-                                                                                         propertyCache);
+              UpdateCache(site,
+                          hydroVars,
+                          lbmParams,
+                          propertyCache);
             }
           }
 

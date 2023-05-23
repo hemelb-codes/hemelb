@@ -6,31 +6,31 @@
 #ifndef HEMELB_LB_COLLISIONS_NONZEROVELOCITYEQUILIBRIUMFIXEDDENSITY_H
 #define HEMELB_LB_COLLISIONS_NONZEROVELOCITYEQUILIBRIUMFIXEDDENSITY_H
 
-#include "lb/collisions/BaseCollision.h"
+#include "lb/concepts.h"
 #include "lb/iolets/BoundaryValues.h"
 
 namespace hemelb::lb
 {
 
-      template<typename KernelType>
-      class NonZeroVelocityEquilibriumFixedDensity : public BaseCollision<
-          NonZeroVelocityEquilibriumFixedDensity<KernelType>, KernelType>
-      {
-        public:
-          using CKernel = KernelType;
+    template<kernel_type K>
+    class NonZeroVelocityEquilibriumFixedDensity
+    {
+    public:
+        using KernelType = K;
+        using LatticeType = typename KernelType::LatticeType;
+        using VarsType = typename KernelType::VarsType;
 
-          NonZeroVelocityEquilibriumFixedDensity(InitParams& initParams) :
-              kernel(initParams), boundaryObject(initParams.boundaryObject)
-          {
+        NonZeroVelocityEquilibriumFixedDensity(InitParams& initParams) :
+                kernel(initParams), boundaryObject(initParams.boundaryObject)
+        {
+        }
 
-          }
-
-          inline void DoCalculatePreCollision(HydroVars<KernelType>& hydroVars,
-                                              const geometry::Site<geometry::Domain>& site)
-          {
-            CKernel::LatticeType::CalculateDensityAndMomentum(hydroVars.f,
-                                                              hydroVars.density,
-                                                              hydroVars.momentum);
+        void CalculatePreCollision(VarsType& hydroVars,
+                                   const geometry::Site<geometry::Domain>& site)
+        {
+            LatticeType::CalculateDensityAndMomentum(hydroVars.f,
+                                                     hydroVars.density,
+                                                     hydroVars.momentum);
 
             // Externally impose a density. Keep a record of the old one so we can scale the
             // momentum vector.
@@ -40,22 +40,21 @@ namespace hemelb::lb
             hydroVars.momentum *= (hydroVars.density / previousDensity);
 
             kernel.CalculateFeq(hydroVars, site.GetIndex());
-          }
+        }
 
-          inline void DoCollide(const LbmParameters* lbmParams,
-                                HydroVars<KernelType>& iHydroVars)
-          {
-            for (Direction direction = 0; direction < CKernel::LatticeType::NUMVECTORS; ++direction)
+        void Collide(const LbmParameters* lbmParams,
+                     VarsType& iHydroVars)
+        {
+            for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
             {
-              iHydroVars.SetFPostCollision(direction, iHydroVars.GetFEq()[direction]);
+                iHydroVars.SetFPostCollision(direction, iHydroVars.GetFEq()[direction]);
             }
-          }
+        }
 
-        private:
-          KernelType kernel;
-          BoundaryValues* boundaryObject;
-      };
-
+    private:
+        KernelType kernel;
+        BoundaryValues* boundaryObject;
+    };
 }
 
-#endif /* HEMELB_LB_COLLISIONS_NONZEROVELOCITYEQUILIBRIUMFIXEDDENSITY_H */
+#endif

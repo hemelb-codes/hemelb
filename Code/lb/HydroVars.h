@@ -112,6 +112,7 @@ namespace hemelb::lb
     };
 
     /// This exists to be specialised for some kernels that need extra members.
+    /// Can't constrain the template parameter to be kernel_type cos cycles.
     template <typename KernelImpl>
     struct HydroVars : HydroVarsBase<typename KernelImpl::LatticeType>
     {

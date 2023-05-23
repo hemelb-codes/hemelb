@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_LB_STREAMERS_BASESTREAMER_H
-#define HEMELB_LB_STREAMERS_BASESTREAMER_H
+#ifndef HEMELB_LB_STREAMERS_COMMON_H
+#define HEMELB_LB_STREAMERS_COMMON_H
 
 #include <cmath>
 
@@ -16,44 +16,13 @@
 
 namespace hemelb::lb::streamers
 {
-    /**
-     * BaseStreamer: inheritable base class for the streaming operator. The public interface
-     * here defines the complete interface usable by external code.
-     *  - Constructor(InitParams&)
-     *  - StreamAndCollide(const site_t, const site_t, const LbmParameters*,
-     *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
-     *  - PostStep(const site_t, const site_t, const LbmParameters*,
-     *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
-     *  - Reset(InitParams* init)
-     *
-     * The following must be implemented by concrete streamers (which derive from this class
-     * using the CRTP).
-     *  - typedef for CollisionType, the type of the collider operation.
-     *  - Constructor(InitParams&)
-     *  - DoStreamAndCollide(const site_t, const site_t, const LbmParameters*,
-     *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
-     *  - DoPostStep(const site_t, const site_t, const LbmParameters*,
-     *      geometry::domain_type*, lb::MacroscopicPropertyCache& propertyCache)
-     *  - DoReset(InitParams* init)
-     *
-     * The design is to for the streamers to be pretty dumb and for them to
-     * basically just control iteration over the sites and directions while
-     * delegating the logic of actually streaming to some other classes
-     * (e.g. BouzidiFirdaousLallemand delegates bulk link streaming to
-     * SimpleCollideAndStreamDelegate and wall link streaming to BFLDelagate,
-     * which uses SimpleBounceBackDelegate in the cases where it can't handle
-     * because two opposite links are both wall links).
-     */
-    class BaseStreamer
+    /// Update the property cache.
+    template<lattice_type LatticeType>
+    static void UpdateCache(
+            const geometry::Site<geometry::Domain>& site,
+            const HydroVarsBase<LatticeType>& hydroVars, const LbmParameters* lbmParams,
+            lb::MacroscopicPropertyCache& propertyCache)
     {
-    protected:
-        template<lattice_type LatticeType>
-        static void UpdateMinsAndMaxes(
-              const geometry::Site<geometry::Domain>& site,
-              const HydroVarsBase<LatticeType>& hydroVars, const LbmParameters* lbmParams,
-              lb::MacroscopicPropertyCache& propertyCache)
-        {
-            //static_assert(std::same_as<LatticeType, typename StreamerImpl::CollisionType::CKernel::LatticeType>);
             if (propertyCache.densityCache.RequiresRefresh())
             {
               propertyCache.densityCache.Put(site.GetIndex(), hydroVars.density);
@@ -159,7 +128,26 @@ namespace hemelb::lb::streamers
 
             }
           }
-      };
+
+    /**
+     * Null implementation of an iolet link delegate.
+     */
+    template<typename C>
+    struct NullLink
+    {
+        using CollisionType = C;
+        using VarsType = typename CollisionType::VarsType;
+        using LatticeType = typename CollisionType::LatticeType;
+        NullLink(CollisionType& collider, InitParams& initParams)
+        {
+        }
+        void StreamLink(LbmParameters const*, geometry::FieldData&,
+                        geometry::Site<geometry::FieldData> const&,
+                        VarsType&, Direction) {}
+
+        void PostStepLink(geometry::FieldData&,geometry::Site<geometry::FieldData> const&,
+                          Direction) {}
+    };
 }
 
-#endif /* HEMELB_LB_STREAMERS_BASESTREAMER_H */
+#endif

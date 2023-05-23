@@ -6,7 +6,7 @@
 #ifndef HEMELB_LB_COLLISIONS_NORMAL_H
 #define HEMELB_LB_COLLISIONS_NORMAL_H
 
-#include "lb/collisions/BaseCollision.h"
+#include "lb/concepts.h"
 
 namespace hemelb::lb
 {
@@ -14,7 +14,7 @@ namespace hemelb::lb
      * Normal collisions - use a formula to relax the distribution towards equilibrium.
      */
     template<kernel_type K>
-    class Normal : public BaseCollision<Normal<K>, K>
+    class Normal
     {
     public:
         using KernelType = K;
@@ -26,14 +26,13 @@ namespace hemelb::lb
         {
         }
 
-        inline void DoCalculatePreCollision(VarsType& hydroVars,
-                                            const geometry::Site<geometry::Domain>& site)
+        void CalculatePreCollision(VarsType& hydroVars,
+                                   const geometry::Site<geometry::Domain>& site)
         {
             kernel.CalculateDensityMomentumFeq(hydroVars, site.GetIndex());
         }
 
-        inline void DoCollide(const LbmParameters* lbmParams,
-                              VarsType& iHydroVars)
+        void Collide(const LbmParameters* lbmParams, VarsType& iHydroVars)
         {
             kernel.Collide(lbmParams, iHydroVars);
         }

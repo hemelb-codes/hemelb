@@ -11,10 +11,17 @@
 #include "lb/lattices/Lattice.h"
 
 namespace hemelb::geometry {
-        class FieldData;
+    template <typename>
+    class Site;
+    class Domain;
+    class FieldData;
 }
 namespace hemelb::lb {
     class MacroscopicPropertyCache;
+
+    // Would like the template parameter to be kernel_type, but this would be circular.
+    template <typename>
+    struct HydroVars;
 
     namespace detail {
         template<typename Base, typename Derived>
@@ -28,21 +35,20 @@ namespace hemelb::lb {
     };
 
     template <typename K>
-    concept kernel_type = requires {
-        typename K::LatticeType;
-        requires lattice_type<typename K::LatticeType>;
+    concept kernel_type =
+    lattice_type<typename K::LatticeType> &&
+    requires (InitParams& i, K k, typename K::VarsType v, site_t idx, LbmParameters const* lbmParams) {
         typename K::VarsType;
-        requires requires (K k, typename K::VarsType v, site_t idx, LbmParameters const* lbmParams) {
-            { k.CalculateDensityMomentumFeq(v, idx) };
-            { k.Collide(lbmParams, v)};
-        };
+        { K(i) };
+        { k.CalculateDensityMomentumFeq(v, idx) };
+        { k.Collide(lbmParams, v)};
     };
 
     // For MRT kernels
     template<typename MB>
-    concept moment_basis = requires {
-        // A lattice
-        requires lattice_type<typename MB::Lattice>;
+    concept moment_basis =
+    lattice_type<typename MB::Lattice> && // A lattice
+    requires {
         // That the number of kinetic/non-hydrodynamic moments be consistent with the Lattice
         // (as there are 4 conserved moments in 3D).
         typename std::enable_if<MB::NUMMOMENTS + 4 == MB::Lattice::NUMVECTORS>::type;
@@ -51,14 +57,47 @@ namespace hemelb::lb {
         { MB::SetUpCollisionMatrix(0.0) } -> std::same_as<std::array<distribn_t, MB::NUMMOMENTS>>;
     };
 
-    template<typename S>
-    concept streamer = requires(S s,
+    // Collision - basically a wrapper around a kernel
+    template <typename C>
+    concept collision_type =
+    kernel_type<typename C::KernelType> &&
+    lattice_type<typename C::LatticeType> &&
+    requires (
+            C c,
             InitParams& i,
-            site_t site_idx, LbmParameters const* lbmParameters,
-            geometry::FieldData& dom, MacroscopicPropertyCache& cache
-            ) {
-        // public typedef of collision
-        typename S::CollisionType;
+            typename C::VarsType v,
+            geometry::Site<geometry::Domain> const site,
+            LbmParameters const* lbmParams
+    ) {
+        { C(i) };
+        { c.CalculatePreCollision(v, site) };
+        { c.Collide(lbmParams, v) };
+    };
+
+    /// Concept for doing collide-and-stream on one link (lattice vector)
+    template <typename T>
+    concept link_streamer =
+    collision_type<typename T::CollisionType> &&
+    lattice_type<typename T::LatticeType> &&
+    requires(
+            T& linkStreamer,
+            LbmParameters const* lbmParams,
+            geometry::FieldData& data,
+            geometry::Site<geometry::FieldData> const& site,
+            HydroVars<typename T::CollisionType::KernelType>& hydroVars,
+            Direction d
+    ) {
+        { linkStreamer.StreamLink(lbmParams, data, site, hydroVars, d) };
+        { linkStreamer.PostStepLink(data, site, d) };
+    };
+    template<typename S>
+    concept streamer =
+    collision_type<typename S::CollisionType> && // collision
+    requires(S s,
+             InitParams& i,
+             site_t site_idx, LbmParameters const* lbmParameters,
+             geometry::FieldData& dom, MacroscopicPropertyCache& cache
+    ) {
         // Constructor accepting InitParams&
         { S{i} };
         // Main work functions!

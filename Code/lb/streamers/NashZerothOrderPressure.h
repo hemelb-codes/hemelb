@@ -2,31 +2,32 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
-#ifndef HEMELB_LB_STREAMERS_NASHZEROTHORDERPRESSUREDELEGATE_H
-#define HEMELB_LB_STREAMERS_NASHZEROTHORDERPRESSUREDELEGATE_H
+#ifndef HEMELB_LB_STREAMERS_NASHZEROTHORDERPRESSURE_H
+#define HEMELB_LB_STREAMERS_NASHZEROTHORDERPRESSURE_H
 
+#include "lb/concepts.h"
 #include "util/utilityFunctions.h"
-#include "lb/streamers/LinkStreamer.h"
 
 namespace hemelb::lb::streamers
 {
-    template<typename CollisionImpl>
-    class NashZerothOrderPressureDelegate
+    template<collision_type C>
+    class NashZerothOrderPressureLink
     {
     public:
-        using CollisionType = CollisionImpl;
-        using LatticeType = typename CollisionType::CKernel::LatticeType;
+        using CollisionType = C;
+        using VarsType = typename CollisionType::VarsType;
+        using LatticeType = typename CollisionType::LatticeType;
 
-          NashZerothOrderPressureDelegate(CollisionType& delegatorCollider,
-                                          InitParams& initParams) :
-              collider(delegatorCollider), iolet(*initParams.boundaryObject)
-          {
-          }
+        NashZerothOrderPressureLink(CollisionType& delegatorCollider,
+                                    InitParams& initParams) :
+                collider(delegatorCollider), iolet(*initParams.boundaryObject)
+        {
+        }
 
         void StreamLink(const LbmParameters* lbmParams,
                         geometry::FieldData& latticeData,
                         const geometry::Site<geometry::FieldData>& site,
-                        HydroVars<typename CollisionType::CKernel>& hydroVars,
+                        VarsType& hydroVars,
                         const Direction& direction)
         {
             int boundaryId = site.GetIoletId();
@@ -45,7 +46,7 @@ namespace hemelb::lb::streamers
             // TODO having to give 0 as an argument is also ugly.
             // TODO it's ugly that we have to give hydroVars a nonsense distribution vector
             // that doesn't get used.
-            HydroVars<typename CollisionType::CKernel> ghostHydrovars(site);
+            VarsType ghostHydrovars(site);
 
             ghostHydrovars.density = ghostDensity;
             ghostHydrovars.momentum = ioletNormal * component * ghostDensity;
@@ -71,4 +72,4 @@ namespace hemelb::lb::streamers
     };
 }
 
-#endif // HEMELB_LB_STREAMERS_NASHZEROTHORDERPRESSUREDELEGATE_H
+#endif

@@ -6,56 +6,53 @@
 #ifndef HEMELB_LB_COLLISIONS_ZEROVELOCITYEQUILIBRIUM_H
 #define HEMELB_LB_COLLISIONS_ZEROVELOCITYEQUILIBRIUM_H
 
-#include "lb/collisions/BaseCollision.h"
+#include "lb/concepts.h"
 
 namespace hemelb::lb
 {
-      /**
-       * Collision operator that maintains the density, set velocity to 0 and fully relaxes
-       * to equilibrium.
-       */
-      template<typename KernelType>
-      class ZeroVelocityEquilibrium : public BaseCollision<ZeroVelocityEquilibrium<KernelType>,
-          KernelType>
-      {
-        public:
-          using CKernel = KernelType;
+    /**
+     * Collision operator that maintains the density, set velocity to 0 and fully relaxes
+     * to equilibrium.
+     */
+    template<kernel_type K>
+    class ZeroVelocityEquilibrium
+    {
+    public:
+        using KernelType = K;
+        using LatticeType = typename KernelType::LatticeType;
+        using VarsType = typename KernelType::VarsType;
 
-          ZeroVelocityEquilibrium(InitParams& initParams) :
-              BaseCollision<ZeroVelocityEquilibrium<KernelType>, KernelType>(), kernel(initParams)
-          {
+        ZeroVelocityEquilibrium(InitParams& initParams) : kernel(initParams)
+        {
+        }
 
-          }
-
-          inline void DoCalculatePreCollision(HydroVars<KernelType>& hydroVars,
-                                              const geometry::Site<geometry::Domain>& site)
-          {
+        void CalculatePreCollision(VarsType& hydroVars,
+                                   const geometry::Site<geometry::Domain>& site)
+        {
             hydroVars.density = 0.0;
 
-            for (unsigned int ii = 0; ii < CKernel::LatticeType::NUMVECTORS; ++ii)
+            for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {
-              hydroVars.density += hydroVars.f[ii];
+                hydroVars.density += hydroVars.f[ii];
             }
 
             hydroVars.momentum = util::Vector3D<distribn_t>::Zero();
 
             kernel.CalculateFeq(hydroVars, site.GetIndex());
-          }
+        }
 
-          inline void DoCollide(const LbmParameters* lbmParams,
-                                HydroVars<KernelType>& iHydroVars)
-          {
-            for (Direction direction = 0; direction < CKernel::LatticeType::NUMVECTORS; ++direction)
+        void Collide(const LbmParameters* lbmParams,
+                     VarsType& iHydroVars)
+        {
+            for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
             {
-              iHydroVars.SetFPostCollision(direction, iHydroVars.GetFEq()[direction]);
+                iHydroVars.SetFPostCollision(direction, iHydroVars.GetFEq()[direction]);
             }
-          }
+        }
 
-        private:
-          KernelType kernel;
-
+    private:
+        KernelType kernel;
       };
-
 }
 
-#endif /* HEMELB_LB_COLLISIONS_ZEROVELOCITYEQUILIBRIUM_H */
+#endif

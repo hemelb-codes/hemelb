@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_LB_STREAMERS_JUNKYANGFACTORY_H
-#define HEMELB_LB_STREAMERS_JUNKYANGFACTORY_H
+#ifndef HEMELB_LB_STREAMERS_JUNKYANG_H
+#define HEMELB_LB_STREAMERS_JUNKYANG_H
 
 #include <set>
 
@@ -13,41 +13,28 @@
 #include <boost/numeric/ublas/io.hpp>
 
 #include "units.h"
-#include "lb/streamers/BaseStreamer.h"
+#include "lb/streamers/Common.h"
 
 namespace hemelb::lb::streamers
 {
-    /**
-     * Null implementation of an iolet link delegate.
-     */
-    template<typename CollisionImpl>
-    struct NoIoletLink
-    {
-        NoIoletLink(CollisionImpl& collider, InitParams& initParams)
-        {
-        }
-    };
+
 
     /**
        * Template to produce Streamers that can cope with fluid-fluid, fluid-solid
-       * (using the Junk&Yang method, see below) and fluid-iolet links. Requires
-       * two classes as arguments: 1) the Collision class and 2) a StreamerDelegate
-       * class that will handle the iolet links.
+       * (using the Junk&Yang method, see below) and fluid-iolet links. Requires a Link Streamer
+       * class that will handle the iolet links (or NullLink if wall-only).
        *
-       * It is intended that a simpler metafunction partially specialise this
-       * template on IoletLinkImpl.
-       *
-       * This class implements the Junk&Yang no-slip boundary condition as described in
-       *
+       * This class implements the Junk & Yang no-slip boundary condition as described in
        * M. Junk and Z. Yang "One-point boundary condition for the lattice Boltzmann method", Phys Rev E 72 (2005)
        */
-    template<typename CollisionImpl, typename IoletLinkImpl = NoIoletLink<CollisionImpl>>
-    class JunkYangFactory : public BaseStreamer
+    template<link_streamer IoletLinkImpl>
+    class JunkYangFactory
     {
     public:
-        using CollisionType = CollisionImpl;
-        using LatticeType = typename CollisionType::CKernel::LatticeType;
-        static constexpr bool has_iolet = !std::same_as<IoletLinkImpl, NoIoletLink<CollisionImpl>>;
+        using CollisionType = typename IoletLinkImpl::CollisionType;
+        using VarsType = typename CollisionType::VarsType;
+        using LatticeType = typename CollisionType::LatticeType;
+        static constexpr bool has_iolet = !std::same_as<IoletLinkImpl, NullLink<CollisionType>>;
     private:
         using matrix = boost::numeric::ublas::matrix<distribn_t>;
         using identity_matrix = boost::numeric::ublas::identity_matrix<distribn_t>;
@@ -100,12 +87,12 @@ namespace hemelb::lb::streamers
 
               auto&& site = latticeData.GetSite(siteIndex);
 
-              HydroVars<typename CollisionType::CKernel> hydroVars(site);
+              VarsType hydroVars(site);
 
               ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
               hydroVars.tau = lbmParams->GetTau();
 
-              // In the first step, we stream and collide as we would for the SimpleCollideAndStream
+              // In the first step, we stream and collide as we would for the BulkStreamer
               // streamer.
               collider.CalculatePreCollision(hydroVars, site);
               collider.Collide(lbmParams, hydroVars);
@@ -157,7 +144,7 @@ namespace hemelb::lb::streamers
                 fOld[siteIndex](index) = site.GetFOld<LatticeType>()[*outgoingVelocityIter];
               }
 
-                UpdateMinsAndMaxes(site,
+                UpdateCache(site,
                                                                            hydroVars,
                                                                            lbmParams,
                                                                            propertyCache);
@@ -211,7 +198,7 @@ namespace hemelb::lb::streamers
 
     private:
           CollisionType collider;
-          SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
+          BulkLink<CollisionType> bulkLinkDelegate;
           IoletLinkImpl ioletLinkDelegate;
           //! Problem dimension (2D, 3D)
           static const unsigned DIMENSION = 3U;
@@ -486,4 +473,4 @@ namespace hemelb::lb::streamers
           }
       };
 }
-#endif /* HEMELB_LB_STREAMERS_JUNKYANGFACTORY_H */
+#endif
