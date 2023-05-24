@@ -29,7 +29,7 @@ namespace hemelb::tests
     /**
      * Helper class that exposes implementation details to the tests.
      */
-    using lb::streamers::VSExtra;
+    using lb::VSExtra;
     class LocalVSExtra : public VSExtra<lb::D3Q15>
     {
     public:
@@ -86,9 +86,9 @@ namespace hemelb::tests
         using Lattice = lb::D3Q15;
         using Kernel = lb::LBGK<Lattice>;
         using Collision = lb::Normal<Kernel>;
-        using VirtualSite = lb::streamers::VirtualSite<Lattice>;
+        using VirtualSite = lb::VirtualSite<Lattice>;
         using InOutLetCosine = lb::InOutLetCosine;
-        using RSHV = lb::streamers::RSHV;
+        using RSHV = lb::RSHV;
 
         auto Info = [&]() -> const lb::LatticeInfo& {
             return Lattice::GetLatticeInfo();
@@ -292,7 +292,7 @@ namespace hemelb::tests
                                              + dom->GetMidDomainCollisionCount(4);
             initParams.siteRanges[1].second = initParams.siteRanges[1].first
                                               + dom->GetMidDomainCollisionCount(5);
-            lb::streamers::VirtualSiteIolet<Collision> outletStreamer(initParams);
+            lb::VirtualSiteIolet<Collision> outletStreamer(initParams);
 
             // All the sites at the outlet plane (x, y, 3) should be in the cache.
             InOutLetCosine& outlet = *GetIolet(outletBoundary);
@@ -328,9 +328,9 @@ namespace hemelb::tests
 
         SECTION("TestStep") {
             initParams.boundaryObject = &inletBoundary;
-            lb::streamers::VirtualSiteIolet<Collision> inletStreamer(initParams);
+            lb::VirtualSiteIolet<Collision> inletStreamer(initParams);
             initParams.boundaryObject = &outletBoundary;
-            lb::streamers::VirtualSiteIolet<Collision> outletStreamer(initParams);
+            lb::VirtualSiteIolet<Collision> outletStreamer(initParams);
 
             InitialiseGradientHydroVars();
 

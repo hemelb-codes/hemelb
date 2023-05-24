@@ -9,7 +9,7 @@
 #include "lb/concepts.h"
 #include "lb/streamers/SimpleBounceBack.h"
 
-namespace hemelb::lb::streamers
+namespace hemelb::lb
 {
     /**
      * Implement the boundary condition described in Bouzidi, Firdaous and

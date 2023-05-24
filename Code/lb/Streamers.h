@@ -19,7 +19,6 @@
 
 namespace hemelb::lb {
     namespace detail {
-        using namespace streamers;
         template <typename C>
         constexpr auto get_default_wall_streamer(InitParams& i) {
             constexpr auto WALL = build_info::WALL_BOUNDARY;
@@ -56,7 +55,7 @@ namespace hemelb::lb {
     }
 
     template <typename C>
-    using DefaultStreamer = streamers::BulkStreamer<C>;
+    using DefaultStreamer = BulkStreamer<C>;
 
     template <typename C>
     using DefaultWallStreamer = decltype(detail::get_default_wall_streamer<C>(std::declval<InitParams&>()));
@@ -81,10 +80,10 @@ namespace hemelb::lb {
             template <typename> class IoletT // iolet delegate template
     >
     struct CombineWallAndIoletStreamers<
-            streamers::StreamerTypeFactory<WallT<C>, streamers::NullLink<C>>,
-            streamers::StreamerTypeFactory<streamers::NullLink<C>, IoletT<C>>
+            StreamerTypeFactory<WallT<C>, NullLink<C>>,
+            StreamerTypeFactory<NullLink<C>, IoletT<C>>
     > {
-        using type = streamers::StreamerTypeFactory<WallT<C>, IoletT<C>>;
+        using type = StreamerTypeFactory<WallT<C>, IoletT<C>>;
     };
 
     // Junk Yang is different: the pure wall streamer has a special tag type for no-iolet
@@ -93,10 +92,10 @@ namespace hemelb::lb {
             template <typename> class IoletT // iolet delegate template
     >
     struct CombineWallAndIoletStreamers<
-            streamers::JunkYangFactory<streamers::NullLink<C> >,
-            streamers::StreamerTypeFactory<streamers::NullLink<C>, IoletT<C>>
+            JunkYangFactory<NullLink<C> >,
+            StreamerTypeFactory<NullLink<C>, IoletT<C>>
     > {
-        using type = streamers::JunkYangFactory<IoletT<C>>;
+        using type = JunkYangFactory<IoletT<C>>;
     };
 }
 #endif /* HEMELB_LB_STREAMERS_H */

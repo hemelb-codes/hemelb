@@ -12,7 +12,7 @@
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "util/Vector3D.h"
 
-namespace hemelb::lb::streamers
+namespace hemelb::lb
 {
 
     /**

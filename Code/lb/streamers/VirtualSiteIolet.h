@@ -17,7 +17,7 @@
 #include "lb/streamers/VirtualSite.h"
 #include "log/Logger.h"
 
-namespace hemelb::lb::streamers
+namespace hemelb::lb
 {
 
     template<collision_type C>
@@ -177,10 +177,10 @@ namespace hemelb::lb::streamers
               cachedHV.rho = hydroVars.density;
               cachedHV.u = hydroVars.velocity;
 
-              UpdateCache(site,
-                          hydroVars,
-                          lbmParams,
-                          propertyCache);
+                UpdateCachePostCollision(site,
+                                         hydroVars,
+                                         lbmParams,
+                                         propertyCache);
             }
           }
 

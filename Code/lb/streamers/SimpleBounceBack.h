@@ -9,7 +9,7 @@
 #include "lb/concepts.h"
 #include "lb/streamers/BulkStreamer.h"
 
-namespace hemelb::lb::streamers
+namespace hemelb::lb
 {
 
     template<collision_type C>

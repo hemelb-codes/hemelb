@@ -8,7 +8,7 @@
 #include "lb/concepts.h"
 #include "util/utilityFunctions.h"
 
-namespace hemelb::lb::streamers
+namespace hemelb::lb
 {
     template<collision_type C>
     class NashZerothOrderPressureLink

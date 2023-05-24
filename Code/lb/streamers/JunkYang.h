@@ -15,7 +15,7 @@
 #include "units.h"
 #include "lb/streamers/Common.h"
 
-namespace hemelb::lb::streamers
+namespace hemelb::lb
 {
 
 
@@ -144,10 +144,10 @@ namespace hemelb::lb::streamers
                 fOld[siteIndex](index) = site.GetFOld<LatticeType>()[*outgoingVelocityIter];
               }
 
-                UpdateCache(site,
-                                                                           hydroVars,
-                                                                           lbmParams,
-                                                                           propertyCache);
+                UpdateCachePostCollision(site,
+                                         hydroVars,
+                                         lbmParams,
+                                         propertyCache);
             }
 
         }

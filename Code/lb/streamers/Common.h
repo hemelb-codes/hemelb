@@ -14,11 +14,11 @@
 #include "lb/LbmParameters.h"
 #include "lb/MacroscopicPropertyCache.h"
 
-namespace hemelb::lb::streamers
+namespace hemelb::lb
 {
     /// Update the property cache.
     template<lattice_type LatticeType>
-    static void UpdateCache(
+    void UpdateCachePostCollision(
             const geometry::Site<geometry::Domain>& site,
             const HydroVarsBase<LatticeType>& hydroVars, const LbmParameters* lbmParams,
             lb::MacroscopicPropertyCache& propertyCache)

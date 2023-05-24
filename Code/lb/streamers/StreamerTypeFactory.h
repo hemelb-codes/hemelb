@@ -9,7 +9,7 @@
 #include "lb/streamers/Common.h"
 #include "lb/streamers/BulkStreamer.h"
 
-namespace hemelb::lb::streamers
+namespace hemelb::lb
 {
     /**
      * Template to produce Streamers that can cope with fluid-fluid,
@@ -78,10 +78,10 @@ namespace hemelb::lb::streamers
                     }
                 }
 
-                UpdateCache(site,
-                                   hydroVars,
-                                   lbmParams,
-                                   propertyCache);
+                UpdateCachePostCollision(site,
+                                         hydroVars,
+                                         lbmParams,
+                                         propertyCache);
             }
         }
 

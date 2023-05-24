@@ -6,17 +6,19 @@
 #ifndef HEMELB_LB_STREAMERS_LADDIOLET_H
 #define HEMELB_LB_STREAMERS_LADDIOLET_H
 
+#include "lb/concepts.h"
 #include "lb/streamers/SimpleBounceBack.h"
 
-namespace hemelb::lb::streamers
+namespace hemelb::lb
 {
 
-    template<typename CollisionImpl>
-    class LaddIoletLink : public BounceBackLink<CollisionImpl>
+    template<collision_type C>
+    class LaddIoletLink : public BounceBackLink<C>
     {
     public:
-        using CollisionType = CollisionImpl;
-        using LatticeType = typename CollisionType::CKernel::LatticeType;
+        using CollisionType = C;
+        using VarsType = typename CollisionType::VarsType;
+        using LatticeType = typename CollisionType::LatticeType;
 
         LaddIoletLink(CollisionType& delegatorCollider, InitParams& initParams) :
                 BounceBackLink<CollisionType>(delegatorCollider, initParams),
@@ -27,7 +29,7 @@ namespace hemelb::lb::streamers
         void StreamLink(const LbmParameters* lbmParams,
                                geometry::FieldData& latticeData,
                                const geometry::Site<geometry::Domain>& site,
-                               HydroVars<typename CollisionType::CKernel>& hydroVars,
+                               VarsType& hydroVars,
                                const Direction& ii)
         {
             // Translating from Ladd, J. Fluid Mech. "Numerical simulations
@@ -50,7 +52,7 @@ namespace hemelb::lb::streamers
             LatticeVelocity wallMom(iolet->GetVelocity(halfWay, bValues->GetTimeStep()));
             //TODO: Add site.GetGlobalSiteCoords() as a first argument?
 
-            if (CollisionType::CKernel::LatticeType::IsLatticeCompressible())
+            if (LatticeType::IsLatticeCompressible())
             {
                 wallMom *= hydroVars.density;
             }
@@ -58,7 +60,7 @@ namespace hemelb::lb::streamers
             distribn_t correction = 2. * LatticeType::EQMWEIGHTS[ii]
                                     * Dot(wallMom, LatticeType::VECTORS[ii]) / Cs2;
 
-            * (latticeData.GetFNew(BounceBackLink<CollisionImpl>::GetBBIndex(site.GetIndex(),
+            * (latticeData.GetFNew(BounceBackLink<CollisionType>::GetBBIndex(site.GetIndex(),
                                                                              ii))) =
                     hydroVars.GetFPostCollision()[ii] - correction;
         }

@@ -15,7 +15,7 @@
 #include "lb/iolets/InOutLet.h"
 #include "lb/lattices/LatticeInfo.h"
 
-namespace hemelb::lb::streamers
+namespace hemelb::lb
 {
 
     // Hydrodynamic variables at real sites needed to compute virtual site data.

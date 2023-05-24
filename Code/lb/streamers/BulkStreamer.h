@@ -10,7 +10,7 @@
 #include "lb/streamers/Common.h"
 #include "lb/HFunction.h"
 
-namespace hemelb::lb::streamers
+namespace hemelb::lb
 {
     /// Do bulk streaming along a link
     /// Instantiations satisfy link_streamer
@@ -86,7 +86,7 @@ namespace hemelb::lb::streamers
                     bulkLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
                 }
 
-                UpdateCache(site, hydroVars, lbmParams, propertyCache);
+                UpdateCachePostCollision(site, hydroVars, lbmParams, propertyCache);
             }
         }
 

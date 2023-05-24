@@ -84,7 +84,7 @@ namespace hemelb::lb {
             LbmParameters const* lbmParams,
             geometry::FieldData& data,
             geometry::Site<geometry::FieldData> const& site,
-            HydroVars<typename T::CollisionType::KernelType>& hydroVars,
+            typename T::CollisionType::VarsType& hydroVars,
             Direction d
     ) {
         { linkStreamer.StreamLink(lbmParams, data, site, hydroVars, d) };

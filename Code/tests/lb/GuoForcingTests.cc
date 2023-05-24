@@ -321,7 +321,7 @@ namespace hemelb::tests
             FPostCollision(site.GetFOld<LatticeType>(), LatticeForceVector(0, 0, 0), withoutForce);
 
             // Stream that site
-            using lb::streamers::BulkStreamer;
+            using lb::BulkStreamer;
             BulkStreamer<Collision> streamer(initParams);
             streamer.StreamAndCollide(site.GetIndex(), 1, &lbmParams, *latDat, *propertyCache);
 
@@ -350,9 +350,9 @@ namespace hemelb::tests
             FPostCollision(site.GetFOld<LatticeType>(), LatticeForceVector(0, 0, 0), withoutForce);
 
             // Stream that site
-            using SBB = lb::streamers::StreamerTypeFactory<
-                    lb::streamers::BounceBackLink<Collision>,
-                    lb::streamers::NullLink<Collision>
+            using SBB = lb::StreamerTypeFactory<
+                    lb::BounceBackLink<Collision>,
+                    lb::NullLink<Collision>
             >;
             SBB streamer(initParams);
             streamer.StreamAndCollide(site.GetIndex(), 1, &lbmParams, *latDat, *propertyCache);

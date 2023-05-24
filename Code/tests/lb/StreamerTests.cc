@@ -24,7 +24,7 @@ namespace hemelb::tests
     // collision operators are correct (as they're tested elsewhere),
     // then compare the post-streamed values with the values we expect
     // to have been streamed there.
-    using namespace lb::streamers;
+    using namespace lb;
     TEST_CASE_METHOD(public helpers::FourCubeBasedTestFixture<>, "StreamerTests") {
         using LATTICE = lb::D3Q15;
         using KERNEL = lb::LBGK<LATTICE>;
