@@ -24,6 +24,9 @@ env:
   hemelb_install_prefix: ${{github.workspace}}/install
   # VMs have 2 cores, double as compilation often IO bound
   CMAKE_BUILD_PARALLEL_LEVEL: 4
+  # Latest Gnu compiler on Ubuntu 22.04
+  CC: gcc-12
+  CXX: g++-12
 
 jobs:
   basic-checks:
