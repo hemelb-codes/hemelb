@@ -17,16 +17,16 @@ include(GNUInstallDirs)
 
 find_package(ZLIB REQUIRED)
 find_package(Boost REQUIRED COMPONENTS headers)
-find_package(VTK REQUIRED COMPONENTS
-  vtkCommonCore
-  vtkCommonDataModel
-  vtkCommonExecutionModel
-  vtkCommonMath
-  vtkFiltersCore
-  vtkFiltersGeneral
-  vtkFiltersSources
-  vtkIOXML
-  vtkWrappingPythonCore
+find_package(VTK 9 REQUIRED COMPONENTS
+  CommonCore
+  CommonDataModel
+  CommonExecutionModel
+  CommonMath
+  FiltersCore
+  FiltersGeneral
+  FiltersSources
+  IOXML
+  WrappingPythonCore
 )
 find_package(CGAL REQUIRED)
 
