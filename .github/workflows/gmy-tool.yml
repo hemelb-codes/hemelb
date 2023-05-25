@@ -34,7 +34,7 @@ jobs:
   lint-cpp:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Run clang-format
         working-directory: geometry-tool/HlbGmyTool/Model/Generation

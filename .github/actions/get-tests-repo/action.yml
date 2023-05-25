@@ -19,7 +19,7 @@ runs:
         else
           branch=$GITHUB_REF_NAME
         fi
-        echo "::set-output name=value::$branch"
+        echo "value=$branch" >> $GITHUB_OUTPUT
 
     - uses: octokit/request-action@v2.x
       id: check_branch_exists
