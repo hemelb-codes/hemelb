@@ -6,6 +6,7 @@
 #ifndef HEMELB_UTIL_TRAITS_H
 #define HEMELB_UTIL_TRAITS_H
 
+#include <optional>
 #include <type_traits>
 
 namespace hemelb::util {
@@ -15,9 +16,6 @@ namespace hemelb::util {
   struct is_optional : std::false_type {};
   template <typename T>
   struct is_optional<std::optional<T>> : std::true_type {};
-
-  template <typename T>
-  inline constexpr bool is_optional_v = is_optional<T>::value;
 
 }
 

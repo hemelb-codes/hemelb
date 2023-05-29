@@ -9,6 +9,7 @@
 #include <concepts>
 #include "lb/LbmParameters.h"
 #include "lb/lattices/Lattice.h"
+#include "util/concepts.h"
 
 namespace hemelb::geometry {
     template <typename>
@@ -23,15 +24,10 @@ namespace hemelb::lb {
     template <typename>
     struct HydroVars;
 
-    namespace detail {
-        template<typename Base, typename Derived>
-        concept base_of = std::derived_from<Derived, Base>;
-    }
-
     // A lattice is an instantiation of Lattice (or a type derived from such)
     template<typename L>
     concept lattice_type = requires(L l) {
-        { Lattice{l}} -> detail::base_of<L>;
+        { Lattice{l}} -> util::base_of<L>;
     };
 
     template <typename K>
