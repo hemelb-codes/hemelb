@@ -10,24 +10,20 @@
 #include "SimulationMaster.h"
 #include "lb/lattices/D3Q19.h"
 #include "Traits.h"
-#include "redblood/Mesh.h"
 #include "redblood/MeshIO.h"
-#include "redblood/Cell.h"
 #include "redblood/CellController.h"
 #include "redblood/stencil.h"
 #include "tests/helpers/FolderTestFixture.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace redblood;
 
     TEST_CASE_METHOD(helpers::FolderTestFixture, "Fedosov validation tests", "[redblood][.long]") {
 
-      typedef Traits<>::Reinstantiate<lb::D3Q19, lb::GuoForcingLBGK>::Type Traits;
-      typedef hemelb::redblood::CellController<Traits> CellControl;
-      typedef SimulationMaster<Traits> MasterSim;
+      using Traits = Traits<lb::D3Q19, lb::GuoForcingLBGK>;
+      using CellControl = hemelb::redblood::CellController<Traits>;
+      using MasterSim = SimulationMaster<Traits>;
 
       CopyResourceToTempdir("fedosov1c.xml");
       CopyResourceToTempdir("fedosov1c.gmy");
@@ -71,6 +67,5 @@ namespace hemelb
       }
     }
 
-  } // namespace tests
-} // namespace hemelb
+}
 

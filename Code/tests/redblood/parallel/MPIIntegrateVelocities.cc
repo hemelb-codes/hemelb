@@ -22,46 +22,50 @@
 namespace hemelb::tests
 {
     using namespace redblood;
+
     class MPIIntegrateVelocitiesTests : public helpers::FolderTestFixture
     {
     public:
-      MPIIntegrateVelocitiesTests();
+        MPIIntegrateVelocitiesTests();
 
-      template<class STENCIL> void testMidRegion()
-      {
-	Check<STENCIL>(2, 0, 1);
-      }
-      template<class STENCIL> void testEdgeRegion()
-      {
-	Check<STENCIL>(0, 2, 1);
-      }
-      template<class STENCIL> void testAll()
-      {
-	Check<STENCIL>(3, 3, 2);
-      }
+        template<class STENCIL>
+        void testMidRegion()
+        {
+            Check<STENCIL>(2, 0, 1);
+        }
+        template<class STENCIL>
+        void testEdgeRegion()
+        {
+            Check<STENCIL>(0, 2, 1);
+        }
+        template<class STENCIL>
+        void testAll()
+        {
+            Check<STENCIL>(3, 3, 2);
+        }
 
     protected:
-      std::shared_ptr<configuration::CommandLine> options;
+        std::shared_ptr<configuration::CommandLine> options;
 
-      //! Meta-function to create simulation type
-      template<class STENCIL>
-      struct MasterSim
-      {
-	using LBTraits = Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type;
-	using Traits = typename LBTraits::ChangeStencil<STENCIL>::Type;
-	using Type = OpenedSimulationMaster<Traits>;
-      };
+        //! Meta-function to create simulation type
+        template<class STENCIL>
+        using MasterSim = OpenedSimulationMaster<
+                Traits<
+                        lb::DefaultLattice, lb::GuoForcingLBGK, lb::Normal,
+                        lb::DefaultStreamer, lb::DefaultWallStreamer, lb::DefaultInletStreamer, lb::DefaultOutletStreamer,
+                        STENCIL
+                >
+        >;
 
-      //! Creates a master simulation
-      template<class STENCIL>
-      std::shared_ptr<typename MasterSim<STENCIL>::Type> CreateMasterSim(
-									 net::MpiCommunicator const &comm) const
-      {
-	using MasterSim = typename MasterSim<STENCIL>::Type;
-	return std::make_shared<MasterSim>(*options, comm);
-      }
+        //! Creates a master simulation
+        template<class STENCIL>
+        auto CreateMasterSim(net::MpiCommunicator const &comm) const
+        {
+            return std::make_shared<MasterSim<STENCIL>>(*options, comm);
+        }
 
-      template<class STENCIL> void Check(size_t mid, size_t edges, size_t nCells);
+        template<class STENCIL>
+        void Check(size_t mid, size_t edges, size_t nCells);
     };
 
     MPIIntegrateVelocitiesTests::MPIIntegrateVelocitiesTests() : FolderTestFixture()

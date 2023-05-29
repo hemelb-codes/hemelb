@@ -36,52 +36,6 @@ namespace hemelb
         using WallInletBoundary = typename lb::CombineWallAndIoletStreamers<WallBoundary, InletBoundary>::type;
         using WallOutletBoundary = typename lb::CombineWallAndIoletStreamers<WallBoundary, OutletBoundary>::type;
         using Stencil = STENCIL;
-
-        //! Fully reinstantiate, where defaults are current choices.
-        //! This is a convenience function to limit the amount of explicit resintantiation
-        template <
-            class NEW_LATTICE,
-            template<class> class NEW_KERNEL = KERNEL,
-            template<class> class NEW_COLLISION = COLLISION,
-            template<class> class NEW_STREAMER = STREAMER,
-            template<class> class NEW_WALL_BOUNDARY = WALL_BOUNDARY,
-            template<class> class NEW_INLET_BOUNDARY = INLET_BOUNDARY,
-            template<class> class NEW_OUTLET_BOUNDARY = OUTLET_BOUNDARY,
-            typename NEW_STENCIL = STENCIL
-        >
-        struct Reinstantiate
-        {
-            using Type = Traits<
-                    NEW_LATTICE,
-                    NEW_KERNEL,
-                    NEW_COLLISION,
-                    NEW_STREAMER,
-                    NEW_WALL_BOUNDARY,
-                    NEW_INLET_BOUNDARY,
-                    NEW_OUTLET_BOUNDARY,
-                    NEW_STENCIL
-            >;
-        };
-
-        //! Changes only kernel type
-        //! This is a convenience function to limit the amount of explicit resintantiation
-        template<template<class> class NEW_KERNEL>
-        struct ChangeKernel
-        {
-            using Type = typename Reinstantiate<LATTICE, NEW_KERNEL>::Type;
-        };
-
-        //! Changes only stencil type
-        //! This is a convenience function to limit the amount of explicit resintantiation
-        template<class NEW_STENCIL>
-        struct ChangeStencil
-        {
-            using Type = typename Reinstantiate<
-                    LATTICE, KERNEL, COLLISION, STREAMER,
-                    WALL_BOUNDARY, INLET_BOUNDARY, OUTLET_BOUNDARY,
-                    NEW_STENCIL
-            >::Type;
-        };
     };
 }
 

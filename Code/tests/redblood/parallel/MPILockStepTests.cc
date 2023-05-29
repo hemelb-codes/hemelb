@@ -11,7 +11,6 @@
 #include <catch2/catch.hpp>
 
 #include "redblood/CellController.h"
-#include "redblood/parallel/IntegrateVelocities.h"
 #include "redblood/parallel/CellParallelization.h"
 #include "configuration/CommandLine.h"
 #include "SimulationMaster.h"
@@ -21,44 +20,39 @@
 #include "tests/helpers/ApproxVector.h"
 #include "tests/redblood/parallel/ParallelFixtures.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace redblood;
     //! Parallel and Sequential move in lock step
     class MPILockStepTests : public helpers::FolderTestFixture
     {
     public:
-      MPILockStepTests();
+        MPILockStepTests();
 
-      template<class STENCIL> void testIntegration()
-      {
-	Check<STENCIL>();
-      }
+        template<class STENCIL> void testIntegration()
+        {
+            Check<STENCIL>();
+        }
 
     protected:
-      std::shared_ptr<hemelb::configuration::CommandLine> options;
+        std::shared_ptr<configuration::CommandLine> options;
 
-      //! Meta-function to create simulation type
-      template<class STENCIL>
-      struct MasterSim
-      {
-	typedef ::hemelb::Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type LBTraits;
-	typedef typename LBTraits::ChangeStencil<STENCIL>::Type Traits;
-	typedef OpenedSimulationMaster<Traits> Type;
-      };
+        //! Meta-function to create simulation type
+        template<class STENCIL>
+        using MasterSim = OpenedSimulationMaster<Traits<
+                lb::DefaultLattice, lb::GuoForcingLBGK, lb::Normal,
+                lb::DefaultStreamer, lb::DefaultWallStreamer, lb::DefaultInletStreamer, lb::DefaultOutletStreamer,
+                STENCIL
+        >>;
 
-      //! Creates a master simulation
-      template<class STENCIL>
-      std::shared_ptr<typename MasterSim<STENCIL>::Type> CreateMasterSim(
-									 net::MpiCommunicator const &comm) const
-      {
-	typedef typename MasterSim<STENCIL>::Type MasterSim;
-	return std::make_shared<MasterSim>(*options, comm);
-      }
+        //! Creates a master simulation
+        template<class STENCIL>
+        [[nodiscard]] auto CreateMasterSim(net::MpiCommunicator const &comm) const
+        {
+            return std::make_shared<MasterSim<STENCIL>>(*options, comm);
+        }
 
-      template<class STENCIL> void Check();
+        template<class STENCIL> void Check();
     };
 
 
@@ -87,9 +81,7 @@ namespace hemelb
 	    result });
     }
 
-    void checkBarycenter(
-			 net::MpiCommunicator const &world, hemelb::redblood::CellContainer const &cells) {
-
+    void checkBarycenter(net::MpiCommunicator const &world, CellContainer const &cells) {
       std::vector<uint64_t> uuids;
       std::vector<LatticePosition> barycenters;
       for(auto const &cell: cells) {
@@ -116,7 +108,7 @@ namespace hemelb
           net::MpiCommunicator const &world,
           geometry::FieldData const &latDat,
           std::size_t &nbtests,
-          hemelb::redblood::CellContainer const &cells) {
+          CellContainer const &cells) {
       auto& dom = latDat.GetDomain();
       std::vector<LatticeVector> positions;
       std::vector<LatticeForceVector> forces;
@@ -127,7 +119,7 @@ namespace hemelb
 	  forces.push_back(site.GetForce());
 	}
       }
-      if(cells.size() == 0 and world.Rank() == 0) {
+      if(cells.empty() and world.Rank() == 0) {
 	REQUIRE(std::size_t(0) == positions.size());
       }
       if(world.Rank() == 0) {
@@ -152,74 +144,63 @@ namespace hemelb
     template<class STENCIL>
     void MPILockStepTests::Check()
     {
-      using hemelb::redblood::CellContainer;
-      using hemelb::redblood::TemplateCellContainer;
-      using hemelb::redblood::CellInserter;
-      typedef typename MasterSim<STENCIL>::Type::Traits Traits;
+        using Traits = typename MasterSim<STENCIL>::Traits;
 
-      auto const world = Comms();
-      auto const color = world.Rank() == 0;
-      auto const split = world.Split(color);
-      if(world.Size() < 3) {
-	log::Logger::Log<log::Debug, log::Singleton>(
-						     "Lock step tests of no interest if fewer than 3 processors");
-	return;
-      }
+        auto const world = Comms();
+        auto const color = world.Rank() == 0;
+        auto const split = world.Split(color);
+        if(world.Size() < 3) {
+            log::Logger::Log<log::Debug, log::Singleton>(
+                    "Lock step tests of no interest if fewer than 3 processors");
+            return;
+        }
 
-      auto master = CreateMasterSim<STENCIL>(split);
-      REQUIRE(master);
+        auto master = CreateMasterSim<STENCIL>(split);
+        REQUIRE(master);
 
-      auto controller = std::static_pointer_cast<hemelb::redblood::CellController<Traits>>(
-											   master->GetCellController());
-      auto const originalCellInserter = controller->GetCellInsertion();
-      auto rank = world.Rank();
-      auto cellInserter = [&originalCellInserter, rank](CellInserter const &adder) {
-	auto const transformCell = [adder, originalCellInserter, rank](CellContainer::value_type cell) {
-	  static boost::uuids::uuid nbCells = {{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-						0x0, 0x0, 0x0, 0x0, 0x0, static_cast<uint8_t>(rank)}};
-	  cell->SetTag(nbCells);
-	  ++*static_cast<int64_t*>(static_cast<void*>(&nbCells));
-	  *cell += LatticePosition(0,0,3.6);
-	  adder(cell);
-	};
-	originalCellInserter(transformCell);
-      };
-      controller->SetCellInsertion(cellInserter);
-      std::size_t nbtests = 0;
-      controller->AddCellChangeListener(
-					std::bind(
-						  checkNonZeroForceSites,
-						  std::cref(world), std::cref(master->GetFieldData()), std::ref(nbtests),
-						  std::placeholders::_1
-						  )
-					);
-      controller->AddCellChangeListener(
-					std::bind(
-						  checkBarycenter,
-						  std::cref(world),
-						  std::placeholders::_1
-						  )
-					);
+        auto controller = std::static_pointer_cast<CellController<Traits>>(master->GetCellController());
+        auto const originalCellInserter = controller->GetCellInsertion();
+        auto rank = world.Rank();
+        auto cellInserter = [&originalCellInserter, rank](CellInserter const &adder) {
+            auto const transformCell = [adder, originalCellInserter, rank](CellContainer::value_type cell) {
+                static boost::uuids::uuid nbCells = {{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+                                                      0x0, 0x0, 0x0, 0x0, 0x0, static_cast<uint8_t>(rank)}};
+                cell->SetTag(nbCells);
+                ++*static_cast<int64_t*>(static_cast<void*>(&nbCells));
+                *cell += LatticePosition(0,0,3.6);
+                adder(cell);
+            };
+            originalCellInserter(transformCell);
+        };
+        controller->SetCellInsertion(cellInserter);
+        std::size_t nbtests = 0;
+        controller->AddCellChangeListener(
+                [&] (CellContainer const& cells) {
+                    return checkNonZeroForceSites(world, master->GetFieldData(), nbtests, cells); }
+        );
+        controller->AddCellChangeListener(
+                [&](CellContainer const& cells) {
+                    return checkBarycenter(world, cells);
+                });
 
-      // run the simulation
-      master->RunSimulation();
-      master->Finalise();
-      REQUIRE((nbtests > 0 or world.Rank() != 0));
+        // run the simulation
+        master->RunSimulation();
+        master->Finalise();
+        REQUIRE((nbtests > 0 or world.Rank() != 0));
     }
 
-    METHOD_AS_TEST_CASE(MPILockStepTests::testIntegration<hemelb::redblood::stencil::FourPoint>,
+    METHOD_AS_TEST_CASE(MPILockStepTests::testIntegration<stencil::FourPoint>,
 			"Test running in lockstep with four point stencil",
 			"[redblood][.long]");
-    METHOD_AS_TEST_CASE(MPILockStepTests::testIntegration<hemelb::redblood::stencil::ThreePoint>,
+    METHOD_AS_TEST_CASE(MPILockStepTests::testIntegration<stencil::ThreePoint>,
 			"Test running in lockstep with three point stencil",
 			"[redblood][.long]");
-    METHOD_AS_TEST_CASE(MPILockStepTests::testIntegration<hemelb::redblood::stencil::CosineApprox>,
+    METHOD_AS_TEST_CASE(MPILockStepTests::testIntegration<stencil::CosineApprox>,
 			"Test running in lockstep with cosine stencil",
 			"[redblood][.long]");
-    METHOD_AS_TEST_CASE(MPILockStepTests::testIntegration<hemelb::redblood::stencil::TwoPoint>,
+    METHOD_AS_TEST_CASE(MPILockStepTests::testIntegration<stencil::TwoPoint>,
 			"Test running in lockstep with two point stencil",
 			"[redblood][.long]");
-  }
 }
 
 

@@ -38,7 +38,9 @@ namespace hemelb::tests
       using namespace redblood;
 
       LatticeDistance const cutoff = 5.0;
-      using Traits = hemelb::Traits<>::Reinstantiate<lb::D3Q15, lb::GuoForcingLBGK>::Type::ChangeStencil<stencil::FourPoint>::Type;
+        using Traits = hemelb::Traits<lb::D3Q15, lb::GuoForcingLBGK, lb::Normal,
+                lb::DefaultStreamer, lb::DefaultWallStreamer, lb::DefaultInletStreamer, lb::DefaultOutletStreamer,
+                stencil::FourPoint>;
 
       auto BuildTemplateContainer = [] (CellContainer const &cellContainer) ->  std::shared_ptr<TemplateCellContainer>
 	{

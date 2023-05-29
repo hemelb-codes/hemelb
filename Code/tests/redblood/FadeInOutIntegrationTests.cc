@@ -15,17 +15,15 @@
 #include "redblood/CellController.h"
 #include "tests/helpers/FolderTestFixture.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace redblood;
     TEST_CASE_METHOD(helpers::FolderTestFixture,
-		     "FadeInOutIntegrationTests",
-		     "[redblood][.long]") {
-      typedef Traits<>::Reinstantiate<lb::D3Q19, lb::GuoForcingLBGK>::Type Traits;
-      typedef hemelb::redblood::CellController<Traits> CellControl;
-      typedef SimulationMaster<Traits> MasterSim;
+                     "FadeInOutIntegrationTests",
+                     "[redblood][.long]") {
+        using Traits = Traits<lb::D3Q19, lb::GuoForcingLBGK>;
+        using CellControl = CellController<Traits>;
+        using MasterSim = SimulationMaster<Traits>;
 
       CopyResourceToTempdir("large_cylinder_rbc.xml");
       CopyResourceToTempdir("large_cylinder.gmy");
@@ -155,6 +153,5 @@ namespace hemelb
       }
     }
 
-  } // namespace tests
-} // namespace hemelb
+}
 

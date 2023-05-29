@@ -19,9 +19,9 @@ namespace hemelb::tests
     using namespace redblood;
     class CellIntegrationTests : public helpers::FolderTestFixture
     {
-      using Traits = Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type;
-      using CellControll = CellController<Traits>;
-      using MasterSim = SimulationMaster<Traits>;
+      using MyTraits = Traits<lb::DefaultLattice, lb::GuoForcingLBGK>;
+      using CellControll = CellController<MyTraits>;
+      using MasterSim = SimulationMaster<MyTraits>;
 
     public:
       CellIntegrationTests() : FolderTestFixture(), timings(Comms()) {

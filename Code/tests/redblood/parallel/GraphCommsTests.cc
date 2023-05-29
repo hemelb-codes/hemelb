@@ -15,34 +15,33 @@ namespace hemelb::tests
     class GraphCommsTests : public helpers::FolderTestFixture
     {
     public:
-      GraphCommsTests();
+        GraphCommsTests();
 
-      void testOrderingOfVectors();
-      void testDumbGraphCommunicator();
-      void testGraphCommunicator();
-      void testComputeCellsEffectiveSize();
-      void testComputeGlobalCoordsToProcMap();
+        void testOrderingOfVectors();
+        void testDumbGraphCommunicator();
+        void testGraphCommunicator();
+        void testComputeCellsEffectiveSize();
+        void testComputeGlobalCoordsToProcMap();
 
     protected:
-      std::shared_ptr<hemelb::configuration::CommandLine> options;
+        std::shared_ptr<configuration::CommandLine> options;
 
-      //! Meta-function to create simulation type
-      template<class STENCIL>
-      struct MasterSim
-      {
-	using LBTraits = ::hemelb::Traits<>::ChangeKernel<hemelb::lb::GuoForcingLBGK>::Type;
-	using Traits = typename LBTraits::ChangeStencil<STENCIL>::Type;
-	using Type = OpenedSimulationMaster<Traits>;
-      };
+        //! Meta-function to create simulation type
+        template<class STENCIL>
+        using MasterSim = OpenedSimulationMaster<
+                Traits<
+                        lb::DefaultLattice, lb::GuoForcingLBGK, lb::Normal,
+                        lb::DefaultStreamer, lb::DefaultWallStreamer, lb::DefaultInletStreamer, lb::DefaultOutletStreamer,
+                        STENCIL
+                >
+        >;
 
-      //! Creates a master simulation
-      template<class STENCIL = hemelb::redblood::stencil::FourPoint>
-      std::shared_ptr<typename MasterSim<STENCIL>::Type> CreateMasterSim(
-              net::MpiCommunicator const &comm) const
-      {
-	using MasterSim = typename MasterSim<STENCIL>::Type;
-	return std::make_shared<MasterSim>(*options, comm);
-      }
+        //! Creates a master simulation
+        template<class STENCIL = stencil::FourPoint>
+        [[nodiscard]] auto CreateMasterSim(net::MpiCommunicator const &comm) const
+        {
+            return std::make_shared<MasterSim<STENCIL>>(*options, comm);
+        }
 
     };
 
@@ -155,7 +154,7 @@ namespace hemelb::tests
     }
 
     void GraphCommsTests::testComputeCellsEffectiveSize() {
-        using hemelb::redblood::parallel::ComputeCellsEffectiveSize;
+        using parallel::ComputeCellsEffectiveSize;
 
         // Setup simulation with cylinder
         auto comms = Comms();

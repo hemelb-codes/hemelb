@@ -22,7 +22,7 @@ namespace hemelb::tests
 
     TEST_CASE_METHOD(helpers::FolderTestFixture,
 		     "SadCellIntegrationTests", "[redblood][.long]") {
-      using Traits = Traits<>::Reinstantiate<lb::D3Q19, hemelb::lb::GuoForcingLBGK>::Type;
+      using Traits = Traits<lb::D3Q19, hemelb::lb::GuoForcingLBGK>;
       using CellControl = hemelb::redblood::CellController<Traits>;
       using MasterSim = SimulationMaster<Traits>;
 

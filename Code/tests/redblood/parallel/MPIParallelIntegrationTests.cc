@@ -3,7 +3,6 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include <algorithm>
 #include <random>
 #include <memory>
 
@@ -13,51 +12,47 @@
 #include "redblood/parallel/IntegrateVelocities.h"
 #include "redblood/parallel/CellParallelization.h"
 #include "configuration/CommandLine.h"
-#include "SimulationMaster.h"
 #include "tests/redblood/Fixtures.h"
 #include "tests/helpers/LatticeDataAccess.h"
 #include "tests/helpers/FolderTestFixture.h"
 #include "tests/helpers/ApproxVector.h"
 #include "tests/redblood/parallel/ParallelFixtures.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace redblood;
 
     class MPIParallelIntegrationTests : public helpers::FolderTestFixture
     {
     public:
-      MPIParallelIntegrationTests();
+        MPIParallelIntegrationTests();
 
-      template<class STENCIL> void testIntegration()
-      {
-	Check<STENCIL>();
-      }
+        template<class STENCIL> void testIntegration()
+        {
+            Check<STENCIL>();
+        }
 
     protected:
-      std::shared_ptr<hemelb::configuration::CommandLine> options;
+        std::shared_ptr<hemelb::configuration::CommandLine> options;
 
-      //! Meta-function to create simulation type
-      template<class STENCIL>
-      struct MasterSim
-      {
-	typedef ::hemelb::Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type LBTraits;
-	typedef typename LBTraits::ChangeStencil<STENCIL>::Type Traits;
-	typedef OpenedSimulationMaster<Traits> Type;
-      };
+        //! Meta-function to create simulation type
+        template<class STENCIL>
+        using MasterSim = OpenedSimulationMaster<
+                Traits<
+                        lb::DefaultLattice, lb::GuoForcingLBGK, lb::Normal,
+                        lb::DefaultStreamer, lb::DefaultWallStreamer, lb::DefaultInletStreamer, lb::DefaultOutletStreamer,
+                        STENCIL
+                >
+        >;
 
-      //! Creates a master simulation
-      template<class STENCIL>
-      std::shared_ptr<typename MasterSim<STENCIL>::Type> CreateMasterSim(
-									 net::MpiCommunicator const &comm) const
-      {
-	typedef typename MasterSim<STENCIL>::Type MasterSim;
-	return std::make_shared<MasterSim>(*options, comm);
-      }
+        //! Creates a master simulation
+        template<class STENCIL>
+        [[nodiscard]] auto CreateMasterSim(net::MpiCommunicator const &comm) const
+        {
+            return std::make_shared<MasterSim<STENCIL>>(*options, comm);
+        }
 
-      template<class STENCIL> void Check();
+        template<class STENCIL> void Check();
     };
 
     MPIParallelIntegrationTests::MPIParallelIntegrationTests() : FolderTestFixture()
@@ -96,7 +91,7 @@ namespace hemelb
     void MPIParallelIntegrationTests::Check() {
       using hemelb::redblood::CellContainer;
       using hemelb::redblood::TemplateCellContainer;
-      typedef typename MasterSim<STENCIL>::Traits Traits;
+      using Traits = typename MasterSim<STENCIL>::Traits;
 
       auto const world = net::MpiCommunicator::World();
       auto const color = world.Rank() == 0;
@@ -168,4 +163,3 @@ namespace hemelb
 			"MPIParallelIntegrationTests with FourPoint stencil",
 			"[redblood][.long]");
   }
-}

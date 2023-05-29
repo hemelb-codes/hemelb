@@ -18,50 +18,47 @@
 #include "tests/redblood/parallel/ParallelFixtures.h"
 #include "tests/helpers/ApproxVector.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     class MPISpreadForcesTests : public helpers::FolderTestFixture
     {
     public:
-      MPISpreadForcesTests();
+        MPISpreadForcesTests();
 
-      template<class STENCIL> void testMidRegion()
-      {
-	Check<STENCIL>(2, 0, 1);
-      }
-      template<class STENCIL> void testEdgeRegion()
-      {
-	Check<STENCIL>(0, 2, 1);
-      }
-      template<class STENCIL> void testAll()
-      {
-	Check<STENCIL>(10, 10, 2);
-      }
+        template<class STENCIL> void testMidRegion()
+        {
+            Check<STENCIL>(2, 0, 1);
+        }
+        template<class STENCIL> void testEdgeRegion()
+        {
+            Check<STENCIL>(0, 2, 1);
+        }
+        template<class STENCIL> void testAll()
+        {
+            Check<STENCIL>(10, 10, 2);
+        }
 
     protected:
-      std::shared_ptr<hemelb::configuration::CommandLine> options;
+        std::shared_ptr<hemelb::configuration::CommandLine> options;
 
-      //! Meta-function to create simulation type
-      template<class STENCIL>
-      struct MasterSim
-      {
-	typedef ::hemelb::Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type LBTraits;
-	typedef typename LBTraits::ChangeStencil<STENCIL>::Type Traits;
-	typedef OpenedSimulationMaster<Traits> Type;
-      };
+        //! Meta-function to create simulation type
+        template<class STENCIL>
+        using MasterSim = OpenedSimulationMaster<
+                Traits<
+                        lb::DefaultLattice, lb::GuoForcingLBGK, lb::Normal,
+                        lb::DefaultStreamer, lb::DefaultWallStreamer, lb::DefaultInletStreamer, lb::DefaultOutletStreamer,
+                        STENCIL
+                >
+        >;
 
-      //! Creates a master simulation
-      template<class STENCIL>
-      std::shared_ptr<typename MasterSim<STENCIL>::Type> CreateMasterSim(
-									 net::MpiCommunicator const &comm) const
-      {
-	typedef typename MasterSim<STENCIL>::Type MasterSim;
-	return std::make_shared<MasterSim>(*options, comm);
-      }
+        //! Creates a master simulation
+        template<class STENCIL>
+        auto CreateMasterSim(net::MpiCommunicator const &comm) const
+        {
+            return std::make_shared<MasterSim<STENCIL>>(*options, comm);
+        }
 
-      template<class STENCIL> void Check(size_t mid, size_t edges, size_t nCells);
+        template<class STENCIL> void Check(size_t mid, size_t edges, size_t nCells);
     };
 
     MPISpreadForcesTests::MPISpreadForcesTests() : FolderTestFixture::FolderTestFixture()
@@ -209,5 +206,4 @@ namespace hemelb
 			"[redblood]");
 
   }
-}
 

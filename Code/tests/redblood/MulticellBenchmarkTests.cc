@@ -11,7 +11,6 @@
 #include "Traits.h"
 #include "redblood/Mesh.h"
 #include "redblood/MeshIO.h"
-#include "redblood/Cell.h"
 #include "redblood/CellController.h"
 #include "tests/helpers/FolderTestFixture.h"
 
@@ -19,17 +18,15 @@
 #include <valgrind/callgrind.h>
 #endif
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     using namespace redblood;
 
-    class MulticellBenchmarkTests : public hemelb::tests::helpers::FolderTestFixture
+    class MulticellBenchmarkTests : public helpers::FolderTestFixture
     {
-      typedef Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type Traits;
-      typedef hemelb::redblood::CellController<Traits> CellControl;
-      typedef SimulationMaster<Traits> MasterSim;
+      using MyTraits = Traits<lb::DefaultLattice, lb::GuoForcingLBGK>;
+      using CellControl = hemelb::redblood::CellController<MyTraits>;
+      using MasterSim = SimulationMaster<MyTraits>;
 
     public:
       MulticellBenchmarkTests() : FolderTestFixture() {
@@ -138,5 +135,4 @@ namespace hemelb
 			"Run a simulation long enought to have 6 cells",
 			"[redblood][.long]");
 #endif
-  }// namespace tests
-} // namespace hemelb
+}

@@ -31,20 +31,19 @@ namespace hemelb::tests
 
         //! Meta-function to create simulation type
         template<class STENCIL>
-        struct MasterSim
-        {
-            using LBTraits = Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type;
-            using Traits = typename LBTraits::ChangeStencil<STENCIL>::Type;
-            using Type = OpenedSimulationMaster<Traits>;
-        };
+        using MasterSim = OpenedSimulationMaster<
+                Traits<
+                        lb::DefaultLattice, lb::GuoForcingLBGK, lb::Normal,
+                        lb::DefaultStreamer, lb::DefaultWallStreamer, lb::DefaultInletStreamer, lb::DefaultOutletStreamer,
+                        STENCIL
+                >
+        >;
 
         //! Creates a master simulation
         template<class STENCIL>
-        std::shared_ptr<typename MasterSim<STENCIL>::Type> CreateMasterSim(
-                net::MpiCommunicator const &comm) const
+        auto CreateMasterSim(net::MpiCommunicator const &comm) const
         {
-            using MasterSim = typename MasterSim<STENCIL>::Type;
-            return std::make_shared<MasterSim>(*options, comm);
+            return std::make_shared<MasterSim<STENCIL>>(*options, comm);
         }
     };
 
