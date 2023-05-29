@@ -7,12 +7,12 @@
 #define HEMELB_LB_INCOMPRESSIBILITYCHECKER_HPP
 
 #include "lb/IncompressibilityChecker.h"
+
+#include "hassert.h"
 #include "reporting/Timers.h"
 
-namespace hemelb
+namespace hemelb::lb
 {
-  namespace lb
-  {
     template<class BroadcastPolicy>
     IncompressibilityChecker<BroadcastPolicy>::DensityTracker::DensityTracker() :
         allocatedHere(true)
@@ -132,7 +132,7 @@ namespace hemelb
             default:
               // This should never trip. It only occurs when a new entry is added to the density tracker and
               // no suitable initialisation is provided.
-              assert(false);
+              HASSERT(false);
           }
         }
       }
@@ -142,14 +142,14 @@ namespace hemelb
     template<class BroadcastPolicy>
     distribn_t IncompressibilityChecker<BroadcastPolicy>::GetGlobalSmallestDensity() const
     {
-      assert(AreDensitiesAvailable());
+      HASSERT(AreDensitiesAvailable());
       return (*globalDensityTracker)[DensityTracker::MIN_DENSITY];
     }
 
     template<class BroadcastPolicy>
     distribn_t IncompressibilityChecker<BroadcastPolicy>::GetGlobalLargestDensity() const
     {
-      assert(AreDensitiesAvailable());
+      HASSERT(AreDensitiesAvailable());
       return (*globalDensityTracker)[DensityTracker::MAX_DENSITY];
     }
 
@@ -157,7 +157,7 @@ namespace hemelb
     double IncompressibilityChecker<BroadcastPolicy>::GetMaxRelativeDensityDifference() const
     {
       distribn_t maxDensityDiff = GetGlobalLargestDensity() - GetGlobalSmallestDensity();
-      assert(maxDensityDiff >= 0.0);
+      HASSERT(maxDensityDiff >= 0.0);
       return maxDensityDiff / REFERENCE_DENSITY;
     }
 
@@ -263,10 +263,9 @@ namespace hemelb
     template<class BroadcastPolicy>
     double IncompressibilityChecker<BroadcastPolicy>::GetGlobalLargestVelocityMagnitude() const
     {
-      assert(AreDensitiesAvailable());
+      HASSERT(AreDensitiesAvailable());
       return (*globalDensityTracker)[DensityTracker::MAX_VELOCITY_MAGNITUDE];
     }
-  }
 }
 
 #endif /* HEMELB_LB_INCOMPRESSIBILITYCHECKER_HPP */

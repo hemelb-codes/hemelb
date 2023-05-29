@@ -8,6 +8,7 @@
 
 #include <limits>
 
+#include "hassert.h"
 #include "net/PhasedBroadcastRegular.h"
 #include "lb/SimulationState.h"
 #include "net/net.h"
@@ -16,10 +17,8 @@
 // behaves like the root node of the broadcast tree and another for a
 // leaf node.
 
-namespace hemelb
+namespace hemelb::net
 {
-  namespace net
-  {
 
     // In this mock, we pretend that the current process is the root
     // node of a phased broadcast and that a pair of values is going
@@ -35,12 +34,12 @@ namespace hemelb
     public:
       BroadcastMockRootNode(net::Net * net, const lb::SimulationState * simState, unsigned int spreadFactor);
 
-      virtual ~BroadcastMockRootNode();
+      ~BroadcastMockRootNode() override;
 
       //  Overwritten IteraredAction methods that implement the mock.
-      void RequestComms();
-      void PostReceive();
-      void EndIteration();
+      void RequestComms() override;
+      void PostReceive() override;
+      void EndIteration() override;
 
     protected:
       // Receives data from each child. This is a set length per
@@ -82,12 +81,12 @@ namespace hemelb
     public:
       BroadcastMockLeafNode(net::Net * net, const lb::SimulationState * simState, unsigned int spreadFactor);
 
-      virtual ~BroadcastMockLeafNode();
+      ~BroadcastMockLeafNode() override;
 
       //  Overwritten IteraredAction methods that implement the mock.
-      void RequestComms();
-      void PostReceive();
-      void EndIteration();
+      void RequestComms() override;
+      void PostReceive() override;
+      void EndIteration() override;
 
     protected:
       // Receives data from each child. This is a set length per
@@ -126,7 +125,7 @@ namespace hemelb
     template<class T>
     void BroadcastMockRootNode::ReceiveFromChildren(T* dataStart, int countPerChild)
     {
-      assert(countPerChild == 3);
+      HASSERT(countPerChild == 3);
 
       switch (callCounter++)
 	{
@@ -162,13 +161,13 @@ namespace hemelb
 
         default:
           // Sanity check. Control should never reach this branch
-          assert(false);
+          HASSERT(false);
 	}
     }
     template<class T>
     void BroadcastMockLeafNode::ReceiveFromParent(T* dataStart, int countPerChild)
     {
-      assert(countPerChild == 3);
+      HASSERT(countPerChild == 3);
 
       switch (iterationCounter)
 	{
@@ -193,7 +192,7 @@ namespace hemelb
 
         default:
           // Sanity check. Control should never reach this branch
-          assert(false);
+          HASSERT(false);
 	}
 
     }
@@ -201,13 +200,12 @@ namespace hemelb
     template<class T>
     void BroadcastMockLeafNode::SendToParent(T* data, int count)
     {
-      assert(count == 3);
+      HASSERT(count == 3);
       minSentUp = data[0];
       maxSentUp = data[1];
       maxVelSentUp = data[2];
     }
 
   }
-}
 
-#endif // once
+#endif

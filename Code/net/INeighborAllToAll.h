@@ -7,13 +7,11 @@
 
 #include <vector>
 #include <algorithm>
-#include <cassert>
+#include "hassert.h"
 #include "net/MpiCommunicator.h"
 
-namespace hemelb
+namespace hemelb::net
 {
-  namespace net
-  {
     //! \brief Simplifies non-blocking neighberhood collectives
     //! \details Owns send and receive buffer. Handles waiting for request to complete.
     //! \code
@@ -102,8 +100,8 @@ namespace hemelb
 
     template<class SEND, class RECEIVE> void INeighborAllToAll<SEND, RECEIVE>::send()
     {
-      assert(neighbors.size() == 0 or sendBuffer.size() % neighbors.size() == 0);
-      assert(comm);
+      HASSERT(neighbors.size() == 0 or sendBuffer.size() % neighbors.size() == 0);
+      HASSERT(comm);
       auto const n = neighbors.size() > 0 ?
         sendBuffer.size() / neighbors.size() :
         0;
@@ -129,7 +127,7 @@ namespace hemelb
     int INeighborAllToAll<SEND, RECEIVE>::GetNeighborIndex(int neighbor) const
     {
       auto const i_neigh = std::find(neighbors.begin(), neighbors.end(), neighbor);
-      assert(i_neigh != neighbors.end());
+      HASSERT(i_neigh != neighbors.end());
       return i_neigh - neighbors.begin();
     }
 
@@ -141,6 +139,5 @@ namespace hemelb
       std::copy(input.begin(), input.end(), sendBuffer.begin() + N * GetNeighborIndex(neighbor));
     }
 
-  } /* redblood */
-} /* hemelb */
+}
 #endif

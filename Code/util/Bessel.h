@@ -8,10 +8,8 @@
 
 #include <complex>
 
-namespace hemelb
+namespace hemelb::util
 {
-  namespace util
-  {
 
     /**
      * Evaluates the Bessel function of the first kind order 0 at z. The solution is approximated
@@ -33,7 +31,6 @@ namespace hemelb
      */
     std::complex<double>
     BesselJ0ComplexArgument(const std::complex<double>& z, double tolSq = 1e-12);
-  }
 }
 
 #endif // HEMELB_UTIL_BESSEL_H

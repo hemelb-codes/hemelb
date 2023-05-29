@@ -6,13 +6,10 @@
 #include "util/Bessel.h"
 
 #include <cmath>
-#include <cassert>
-#include <iostream>
+#include "hassert.h"
 
-namespace hemelb
+namespace hemelb::util
 {
-  namespace util
-  {
 
     std::complex<double> BesselJ0ComplexArgument(const std::complex<double>& z, double tolSq)
     {
@@ -32,9 +29,8 @@ namespace hemelb
       }
 
       // If this assertion trips, it is likely that the zSqOver4_pow / (fact * fact) has become inf / inf
-      assert(!std::isnan(real(sum)) && !std::isnan(imag(sum)));
+      HASSERT(!std::isnan(real(sum)) && !std::isnan(imag(sum)));
 
       return sum;
     }
-  }
 }

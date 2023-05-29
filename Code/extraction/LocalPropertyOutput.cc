@@ -3,7 +3,7 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include <cassert>
+#include "hassert.h"
 #include "extraction/LocalPropertyOutput.h"
 #include "io/formats/formats.h"
 #include "io/formats/extraction.h"
@@ -207,7 +207,7 @@ namespace hemelb::extraction
 	  field.typecode);
       }
 
-      assert(headerWriter.GetBuf().size() == total_header_len);
+      HASSERT(headerWriter.GetBuf().size() == total_header_len);
       return headerWriter.GetBuf();
     }
 
@@ -379,7 +379,7 @@ namespace hemelb::extraction
 				uint32_t(fmt::offset::VersionNumber),
 				int32_t(comms.Size())
 				);
-	assert(buf.size() == fmt::offset::HeaderLength);
+	HASSERT(buf.size() == fmt::offset::HeaderLength);
 	offsetFile.WriteAt(0, buf);
       }
       // Every rank writes its offset

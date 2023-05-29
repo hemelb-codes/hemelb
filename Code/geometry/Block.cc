@@ -4,9 +4,8 @@
 // license in the file LICENSE.
 
 #include "geometry/Block.h"
-
+#include "hassert.h"
 #include "constants.h"
-#include <cassert>
 
 namespace hemelb::geometry
 {
@@ -24,31 +23,31 @@ namespace hemelb::geometry
 
     proc_t Block::GetProcessorRankForSite(site_t localSiteIndex) const
     {
-      assert(localSiteIndex < processorRankForEachBlockSite.size());
+      HASSERT(localSiteIndex < processorRankForEachBlockSite.size());
       return processorRankForEachBlockSite[localSiteIndex];
     }
 
     site_t Block::GetLocalContiguousIndexForSite(site_t localSiteIndex) const
     {
-      assert(localSiteIndex < localContiguousIndex.size());
+      HASSERT(localSiteIndex < localContiguousIndex.size());
       return localContiguousIndex[localSiteIndex];
     }
 
     bool Block::SiteIsSolid(site_t localSiteIndex) const
     {
-      assert(localSiteIndex < localContiguousIndex.size());
+      HASSERT(localSiteIndex < localContiguousIndex.size());
       return localContiguousIndex[localSiteIndex] == SOLID_SITE_ID;
     }
 
     void Block::SetProcessorRankForSite(site_t localSiteIndex, proc_t rank)
     {
-      assert(localSiteIndex < processorRankForEachBlockSite.size());
+      HASSERT(localSiteIndex < processorRankForEachBlockSite.size());
       processorRankForEachBlockSite[localSiteIndex] = rank;
     }
 
     void Block::SetLocalContiguousIndexForSite(site_t localSiteIndex, site_t contiguousIndex)
     {
-      assert(localSiteIndex < localContiguousIndex.size());
+      HASSERT(localSiteIndex < localContiguousIndex.size());
       localContiguousIndex[localSiteIndex] = contiguousIndex;
     }
 

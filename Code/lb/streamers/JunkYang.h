@@ -12,6 +12,7 @@
 #include <boost/numeric/ublas/lu.hpp>
 #include <boost/numeric/ublas/io.hpp>
 
+#include "hassert.h"
 #include "units.h"
 #include "lb/streamers/Common.h"
 
@@ -82,8 +83,8 @@ namespace hemelb::lb
         {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              assert(latticeData.GetSite(siteIndex).IsWall());
-              assert(lMatrices.find(siteIndex) != lMatrices.end());
+              HASSERT(latticeData.GetSite(siteIndex).IsWall());
+              HASSERT(lMatrices.find(siteIndex) != lMatrices.end());
 
               auto&& site = latticeData.GetSite(siteIndex);
 
@@ -158,9 +159,9 @@ namespace hemelb::lb
         {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              assert(latticeData.GetSite(siteIndex).IsWall());
-              assert(lMatrices.find(siteIndex) != lMatrices.end());
-              assert(luPermutationMatrices.find(siteIndex) != luPermutationMatrices.end());
+              HASSERT(latticeData.GetSite(siteIndex).IsWall());
+              HASSERT(lMatrices.find(siteIndex) != lMatrices.end());
+              HASSERT(luPermutationMatrices.find(siteIndex) != luPermutationMatrices.end());
 
               vector rVector;
               AssembleRVector(siteIndex, latticeData,rVector);
@@ -313,9 +314,9 @@ namespace hemelb::lb
                     + LatticeType::CZ[*rowIndexIncomingVelocity]
                         * LatticeType::CZ[*columnIndexIncomingVelocity];
 
-                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
+                HASSERT(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
                     >= 0);
-                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
+                HASSERT(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
                     < 1);
 
                 kMatrices[contiguousSiteIndex](rowIndex, columnIndex) =
@@ -330,7 +331,7 @@ namespace hemelb::lb
                                 * LatticeType::VECTORS[*rowIndexIncomingVelocity][ALPHA]
                                 * (colColdirectionsInnProd - (DIMENSION / 3.0)));
 
-                assert(fabs(kMatrices[contiguousSiteIndex](rowIndex, columnIndex)) < 1e3);
+                HASSERT(fabs(kMatrices[contiguousSiteIndex](rowIndex, columnIndex)) < 1e3);
               }
 
               /*
@@ -357,9 +358,9 @@ namespace hemelb::lb
                     + LatticeType::CZ[*rowIndexIncomingVelocity]
                         * LatticeType::CZ[*columnIndexOutgoingVelocity];
 
-                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
+                HASSERT(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
                     >= 0);
-                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
+                HASSERT(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
                     < 1);
 
                 kMatrices[contiguousSiteIndex](rowIndex, columnIndex) =
@@ -374,7 +375,7 @@ namespace hemelb::lb
                                 * LatticeType::VECTORS[*rowIndexIncomingVelocity][ALPHA]
                                 * (colColdirectionsInnProd - (DIMENSION / 3.0)));
 
-                assert(fabs(kMatrices[contiguousSiteIndex](rowIndex, columnIndex)) < 1e3);
+                HASSERT(fabs(kMatrices[contiguousSiteIndex](rowIndex, columnIndex)) < 1e3);
               }
 
             }
@@ -408,7 +409,7 @@ namespace hemelb::lb
               luPermutationMatrices[iter->first] =
                   new permutation_matrix(incomingVelocities[iter->first].size());
               // If this assertion trips, lMatrices[siteLocalIndex] is singular.
-              assert(lu_factorize(iter->second, *luPermutationMatrices[iter->first]) == 0);
+              HASSERT(lu_factorize(iter->second, *luPermutationMatrices[iter->first]) == 0);
             }
           }
 
@@ -424,8 +425,8 @@ namespace hemelb::lb
               const site_t contiguousSiteIndex,
               c_vector& sigmaVector) // const
           {
-            assert(fPostCollision.find(contiguousSiteIndex) != fPostCollision.end());
-            assert(fOld.find(contiguousSiteIndex) != fOld.end());
+            HASSERT(fPostCollision.find(contiguousSiteIndex) != fPostCollision.end());
+            HASSERT(fOld.find(contiguousSiteIndex) != fOld.end());
             sigmaVector = fPostCollision[contiguousSiteIndex]
                 - (1 - THETA) * fOld[contiguousSiteIndex];
           }
@@ -452,7 +453,7 @@ namespace hemelb::lb
              *  Assemble a vector with the updated values of the distribution function for the outgoing velocities,
              *  which have already been streamed
              */
-            assert(fNew.size() == outgoingVelocities[contiguousSiteIndex].size());
+            HASSERT(fNew.size() == outgoingVelocities[contiguousSiteIndex].size());
             unsigned index = 0;
             for (auto outgoingDirIter =
                 outgoingVelocities[contiguousSiteIndex].begin();

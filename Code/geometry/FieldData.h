@@ -7,11 +7,11 @@
 #define HEMELB_GEOMETRY_FIELDDATA_H
 
 #include <algorithm>
-#include <cassert>
 #include <cstddef>
 #include <memory>
 #include <vector>
 
+#include "hassert.h"
 #include "units.h"
 #include "geometry/Domain.h"
 #include "geometry/Site.h"
@@ -184,14 +184,14 @@ namespace hemelb::geometry {
          */
         // Method should remain protected, intent is to set this information via Site
         inline void SetForceAtSite(site_t iSiteIndex, LatticeForceVector const &force) {
-            assert(iSiteIndex >= site_t(0));
-            assert(m_force.size() > std::size_t(iSiteIndex));
+            HASSERT(iSiteIndex >= site_t(0));
+            HASSERT(m_force.size() > std::size_t(iSiteIndex));
             m_force[iSiteIndex] = force;
         }
 
         inline void AddToForceAtSite(site_t iSiteIndex, LatticeForceVector const &force) {
-            assert(iSiteIndex >= site_t(0));
-            assert(m_force.size() > std::size_t(iSiteIndex));
+            HASSERT(iSiteIndex >= site_t(0));
+            HASSERT(m_force.size() > std::size_t(iSiteIndex));
             m_force[iSiteIndex] += force;
         }
         /**
@@ -202,8 +202,8 @@ namespace hemelb::geometry {
          */
         // Method should remain protected, intent is to set this information via Site
         inline void SetForceAtSite(site_t iSiteIndex, LatticeForce force) {
-            assert(iSiteIndex >= site_t(0));
-            assert(m_force.size() > std::size_t(iSiteIndex));
+            HASSERT(iSiteIndex >= site_t(0));
+            HASSERT(m_force.size() > std::size_t(iSiteIndex));
             m_force[iSiteIndex] = util::Vector3D<distribn_t>(0.0, 0.0, force);
         }
 

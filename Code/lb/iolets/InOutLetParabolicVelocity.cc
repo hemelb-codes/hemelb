@@ -2,7 +2,9 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
+
 #include "lb/iolets/InOutLetParabolicVelocity.h"
+#include "hassert.h"
 #include "configuration/SimConfig.h"
 
 namespace hemelb::lb
@@ -26,7 +28,7 @@ namespace hemelb::lb
         LatticePosition displ = x - position;
         LatticeDistance z = Dot(displ, normal);
         Dimensionless rSq = (displ.GetMagnitudeSquared() - z * z) / (radius * radius);
-        assert(rSq <= 1.0);
+        HASSERT(rSq <= 1.0);
 
         // Get the max velocity
         LatticeSpeed max = maxSpeed;

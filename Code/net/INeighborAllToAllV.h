@@ -6,17 +6,15 @@
 #define HEMELB_NET_INEIGHBORALLTOALLV_H
 
 #include <vector>
-#include <cassert>
 #include <numeric>
 
+#include "hassert.h"
 #include "net/INeighborAllToAll.h"
 #include "net/MpiCommunicator.h"
 #include "units.h"
 
-namespace hemelb
+namespace hemelb::net
 {
-  namespace net
-  {
     //! \brief Simplifies non-blocking neighberhood collectives
     //! \details Owns send and receive buffer. Handles waiting for request to complete.
     //! \code
@@ -93,12 +91,12 @@ namespace hemelb
           }                                                                                      \
           int Get ## Name ## Counts(proc_t process)                                              \
           {                                                                                      \
-            assert(int(name ## Counts.size()) > GetNeighborIndex(process));                      \
+            HASSERT(int(name ## Counts.size()) > GetNeighborIndex(process));                      \
             return name ## Counts[GetNeighborIndex(process)];                                    \
           }                                                                                      \
           void Set ## Name ## Counts(proc_t process, int count)                                  \
           {                                                                                      \
-            assert(int(name ## Counts.size()) > GetNeighborIndex(process));                      \
+            HASSERT(int(name ## Counts.size()) > GetNeighborIndex(process));                      \
             name ## Counts[GetNeighborIndex(process)] = count;                                   \
             auto const N = std::accumulate(name ## Counts.begin(), name ## Counts.end(), 0);     \
             name ## Buffer.resize(N);                                                            \
@@ -107,10 +105,10 @@ namespace hemelb
           Name const & Get ## Name(int neighbor, int i) const                                    \
           {                                                                                      \
             auto const index = GetNeighborIndex(neighbor);                                       \
-            assert(int(name ## Counts.size()) > index);                                          \
+            HASSERT(int(name ## Counts.size()) > index);                                          \
             auto const offset = std::accumulate(                                                 \
                 name ## Counts.begin(), name ## Counts.begin() + index, 0) + i;                  \
-            assert(int(name ## Buffer.size()) > offset);                                         \
+            HASSERT(int(name ## Buffer.size()) > offset);                                         \
             return name ## Buffer[offset];                                                       \
           }                                                                                      \
           /** Sets specific send object **/                                                      \
@@ -126,7 +124,7 @@ namespace hemelb
           /** Uses output iterator to fill in send or receive buffer **/                         \
           void insert ## Name(int neighbor, std::vector<Name> const & input)                     \
           {                                                                                      \
-            assert(int(input.size()) == name ## Counts[GetNeighborIndex(neighbor)]);             \
+            HASSERT(int(input.size()) == name ## Counts[GetNeighborIndex(neighbor)]);             \
             insert(neighbor, input.begin(), name ## Buffer, name ## Counts);                     \
           }                                                                                      \
           /** Fill buffer with specific input **/                                                \
@@ -193,9 +191,9 @@ namespace hemelb
                                                    std::vector<int> const & counts)
     {
       auto const index = GetNeighborIndex(neighbor);
-      assert(int(counts.size()) > index);
+      HASSERT(int(counts.size()) > index);
       auto const offset = std::accumulate(counts.begin(), counts.begin() + index, 0);
-      assert(int(container.size()) >= counts[index] + offset);
+      HASSERT(int(container.size()) >= counts[index] + offset);
       for (int i(offset); i < counts[index] + offset; ++i, ++input)
       {
         container[i] = *input;
@@ -208,9 +206,9 @@ namespace hemelb
                                                         std::vector<int> const & counts, int i)
     {
       auto const index = GetNeighborIndex(neighbor);
-      assert(int(counts.size()) > index);
+      HASSERT(int(counts.size()) > index);
       auto const offset = std::accumulate(counts.begin(), counts.begin() + index, 0) + i;
-      assert(int(container.size()) > offset);
+      HASSERT(int(container.size()) > offset);
       container[offset] = input;
     }
 
@@ -232,6 +230,5 @@ namespace hemelb
       HEMELB_MPI_CALL(MPI_Ineighbor_alltoallv,
                       ( sendBuffer.data(), sendCounts.data(), sendOffsets.data(), sendType, receiveBuffer.data(), receiveCounts.data(), recvOffsets.data(), recvType, comm, &request ));
     }
-  } /* redblood */
-} /* hemelb */
+}
 #endif

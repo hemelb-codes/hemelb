@@ -3,14 +3,14 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 #include "lb/iolets/InOutLetFileVelocity.h"
+
 #include <algorithm>
 #include <fstream>
+#include "hassert.h"
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
-#include "util/utilityStructs.h"
 #include "configuration/SimConfig.h"
 #include <cmath>
-#include <algorithm>
 
 namespace hemelb::lb
 {
@@ -116,7 +116,7 @@ namespace hemelb::lb
           LatticePosition displ = x - position;
           LatticeDistance z = Dot(displ, normal);
           Dimensionless rSqOverASq = (displ.GetMagnitudeSquared() - z * z) / (radius * radius);
-          assert(rSqOverASq <= 1.0);
+          HASSERT(rSqOverASq <= 1.0);
 
           // Get the max velocity
           LatticeSpeed max = velocityTable[t];

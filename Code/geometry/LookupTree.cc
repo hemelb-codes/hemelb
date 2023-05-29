@@ -5,7 +5,7 @@
 
 #include "geometry/LookupTree.h"
 
-#include <cassert>
+#include "hassert.h"
 #include "constants.h"
 
 namespace hemelb::net {
@@ -202,7 +202,7 @@ namespace hemelb::geometry::octree {
                     if (lvl.child_indices.back()[local] == Level::NC) {
                         lvl.child_indices.back()[local] = ans.levels[pl + 1].node_ids.size() - 1;
                     } else {
-                        assert(lvl.child_indices.back()[local] == ans.levels[pl + 1].node_ids.size() - 1);
+                        HASSERT(lvl.child_indices.back()[local] == ans.levels[pl + 1].node_ids.size() - 1);
                     }
                 }
             }

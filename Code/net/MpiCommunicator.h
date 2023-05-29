@@ -6,13 +6,13 @@
 #ifndef HEMELB_NET_MPICOMMUNICATOR_H
 #define HEMELB_NET_MPICOMMUNICATOR_H
 
-#include <cassert>
 #include <map>
 #include <memory>
 #include <numeric>
 #include <span>
 #include <vector>
 
+#include "hassert.h"
 #include "net/MpiError.h"
 
 namespace hemelb::net
@@ -57,7 +57,7 @@ namespace hemelb::net
 
         // Return a span over the data belonging to the given process.
         std::span<T> operator[](std::size_t i) {
-            assert(i >= 0 && i < displacements.size());
+            HASSERT(i >= 0 && i < displacements.size());
             auto start = displacements[i];
             auto count = displacements[i+1] - start;
             return std::span<T>{data.data() + start, unsigned(count)};
@@ -88,7 +88,7 @@ namespace hemelb::net
          */
         inline int Rank() const
         {
-          assert(localRankInCommunicator >= 0);
+          HASSERT(localRankInCommunicator >= 0);
           return localRankInCommunicator;
         }
 
@@ -98,7 +98,7 @@ namespace hemelb::net
          */
         inline int Size() const
         {
-          assert(communicatorSize > 0);
+          HASSERT(communicatorSize > 0);
           return communicatorSize;
         }
 

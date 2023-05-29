@@ -4,8 +4,8 @@
 // license in the file LICENSE.
 
 #include "redblood/CellEnergy.h"
-
 #include "redblood/Facet.h"
+#include "hassert.h"
 
 namespace hemelb::redblood
 {
@@ -125,7 +125,7 @@ namespace hemelb::redblood
           return 0e0;
         }
 
-      assert(orig.vertices.size() == vertices.size());
+      HASSERT(orig.vertices.size() == vertices.size());
       LatticeVolume const vol0 = volume(orig) * origMesh_scale * origMesh_scale * origMesh_scale;
       LatticeVolume const deltaV = volume(vertices, orig.facets) - vol0;
       double const strength(intensity / 6.0 * deltaV / vol0);
@@ -158,7 +158,7 @@ namespace hemelb::redblood
 				LatticeModulus intensity, std::vector<LatticeForceVector> &forces,
 				Dimensionless origMesh_scale)
     {
-      assert(orig.vertices.size() == vertices.size());
+      HASSERT(orig.vertices.size() == vertices.size());
 
       LatticeArea const surf0 = area(orig) * origMesh_scale * origMesh_scale;
       LatticeArea const deltaS = area(vertices, orig.facets) - surf0;

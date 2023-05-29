@@ -6,15 +6,22 @@
 #ifndef HEMELB_HASSERT_H
 #define HEMELB_HASSERT_H
 
+#ifdef HEMELB_CODE
+// A HemeLB assertion macro
 #include "Exception.h"
 #include "build_info.h"
 
-// A HemeLB assertion macro
 #define HASSERT(expr) \
 if constexpr (::hemelb::DEBUG) { \
     if (!(expr)) { \
         throw (::hemelb::Exception() << "Assertion failure '" #expr "' in '" __FILE__ ":" << __LINE__); \
     } \
 }
+
+#else // Fall back to C assert macro
+#include <cassert>
+#define HASSERT(expr) assert(expr)
+
+#endif
 
 #endif

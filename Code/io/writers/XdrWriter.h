@@ -6,10 +6,9 @@
 #ifndef HEMELB_IO_WRITERS_XDRWRITER_H
 #define HEMELB_IO_WRITERS_XDRWRITER_H
 
-#include <cassert>
-
 #include "io/writers/Writer.h"
 #include "io/XdrSerialisation.h"
+#include "hassert.h"
 
 namespace hemelb::io
 {
@@ -152,7 +151,7 @@ namespace hemelb::io
 	  void write(T const& valToWrite) {
 	    constexpr auto buf_size = xdr::xdr_serialised_size<T>();
 	    // If we have an end then we must have space to store the serialised value
-	    assert(boi_traits::check_space(end, current, buf_size));
+	    HASSERT(boi_traits::check_space(end, current, buf_size));
 
 	    char buf[buf_size];
 	    xdr::xdr_serialise(valToWrite, buf);

@@ -4,11 +4,10 @@
 // license in the file LICENSE.
 
 #include "net/mixins/alltoall/SeparatedAllToAll.h"
-#include <cassert>
-namespace hemelb
+#include "hassert.h"
+
+namespace hemelb::net
 {
-  namespace net
-  {
     SeparatedAllToAll::SeparatedAllToAll(const MpiCommunicator& comms) :
         BaseNet(comms), StoringNet(comms)
     {
@@ -16,7 +15,7 @@ namespace hemelb
 
     void SeparatedAllToAll::WaitAllToAll()
     {
-      assert(allToAllReceiveProcComms.size() == allToAllSendProcComms.size());
+      HASSERT(allToAllReceiveProcComms.size() == allToAllSendProcComms.size());
       for (unsigned int i = 0; i < allToAllReceiveProcComms.size(); i++)
       {
         auto& sendreq = allToAllSendProcComms[i];
@@ -28,6 +27,5 @@ namespace hemelb
       allToAllReceiveProcComms.clear();
       allToAllSendProcComms.clear();
     }
-  }
 }
 

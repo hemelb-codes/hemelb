@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include <cassert>
 #include "io/readers/XdrMemReader.h"
+#include "hassert.h"
 
 namespace hemelb::io
 {
@@ -24,7 +24,7 @@ namespace hemelb::io
   }
 
   const char* XdrMemReader::get_bytes(size_t n) {
-    assert(GetPosition() + n <= len);
+    HASSERT(GetPosition() + n <= len);
     auto ans = current;
     current += n;
     return ans;
