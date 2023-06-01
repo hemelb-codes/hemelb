@@ -787,9 +787,9 @@ namespace hemelb::lb
             for (Direction direction = 0; direction < NUMVECTORS; ++direction)
             {
               f_eq[direction] = density * EQMWEIGHTS[direction] * term1.x() * term1.y() * term1.z()
-                  * util::NumericalFunctions::IntegerPower(term2.x(), CX[direction])
-                  * util::NumericalFunctions::IntegerPower(term2.y(), CY[direction])
-                  * util::NumericalFunctions::IntegerPower(term2.z(), CZ[direction]);
+                  * util::IntegerPower(term2.x(), CX[direction])
+                  * util::IntegerPower(term2.y(), CY[direction])
+                  * util::IntegerPower(term2.z(), CZ[direction]);
             }
           }
 
@@ -856,9 +856,9 @@ namespace hemelb::lb
             for (Direction direction = 0; direction < NUMVECTORS; ++direction)
             {
               f_eq[direction] = EQMWEIGHTS[direction] * chi
-                  * util::NumericalFunctions::IntegerPower(zeta.x(), CX[direction])
-                  * util::NumericalFunctions::IntegerPower(zeta.y(), CY[direction])
-                  * util::NumericalFunctions::IntegerPower(zeta.z(), CZ[direction]);
+                  * util::IntegerPower(zeta.x(), CX[direction])
+                  * util::IntegerPower(zeta.y(), CY[direction])
+                  * util::IntegerPower(zeta.z(), CZ[direction]);
             }
           }
 
@@ -925,23 +925,23 @@ namespace hemelb::lb
 
             // The 5th order term.
             distribn_t zetaHighOrders = 27.0
-                * (util::NumericalFunctions::IntegerPower(ux, 5) - 4. * ux * uy * uy * uz * uz)
+                * (util::IntegerPower(ux, 5) - 4. * ux * uy * uy * uz * uz)
                 / 8.0;
 
             // The 6th order term.
             zetaHighOrders += 81.0
-                * (util::NumericalFunctions::IntegerPower(ux, 6) - 8. * ux * ux * uy * uy * uz * uz)
+                * (util::IntegerPower(ux, 6) - 8. * ux * ux * uy * uy * uz * uz)
                 / 16.0;
 
             // The 7th order term.
             zetaHighOrders += 81.0
-                * (util::NumericalFunctions::IntegerPower(ux, 7)
+                * (util::IntegerPower(ux, 7)
                     + 2. * ux * uy * uy * uz * uz * velocityMagnitudeSquared
                     - 10. * ux * ux * ux * uy * uy * uz * uz) / 16.0;
 
             // The 8th order term.
             zetaHighOrders += 243.0
-                * (util::NumericalFunctions::IntegerPower(ux, 8)
+                * (util::IntegerPower(ux, 8)
                     + 16.0 * ux * ux * uy * uy * uz * uz * (uy * uy + uz * uz)) / 128.0;
 
             return zetaHighOrders;

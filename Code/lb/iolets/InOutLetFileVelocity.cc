@@ -98,7 +98,7 @@ namespace hemelb::lb
               + (static_cast<double>(timeStep % TimeStepsInInletVelocityProfile) / static_cast<double>(totalTimeSteps))
                   * (times.back() - times.front());
 
-          PhysicalSpeed vel = util::NumericalFunctions::LinearInterpolate(times, values, point);
+          PhysicalSpeed vel = util::LinearInterpolate(times, values, point);
 
           velocityTable[timeStep] = units->ConvertVelocityToLatticeUnits(vel);
         }
