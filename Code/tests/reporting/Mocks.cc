@@ -10,41 +10,30 @@
 #include "net/IOCommunicator.h"
 #include "reporting/Timers.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
-    ClockMock::ClockMock() : fakeTime(0)
-    {
-    }
-    double ClockMock::CurrentTime() {
-      fakeTime += 10.0;
-      return fakeTime;
+    double ClockMock::operator()() {
+        fakeTime += 10.0;
+        return fakeTime;
     }
 
-    MPICommsMock::MPICommsMock(const net::IOCommunicator& ignored) :
-              calls(1)
-    {
-    }
-    int MPICommsMock::Reduce(double *sendbuf,
-			     double *recvbuf,
-			     int count,
-			     MPI_Datatype datatype,
-			     MPI_Op op,
-			     int root) {
-      REQUIRE((int)reporting::Timers::last == count);
-      for (int i = 0; i < count; i++) {
-	REQUIRE(10.0 * i == sendbuf[i]);
-	recvbuf[i] = 5.0 * i * calls;
-      }
-      calls++;
-      return 0;
-    }
-    proc_t MPICommsMock::GetProcessorCount()
-    {
-      return 5;
+    std::vector<double> MPICommsMock::Reduce(const std::vector<double> & sendbuf, MPI_Op, int root) {
+        auto const count = sendbuf.size();
+        REQUIRE(reporting::Timers::last == count);
+        std::vector<double> recvbuf(count);
+
+        for (int i = 0; i < count; i++) {
+            REQUIRE(10.0 * i == sendbuf[i]);
+            recvbuf[i] = 5.0 * i * calls;
+        }
+        calls++;
+        return recvbuf;
     }
 
-  }
+    int MPICommsMock::Size() const
+    {
+        return 5;
+    }
+
 }
 

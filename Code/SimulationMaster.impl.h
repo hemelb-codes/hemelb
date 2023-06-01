@@ -42,7 +42,7 @@ namespace hemelb
     template<class TRAITS>
     SimulationMaster<TRAITS>::SimulationMaster(configuration::CommandLine & options,
                                                const net::IOCommunicator& ioComm) :
-            ioComms(ioComm.Duplicate()), timings(ioComms), build_info(),
+            ioComms(ioComm.Duplicate()), build_info(),
             communicationNet(ioComms)
     {
         // Start the main timer!
@@ -151,7 +151,8 @@ namespace hemelb
   void SimulationMaster<TRAITS>::Finalise()
   {
     timings[reporting::Timers::total].Stop();
-    timings.Reduce();
+    timings.Reduce(ioComms);
+
     if (IsCurrentProcTheIOProc())
     {
       reporter->FillDictionary();

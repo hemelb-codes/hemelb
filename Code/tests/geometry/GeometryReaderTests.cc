@@ -24,7 +24,7 @@ namespace hemelb
   namespace tests
   {
     TEST_CASE_METHOD(helpers::FolderTestFixture, "GeometryReaderTests") {
-      auto timings = std::make_unique<reporting::Timers>(Comms());
+      auto timings = std::make_unique<reporting::Timers>();
       
       auto reader = std::make_unique<geometry::GeometryReader>(lb::D3Q15::GetLatticeInfo(),
 							       *timings,

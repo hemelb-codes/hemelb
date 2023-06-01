@@ -51,7 +51,7 @@ namespace hemelb::tests
 	  return templates;
 	};
 
-      auto timers = std::make_unique<reporting::Timers>(Comms());
+      auto timers = std::make_unique<reporting::Timers>();
       
       SECTION("testCell2FluidWithoutCells") {
         CellContainer cells;
