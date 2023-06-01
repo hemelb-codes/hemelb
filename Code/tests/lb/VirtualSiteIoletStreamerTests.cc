@@ -316,12 +316,8 @@ namespace hemelb::tests
                 site_t globalIdx = hvPtr.first;
                 LatticeVector pos;
                 dom->GetGlobalCoordsFromGlobalNoncontiguousSiteId(globalIdx, pos);
-                REQUIRE(hemelb::util::NumericalFunctions::IsInRange<LatticeCoordinate>(pos.x(),
-                                                                                       1,
-                                                                                       4));
-                REQUIRE(hemelb::util::NumericalFunctions::IsInRange<LatticeCoordinate>(pos.y(),
-                                                                                       1,
-                                                                                       4));
+                REQUIRE(util::IsInRange<LatticeCoordinate>(pos.x(), 1, 4));
+                REQUIRE(util::IsInRange<LatticeCoordinate>(pos.y(), 1, 4));
                 REQUIRE(LatticeCoordinate(4) == pos.z());
             }
         }

@@ -4,16 +4,12 @@
 // license in the file LICENSE.
 
 #include "net/mpi.h"
-namespace hemelb
+namespace hemelb::util
 {
-  namespace util
-  {
     // Returns the number of seconds to 6dp elapsed since the Epoch
     double myClock()
     {
-      return MPI_Wtime();
+        return MPI_Wtime();
     }
-
-  }
 
 }

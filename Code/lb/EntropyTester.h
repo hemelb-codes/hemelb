@@ -65,7 +65,7 @@ namespace hemelb
                 const geometry::Site<const geometry::Domain> site = mLatDat->GetSite(i);
 
                 HFunction<LatticeType> HFunc(site.GetFOld<LatticeType>(), nullptr);
-                dHMax = util::NumericalFunctions::max(dHMax, HFunc.eval() - mHPreCollision[i]);
+                dHMax = std::max(dHMax, HFunc.eval() - mHPreCollision[i]);
               }
             }
 
@@ -82,7 +82,7 @@ namespace hemelb
                 const geometry::Site<const geometry::Domain> site = mLatDat->GetSite(i);
 
                 HFunction<LatticeType> HFunc(site.GetFOld<LatticeType>(), nullptr);
-                dHMax = util::NumericalFunctions::max(dHMax, HFunc.eval() - mHPreCollision[i]);
+                dHMax = std::max(dHMax, HFunc.eval() - mHPreCollision[i]);
               }
             }
 

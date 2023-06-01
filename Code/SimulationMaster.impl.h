@@ -106,7 +106,7 @@ namespace hemelb
       return 1000000000;
     }
     unsigned long roundedPeriod = simulationState->GetTotalTimeSteps() / frequency;
-    return util::NumericalFunctions::max(1U, (unsigned int) roundedPeriod);
+    return std::max(1U, (unsigned int) roundedPeriod);
   }
 
   template<class TRAITS>
