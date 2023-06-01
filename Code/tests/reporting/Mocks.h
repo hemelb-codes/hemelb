@@ -9,38 +9,26 @@
 #include <mpi.h>
 #include "units.h"
 
-namespace hemelb
-{
-  namespace net {
+namespace hemelb::net {
     class IOCommunicator;
-  }
+}
 
-  namespace tests
-  {
+namespace hemelb::tests
+{
     class ClockMock {
     public:
-      ClockMock();
-    protected:
-      double CurrentTime();
+      ClockMock() = default;
+      double operator()();
     private:
-      double fakeTime;
+      double fakeTime = 0.0;
     };
 
     class MPICommsMock {
+        unsigned calls = 1;
     public:
-      MPICommsMock(const net::IOCommunicator& ignored);
-    protected:
-      int Reduce(double *sendbuf,
-		 double *recvbuf,
-		 int count,
-		 MPI_Datatype datatype,
-		 MPI_Op op,
-		 int root);
-      proc_t GetProcessorCount();
-    private:
-      unsigned int calls;
+        int Size() const;
+        std::vector<double> Reduce(std::vector<double> const&, MPI_Op, int root);
     };
-  }
 }
 
 #endif // HEMELB_TESTS_REPORTING_MOCKS_H
