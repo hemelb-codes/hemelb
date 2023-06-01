@@ -14,28 +14,38 @@
 
 namespace hemelb::reporting
 {
+
+    template <typename T, typename Result>
+    concept timer_function = std::is_default_constructible_v<T> && std::same_as<std::invoke_result_t<T>, Result>;
+
     /**
      * Timer which manages performance measurement for a single aspect of the code
      * @tparam ClockPolicy Policy defining how to get the current time
      */
-    template<class ClockPolicy>
-    class TimerBase : public ClockPolicy
+    template<typename Timer>
+    class TimerBase
     {
-      public:
+        // Assert rather than constrain type parameter to avoid
+        // having concept in forward declaration.
+        static_assert(timer_function<Timer, double>);
+
+        Timer timer;
+        double start = 0; //! Time when the timer was last started.
+        double time = 0; //! Current running total time.
+
+    public:
         /**
          * Starts with the timer stopped.
          */
-        TimerBase() :
-            start(0), time(0)
-        {
-        }
+        TimerBase() = default;
+
         /**
          * Get the current total time spent on this timer
          * @return current total time spent on this timer
          */
         double Get() const
         {
-          return time;
+            return time;
         }
         /**
          * Force the current total time to an arbitrary value.
@@ -44,92 +54,87 @@ namespace hemelb::reporting
          */
         void Set(double t)
         {
-          time = t;
+            time = t;
         }
         /**
          * Start the timer.
          */
         void Start()
         {
-          start = ClockPolicy::CurrentTime();
+            start = timer();
         }
         /**
          * Stop the timer.
          */
         void Stop()
         {
-          time += ClockPolicy::CurrentTime() - start;
+            time += timer() - start;
         }
-      private:
-        double start; //! Time when the timer was last started.
-        double time; //! Current running total time.
     };
 
     /**
      * Class which manages a set of timers timing aspects of a HemeLB run
      * @tparam ClockPolicy How to get the current time
-     * @tparam CommsPolicy How to share information between processes
      */
-    template<class ClockPolicy, class CommsPolicy>
-    class TimersBase : public CommsPolicy,
-                       public Reportable
+    template<class ClockPolicy>
+    class TimersBase : public Reportable
     {
-      public:
+    public:
         using Timer = TimerBase<ClockPolicy>;
         /**
          * The set of possible timers
          */
         enum TimerName
         {
-          total = 0, //!< Total time
-          initialDecomposition, //!< Initial seed decomposition
-          domainDecomposition, //!< Time spent in parmetis domain decomposition
-          fileRead, //!< Time spent in reading the geometry description file
-          reRead, //!< Time spend in re-reading the geometry after second decomposition
-          unzip, //!< Time spend in un-zipping
-          moves, //!< Time spent moving things around post-parmetis
-          parmetis, //!< Time spent in Parmetis
-          latDatInitialise, //!< Time spent initialising the lattice data
-          lb, //!< Time spent doing the core lattice boltzman simulation
-          lb_calc, //!< Time spent doing calculations in the core lattice boltzmann simulation
-          monitoring, //!< Time spent monitoring for stability, compressibility, etc.
-          mpiSend, //!< Time spent sending MPI data
-          mpiWait, //!< Time spent waiting for MPI
-          simulation, //!< Total time for running the simulation,
-          readNet,
-          readParse,
-          readBlock,
-          readBlocksPrelim,
-          readBlocksAll,
-          moveForcingNumbers,
-          moveForcingData,
-          blockRequirements,
-          moveCountsSending,
-          moveDataSending,
-          PopulateOptimisationMovesList,
-          InitialGeometryRead,
-          colloidInitialisation,
-          colloidCommunicatePositions,
-          colloidCommunicateVelocities,
-          colloidCalculateForces,
-          colloidUpdateCalculations,
-          colloidOutput,
-          extractionWriting,
-          cellInitialisation,
-          cellInsertion,
-          computeNodeDistributions,
-          exchangeCells,
-          computeAndPostVelocities,
-          receiveVelocitiesAndUpdate,
-          updateDNC,
-          computeAndPostForces,
-          receiveForcesAndUpdate,
-          updateCellAndWallInteractions,
-          cellRemoval,
-          cellListeners,
-          graphComm,
-          last
-        //!< last, this has to be the last element of the enumeration so it can be used to track cardinality
+            total = 0, //!< Total time
+            initialDecomposition, //!< Initial seed decomposition
+            domainDecomposition, //!< Time spent in parmetis domain decomposition
+            fileRead, //!< Time spent in reading the geometry description file
+            reRead, //!< Time spend in re-reading the geometry after second decomposition
+            unzip, //!< Time spend in un-zipping
+            moves, //!< Time spent moving things around post-parmetis
+            parmetis, //!< Time spent in Parmetis
+            latDatInitialise, //!< Time spent initialising the lattice data
+            lb, //!< Time spent doing the core lattice boltzman simulation
+            lb_calc, //!< Time spent doing calculations in the core lattice boltzmann simulation
+            monitoring, //!< Time spent monitoring for stability, compressibility, etc.
+            mpiSend, //!< Time spent sending MPI data
+            mpiWait, //!< Time spent waiting for MPI
+            simulation, //!< Total time for running the simulation,
+            readNet,
+            readParse,
+            readBlock,
+            readBlocksPrelim,
+            readBlocksAll,
+            moveForcingNumbers,
+            moveForcingData,
+            blockRequirements,
+            moveCountsSending,
+            moveDataSending,
+            PopulateOptimisationMovesList,
+            InitialGeometryRead,
+            colloidInitialisation,
+            colloidCommunicatePositions,
+            colloidCommunicateVelocities,
+            colloidCalculateForces,
+            colloidUpdateCalculations,
+            colloidOutput,
+            extractionWriting,
+            cellInitialisation,
+            cellInsertion,
+            computeNodeDistributions,
+            exchangeCells,
+            computeAndPostVelocities,
+            receiveVelocitiesAndUpdate,
+            updateDNC,
+            computeAndPostForces,
+            receiveForcesAndUpdate,
+            updateCellAndWallInteractions,
+            cellRemoval,
+            cellListeners,
+            graphComm,
+            last
+            //!< last, this has to be the last element of the enumeration so it can be used to track cardinality
         };
         static const unsigned int numberOfTimers = last;
 
@@ -138,8 +143,8 @@ namespace hemelb::reporting
          */
         static const std::string timerNames[TimersBase::numberOfTimers];
 
-        TimersBase(const net::IOCommunicator& comms) :
-            CommsPolicy(comms), timers(numberOfTimers), maxes(numberOfTimers), mins(numberOfTimers),
+        TimersBase() :
+                timers(numberOfTimers), maxes(numberOfTimers), mins(numberOfTimers),
                 means(numberOfTimers)
         {
         }
@@ -152,7 +157,7 @@ namespace hemelb::reporting
          */
         const std::vector<double> &Maxes() const
         {
-          return maxes;
+            return maxes;
         }
         /**
          * Min across all processes.
@@ -161,7 +166,7 @@ namespace hemelb::reporting
          */
         const std::vector<double> &Mins() const
         {
-          return mins;
+            return mins;
         }
         /**
          * Averages across all processes.
@@ -170,7 +175,7 @@ namespace hemelb::reporting
          */
         const std::vector<double> &Means() const
         {
-          return means;
+            return means;
         }
         /**
          * The timer for the given timer name
@@ -179,7 +184,7 @@ namespace hemelb::reporting
          */
         Timer & operator[](TimerName t)
         {
-          return timers[t];
+            return timers[t];
         }
         /**
          * The timer for the given timer name
@@ -188,7 +193,7 @@ namespace hemelb::reporting
          */
         const Timer & operator[](TimerName t) const
         {
-          return timers[t];
+            return timers[t];
         }
         /**
          * The timer for the given timer name
@@ -197,7 +202,7 @@ namespace hemelb::reporting
          */
         Timer & operator[](unsigned int t)
         {
-          return timers[t];
+            return timers[t];
         }
         /**
          * The timer for the given timer name
@@ -206,76 +211,76 @@ namespace hemelb::reporting
          */
         const Timer & operator[](unsigned int t) const
         {
-          return timers[t];
+            return timers[t];
         }
         /**
          * Share timing information across timers
          */
-        void Reduce();
+        template <typename Communicator>
+        void Reduce(Communicator&& comm);
 
         void Report(Dict& dictionary) override;
 
-      private:
+    private:
+        int n_processes = 0;
         std::vector<Timer> timers; //! The set of timers
         std::vector<double> maxes; //! Max across processes
         std::vector<double> mins; //! Min across processes
         std::vector<double> means; //! Average across processes
     };
     using Timer = TimerBase<HemeLBClockPolicy>;
-    using Timers = TimersBase<HemeLBClockPolicy, MPICommsPolicy>;
+    using Timers = TimersBase<HemeLBClockPolicy>;
 
-    template<class ClockPolicy, class CommsPolicy>
-    const std::string TimersBase<ClockPolicy, CommsPolicy>::timerNames[TimersBase<ClockPolicy,
-        CommsPolicy>::numberOfTimers] =
-
-    { "Total",
-      "Seed Decomposition",
-      "Domain Decomposition",
-      "File Read",
-      "Re Read",
-      "Unzip",
-      "Moves",
-      "Parmetis",
-      "Lattice Data initialisation",
-      "Lattice Boltzmann",
-      "LB calc only",
-      "Monitoring",
-      "MPI Send",
-      "MPI Wait",
-      "Simulation total",
-      "Reading communications",
-      "Parsing",
-      "Read IO",
-      "Read Blocks prelim",
-      "Read blocks all",
-      "Move Forcing Counts",
-      "Move Forcing Data",
-      "Block Requirements",
-      "Move Counts Sending",
-      "Move Data Sending",
-      "Populating moves list for decomposition optimisation",
-      "Initial geometry reading",
-      "Colloid initialisation",
-      "Colloid position communication",
-      "Colloid velocity communication",
-      "Colloid force calculations",
-      "Colloid calculations for updating",
-      "Colloid outputting",
-      "Extraction writing",
-      "RBC initialisation",
-      "RBC insertion",
-      "Compute node distributions",
-      "Exchange cells",
-      "Compute local velocities and post them",
-      "Receive velocities and update non local contributions",
-      "Update divide and conquer",
-      "Compute local forces and post them",
-      "Receive forces and update non local contributions",
-      "Update cell-cell and cell-wall interactions",
-      "Remove cells",
-      "Notify cell listeners",
-      "Create graph communicator"
-    };
+    template<class ClockPolicy>
+    const std::string TimersBase<ClockPolicy>::timerNames[TimersBase<ClockPolicy>::numberOfTimers] =
+            { "Total",
+              "Seed Decomposition",
+              "Domain Decomposition",
+              "File Read",
+              "Re Read",
+              "Unzip",
+              "Moves",
+              "Parmetis",
+              "Lattice Data initialisation",
+              "Lattice Boltzmann",
+              "LB calc only",
+              "Monitoring",
+              "MPI Send",
+              "MPI Wait",
+              "Simulation total",
+              "Reading communications",
+              "Parsing",
+              "Read IO",
+              "Read Blocks prelim",
+              "Read blocks all",
+              "Move Forcing Counts",
+              "Move Forcing Data",
+              "Block Requirements",
+              "Move Counts Sending",
+              "Move Data Sending",
+              "Populating moves list for decomposition optimisation",
+              "Initial geometry reading",
+              "Colloid initialisation",
+              "Colloid position communication",
+              "Colloid velocity communication",
+              "Colloid force calculations",
+              "Colloid calculations for updating",
+              "Colloid outputting",
+              "Extraction writing",
+              "RBC initialisation",
+              "RBC insertion",
+              "Compute node distributions",
+              "Exchange cells",
+              "Compute local velocities and post them",
+              "Receive velocities and update non local contributions",
+              "Update divide and conquer",
+              "Compute local forces and post them",
+              "Receive forces and update non local contributions",
+              "Update cell-cell and cell-wall interactions",
+              "Remove cells",
+              "Notify cell listeners",
+              "Create graph communicator"
+            };
 }
 
 #endif //HEMELB_REPORTING_TIMERS_H

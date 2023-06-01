@@ -24,7 +24,7 @@ namespace hemelb::tests
       using MasterSim = SimulationMaster<MyTraits>;
 
     public:
-      CellIntegrationTests() : FolderTestFixture(), timings(Comms()) {
+      CellIntegrationTests() : FolderTestFixture(), timings() {
 	CopyResourceToTempdir("red_blood_cell.txt");
 	TiXmlDocument doc(resources::Resource("large_cylinder.xml").Path());
 	CopyResourceToTempdir("large_cylinder.xml");
