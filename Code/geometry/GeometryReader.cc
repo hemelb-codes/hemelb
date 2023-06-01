@@ -333,7 +333,7 @@ namespace hemelb::geometry
       net::Net net = net::Net(computeComms);
       Needs needs(geometry.GetBlockCount(),
                   readBlock,
-                  util::NumericalFunctions::min(READING_GROUP_SIZE, computeComms.Size()),
+                  std::min(READING_GROUP_SIZE, computeComms.Size()),
                   net,
                   ShouldValidate());
 
@@ -602,8 +602,7 @@ namespace hemelb::geometry
 
     proc_t GeometryReader::GetReadingCoreForBlock(site_t blockNumber)
     {
-      return proc_t(blockNumber
-          % util::NumericalFunctions::min(READING_GROUP_SIZE, computeComms.Size()));
+        return proc_t(blockNumber % std::min(READING_GROUP_SIZE, computeComms.Size()));
     }
 
     /**
