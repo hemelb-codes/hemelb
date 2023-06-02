@@ -92,7 +92,7 @@ namespace hemelb
           blockTraverser.CurrentLocationValid(); blockTraverser.TraverseOne())
       {
         util::Vector3D<site_t> globalLocationForBlock = blockTraverser.GetCurrentLocation()
-            * gmyResult.GetBlockSize();
+            * site_t(gmyResult.GetBlockSize());
 
         // if block has sites
         site_t blockId = blockTraverser.GetCurrentIndex();
@@ -186,8 +186,8 @@ namespace hemelb
             site_t* blockIdForSite, site_t* localSiteIdForSite, proc_t* ownerRankForSite)
     {
       // obtain block information (3D location vector and 1D id number) for the site
-      util::Vector3D<site_t> blockLocationForSite = globalLocationForSite
-          / gmyResult.GetBlockSize();
+      Vec16 blockLocationForSite(globalLocationForSite
+          / gmyResult.GetBlockSize());
       // check for global location being outside the simulation entirely
       if (!gmyResult.AreBlockCoordinatesValid(blockLocationForSite))
         return false;
