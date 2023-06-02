@@ -15,6 +15,7 @@
 #include "reporting/Reporter.h"
 #include "reporting/Timers.h"
 #include "reporting/Timers.hpp"
+#include "util/Iterator.h"
 
 #include "tests/helpers/FourCubeLatticeData.h"
 #include "tests/helpers/HasCommsTestFixture.h"
@@ -71,8 +72,8 @@ namespace hemelb::tests
         auto CheckTimingsTable = [&]() {
             std::stringstream expectation;
             expectation << std::setprecision(3);
-            for (unsigned int row = 0; row < Timers::numberOfTimers; row++) {
-                expectation << "N" << TimersMock::timerNames[row] << "L" << row * 10.0 << "MI" << row * 15.0 << "ME"
+            for (auto [row, t]: util::enumerate(mockTimers)) {
+                expectation << "N" << t.Description() << "L" << row * 10.0 << "MI" << row * 15.0 << "ME"
                             << row * 2.0 << "MA" << row * 5.0 << " " << std::flush;
             }
             AssertTemplate(expectation.str(), "{{#TIMER}}N{{NAME}}L{{LOCAL}}MI{{MIN}}ME{{MEAN}}MA{{MAX}} {{/TIMER}}");
@@ -86,10 +87,10 @@ namespace hemelb::tests
 
         SECTION("TestMainReport") {
             // Mock up some timings
-            for (unsigned int i = 0; i < Timers::numberOfTimers; i++) {
+            for (auto [i, t]: util::enumerate(mockTimers)) {
                 for (unsigned int j = 0; j < i; j++) {
-                    mockTimers[i].Start();
-                    mockTimers[i].Stop();
+                    t.Start();
+                    t.Stop();
                 }
             }
             mockTimers.Reduce(mockComms); // invoke the Timers MPI mock

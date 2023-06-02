@@ -135,7 +135,7 @@ namespace hemelb::configuration {
                 actors_to_register_for_phase.emplace_back(p.get(), i);
         };
 
-        timings[reporting::Timers::latDatInitialise].Start();
+        timings.latDatInitialise().Start();
         // Use a reader to read in the file.
         log::Logger::Log<log::Info, log::Singleton>("Loading and decomposing geometry file %s.", config.GetDataFilePath().c_str());
         auto readGeometryData = ReadGmy(lat_info, timings, ioComms);
@@ -147,7 +147,7 @@ namespace hemelb::configuration {
         log::Logger::Log<log::Info, log::Singleton>("Initialising field data.");
         control.fieldData = std::make_shared<geometry::FieldData>(control.domainData);
         things_to_report.push_back(control.domainData.get());
-        timings[reporting::Timers::latDatInitialise].Stop();
+        timings.latDatInitialise().Stop();
 
         log::Logger::Log<log::Info, log::Singleton>("Initialising neighbouring data manager.");
         auto ndm =

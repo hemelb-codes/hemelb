@@ -19,12 +19,12 @@ namespace hemelb::util
     protected:
         WrappedIterT first;
         WrappedIterT last;
-
+        using WrappedRefT = std::iter_reference_t<WrappedIterT>;
         //! Holds info about enumeration
         struct EnumerateItem
         {
             CounterT index;
-            typename WrappedIterT::reference value;
+            WrappedRefT value;
         };
 
     public:
@@ -74,9 +74,13 @@ namespace hemelb::util
 
     //! Ranged-for loops with enumeration
     template<class C>
-    auto enumerate(C&& c) -> Enumerate<decltype(begin(std::forward<C>(c)))>
+    auto enumerate(C&& c)
     {
-      return {begin(std::forward<C>(c)), end(std::forward<C>(c))};
+        using namespace std;
+        auto b = begin(std::forward<C>(c));
+        auto e = end(std::forward<C>(c));
+        using IterT = decltype(b);
+        return Enumerate<IterT>(b, e);
     }
 
     //! Ranged-for loops with enumeration

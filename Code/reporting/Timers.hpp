@@ -15,13 +15,15 @@ namespace hemelb::reporting
     void TimersBase<ClockPolicy>::Reduce(Communicator &&comm)
     {
         n_processes = comm.Size();
-        std::vector<double> timings(numberOfTimers);
+        DArray timings;
         for (unsigned int i = 0; i < numberOfTimers; i++)
             timings[i] = timers[i].Get();
 
-        maxes = comm.Reduce(timings, MPI_MAX, 0);
-        means = comm.Reduce(timings, MPI_SUM, 0);
-        mins =  comm.Reduce(timings, MPI_MIN, 0);
+        using span = std::span<double, numberOfTimers>;
+        using cspan = std::span<double const, numberOfTimers>;
+        comm.Reduce(span(maxes), cspan(timings), MPI_MAX, 0);
+        comm.Reduce(span(means), cspan(timings), MPI_SUM, 0);
+        comm.Reduce(span(mins), cspan(timings), MPI_MIN, 0);
 
         for (auto& m: means)
             m /= n_processes;
@@ -35,7 +37,7 @@ namespace hemelb::reporting
       for (unsigned int ii = 0; ii < numberOfTimers; ii++)
       {
         Dict timer = dictionary.AddSectionDictionary("TIMER");
-        timer.SetValue("NAME", timerNames[ii]);
+        timer.SetValue("NAME", timers[ii].description);
         timer.SetFormattedValue("LOCAL", "%.3g", timers[ii].Get());
         timer.SetFormattedValue("MIN", "%.3g", Mins()[ii]);
         timer.SetFormattedValue("MEAN", "%.3g", Means()[ii]);

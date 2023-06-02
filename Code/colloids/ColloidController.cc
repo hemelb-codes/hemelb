@@ -19,9 +19,9 @@ namespace hemelb
   {
     const void ColloidController::OutputInformation(const LatticeTimeStep timestep) const
     {
-      timers[reporting::Timers::colloidOutput].Start();
+      timers.colloidOutput().Start();
       particleSet->OutputInformation(timestep);
-      timers[reporting::Timers::colloidOutput].Stop();
+      timers.colloidOutput().Stop();
     }
 
     // destructor
@@ -246,11 +246,11 @@ namespace hemelb
     {
       // communication from step 2
       log::Logger::Log<log::Debug, log::OnePerCore>("Communicating colloid particle positions");
-      timers[reporting::Timers::colloidCommunicatePositions].Start();
+      timers.colloidCommunicatePositions().Start();
       particleSet->CommunicateParticlePositions();
-      timers[reporting::Timers::colloidCommunicatePositions].Stop();
+      timers.colloidCommunicatePositions().Stop();
 
-      timers[reporting::Timers::colloidCalculateForces].Start();
+      timers.colloidCalculateForces().Start();
       log::Logger::Log<log::Debug, log::OnePerCore>("Calculating colloid body forces");
       // step 3
       particleSet->CalculateBodyForces();
@@ -258,7 +258,7 @@ namespace hemelb
       log::Logger::Log<log::Debug, log::OnePerCore>("Calculating feedback forces for colloids");
       // steps 1 & 4 combined
       particleSet->CalculateFeedbackForces();
-      timers[reporting::Timers::colloidCalculateForces].Stop();
+      timers.colloidCalculateForces().Stop();
       // steps 5 and 8 performed by LBM actor
     }
 
@@ -267,27 +267,27 @@ namespace hemelb
       const LatticeTimeStep currentTimestep = simulationState.GetTimeStep();
 
       // step 6
-      timers[reporting::Timers::colloidUpdateCalculations].Start();
+      timers.colloidUpdateCalculations().Start();
       log::Logger::Log<log::Debug, log::OnePerCore>("Interpolating fluid velocities for colloids");
       particleSet->InterpolateFluidVelocity();
-      timers[reporting::Timers::colloidUpdateCalculations].Stop();
+      timers.colloidUpdateCalculations().Stop();
 
       // communication from step 6
       log::Logger::Log<log::Debug, log::OnePerCore>("Communicating fluid velocities for colloids");
-      timers[reporting::Timers::colloidCommunicateVelocities].Start();
+      timers.colloidCommunicateVelocities().Start();
       particleSet->CommunicateFluidVelocities();
-      timers[reporting::Timers::colloidCommunicateVelocities].Stop();
+      timers.colloidCommunicateVelocities().Stop();
 
       // extra step (not in original design)
       log::Logger::Log<log::Debug, log::OnePerCore>("Apply boundary conditions for colloids");
-      timers[reporting::Timers::colloidUpdateCalculations].Start();
+      timers.colloidUpdateCalculations().Start();
       particleSet->ApplyBoundaryConditions(currentTimestep);
 
       // steps 7 & 2 combined
       log::Logger::Log<log::Debug, log::OnePerCore>("Updating colloid positions");
       particleSet->UpdatePositions();
 
-      timers[reporting::Timers::colloidUpdateCalculations].Stop();
+      timers.colloidUpdateCalculations().Stop();
     }
 
   }
