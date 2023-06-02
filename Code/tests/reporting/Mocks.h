@@ -17,17 +17,33 @@ namespace hemelb::tests
 {
     class ClockMock {
     public:
-      ClockMock() = default;
-      double operator()();
+        double operator()() {
+            fakeTime += 10.0;
+            return fakeTime;
+        }
+
     private:
-      double fakeTime = 0.0;
+        double fakeTime = 0.0;
     };
 
     class MPICommsMock {
         unsigned calls = 1;
     public:
-        int Size() const;
-        std::vector<double> Reduce(std::vector<double> const&, MPI_Op, int root);
+        inline int Size() const {
+            return 5;
+        }
+
+        template <std::size_t N = std::dynamic_extent>
+        void Reduce(std::span<double, N> recvbuf, std::span<double const, N> sendbuf, MPI_Op, int root) {
+            auto const count = sendbuf.size();
+            //REQUIRE(reporting::Timers::numberOfTimers == count);
+
+            for (int i = 0; i < count; i++) {
+                REQUIRE(10.0 * i == sendbuf[i]);
+                recvbuf[i] = 5.0 * i * calls;
+            }
+            calls++;
+        }
     };
 }
 

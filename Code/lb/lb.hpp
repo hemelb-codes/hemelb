@@ -161,7 +161,7 @@ namespace hemelb::lb
     template<class TRAITS>
     void LBM<TRAITS>::RequestComms()
     {
-      timings[hemelb::reporting::Timers::lb].Start();
+      timings.lb().Start();
 
       // Delegate to the lattice data object to post the asynchronous sends and receives
       // (via the Net object).
@@ -169,14 +169,14 @@ namespace hemelb::lb
       // to include them in the ISends and IRecvs that happen later.
       mLatDat->SendAndReceive(mNet);
 
-      timings[hemelb::reporting::Timers::lb].Stop();
+      timings.lb().Stop();
     }
 
     template<class TRAITS>
     void LBM<TRAITS>::PreSend()
     {
-      timings[hemelb::reporting::Timers::lb].Start();
-      timings[hemelb::reporting::Timers::lb_calc].Start();
+      timings.lb().Start();
+      timings.lb_calc().Start();
 
       /**
        * In the PreSend phase, we do LB on all the sites that need to have results sent to
@@ -207,15 +207,15 @@ namespace hemelb::lb
 
       StreamAndCollide(*mOutletWallCollision, offset, dom.GetDomainEdgeCollisionCount(5));
 
-      timings[hemelb::reporting::Timers::lb_calc].Stop();
-      timings[hemelb::reporting::Timers::lb].Stop();
+      timings.lb_calc().Stop();
+      timings.lb().Stop();
     }
 
     template<class TRAITS>
     void LBM<TRAITS>::PreReceive()
     {
-      timings[hemelb::reporting::Timers::lb].Start();
-      timings[hemelb::reporting::Timers::lb_calc].Start();
+      timings.lb().Start();
+      timings.lb_calc().Start();
 
       /**
        * In the PreReceive phase, we perform LB for all the sites whose neighbours lie on this
@@ -246,14 +246,14 @@ namespace hemelb::lb
 
       StreamAndCollide(*mOutletWallCollision, offset, dom.GetMidDomainCollisionCount(5));
 
-      timings[hemelb::reporting::Timers::lb_calc].Stop();
-      timings[hemelb::reporting::Timers::lb].Stop();
+      timings.lb_calc().Stop();
+      timings.lb().Stop();
     }
 
     template<class TRAITS>
     void LBM<TRAITS>::PostReceive()
     {
-      timings[hemelb::reporting::Timers::lb].Start();
+      timings.lb().Start();
 
       // Copy the distribution functions received from the neighbouring
       // processors into the destination buffer "f_new".
@@ -264,7 +264,7 @@ namespace hemelb::lb
       // Do any cleanup steps necessary on boundary nodes
       site_t offset = dom.GetMidDomainSiteCount();
 
-      timings[hemelb::reporting::Timers::lb_calc].Start();
+      timings.lb_calc().Start();
 
       log::Logger::Log<log::Debug, log::OnePerCore>("LBM - PostReceive - StreamAndCollide");
       //TODO yup, this is horrible. If you read this, please improve the following code.
@@ -304,8 +304,8 @@ namespace hemelb::lb
 
       PostStep(*mOutletWallCollision, offset, dom.GetMidDomainCollisionCount(5));
 
-      timings[hemelb::reporting::Timers::lb_calc].Stop();
-      timings[hemelb::reporting::Timers::lb].Stop();
+      timings.lb_calc().Stop();
+      timings.lb().Stop();
     }
 
     template<class TRAITS>

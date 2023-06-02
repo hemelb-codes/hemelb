@@ -19,7 +19,7 @@ namespace hemelb::geometry::decomposition
           timers(timers), comms(comms), geometry(geometry), latticeInfo(latticeInfo),
               procForEachBlock(procForEachBlock), fluidSitesPerBlock(fluidSitesOnEachBlock)
       {
-        timers[hemelb::reporting::Timers::InitialGeometryRead].Start(); //overall dbg timing
+        timers.InitialGeometryRead().Start(); //overall dbg timing
 
         // Calculate the site distribution and validate if appropriate.
         PopulateSiteDistribution();
@@ -49,10 +49,10 @@ namespace hemelb::geometry::decomposition
 
         log::Logger::Log<log::Trace, log::OnePerCore>("Adj length %i", localAdjacencies.size());
 
-        timers[hemelb::reporting::Timers::InitialGeometryRead].Stop();
+        timers.InitialGeometryRead().Stop();
 
         // Call parmetis.
-        timers[hemelb::reporting::Timers::parmetis].Start();
+        timers.parmetis().Start();
         log::Logger::Log<log::Debug, log::OnePerCore>("Making the call to Parmetis");
 
         bool do_decomposition = true;
@@ -63,11 +63,11 @@ namespace hemelb::geometry::decomposition
         if (do_decomposition)
         {
           CallParmetis(localVertexCount);
-          timers[hemelb::reporting::Timers::parmetis].Stop();
+          timers.parmetis().Stop();
           log::Logger::Log<log::Debug, log::OnePerCore>("Parmetis has finished.");
 
           // Convert the ParMetis results into a nice format.
-          timers[hemelb::reporting::Timers::PopulateOptimisationMovesList].Start();
+          timers.PopulateOptimisationMovesList().Start();
           log::Logger::Log<log::Debug, log::OnePerCore>("Getting moves lists for this core.");
           PopulateMovesList();
         }
@@ -79,7 +79,7 @@ namespace hemelb::geometry::decomposition
 #endif
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Done getting moves lists for this core");
-        timers[hemelb::reporting::Timers::PopulateOptimisationMovesList].Stop();
+        timers.PopulateOptimisationMovesList().Stop();
       }
 
       void OptimisedDecomposition::CallParmetis(idx_t localVertexCount)
@@ -552,7 +552,7 @@ namespace hemelb::geometry::decomposition
           std::vector<idx_t>& moveData,
           std::map<proc_t, std::vector<site_t> >& blockIdsIRequireFromX)
       {
-        timers[hemelb::reporting::Timers::moveForcingNumbers].Start();
+        timers.moveForcingNumbers().Start();
 
         net::Net netForMoveSending(comms);
 
@@ -579,9 +579,9 @@ namespace hemelb::geometry::decomposition
         // Now find how many blocks are being forced upon us from every other core.
         log::Logger::Log<log::Debug, log::OnePerCore>("Moving forcing block numbers");
         std::vector<proc_t> blocksForcedOnMe = comms.AllToAll(numberOfBlocksIForceUponX);
-        timers[hemelb::reporting::Timers::moveForcingNumbers].Stop();
+        timers.moveForcingNumbers().Stop();
 
-        timers[hemelb::reporting::Timers::moveForcingData].Start();
+        timers.moveForcingData().Start();
         // Now get all the blocks being forced upon me.
         std::map<proc_t, std::vector<site_t> > blocksForcedOnMeByEachProc;
         for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.Size()))))); ++otherProc)
@@ -663,7 +663,7 @@ namespace hemelb::geometry::decomposition
 
         }
 
-        timers[hemelb::reporting::Timers::moveForcingData].Stop();
+        timers.moveForcingData().Stop();
       }
 
       void OptimisedDecomposition::GetBlockRequirements(
@@ -673,7 +673,7 @@ namespace hemelb::geometry::decomposition
           std::map<proc_t, std::vector<site_t> >& blockIdsXRequiresFromMe)
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Calculating block requirements");
-        timers[hemelb::reporting::Timers::blockRequirements].Start();
+        timers.blockRequirements().Start();
         // Populate numberOfBlocksRequiredFrom
         for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.Size()))))); ++otherProc)
         {
@@ -702,7 +702,7 @@ namespace hemelb::geometry::decomposition
           netForMoveSending.RequestSendV(std::span<site_t const>(blockIdsIRequireFromX[otherProc]), otherProc);
         }
         netForMoveSending.Dispatch();
-        timers[hemelb::reporting::Timers::blockRequirements].Stop();
+        timers.blockRequirements().Stop();
       }
 
       void OptimisedDecomposition::ShareMoveCounts(
@@ -713,7 +713,7 @@ namespace hemelb::geometry::decomposition
           std::map<proc_t, std::vector<site_t> >& blockIdsIRequireFromX,
           std::vector<idx_t>& movesForEachBlockWeCareAbout)
       {
-        timers[hemelb::reporting::Timers::moveCountsSending].Start();
+        timers.moveCountsSending().Start();
         // Initialise the moves for each local block to 0. This handles an edge case where a local
         // block has no moves.
         for (site_t blockId = 0; blockId < geometry.GetBlockCount(); ++blockId)
@@ -780,7 +780,7 @@ namespace hemelb::geometry::decomposition
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Sending move counts");
         netForMoveSending.Dispatch();
-        timers[hemelb::reporting::Timers::moveCountsSending].Stop();
+        timers.moveCountsSending().Stop();
       }
 
       void OptimisedDecomposition::ShareMoveData(
@@ -789,7 +789,7 @@ namespace hemelb::geometry::decomposition
           std::map<proc_t, std::vector<site_t> > blockIdsXRequiresFromMe,
           std::map<site_t, std::vector<idx_t> > moveDataForEachBlock)
       {
-        timers[hemelb::reporting::Timers::moveDataSending].Start();
+        timers.moveDataSending().Start();
         idx_t totalMovesToReceive = 0;
         for (site_t blockId = 0; blockId < geometry.GetBlockCount(); ++blockId)
         {
@@ -843,7 +843,7 @@ namespace hemelb::geometry::decomposition
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Sending move data");
         netForMoveSending.Dispatch();
-        timers[hemelb::reporting::Timers::moveDataSending].Stop();
+        timers.moveDataSending().Stop();
       }
 
       /**

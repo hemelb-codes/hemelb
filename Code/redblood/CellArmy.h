@@ -106,7 +106,7 @@ namespace hemelb
         //! Calls cell insertion
         void CallCellInsertion()
         {
-          timings[hemelb::reporting::Timers::cellInsertion].Start();
+          timings.cellInsertion().Start();
           if (cellInsertionCallBack)
           {
             auto callback = [this](CellContainer::value_type cell)
@@ -115,7 +115,7 @@ namespace hemelb
             };
             cellInsertionCallBack(callback);
           }
-          timings[hemelb::reporting::Timers::cellInsertion].Stop();
+          timings.cellInsertion().Stop();
         }
 
         //! Adds a cell change listener to be notified when cell positions change
@@ -127,12 +127,12 @@ namespace hemelb
         //! Invokes the callback function to output cell positions
         void NotifyCellChangeListeners()
         {
-          timings[hemelb::reporting::Timers::cellListeners].Start();
+          timings.cellListeners().Start();
           for (CellChangeListener ccl : cellChangeListeners)
           {
             ccl(cells);
           }
-          timings[hemelb::reporting::Timers::cellListeners].Stop();
+          timings.cellListeners().Stop();
         }
 
         //! Sets outlets within which cells disappear
@@ -212,7 +212,7 @@ namespace hemelb
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Fluid -> cell interations");
 
-      timings[hemelb::reporting::Timers::exchangeCells].Start();
+      timings.exchangeCells().Start();
       auto ownership = [this](CellContainer::value_type cell)
       {
         auto owner = nodeDistributions.at(cell->GetTag()).DominantAffectedProc();
@@ -231,21 +231,21 @@ namespace hemelb
       exchangeCells.Update(nodeDistributions,
                            distCells,
                            parallel::details::AssessMPIFunction<Stencil>(globalCoordsToProcMap));
-      timings[hemelb::reporting::Timers::exchangeCells].Stop();
+      timings.exchangeCells().Stop();
 
       // Actually perform velocity integration
-      timings[hemelb::reporting::Timers::computeAndPostVelocities].Start();
+      timings.computeAndPostVelocities().Start();
       velocityIntegrator.PostMessageLength(std::get<2>(distCells));
       velocityIntegrator.ComputeLocalVelocitiesAndUpdatePositions<TRAITS>(fieldData, cells);
       velocityIntegrator.PostVelocities<TRAITS>(fieldData, std::get<2>(distCells));
-      timings[hemelb::reporting::Timers::computeAndPostVelocities].Stop();
+      timings.computeAndPostVelocities().Stop();
 
-      timings[hemelb::reporting::Timers::receiveVelocitiesAndUpdate].Start();
+      timings.receiveVelocitiesAndUpdate().Start();
       velocityIntegrator.UpdatePositionsNonLocal(nodeDistributions, cells);
-      timings[hemelb::reporting::Timers::receiveVelocitiesAndUpdate].Stop();
+      timings.receiveVelocitiesAndUpdate().Stop();
 
       // Positions have changed: update node distributions
-      timings[hemelb::reporting::Timers::computeNodeDistributions].Start();
+      timings.computeNodeDistributions().Start();
       for (auto cell : cells)
       {
         try
@@ -265,14 +265,14 @@ namespace hemelb
           throw;
         }
       }
-      timings[hemelb::reporting::Timers::computeNodeDistributions].Stop();
+      timings.computeNodeDistributions().Stop();
 
       // Positions have changed: update Divide and Conquer stuff
       log::Logger::Log<log::Debug, log::OnePerCore>("Number of lent cells: %i",
                                                     std::get<2>(distCells).size());
-      timings[hemelb::reporting::Timers::updateDNC].Start();
+      timings.updateDNC().Start();
       cellDnC.update(distCells);
-      timings[hemelb::reporting::Timers::updateDNC].Stop();
+      timings.updateDNC().Stop();
       lentCells = std::move(std::get<2>(distCells));
     }
 
@@ -282,28 +282,28 @@ namespace hemelb
       log::Logger::Log<log::Debug, log::OnePerCore>("Cell -> fluid interations");
       fieldData.ResetForces();
 
-      timings[hemelb::reporting::Timers::computeAndPostForces].Start();
+      timings.computeAndPostForces().Start();
       forceSpreader.PostMessageLength(nodeDistributions, cells);
       forceSpreader.ComputeForces(cells);
       forceSpreader.PostForcesAndNodes(nodeDistributions, cells);
       forceSpreader.SpreadLocalForces<TRAITS>(fieldData, cells);
-      timings[hemelb::reporting::Timers::computeAndPostForces].Stop();
+      timings.computeAndPostForces().Stop();
 
-      timings[hemelb::reporting::Timers::receiveForcesAndUpdate].Start();
+      timings.receiveForcesAndUpdate().Start();
       forceSpreader.SpreadNonLocalForces<TRAITS>(fieldData);
-      timings[hemelb::reporting::Timers::receiveForcesAndUpdate].Stop();
+      timings.receiveForcesAndUpdate().Stop();
 
       //! @todo Any changes required for these lines when running in parallel?
-      timings[hemelb::reporting::Timers::updateCellAndWallInteractions].Start();
+      timings.updateCellAndWallInteractions().Start();
       addCell2CellInteractions<Stencil>(cellDnC, cell2Cell, fieldData);
       addCell2WallInteractions<Stencil>(cellDnC, wallDnC, cell2Wall, fieldData);
-      timings[hemelb::reporting::Timers::updateCellAndWallInteractions].Stop();
+      timings.updateCellAndWallInteractions().Stop();
     }
 
     template<class TRAITS>
     void CellArmy<TRAITS>::CellRemoval()
     {
-      timings[hemelb::reporting::Timers::cellRemoval].Start();
+      timings.cellRemoval().Start();
       auto i_first = cells.cbegin();
       auto const i_end = cells.cend();
       while (i_first != i_end)
@@ -329,7 +329,7 @@ namespace hemelb
           assert(numErased == 1);
         }
       }
-      timings[hemelb::reporting::Timers::cellRemoval].Stop();
+      timings.cellRemoval().Stop();
     }
 
     template<class TRAITS>

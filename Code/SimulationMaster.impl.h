@@ -46,7 +46,7 @@ namespace hemelb
             communicationNet(ioComms)
     {
         // Start the main timer!
-        timings[reporting::Timers::total].Start();
+        timings.total().Start();
 
         fileManager = std::make_shared<io::PathManager>(options,
                                                                 IsCurrentProcTheIOProc(),
@@ -132,7 +132,7 @@ namespace hemelb
   void SimulationMaster<TRAITS>::RunSimulation()
   {
     log::Logger::Log<log::Info, log::Singleton>("Beginning to run simulation.");
-    timings[reporting::Timers::simulation].Start();
+    timings.simulation().Start();
 
     while (simulationState->GetTimeStep() <= simulationState->GetTotalTimeSteps())
     {
@@ -143,14 +143,14 @@ namespace hemelb
       }
     }
 
-    timings[reporting::Timers::simulation].Stop();
+    timings.simulation().Stop();
     Finalise();
   }
 
   template<class TRAITS>
   void SimulationMaster<TRAITS>::Finalise()
   {
-    timings[reporting::Timers::total].Stop();
+    timings.total().Stop();
     timings.Reduce(ioComms);
 
     if (IsCurrentProcTheIOProc())
