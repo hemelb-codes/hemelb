@@ -40,7 +40,7 @@ namespace hemelb
             ! (bcNode == io::xml::Element::Missing());
             bcNode = bcNode.NextSiblingOrNull(boundaryConditionClass))
         {
-          const std::string& appliesTo = bcNode.GetAttributeOrThrow("appliesTo");
+          auto appliesTo = bcNode.GetAttributeOrThrow("appliesTo");
           BoundaryCondition* nextBC = createFunction(bcNode);
           if (appliesTo == "wall")
             BoundaryConditions::boundaryConditionsWall.push_back(nextBC);
@@ -91,8 +91,7 @@ namespace hemelb
         return keep;
       }
 
-      const lb::lattices::LatticeInfo latticeInfo =
-          BoundaryConditions::latticeData->GetLatticeInfo();
+      auto& latticeInfo = BoundaryConditions::latticeData->GetLatticeInfo();
       const geometry::Site<const geometry::Domain> site =
           latticeData->GetSite(localContiguousId);
       const geometry::SiteData siteData = site.GetSiteData();
