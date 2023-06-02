@@ -79,7 +79,7 @@ namespace hemelb::geometry
 
     GmyReadResult GeometryReader::LoadAndDecompose(const std::string& dataFilePath)
     {
-        timings[reporting::Timers::fileRead].Start();
+        timings.fileRead().Start();
 
         // Open the file for read on node leaders
         if (computeComms.AmNodeLeader()) {
@@ -93,10 +93,10 @@ namespace hemelb::geometry
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Reading file header");
         ReadHeader(geometry.GetBlockCount());
-        timings[reporting::Timers::fileRead].Stop();
+        timings.fileRead().Stop();
 
         {
-            timings[reporting::Timers::initialDecomposition].Start();
+            timings.initialDecomposition().Start();
             principalProcForEachBlock.resize(geometry.GetBlockCount());
 
             log::Logger::Log<log::Info, log::Singleton>("Creating block-level octree");
@@ -131,10 +131,10 @@ namespace hemelb::geometry
                 basicDecomposer.Validate(principalProcForEachBlock, computeComms);
             }
 
-            timings[reporting::Timers::initialDecomposition].Stop();
+            timings.initialDecomposition().Stop();
         }
 
-        timings[reporting::Timers::fileRead].Start();
+        timings.fileRead().Start();
         {
           std::vector<U64> blocks_wanted;
           blocks_wanted.reserve((2*nFluidBlocks) / computeComms.Size());
@@ -147,10 +147,10 @@ namespace hemelb::geometry
         if constexpr (build_info::VALIDATE_GEOMETRY) {
             ValidateGeometry(geometry);
         }
-        timings[reporting::Timers::fileRead].Stop();
+        timings.fileRead().Stop();
 
         log::Logger::Log<log::Info, log::Singleton>("Optimising the domain decomposition.");
-        timings[reporting::Timers::domainDecomposition].Start();
+        timings.domainDecomposition().Start();
 
         // Having done an initial decomposition of the geometry, and read in the data, we optimise the
         // domain decomposition.
@@ -163,7 +163,7 @@ namespace hemelb::geometry
             ValidateGeometry(geometry);
         }
 
-        timings[reporting::Timers::domainDecomposition].Stop();
+        timings.domainDecomposition().Stop();
 
         return geometry;
     }
@@ -428,7 +428,7 @@ namespace hemelb::geometry
                                               const std::vector<U64>& blocksWanted)
     {
       // Create a list of which blocks to read in.
-      timings[reporting::Timers::readBlocksPrelim].Start();
+      timings.readBlocksPrelim().Start();
 
       // Populate the list of blocks to read (including a halo one block wide around all
       // local blocks).
@@ -464,13 +464,14 @@ namespace hemelb::geometry
       for (auto& [gmy_idx, data]: compressed_block_data) {
         DeserialiseBlock(geometry, data, gmy_idx);
       }
+      timings.readBlocksPrelim().Stop();
     }
 
     void GeometryReader::DeserialiseBlock(
         GmyReadResult& geometry, std::vector<char> const& compressedBlockData,
         site_t block_gmy
     ) {
-        timings[reporting::Timers::readParse].Start();
+        timings.readParse().Start();
         // Create an Xdr interpreter.
         auto blockData = DecompressBlockData(compressedBlockData,
                                              bytesPerUncompressedBlock[block_gmy]);
@@ -498,13 +499,13 @@ namespace hemelb::geometry
                                                           numSitesRead);
           }
         }
-      timings[reporting::Timers::readParse].Stop();
+      timings.readParse().Stop();
     }
 
     std::vector<char> GeometryReader::DecompressBlockData(const std::vector<char>& compressed,
                                                           const unsigned int uncompressedBytes)
     {
-      timings[reporting::Timers::unzip].Start();
+      timings.unzip().Start();
       // For zlib return codes.
       int ret;
 
@@ -535,7 +536,7 @@ namespace hemelb::geometry
       if (ret != Z_OK)
         throw Exception() << "Decompression error for block";
 
-      timings[reporting::Timers::unzip].Stop();
+      timings.unzip().Stop();
       return uncompressed;
     }
 
@@ -791,22 +792,22 @@ namespace hemelb::geometry
                                                       geometry,
                                                       latticeInfo);
 
-      timings[reporting::Timers::reRead].Start();
+      timings.reRead().Start();
       log::Logger::Log<log::Debug, log::OnePerCore>("Rereading blocks");
       // Reread the blocks based on the ParMetis decomposition.
       RereadBlocks(geometry,
                    optimiser.GetStaying(),
                    optimiser.GetArriving());
-      timings[reporting::Timers::reRead].Stop();
+      timings.reRead().Stop();
 
-      timings[reporting::Timers::moves].Start();
+      timings.moves().Start();
       // Implement the decomposition now that we have read the necessary data.
       log::Logger::Log<log::Debug, log::OnePerCore>("Implementing moves");
       ImplementMoves(geometry,
                      optimiser.GetStaying(),
                      optimiser.GetArriving(),
                      optimiser.GetLeaving());
-      timings[reporting::Timers::moves].Stop();
+      timings.moves().Stop();
     }
 
     // The header section of the config file contains a number of records.

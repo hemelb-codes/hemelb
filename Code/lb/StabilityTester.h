@@ -90,8 +90,7 @@ namespace hemelb::lb
          */
         void PostSendToParent(unsigned long splayNumber) override
         {
-          timings[hemelb::reporting::Timers::monitoring].Start();
-
+          timings.monitoring().Start();
           // No need to bother testing out local lattice points if we're going to be
           // sending up a 'Unstable' value anyway.
           if (mUpwardsStability != Unstable)
@@ -145,7 +144,7 @@ namespace hemelb::lb
             }
           }
 
-          timings[hemelb::reporting::Timers::monitoring].Stop();
+          timings.monitoring().Stop();
         }
 
         using span = typename LatticeType::const_span;
@@ -196,7 +195,7 @@ namespace hemelb::lb
          */
         void PostReceiveFromChildren(unsigned long splayNumber) override
         {
-          timings[hemelb::reporting::Timers::monitoring].Start();
+          timings.monitoring().Start();
 
           // No need to test children's stability if this node is already unstable.
           if (mUpwardsStability != Unstable)
@@ -238,7 +237,7 @@ namespace hemelb::lb
             }
           }
 
-          timings[hemelb::reporting::Timers::monitoring].Stop();
+          timings.monitoring().Stop();
         }
 
         /**

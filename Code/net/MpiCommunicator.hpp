@@ -60,6 +60,11 @@ namespace hemelb::net
       HEMELB_MPI_CALL(MPI_Reduce, (&val, &ans, 1, MpiDataType<T>(), op, root, *this));
       return ans;
     }
+    template<typename T, std::size_t N>
+    void MpiCommunicator::Reduce(std::span<T, N> dest, std::span<const T, N> vals, const MPI_Op& op, const int root) const
+    {
+        HEMELB_MPI_CALL(MPI_Reduce, (vals.data(), dest.data(), vals.size(), MpiDataType<T>(), op, root, *this));
+    }
 
     template<typename T>
     std::vector<T> MpiCommunicator::Reduce(const std::vector<T>& vals, const MPI_Op& op,

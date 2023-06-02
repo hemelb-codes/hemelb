@@ -8,6 +8,7 @@
 #include "reporting/Timers.h"
 #include "reporting/Timers.hpp"
 
+#include "util/Iterator.h"
 #include "tests/reporting/Mocks.h"
 #include "tests/helpers/HasCommsTestFixture.h"
 
@@ -50,31 +51,32 @@ namespace hemelb::tests
         auto timers = TimersBase<ClockMock>();
 
         SECTION("TestInitialization") {
-            REQUIRE(Approx(0.0) == timers[Timers::total].Get());
-            for (unsigned int i = 0; i < Timers::numberOfTimers; i++) {
-                REQUIRE(Approx(0.0) == timers[i].Get());
+            REQUIRE(Approx(0.0) == timers.total().Get());
+            for (auto& t: timers) {
+                REQUIRE(Approx(0.0) == t.Get());
             }
         }
 
         SECTION("TestTimersSeparate") {
-            for (unsigned int i = 0; i < Timers::numberOfTimers; i++) {
+            for (auto [i, t]: util::enumerate(timers)) {
                 for (unsigned int j = 0; j < i; j++) {
-                    timers[i].Start();
-                    timers[i].Stop();
+                    t.Start();
+                    t.Stop();
                 }
             }
-            for (unsigned int i = 0; i < Timers::numberOfTimers; i++) {
-                REQUIRE(Approx(10.0 * i) == timers[i].Get());
+            for (auto [i, t]: util::enumerate(timers)) {
+                REQUIRE(Approx(10.0 * i) == t.Get());
             }
         }
 
         SECTION("TestReduce") {
-            for (unsigned int i = 0; i < Timers::numberOfTimers; i++) {
+            for (auto [i, t]: util::enumerate(timers)) {
                 for (unsigned int j = 0; j < i; j++) {
-                    timers[i].Start();
-                    timers[i].Stop();
+                    t.Start();
+                    t.Stop();
                 }
             }
+
             timers.Reduce(MPICommsMock()); // trigger the mock
             for (unsigned int i = 0; i < Timers::numberOfTimers; i++) {
                 REQUIRE(Approx(i * 5.0) == timers.Maxes()[i]);
