@@ -16,7 +16,7 @@
 #include <tinyxml.h>
 
 #include "resources/Resource.h"
-#include "util/utilityFunctions.h"
+#include "util/clock.h"
 
 namespace fs = std::filesystem;
 
@@ -94,7 +94,7 @@ namespace hemelb::tests::helpers
 
     namespace {
         std::int64_t HackyUUID() {
-            static std::int32_t uuid[2] = {getpid(), std::int32_t(util::myClock() * 100000)};
+            static std::int32_t uuid[2] = {getpid(), std::int32_t(util::clock() * 100000)};
             ++uuid[1];
             return *reinterpret_cast<std::int64_t*>(uuid);
         }

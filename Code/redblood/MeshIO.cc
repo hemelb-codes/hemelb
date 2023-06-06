@@ -15,6 +15,7 @@
 #include <vtkXMLPolyDataReader.h>
 #include <vtkXMLPolyDataWriter.h>
 
+#include "log/Logger.h"
 #include "redblood/Cell.h"
 #include "redblood/CellBase.h"
 #include "redblood/CellEnergy.h"

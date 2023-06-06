@@ -16,7 +16,7 @@
 #include <fstream>
 #include "net/mpi.h"
 #include "net/IOCommunicator.h"
-#include "util/utilityFunctions.h"
+#include "util/numerical.h"
 
 namespace hemelb::reporting
 {

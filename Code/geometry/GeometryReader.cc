@@ -20,7 +20,7 @@
 #include "net/IOCommunicator.h"
 #include "log/Logger.h"
 #include "util/span.h"
-#include "util/utilityFunctions.h"
+#include "util/numerical.h"
 #include "util/Iterator.h"
 #include "constants.h"
 

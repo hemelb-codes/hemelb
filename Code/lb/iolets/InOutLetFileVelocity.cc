@@ -8,7 +8,7 @@
 #include <fstream>
 #include "hassert.h"
 #include "log/Logger.h"
-#include "util/utilityFunctions.h"
+#include "util/numerical.h"
 #include "configuration/SimConfig.h"
 #include <cmath>
 
@@ -23,6 +23,47 @@ namespace hemelb::lb
     {
         InOutLet* copy = new InOutLetFileVelocity(*this);
         return copy;
+    }
+
+    template<typename T>
+    T LinearInterpolate(std::vector<T> const& xVector, std::vector<T> const& yVector, T targetX)
+    {
+        int lowerIndex = 0;
+
+        if (log::Logger::ShouldDisplay<log::Debug>())
+        {
+            if (targetX < xVector[0] || targetX > xVector[xVector.size() - 1])
+            {
+                log::Logger::Log<log::Warning, log::OnePerCore>("Linear Interpolation beyond bounds: %f is not between %f and %f",
+                                                                targetX,
+                                                                xVector[0],
+                                                                xVector[xVector.size() - 1]);
+            }
+        }
+
+        while (! (targetX >= xVector[lowerIndex] && targetX <= xVector[lowerIndex + 1]))
+        {
+            lowerIndex++;
+        }
+
+        // If discontinuities are present in the trace the correct behaviour is ill-defined.
+        if (log::Logger::ShouldDisplay<log::Debug>())
+        {
+            if (xVector[lowerIndex] == xVector[lowerIndex + 1])
+            {
+                log::Logger::Log<log::Warning, log::OnePerCore>("Multiple points for same x value in LinearInterpolate: ");
+                log::Logger::Log<log::Warning, log::OnePerCore>("(%f, %f) and (%f, %f). Division by zero!",
+                                                                xVector[lowerIndex],
+                                                                yVector[lowerIndex],
+                                                                xVector[lowerIndex + 1],
+                                                                yVector[lowerIndex + 1]);
+            }
+        }
+
+        // Linear interpolation of function f(x) between two points A and B
+        // f(A) + (fraction along x axis between A and B) * (f(B) - f(A))
+        return std::lerp(yVector[lowerIndex], yVector[lowerIndex + 1],
+                         (targetX - xVector[lowerIndex]) / (xVector[lowerIndex + 1] - xVector[lowerIndex]));
     }
 
     void InOutLetFileVelocity::CalculateTable(LatticeTimeStep totalTimeSteps, PhysicalTime timeStepLength)
@@ -98,7 +139,7 @@ namespace hemelb::lb
               + (static_cast<double>(timeStep % TimeStepsInInletVelocityProfile) / static_cast<double>(totalTimeSteps))
                   * (times.back() - times.front());
 
-          PhysicalSpeed vel = util::LinearInterpolate(times, values, point);
+          PhysicalSpeed vel = LinearInterpolate(times, values, point);
 
           velocityTable[timeStep] = units->ConvertVelocityToLatticeUnits(vel);
         }

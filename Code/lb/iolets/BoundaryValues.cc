@@ -4,9 +4,12 @@
 // license in the file LICENSE.
 
 #include "lb/iolets/BoundaryValues.h"
-#include "lb/iolets/BoundaryComms.h"
-#include "util/utilityFunctions.h"
+
 #include <algorithm>
+
+#include "lb/iolets/BoundaryComms.h"
+#include "log/Logger.h"
+#include "util/numerical.h"
 
 namespace hemelb::lb
 {
