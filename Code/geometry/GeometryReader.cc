@@ -18,7 +18,7 @@
 #include "net/net.h"
 #include "net/IOCommunicator.h"
 #include "log/Logger.h"
-#include "util/utilityFunctions.h"
+#include "util/numerical.h"
 #include "constants.h"
 
 namespace hemelb::geometry

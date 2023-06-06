@@ -3,16 +3,14 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_UTIL_UTILITYFUNCTIONS_H
-#define HEMELB_UTIL_UTILITYFUNCTIONS_H
+#ifndef HEMELB_UTIL_NUMERICAL_H
+#define HEMELB_UTIL_NUMERICAL_H
 
-#include "log/Logger.h"
 #include <cmath>
 #include <iostream>
 #include <cstdlib>
 #include <vector>
 
-// Static class for simple functions that could be useful in many places
 namespace hemelb::util
 {
 
@@ -45,48 +43,6 @@ namespace hemelb::util
     {
         return ( (x >= min) && (x <= max));
     }
-
-    template<typename T>
-    T LinearInterpolate(std::vector<T> const& xVector, std::vector<T> const& yVector, T targetX)
-    {
-        int lowerIndex = 0;
-
-        if (log::Logger::ShouldDisplay<log::Debug>())
-        {
-            if (targetX < xVector[0] || targetX > xVector[xVector.size() - 1])
-            {
-                log::Logger::Log<log::Warning, log::OnePerCore>("Linear Interpolation beyond bounds: %f is not between %f and %f",
-                                                                targetX,
-                                                                xVector[0],
-                                                                xVector[xVector.size() - 1]);
-            }
-        }
-
-        while (! (targetX >= xVector[lowerIndex] && targetX <= xVector[lowerIndex + 1]))
-        {
-            lowerIndex++;
-        }
-
-        // If discontinuities are present in the trace the correct behaviour is ill-defined.
-        if (log::Logger::ShouldDisplay<log::Debug>())
-        {
-            if (xVector[lowerIndex] == xVector[lowerIndex + 1])
-            {
-                log::Logger::Log<log::Warning, log::OnePerCore>("Multiple points for same x value in LinearInterpolate: ");
-                log::Logger::Log<log::Warning, log::OnePerCore>("(%f, %f) and (%f, %f). Division by zero!",
-                                                                xVector[lowerIndex],
-                                                                yVector[lowerIndex],
-                                                                xVector[lowerIndex + 1],
-                                                                yVector[lowerIndex + 1]);
-            }
-        }
-
-        // Linear interpolation of function f(x) between two points A and B
-        // f(A) + (fraction along x axis between A and B) * (f(B) - f(A))
-        return std::lerp(yVector[lowerIndex], yVector[lowerIndex + 1],
-                         (targetX - xVector[lowerIndex]) / (xVector[lowerIndex + 1] - xVector[lowerIndex]));
-    }
-
 
     /**
      * The Newton_Raphson method takes in a functor with the operator () overloaded, which
@@ -223,9 +179,6 @@ namespace hemelb::util
         else
             return xSolution;
     }
-
-    // Returns the number of seconds to 6dp elapsed since the Epoch
-    double myClock();
 
 }
 

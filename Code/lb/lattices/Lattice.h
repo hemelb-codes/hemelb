@@ -15,7 +15,7 @@
 #include "constants.h"
 #include "units.h"
 #include "lb/lattices/LatticeInfo.h"
-#include "util/utilityFunctions.h"
+#include "util/numerical.h"
 #include "util/Vector3D.h"
 #include "util/Matrix3D.h"
 

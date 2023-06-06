@@ -4,6 +4,7 @@
 // license in the file LICENSE.
 #include "redblood/parallel/GraphBasedCommunication.h"
 
+#include "log/Logger.h"
 #include "net/MpiCommunicator.h"
 #include "net/SparseExchange.h"
 #include "reporting/Timers.h"

@@ -11,8 +11,10 @@
 #include <list>
 #include <random>
 #include <utility>
+
 #include "io/xml.h"
 #include "lb/iolets/InOutLet.h"
+#include "log/Logger.h"
 #include "redblood/types.h"
 #include "redblood/Mesh.h"
 #include "redblood/Cell.h"

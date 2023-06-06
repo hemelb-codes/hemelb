@@ -17,7 +17,7 @@
 #include "extraction/PropertyActor.h"
 #include "extraction/LbDataSourceIterator.h"
 #include "io/writers/XdrFileWriter.h"
-#include "util/utilityFunctions.h"
+#include "util/numerical.h"
 #include "geometry/Domain.h"
 #include "log/Logger.h"
 #include "lb/HFunction.h"

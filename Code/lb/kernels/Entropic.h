@@ -14,7 +14,7 @@
 #include "lb/HFunction.h"
 #include "lb/LbmParameters.h"
 #include "geometry/Domain.h"
-#include "util/utilityFunctions.h"
+#include "util/numerical.h"
 
 namespace hemelb::lb
 {
