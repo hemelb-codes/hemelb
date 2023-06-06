@@ -6,10 +6,12 @@
 #include <string>
 
 #include "configuration/SimConfig.h"
+#include "io/TimePattern.h"
 #include "build_info.h"
 
 namespace hemelb::configuration
 {
+
     // Base IC
     ICConfigBase::ICConfigBase(std::optional<LatticeTimeStep> t) : t0(t) {
     }
@@ -59,13 +61,14 @@ namespace hemelb::configuration
     void SimConfig::DoIO(io::xml::Element topNode)
     {
       // Top element must be:
-      // <hemelbsettings version="5" />
+      // <hemelbsettings version="6" />
+      constexpr unsigned VERSION = 6;
       if (topNode.GetName() != "hemelbsettings")
         throw Exception() << "Invalid root element: " << topNode.GetPath();
 
       auto version = topNode.GetAttributeOrThrow<unsigned>("version");
-      if (version != 5U)
-        throw Exception() << "Unrecognised XML version. Expected 5, got " << version;
+      if (version != VERSION)
+        throw Exception() << "Unrecognised XML version. Expected " << VERSION << ", got " << version;
 
       DoIOForSimulation(topNode.GetChildOrThrow("simulation"));
 
@@ -168,6 +171,14 @@ namespace hemelb::configuration
                 [](io::xml::Element const& el) {
                     return GetDimensionalValue<PhysicalPressure>(el, "mmHg");
                 }).value_or(0);
+
+        sim_info.checkpoint = simEl.GetChildOrNull("checkpoint").transform(
+                [](io::xml::Element const& el) {
+                    CheckpointInfo ans;
+                    el.GetAttributeOrThrow("period", ans.period);
+                    return ans;
+                }
+        );
     }
 
     void SimConfig::DoIOForGeometry(const io::xml::Element geometryEl)
@@ -301,30 +312,7 @@ namespace hemelb::configuration
         propertyOutputs.push_back(DoIOForPropertyOutputFile(*poPtr));
       }
 
-      if (auto cpEl = propertiesEl.GetChildOrNull("checkpoint")) {
-	// Create a checkpoint property extractor.
-	//
-	// This is just a normal one, but fixed to be whole geometry,
-	// only distributions, at double precision.
-	//
-	// Get stuff from XML
-	auto file = extraction::PropertyOutputFile{};
-	file.filename = cpEl.GetAttributeOrThrow("file");
-	cpEl.GetAttributeOrThrow("period", file.frequency);
-	// Configure the file
-	file.geometry.reset(new extraction::WholeGeometrySelector());
-	file.ts_mode = extraction::single_timestep_files{};
 
-	extraction::OutputField field;
-	field.name = "distributions";
-	field.noffsets = 0;
-	field.offset = {};
-	field.typecode = distribn_t{0};
-	field.src = extraction::source::Distributions{};
-	file.fields.push_back(field);
-	// Add to outputs
-	propertyOutputs.push_back(std::move(file));
-      }
     }
 
     extraction::PropertyOutputFile SimConfig::DoIOForPropertyOutputFile(
@@ -345,16 +333,9 @@ namespace hemelb::configuration
 
       file.filename = propertyoutputEl.GetAttributeOrThrow("file");
       if (std::holds_alternative<extraction::single_timestep_files>(file.ts_mode)) {
-	auto const& p = file.filename.native();
-	// Path must contain exactly one printf conversion specifier
-	// for an integer.
-	auto const errmsg = "For single timestep output files, "
-	  "the path must contain exactly one '%d' and no other '%' characters";
-	auto n_pc = std::count(p.begin(), p.end(), '%');
-	auto i_pcd = p.find("%d", 0, 2);
-	if (n_pc != 1 || i_pcd == std::string::npos) {
-	  throw Exception() << errmsg;
-	}
+          if (!io::TimePattern::Check(file.filename.native()))
+              throw (Exception() << "For single timestep output files, "
+                                    "the path must contain exactly one '%d' and no other '%' characters");
       }
 
       propertyoutputEl.GetAttributeOrThrow("period", file.frequency);

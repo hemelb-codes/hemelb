@@ -19,21 +19,19 @@
 #include "tests/helpers/HasCommsTestFixture.h"
 #include "tests/extraction/DummyDataSource.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     namespace {
-      const char* tempXtrFileName = "simple.xtr";
-      const char* tempOffFileName = "simple.off";
-      // Power of 2 for simple binary
-      constexpr double REFERENCE_PRESSURE_mmHg = 8.0;
+        const char* tempXtrFileName = "simple.xtr";
+        const char* tempOffFileName = "simple.off";
+        // Power of 2 for simple binary
+        constexpr double REFERENCE_PRESSURE_mmHg = 8.0;
 
-      constexpr double epsilon = 1e-5;
-      template <typename T>
-      Approx apprx(T&& x) {
-	return Approx(std::forward<T>(x)).epsilon(epsilon);
-      }
+        constexpr double epsilon = 1e-5;
+        template <typename T>
+        Approx apprx(T&& x) {
+            return Approx(std::forward<T>(x)).epsilon(epsilon);
+        }
 
       void CheckDataWriting(DummyDataSource* datasource, uint64_t timestep, io::FILE& file) {
 	// The file should have an entry for each lattice point, consisting
@@ -117,7 +115,7 @@ namespace hemelb
       extraction::OutputField velocity{"Velocity", extraction::source::Velocity{}, float{0}, 0};
       simpleOutFile.fields.push_back(velocity);
 
-      auto simpleDataSource = std::make_unique<DummyDataSource>();
+      auto simpleDataSource = std::make_shared<DummyDataSource>();
 
       SECTION("StringWrittenLength") {
 	// Check the zero length string
@@ -134,18 +132,18 @@ namespace hemelb
 
       }
 
-      SECTION("Header length calculation") {
-	auto hl = [](extraction::OutputField const& f) {
-	  return io::formats::extraction::GetFieldHeaderLength(f.name, f.noffsets, extraction::code::type_to_enum(f.typecode));
-	};
+        SECTION("Header length calculation") {
+            auto hl = [](extraction::OutputField const& f) {
+                return io::formats::extraction::GetFieldHeaderLength(f.name, f.noffsets, extraction::code::type_to_enum(f.typecode));
+            };
 
-	int const hlen = hl(pressure) + hl(velocity);
-	REQUIRE(hlen == fieldHeaderLength);
-      }
+            auto hlen = hl(pressure) + hl(velocity);
+            REQUIRE(hlen == fieldHeaderLength);
+        }
 
       SECTION("Write") {
 	// Create the writer object; this should write the headers.
-	auto propertyWriter = std::make_unique<extraction::LocalPropertyOutput>(*simpleDataSource, simpleOutFile, Comms());
+	auto propertyWriter = std::make_unique<extraction::LocalPropertyOutput>(simpleDataSource, simpleOutFile, Comms());
 	// Open the file
 	auto writtenFile = io::FILE::open(simpleOutFile.filename, "r");
 	
@@ -241,6 +239,5 @@ namespace hemelb
       std::remove(tempOffFileName);
       }
 
-  }
 }
 

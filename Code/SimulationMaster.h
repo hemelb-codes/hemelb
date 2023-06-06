@@ -29,14 +29,57 @@ namespace hemelb
 {
     namespace configuration { class SimBuilder; }
     namespace extraction { class PropertyActor; }
+    namespace io { class Checkpointer; }
 
     template<class TRAITS = Traits<>>
-  class SimulationMaster
-  {
-      friend class configuration::SimBuilder;
+    class SimulationMaster
+    {
     public:
-      using Traits = TRAITS;
+        friend class configuration::SimBuilder;
+        using Traits = TRAITS;
+        using LatticeType = typename Traits::Lattice;
 
+    protected:
+        reporting::BuildInfo build_info;
+        reporting::Timers timings;
+        net::IOCommunicator ioComms;
+        net::Net communicationNet;
+
+        std::shared_ptr<configuration::SimConfig> simConfig;
+
+        std::shared_ptr<lb::BoundaryValues> inletValues;
+        std::shared_ptr<lb::BoundaryValues> outletValues;
+        /* The next quantities are protected because they are used by MultiscaleSimulationMaster */
+        std::shared_ptr<geometry::Domain> domainData;
+        std::shared_ptr<geometry::FieldData> fieldData;
+        std::shared_ptr<lb::LBM<Traits>> latticeBoltzmannModel;
+        std::shared_ptr<geometry::neighbouring::NeighbouringDataManager> neighbouringDataManager;
+
+        std::shared_ptr<io::PathManager> fileManager;
+        std::shared_ptr<reporting::Reporter> reporter;
+
+        std::shared_ptr<lb::SimulationState> simulationState;
+
+        /** Struct containing the configuration of various checkers/testers */
+        std::shared_ptr<lb::StabilityTester<LatticeType>> stabilityTester;
+        std::shared_ptr<lb::EntropyTester<LatticeType>> entropyTester;
+        /** Actor in charge of checking the maximum density difference across the domain */
+        using ICC = lb::IncompressibilityChecker<net::PhasedBroadcastRegular<>>;
+        std::shared_ptr<ICC> incompressibilityChecker;
+
+        std::shared_ptr<net::IteratedAction> cellController;
+        std::shared_ptr<net::IteratedAction> colloidController;
+
+        std::shared_ptr<util::UnitConverter> unitConverter;
+
+        std::shared_ptr<extraction::IterableDataSource> propertyDataSource;
+        std::shared_ptr<extraction::PropertyActor> propertyExtractor;
+        std::shared_ptr<io::Checkpointer> checkpointer;
+
+        std::shared_ptr<net::phased::StepManager> stepManager;
+        std::shared_ptr<net::phased::NetConcern> netConcern;
+
+    public:
       SimulationMaster(configuration::CommandLine &options,
                        const net::IOCommunicator& ioComms);
       virtual ~SimulationMaster();
@@ -72,25 +115,13 @@ namespace hemelb
 #     endif
     protected:
 
-      std::shared_ptr<lb::BoundaryValues> inletValues;
-      std::shared_ptr<lb::BoundaryValues> outletValues;
       virtual void DoTimeStep();
 
-      /* The next quantities are protected because they are used by MultiscaleSimulationMaster */
-      // Set the lattice type via a build parameter
-      using latticeType = typename Traits::Lattice;
-      std::shared_ptr<geometry::Domain> domainData;
-      std::shared_ptr<geometry::FieldData> fieldData;
-      std::shared_ptr<lb::LBM<Traits>> latticeBoltzmannModel;
-      std::shared_ptr<geometry::neighbouring::NeighbouringDataManager>
-        neighbouringDataManager;
-      net::IOCommunicator ioComms;
-      std::shared_ptr<configuration::SimConfig> simConfig;
 
     private:
       void Initialise();
       void SetupReporting(); // set up the reporting file
-      unsigned int OutputPeriod(unsigned int frequency);
+      unsigned OutputPeriod(unsigned int frequency);
       void HandleActors();
       void OnUnstableSimulation();
       /**
@@ -104,31 +135,7 @@ namespace hemelb
        */
       void LogStabilityReport();
 
-      std::shared_ptr<io::PathManager> fileManager;
-      reporting::Timers timings;
-      std::shared_ptr<reporting::Reporter> reporter;
-      reporting::BuildInfo build_info;
 
-      std::shared_ptr<lb::SimulationState> simulationState;
-
-      /** Struct containing the configuration of various checkers/testers */
-      std::shared_ptr<lb::StabilityTester<latticeType>> stabilityTester;
-      std::shared_ptr<lb::EntropyTester<latticeType>> entropyTester;
-      /** Actor in charge of checking the maximum density difference across the domain */
-      std::shared_ptr<lb::IncompressibilityChecker<net::PhasedBroadcastRegular<> >>
-        incompressibilityChecker;
-
-      std::shared_ptr<net::IteratedAction> cellController;
-      std::shared_ptr<net::IteratedAction> colloidController;
-      net::Net communicationNet;
-
-      std::shared_ptr<util::UnitConverter> unitConverter;
-
-      std::shared_ptr<extraction::IterableDataSource> propertyDataSource;
-      std::shared_ptr<extraction::PropertyActor> propertyExtractor;
-
-      std::shared_ptr<net::phased::StepManager> stepManager;
-      std::shared_ptr<net::phased::NetConcern> netConcern;
 
       static constexpr LatticeTimeStep FORCE_FLUSH_PERIOD = 1000;
   };

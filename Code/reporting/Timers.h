@@ -145,6 +145,7 @@ namespace hemelb::reporting
             cellRemoval,
             cellListeners,
             graphComm,
+            writeCheckpoint,
             last
             //!< last, this has to be the last element of the enumeration so it can be used to track cardinality
         };
@@ -213,6 +214,7 @@ namespace hemelb::reporting
             HLB_TIMER_INIT(cellRemoval, "Remove cells");
             HLB_TIMER_INIT(cellListeners, "Notify cell listeners");
             HLB_TIMER_INIT(graphComm, "Create graph communicator");
+            HLB_TIMER_INIT(writeCheckpoint, "Write checkpoint(s)");
 #undef HLB_TIMER_INIT
 
             for (auto const& t: timers) {
@@ -272,6 +274,7 @@ namespace hemelb::reporting
         HLB_TIMER_ACCESSOR(cellRemoval)
         HLB_TIMER_ACCESSOR(cellListeners)
         HLB_TIMER_ACCESSOR(graphComm)
+        HLB_TIMER_ACCESSOR(writeCheckpoint)
 #undef HLB_TIMER_ACCESSOR
         /**
          * Max across all processes.

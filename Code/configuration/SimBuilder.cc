@@ -225,8 +225,8 @@ namespace hemelb::configuration {
 
     std::shared_ptr<extraction::PropertyActor> SimBuilder::BuildPropertyExtraction(
             std::filesystem::path const& xtr_path,
-            const lb::SimulationState& simState,
-            extraction::IterableDataSource& dataSource,
+            std::shared_ptr<lb::SimulationState const> simState,
+            std::shared_ptr<extraction::IterableDataSource> dataSource,
             reporting::Timers& timings,
             const net::IOCommunicator& ioComms
     ) const {
@@ -243,6 +243,49 @@ namespace hemelb::configuration {
                 dataSource,
                 timings,
                 ioComms
+        );
+    }
+    std::shared_ptr<io::Checkpointer> SimBuilder::BuildCheckpointer(
+            std::filesystem::path const& cp_path,
+            std::shared_ptr<lb::SimulationState const> simState,
+            std::shared_ptr<extraction::IterableDataSource> dataSource,
+            reporting::Timers& timings,
+            const net::IOCommunicator& ioComms
+    ) const {
+        if (!config.sim_info.checkpoint.has_value())
+            return nullptr;
+
+        auto& cp_info = *config.sim_info.checkpoint;
+
+        auto cp_dir_pattern = cp_path / "%d";
+        auto dist_pattern = cp_dir_pattern / "distributions.xtr";
+
+        // Create a checkpoint property extractor.
+        //
+        // This is just a normal one, but fixed to be whole geometry,
+        // only distributions, at double precision.
+        auto lpo = [&]() {
+            using namespace extraction;
+            auto file = PropertyOutputFile{
+                    .filename = cp_dir_pattern / "distributions.xtr",
+                    .frequency = cp_info.period,
+                    .geometry = util::make_clone_ptr<WholeGeometrySelector>(),
+                    .fields = {
+                            OutputField{
+                                    .name = "distributions",
+                                    .src = source::Distributions{},
+                                    .typecode = distribn_t{0},
+                                    .noffsets = 0,
+                                    .offset = {},
+                            }
+                    },
+                    .ts_mode = single_timestep_files{}
+            };
+            return std::make_unique<LocalPropertyOutput>(dataSource, file, ioComms);
+        }();
+
+        return std::make_shared<io::Checkpointer>(
+                cp_info.period, cp_dir_pattern.native(), std::move(simState), timings, std::move(lpo)
         );
     }
 

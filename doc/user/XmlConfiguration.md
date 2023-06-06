@@ -51,8 +51,10 @@ It's child elements are:
 * Optional: `<reference_pressure value="float" units="mmHg" />` the
   physical pressure that corresponds to a lattice density
   of 1. Default is 0.
-
-
+* Optional: `<checkpoint period="int">` -
+  save a checkpoint at the given interval (in timesteps) to the
+  "Checkpoints" directory.
+  
 ## Geometry
 The `<geometry>` element is required. It has one, required, child element:
 * `<datafile path="relative path to geometry file" />` - the path
@@ -154,10 +156,10 @@ Describe what data to extract under the `<properties>` element. Child elements:
     + `type="tangentialprojectiontraction"`
     + `type="mpirank"`
 
-* `<checkpoint file="path" period="int">` - save a checkpoint file to
-  the given path at the given interval (in timesteps).
-
 ## Changes
+
+### Version 6
+Moved checkpoint 
 
 ### Version 5
 

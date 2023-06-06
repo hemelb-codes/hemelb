@@ -10,21 +10,16 @@
 #include <string>
 #include "log/Logger.h"
 
-namespace hemelb
+namespace hemelb::configuration
 {
-  namespace configuration
-  {
     class CommandLine;
     class SimConfig;
-  }
+}
 
-  namespace io
-  {
+namespace hemelb::io
+{
     // Forward declare the Writer
-    namespace writers
-    {
-      class Writer;
-    }
+    namespace writers { class Writer; }
 
     /**
      * Manage the input and output file system locations for HemeLB reports, extracted data, and input xml.
@@ -65,6 +60,8 @@ namespace hemelb
          */
         [[nodiscard]] const path& GetDataExtractionPath() const;
 
+        [[nodiscard]] const path& GetCheckpointPath() const;
+
         /**
          * Create a subdirectory inside the RBC output directory and return its path
          * @param subdirectoryName Name of the subdirectory to be created
@@ -77,11 +74,12 @@ namespace hemelb
         path inputFile;
         path colloidFile;
         path extractionDir;
+        path cpDir;
         const configuration::CommandLine &options;
         bool doIo; //! Am I the input/output node?
         path rbcDir; //! Path for RBC output
     };
-  }
+
 }
 
 #endif //HEMELB_IO_PATHMANAGER_H

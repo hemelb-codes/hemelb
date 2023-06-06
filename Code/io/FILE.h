@@ -11,6 +11,8 @@
 #include <memory>
 
 namespace hemelb::io {
+    // A thin RAII-style owning wrapper around a C standard library FILE object.
+    // Note this is NOT MPI-aware, so mainly for use in tests.
     class FILE {
         struct Closer {
             void operator()(std::FILE *);

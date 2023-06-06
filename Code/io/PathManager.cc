@@ -22,6 +22,7 @@ namespace hemelb::io
         extractionDir = outputDir / "Extracted";
         colloidFile = outputDir / "ColloidOutput.xdr";
         rbcDir = outputDir / "Cells";
+        cpDir = outputDir / "Checkpoints";
 
         if (doIo)
         {
@@ -31,6 +32,7 @@ namespace hemelb::io
             fs::create_directory(outputDir);
             fs::create_directory(extractionDir);
             fs::create_directory(rbcDir);
+            fs::create_directory(cpDir);
         }
     }
 
@@ -50,6 +52,11 @@ namespace hemelb::io
     const fs::path& PathManager::GetDataExtractionPath() const
     {
       return extractionDir;
+    }
+
+    const fs::path& PathManager::GetCheckpointPath() const
+    {
+        return cpDir;
     }
 
     fs::path PathManager::GetRBCOutputPathWithSubdir(std::string const& subdirectoryName) const
