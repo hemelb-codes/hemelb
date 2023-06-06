@@ -8,18 +8,16 @@
 
 #include "extraction/IterableDataSource.h"
 #include "extraction/PropertyOutputFile.h"
+#include "io/TimePattern.h"
 #include "lb/Lattices.h"
 #include "net/mpi.h"
+#include "net/IOCommunicator.h"
 #include "net/MpiFile.h"
 
-namespace hemelb
+namespace hemelb::net { class IOCommunicator; }
+
+namespace hemelb::extraction
 {
-  namespace net
-  {
-    class IOCommunicator;
-  }
-  namespace extraction
-  {
     // Stores sufficient information to output property information
     // from this core.
     class LocalPropertyOutput
@@ -27,8 +25,8 @@ namespace hemelb
     public:
       // Initialises a LocalPropertyOutput. Required so we can use
       // const reference types. Collective on the communicator.
-      LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile& outputSpec,
-			  const net::IOCommunicator& ioComms);
+      LocalPropertyOutput(std::shared_ptr<IterableDataSource> dataSource, const PropertyOutputFile& outputSpec,
+			  net::IOCommunicator ioComms);
 
       // True if this property output should be written on the current iteration.
       bool ShouldWrite(unsigned long timestepNumber) const;
@@ -60,17 +58,17 @@ namespace hemelb
       void StartFile(std::string const& fn);
 
       // Our communicator
-      const net::IOCommunicator& comms;
+      net::IOCommunicator comms;
 
       // For single-timestep-per-file mode, hold the pattern we'll
       // pass to printf.
-      std::string output_file_pattern;
+      io::TimePattern output_file_pattern;
 
       // The MPI file to write into.
       net::MpiFile outputFile;
 
       // The data source to use for file output.
-      IterableDataSource& dataSource;
+      std::shared_ptr<IterableDataSource> dataSource;
 
       // PropertyOutputFile spec.
       PropertyOutputFile outputSpec;
@@ -97,7 +95,6 @@ namespace hemelb
       // The MPI file to write the offsets into.
       std::string offset_file_name;
     };
-  }
 }
 
 #endif // HEMELB_EXTRACTION_LOCALPROPERTYOUTPUT_H

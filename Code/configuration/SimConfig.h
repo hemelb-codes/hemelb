@@ -124,11 +124,16 @@ namespace hemelb::configuration
         PhysicalPressure reference_pressure_mmHg;
     };
 
+    struct CheckpointInfo {
+        LatticeTimeStep period;
+    };
+
     struct GlobalSimInfo {
         lb::StressTypes stress_type;
         TimeInfo time;
         SpaceInfo space;
         FluidInfo fluid;
+        std::optional<CheckpointInfo> checkpoint;
     };
 
     struct FlowExtensionConfig {
