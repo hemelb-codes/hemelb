@@ -24,7 +24,9 @@ add_library(hemelb_io OBJECT
   writers/Writer.cc
   formats/geometry.cc
   xml.cc
-  )
+  Checkpointer.cc
+  TimePattern.cc
+)
 
 target_link_libraries(hemelb_io PUBLIC
   hemelb_util

@@ -42,8 +42,7 @@ namespace hemelb
     template<class TRAITS>
     SimulationMaster<TRAITS>::SimulationMaster(configuration::CommandLine & options,
                                                const net::IOCommunicator& ioComm) :
-            ioComms(ioComm.Duplicate()), build_info(),
-            communicationNet(ioComms)
+            build_info(), ioComms(ioComm.Duplicate()), communicationNet(ioComms)
     {
         // Start the main timer!
         timings.total().Start();
@@ -65,9 +64,8 @@ namespace hemelb
    *
    * Deallocates dynamically allocated memory to contained classes.
    */
-  template<class TRAITS> SimulationMaster<TRAITS>::~SimulationMaster()
-  {
-  }
+  template<class TRAITS>
+  SimulationMaster<TRAITS>::~SimulationMaster() = default;
 
   /**
    * Returns true if the current processor is the dedicated I/O

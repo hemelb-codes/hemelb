@@ -42,6 +42,10 @@ It's child elements are:
 * Required: `<voxel_size value="float" units="m" />` - the voxel size in the gmy file
 * Required: `<origin value="(x,y,z)" units="m" />` - the location of lattice site (0,0,0) in world coordinates 
 * Optional: `<extra_warmup_steps value="int" units="lattice" />` - the length of the simulation's warmup period; units must be lattice
+* Optional: `<checkpoint period="int">` -
+  save a checkpoint at the given interval (in timesteps) to the
+  "Checkpoints" directory.
+  
 
 ## Geometry
 The `<geometry>` element is required. It has one, required, child element:
@@ -144,10 +148,10 @@ Describe what data to extract under the `<properties>` element. Child elements:
     + `type="tangentialprojectiontraction"`
     + `type="mpirank"`
 
-* `<checkpoint file="path" period="int">` - save a checkpoint file to
-  the given path at the given interval (in timesteps).
-
 ## Changes
+
+### Version 6
+Moved checkpoint 
 
 ### Version 5
 
