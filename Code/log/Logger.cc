@@ -11,7 +11,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#include "util/utilityFunctions.h"
+#include "util/clock.h"
 #include "net/mpi.h"
 #include "log/Logger.h"
 
@@ -31,7 +31,7 @@ namespace hemelb::log
         {
           thisRank = net::MpiCommunicator::World().Rank();
         }
-        startTime = util::myClock();
+        startTime = util::clock();
       }
     }
 
@@ -44,7 +44,7 @@ namespace hemelb::log
       output.fill('0');
 
       output << "[Rank " << std::setw(7) << thisRank << ", " << std::setiosflags(std::ios::fixed)
-          << std::setprecision(1) << (util::myClock() - startTime) << "s";
+          << std::setprecision(1) << (util::clock() - startTime) << "s";
 
 #ifdef HAVE_RUSAGE
       rusage usage;
@@ -65,7 +65,7 @@ namespace hemelb::log
     {
         if (thisRank == 0)
         {
-            std::printf("![%.1fs] ", util::myClock() - startTime);
+            std::printf("![%.1fs] ", util::clock() - startTime);
             std::vprintf(format.data(), args);
             std::printf("\n");
         }

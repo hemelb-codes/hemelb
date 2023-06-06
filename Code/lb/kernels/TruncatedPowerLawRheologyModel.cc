@@ -5,7 +5,7 @@
 
 #include "lb/kernels/TruncatedPowerLawRheologyModel.h"
 #include "lb/LbmParameters.h"
-#include "util/utilityFunctions.h"
+#include "util/numerical.h"
 
 namespace hemelb::lb
 {

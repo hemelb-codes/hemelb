@@ -10,7 +10,7 @@
 #include <utility>
 
 #include "reporting/Reportable.h"
-#include "util/utilityFunctions.h"
+#include "util/numerical.h"
 #include "reporting/Policies.h"
 #include "reporting/timers_fwd.h"
 

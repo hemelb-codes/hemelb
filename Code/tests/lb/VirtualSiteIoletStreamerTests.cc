@@ -14,7 +14,7 @@
 #include "lb/iolets/InOutLets.h"
 #include "lb/streamers/VirtualSiteIolet.h"
 #include "geometry/SiteData.h"
-#include "util/utilityFunctions.h"
+#include "util/numerical.h"
 
 #include "tests/helpers/ApproxVector.h"
 #include "tests/helpers/FourCubeBasedTestFixture.h"

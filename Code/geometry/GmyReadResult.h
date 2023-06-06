@@ -12,7 +12,7 @@
 #include "units.h"
 #include "constants.h"
 #include "geometry/GeometryBlock.h"
-#include "util/utilityFunctions.h"
+#include "util/numerical.h"
 #include "util/Vector3D.h"
 
 namespace hemelb::geometry

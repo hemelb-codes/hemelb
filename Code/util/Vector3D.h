@@ -13,7 +13,7 @@
 #include <algorithm>
 #include <numeric>
 #include <limits>
-#include "util/utilityFunctions.h"
+#include "util/numerical.h"
 
 namespace hemelb::util
 {
