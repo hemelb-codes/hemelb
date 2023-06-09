@@ -73,7 +73,7 @@ include(mpi)
 include(HemeLbDependency)
 
 find_hemelb_dependency(Boost REQUIRED)
-find_hemelb_dependency(TinyXML REQUIRED)
+find_hemelb_dependency(tinyxml2 REQUIRED)
 
 find_hemelb_dependency(ParMETIS REQUIRED)
 find_hemelb_dependency(CTemplate REQUIRED)

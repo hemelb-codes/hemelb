@@ -7,7 +7,7 @@
 #include <random>
 
 #include <catch2/catch.hpp>
-#include <tinyxml.h>
+#include <tinyxml2.h>
 
 #include "redblood/parallel/IntegrateVelocities.h"
 #include "redblood/parallel/CellParallelization.h"
@@ -76,7 +76,8 @@ namespace hemelb::tests
       if (net::MpiCommunicator::World().Rank() == 0)
         {
           CopyResourceToTempdir("red_blood_cell.txt");
-          TiXmlDocument doc(resources::Resource("large_cylinder.xml").Path());
+          tinyxml2::XMLDocument doc;
+          doc.LoadFile(resources::Resource("large_cylinder.xml").Path().c_str());
           CopyResourceToTempdir("large_cylinder.xml");
           ModifyXMLInput("large_cylinder.xml", { "simulation", "steps", "value" }, 2);
           CopyResourceToTempdir("large_cylinder.gmy");

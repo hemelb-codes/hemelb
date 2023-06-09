@@ -4,10 +4,8 @@
 // license in the file LICENSE.
 
 #include <catch2/catch.hpp>
-#include <tinyxml.h>
 
 #include "io/xml.h"
-#include "redblood/FlowExtension.h"
 #include "redblood/RBCInserter.h"
 #include "tests/redblood/Fixtures.h"
 #include "tests/helpers/FolderTestFixture.h"
@@ -17,6 +15,7 @@
 
 namespace hemelb::tests
 {
+    using namespace io::xml;
     using namespace redblood;
 
     TEST_CASE_METHOD(FlowExtensionFixture, "CellInserterTests", "[redblood]") {
@@ -25,7 +24,7 @@ namespace hemelb::tests
         TemplateCellContainer cells;
         cells.emplace("joe", std::make_shared<Cell>(tetrahedron()));
 
-        auto getDocument = [&](LatticeDistance radius = 1e0, int numInserters = 0) -> TiXmlDocument {
+        auto getDocument = [&](LatticeDistance radius = 1e0, int numInserters = 0) {
             std::ostringstream sstr;
             sstr << "<hemelbsettings>"
                     "<inlets><inlet>"
@@ -48,8 +47,8 @@ namespace hemelb::tests
             }
             sstr << "</inlet></inlets>"
                     "</hemelbsettings>";
-            TiXmlDocument doc;
-            doc.Parse(sstr.str().c_str());
+            Document doc;
+            doc.LoadString(sstr.str().c_str());
             return doc;
         };
 
@@ -66,25 +65,25 @@ namespace hemelb::tests
         SECTION("testNoPeriodicInsertion") {
             auto doc = getDocument(1e0, 0);
             *cells["joe"] *= 0.1e0;
-            auto const inserter = readRBCInserters(doc.FirstChildElement("hemelbsettings")->FirstChildElement("inlets"),
+            auto const inserter = readRBCInserters(doc.GetRoot().GetChildOrThrow("inlets"),
                                                    cells);
             REQUIRE(not inserter);
         }
 
-      SECTION("testCellOutsideFlowExtension") {
-	auto doc = getDocument(1e0, 1);
-	REQUIRE_THROWS_AS(readRBCInserters(doc.FirstChildElement("hemelbsettings")->FirstChildElement("inlets"),
-					      cells),
-			  hemelb::Exception);
-      }
+        SECTION("testCellOutsideFlowExtension") {
+            auto doc = getDocument(1e0, 1);
+            REQUIRE_THROWS_AS(readRBCInserters(doc.GetRoot().GetChildOrThrow("inlets"),
+                                               cells),
+                              hemelb::Exception);
+        }
 
-      SECTION("testPeriodicInsertion") {
-	// Creates an inserter and checks it exists
-	auto doc = getDocument(1, 2);
-	*cells["joe"] *= 0.1e0;
-	auto const inserter = readRBCInserters(doc.FirstChildElement("hemelbsettings")->FirstChildElement("inlets"),
-					       cells);
-	REQUIRE(inserter);
+        SECTION("testPeriodicInsertion") {
+            // Creates an inserter and checks it exists
+            auto doc = getDocument(1, 2);
+            *cells["joe"] *= 0.1e0;
+            auto const inserter = readRBCInserters(doc.GetRoot().GetChildOrThrow("inlets"),
+                                                   cells);
+            REQUIRE(inserter);
 
 	// all calls up to offset result in node added cell
 	int num_calls = 0;
@@ -118,7 +117,7 @@ namespace hemelb::tests
 	  REQUIRE(2 == num_calls);
 	  num_calls = 0;
 	}
-      }
+        }
 
       SECTION("testTranslation") {
 	auto const identity = rotationMatrix(LatticePosition(0, 0, 1),
@@ -153,8 +152,8 @@ namespace hemelb::tests
 	auto addCell = [&current_cell](CellContainer::value_type const& cell) {
 	  current_cell = cell;
 	};
-	auto const inserter = readRBCInserters(doc.FirstChildElement("hemelbsettings")->FirstChildElement("inlets"),
-					       cells);
+	auto const inserter = readRBCInserters(doc.GetRoot().GetChildOrThrow("inlets"),
+                                           cells);
 	REQUIRE(inserter);
 	inserter(addCell);
 	REQUIRE(current_cell);
@@ -164,8 +163,8 @@ namespace hemelb::tests
 	helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "x", "value" }, 0.1);
 	helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "y", "units" }, "m");
 	helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "y", "value" }, 0.1);
-	auto const insertTranslated = readRBCInserters(doc.FirstChildElement("hemelbsettings")->FirstChildElement("inlets"),
-						       cells);
+	auto const insertTranslated = readRBCInserters(doc.GetRoot().GetChildOrThrow("inlets"),
+                                                   cells);
 	REQUIRE(insertTranslated);
 	insertTranslated(addCell);
 	REQUIRE(current_cell);
@@ -176,8 +175,8 @@ namespace hemelb::tests
 
 	helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "z", "units" }, "m");
 	helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "z", "value" }, 0.1);
-	auto const insertWithZ = readRBCInserters(doc.FirstChildElement("hemelbsettings")->FirstChildElement("inlets"),
-						  cells);
+	auto const insertWithZ = readRBCInserters(doc.GetRoot().GetChildOrThrow("inlets"),
+                                              cells);
 	REQUIRE(insertWithZ);
 	insertWithZ(addCell);
 	REQUIRE(current_cell);

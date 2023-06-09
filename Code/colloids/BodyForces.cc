@@ -7,10 +7,8 @@
 #include "colloids/BodyForceExamples.h"
 #include "colloids/GraviticBodyForce.h"
 
-namespace hemelb
+namespace hemelb::colloids
 {
-  namespace colloids
-  {
     std::map<std::string, const BodyForce* const > BodyForces::bodyForces;
     std::map<site_t, LatticeForceVector> BodyForces::forceForEachSite;
 
@@ -24,15 +22,9 @@ namespace hemelb
       io::xml::Element colloidsBodyForcesNode =
           xml.GetRoot().GetChildOrThrow("colloids").GetChildOrThrow("bodyForces");
 
-      for (std::map<std::string, BodyForceFactory_Create>::const_iterator iter =
-          mapForceGenerators.begin(); iter != mapForceGenerators.end(); iter++)
+      for (auto& [forceClass, createFunction]: mapForceGenerators)
       {
-        const std::string forceClass = iter->first;
-        const BodyForceFactory_Create createFunction = iter->second;
-
-        for (io::xml::Element forceNode = colloidsBodyForcesNode.GetChildOrNull(forceClass);
-            forceNode != io::xml::Element::Missing();
-            forceNode = forceNode.NextSiblingOrNull(forceClass))
+        for (auto forceNode: colloidsBodyForcesNode.Children(forceClass))
         {
           auto forceName = forceNode.GetAttributeOrThrow("forceName");
           BodyForce* nextForce = createFunction(forceNode);
@@ -50,5 +42,4 @@ namespace hemelb
       return totalForce;
     }
 
-  }
 }
