@@ -4,7 +4,7 @@
 // license in the file LICENSE.
 
 #include <catch2/catch.hpp>
-#include <tinyxml.h>
+#include <tinyxml2.h>
 
 #include "redblood/FlowExtension.h"
 #include "util/Vector3D.h"
@@ -92,7 +92,7 @@ namespace hemelb::tests
       }
 
       SECTION("testReadFromXML") {
-	TiXmlDocument doc;
+	tinyxml2::XMLDocument doc;
 	doc.Parse("<inlet>"
 		  "  <normal units=\"dimensionless\" value=\"(0.0,1.0,1.0)\" />"
 		  "  <position units=\"m\" value=\"(0.1,0.2,0.3)\" />"

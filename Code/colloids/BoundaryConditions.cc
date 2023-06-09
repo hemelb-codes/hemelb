@@ -9,10 +9,8 @@
 #include "geometry/Site.h"
 #include "geometry/SiteData.h"
 
-namespace hemelb
+namespace hemelb::colloids
 {
-  namespace colloids
-  {
     std::vector<BoundaryCondition*> BoundaryConditions::boundaryConditionsWall;
     std::vector<BoundaryCondition*> BoundaryConditions::boundaryConditionsInlet;
     std::vector<BoundaryCondition*> BoundaryConditions::boundaryConditionsOutlet;
@@ -35,20 +33,22 @@ namespace hemelb
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("*** In BoundaryConditions::InitBoundaryConditions - looking for %s BC in XML\n",
                                                       boundaryConditionClass.c_str());
-        for ( // There must be at least one BC element for each type
-        io::xml::Element bcNode = colloidsBC.GetChildOrThrow(boundaryConditionClass);
-            ! (bcNode == io::xml::Element::Missing());
-            bcNode = bcNode.NextSiblingOrNull(boundaryConditionClass))
-        {
-          auto appliesTo = bcNode.GetAttributeOrThrow("appliesTo");
-          BoundaryCondition* nextBC = createFunction(bcNode);
-          if (appliesTo == "wall")
-            BoundaryConditions::boundaryConditionsWall.push_back(nextBC);
-          else if (appliesTo == "inlet")
-            BoundaryConditions::boundaryConditionsInlet.push_back(nextBC);
-          else if (appliesTo == "outlet")
-            BoundaryConditions::boundaryConditionsOutlet.push_back(nextBC);
+        // There must be at least one BC element for each type - count here
+        unsigned num_bc_type = 0;
+        for (auto bcNode: colloidsBC.Children(boundaryConditionClass)) {
+            ++num_bc_type;
+            auto appliesTo = bcNode.GetAttributeOrThrow("appliesTo");
+            BoundaryCondition* nextBC = createFunction(bcNode);
+            if (appliesTo == "wall")
+                BoundaryConditions::boundaryConditionsWall.push_back(nextBC);
+            else if (appliesTo == "inlet")
+                BoundaryConditions::boundaryConditionsInlet.push_back(nextBC);
+            else if (appliesTo == "outlet")
+                BoundaryConditions::boundaryConditionsOutlet.push_back(nextBC);
         }
+        if (num_bc_type == 0)
+            throw (Exception() << "Missing colloids boundary condition element for class "
+                               << boundaryConditionClass);
       }
     }
 
@@ -205,5 +205,4 @@ namespace hemelb
       return keep;
     }
 
-  }
 }

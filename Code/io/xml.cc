@@ -4,15 +4,20 @@
 // license in the file LICENSE.
 #include <stdexcept>
 
-#include "tinyxml.h"
+#include <tinyxml2.h>
 
 #include "io/xml.h"
 
 namespace hemelb::io::xml
 {
+    using namespace tinyxml2;
+
     Document::Document()
     {
-        xmlDoc = std::make_unique<::TiXmlDocument>();
+        xmlDoc = std::make_unique<XMLDocument>();
+        // Associate our Document object with TinyXML's to allow
+        // look up of the filename in error reporting.
+        xmlDoc->SetUserData(this);
     }
 
     Document::Document(const std::filesystem::path& path) : Document()
@@ -20,26 +25,45 @@ namespace hemelb::io::xml
         LoadFile(path);
     }
 
+    // Supply default implementations of destructor/move
     Document::~Document() = default;
+    Document::Document(Document &&) = default;
+    Document &Document::operator=(Document &&) = default;
 
     Element Document::GetRoot()
     {
         return {xmlDoc->RootElement()};
     }
 
+    Element Document::AddChild(char const* name) {
+        auto el = xmlDoc->NewElement(name);
+        xmlDoc->InsertEndChild(el);
+        return el;
+    }
+
     void Document::LoadFile(const std::filesystem::path& path) {
-        if (!xmlDoc->LoadFile(path.c_str())) {
+        filename = path;
+        if (xmlDoc->LoadFile(path.c_str()) != tinyxml2::XML_SUCCESS) {
             throw ParseError(xmlDoc.get());
         }
     }
 
-    void Document::LoadString(std::string_view data) {
-        if (xmlDoc->Parse(data.data()) == nullptr) {
+    void Document::LoadString(char const* data) {
+        filename = "";
+        if (xmlDoc->Parse(data) != XML_SUCCESS) {
             throw ParseError(xmlDoc.get());
         }
     }
 
-    Element::Element(TiXmlElement const* el_) :
+    void Document::LoadString(const std::string &data) {
+        LoadString(data.c_str());
+    }
+
+    void Document::SaveFile(const std::filesystem::path &path) const {
+        xmlDoc->SaveFile(path.c_str());
+    }
+
+    Element::Element(XMLElement* el_) :
             el(el_)
     {
     }
@@ -50,14 +74,14 @@ namespace hemelb::io::xml
     {
         return {};
     }
-    const std::string& Element::GetName() const
+    std::string_view Element::GetName() const
     {
-        return el->ValueStr();
+        return el->Name();
     }
 
     int Element::GetLine() const
     {
-        return el->Row();
+        return el->GetLineNum();
     }
 
     Element Element::GetChildOrNull() const
@@ -65,9 +89,9 @@ namespace hemelb::io::xml
         return Element(el->FirstChildElement());
     }
 
-    Element Element::GetChildOrNull(std::string_view name) const
+    Element Element::GetChildOrNull(char const* name) const
     {
-        return Element(el->FirstChildElement(name.data()));
+        return Element(el->FirstChildElement(name));
     }
 
     Element Element::GetChildOrThrow() const
@@ -78,26 +102,21 @@ namespace hemelb::io::xml
 
         return Element(ans);
     }
-    Element Element::GetChildOrThrow(std::string_view name) const
+    Element Element::GetChildOrThrow(char const* name) const
     {
-        auto ans = el->FirstChildElement(name.data());
+        auto ans = el->FirstChildElement(name);
         if (ans == nullptr)
             throw ChildError(*this, name);
 
         return Element(ans);
     }
 
-    NamedChildIterator Element::IterChildren(std::string_view name) const
-    {
+    NamedIterationRange Element::Children(char const* name) const {
         return {*this, std::string{name}};
     }
 
-    NamedIterationRange Element::Children(std::string_view name) const {
-        return {*this, std::string{name}};
-    }
-
-    UnnamedChildIterator Element::IterChildren() const {
-        return {*this};
+    NamedIterationRange Element::Children(std::string name) const {
+        return {*this, std::move(name)};
     }
 
     UnnamedIterationRange Element::Children() const {
@@ -113,40 +132,26 @@ namespace hemelb::io::xml
         return Element(ans);
     }
 
-    Element Element::NextSiblingOrNull(std::string_view name) const
+    Element Element::NextSiblingOrNull(char const* name) const
     {
-        auto ans = el->NextSiblingElement(name.data());
+        auto ans = el->NextSiblingElement(name);
         if (ans == nullptr)
             return nullptr;
 
         return Element(ans);
     }
 
-    Element Element::NextSiblingOrThrow() const
-    {
-        auto ans = el->NextSiblingElement();
-        if (ans == nullptr)
-            throw SiblingError(*this, "of any name");
-
-        return Element(ans);
+    char const* Element::GetAttrOrNull(char const* attr) const {
+        return el->Attribute(attr);
     }
 
-    Element Element::NextSiblingOrThrow(std::string_view name) const
-    {
-        auto ans = el->NextSiblingElement(name.data());
-        if (ans == nullptr)
-            throw SiblingError(*this, name);
-
-        return Element(ans);
+    void Element::SetAttribute(const char *name, const char *value) {
+        el->SetAttribute(name, value);
     }
 
-    char const* Element::GetAttrOrNull(std::string_view attr) const {
-        return el->Attribute(attr.data());
-    }
-
-    std::optional<std::string_view> Element::GetAttributeMaybe(std::string_view name) const
+    std::optional<std::string_view> Element::GetAttributeMaybe(char const* name) const
     {
-        auto attr_p = el->Attribute(name.data());
+        auto attr_p = el->Attribute(name);
         if (attr_p == nullptr) {
             return std::nullopt;
         } else {
@@ -154,9 +159,9 @@ namespace hemelb::io::xml
         }
     }
 
-    std::string_view Element::GetAttributeOrThrow(std::string_view name) const
+    std::string_view Element::GetAttributeOrThrow(char const* name) const
     {
-        const char* ans = el->Attribute(name.data());
+        const char* ans = el->Attribute(name);
         if (ans == nullptr)
             throw AttributeError(*this, name);
 
@@ -190,20 +195,24 @@ namespace hemelb::io::xml
         GetPathWorker(el, ans);
         return ans.str();
     }
-    void Element::GetPathWorker(const TiXmlElement* el, std::ostringstream& ans)
+    void Element::GetPathWorker(const XMLElement* el, std::ostringstream& ans)
     {
-        const TiXmlNode* parent = el->Parent();
-        const TiXmlElement* parentEl = parent->ToElement();
+        const XMLNode* parent = el->Parent();
+        const XMLElement* parentEl = parent->ToElement();
         if (parentEl != nullptr)
         {
             GetPathWorker(parentEl, ans);
         }
         else
         {
-            const TiXmlDocument* doc = parent->ToDocument();
-            if (doc != nullptr)
+            // Documents owned by our Document class have a user data
+            // pointer to the instance.
+            const XMLDocument* doc = parent->ToDocument();
+            auto heme_doc = static_cast<Document const*>(doc->GetUserData());
+            auto fn = heme_doc->filename;
+            if (fn != "")
             {
-                ans << doc->Value() << ":";
+                ans << fn << ":";
             }
             else
             {
@@ -211,11 +220,23 @@ namespace hemelb::io::xml
             }
         }
 
-        ans << "/" << el->Value() << "(" << el->Row() << ")";
+        ans << "/" << el->Value() << "(" << el->GetLineNum() << ")";
     }
 
     Element::operator bool() const {
         return el != nullptr;
+    }
+
+    Element Element::AddChild(const char *name) {
+        return {el->InsertNewChildElement(name)};
+    }
+
+    void Element::DeleteChild(const Element &elem_to_del) {
+        el->DeleteChild(elem_to_del.el);
+    }
+
+    void Element::Delete() {
+        GetParentOrThrow().DeleteChild(*this);
     }
 
     /**
@@ -283,10 +304,10 @@ namespace hemelb::io::xml
     }
 
     void NamedChildIterator::start() {
-        current = parent.GetChildOrNull(name);
+        current = parent.GetChildOrNull(name.c_str());
     }
     void NamedChildIterator::next() {
-        current = current.NextSiblingOrNull(name);
+        current = current.NextSiblingOrNull(name.c_str());
     }
 
     /**
@@ -340,8 +361,8 @@ namespace hemelb::io::xml
         *this << "xml::";
     }
 
-    ParseError::ParseError(const TiXmlDocument* node) : XmlError() {
-        *this << "Error parsing XML. TiXml says: " << node->ErrorDesc();
+    ParseError::ParseError(const XMLDocument* node) : XmlError() {
+        *this << "Error parsing XML. TinXML2 says: " << node->ErrorStr();
     }
 
     // Missing attribute

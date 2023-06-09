@@ -32,5 +32,5 @@ target_link_libraries(hemelb_io PUBLIC
   hemelb_util
   )
 target_link_libraries(hemelb_io PRIVATE
-  TinyXML::TinyXML
+  tinyxml2::tinyxml2
   )

@@ -4,9 +4,9 @@
 // license in the file LICENSE.
 
 #include <catch2/catch.hpp>
-#include <tinyxml.h>
+//#include <tinyxml2.h>
 
-#include "configuration/SimConfig.h"
+#include "io/xml.h"
 #include "configuration/SimBuilder.h"
 #include "redblood/CellControllerBuilder.h"
 #include "redblood/MeshIO.h"
@@ -33,7 +33,8 @@ namespace hemelb::tests
     using namespace redblood;
 
     TEST_CASE_METHOD(helpers::FolderTestFixture, "CellIOTests", "[redblood]") {
-        TiXmlDocument doc;
+        //tinyxml2::XMLDocument doc;
+        io::xml::Document doc;
         LatticeDistance scale;
 
         auto converter = std::make_shared<util::UnitConverter>(0.5, 0.6, LatticePosition(1, 2, 3), 1000.0, 0.0);
@@ -44,33 +45,29 @@ namespace hemelb::tests
         auto builder = UninitSimBuilder(*config, converter);
         auto cell_builder = CellControllerBuilder(converter);
         {
-            // It seems TiXML might take care of deallocation
-            auto const parent = new TiXmlElement("parent");
-            doc.LinkEndChild(parent);
-            auto const cell = new TiXmlElement("cell");
-            auto const shape = new TiXmlElement("shape");
-            shape->SetAttribute("mesh_path", "red_blood_cell.txt");
-            shape->SetAttribute("mesh_format", "Krueger");
-            cell->LinkEndChild(shape);
-            auto const scaleXML = new TiXmlElement("scale");
-            scale = 1.5;
-            scaleXML->SetDoubleAttribute("value", scale);
-            scaleXML->SetAttribute("units", "m");
-            cell->LinkEndChild(scaleXML);
+            // This allocates an element, but doesn't add to the document.
+            // (Note: elements are owned by their document)
+            auto parent = doc.AddChild("parent");
+            auto cell = parent.AddChild("cell");
 
-            auto const moduli = new TiXmlElement("moduli");
-            auto add_stuff = [moduli](std::string const& name, std::string const& units, Dimensionless value) {
-                auto elem = new TiXmlElement(name);
-                elem->SetDoubleAttribute("value", value);
-                elem->SetAttribute("units", units);
-                moduli->LinkEndChild(elem);
+            auto shape = cell.AddChild("shape");
+            shape.SetAttribute("mesh_path", "red_blood_cell.txt");
+            shape.SetAttribute("mesh_format", "Krueger");
+
+            auto scaleXML = cell.AddChild("scale");
+            scale = 1.5;
+            scaleXML.SetAttribute("value", scale);
+            scaleXML.SetAttribute("units", "m");
+
+            auto moduli = cell.AddChild("moduli");
+            auto add_stuff = [&moduli](char const* name, char const* units, Dimensionless value) {
+                auto elem = moduli.AddChild(name);
+                elem.SetAttribute("value", value);
+                elem.SetAttribute("units", units);
             };
             add_stuff("surface", "lattice", 2e0);
             add_stuff("dilation", "lattice", 0.58);
             add_stuff("bending", "Nm", 2e-18);
-            cell->LinkEndChild(moduli);
-
-            parent->LinkEndChild(cell);
         }
 
         auto approx = Approx(0.0).margin(1e-12);
@@ -78,8 +75,8 @@ namespace hemelb::tests
         // Reads cell with minimum stuff
         SECTION("testReadCellWithDefaults") {
             // Remove moduli, so we get default behavior
-            auto cellEl = doc.FirstChildElement("parent")->FirstChildElement("cell");
-            cellEl->RemoveChild(cellEl->FirstChildElement("moduli"));
+            auto cellEl = doc.GetRoot().GetChildOrThrow("cell");
+            cellEl.GetChildOrThrow("moduli").Delete();
 
             auto cellConf = config->readCell(cellEl);
             auto cell = dynamic_unique_cast<Cell const>(cell_builder.build_cell(cellConf));
@@ -96,7 +93,7 @@ namespace hemelb::tests
         }
 
         SECTION("testReadCellModuli") {
-            auto cellConf = config->readCell(doc.FirstChildElement("parent")->FirstChildElement("cell"));
+            auto cellConf = config->readCell(doc.GetRoot().GetChildOrThrow("cell"));
             auto const moduli = cell_builder.build_cell_moduli(cellConf.moduli);
             REQUIRE(approx(1e0) == moduli.volume);
             REQUIRE(approx(2e0) == moduli.surface);
@@ -154,12 +151,13 @@ namespace hemelb::tests
                                    "   </cells>"
                                    "  </redbloodcells>"
                                    "</parent>";
-            TiXmlDocument document;
-            document.Parse(xml_text);
-            auto root = document.FirstChildElement("parent");
-            auto tc_conf = config->readTemplateCells(root->FirstChildElement("redbloodcells")->FirstChildElement("cells"));
-            auto in_conf = config->DoIOForInOutlets(root->FirstChildElement("inlets"));
-            auto out_conf = config->DoIOForInOutlets(root->FirstChildElement("outlets"));
+            //tinyxml2::XMLDocument document;
+            io::xml::Document document;
+            document.LoadString(xml_text);
+            auto root = document.GetRoot();
+            auto tc_conf = config->readTemplateCells(root.GetChildOrThrow("redbloodcells").GetChildOrThrow("cells"));
+            auto in_conf = config->DoIOForInOutlets(root.GetChildOrThrow("inlets"));
+            auto out_conf = config->DoIOForInOutlets(root.GetChildOrThrow("outlets"));
             auto ins = builder.BuildIolets(in_conf);
             auto outs = builder.BuildIolets(out_conf);
 

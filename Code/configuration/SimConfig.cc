@@ -11,6 +11,7 @@
 
 namespace hemelb::configuration
 {
+    using Element = io::xml::Element;
 
     // Base IC
     ICConfigBase::ICConfigBase(std::optional<LatticeTimeStep> t) : t0(t) {
@@ -58,7 +59,7 @@ namespace hemelb::configuration
         return std::filesystem::absolute(xml_dir / path);
     }
 
-    void SimConfig::DoIO(io::xml::Element topNode)
+    void SimConfig::DoIO(Element topNode)
     {
       // Top element must be:
       // <hemelbsettings version="6" />
@@ -74,7 +75,7 @@ namespace hemelb::configuration
 
       DoIOForGeometry(topNode.GetChildOrThrow("geometry"));
 
-      if (topNode.GetChildOrNull("colloids") != io::xml::Element::Missing())
+      if (topNode.GetChildOrNull("colloids") != Element::Missing())
       {
         hasColloidSection = true;
       }
@@ -104,7 +105,7 @@ namespace hemelb::configuration
       }
     }
 
-    void SimConfig::DoIOForSimulation(const io::xml::Element simEl)
+    void SimConfig::DoIOForSimulation(const Element simEl)
     {
         // Required element
         // <stresstype value="enum lb::StressTypes" />
@@ -123,12 +124,12 @@ namespace hemelb::configuration
 
         // Required element
         // <steps value="unsigned" units="lattice />
-        const io::xml::Element stepsEl = simEl.GetChildOrThrow("steps");
+        const Element stepsEl = simEl.GetChildOrThrow("steps");
         GetDimensionalValue(stepsEl, "lattice", sim_info.time.total_steps);
 
         // Required element
         // <step_length value="float" units="s" />
-        const io::xml::Element tsEl = simEl.GetChildOrThrow("step_length");
+        const Element tsEl = simEl.GetChildOrThrow("step_length");
         GetDimensionalValue(tsEl, "s", sim_info.time.step_s);
 
         // Optional element
@@ -143,37 +144,37 @@ namespace hemelb::configuration
 
         // Required element
         // <voxel_size value="float" units="m" />
-        const io::xml::Element vsEl = simEl.GetChildOrThrow("voxel_size");
+        const Element vsEl = simEl.GetChildOrThrow("voxel_size");
         GetDimensionalValue(vsEl, "m", sim_info.space.step_m);
 
         // Required element
         // <origin value="(x,y,z)" units="m" />
-        const io::xml::Element originEl = simEl.GetChildOrThrow("origin");
+        const Element originEl = simEl.GetChildOrThrow("origin");
         GetDimensionalValue(originEl, "m", sim_info.space.geometry_origin_m);
 
         // Optional element
         // <fluid_density value="float" units="kg/m3" />
         sim_info.fluid.density_kgm3 = simEl.GetChildOrNull("fluid_density").transform(
-                [](io::xml::Element const& el) {
+                [](Element const& el) {
                     return GetDimensionalValue<PhysicalDensity>(el, "kg/m3");
                 }).value_or(DEFAULT_FLUID_DENSITY_Kg_per_m3);
 
         // Optional element
         // <fluid_viscosity value="float" units="Pa.s" />
         sim_info.fluid.viscosity_Pas = simEl.GetChildOrNull("fluid_viscosity").transform(
-                [](io::xml::Element const& el) {
+                [](Element const& el) {
                     return GetDimensionalValue<PhysicalDynamicViscosity>(el, "Pa.s");
                 }).value_or(DEFAULT_FLUID_VISCOSITY_Pas);
 
         // Optional element (default = 0)
         // <reference_pressure value="float" units="mmHg" />
         sim_info.fluid.reference_pressure_mmHg = simEl.GetChildOrNull("reference_pressure").transform(
-                [](io::xml::Element const& el) {
+                [](Element const& el) {
                     return GetDimensionalValue<PhysicalPressure>(el, "mmHg");
                 }).value_or(0);
 
         sim_info.checkpoint = simEl.GetChildOrNull("checkpoint").transform(
-                [](io::xml::Element const& el) {
+                [](Element const& el) {
                     CheckpointInfo ans;
                     el.GetAttributeOrThrow("period", ans.period);
                     return ans;
@@ -181,7 +182,7 @@ namespace hemelb::configuration
         );
     }
 
-    void SimConfig::DoIOForGeometry(const io::xml::Element geometryEl)
+    void SimConfig::DoIOForGeometry(const Element geometryEl)
     {
       // Required element
       // <geometry>
@@ -196,11 +197,11 @@ namespace hemelb::configuration
      * @param ioletEl
      * @param requiredBC
      */
-    void SimConfig::CheckIoletMatchesCMake(const io::xml::Element& ioletEl,
+    void SimConfig::CheckIoletMatchesCMake(const Element& ioletEl,
                                            const std::string& requiredBC) const
     {
       // Check that HEMELB_*LET_BOUNDARY is consistent with this
-      const std::string& ioletTypeName = ioletEl.GetName();
+      auto ioletTypeName = ioletEl.GetName();
       std::string hemeIoletBC;
 
       if (ioletTypeName == "inlet")
@@ -220,44 +221,40 @@ namespace hemelb::configuration
       }
     }
 
-    auto SimConfig::DoIOForInOutlets(const io::xml::Element ioletsEl) const -> std::vector<IoletConfig>
+    auto SimConfig::DoIOForInOutlets(const Element ioletsEl) const -> std::vector<IoletConfig>
     {
-      const std::string& nodeName = ioletsEl.GetName();
+        auto nodeName = ioletsEl.GetName();
+        auto childNodeName = std::string{nodeName.substr(0, nodeName.size() - 1)};
+        std::vector<IoletConfig> ioletList;
+        for (auto currentIoletNode: ioletsEl.Children(std::string{nodeName.substr(0, nodeName.size() - 1)})) {
+            // Determine which InOutlet to create
+            Element conditionEl = currentIoletNode.GetChildOrThrow("condition");
+            auto conditionType = conditionEl.GetAttributeOrThrow("type");
 
-      const std::string childNodeName = nodeName.substr(0, nodeName.size() - 1);
-      std::vector<IoletConfig> ioletList;
-      for (io::xml::Element currentIoletNode = ioletsEl.GetChildOrNull(childNodeName);
-          currentIoletNode != io::xml::Element::Missing();
-          currentIoletNode = currentIoletNode.NextSiblingOrNull(childNodeName))
-      {
-        // Determine which InOutlet to create
-        io::xml::Element conditionEl = currentIoletNode.GetChildOrThrow("condition");
-        auto conditionType = conditionEl.GetAttributeOrThrow("type");
+            IoletConfig newIolet;
 
-        IoletConfig newIolet;
-
-        if (conditionType == "pressure")
-        {
-          newIolet = DoIOForPressureInOutlet(currentIoletNode);
+            if (conditionType == "pressure")
+            {
+                newIolet = DoIOForPressureInOutlet(currentIoletNode);
+            }
+            else if (conditionType == "velocity")
+            {
+                newIolet = DoIOForVelocityInOutlet(currentIoletNode);
+            }
+            else
+            {
+                throw Exception() << "Invalid boundary condition type '" << conditionType << "' in "
+                                  << conditionEl.GetPath();
+            }
+            ioletList.push_back(std::move(newIolet));
         }
-        else if (conditionType == "velocity")
-        {
-          newIolet = DoIOForVelocityInOutlet(currentIoletNode);
-        }
-        else
-        {
-          throw Exception() << "Invalid boundary condition type '" << conditionType << "' in "
-              << conditionEl.GetPath();
-        }
-        ioletList.push_back(std::move(newIolet));
-      }
-      return ioletList;
+        return ioletList;
     }
 
-    auto SimConfig::DoIOForPressureInOutlet(const io::xml::Element& ioletEl) const -> IoletConfig
+    auto SimConfig::DoIOForPressureInOutlet(const Element& ioletEl) const -> IoletConfig
     {
       CheckIoletMatchesCMake(ioletEl, "NASHZEROTHORDERPRESSUREIOLET");
-      io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+      Element conditionEl = ioletEl.GetChildOrThrow("condition");
       auto conditionSubtype = conditionEl.GetAttributeOrThrow("subtype");
 
       if (conditionSubtype == "cosine")
@@ -279,10 +276,10 @@ namespace hemelb::configuration
       }
     }
 
-    auto SimConfig::DoIOForVelocityInOutlet(const io::xml::Element& ioletEl) const -> IoletConfig
+    auto SimConfig::DoIOForVelocityInOutlet(const Element& ioletEl) const -> IoletConfig
     {
       CheckIoletMatchesCMake(ioletEl, "LADDIOLET");
-      io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+      Element conditionEl = ioletEl.GetChildOrThrow("condition");
       auto conditionSubtype = conditionEl.GetAttributeOrThrow("subtype");
 
       if (conditionSubtype == "parabolic")
@@ -304,7 +301,7 @@ namespace hemelb::configuration
       }
     }
 
-    void SimConfig::DoIOForProperties(const io::xml::Element& propertiesEl)
+    void SimConfig::DoIOForProperties(const Element& propertiesEl)
     {
       for (auto poEl: propertiesEl.Children("propertyoutput"))
       {
@@ -315,7 +312,7 @@ namespace hemelb::configuration
     }
 
     extraction::PropertyOutputFile SimConfig::DoIOForPropertyOutputFile(
-        const io::xml::Element& propertyoutputEl)
+        const Element& propertyoutputEl)
     {
       auto file = extraction::PropertyOutputFile{};
 
@@ -339,7 +336,7 @@ namespace hemelb::configuration
 
       propertyoutputEl.GetAttributeOrThrow("period", file.frequency);
 
-      io::xml::Element geometryEl = propertyoutputEl.GetChildOrThrow("geometry");
+      Element geometryEl = propertyoutputEl.GetChildOrThrow("geometry");
       auto type = geometryEl.GetAttributeOrThrow("type");
 
       if (type == "plane")
@@ -374,27 +371,63 @@ namespace hemelb::configuration
       return file;
     }
 
-    extraction::StraightLineGeometrySelector* SimConfig::DoIOForLineGeometry(
-        const io::xml::Element& geometryEl)
+    extraction::StraightLineGeometrySelector*
+    SimConfig::DoIOForLineGeometry(const Element& geometryEl)
     {
-      io::xml::Element point1El = geometryEl.GetChildOrThrow("point");
-      io::xml::Element point2El = point1El.NextSiblingOrThrow("point");
+        std::vector<PhysicalPosition> points;
+        for (auto child: geometryEl.Children()) {
+            if (auto name = child.GetName(); name != "point")
+                throw (Exception() << "Unknown child element: " << name);
+            points.push_back(GetDimensionalValue<PhysicalPosition>(child, "m"));
+        }
 
-      PhysicalPosition point1;
-      PhysicalPosition point2;
+        if (auto n = points.size(); n != 2)
+            throw (Exception() << "Must have exactly 2 points for line, instead have " << n);
 
-      GetDimensionalValue(point1El, "m", point1);
-      GetDimensionalValue(point2El, "m", point2);
-
-      return new extraction::StraightLineGeometrySelector(point1.as<float>(), point2.as<float>());
+        return new extraction::StraightLineGeometrySelector(points[0].as<float>(), points[1].as<float>());
     }
 
-    extraction::PlaneGeometrySelector* SimConfig::DoIOForPlaneGeometry(
-        const io::xml::Element& geometryEl)
-    {
-      io::xml::Element pointEl = geometryEl.GetChildOrThrow("point");
-      io::xml::Element normalEl = geometryEl.GetChildOrThrow("normal");
+    template <std::size_t N>
+    auto GetExactChildren(Element const& el, std::array<char const*, N> names) {
+        using PAIR = std::pair<std::size_t, std::string_view>;
+        std::vector<PAIR> idx_names(N); //= {{0, NAMES}...};
+        for (std::size_t i = 0; i < N; ++i) {
+            idx_names[i] = {i, names[i]};
+        }
 
+        std::array<Element, N> ans;
+
+        // Must inspect all children of the node
+        for (auto child: el.Children()) {
+            // Check the found child against allowed names
+            auto match = std::find_if(idx_names.begin(), idx_names.end(),
+                                      [&](PAIR const& i_name) {
+                                          return i_name.second == child.GetName();
+                                      });
+            if (match == idx_names.end())
+                throw (Exception() << "Unexpected element found: " << child.GetPath());
+            // It was one of the expected, add to output
+            ans[match->first] = child;
+            // Remove from allowed names
+            idx_names.erase(match);
+        }
+        // Now check for required names not found
+        for (auto& [_, name]: idx_names) {
+            throw (Exception() << "Required child not found: " << name);
+        }
+        return ans;
+    }
+
+    template <typename... Ts>
+    auto GetExactChildren(Element const& el, Ts&... names) {
+        constexpr auto N = sizeof...(Ts);
+        return GetExactChildren<N>(el, std::array<char const*, N>{std::forward<Ts>(names)...});
+    }
+
+    extraction::PlaneGeometrySelector*
+    SimConfig::DoIOForPlaneGeometry(const Element& geometryEl)
+    {
+        auto [pointEl, normalEl] = GetExactChildren(geometryEl, "point", "normal");
       PhysicalPosition point;
       util::Vector3D<float> normal;
 
@@ -402,7 +435,7 @@ namespace hemelb::configuration
       GetDimensionalValue(normalEl, "dimensionless", normal);
 
       auto radius = geometryEl.GetChildOrNull("radius").transform(
-	[](io::xml::Element const& el) {
+	[](Element const& el) {
 	  return GetDimensionalValue<PhysicalDistance>(el, "m");
 	});
       if (radius)
@@ -412,16 +445,16 @@ namespace hemelb::configuration
     }
 
     extraction::SurfacePointSelector* SimConfig::DoIOForSurfacePoint(
-        const io::xml::Element& geometryEl)
+        const Element& geometryEl)
     {
-      io::xml::Element pointEl = geometryEl.GetChildOrThrow("point");
+      Element pointEl = geometryEl.GetChildOrThrow("point");
 
       PhysicalPosition point;
       GetDimensionalValue(pointEl, "m", point);
       return new extraction::SurfacePointSelector(point.as<float>());
     }
 
-    extraction::OutputField SimConfig::DoIOForPropertyField(const io::xml::Element& fieldEl)
+    extraction::OutputField SimConfig::DoIOForPropertyField(const Element& fieldEl)
     {
       extraction::OutputField field;
       auto type = fieldEl.GetAttributeOrThrow("type");
@@ -487,11 +520,11 @@ namespace hemelb::configuration
       return field;
     }
 
-    void SimConfig::DoIOForBaseInOutlet(const io::xml::Element& ioletEl,
+    void SimConfig::DoIOForBaseInOutlet(const Element& ioletEl,
                                         IoletConfigBase& ioletConf) const
     {
-        io::xml::Element positionEl = ioletEl.GetChildOrThrow("position");
-        io::xml::Element normalEl = ioletEl.GetChildOrThrow("normal");
+        Element positionEl = ioletEl.GetChildOrThrow("position");
+        Element normalEl = ioletEl.GetChildOrThrow("normal");
 
         GetDimensionalValue(positionEl, "m", ioletConf.position);
         GetDimensionalValue(normalEl, "dimensionless", ioletConf.normal);
@@ -509,7 +542,7 @@ namespace hemelb::configuration
             // Optional element - default is length of flowext
             // <fadelength ioletConf="float" units="m" />
             flowConf.fadelength_m = flowEl.GetChildOrNull("fadelength").transform(
-                    [](io::xml::Element const &el) {
+                    [](Element const &el) {
                         return GetDimensionalValue<PhysicalDistance>(el, "m");
                     }).value_or(flowConf.length_m);
 
@@ -528,7 +561,7 @@ namespace hemelb::configuration
         for (auto insertEl: ioletEl.Children("insertcell")) {
             CellInserterConfig inserterConf;
             auto maybeSeed = insertEl.GetChildOrNull("seed").transform(
-                    [](io::xml::Element const& _) { return _.GetAttributeOrThrow<std::int64_t>("value"); }
+                    [](Element const& _) { return _.GetAttributeOrThrow<std::int64_t>("value"); }
             );
             if (maybeSeed) {
                 inserterConf.seed = *maybeSeed;
@@ -604,7 +637,7 @@ namespace hemelb::configuration
         return std::optional<U>{};
     }
 
-    void SimConfig::DoIOForInitialConditions(io::xml::Element initialconditionsEl)
+    void SimConfig::DoIOForInitialConditions(Element initialconditionsEl)
     {
         // The <time> element may be present - if so, it will set the
         // initial timestep value
@@ -623,7 +656,7 @@ namespace hemelb::configuration
                         << "XML contains both <pressure> and <checkpoint> sub elements of <initialconditions>";
             } else {
                 // Only pressure
-                io::xml::Element uniformEl = pressureEl.GetChildOrThrow("uniform");
+                Element uniformEl = pressureEl.GetChildOrThrow("uniform");
                 PhysicalPressure p0_mmHg;
                 GetDimensionalValue(uniformEl, "mmHg", p0_mmHg);
                 initial_condition = EquilibriumIC(t0, p0_mmHg);
@@ -647,13 +680,13 @@ namespace hemelb::configuration
     }
 
     auto SimConfig::DoIOForCosinePressureInOutlet(
-        const io::xml::Element& ioletEl) const -> IoletConfig
+        const Element& ioletEl) const -> IoletConfig
     {
       //auto newIolet = util::make_clone_ptr<lb::iolets::InOutLetCosine>();
       CosinePressureIoletConfig newIolet;
       DoIOForBaseInOutlet(ioletEl, newIolet);
 
-      const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+      const Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
       newIolet.amp_mmHg = GetDimensionalValue<PhysicalPressure>(conditionEl.GetChildOrThrow("amplitude"), "mmHg");
       newIolet.mean_mmHg = GetDimensionalValue<PhysicalPressure>(conditionEl.GetChildOrThrow("mean"), "mmHg");
@@ -663,29 +696,29 @@ namespace hemelb::configuration
     }
 
     auto SimConfig::DoIOForFilePressureInOutlet(
-        const io::xml::Element& ioletEl) const -> IoletConfig
+        const Element& ioletEl) const -> IoletConfig
     {
       FilePressureIoletConfig newIolet;
       DoIOForBaseInOutlet(ioletEl, newIolet);
 
-      const io::xml::Element pathEl = ioletEl.GetChildOrThrow("condition").GetChildOrThrow("path");
+      const Element pathEl = ioletEl.GetChildOrThrow("condition").GetChildOrThrow("path");
       newIolet.file_path = RelPathToFullPath(pathEl.GetAttributeOrThrow("value"));
 
       return newIolet;
     }
 
     auto SimConfig::DoIOForMultiscalePressureInOutlet(
-        const io::xml::Element& ioletEl) const -> IoletConfig
+        const Element& ioletEl) const -> IoletConfig
     {
       MultiscalePressureIoletConfig newIolet;
       DoIOForBaseInOutlet(ioletEl, newIolet);
 
-      const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+      const Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
-      const io::xml::Element pressureEl = conditionEl.GetChildOrThrow("pressure");
+      const Element pressureEl = conditionEl.GetChildOrThrow("pressure");
       GetDimensionalValue(pressureEl, "mmHg", newIolet.pressure_reference_mmHg);
 
-      const io::xml::Element velocityEl = conditionEl.GetChildOrThrow("velocity");
+      const Element velocityEl = conditionEl.GetChildOrThrow("velocity");
       GetDimensionalValue(velocityEl, "m/s", newIolet.velocity_reference_ms);
 
       newIolet.label = conditionEl.GetChildOrThrow("label").GetAttributeOrThrow("value");
@@ -693,12 +726,12 @@ namespace hemelb::configuration
     }
 
     auto SimConfig::DoIOForParabolicVelocityInOutlet(
-        const io::xml::Element& ioletEl) const -> IoletConfig
+        const Element& ioletEl) const -> IoletConfig
     {
         ParabolicVelocityIoletConfig newIolet;
         DoIOForBaseInOutlet(ioletEl, newIolet);
 
-        const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+        const Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
         GetDimensionalValue(conditionEl.GetChildOrThrow("radius"), "m", newIolet.radius_m);
         GetDimensionalValue(conditionEl.GetChildOrThrow("maximum"), "m/s", newIolet.max_speed_ms);
@@ -706,12 +739,12 @@ namespace hemelb::configuration
     }
 
     auto SimConfig::DoIOForWomersleyVelocityInOutlet(
-        const io::xml::Element& ioletEl) const -> IoletConfig
+        const Element& ioletEl) const -> IoletConfig
     {
         WomersleyVelocityIoletConfig newIolet;
         DoIOForBaseInOutlet(ioletEl, newIolet);
 
-        const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+        const Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
         GetDimensionalValue(conditionEl.GetChildOrThrow("radius"), "m", newIolet.radius_m);
         GetDimensionalValue(conditionEl.GetChildOrThrow("pressure_gradient_amplitude"),
@@ -722,12 +755,12 @@ namespace hemelb::configuration
     }
 
     auto SimConfig::DoIOForFileVelocityInOutlet(
-            const io::xml::Element& ioletEl) const -> IoletConfig
+            const Element& ioletEl) const -> IoletConfig
     {
         FileVelocityIoletConfig newIolet;
         DoIOForBaseInOutlet(ioletEl, newIolet);
 
-        const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+        const Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
         newIolet.file_path = RelPathToFullPath(conditionEl.GetChildOrThrow("path").GetAttributeOrThrow("value"));
         GetDimensionalValue(conditionEl.GetChildOrThrow("radius"), "m", newIolet.radius_m);
@@ -740,19 +773,19 @@ namespace hemelb::configuration
       return hasColloidSection;
     }
 
-    void SimConfig::DoIOForMonitoring(const io::xml::Element& monEl)
+    void SimConfig::DoIOForMonitoring(const Element& monEl)
     {
-      io::xml::Element convEl = monEl.GetChildOrNull("steady_flow_convergence");
-      if (convEl != io::xml::Element::Missing())
+      Element convEl = monEl.GetChildOrNull("steady_flow_convergence");
+      if (convEl != Element::Missing())
       {
         DoIOForSteadyFlowConvergence(convEl);
       }
 
       monitoringConfig.doIncompressibilityCheck = (monEl.GetChildOrNull("incompressibility")
-          != io::xml::Element::Missing());
+          != Element::Missing());
     }
 
-    void SimConfig::DoIOForSteadyFlowConvergence(const io::xml::Element& convEl)
+    void SimConfig::DoIOForSteadyFlowConvergence(const Element& convEl)
     {
         monitoringConfig.doConvergenceCheck = true;
         monitoringConfig.convergenceRelativeTolerance = convEl.GetAttributeOrThrow<double>("tolerance");
@@ -769,7 +802,7 @@ namespace hemelb::configuration
         }
     }
 
-    void SimConfig::DoIOForConvergenceCriterion(const io::xml::Element& criterionEl)
+    void SimConfig::DoIOForConvergenceCriterion(const Element& criterionEl)
     {
       auto criterionType = criterionEl.GetAttributeOrThrow("type");
 
@@ -783,7 +816,7 @@ namespace hemelb::configuration
       monitoringConfig.convergenceReferenceValue = GetDimensionalValue<PhysicalSpeed>(criterionEl, "m/s");
     }
 
-    TemplateCellConfig SimConfig::readCell(const io::xml::Element& cellNode) const {
+    TemplateCellConfig SimConfig::readCell(const Element& cellNode) const {
         TemplateCellConfig ans;
         ans.name = cellNode.GetAttributeMaybe("name").value_or("default");
         auto const shape = cellNode.GetChildOrThrow("shape");
@@ -791,7 +824,7 @@ namespace hemelb::configuration
                 shape.GetAttributeOrThrow("mesh_path")
         );
 
-        auto get_fmt = [](io::xml::Element const& shape, std::string attr_name) -> MeshFormat {
+        auto get_fmt = [](Element const& shape, char const* attr_name) -> MeshFormat {
             auto fmt = shape.GetAttributeOrThrow(attr_name);
             if (fmt == "VTK") {
                 return VTKMeshFormat{};
@@ -829,7 +862,7 @@ namespace hemelb::configuration
         return ans;
     }
 
-    std::map<std::string, TemplateCellConfig> SimConfig::readTemplateCells(io::xml::Element const& cellsEl) const {
+    std::map<std::string, TemplateCellConfig> SimConfig::readTemplateCells(Element const& cellsEl) const {
         std::map<std::string, TemplateCellConfig> ans;
         for (auto cellNode = cellsEl.GetChildOrNull("cell");
              cellNode;
@@ -844,7 +877,7 @@ namespace hemelb::configuration
         return ans;
     }
 
-    NodeForceConfig readNode2NodeForce(const io::xml::Element& node) {
+    NodeForceConfig readNode2NodeForce(const Element& node) {
         auto intensity = GetDimensionalValueWithDefault<
                 quantity_union<double, "Nm", "lattice">
         >(node, "intensity", quantity<double, "Nm">(1.0));
@@ -854,18 +887,18 @@ namespace hemelb::configuration
 
         // exponent doesnt have units apparently
         auto exponent = node.and_then(
-                [](io::xml::Element const& el) { return el.GetChildOrNull("exponent"); }
+                [](Element const& el) { return el.GetChildOrNull("exponent"); }
         ).transform(
-                [](io::xml::Element const& el) { return el.GetAttributeOrThrow<std::size_t>("value"); }
+                [](Element const& el) { return el.GetAttributeOrThrow<std::size_t>("value"); }
         ).value_or(std::size_t(2));
 
         return {intensity, cutoffdist, exponent};
     }
 
-    RBCConfig SimConfig::DoIOForRedBloodCells(const io::xml::Element &rbcEl) const {
+    RBCConfig SimConfig::DoIOForRedBloodCells(const Element &rbcEl) const {
         RBCConfig ans;
 
-        const io::xml::Element controllerNode = rbcEl.GetChildOrThrow("controller");
+        const Element controllerNode = rbcEl.GetChildOrThrow("controller");
         ans.boxSize = GetDimensionalValue<LatticeDistance>(controllerNode.GetChildOrThrow("boxsize"), "lattice");
 
         if (auto cellsEl = rbcEl.GetChildOrNull("cells"))
