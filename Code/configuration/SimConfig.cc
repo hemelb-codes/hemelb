@@ -306,10 +306,9 @@ namespace hemelb::configuration
 
     void SimConfig::DoIOForProperties(const io::xml::Element& propertiesEl)
     {
-      for (io::xml::ChildIterator poPtr = propertiesEl.IterChildren("propertyoutput");
-          !poPtr.AtEnd(); ++poPtr)
+      for (auto poEl: propertiesEl.Children("propertyoutput"))
       {
-        propertyOutputs.push_back(DoIOForPropertyOutputFile(*poPtr));
+        propertyOutputs.push_back(DoIOForPropertyOutputFile(poEl));
       }
 
 
@@ -369,9 +368,8 @@ namespace hemelb::configuration
             << "' in element " << geometryEl.GetPath();
       }
 
-      for (io::xml::ChildIterator fieldPtr = propertyoutputEl.IterChildren("field");
-          !fieldPtr.AtEnd(); ++fieldPtr)
-        file.fields.push_back(DoIOForPropertyField(*fieldPtr));
+      for (auto fieldEl: propertyoutputEl.Children("field"))
+        file.fields.push_back(DoIOForPropertyField(fieldEl));
 
       return file;
     }
@@ -527,9 +525,9 @@ namespace hemelb::configuration
 
         // Optional element(s) <insertcell>
         std::int64_t horrible_hack_seed = 0;
-        for (auto insertEl = ioletEl.IterChildren("insertcell"); !insertEl.AtEnd(); ++insertEl) {
+        for (auto insertEl: ioletEl.Children("insertcell")) {
             CellInserterConfig inserterConf;
-            auto maybeSeed = insertEl->GetChildOrNull("seed").transform(
+            auto maybeSeed = insertEl.GetChildOrNull("seed").transform(
                     [](io::xml::Element const& _) { return _.GetAttributeOrThrow<std::int64_t>("value"); }
             );
             if (maybeSeed) {
@@ -549,7 +547,7 @@ namespace hemelb::configuration
                 }
                 inserterConf.seed = horrible_hack_seed;
             }
-            inserterConf.template_name = insertEl->GetAttributeOrThrow("template");
+            inserterConf.template_name = insertEl.GetAttributeOrThrow("template");
 //                    if (templateCells.count(templateName) == 0)
 //                    {
 //                        throw Exception() << "Template cell name does not match a known template cell";
@@ -557,35 +555,35 @@ namespace hemelb::configuration
 
             // Rotate cell to align z axis with given position, and then z axis with flow
             // If phi == 0, then cell symmetry axis is aligned with the flow
-            inserterConf.theta_rad = GetDimensionalValueWithDefault<Angle>(*insertEl, "theta", "rad", 0e0);
-            inserterConf.phi_rad = GetDimensionalValueWithDefault<Angle>(*insertEl, "phi", "rad", 0e0);
+            inserterConf.theta_rad = GetDimensionalValueWithDefault<Angle>(insertEl, "theta", "rad", 0e0);
+            inserterConf.phi_rad = GetDimensionalValueWithDefault<Angle>(insertEl, "phi", "rad", 0e0);
             inserterConf.translation_m = {
-                    GetDimensionalValueWithDefault<PhysicalDistance>(*insertEl, "x", "m", 0e0),
-                    GetDimensionalValueWithDefault<PhysicalDistance>(*insertEl, "y", "m", 0e0),
-                    GetDimensionalValueWithDefault<PhysicalDistance>(*insertEl, "z", "m", 0e0)
+                    GetDimensionalValueWithDefault<PhysicalDistance>(insertEl, "x", "m", 0e0),
+                    GetDimensionalValueWithDefault<PhysicalDistance>(insertEl, "y", "m", 0e0),
+                    GetDimensionalValueWithDefault<PhysicalDistance>(insertEl, "z", "m", 0e0)
             };
 
             inserterConf.offset = GetDimensionalValueWithDefault<
                     quantity_union<double, "s", "lattice">
-            >(*insertEl, "offset", quantity<double, "s">(0));
+            >(insertEl, "offset", quantity<double, "s">(0));
             inserterConf.drop_period_s = GetDimensionalValue<LatticeTime>(
-                    insertEl->GetChildOrThrow("every"), "s");
+                    insertEl.GetChildOrThrow("every"), "s");
             inserterConf.dt_s = GetDimensionalValueWithDefault<LatticeTime>(
-                    *insertEl, "delta_t", "s", 0e0);
+                    insertEl, "delta_t", "s", 0e0);
 
-            inserterConf.dtheta_rad = GetDimensionalValueWithDefault<Angle>(*insertEl,
+            inserterConf.dtheta_rad = GetDimensionalValueWithDefault<Angle>(insertEl,
                                                                       "delta_theta",
                                                                       "rad",
                                                                       0e0);
-            inserterConf.dphi_rad = GetDimensionalValueWithDefault<Angle>(*insertEl,
+            inserterConf.dphi_rad = GetDimensionalValueWithDefault<Angle>(insertEl,
                                                                     "delta_phi",
                                                                     "rad",
                                                                     0e0);
-            inserterConf.dx_m = GetDimensionalValueWithDefault<LatticeDistance>(*insertEl,
+            inserterConf.dx_m = GetDimensionalValueWithDefault<LatticeDistance>(insertEl,
                                                                             "delta_x",
                                                                             "m",
                                                                             0e0);
-            inserterConf.dy_m = GetDimensionalValueWithDefault<LatticeDistance>(*insertEl,
+            inserterConf.dy_m = GetDimensionalValueWithDefault<LatticeDistance>(insertEl,
                                                                             "delta_y",
                                                                             "m",
                                                                             0e0);
@@ -756,21 +754,19 @@ namespace hemelb::configuration
 
     void SimConfig::DoIOForSteadyFlowConvergence(const io::xml::Element& convEl)
     {
-      monitoringConfig.doConvergenceCheck = true;
-      monitoringConfig.convergenceRelativeTolerance = convEl.GetAttributeOrThrow<double>("tolerance");
-      monitoringConfig.convergenceTerminate = (convEl.GetAttributeOrThrow("terminate") == "true");
+        monitoringConfig.doConvergenceCheck = true;
+        monitoringConfig.convergenceRelativeTolerance = convEl.GetAttributeOrThrow<double>("tolerance");
+        monitoringConfig.convergenceTerminate = (convEl.GetAttributeOrThrow("terminate") == "true");
 
-      if (convEl.IterChildren("criterion").AtEnd())
-      {
-        throw Exception() << "At least one convergence criterion must be provided in "
-            << convEl.GetPath();
-      }
-
-      for (io::xml::ChildIterator criteriaIt = convEl.IterChildren("criterion");
-          !criteriaIt.AtEnd(); ++criteriaIt)
-      {
-        DoIOForConvergenceCriterion(*criteriaIt);
-      }
+        auto n = 0;
+        for (auto criterionEl: convEl.Children("criterion")) {
+            DoIOForConvergenceCriterion(criterionEl);
+            n++;
+        }
+        if (n == 0) {
+            throw Exception() << "At least one convergence criterion must be provided in "
+                              << convEl.GetPath();
+        }
     }
 
     void SimConfig::DoIOForConvergenceCriterion(const io::xml::Element& criterionEl)
