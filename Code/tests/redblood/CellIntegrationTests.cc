@@ -4,7 +4,7 @@
 // license in the file LICENSE.
 
 #include <catch2/catch.hpp>
-#include <tinyxml.h>
+#include <tinyxml2.h>
 
 #include "Traits.h"
 #include "SimulationMaster.h"
@@ -26,7 +26,8 @@ namespace hemelb::tests
     public:
       CellIntegrationTests() : FolderTestFixture(), timings() {
 	CopyResourceToTempdir("red_blood_cell.txt");
-	TiXmlDocument doc(resources::Resource("large_cylinder.xml").Path());
+	tinyxml2::XMLDocument doc;
+    doc.LoadFile(resources::Resource("large_cylinder.xml").Path().c_str());
 	CopyResourceToTempdir("large_cylinder.xml");
     ModifyXMLInput("large_cylinder.xml", {"simulation", "steps", "value"}, 8);
 	CopyResourceToTempdir("large_cylinder.gmy");

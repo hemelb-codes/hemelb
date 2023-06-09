@@ -62,7 +62,7 @@ namespace hemelb::configuration
     //! If it doesn't exist, return @param default_value.
     template <typename T>
     T GetDimensionalValueWithDefault(const io::xml::Element& elem,
-                                     std::string_view name, std::string_view unit, T default_value) {
+                                     char const* name, char const* unit, T default_value) {
         return elem
                 .and_then([&](const io::xml::Element& _) { return _.GetChildOrNull(name); })
                 .transform([&](const io::xml::Element& _) { return GetDimensionalValue<T>(_, unit); })
@@ -70,7 +70,7 @@ namespace hemelb::configuration
     }
 
     template <QuantityUnion QUnion, IsVariantAlternative<QUnion> DefaultQ>
-    QUnion GetDimensionalValueWithDefault(const io::xml::Element& elem, std::string_view name, DefaultQ const& default_q) {
+    QUnion GetDimensionalValueWithDefault(const io::xml::Element& elem, char const* name, DefaultQ const& default_q) {
         using RepT = typename quantity_union_traits<QUnion>::representation_type;
         using io::xml::Element;
         return elem
