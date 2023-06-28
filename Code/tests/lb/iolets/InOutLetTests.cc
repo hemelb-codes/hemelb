@@ -18,16 +18,12 @@ namespace hemelb::tests
     //using namespace lb::iolets;
     using resources::Resource;
 
-    class UncheckedSimConfig : public configuration::SimConfig {
+    class UncheckedSimConfigReader : public configuration::SimConfigReader {
     public:
-        explicit UncheckedSimConfig(const std::string& path) :
-                configuration::SimConfig(path)
-        {
-            Init();
-        }
+        using configuration::SimConfigReader::SimConfigReader;
     protected:
         void CheckIoletMatchesCMake(const io::xml::Element& ioletEl,
-                                    const std::string& requiredBC) const override
+                                            std::string_view requiredBC) const override
         {
 
         }
@@ -59,7 +55,8 @@ namespace hemelb::tests
 
         SECTION("TestCosineConstruct") {
             // Bootstrap ourselves an iolet, by loading config.xml.
-            UncheckedSimConfig config(Resource("config.xml").Path());
+            UncheckedSimConfigReader reader(Resource("config.xml").Path());
+            auto config = reader.Read();
             configuration::SimBuilder builder(config);
             auto& converter = *builder.GetUnitConverter();
 
@@ -107,7 +104,8 @@ namespace hemelb::tests
             CopyResourceToTempdir("iolet.txt");
             MoveToTempdir();
 
-            UncheckedSimConfig config(Resource("config_file_inlet.xml").Path());
+            UncheckedSimConfigReader reader(Resource("config_file_inlet.xml").Path());
+            auto config = reader.Read();
             configuration::SimBuilder builder(config);
             auto& converter = *builder.GetUnitConverter();
 
@@ -139,7 +137,8 @@ namespace hemelb::tests
 
         SECTION("TestParabolicVelocityConstruct") {
             // Bootstrap ourselves an inoutlet, by loading config.xml.
-            UncheckedSimConfig config(Resource("config-velocity-iolet.xml").Path());
+            UncheckedSimConfigReader reader(Resource("config-velocity-iolet.xml").Path());
+            auto config = reader.Read();
             configuration::SimBuilder builder(config);
             auto& converter = *builder.GetUnitConverter();
 
@@ -173,7 +172,8 @@ namespace hemelb::tests
 
         SECTION("TestWomersleyVelocityConstruct") {
             // Bootstrap ourselves a in inoutlet, by loading config.xml.
-            UncheckedSimConfig config(Resource("config_new_velocity_inlets.xml").Path());
+            UncheckedSimConfigReader reader(Resource("config_new_velocity_inlets.xml").Path());
+            auto config = reader.Read();
             configuration::SimBuilder builder(config);
             auto& converter = *builder.GetUnitConverter();
 
@@ -243,7 +243,8 @@ namespace hemelb::tests
             MoveToTempdir();
 
             // Bootstrap ourselves a file velocity inlet, by loading an appropriate config file.
-            UncheckedSimConfig config(Resource("config_file_velocity_inlet.xml").Path());
+            UncheckedSimConfigReader reader(Resource("config_file_velocity_inlet.xml").Path());
+            auto config = reader.Read();
             configuration::SimBuilder builder(config);
             auto& converter = *builder.GetUnitConverter();
 

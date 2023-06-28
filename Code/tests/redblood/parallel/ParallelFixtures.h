@@ -10,10 +10,8 @@
 #include "tests/redblood/Fixtures.h"
 #include "SimulationMaster.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     //! \brief gathers mid-domain and egde positions from all procs
     //! \details If there are insufficient number of edges, mid-domains are used instead.
     //! erase removes the components from the first process.
@@ -26,18 +24,18 @@ namespace hemelb
     class OpenedSimulationMaster : public SimulationMaster<TRAITS>
     {
     public:
-      using SimulationMaster<TRAITS>::SimulationMaster;
-      using SimulationMaster<TRAITS>::Finalise;
+        using SimulationMaster<TRAITS>::SimulationMaster;
+        using SimulationMaster<TRAITS>::Finalise;
 
-      void DoTimeStep()
-      {
-	SimulationMaster<TRAITS>::DoTimeStep();
-      }
+        void DoTimeStep()
+        {
+            SimulationMaster<TRAITS>::DoTimeStep();
+        }
 
-      std::shared_ptr<hemelb::configuration::SimConfig> GetSimConfig()
-      {
-	return this->simConfig;
-      }
+        configuration::SimConfig const& GetSimConfig()
+        {
+            return this->simConfig;
+        }
     };
 
     class DummyCell : public NodeCell {
@@ -65,7 +63,6 @@ namespace hemelb
 											     net::MpiCommunicator const &c, size_t nCells);
 
     net::MpiCommunicator CreateDumbGraphComm(net::MpiCommunicator const &comm);
-  }
 }
 
 #endif  // ONCE

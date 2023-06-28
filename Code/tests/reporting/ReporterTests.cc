@@ -104,8 +104,8 @@ namespace hemelb::tests
             AssertTemplate("", "{{#UNSTABLE}} unstable{{/UNSTABLE}}");
             AssertTemplate("R0S64 R1S1000 R2S2000 R3S3000 R4S4000 ",
                            "{{#PROCESSOR}}R{{RANK}}S{{SITES}} {{/PROCESSOR}}");
-            AssertTemplate(build_info::REVISION_HASH, "{{#BUILD}}{{REVISION}}{{/BUILD}}");
-            AssertTemplate(build_info::BUILD_TIME, "{{#BUILD}}{{TIME}}{{/BUILD}}");
+            AssertTemplate(build_info::REVISION_HASH.str(), "{{#BUILD}}{{REVISION}}{{/BUILD}}");
+            AssertTemplate(build_info::BUILD_TIME.str(), "{{#BUILD}}{{TIME}}{{/BUILD}}");
             AssertValue("0.000100", "TIME_STEP_LENGTH");
             AssertValue("1000", "TOTAL_TIME_STEPS");
             AssertValue("1000", "STEPS");
