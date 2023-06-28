@@ -30,86 +30,140 @@ namespace hemelb::configuration
     }
 
 
-    std::unique_ptr<SimConfig> SimConfig::New(const path& path)
+    SimConfig SimConfig::New(const path& path)
     {
-      auto ans = std::unique_ptr<SimConfig>{new SimConfig{path}};
-      ans->Init();
-      return ans;
+        auto reader = SimConfigReader(path);
+        return reader.Read();
     }
 
+    // Given an element, get those child elements specified by name (repeats OK)
+    // Any missing or extra elements are an error.
+    //
+    // Probably easier to use the helper template below
+    template <std::size_t N>
+    auto GetExactChildren(Element const& el, std::array<char const*, N> names) {
+        using PAIR = std::pair<std::size_t, std::string_view>;
+        std::vector<PAIR> idx_names(N); //= {{0, NAMES}...};
+        for (std::size_t i = 0; i < N; ++i) {
+            idx_names[i] = {i, names[i]};
+        }
 
-    SimConfig::SimConfig(const path& path) :
-        xmlFilePath(path)
+        std::array<Element, N> ans;
+
+        // Must inspect all children of the node
+        for (auto child: el.Children()) {
+            // Check the found child against allowed names
+            auto match = std::find_if(idx_names.begin(), idx_names.end(),
+                                      [&](PAIR const& i_name) {
+                                          return i_name.second == child.GetName();
+                                      });
+            if (match == idx_names.end())
+                throw (Exception() << "Unexpected element found: " << child.GetPath());
+            // It was one of the expected, add to output
+            ans[match->first] = child;
+            // Remove from allowed names
+            idx_names.erase(match);
+        }
+        // Now check for required names not found
+        for (auto& [_, name]: idx_names) {
+            throw (Exception() << "Required child not found: " << name);
+        }
+        return ans;
+    }
+    // Helper for the above.
+    template <typename... Ts>
+    auto GetExactChildren(Element const& el, Ts&... names) {
+        constexpr auto N = sizeof...(Ts);
+        return GetExactChildren<N>(el, std::array<char const*, N>{std::forward<Ts>(names)...});
+    }
+
+    // Like std::foreach but for the child sublements of the given name, any others being an error.
+    template <std::invocable<Element const&> F>
+    void ForExactChildren(Element const& el, std::string_view sub_el_name, F&& func) {
+        for (auto sub_el: el.Children()) {
+            if (auto name = sub_el.GetName(); name != sub_el_name) {
+                throw (Exception() << "Unexpected child element: " << sub_el.GetPath());
+            }
+            std::invoke(func, sub_el);
+        }
+    }
+
+    SimConfigReader::SimConfigReader(path path) :
+        xmlFilePath(std::move(path))
     {
     }
 
-    void SimConfig::Init()
+    SimConfig SimConfigReader::Read() const
     {
-      if (!std::filesystem::exists(xmlFilePath))
-      {
-        throw Exception() << "Config file '" << xmlFilePath << "' does not exist";
-      }
-      auto rawXmlDoc = io::xml::Document(xmlFilePath);
-      DoIO(rawXmlDoc.GetRoot());
+        if (!std::filesystem::exists(xmlFilePath))
+        {
+            throw Exception() << "Config file '" << xmlFilePath << "' does not exist";
+        }
+        auto rawXmlDoc = std::make_shared<io::xml::Document>(xmlFilePath);
+        auto ans = DoIO(rawXmlDoc->GetRoot());
+        ans.source_xml = rawXmlDoc;
+        return ans;
     }
 
     // Turn an input XML-relative path into a full path
-    std::filesystem::path SimConfig::RelPathToFullPath(std::string_view path) const {
+    std::filesystem::path SimConfigReader::RelPathToFullPath(std::string_view path) const {
         auto xml_dir = xmlFilePath.parent_path();
         return std::filesystem::absolute(xml_dir / path);
     }
 
-    void SimConfig::DoIO(Element topNode)
+    SimConfig SimConfigReader::DoIO(Element topNode) const
     {
-      // Top element must be:
-      // <hemelbsettings version="6" />
-      constexpr unsigned VERSION = 6;
-      if (topNode.GetName() != "hemelbsettings")
-        throw Exception() << "Invalid root element: " << topNode.GetPath();
+        SimConfig ans;
+        // Top element must be:
+        // <hemelbsettings version="6" />
+        constexpr unsigned VERSION = 6;
+        if (topNode.GetName() != "hemelbsettings")
+            throw Exception() << "Invalid root element: " << topNode.GetPath();
 
-      auto version = topNode.GetAttributeOrThrow<unsigned>("version");
-      if (version != VERSION)
-        throw Exception() << "Unrecognised XML version. Expected " << VERSION << ", got " << version;
+        auto version = topNode.GetAttributeOrThrow<unsigned>("version");
+        if (version != VERSION)
+            throw Exception() << "Unrecognised XML version. Expected " << VERSION << ", got " << version;
 
-      DoIOForSimulation(topNode.GetChildOrThrow("simulation"));
+        ans.sim_info = DoIOForSimulation(topNode.GetChildOrThrow("simulation"));
 
-      DoIOForGeometry(topNode.GetChildOrThrow("geometry"));
+        ans.dataFilePath = DoIOForGeometry(topNode.GetChildOrThrow("geometry"));
 
-      if (topNode.GetChildOrNull("colloids") != Element::Missing())
-      {
-        hasColloidSection = true;
-      }
+        if (topNode.GetChildOrNull("colloids") != Element::Missing())
+        {
+            ans.colloid_xml_path = xmlFilePath;
+        }
 
-      DoIOForInitialConditions(topNode.GetChildOrThrow("initialconditions"));
+        ans.initial_condition = DoIOForInitialConditions(topNode.GetChildOrThrow("initialconditions"));
 
-      inlets = DoIOForInOutlets(topNode.GetChildOrThrow("inlets"));
-      outlets = DoIOForInOutlets(topNode.GetChildOrThrow("outlets"));
+        ans.inlets = DoIOForInOutlets(ans.sim_info, topNode.GetChildOrThrow("inlets"));
+        ans.outlets = DoIOForInOutlets(ans.sim_info, topNode.GetChildOrThrow("outlets"));
 
-      // Optional element <properties>
-      if (auto propertiesEl = topNode.GetChildOrNull("properties"))
-        DoIOForProperties(propertiesEl);
+        // Optional element <properties>
+        if (auto propertiesEl = topNode.GetChildOrNull("properties"))
+            ans.propertyOutputs = DoIOForProperties(ans.sim_info, propertiesEl);
 
-      // Optional element <monitoring>
-      if (auto monitoringEl = topNode.GetChildOrNull("monitoring"))
-        DoIOForMonitoring(monitoringEl);
+        // Optional element <monitoring>
+        if (auto monitoringEl = topNode.GetChildOrNull("monitoring"))
+            ans.monitoringConfig = DoIOForMonitoring(monitoringEl);
 
-      // The RBC section must be parsed *after* the inlets and outlets have been
-      // defined
-      if (auto rbcEl = topNode.GetChildOrNull("redbloodcells")) {
-#ifdef HEMELB_BUILD_RBC
-	//rbcConf = new redblood::RBCConfig;
-          rbcConf = DoIOForRedBloodCells(rbcEl);
-#else
-	      throw Exception() << "Input XML has redbloodcells section but HEMELB_BUILD_RBC=OFF";
-#endif
-      }
+        // The RBC section must be parsed *after* the inlets and outlets have been
+        // defined
+        if (auto rbcEl = topNode.GetChildOrNull("redbloodcells")) {
+            if constexpr (build_info::BUILD_RBC) {
+                ans.rbcConf = DoIOForRedBloodCells(ans, rbcEl);
+            } else {
+                throw Exception() << "Input XML has redbloodcells section but HEMELB_BUILD_RBC=OFF";
+            }
+        }
+        return ans;
     }
 
-    void SimConfig::DoIOForSimulation(const Element simEl)
+    GlobalSimInfo SimConfigReader::DoIOForSimulation(const Element simEl) const
     {
+        GlobalSimInfo ans;
         // Required element
         // <stresstype value="enum lb::StressTypes" />
-        sim_info.stress_type = [](unsigned v) {
+        ans.stress_type = [](unsigned v) {
             switch (v) {
                 case lb::IgnoreStress:
                     return lb::IgnoreStress;
@@ -125,70 +179,72 @@ namespace hemelb::configuration
         // Required element
         // <steps value="unsigned" units="lattice />
         const Element stepsEl = simEl.GetChildOrThrow("steps");
-        GetDimensionalValue(stepsEl, "lattice", sim_info.time.total_steps);
+        GetDimensionalValue(stepsEl, "lattice", ans.time.total_steps);
 
         // Required element
         // <step_length value="float" units="s" />
         const Element tsEl = simEl.GetChildOrThrow("step_length");
-        GetDimensionalValue(tsEl, "s", sim_info.time.step_s);
+        GetDimensionalValue(tsEl, "s", ans.time.step_s);
 
         // Optional element
         // <extra_warmup_steps value="unsigned" units="lattice" />
         if (auto wuEl = simEl.GetChildOrNull("extra_warmup_steps"))
         {
-            GetDimensionalValue(wuEl, "lattice", sim_info.time.warmup_steps);
-            sim_info.time.total_steps += sim_info.time.warmup_steps;
+            GetDimensionalValue(wuEl, "lattice", ans.time.warmup_steps);
+            ans.time.total_steps += ans.time.warmup_steps;
         } else {
-            sim_info.time.warmup_steps = 0;
+            ans.time.warmup_steps = 0;
         }
 
         // Required element
         // <voxel_size value="float" units="m" />
         const Element vsEl = simEl.GetChildOrThrow("voxel_size");
-        GetDimensionalValue(vsEl, "m", sim_info.space.step_m);
+        GetDimensionalValue(vsEl, "m", ans.space.step_m);
 
         // Required element
         // <origin value="(x,y,z)" units="m" />
         const Element originEl = simEl.GetChildOrThrow("origin");
-        GetDimensionalValue(originEl, "m", sim_info.space.geometry_origin_m);
+        GetDimensionalValue(originEl, "m", ans.space.geometry_origin_m);
 
         // Optional element
         // <fluid_density value="float" units="kg/m3" />
-        sim_info.fluid.density_kgm3 = simEl.GetChildOrNull("fluid_density").transform(
+        ans.fluid.density_kgm3 = simEl.GetChildOrNull("fluid_density").transform(
                 [](Element const& el) {
                     return GetDimensionalValue<PhysicalDensity>(el, "kg/m3");
                 }).value_or(DEFAULT_FLUID_DENSITY_Kg_per_m3);
 
         // Optional element
         // <fluid_viscosity value="float" units="Pa.s" />
-        sim_info.fluid.viscosity_Pas = simEl.GetChildOrNull("fluid_viscosity").transform(
+        ans.fluid.viscosity_Pas = simEl.GetChildOrNull("fluid_viscosity").transform(
                 [](Element const& el) {
                     return GetDimensionalValue<PhysicalDynamicViscosity>(el, "Pa.s");
                 }).value_or(DEFAULT_FLUID_VISCOSITY_Pas);
 
         // Optional element (default = 0)
         // <reference_pressure value="float" units="mmHg" />
-        sim_info.fluid.reference_pressure_mmHg = simEl.GetChildOrNull("reference_pressure").transform(
+        ans.fluid.reference_pressure_mmHg = simEl.GetChildOrNull("reference_pressure").transform(
                 [](Element const& el) {
                     return GetDimensionalValue<PhysicalPressure>(el, "mmHg");
                 }).value_or(0);
 
-        sim_info.checkpoint = simEl.GetChildOrNull("checkpoint").transform(
+        ans.checkpoint = simEl.GetChildOrNull("checkpoint").transform(
                 [](Element const& el) {
                     CheckpointInfo ans;
                     el.GetAttributeOrThrow("period", ans.period);
                     return ans;
                 }
         );
+
+        return ans;
     }
 
-    void SimConfig::DoIOForGeometry(const Element geometryEl)
+    auto SimConfigReader::DoIOForGeometry(const Element geometryEl) const -> path
     {
-      // Required element
-      // <geometry>
-      //  <datafile path="relative path to GMY" />
-      // </geometry>
-      dataFilePath = RelPathToFullPath(geometryEl.GetChildOrThrow("datafile").GetAttributeOrThrow("path"));
+        // Required element
+        // <geometry>
+        //  <datafile path="relative path to GMY" />
+        // </geometry>
+        return RelPathToFullPath(geometryEl.GetChildOrThrow("datafile").GetAttributeOrThrow("path"));
     }
 
     /**
@@ -197,17 +253,17 @@ namespace hemelb::configuration
      * @param ioletEl
      * @param requiredBC
      */
-    void SimConfig::CheckIoletMatchesCMake(const Element& ioletEl,
-                                           const std::string& requiredBC) const
+    void SimConfigReader::CheckIoletMatchesCMake(const Element& ioletEl,
+                                                 std::string_view requiredBC) const
     {
       // Check that HEMELB_*LET_BOUNDARY is consistent with this
       auto ioletTypeName = ioletEl.GetName();
-      std::string hemeIoletBC;
+      std::string_view hemeIoletBC;
 
       if (ioletTypeName == "inlet")
-        hemeIoletBC = build_info::INLET_BOUNDARY.str();
+        hemeIoletBC = build_info::INLET_BOUNDARY.view();
       else if (ioletTypeName == "outlet")
-        hemeIoletBC = build_info::OUTLET_BOUNDARY.str();
+        hemeIoletBC = build_info::OUTLET_BOUNDARY.view();
       else
         throw Exception() << "Unexpected element name '" << ioletTypeName
             << "'. Expected 'inlet' or 'outlet'";
@@ -221,7 +277,7 @@ namespace hemelb::configuration
       }
     }
 
-    auto SimConfig::DoIOForInOutlets(const Element ioletsEl) const -> std::vector<IoletConfig>
+    auto SimConfigReader::DoIOForInOutlets(GlobalSimInfo const& sim_info, const Element ioletsEl) const -> std::vector<IoletConfig>
     {
         auto nodeName = ioletsEl.GetName();
         auto childNodeName = std::string{nodeName.substr(0, nodeName.size() - 1)};
@@ -246,12 +302,20 @@ namespace hemelb::configuration
                 throw Exception() << "Invalid boundary condition type '" << conditionType << "' in "
                                   << conditionEl.GetPath();
             }
+            std::visit([&](auto& conf) {
+                if constexpr (std::is_same_v<decltype(conf), std::monostate&>) {
+                    throw Exception();
+                } else {
+                    DoIOForBaseInOutlet(sim_info, currentIoletNode, conf);
+                }
+            },
+                       newIolet);
             ioletList.push_back(std::move(newIolet));
         }
         return ioletList;
     }
 
-    auto SimConfig::DoIOForPressureInOutlet(const Element& ioletEl) const -> IoletConfig
+    auto SimConfigReader::DoIOForPressureInOutlet(const Element& ioletEl) const -> IoletConfig
     {
       CheckIoletMatchesCMake(ioletEl, "NASHZEROTHORDERPRESSUREIOLET");
       Element conditionEl = ioletEl.GetChildOrThrow("condition");
@@ -276,7 +340,7 @@ namespace hemelb::configuration
       }
     }
 
-    auto SimConfig::DoIOForVelocityInOutlet(const Element& ioletEl) const -> IoletConfig
+    auto SimConfigReader::DoIOForVelocityInOutlet(const Element& ioletEl) const -> IoletConfig
     {
       CheckIoletMatchesCMake(ioletEl, "LADDIOLET");
       Element conditionEl = ioletEl.GetChildOrThrow("condition");
@@ -301,18 +365,20 @@ namespace hemelb::configuration
       }
     }
 
-    void SimConfig::DoIOForProperties(const Element& propertiesEl)
+
+
+    std::vector<extraction::PropertyOutputFile> SimConfigReader::DoIOForProperties(GlobalSimInfo const& sim_info, const Element& propertiesEl) const
     {
-      for (auto poEl: propertiesEl.Children("propertyoutput"))
-      {
-        propertyOutputs.push_back(DoIOForPropertyOutputFile(poEl));
-      }
-
-
+        std::vector<extraction::PropertyOutputFile> propertyOutputs;
+        ForExactChildren(propertiesEl, "propertyoutput",
+                         [&](Element const& _) {
+                             propertyOutputs.push_back(DoIOForPropertyOutputFile(sim_info, _));
+                         });
+        return propertyOutputs;
     }
 
-    extraction::PropertyOutputFile SimConfig::DoIOForPropertyOutputFile(
-        const Element& propertyoutputEl)
+    extraction::PropertyOutputFile SimConfigReader::DoIOForPropertyOutputFile(GlobalSimInfo const& sim_info,
+                                                                              const Element& propertyoutputEl) const
     {
       auto file = extraction::PropertyOutputFile{};
 
@@ -366,13 +432,13 @@ namespace hemelb::configuration
       }
 
       for (auto fieldEl: propertyoutputEl.Children("field"))
-        file.fields.push_back(DoIOForPropertyField(fieldEl));
+        file.fields.push_back(DoIOForPropertyField(sim_info, fieldEl));
 
       return file;
     }
 
     extraction::StraightLineGeometrySelector*
-    SimConfig::DoIOForLineGeometry(const Element& geometryEl)
+    SimConfigReader::DoIOForLineGeometry(const Element& geometryEl) const
     {
         std::vector<PhysicalPosition> points;
         for (auto child: geometryEl.Children()) {
@@ -387,45 +453,10 @@ namespace hemelb::configuration
         return new extraction::StraightLineGeometrySelector(points[0].as<float>(), points[1].as<float>());
     }
 
-    template <std::size_t N>
-    auto GetExactChildren(Element const& el, std::array<char const*, N> names) {
-        using PAIR = std::pair<std::size_t, std::string_view>;
-        std::vector<PAIR> idx_names(N); //= {{0, NAMES}...};
-        for (std::size_t i = 0; i < N; ++i) {
-            idx_names[i] = {i, names[i]};
-        }
 
-        std::array<Element, N> ans;
-
-        // Must inspect all children of the node
-        for (auto child: el.Children()) {
-            // Check the found child against allowed names
-            auto match = std::find_if(idx_names.begin(), idx_names.end(),
-                                      [&](PAIR const& i_name) {
-                                          return i_name.second == child.GetName();
-                                      });
-            if (match == idx_names.end())
-                throw (Exception() << "Unexpected element found: " << child.GetPath());
-            // It was one of the expected, add to output
-            ans[match->first] = child;
-            // Remove from allowed names
-            idx_names.erase(match);
-        }
-        // Now check for required names not found
-        for (auto& [_, name]: idx_names) {
-            throw (Exception() << "Required child not found: " << name);
-        }
-        return ans;
-    }
-
-    template <typename... Ts>
-    auto GetExactChildren(Element const& el, Ts&... names) {
-        constexpr auto N = sizeof...(Ts);
-        return GetExactChildren<N>(el, std::array<char const*, N>{std::forward<Ts>(names)...});
-    }
 
     extraction::PlaneGeometrySelector*
-    SimConfig::DoIOForPlaneGeometry(const Element& geometryEl)
+    SimConfigReader::DoIOForPlaneGeometry(const Element& geometryEl) const
     {
         auto [pointEl, normalEl] = GetExactChildren(geometryEl, "point", "normal");
       PhysicalPosition point;
@@ -444,8 +475,8 @@ namespace hemelb::configuration
         return new extraction::PlaneGeometrySelector(point.as<float>(), normal);
     }
 
-    extraction::SurfacePointSelector* SimConfig::DoIOForSurfacePoint(
-        const Element& geometryEl)
+    extraction::SurfacePointSelector*
+    SimConfigReader::DoIOForSurfacePoint(const Element& geometryEl) const
     {
       Element pointEl = geometryEl.GetChildOrThrow("point");
 
@@ -454,7 +485,8 @@ namespace hemelb::configuration
       return new extraction::SurfacePointSelector(point.as<float>());
     }
 
-    extraction::OutputField SimConfig::DoIOForPropertyField(const Element& fieldEl)
+    extraction::OutputField
+    SimConfigReader::DoIOForPropertyField(GlobalSimInfo const& sim_info, const Element& fieldEl) const
     {
       extraction::OutputField field;
       auto type = fieldEl.GetAttributeOrThrow("type");
@@ -520,8 +552,7 @@ namespace hemelb::configuration
       return field;
     }
 
-    void SimConfig::DoIOForBaseInOutlet(const Element& ioletEl,
-                                        IoletConfigBase& ioletConf) const
+    void SimConfigReader::DoIOForBaseInOutlet(GlobalSimInfo const& sim_info, const Element& ioletEl, IoletConfigBase& ioletConf) const
     {
         Element positionEl = ioletEl.GetChildOrThrow("position");
         Element normalEl = ioletEl.GetChildOrThrow("normal");
@@ -637,8 +668,9 @@ namespace hemelb::configuration
         return std::optional<U>{};
     }
 
-    void SimConfig::DoIOForInitialConditions(Element initialconditionsEl)
+    ICConfig SimConfigReader::DoIOForInitialConditions(Element initialconditionsEl) const
     {
+        ICConfig initial_condition;
         // The <time> element may be present - if so, it will set the
         // initial timestep value
         auto t0 = initialconditionsEl.GetChildOrNull("time").transform([](auto el) {
@@ -677,15 +709,13 @@ namespace hemelb::configuration
                 throw Exception() << "XML <initialconditions> element contains no known initial condition type";
             }
         }
+        return initial_condition;
     }
 
-    auto SimConfig::DoIOForCosinePressureInOutlet(
-        const Element& ioletEl) const -> IoletConfig
+    auto SimConfigReader::DoIOForCosinePressureInOutlet(const Element& ioletEl) const -> IoletConfig
     {
       //auto newIolet = util::make_clone_ptr<lb::iolets::InOutLetCosine>();
       CosinePressureIoletConfig newIolet;
-      DoIOForBaseInOutlet(ioletEl, newIolet);
-
       const Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
       newIolet.amp_mmHg = GetDimensionalValue<PhysicalPressure>(conditionEl.GetChildOrThrow("amplitude"), "mmHg");
@@ -695,24 +725,18 @@ namespace hemelb::configuration
       return newIolet;
     }
 
-    auto SimConfig::DoIOForFilePressureInOutlet(
-        const Element& ioletEl) const -> IoletConfig
+    auto SimConfigReader::DoIOForFilePressureInOutlet(const Element& ioletEl) const -> IoletConfig
     {
       FilePressureIoletConfig newIolet;
-      DoIOForBaseInOutlet(ioletEl, newIolet);
-
       const Element pathEl = ioletEl.GetChildOrThrow("condition").GetChildOrThrow("path");
       newIolet.file_path = RelPathToFullPath(pathEl.GetAttributeOrThrow("value"));
 
       return newIolet;
     }
 
-    auto SimConfig::DoIOForMultiscalePressureInOutlet(
-        const Element& ioletEl) const -> IoletConfig
+    auto SimConfigReader::DoIOForMultiscalePressureInOutlet(const Element& ioletEl) const -> IoletConfig
     {
       MultiscalePressureIoletConfig newIolet;
-      DoIOForBaseInOutlet(ioletEl, newIolet);
-
       const Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
       const Element pressureEl = conditionEl.GetChildOrThrow("pressure");
@@ -725,11 +749,10 @@ namespace hemelb::configuration
       return newIolet;
     }
 
-    auto SimConfig::DoIOForParabolicVelocityInOutlet(
+    auto SimConfigReader::DoIOForParabolicVelocityInOutlet(
         const Element& ioletEl) const -> IoletConfig
     {
         ParabolicVelocityIoletConfig newIolet;
-        DoIOForBaseInOutlet(ioletEl, newIolet);
 
         const Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
@@ -738,11 +761,9 @@ namespace hemelb::configuration
         return newIolet;
     }
 
-    auto SimConfig::DoIOForWomersleyVelocityInOutlet(
-        const Element& ioletEl) const -> IoletConfig
+    auto SimConfigReader::DoIOForWomersleyVelocityInOutlet(const Element& ioletEl) const -> IoletConfig
     {
         WomersleyVelocityIoletConfig newIolet;
-        DoIOForBaseInOutlet(ioletEl, newIolet);
 
         const Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
@@ -754,11 +775,10 @@ namespace hemelb::configuration
         return newIolet;
     }
 
-    auto SimConfig::DoIOForFileVelocityInOutlet(
+    auto SimConfigReader::DoIOForFileVelocityInOutlet(
             const Element& ioletEl) const -> IoletConfig
     {
         FileVelocityIoletConfig newIolet;
-        DoIOForBaseInOutlet(ioletEl, newIolet);
 
         const Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
@@ -768,24 +788,22 @@ namespace hemelb::configuration
         return newIolet;
     }
 
-    bool SimConfig::HasColloidSection() const
+
+    MonitoringConfig SimConfigReader::DoIOForMonitoring(const Element& monEl) const
     {
-      return hasColloidSection;
+        MonitoringConfig monitoringConfig;
+        Element convEl = monEl.GetChildOrNull("steady_flow_convergence");
+        if (convEl != Element::Missing())
+        {
+            DoIOForSteadyFlowConvergence(convEl, monitoringConfig);
+        }
+
+        monitoringConfig.doIncompressibilityCheck = (monEl.GetChildOrNull("incompressibility")
+                                                     != Element::Missing());
+        return monitoringConfig;
     }
 
-    void SimConfig::DoIOForMonitoring(const Element& monEl)
-    {
-      Element convEl = monEl.GetChildOrNull("steady_flow_convergence");
-      if (convEl != Element::Missing())
-      {
-        DoIOForSteadyFlowConvergence(convEl);
-      }
-
-      monitoringConfig.doIncompressibilityCheck = (monEl.GetChildOrNull("incompressibility")
-          != Element::Missing());
-    }
-
-    void SimConfig::DoIOForSteadyFlowConvergence(const Element& convEl)
+    void SimConfigReader::DoIOForSteadyFlowConvergence(const Element& convEl, MonitoringConfig& monitoringConfig) const
     {
         monitoringConfig.doConvergenceCheck = true;
         monitoringConfig.convergenceRelativeTolerance = convEl.GetAttributeOrThrow<double>("tolerance");
@@ -793,7 +811,7 @@ namespace hemelb::configuration
 
         auto n = 0;
         for (auto criterionEl: convEl.Children("criterion")) {
-            DoIOForConvergenceCriterion(criterionEl);
+            DoIOForConvergenceCriterion(criterionEl, monitoringConfig);
             n++;
         }
         if (n == 0) {
@@ -802,7 +820,7 @@ namespace hemelb::configuration
         }
     }
 
-    void SimConfig::DoIOForConvergenceCriterion(const Element& criterionEl)
+    void SimConfigReader::DoIOForConvergenceCriterion(const Element& criterionEl, MonitoringConfig& monitoringConfig) const
     {
       auto criterionType = criterionEl.GetAttributeOrThrow("type");
 
@@ -816,7 +834,7 @@ namespace hemelb::configuration
       monitoringConfig.convergenceReferenceValue = GetDimensionalValue<PhysicalSpeed>(criterionEl, "m/s");
     }
 
-    TemplateCellConfig SimConfig::readCell(const Element& cellNode) const {
+    TemplateCellConfig SimConfigReader::readCell(const Element& cellNode) const {
         TemplateCellConfig ans;
         ans.name = cellNode.GetAttributeMaybe("name").value_or("default");
         auto const shape = cellNode.GetChildOrThrow("shape");
@@ -862,7 +880,7 @@ namespace hemelb::configuration
         return ans;
     }
 
-    std::map<std::string, TemplateCellConfig> SimConfig::readTemplateCells(Element const& cellsEl) const {
+    std::map<std::string, TemplateCellConfig> SimConfigReader::readTemplateCells(Element const& cellsEl) const {
         std::map<std::string, TemplateCellConfig> ans;
         for (auto cellNode = cellsEl.GetChildOrNull("cell");
              cellNode;
@@ -895,7 +913,7 @@ namespace hemelb::configuration
         return {intensity, cutoffdist, exponent};
     }
 
-    RBCConfig SimConfig::DoIOForRedBloodCells(const Element &rbcEl) const {
+    RBCConfig SimConfigReader::DoIOForRedBloodCells(SimConfig const& conf, const Element &rbcEl) const {
         RBCConfig ans;
 
         const Element controllerNode = rbcEl.GetChildOrThrow("controller");
@@ -923,9 +941,9 @@ namespace hemelb::configuration
             }, iolet_v);
             return ok;
         };
-        if (!(std::all_of(inlets.begin(), inlets.end(), cell_inserter_templates_exist)
+        if (!(std::all_of(conf.inlets.begin(), conf.inlets.end(), cell_inserter_templates_exist)
               &&
-              std::all_of(outlets.begin(), outlets.end(), cell_inserter_templates_exist))) {
+              std::all_of(conf.outlets.begin(), conf.outlets.end(), cell_inserter_templates_exist))) {
             throw Exception() << "One or more cell inserters refer to a template that does not exist";
         }
 

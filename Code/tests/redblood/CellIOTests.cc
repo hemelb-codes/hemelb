@@ -4,7 +4,6 @@
 // license in the file LICENSE.
 
 #include <catch2/catch.hpp>
-//#include <tinyxml2.h>
 
 #include "io/xml.h"
 #include "configuration/SimBuilder.h"
@@ -41,8 +40,10 @@ namespace hemelb::tests
 
         CopyResourceToTempdir("red_blood_cell.txt");
         CopyResourceToTempdir("empty_for_relative_paths.xml");
-        auto config = std::make_unique<UninitSimConfig>("empty_for_relative_paths.xml");
-        auto builder = UninitSimBuilder(*config, converter);
+        configuration::SimConfig config;
+        configuration::SimConfigReader reader("empty_for_relative_paths.xml");
+        //auto config = std::make_unique<UninitSimConfig>("empty_for_relative_paths.xml");
+        auto builder = UninitSimBuilder(config, converter);
         auto cell_builder = CellControllerBuilder(converter);
         {
             // This allocates an element, but doesn't add to the document.
@@ -78,7 +79,7 @@ namespace hemelb::tests
             auto cellEl = doc.GetRoot().GetChildOrThrow("cell");
             cellEl.GetChildOrThrow("moduli").Delete();
 
-            auto cellConf = config->readCell(cellEl);
+            auto cellConf = reader.readCell(cellEl);
             auto cell = dynamic_unique_cast<Cell const>(cell_builder.build_cell(cellConf));
             REQUIRE(cell);
             auto const kruegerIO = redblood::KruegerMeshIO{};
@@ -93,7 +94,7 @@ namespace hemelb::tests
         }
 
         SECTION("testReadCellModuli") {
-            auto cellConf = config->readCell(doc.GetRoot().GetChildOrThrow("cell"));
+            auto cellConf = reader.readCell(doc.GetRoot().GetChildOrThrow("cell"));
             auto const moduli = cell_builder.build_cell_moduli(cellConf.moduli);
             REQUIRE(approx(1e0) == moduli.volume);
             REQUIRE(approx(2e0) == moduli.surface);
@@ -151,13 +152,13 @@ namespace hemelb::tests
                                    "   </cells>"
                                    "  </redbloodcells>"
                                    "</parent>";
-            //tinyxml2::XMLDocument document;
             io::xml::Document document;
             document.LoadString(xml_text);
             auto root = document.GetRoot();
-            auto tc_conf = config->readTemplateCells(root.GetChildOrThrow("redbloodcells").GetChildOrThrow("cells"));
-            auto in_conf = config->DoIOForInOutlets(root.GetChildOrThrow("inlets"));
-            auto out_conf = config->DoIOForInOutlets(root.GetChildOrThrow("outlets"));
+            auto tc_conf = reader.readTemplateCells(root.GetChildOrThrow("redbloodcells").GetChildOrThrow("cells"));
+            configuration::GlobalSimInfo sim_info;
+            auto in_conf = reader.DoIOForInOutlets(sim_info, root.GetChildOrThrow("inlets"));
+            auto out_conf = reader.DoIOForInOutlets(sim_info, root.GetChildOrThrow("outlets"));
             auto ins = builder.BuildIolets(in_conf);
             auto outs = builder.BuildIolets(out_conf);
 

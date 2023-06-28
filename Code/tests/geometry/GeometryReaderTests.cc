@@ -19,10 +19,8 @@
 #include "tests/helpers/LaddFail.h"
 #include "tests/helpers/EqualitySiteData.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     TEST_CASE_METHOD(helpers::FolderTestFixture, "GeometryReaderTests") {
       auto timings = std::make_unique<reporting::Timers>();
       
@@ -35,13 +33,13 @@ namespace hemelb
 
       SECTION("TestRead") {
 	LADD_FAIL();
-	reader->LoadAndDecompose(simConfig->GetDataFilePath());
+	reader->LoadAndDecompose(simConfig.GetDataFilePath());
       }
 
       SECTION("TestSameAsFourCube") {
 	LADD_FAIL();
 	auto fourCube = std::unique_ptr<FourCubeLatticeData>{FourCubeLatticeData::Create(Comms())};
-	auto readResult = reader->LoadAndDecompose(simConfig->GetDataFilePath());
+	auto readResult = reader->LoadAndDecompose(simConfig.GetDataFilePath());
     auto&& dom = fourCube->GetDomain();
 
 	for (site_t i = 1; i < 5; i++) {
@@ -76,5 +74,4 @@ namespace hemelb
       }
 
     }
-  }
 }

@@ -53,8 +53,10 @@ namespace hemelb::tests
         };
 
         auto readRBCInserters = [&](io::xml::Element const& inletsNode, TemplateCellContainer const& templateCells) {
-            UninitSimConfig conf("ignored.xml");
-            auto inlet_confs = conf.DoIOForInOutlets(inletsNode);
+            using namespace configuration;
+            SimConfig conf;
+            SimConfigReader reader("ignored.xml");
+            auto inlet_confs = reader.DoIOForInOutlets(conf.GetSimInfo(), inletsNode);
             auto builder = UninitSimBuilder(conf, converter);
             auto inlets = builder.BuildIolets(inlet_confs);
 

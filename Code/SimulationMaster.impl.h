@@ -54,7 +54,7 @@ namespace hemelb
         // Convert XML to configuration
         simConfig = configuration::SimConfig::New(fileManager->GetInputFile());
         // Use it to initialise self
-        auto builder = configuration::SimBuilder(*simConfig);
+        auto builder = configuration::SimBuilder(simConfig);
         log::Logger::Log<log::Info, log::Singleton>("Beginning Initialisation.");
         builder(*this);
     }

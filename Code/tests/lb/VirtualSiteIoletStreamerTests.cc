@@ -144,7 +144,7 @@ namespace hemelb::tests
         // We have to make the outlet sane and consistent with the geometry now.
         inlet->SetNormal(util::Vector3D<Dimensionless>(0, 0, 1));
         PhysicalPosition inletCentre(2.5, 2.5, 0.5);
-        inletCentre *= simConfig->GetVoxelSize();
+        inletCentre *= simConfig.GetVoxelSize();
         inlet->SetPosition(unitConverter->ConvertPositionToLatticeUnits(inletCentre));
         // Want to set the density gradient to be 0.01 in lattice units,
         // starting at 1.0 at the outlet.
@@ -173,7 +173,7 @@ namespace hemelb::tests
         // We have to make the outlet sane and consistent with the geometry now.
         outlet->SetNormal(util::Vector3D<Dimensionless>(0, 0, -1));
         PhysicalPosition outletCentre(2.5, 2.5, 4.5);
-        outletCentre *= simConfig->GetVoxelSize();
+        outletCentre *= simConfig.GetVoxelSize();
         outlet->SetPosition(unitConverter->ConvertPositionToLatticeUnits(outletCentre));
         outlet->SetPressureAmp(0.);
         outlet->SetPressureMean(unitConverter->ConvertPressureToPhysicalUnits(1.0 * Cs2));
