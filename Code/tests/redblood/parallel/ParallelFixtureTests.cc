@@ -91,7 +91,7 @@ namespace hemelb::tests
       auto graphComm =
 	world.DistGraphAdjacent(parallel::ComputeProcessorNeighbourhood(world,
                                                                           dom,
-									      2e-6 / master->GetSimConfig()->GetVoxelSize()));
+									      2e-6 / master->GetSimConfig().GetVoxelSize()));
 
       auto const& globalCoordsToProcMap = parallel::ComputeGlobalCoordsToProcMap(graphComm, dom);
 

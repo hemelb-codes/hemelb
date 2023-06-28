@@ -45,7 +45,7 @@ namespace hemelb
         net::IOCommunicator ioComms;
         net::Net communicationNet;
 
-        std::shared_ptr<configuration::SimConfig> simConfig;
+        configuration::SimConfig simConfig;
 
         std::shared_ptr<lb::BoundaryValues> inletValues;
         std::shared_ptr<lb::BoundaryValues> outletValues;
