@@ -222,111 +222,118 @@ namespace hemelb::extraction
       }
     }
 
-    void LocalPropertyOutput::Write(unsigned long timestepNumber, unsigned long totalSteps)
+    std::optional<std::filesystem::path>
+    LocalPropertyOutput::Write(unsigned long timestepNumber, unsigned long totalSteps)
     {
         // Don't write if we shouldn't this iteration.
         if (!ShouldWrite(timestepNumber))
         {
-            return;
+            return std::nullopt;
         }
 
+        std::filesystem::path ans;
         if (std::holds_alternative<single_timestep_files>(outputSpec.ts_mode)) {
             std::string fn = output_file_pattern.Format(timestepNumber, totalSteps);
             StartFile(fn);
+            ans = fn;
+        } else {
+            ans = outputSpec.filename;
         }
 
         // Don't write if this core doesn't do anything.
-      if (local_data_write_length > 0)
-      {
-	// Create the buffer.
-	auto xdrWriter = io::MakeXdrWriter(buffer.begin(), buffer.end());
+        if (local_data_write_length > 0)
+        {
+            // Create the buffer.
+            auto xdrWriter = io::MakeXdrWriter(buffer.begin(), buffer.end());
 
-	// Firstly, the IO proc must write the iteration number.
-	if (comms.OnIORank())
-	{
-	  xdrWriter << (uint64_t) timestepNumber;
-	}
+            // Firstly, the IO proc must write the iteration number.
+            if (comms.OnIORank())
+            {
+                xdrWriter << (uint64_t) timestepNumber;
+            }
 
-	dataSource->Reset();
+            dataSource->Reset();
 
-	while (dataSource->ReadNext())
-	{
-	  const util::Vector3D<site_t>& position = dataSource->GetPosition();
-	  if (outputSpec.geometry->Include(*dataSource, position))
-	  {
-	    // Write the position
-	    xdrWriter << (uint32_t) position.x() << (uint32_t) position.y() << (uint32_t) position.z();
+            while (dataSource->ReadNext())
+            {
+                const util::Vector3D<site_t>& position = dataSource->GetPosition();
+                if (outputSpec.geometry->Include(*dataSource, position))
+                {
+                    // Write the position
+                    xdrWriter << (uint32_t) position.x() << (uint32_t) position.y() << (uint32_t) position.z();
 
-	    // Write for each field.
-	    for (auto& fieldSpec: outputSpec.fields)
-	    {
-	      overload_visit(
-	        fieldSpec.src,
-		[&](source::Pressure) {
-		  write(xdrWriter, fieldSpec.typecode, dataSource->GetPressure() - fieldSpec.offset[0]);
-		},
-		[&](source::Velocity) {
-		  auto&& v = dataSource->GetVelocity();
-		  write(xdrWriter, fieldSpec.typecode, v.x(), v.y(), v.z());
-		},
-		//! @TODO: Work out how to handle the different stresses.
-		[&](source::VonMisesStress) {
-		  write(xdrWriter, fieldSpec.typecode, dataSource->GetVonMisesStress());
-		},
-		[&](source::ShearStress) {
-		  write(xdrWriter, fieldSpec.typecode, dataSource->GetShearStress());
-		},
-		[&](source::ShearRate) {
-		  write(xdrWriter, fieldSpec.typecode, dataSource->GetShearRate());
-		},
-		[&](source::StressTensor) {
-		  util::Matrix3D tensor = dataSource->GetStressTensor();
-		  // Only the upper triangular part of the symmetric
-		  // tensor is stored. Storage is row-wise.
-		  write(xdrWriter, fieldSpec.typecode,
-			tensor[0][0], tensor[0][1], tensor[0][2],
-                                      tensor[1][1], tensor[1][2],
-                                                    tensor[2][2]);
-		},
-		[&](source::Traction) {
-		  auto&& t = dataSource->GetTraction();
-		  write(xdrWriter, fieldSpec.typecode, t.x(), t.y(), t.z());
-		},
-		[&](source::TangentialProjectionTraction) {
-		  auto&& t = dataSource->GetTangentialProjectionTraction();
-		  write(xdrWriter, fieldSpec.typecode, t.x(), t.y(), t.z());
-		},
-		[&](source::Distributions) {
-		  unsigned numComponents = dataSource->GetNumVectors();
-		  distribn_t const* d_ptr = dataSource->GetDistribution();
-		  for (auto i = 0U; i < numComponents; i++)
-		  {
-		    write(xdrWriter, fieldSpec.typecode, d_ptr[i]);
-		  }
-		},
-		[&](source::MpiRank) {
-		  write(xdrWriter, fieldSpec.typecode, comms.Rank());
-		}
-              );
-	    }
-	  }
-	}
+                    // Write for each field.
+                    for (auto& fieldSpec: outputSpec.fields)
+                    {
+                        overload_visit(
+                                fieldSpec.src,
+                                [&](source::Pressure) {
+                                    write(xdrWriter, fieldSpec.typecode, dataSource->GetPressure() - fieldSpec.offset[0]);
+                                },
+                                [&](source::Velocity) {
+                                    auto&& v = dataSource->GetVelocity();
+                                    write(xdrWriter, fieldSpec.typecode, v.x(), v.y(), v.z());
+                                },
+                                //! @TODO: Work out how to handle the different stresses.
+                                [&](source::VonMisesStress) {
+                                    write(xdrWriter, fieldSpec.typecode, dataSource->GetVonMisesStress());
+                                },
+                                [&](source::ShearStress) {
+                                    write(xdrWriter, fieldSpec.typecode, dataSource->GetShearStress());
+                                },
+                                [&](source::ShearRate) {
+                                    write(xdrWriter, fieldSpec.typecode, dataSource->GetShearRate());
+                                },
+                                [&](source::StressTensor) {
+                                    util::Matrix3D tensor = dataSource->GetStressTensor();
+                                    // Only the upper triangular part of the symmetric
+                                    // tensor is stored. Storage is row-wise.
+                                    write(xdrWriter, fieldSpec.typecode,
+                                          tensor[0][0], tensor[0][1], tensor[0][2],
+                                          tensor[1][1], tensor[1][2],
+                                          tensor[2][2]);
+                                },
+                                [&](source::Traction) {
+                                    auto&& t = dataSource->GetTraction();
+                                    write(xdrWriter, fieldSpec.typecode, t.x(), t.y(), t.z());
+                                },
+                                [&](source::TangentialProjectionTraction) {
+                                    auto&& t = dataSource->GetTangentialProjectionTraction();
+                                    write(xdrWriter, fieldSpec.typecode, t.x(), t.y(), t.z());
+                                },
+                                [&](source::Distributions) {
+                                    unsigned numComponents = dataSource->GetNumVectors();
+                                    distribn_t const* d_ptr = dataSource->GetDistribution();
+                                    for (auto i = 0U; i < numComponents; i++)
+                                    {
+                                        write(xdrWriter, fieldSpec.typecode, d_ptr[i]);
+                                    }
+                                },
+                                [&](source::MpiRank) {
+                                    write(xdrWriter, fieldSpec.typecode, comms.Rank());
+                                }
+                        );
+                    }
+                }
+            }
 
-	// Actually do the MPI writing.
-	outputFile.WriteAt(local_write_start, buffer);
-      }
+            // Actually do the MPI writing.
+            outputFile.WriteAt(local_write_start, buffer);
+        }
 
-      overload_visit(
-        outputSpec.ts_mode,
-	[this](multi_timestep_file) {
-	  // Set the offset to the right place for writing on the next
-	  // iteration.
-	  local_write_start += global_data_write_length;
-	},
-	[this](single_timestep_files) {
-	  outputFile.Close();
-	}
-      );
+        overload_visit(
+                outputSpec.ts_mode,
+                [this](multi_timestep_file) {
+                    // Set the offset to the right place for writing on the next
+                    // iteration.
+                    local_write_start += global_data_write_length;
+                },
+                [this](single_timestep_files) {
+                    outputFile.Close();
+                }
+        );
+
+        return ans;
     }
 
     // Write the offset file.
