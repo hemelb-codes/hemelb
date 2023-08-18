@@ -118,7 +118,7 @@ namespace hemelb::tests
             file->Reset(state);
 
             // Ok, now we have an inlet, check the values are right.
-            REQUIRE(std::string("./iolet.txt") == file->GetFilePath());
+            REQUIRE(file->GetFilePath().filename() == "iolet.txt");
             REQUIRE(Approx(78.0) == converter.ConvertPressureToPhysicalUnits(file->GetPressureMin()));
             REQUIRE(Approx(82.0) == converter.ConvertPressureToPhysicalUnits(file->GetPressureMax()));
             auto expected = ApproxVector<PhysicalPosition>{-1.66017717834e-05, -4.58437586355e-05, -0.05};
@@ -192,7 +192,7 @@ namespace hemelb::tests
 
             // Check the IOLET contains the values expected given the file.
             REQUIRE(10.0 == womersVel->GetRadius());
-            REQUIRE(mmHg_TO_PASCAL * 1e-6 == womersVel->GetPressureGradientAmplitude());
+            REQUIRE(Approx(mmHg_TO_PASCAL * 1e-6) == womersVel->GetPressureGradientAmplitude());
             REQUIRE(5.0 == womersVel->GetPeriod());
             REQUIRE(2.0 == womersVel->GetWomersleyNumber());
             REQUIRE(ApproxVector<PhysicalPosition>{0, 0, -0.05} ==
