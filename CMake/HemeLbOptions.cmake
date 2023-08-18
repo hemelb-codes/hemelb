@@ -41,7 +41,7 @@ endif()
 pass_cachevar(HEMELB HEMELB_EXECUTABLE "hemelb"
   STRING "File name of executable to produce")
 pass_cachevar(HEMELB HEMELB_READING_GROUP_SIZE 5
-  STRING "Number of cores to use to read geometry file.")
+  INT "Number of cores to use to read geometry file.")
 pass_cachevar_choice(HEMELB HEMELB_LOG_LEVEL Info
   STRING "Log level"
   Critical Error Warning Info Debug Trace)
