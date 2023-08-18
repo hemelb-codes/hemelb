@@ -907,10 +907,6 @@ namespace hemelb::geometry
 
     bool GeometryReader::ShouldValidate() const
     {
-#ifdef HEMELB_VALIDATE_GEOMETRY
-      return true;
-#else
-      return false;
-#endif
+        return build_info::VALIDATE_GEOMETRY;
     }
 }

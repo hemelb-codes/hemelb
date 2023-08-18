@@ -302,10 +302,11 @@ namespace hemelb::lb
         log::Logger::Log<log::Warning, log::OnePerCore>("Initializing vInlet.");
         units = unitConverter;
 
-        useWeightsFromFile = false;
-        #ifdef HEMELB_USE_VELOCITY_WEIGHTS_FILE
-        useWeightsFromFile = true;
-        #endif
+        if constexpr (build_info::USE_VELOCITY_WEIGHTS_FILE) {
+            useWeightsFromFile = true;
+        } else {
+            useWeightsFromFile = false;
+        }
 
         if(useWeightsFromFile) {
           //if the new velocity approximation is enabled, then we want to create a lookup table here.

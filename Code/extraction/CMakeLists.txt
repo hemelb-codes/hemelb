@@ -9,4 +9,3 @@ add_library(hemelb_extraction OBJECT
   IterableDataSource.cc PlaneGeometrySelector.cc PropertyActor.cc
   PropertyWriter.cc WholeGeometrySelector.cc LbDataSourceIterator.cc
   GeometrySurfaceSelector.cc SurfacePointSelector.cc LocalDistributionInput.cc)
-target_link_libraries(hemelb_extraction PRIVATE Boost::boost)

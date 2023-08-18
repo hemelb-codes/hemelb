@@ -151,7 +151,7 @@ namespace hemelb::geometry
         //! The rank which reads in the header information.
         static constexpr proc_t HEADER_READING_RANK = 0;
         //! The number of cores (0-READING_GROUP_SIZE-1) that read files in parallel
-        static constexpr proc_t READING_GROUP_SIZE = HEMELB_READING_GROUP_SIZE;
+        static constexpr proc_t READING_GROUP_SIZE = build_info::READING_GROUP_SIZE;
 
         //! Info about the connectivity of the lattice.
         const lb::LatticeInfo& latticeInfo;

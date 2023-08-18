@@ -1060,11 +1060,7 @@ namespace hemelb::geometry::decomposition
 
       bool OptimisedDecomposition::ShouldValidate() const
       {
-#ifdef HEMELB_VALIDATE_GEOMETRY
-        return true;
-#else
-        return false;
-#endif
+          return build_info::VALIDATE_GEOMETRY;
       }
 
       void OptimisedDecomposition::ValidateVertexDistribution()

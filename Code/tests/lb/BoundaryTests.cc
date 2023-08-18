@@ -20,17 +20,13 @@ namespace hemelb::tests
     // the boundaries (in- and out- lets) within them.
     TEST_CASE_METHOD(helpers::FourCubeBasedTestFixture<>, "BoundaryTests") {
         auto pressureToDensity = [&](double pressure) -> double {
-            double inverseVelocity = simConfig.GetTimeStepLength() / simConfig.GetVoxelSize();
-            return 1
-                   + pressure * mmHg_TO_PASCAL * inverseVelocity * inverseVelocity
-                     / (Cs2 * lbmParams.GetFluidDensity());
+            return unitConverter->ConvertPressureToLatticeUnits(pressure) / Cs2;
         };
 
         auto inlets = BuildIolets(geometry::INLET_TYPE);
 
         SECTION("TestConstruct") {
-            double targetStartDensity = unitConverter->ConvertPressureToLatticeUnits(80.0 - 1.0) / Cs2;
-
+            double targetStartDensity = pressureToDensity(80.0 - 1.0);
             REQUIRE(Approx(targetStartDensity) == inlets.GetBoundaryDensity(0));
         }
 
