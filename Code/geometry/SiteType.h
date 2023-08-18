@@ -6,10 +6,8 @@
 #ifndef HEMELB_GEOMETRY_SITETYPE_H
 #define HEMELB_GEOMETRY_SITETYPE_H
 
-namespace hemelb
+namespace hemelb::geometry
 {
-  namespace geometry
-  {
     /*
      * Note: The implementation contains the MPI type registration code.
      */
@@ -21,8 +19,6 @@ namespace hemelb
       INLET_TYPE = 2U,
       OUTLET_TYPE = 3U
     };
-
-  }
 
 }
 #endif // HEMELB_GEOMETRY_SITETYPE_H
