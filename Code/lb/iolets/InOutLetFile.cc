@@ -45,11 +45,18 @@ namespace hemelb::lb
                 log::Logger::Log<log::Trace, log::OnePerCore>("Time: %f s. Value: %f mmHg.", t_s, p_mmHg);
                 auto t_lat = unitConverter->ConvertTimeToLatticeUnits(t_s);
                 auto rho_lat = unitConverter->ConvertPressureToLatticeUnits(p_mmHg) / Cs2;
-                auto it = std::lower_bound(file_data_lat.begin(), file_data_lat.end(), DataPair{t_lat, rho_lat}, less_time);
-                if (it->first == t_lat) {
-                    *it = {t_lat, rho_lat};
+                if (file_data_lat.empty()) {
+                    file_data_lat.emplace_back(t_lat, rho_lat);
                 } else {
-                    file_data_lat.insert(it, std::make_pair(t_lat, rho_lat));
+                    auto it = std::lower_bound(file_data_lat.begin(), file_data_lat.end(), DataPair{t_lat, rho_lat},
+                                               less_time);
+                    if (it == file_data_lat.end()) {
+                        file_data_lat.emplace_back(t_lat, rho_lat);
+                    } else if (it->first == t_lat) {
+                        *it = {t_lat, rho_lat};
+                    } else {
+                        file_data_lat.insert(it, std::make_pair(t_lat, rho_lat));
+                    }
                 }
             }
             datafile.close();
@@ -58,7 +65,7 @@ namespace hemelb::lb
                 return l.second < r.second;
             };
             densityMin = std::min_element(file_data_lat.begin(), file_data_lat.end(), less_density)->second;
-            densityMax = std::min_element(file_data_lat.begin(), file_data_lat.end(), less_density)->second;
+            densityMax = std::max_element(file_data_lat.begin(), file_data_lat.end(), less_density)->second;
 
             // Check if last point's value matches the first
             if (file_data_lat.back().second != file_data_lat.front().second)
