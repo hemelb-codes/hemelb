@@ -8,6 +8,7 @@
 
 #include <type_traits>
 #include <iterator>
+#include <optional>
 
 #include <arpa/inet.h>
 
@@ -156,24 +157,7 @@ namespace hemelb::io::xdr {
 	    // aren't invalidated...)
 	    using start_type = ItT;
 	    // End is an optional iter
-	    //
-	    // TODO: when we move to C++17, use std::optional
-	    // using end_type = std::optional<ItT>;
-	    //
-	    // For now, use a super simple, minimal optional (to avoid boost)
-	    class end_type {
-	      ItT value;
-	      bool valid = false;
-	    public:
-	      end_type(ItT i) : value(i), valid(true) {
-	      }
-	      operator bool() const {
-		return valid;
-	      }
-	      const ItT& operator*() const {
-		return value;
-	      }
-	    };
+	    using end_type = std::optional<ItT>;
 
 	    // No counter needed (Null supports operator+=(size_t))
 	    using counter_type = Null;
