@@ -7,10 +7,10 @@
 #define HEMELB_EXTRACTION_LBDATASOURCEITERATOR_H
 
 #include "extraction/IterableDataSource.h"
-#include "geometry/FieldData.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "util/UnitConverter.h"
 
+namespace hemelb::geometry { class FieldData; }
 namespace hemelb::extraction
 {
     class LbDataSourceIterator : public IterableDataSource
