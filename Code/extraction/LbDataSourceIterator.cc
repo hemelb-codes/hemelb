@@ -4,6 +4,7 @@
 // license in the file LICENSE.
 
 #include "extraction/LbDataSourceIterator.h"
+#include "geometry/FieldData.h"
 
 namespace hemelb::extraction
 {
