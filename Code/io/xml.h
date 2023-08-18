@@ -249,6 +249,9 @@ namespace hemelb::io::xml
         // Create a new element as a child of this one, returning it.
         Element AddChild(char const* name);
 
+        // Copy the element and add as child of this one, returning it.
+        Element CopyAsChild(Element const&);
+
         // Delete this element
         void Delete();
         // Delete child of this
@@ -325,64 +328,53 @@ namespace hemelb::io::xml
         friend bool operator!=(const Element& left, const Element& right);
     };
 
+    // Represent Element::Missing()
+    struct ChildIteratorSentinel {};
+
     /**
      * Want to model the ForwardIterator concept
      */
     class ChildIterator
     {
-    public:
-        using value_type = Element;
-        using reference = Element&;
-        using pointer = Element*;
-        using iterator_category = std::forward_iterator_tag;
-
-        /**
-         * Dereference
-         * @return
-         */
-        reference operator*();
-
-        /**
-         * Dereference
-         * @return
-         */
-        pointer operator->();
-
-        /**
-         * Prefix increment
-         * @return
-         */
-        ChildIterator& operator++();
-
     protected:
-        virtual void start() = 0;
-        virtual void next() = 0;
-
         Element parent = Element::Missing();
         Element current = Element::Missing();
+
+    public:
+        using difference_type = std::ptrdiff_t;
+        using value_type = Element const;
+        using reference = Element const&;
+        //using iterator_category = std::forward_iterator_tag;
+
+        Element const& operator*() const;
+        Element const* operator->() const;
+
+        inline friend bool operator==(ChildIterator const& it, ChildIteratorSentinel) {
+            return it.current == Element::Missing();
+        }
     };
+
 
     // Iterates over all the child elements.
     class UnnamedChildIterator final : public ChildIterator {
-        void start() override;
-        void next() override;
     public:
         UnnamedChildIterator() = default;
         UnnamedChildIterator(const Element& elem);
         UnnamedChildIterator(const Element& elem, const Element& pos);
-
+        UnnamedChildIterator& operator++();
+        UnnamedChildIterator operator++(int);
         friend bool operator==(const UnnamedChildIterator& a, const UnnamedChildIterator& b);
     };
 
     // Iterates over child elements with the given name.
     class NamedChildIterator final : public ChildIterator {
         std::string name;
-        void start() override;
-        void next() override;
     public:
         NamedChildIterator() = default;
         NamedChildIterator(const Element& elem, std::string subElemName);
         NamedChildIterator(const Element& elem, std::string subElemName, const Element& pos);
+        NamedChildIterator& operator++();
+        NamedChildIterator operator++(int);
         friend bool operator==(const NamedChildIterator& a, const NamedChildIterator& b);
     };
 
@@ -405,13 +397,13 @@ namespace hemelb::io::xml
         std::string name;
 
         [[nodiscard]] NamedChildIterator begin() const;
-        [[nodiscard]] NamedChildIterator end() const;
+        [[nodiscard]] ChildIteratorSentinel end() const;
     };
     struct UnnamedIterationRange {
         Element parent;
 
         [[nodiscard]] UnnamedChildIterator begin() const;
-        [[nodiscard]] UnnamedChildIterator end() const;
+        [[nodiscard]] ChildIteratorSentinel end() const;
     };
 
     /** an abstraction for an XML document

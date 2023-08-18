@@ -2,7 +2,6 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
-#include <stdexcept>
 
 #include <tinyxml2.h>
 
@@ -10,6 +9,12 @@
 
 namespace hemelb::io::xml
 {
+    // Concept checks for the iterators
+    static_assert(std::forward_iterator<UnnamedChildIterator>);
+    static_assert(std::forward_iterator<NamedChildIterator>);
+    static_assert(std::sentinel_for<ChildIteratorSentinel, NamedChildIterator>);
+    static_assert(std::sentinel_for<ChildIteratorSentinel, UnnamedChildIterator>);
+
     using namespace tinyxml2;
 
     Document::Document()
@@ -30,7 +35,7 @@ namespace hemelb::io::xml
     Document::Document(Document &&) = default;
     Document &Document::operator=(Document &&) = default;
 
-    Element Document::GetRoot()
+    Element Document::GetRoot() const
     {
         return {xmlDoc->RootElement()};
     }
@@ -60,7 +65,9 @@ namespace hemelb::io::xml
     }
 
     void Document::SaveFile(const std::filesystem::path &path) const {
-        xmlDoc->SaveFile(path.c_str());
+        if (xmlDoc->SaveFile(path.c_str()) != XML_SUCCESS) {
+            throw (Exception() << "XML save error: " << xmlDoc->ErrorStr());
+        }
     }
 
     Element::Element(XMLElement* el_) :
@@ -231,6 +238,11 @@ namespace hemelb::io::xml
         return {el->InsertNewChildElement(name)};
     }
 
+    Element Element::CopyAsChild(const Element & source) {
+        auto new_el = source.el->DeepClone(el->GetDocument());
+        return {el->InsertEndChild(new_el)->ToElement()};
+    }
+
     void Element::DeleteChild(const Element &elem_to_del) {
         el->DeleteChild(elem_to_del.el);
     }
@@ -243,7 +255,7 @@ namespace hemelb::io::xml
      * Dereference
      * @return
      */
-    ChildIterator::reference ChildIterator::operator*()
+    ChildIterator::reference ChildIterator::operator*() const
     {
         return current;
     }
@@ -252,25 +264,14 @@ namespace hemelb::io::xml
      * Dereference
      * @return
      */
-    ChildIterator::pointer ChildIterator::operator->()
+    Element const* ChildIterator::operator->() const
     {
         return &current;
     }
 
-    /**
-     * Prefix increment
-     * @return
-     */
-    ChildIterator& ChildIterator::operator++()
-    {
-        // increment and return the updated version
-        next();
-        return *this;
-    }
-
     UnnamedChildIterator::UnnamedChildIterator(const Element &elem) {
         parent = elem;
-        start();
+        current = parent.GetChildOrNull();
     }
 
     UnnamedChildIterator::UnnamedChildIterator(const Element &elem, const Element &pos) {
@@ -278,11 +279,22 @@ namespace hemelb::io::xml
         current = pos;
     }
 
-    void UnnamedChildIterator::start() {
-        current = parent.GetChildOrNull();
-    }
-    void UnnamedChildIterator::next() {
+    // Prefix increment
+    UnnamedChildIterator& UnnamedChildIterator::operator++()
+    {
+        // increment and return the updated version
         current = current.NextSiblingOrNull();
+        return *this;
+    }
+
+    // Postfix increment
+    UnnamedChildIterator UnnamedChildIterator::operator++(int)
+    {
+        auto old = *this;
+        // increment this
+        ++*this;
+        // return old
+        return old;
     }
 
     /**
@@ -294,7 +306,7 @@ namespace hemelb::io::xml
             name(std::move(subElemName))
     {
         parent = elem;
-        start();
+        current = parent.GetChildOrNull(name.c_str());
     }
     NamedChildIterator::NamedChildIterator(const Element &elem, std::string subElemName, const Element &pos) :
             name(std::move(subElemName))
@@ -303,11 +315,22 @@ namespace hemelb::io::xml
         current = pos;
     }
 
-    void NamedChildIterator::start() {
-        current = parent.GetChildOrNull(name.c_str());
-    }
-    void NamedChildIterator::next() {
+    // Prefix increment
+    NamedChildIterator& NamedChildIterator::operator++()
+    {
+        // increment and return the updated version
         current = current.NextSiblingOrNull(name.c_str());
+        return *this;
+    }
+
+    // Postfix increment
+    NamedChildIterator NamedChildIterator::operator++(int)
+    {
+        auto old = *this;
+        // increment this
+        ++*this;
+        // return old
+        return old;
     }
 
     /**
@@ -343,16 +366,16 @@ namespace hemelb::io::xml
         return {parent, name};
     }
 
-    NamedChildIterator NamedIterationRange::end() const {
-        return {parent, name, Element::Missing()};
+    ChildIteratorSentinel NamedIterationRange::end() const {
+        return {};
     }
 
     UnnamedChildIterator UnnamedIterationRange::begin() const {
         return {parent};
     }
 
-    UnnamedChildIterator UnnamedIterationRange::end() const {
-        return {parent, Element::Missing()};
+    ChildIteratorSentinel UnnamedIterationRange::end() const {
+        return {};
     }
 
     // XML exception base class
