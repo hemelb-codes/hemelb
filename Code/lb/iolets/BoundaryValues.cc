@@ -7,6 +7,7 @@
 
 #include <algorithm>
 
+#include "geometry/Domain.h"
 #include "lb/iolets/BoundaryComms.h"
 #include "log/Logger.h"
 #include "util/numerical.h"
@@ -34,7 +35,7 @@ namespace hemelb::lb
           iolet->Initialise(&unitConverter);
 
           bool isIoletOnThisProc = IsIoletOnThisProc(latticeData, ioletIndex);
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("BOUNDARYVALUES.CC - isioletonthisproc? : %d",
+          log::Logger::Log<log::Debug, log::OnePerCore>("BOUNDARYVALUES.CC - isioletonthisproc? : %d",
                                                                                 isIoletOnThisProc);
           procsList[ioletIndex] = GatherProcList(isIoletOnThisProc);
 
