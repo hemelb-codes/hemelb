@@ -97,7 +97,7 @@ namespace hemelb::tests
             for (unsigned int step = 0; step < 1000; step++) {
                 state.Increment();
             }
-            REQUIRE(1001lu == state.GetTimeStep());
+            REQUIRE(1000lu == state.GetTimeStep());
             reporter.FillDictionary();
 
             CheckTimingsTable();

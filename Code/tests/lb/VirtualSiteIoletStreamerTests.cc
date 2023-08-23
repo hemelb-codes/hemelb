@@ -362,8 +362,8 @@ namespace hemelb::tests
                                             propertyCache);
 
             // Now every entry in the RSHV cache should have been updated
-            CheckAllHVUpdated(inletBoundary, 1);
-            CheckAllHVUpdated(outletBoundary, 1);
+            CheckAllHVUpdated(inletBoundary, 0);
+            CheckAllHVUpdated(outletBoundary, 0);
 
             // Stream and collide
             offset = 0;

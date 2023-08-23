@@ -25,10 +25,10 @@ namespace hemelb::io {
     }
 
     void Checkpointer::Write() const {
-        auto dir = out_dir_pattern.Format(simulationState->GetTimeStep(), simulationState->GetTotalTimeSteps());
+        auto dir = out_dir_pattern.Format(simulationState->GetTimeStep(), simulationState->GetEndTimeStep());
         fs::create_directory(dir);
 
-        distribution_writer->Write(simulationState->GetTimeStep(), simulationState->GetTotalTimeSteps());
+        distribution_writer->Write(simulationState->GetTimeStep(), simulationState->GetEndTimeStep());
 
     }
 }
