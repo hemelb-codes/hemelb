@@ -108,7 +108,7 @@ namespace hemelb::configuration
     // Turn an input XML-relative path into a full path
     std::filesystem::path SimConfigReader::RelPathToFullPath(std::string_view path) const {
         auto xml_dir = xmlFilePath.parent_path();
-        return std::filesystem::absolute(xml_dir / path);
+        return std::filesystem::weakly_canonical(xml_dir / path);
     }
 
     SimConfig SimConfigReader::DoIO(Element topNode) const
