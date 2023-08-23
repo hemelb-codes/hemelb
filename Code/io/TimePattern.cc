@@ -55,8 +55,8 @@ namespace hemelb::io {
             throw (Exception() << "Formatting error");
 
         // +1 for the null terminator
-        std::string ans(sz + 1, '\0');
-        std::snprintf(ans.data(), ans.size(),
+        std::string ans(sz, '\0');
+        std::snprintf(ans.data(), ans.size() + 1,
                       pattern.data(), prec, t);
         return ans;
     }
