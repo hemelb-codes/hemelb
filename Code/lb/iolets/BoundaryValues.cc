@@ -165,7 +165,7 @@ namespace hemelb::lb
       // This assumes the program has already waited for comms to finish before
       LatticeDensity BoundaryValues::GetBoundaryDensity(const int index)
       {
-        return iolets[index]->GetDensity(state->Get0IndexedTimeStep());
+        return iolets[index]->GetDensity(state->GetTimeStep());
       }
 
       LatticeDensity BoundaryValues::GetDensityMin(int iBoundaryId)

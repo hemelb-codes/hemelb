@@ -121,7 +121,6 @@ namespace hemelb
     private:
       void Initialise();
       void SetupReporting(); // set up the reporting file
-      unsigned OutputPeriod(unsigned int frequency);
       void HandleActors();
       void OnUnstableSimulation();
       /**

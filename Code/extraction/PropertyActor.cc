@@ -77,7 +77,7 @@ namespace hemelb::extraction
     void PropertyActor::EndIteration()
     {
       timers.extractionWriting().Start();
-      propertyWriter->Write(simulationState->GetTimeStep(), simulationState->GetTotalTimeSteps());
+      propertyWriter->Write(simulationState->GetTimeStep(), simulationState->GetEndTimeStep());
       timers.extractionWriting().Stop();
     }
 

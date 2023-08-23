@@ -33,13 +33,13 @@ namespace hemelb::tests
         SECTION("TestUpdate") {
             REQUIRE(Approx(pressureToDensity(80.0 - 1.0)) == inlets.GetBoundaryDensity(0));
 
-            while (simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 20) {
+            while (simState->GetTimeStep() < simState->GetEndTimeStep() / 20) {
                 simState->Increment();
             }
 
             REQUIRE(Approx(pressureToDensity(80.0 + 1.0)) == inlets.GetBoundaryDensity(0));
 
-            while (simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 10) {
+            while (simState->GetTimeStep() < simState->GetEndTimeStep() / 10) {
                 simState->Increment();
             }
 
@@ -63,13 +63,13 @@ namespace hemelb::tests
 
             REQUIRE(Approx(pressureToDensity(78.0)) == inlets.GetBoundaryDensity(0));
 
-            while (simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 2) {
+            while (simState->GetTimeStep() < simState->GetEndTimeStep() / 2) {
                 simState->Increment();
             }
 
             REQUIRE(Approx(pressureToDensity(82.0)) == inlets.GetBoundaryDensity(0));
 
-            while (simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps()) {
+            while (simState->GetTimeStep() < simState->GetEndTimeStep()) {
                 simState->Increment();
             }
 

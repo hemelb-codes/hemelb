@@ -356,7 +356,7 @@ namespace hemelb::redblood {
         net::IOCommunicator ioComms;
 
         void operator()(CellContainer const& cells) {
-            auto timestep = simState->Get0IndexedTimeStep();
+            auto timestep = simState->GetTimeStep();
             if ((timestep % period) != 0)
                 return;
 

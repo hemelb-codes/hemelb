@@ -132,7 +132,7 @@ namespace hemelb::tests
 
             REQUIRE(Approx(targetStartDensity) == file->GetDensityMin());
             REQUIRE(Approx(targetStartDensity) == file->GetDensity(0));
-            REQUIRE(Approx(targetMidDensity) == file->GetDensity(state.GetTotalTimeSteps() / 2));
+            REQUIRE(Approx(targetMidDensity) == file->GetDensity(state.GetEndTimeStep() / 2));
         }
 
         SECTION("TestParabolicVelocityConstruct") {

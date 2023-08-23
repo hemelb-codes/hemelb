@@ -97,17 +97,6 @@ namespace hemelb
   }
 
   template<class TRAITS>
-  unsigned int SimulationMaster<TRAITS>::OutputPeriod(unsigned int frequency)
-  {
-    if (frequency == 0)
-    {
-      return 1000000000;
-    }
-    unsigned long roundedPeriod = simulationState->GetTotalTimeSteps() / frequency;
-    return std::max(1U, (unsigned int) roundedPeriod);
-  }
-
-  template<class TRAITS>
   void SimulationMaster<TRAITS>::HandleActors()
   {
     stepManager->CallActions();
@@ -132,7 +121,7 @@ namespace hemelb
     log::Logger::Log<log::Info, log::Singleton>("Beginning to run simulation.");
     timings.simulation().Start();
 
-    while (simulationState->GetTimeStep() <= simulationState->GetTotalTimeSteps())
+    while (simulationState->GetTimeStep() < simulationState->GetEndTimeStep())
     {
       DoTimeStep();
       if (simulationState->IsTerminating())
