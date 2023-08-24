@@ -318,6 +318,9 @@ namespace hemelb::io::xml
          */
         static void GetPathWorker(const tinyxml2::XMLElement* el, std::ostringstream& ans);
 
+        // Get the document and use that to create an attribute stream with its factory.
+        std::ostringstream MakeAttributeStream() const;
+
         /**
          * Equality and inequality operators for
          * @param left
@@ -422,6 +425,14 @@ namespace hemelb::io::xml
          *   the path to the XML file to be read by this object
          */
         Document(const std::filesystem::path& path);
+        template <std::invocable F>
+        Document(F&& f) : Document() {
+            attr_stream_factory = std::forward<F>(f);
+        }
+        template <std::invocable F>
+        Document(const std::filesystem::path& path, F&& f) : Document(path) {
+            attr_stream_factory = std::forward<F>(f);
+        }
 
         /** destructor - needed to avoid polluting all users of this with TinyXML */
         ~Document();
@@ -454,6 +465,7 @@ namespace hemelb::io::xml
         // the doc filename, so we have to do that.
         friend Element;
         std::filesystem::path filename;
+        std::function<std::ostringstream()> attr_stream_factory;
     };
 
     /**
@@ -658,7 +670,7 @@ namespace hemelb::io::xml
 
     template <typename T>
     void Element::SetAttribute(char const* name, T &&value) {
-        std::ostringstream attrStream;
+        auto attrStream = MakeAttributeStream();
         attrStream << value;
         SetAttribute(name, attrStream.str().c_str());
     }
