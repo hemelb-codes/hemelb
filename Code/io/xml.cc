@@ -17,7 +17,13 @@ namespace hemelb::io::xml
 
     using namespace tinyxml2;
 
-    Document::Document()
+    namespace {
+        std::ostringstream DefaultStream() {
+            return {};
+        }
+    }
+
+    Document::Document() : attr_stream_factory(DefaultStream)
     {
         xmlDoc = std::make_unique<XMLDocument>();
         // Associate our Document object with TinyXML's to allow
@@ -228,6 +234,11 @@ namespace hemelb::io::xml
         }
 
         ans << "/" << el->Value() << "(" << el->GetLineNum() << ")";
+    }
+
+    std::ostringstream Element::MakeAttributeStream() const {
+        auto doc = static_cast<Document const*>(el->GetDocument()->GetUserData());
+        return doc->attr_stream_factory();
     }
 
     Element::operator bool() const {
