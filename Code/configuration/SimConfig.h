@@ -6,7 +6,9 @@
 #ifndef HEMELB_CONFIGURATION_SIMCONFIG_H
 #define HEMELB_CONFIGURATION_SIMCONFIG_H
 
+#include <filesystem>
 #include <map>
+#include <memory>
 #include <optional>
 #include <string>
 #include <variant>
@@ -14,6 +16,7 @@
 
 #include "constants.h"
 #include "quantity.h"
+#include "units.h"
 #include "configuration/MonitoringConfig.h"
 #include "lb/LbmParameters.h"
 #include "util/Vector3D.h"
@@ -25,9 +28,9 @@ namespace hemelb::io {
         class Document;
     }
 }
+
 namespace hemelb::configuration
 {
-
     // Base for initial conditions configuration
     struct ICConfigBase {
       ICConfigBase(std::optional<LatticeTimeStep> t);
@@ -89,8 +92,11 @@ namespace hemelb::configuration
         PhysicalPosition origin_m;
     };
 
+    // Using std::minstd_rand with a 32 bit unsigned seed/state.
+    using PrngSeedType = std::uint32_t;
+
     struct CellInserterConfig {
-        std::int64_t seed;
+        PrngSeedType seed;
         std::string template_name;
         quantity_union<double, "s", "lattice"> offset;
         Angle theta_rad;

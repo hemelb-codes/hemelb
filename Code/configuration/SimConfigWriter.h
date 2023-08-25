@@ -6,12 +6,21 @@
 #ifndef HEMELB_CONFIGURATION_SIMCONFIGWRITER_H
 #define HEMELB_CONFIGURATION_SIMCONFIGWRITER_H
 
+#include <filesystem>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "configuration/SimConfig.h"
 #include "io/xml.h"
 
+namespace hemelb::extraction { struct PropertyOutputFile; }
+
 namespace hemelb::configuration
 {
+    struct MonitoringConfig;
 
+    // Turn a SimConfig into an XML file
     class SimConfigWriter {
         using path = std::filesystem::path;
         using Element = io::xml::Element;
