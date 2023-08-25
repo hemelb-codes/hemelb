@@ -7,12 +7,24 @@
 #define HEMELB_CONFIGURATION_SIMCONFIGREADER_H
 
 #include <filesystem>
+#include <map>
+#include <string>
+#include <string_view>
+#include <vector>
 
-
+#include "Exception.h"
 #include "quantity.h"
+#include "configuration/MonitoringConfig.h"
 #include "configuration/SimConfig.h"
-#include "extraction/GeometrySelectors.h"
+#include "extraction/OutputField.h"
+#include "extraction/PropertyOutputFile.h"
 #include "io/xml.h"
+
+namespace hemelb::extraction {
+    class PlaneGeometrySelector;
+    class StraightLineGeometrySelector;
+    class SurfacePointSelector;
+}
 
 namespace hemelb::configuration {
 

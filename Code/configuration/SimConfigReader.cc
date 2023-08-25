@@ -5,10 +5,22 @@
 
 #include "configuration/SimConfigReader.h"
 
+#include <algorithm>
+#include <array>
+#include <chrono>
+#include <concepts>
+#include <memory>
+#include <optional>
+#include <utility>
+#include <variant>
+
 #include "build_info.h"
+#include "constants.h"
+#include "extraction/GeometrySelectors.h"
 #include "io/TimePattern.h"
 #include "log/Logger.h"
 #include "net/MpiCommunicator.h"
+#include "util/Vector3D.h"
 
 namespace hemelb::configuration {
     using Element = io::xml::Element;
@@ -691,7 +703,6 @@ namespace hemelb::configuration {
 
     auto SimConfigReader::DoIOForCosinePressureInOutlet(const Element& ioletEl) const -> IoletConfig
     {
-        //auto newIolet = util::make_clone_ptr<lb::iolets::InOutLetCosine>();
         CosinePressureIoletConfig newIolet;
         const Element conditionEl = ioletEl.GetChildOrThrow("condition");
 

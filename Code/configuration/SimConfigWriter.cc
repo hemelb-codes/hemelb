@@ -5,10 +5,19 @@
 
 #include "configuration/SimConfigWriter.h"
 
+#include <optional>
+#include <sstream>
+#include <type_traits>
+#include <utility>
+#include <variant>
+
+#include "constants.h"
+#include "Exception.h"
 #include "hassert.h"
+#include "configuration/MonitoringConfig.h"
 #include "extraction/GeometrySelectors.h"
 #include "io/xml.h"
-#include "util/Iterator.h"
+#include "util/variant.h"
 
 namespace hemelb::configuration {
     using namespace io::xml;

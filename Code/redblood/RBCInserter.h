@@ -32,7 +32,7 @@ namespace hemelb::redblood
      */
     class RBCInserter
     {
-      public:
+    public:
         /**
          * Creates an RBC Inserter.
          *
@@ -106,12 +106,14 @@ namespace hemelb::redblood
     //! Red blood cell inserter that adds random rotation and translation to each cell
     class RBCInserterWithPerturbation : public RBCInserter
     {
-      public:
+    public:
+        using PRNG = std::minstd_rand;
+
         RBCInserterWithPerturbation(std::function<bool()> condition,
                                     std::unique_ptr<CellBase const> cell,
                                     util::Matrix3D const &initialRotation, Angle dtheta, Angle dphi,
                                     LatticePosition const& dx, LatticePosition const& dy,
-                                    std::default_random_engine::result_type randomGeneratorSeed = std::default_random_engine::default_seed) :
+                                    PRNG::result_type randomGeneratorSeed = PRNG::default_seed) :
             RBCInserter(condition, std::move(cell)), initialRotation(initialRotation),
                 dtheta(dtheta), dphi(dphi), dx(dx), dy(dy), randomGenerator(randomGeneratorSeed), uniformDistribution(-1.0,1.0)
         {
@@ -129,7 +131,7 @@ namespace hemelb::redblood
         //! Two vectors alongst which to move cell
         LatticePosition dx, dy;
 
-        std::default_random_engine randomGenerator;
+        PRNG randomGenerator;
         std::uniform_real_distribution<double> uniformDistribution;
     };
 

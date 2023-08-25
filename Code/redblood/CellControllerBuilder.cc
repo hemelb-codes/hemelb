@@ -235,7 +235,7 @@ namespace hemelb::redblood {
             auto time = std::make_shared<LatticeTime>(timeStep - 1e0
                                                       + std::numeric_limits<LatticeTime>::epsilon() - offset);
 
-            std::default_random_engine randomGenerator(conf.seed);
+            std::minstd_rand randomGenerator(conf.seed);
             std::uniform_real_distribution<double> uniformDistribution(-1.0, 1.0);
 
             auto condition = [time, timeStep, dt, uniformDistribution, randomGenerator]() mutable
