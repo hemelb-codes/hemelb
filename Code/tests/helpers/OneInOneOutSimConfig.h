@@ -9,7 +9,7 @@
 #include <string>
 
 #include "io/xml.h"
-#include "configuration/SimConfig.h"
+#include "configuration/SimConfigReader.h"
 #include "configuration/SimBuilder.h"
 
 namespace hemelb::tests::helpers

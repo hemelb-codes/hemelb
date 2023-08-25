@@ -5,6 +5,7 @@
 
 #include <catch2/catch.hpp>
 
+#include "configuration/SimConfigReader.h"
 #include "io/xml.h"
 #include "redblood/RBCInserter.h"
 #include "tests/redblood/Fixtures.h"

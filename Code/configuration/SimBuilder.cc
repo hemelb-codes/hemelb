@@ -8,8 +8,10 @@
 #include <algorithm>
 #include <ranges>
 
+#include "extraction/GeometrySelectors.h"
 #include "geometry/GeometryReader.h"
 #include "lb/InitialCondition.h"
+#include "lb/iolets/InOutLets.h"
 #include "redblood/FlowExtension.h"
 #include "reporting/Reporter.h"
 #include "util/variant.h"
@@ -285,7 +287,7 @@ namespace hemelb::configuration {
         }();
 
         return std::make_shared<io::Checkpointer>(
-                cp_info.period, cp_dir_pattern.native(), std::move(simState), timings, std::move(lpo)
+                cp_info.period, cp_dir_pattern.native(), std::move(simState), std::move(lpo)
         );
     }
 

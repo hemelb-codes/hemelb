@@ -14,6 +14,7 @@
 #include "lb/EntropyTester.h"
 #include "lb/iolets/BoundaryValues.h"
 #include "util/UnitConverter.h"
+#include "configuration/SimConfig.h"
 #include "configuration/CommandLine.h"
 #include "io/PathManager.h"
 #include "reporting/Reporter.h"
@@ -97,6 +98,8 @@ namespace hemelb
       }
       util::UnitConverter const & GetUnitConverter() const;
       void Finalise();
+
+      configuration::SimConfig ToConfig() const;
 #     ifdef HEMELB_DOING_UNITTESTS
       //! Makes it easy to add cell controller without messy input files
       void RegisterActor(net::phased::Concern &concern, net::phased::StepManager::Phase phase)

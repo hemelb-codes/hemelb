@@ -5,7 +5,9 @@
 
 #ifndef HEMELB_MULTISCALE_MULTISCALESIMULATIONMASTER_H
 #define HEMELB_MULTISCALE_MULTISCALESIMULATIONMASTER_H
+
 #include <vector>
+#include "lb/iolets/InOutLetMultiscale.h"
 #include "multiscale/Intercommunicator.h"
 #include "SimulationMaster.h"
 #include "util/span.h"

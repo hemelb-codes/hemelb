@@ -58,14 +58,6 @@ namespace hemelb::configuration {
         [[nodiscard]] std::shared_ptr<util::UnitConverter const> GetUnitConverter() const;
 
         template<typename T>
-        void GetDimensionalValueInLatticeUnits(const io::xml::Element& elem,
-                                               const std::string& units, T& value)
-        {
-            GetDimensionalValue(elem, units, value);
-            value = unit_converter->ConvertToLatticeUnits(units, value);
-        }
-
-        template<typename T>
         T ConvertToLatticeUnits(T const& val, std::string_view units)
         {
             return unit_converter->template ConvertToLatticeUnits(units, val);
@@ -269,7 +261,6 @@ namespace hemelb::configuration {
                 timings,
                 ioComms
         );
-        maybe_register_actor(control.checkpointer, 1);
 
         control.netConcern = std::make_shared<net::phased::NetConcern>(
                 control.communicationNet
