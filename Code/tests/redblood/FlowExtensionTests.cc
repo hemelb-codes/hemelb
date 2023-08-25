@@ -6,6 +6,7 @@
 #include <catch2/catch.hpp>
 #include <tinyxml2.h>
 
+#include "configuration/SimConfigReader.h"
 #include "redblood/FlowExtension.h"
 #include "util/Vector3D.h"
 #include "units.h"

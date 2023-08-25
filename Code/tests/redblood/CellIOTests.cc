@@ -7,6 +7,7 @@
 
 #include "io/xml.h"
 #include "configuration/SimBuilder.h"
+#include "configuration/SimConfigReader.h"
 #include "redblood/CellControllerBuilder.h"
 #include "redblood/MeshIO.h"
 #include "redblood/FaderCell.h"

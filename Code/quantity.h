@@ -6,6 +6,7 @@
 #ifndef HEMELB_QUANTITY_H
 #define HEMELB_QUANTITY_H
 
+#include "Exception.h"
 #include "util/ct_string.h"
 
 namespace hemelb {

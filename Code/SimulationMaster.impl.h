@@ -121,9 +121,20 @@ namespace hemelb
     log::Logger::Log<log::Info, log::Singleton>("Beginning to run simulation.");
     timings.simulation().Start();
 
+    auto cp = [&] () {
+        if (checkpointer && checkpointer->ShouldWrite()) {
+            timings.writeCheckpoint().Start();
+            checkpointer->Write(ToConfig());
+            timings.writeCheckpoint().Stop();
+        }
+    };
+
+    cp();
     while (simulationState->GetTimeStep() < simulationState->GetEndTimeStep())
     {
       DoTimeStep();
+      cp();
+
       if (simulationState->IsTerminating())
       {
         break;
@@ -268,6 +279,15 @@ namespace hemelb
   {
     return *unitConverter;
   }
+
+    template <class TRAITS>
+    configuration::SimConfig SimulationMaster<TRAITS>::ToConfig() const {
+        using namespace configuration;
+        SimConfig ans = simConfig;
+        if (simConfig.HasColloidSection())
+            throw (Exception() << "Checkpointing not implemented for colloids");
+        return ans;
+    }
 }
 
 #endif

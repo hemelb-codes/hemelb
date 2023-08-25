@@ -6,7 +6,7 @@
 #include <catch2/catch.hpp>
 
 #include "lb/iolets/InOutLets.h"
-#include "configuration/SimConfig.h"
+#include "configuration/SimConfigReader.h"
 #include "configuration/SimBuilder.h"
 #include "resources/Resource.h"
 
