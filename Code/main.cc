@@ -6,6 +6,7 @@
 #include "net/mpi.h"
 #include "net/IOCommunicator.h"
 #include "configuration/CommandLine.h"
+#include "io/ensure_hexfloat.h"
 #include "debug.h"
 #include "SimulationMaster.h"
 
@@ -29,6 +30,7 @@ int main(int argc, char *argv[])
       hemelbCommunicator.GetNodeComm().Size(),
       hemelbCommunicator.Size()
     );
+    io::GlobalHexFloatLocale ensure_hexfloat;
 
     try {
       // Parse command line
