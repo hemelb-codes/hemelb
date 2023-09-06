@@ -8,4 +8,5 @@ add_test_lib(test_io
   XdrWriterTests.cc
   XdrReaderTests.cc
   xml.cc
+  hexfloat.cc
 )

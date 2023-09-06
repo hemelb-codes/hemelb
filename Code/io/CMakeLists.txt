@@ -26,6 +26,7 @@ add_library(hemelb_io OBJECT
   xml.cc
   Checkpointer.cc
   TimePattern.cc
+  hexfloat.cc
 )
 
 target_link_libraries(hemelb_io PUBLIC
