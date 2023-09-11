@@ -5,6 +5,8 @@
 
 #include "redblood/CellControllerBuilder.h"
 
+#include <boost/uuid/uuid_io.hpp>
+
 #include "io/PathManager.h"
 #include "redblood/FaderCell.h"
 #include "redblood/MeshIO.h"
@@ -366,9 +368,11 @@ namespace hemelb::redblood {
             ioComms.Barrier();
 
             for (auto& cell : cells) {
-                std::stringstream filename;
-                filename << rbcOutputDir << cell->GetTag() << "_t_" << timestep << ".vtp";
-
+                // to_chars guarantees to write exactly 36 chars, also need .vtp\0
+                char name[41];
+                boost::uuids::to_chars(cell->GetTag(), name);
+                std::strncpy(name + 36, ".vtp", 5);
+                auto filename = rbcOutputDir / name;
                 std::shared_ptr<redblood::CellBase> cell_base = [&cell]() {
                     if (auto fader = std::dynamic_pointer_cast<redblood::FaderCell>(cell)) {
                         return fader->GetWrapeeCell();
@@ -380,7 +384,7 @@ namespace hemelb::redblood {
                 auto cell_cast = std::dynamic_pointer_cast<redblood::Cell>(cell_base);
                 assert(cell_cast);
                 auto meshio = redblood::VTKMeshIO{};
-                meshio.writeFile(filename.str(), *cell_cast, *unitConverter);
+                meshio.writeFile(filename.native(), *cell_cast, *unitConverter);
             }
         }
     };

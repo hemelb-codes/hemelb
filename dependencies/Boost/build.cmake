@@ -4,13 +4,13 @@
 # license in the file LICENSE.
 include_guard()
 
-find_file(BOOST_TARBALL boost_1_75_0.tar.gz
+find_file(BOOST_TARBALL boost_1_77_0.tar.gz
   DOC "Path to download BOOST (can be url http://)"
   PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
   )
 if(NOT BOOST_TARBALL)
   message("No boost source found, will download.")
-  set(BOOST_TARBALL https://boostorg.jfrog.io/artifactory/main/release/1.75.0/source/boost_1_75_0.tar.gz
+  set(BOOST_TARBALL https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.tar.gz
     CACHE STRING "Path to download BOOST (can be local file://)" FORCE)
 endif()
 ExternalProject_Add(
