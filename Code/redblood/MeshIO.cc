@@ -195,18 +195,18 @@ namespace hemelb::redblood {
     }
 
     auto KruegerMeshIO::read(Storage mode, std::string const &filename_or_data, bool fixFacetOrientation) const -> MeshPtr {
-      switch (mode) {
-      case Storage::file:
-	if (!std::filesystem::exists(filename_or_data.c_str()))
-	  throw Exception() << "Red-blood-cell mesh file '" << filename_or_data << "' does not exist";
-	
-	log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from %s",
-						     filename_or_data.c_str());
-	// Open file if it exists
-	return read_krueger_mesh(std::ifstream{filename_or_data}, fixFacetOrientation);
-      case Storage::string:
-	return read_krueger_mesh(std::istringstream{filename_or_data}, fixFacetOrientation);
-      }
+        switch (mode) {
+            case Storage::file:
+                if (!std::filesystem::exists(filename_or_data.c_str()))
+                    throw (Exception() << "Red-blood-cell mesh file '" << filename_or_data << "' does not exist");
+
+                log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from %s",
+                                                             filename_or_data.c_str());
+                // Open file if it exists
+                return read_krueger_mesh(std::ifstream{filename_or_data}, fixFacetOrientation);
+            case Storage::string:
+                return read_krueger_mesh(std::istringstream{filename_or_data}, fixFacetOrientation);
+        }
     }
 
     static void write_krueger_mesh(std::ostream &stream, MeshData::Vertices const& vertices, MeshData::Facets const& facets, util::UnitConverter const& converter)
@@ -273,20 +273,21 @@ namespace hemelb::redblood {
 
     auto VTKMeshIO::readUnoriented(Storage mode, std::string const &filename_or_data) const -> std::tuple<MeshPtr, PolyDataPtr>
     {
-      // Read in VTK polydata object
-      auto reader = ErrThrower<vtkXMLPolyDataReader>::New();
-      switch (mode) {
-      case Storage::file:
-	log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from VTK polydata file");
-	reader->ReadFromInputStringOff();
-	reader->SetFileName(filename_or_data.c_str());
-	break;
-      case Storage::string:
-	log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from VTK polydata string");
-	reader->ReadFromInputStringOn();
-	reader->SetInputString(filename_or_data);
-	break;
-      }
+        // Read in VTK polydata object
+        VtkErrorsThrow t;
+        auto reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
+        switch (mode) {
+            case Storage::file:
+                log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from VTK polydata file");
+                reader->ReadFromInputStringOff();
+                reader->SetFileName(filename_or_data.c_str());
+                break;
+            case Storage::string:
+                log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from VTK polydata string");
+                reader->ReadFromInputStringOn();
+                reader->SetInputString(filename_or_data);
+                break;
+        }
 
       reader->Update();
 
@@ -353,62 +354,64 @@ namespace hemelb::redblood {
     std::string VTKMeshIO::write(Storage m, std::string const &filename,
                                  MeshData::Vertices const& vertices, MeshData::Facets const& facets,
                                  util::UnitConverter const& c, PointScalarData const& pt_scalar_fields) const {
-      // Build the vtkPolyData
-      auto pd = vtkSmartPointer<vtkPolyData>::New();
-      
-      // First, the points/vertices
-      auto points = vtkSmartPointer<vtkPoints>::New();
-      points->SetNumberOfPoints(ssize(vertices));
-      for (auto&& [i, v_lat]: util::enumerate(vertices)) {
-          auto const v = c.ConvertPositionToPhysicalUnits(v_lat);
-          points->SetPoint(i, v.m_values.data());
-      }
-      pd->SetPoints(points);
+        VtkErrorsThrow t;
 
-      // Second, the polys/facets/triangles
-      auto tris = vtkSmartPointer<vtkCellArray>::New();
-      tris->AllocateExact(ssize(facets), 3);
-      for (auto&& tri: facets) {
-	tris->InsertNextCell({tri[0], tri[1], tri[2]});
-      }
-      pd->SetPolys(tris);
+        // Build the vtkPolyData
+        auto pd = vtkSmartPointer<vtkPolyData>::New();
 
-      // Third, the scalar point data
-      for (auto&& field: pt_scalar_fields) {
-	auto&& name = field.first;
-	auto&& data = field.second;
-	auto da = vtkSmartPointer<vtkDoubleArray>::New();
-	da->SetName(name.c_str());
-	da->SetNumberOfComponents(1);
-	// This let's VTK "borrow" the data inside our vector.  We
-	// know we're not modifying the polydata, so the const cast is
-	// OK.
-	da->SetArray(const_cast<double*>(data.data()), ssize(data), 1);
-	pd->GetPointData()->AddArray(da);
-      }
+        // First, the points/vertices
+        auto points = vtkSmartPointer<vtkPoints>::New();
+        points->SetNumberOfPoints(ssize(vertices));
+        for (auto&& [i, v_lat]: util::enumerate(vertices)) {
+            auto const v = c.ConvertPositionToPhysicalUnits(v_lat);
+            points->SetPoint(i, v.m_values.data());
+        }
+        pd->SetPoints(points);
 
-      // Now, the writer
-      auto writer = ErrThrower<vtkXMLPolyDataWriter>::New();
-      // The vtkPolyData we just made
-      writer->SetInputData(pd);
+        // Second, the polys/facets/triangles
+        auto tris = vtkSmartPointer<vtkCellArray>::New();
+        tris->AllocateExact(ssize(facets), 3);
+        for (auto&& tri: facets) {
+            tris->InsertNextCell({tri[0], tri[1], tri[2]});
+        }
+        pd->SetPolys(tris);
 
-      // Based on the type of write, configure the writer, run it and
-      // return any output string.
-      switch (m) {
-      case Storage::file:
-	log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
-						     filename.c_str());
-	writer->WriteToOutputStringOff();
-	writer->SetFileName(filename.c_str());
-	writer->Write();
-	return {};
+        // Third, the scalar point data
+        for (auto&& field: pt_scalar_fields) {
+            auto&& name = field.first;
+            auto&& data = field.second;
+            auto da = vtkSmartPointer<vtkDoubleArray>::New();
+            da->SetName(name.c_str());
+            da->SetNumberOfComponents(1);
+            // This let's VTK "borrow" the data inside our vector.  We
+            // know we're not modifying the polydata, so the const cast is
+            // OK.
+            da->SetArray(const_cast<double*>(data.data()), ssize(data), 1);
+            pd->GetPointData()->AddArray(da);
+        }
 
-      case Storage::string:
-	writer->WriteToOutputStringOn();
-	writer->Write();
-	return writer->GetOutputString();
+        // Now, the writer
+        auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+        // The vtkPolyData we just made
+        writer->SetInputData(pd);
 
-      }
+        // Based on the type of write, configure the writer, run it and
+        // return any output string.
+        switch (m) {
+            case Storage::file:
+                log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
+                                                             filename.c_str());
+                writer->WriteToOutputStringOff();
+                writer->SetFileName(filename.c_str());
+                writer->Write();
+                return {};
+
+            case Storage::string:
+                writer->WriteToOutputStringOn();
+                writer->Write();
+                return writer->GetOutputString();
+
+        }
     }
 
 }

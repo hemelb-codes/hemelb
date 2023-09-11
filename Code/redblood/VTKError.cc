@@ -4,27 +4,25 @@
 // license in the file LICENSE.
 
 #include "redblood/VTKError.h"
+#include <vtkObjectFactory.h>
 
-namespace hemelb {
-  namespace redblood {
+namespace hemelb::redblood {
 
-    ErrLogger* ErrLogger::New() {
-      return new ErrLogger;
+    vtkStandardNewMacro(ErrThrowOutputWindow);
+
+    ErrThrowOutputWindow::ErrThrowOutputWindow() = default;
+
+    ErrThrowOutputWindow::~ErrThrowOutputWindow() = default;
+
+    void ErrThrowOutputWindow::DisplayErrorText(char const* txt) {
+        throw Exception() << txt;
     }
 
-    void ErrLogger::Clear() {
-      *this = ErrLogger{};
+    VtkErrorsThrow::VtkErrorsThrow() : originalWindow(vtkOutputWindow::GetInstance()) {
+        vtkOutputWindow::SetInstance(ErrThrowOutputWindow::New());
     }
 
-    void ErrLogger::Execute(vtkObject *vtkNotUsed(caller),
-			    unsigned long event,
-			    void *calldata)
-    {
-      if (event == vtkCommand::ErrorEvent) {
-	err_occurred = true;
-	err_message = static_cast<const char *>(calldata);
-      }
+    VtkErrorsThrow::~VtkErrorsThrow() {
+        vtkOutputWindow::SetInstance(originalWindow);
     }
-
-  }
 }
