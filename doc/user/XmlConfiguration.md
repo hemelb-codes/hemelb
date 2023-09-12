@@ -27,9 +27,14 @@ or:
    (since `operator>>` has been overriden to parse such a string into
    a `util::Vector3D<float>`).
 
+Floating point values can be given in fixed point, scientific
+notation, or hexadecimal floating point. This last can exactly
+represent floating point numbers so is used by tooling to avoid loss
+of precision.
+
 At the top level there must be the root element: `<hemelbsettings
 version="int">`. It MUST have a version attribute, an integer. This is
-currently 5.
+currently 6.
 
 ## Simulation
 The `<simulation>` is required and specifies some global properties of
@@ -54,7 +59,7 @@ It's child elements are:
 * Optional: `<checkpoint period="int">` -
   save a checkpoint at the given interval (in timesteps) to the
   "Checkpoints" directory.
-  
+
 ## Geometry
 The `<geometry>` element is required. It has one, required, child element:
 * `<datafile path="relative path to geometry file" />` - the path
@@ -101,6 +106,9 @@ The `<geometry>` element is required. It has one, required, child element:
     * `subtype="file"` - all subelements required
         * `<path value="relative/path/to/velocity/data/file" />`
         * `<radius value="float" units="lattice"/>` or `<radius value="float" units="m"/>`
+
+Inlets can have `<flowextension>` and `<insertcell>` children. See RBC
+description below.
 
 ## Outlets
 As for "inlets" but with `s/inlet/outlet/`
@@ -154,13 +162,45 @@ Describe what data to extract under the `<properties>` element. Child elements:
     + `type="stresstensor"`
     + `type="traction"`
     + `type="tangentialprojectiontraction"`
+	+ `type="distributions"`
     + `type="mpirank"`
+
+## Cells
+Configure the simulation of resolved flexible particles with the IBM
+using the `<redbloodcells>` element. If this is present, HemeLB must
+have been compiled with `HEMELB_BUILD_RBC` on.
+
+Subelements:
+* Required: `<controller>`
+  - Required: `<boxsize value="float" units="lattice" />`
+* Required: `<cells>` which can have zero or more children `<cell>`
+  specifying the templates for creating cells
+  - optional attribute "name" (default being "default") which must be
+     unique among the `<cell>` elements
+  - Required subelement `<shape>`
+    * Required attribute `"mesh_path"` - the relatative path from XML to
+      the mesh
+	* Required attribute `"mesh_format"` - either "VTK" or "Krueger"
+	* Optional attribute `"reference_mesh_path"` - the relative path
+      to a reference mesh
+	* Required if reference mesh path present: attribute
+      `"reference_mesh_format"`, as above.
+	* Required subelement `<scale value="float" units="m" />`
+  - Optional subelement `<moduli>`
+
+* Optional: `<cell2Cell>`
+* Optional: `<cell2Wall>`
+* Required: `<output>`
+
+Inlets and outlets can have  `<flowextension>` and `<insertcell>`
+child elements.
 
 ## Changes
 
 ### Version 6
-Moved checkpoint 
+- Moved checkpoint.
+- Allow hexadecimal floating point
+- Basic documentation of RBC elements
 
 ### Version 5
-
 Added checkpoint element.

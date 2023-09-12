@@ -7,7 +7,6 @@
 
 #include <algorithm>
 #include <array>
-#include <chrono>
 #include <concepts>
 #include <memory>
 #include <optional>
@@ -577,34 +576,10 @@ namespace hemelb::configuration {
         }
 
         // Optional element(s) <insertcell>
-        PrngSeedType horrible_hack_seed = 0;
         for (auto insertEl: ioletEl.Children("insertcell")) {
             CellInserterConfig inserterConf;
-            auto maybeSeed = insertEl.GetChildOrNull("seed").transform(
-                    [](Element const& _) { return _.GetAttributeOrThrow<PrngSeedType>("value"); }
-            );
-            if (maybeSeed) {
-                inserterConf.seed = *maybeSeed;
-            } else {
-                // We need to seed each of the RBCInserterWithPerturbation objects consistently across MPI processes
-                if (horrible_hack_seed == 0) {
-                    PrngSeedType seed = std::chrono::system_clock::now().time_since_epoch().count();
-                    auto comm_world = hemelb::net::MpiCommunicator::World();
-                    comm_world.Broadcast(seed, 0);
-                    std::stringstream message;
-                    message << "RBC insertion random seed: " << std::hex << std::showbase << seed;
-                    log::Logger::Log<log::Info, log::Singleton>(message.str());
-                    horrible_hack_seed = seed;
-                } else {
-                    horrible_hack_seed += 1;
-                }
-                inserterConf.seed = horrible_hack_seed;
-            }
+            inserterConf.seed = insertEl.GetChildOrThrow("seed").GetAttributeOrThrow<PrngSeedType>("value");
             inserterConf.template_name = insertEl.GetAttributeOrThrow("template");
-//                    if (templateCells.count(templateName) == 0)
-//                    {
-//                        throw Exception() << "Template cell name does not match a known template cell";
-//                    }
 
             // Rotate cell to align z axis with given position, and then z axis with flow
             // If phi == 0, then cell symmetry axis is aligned with the flow

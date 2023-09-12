@@ -27,27 +27,26 @@ namespace hemelb::tests
 
         auto getDocument = [&](LatticeDistance radius = 1e0, int numInserters = 0) {
             std::ostringstream sstr;
-            sstr << "<hemelbsettings>"
-                    "<inlets><inlet>"
-                    "  <condition type=\"pressure\" subtype=\"file\">"
-                    "  <path value=\"ignored.dat\" />"
-                    "  </condition>"
-                    "  <normal units=\"dimensionless\" value=\"(0.0,1.0,1.0)\" />"
-                    "  <position units=\"m\" value=\"(0.1,0.2,0.3)\" />"
-                    "  <flowextension>"
-                    "    <length units=\"m\" value=\"0.5\" />"
-                    "    <radius units=\"m\" value=\"" << radius << "\" />"
-                                                                    "    <fadelength units=\"m\" value=\"0.4\" />"
-                                                                    "  </flowextension>";
+            sstr << "<hemelbsettings>\n<inlets>\n<inlet>\n"
+                    "  <condition type=\"pressure\" subtype=\"file\">\n"
+                    "  <path value=\"ignored.dat\" />\n"
+                    "  </condition>\n"
+                    "  <normal units=\"dimensionless\" value=\"(0.0,1.0,1.0)\" />\n"
+                    "  <position units=\"m\" value=\"(0.1,0.2,0.3)\" />\n"
+                    "  <flowextension>\n"
+                    "    <length units=\"m\" value=\"0.5\" />\n"
+                    "    <radius units=\"m\" value=\"" << radius << "\" />\n"
+                    "    <fadelength units=\"m\" value=\"0.4\" />\n"
+                    "  </flowextension>\n";
             for (int i = 0; i < numInserters; ++i)
             {
-                sstr << "  <insertcell template=\"joe\">"
-                        "    <every units=\"s\" value=\"" << every << "\"/>"
-                                                                      "    <offset units=\"s\" value=\"" << offset << "\"/>"
-                                                                                                                      "  </insertcell>";
+                sstr << "  <insertcell template=\"joe\">\n"
+                     << "    <every units=\"s\" value=\"" << every << "\"/>\n"
+                     << "    <offset units=\"s\" value=\"" << offset << "\"/>\n"
+                     << "    <seed value=\"854" << i << "\" />\n"
+                     << "  </insertcell>\n";
             }
-            sstr << "</inlet></inlets>"
-                    "</hemelbsettings>";
+            sstr << "</inlet>\n</inlets>\n</hemelbsettings>\n";
             Document doc;
             doc.LoadString(sstr.str().c_str());
             return doc;
