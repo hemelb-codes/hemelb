@@ -77,7 +77,6 @@ namespace hemelb::configuration
     };
 
     struct GlobalSimInfo {
-        lb::StressTypes stress_type;
         TimeInfo time;
         SpaceInfo space;
         FluidInfo fluid;
@@ -227,10 +226,6 @@ friend class io::Checkpointer;
         const std::vector<IoletConfig> & GetOutlets() const
         {
           return outlets;
-        }
-        lb::StressTypes GetStressType() const
-        {
-          return sim_info.stress_type;
         }
         const path& GetDataFilePath() const
         {

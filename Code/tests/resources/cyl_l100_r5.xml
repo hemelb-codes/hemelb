@@ -3,7 +3,6 @@
   <simulation>
     <step_length units="s" value="1.852e-08" />
     <steps units="lattice" value="12000" />
-    <stresstype value="1" />
     <voxel_size units="m" value="3.333e-07" />
     <origin units="m" value="(-5.16615e-06,-5.16615e-06,-5.016165e-05)" />
   </simulation>

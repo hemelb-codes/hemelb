@@ -149,20 +149,6 @@ namespace hemelb::configuration {
     GlobalSimInfo SimConfigReader::DoIOForSimulation(const Element simEl) const
     {
         GlobalSimInfo ans;
-        // Required element
-        // <stresstype value="enum lb::StressTypes" />
-        ans.stress_type = [](unsigned v) {
-            switch (v) {
-                case lb::IgnoreStress:
-                    return lb::IgnoreStress;
-                case lb::ShearStress:
-                    return lb::IgnoreStress;
-                case lb::VonMises:
-                    return lb::IgnoreStress;
-                default:
-                    throw Exception() << "Invalid stresstype: " << v;
-            }
-        }(simEl.GetChildOrThrow("stresstype").GetAttributeOrThrow<unsigned>("value"));
 
         // Required element
         // <steps value="unsigned" units="lattice />

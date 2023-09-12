@@ -41,7 +41,6 @@ The `<simulation>` is required and specifies some global properties of
 the simulation, mainly time-related.
 
 It's child elements are:
-* Required: `<stresstype value="int">` - the type of stresses to calculate. Must correspond to the `enum hemelb::lb::StressTypes`
 * Required: `<step_length value="float" units="s" />` - the length of a time step; units must be s (seconds)
 * Required: `<steps value="int" units="lattice" />` - the length of the main simulation; units must be lattice
 * Required: `<voxel_size value="float" units="m" />` - the voxel size in the gmy file
