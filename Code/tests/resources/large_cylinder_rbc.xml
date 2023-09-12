@@ -26,6 +26,7 @@
         <fadelength units="m" value="7e-06" />
       </flowextension>
       <insertcell template="default">
+	<seed value="321" />
         <every units="s" value="2e-0"/>
         <offset units="s" value="40e-8"/>
         <delta_t units="s" value="0e0"/>
