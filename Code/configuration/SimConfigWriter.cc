@@ -105,9 +105,6 @@ namespace hemelb::configuration {
 
     void SimConfigWriter::DoIOForSimulation(const GlobalSimInfo& sim_info) {
         Element outSimEl = outputXml->GetRoot().AddChild("simulation");
-        // Required element
-        // <stresstype value="enum lb::StressTypes" />
-        outSimEl.AddChild("stresstype").SetAttribute("value", sim_info.stress_type);
 
         AddChildDimensionalValue(outSimEl, "step_length", "s", sim_info.time.step_s);
 

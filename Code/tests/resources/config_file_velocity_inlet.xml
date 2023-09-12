@@ -1,7 +1,6 @@
 <?xml version="1.0" ?>
 <hemelbsettings version="6">
   <simulation>
-    <stresstype value="1" />
     <steps value="4000" units="lattice" />
     <step_length value="0.001" units="s" />
     <voxel_size value="0.01" units="m" />

@@ -28,7 +28,6 @@ class HexFloatFormatter(string.Formatter):
 
 class XmlWriter(object):
     VERSION = 6
-    STRESSTYPE = 1
 
     FMT = HexFloatFormatter()
 
@@ -78,7 +77,6 @@ class XmlWriter(object):
             round(self.profile.DurationSeconds / self.profile.TimeStepSeconds),
             "lattice",
         )
-        self.ValueElement(sim, "stresstype", self.STRESSTYPE)
         self.QuantityElement(sim, "voxel_size", self.profile.VoxelSizeMetres, "m")
         self.QuantityElement(sim, "origin", self.profile.OriginMetres, "m")
         return
@@ -142,9 +140,6 @@ class XmlWriter(object):
             self.QuantityElement(iolet, "position", centre, "m")
             continue
         return
-
-    def ValueElement(self, parent, name, value):
-        return SubElement(parent, name, value=self._totext(value))
 
     def QuantityElement(self, parent, name, value, units):
         return SubElement(parent, name, value=self._totext(value), units=units)

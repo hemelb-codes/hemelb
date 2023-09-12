@@ -51,7 +51,6 @@ namespace hemelb::configuration {
     lb::LbmParameters SimBuilder::BuildLbmParams() const {
         auto&& i = config.sim_info;
         lb::LbmParameters ans(i.time.step_s, i.space.step_m, i.fluid.density_kgm3, i.fluid.viscosity_Pas);
-        ans.StressType = i.stress_type;
         return ans;
     }
 

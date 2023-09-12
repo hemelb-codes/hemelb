@@ -22,13 +22,6 @@ namespace hemelb::lb
 {
     class BoundaryValues;
 
-    enum StressTypes
-    {
-      VonMises = 0,
-      ShearStress = 1,
-      IgnoreStress = 2
-    };
-
     class LbmParameters
     {
         inline void CalcDerivedParams() {
@@ -110,8 +103,6 @@ namespace hemelb::lb
         {
           return beta;
         }
-
-        StressTypes StressType;
 
       private:
         PhysicalTime timeStep = 1; // seconds
