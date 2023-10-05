@@ -7,6 +7,7 @@
 #define HEMELB_NET_SPARSEEXCHANGE_H
 
 #include <span>
+#include <utility>
 #include "net/MpiCommunicator.h"
 
 namespace hemelb::net
@@ -34,8 +35,8 @@ namespace hemelb::net
         int all_sends_received = 0;
 
         // Specify communicator and a tag to use.
-        sparse_exchange(MpiCommunicator const &c, int t) :
-                comm(c), tag(t),
+        sparse_exchange(MpiCommunicator c, int t) :
+                comm(std::move(c)), tag(t),
                 dtype(MpiDataType<T>()) {
         }
 
