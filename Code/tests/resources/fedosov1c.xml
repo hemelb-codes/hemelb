@@ -105,17 +105,4 @@
   <monitoring>
     <incompressibility/>
   </monitoring>  
-  
-  <visualisation>
-    <centre units="m" value="(0.0,0.0,0.0)" />
-    <orientation>
-      <longitude units="deg" value="45.0" />
-      <latitude units="deg" value="45.0" />
-    </orientation>
-    <display brightness="0.03" zoom="1.0" />
-    <range>
-      <maxvelocity units="m/s" value="0.1" />
-      <maxstress units="Pa" value="0.1" />
-    </range>
-  </visualisation>  
 </hemelbsettings>
