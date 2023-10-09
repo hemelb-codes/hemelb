@@ -23,16 +23,21 @@ namespace tinyxml2 {
     // Forward declare the TinyXML types needed.
     class XMLDocument;
     class XMLElement;
+    class XMLAttribute;
     // Worth noting that TinyXML-2 only works with C-style null terminated strings.
 }
 
 namespace hemelb::io::xml
 {
     // Forward declare
+    class Document;
     class NamedChildIterator;
     class UnnamedChildIterator;
     struct NamedIterationRange;
     struct UnnamedIterationRange;
+    struct NamedPopIterationRange;
+    struct AttributeNameIterationRange;
+    class DyingElement;
 
     // Represent an element in an XML file, or no element (if equal to
     // the result of Missing());
@@ -43,6 +48,7 @@ namespace hemelb::io::xml
         tinyxml2::XMLElement* el = nullptr;
 
     public:
+
         static Element Missing();
 
         // The default Element() is equal to Element::Missing()
@@ -113,6 +119,9 @@ namespace hemelb::io::xml
         [[nodiscard]] NamedIterationRange Children(char const* name) const;
         [[nodiscard]] NamedIterationRange Children(std::string name) const;
 
+        [[nodiscard]] NamedPopIterationRange PopChildren(char const* name) const;
+        [[nodiscard]] NamedPopIterationRange PopChildren(std::string name) const;
+
         /**
          * Return iterator over all children.
          * @param name
@@ -160,6 +169,11 @@ namespace hemelb::io::xml
          *   Parent
          */
         [[nodiscard]] Element GetParentOrThrow() const;
+
+        // True if this element has at least one attribute.
+        [[nodiscard]] bool HasAttributes() const;
+
+        [[nodiscard]] AttributeNameIterationRange Attributes() const;
 
         /**
          * Get the value (as a string) contained in the specified attribute.
@@ -240,11 +254,29 @@ namespace hemelb::io::xml
         template<class T>
         void GetAttributeOrThrow(char const* name, T& out) const;
 
+        void DelAttribute(char const* name);
+
+        // These "pop" variants act as the "get" versions above, but also
+        // delete the attribute.
+        [[nodiscard]] std::optional<std::string> PopAttributeMaybe(char const* name);
+        [[nodiscard]] std::string PopAttributeOrThrow(char const* name);
+        template<class T>
+        [[nodiscard]] std::optional<T> PopAttributeMaybe(char const* name);
+        template<class T>
+        [[nodiscard]] T PopAttributeOrThrow(char const* name);
+        template<class T>
+        void PopAttributeOrThrow(char const* name, T& out);
+
         /**
          * Return a string giving a full path to the element.
          * @return
          */
+        [[nodiscard]] std::string GetFullPath() const;
+
         [[nodiscard]] std::string GetPath() const;
+
+        // Return the document this element belongs to
+        [[nodiscard]] Document& GetDocument() const;
 
         // Create a new element as a child of this one, returning it.
         Element AddChild(char const* name);
@@ -257,6 +289,9 @@ namespace hemelb::io::xml
         // Delete child of this
         void DeleteChild(Element const& el);
 
+        [[nodiscard]] DyingElement PopChildOrNull(char const* name);
+        [[nodiscard]] DyingElement PopChildOrThrow(char const* name);
+
         void SetAttribute(char const* name, char const* value);
         inline void SetAttribute(char const* name, std::string const& value) {
             SetAttribute(name, value.c_str());
@@ -266,39 +301,54 @@ namespace hemelb::io::xml
 
         operator bool() const;
 
+    private:
+        // Until we have deducing this, work around the const/mutable variants.
+        template <typename Self, typename F>
+        [[nodiscard]] static auto transform_impl(Self&& self, F&& f) {
+            using R = std::decay_t<std::invoke_result_t<F, Self>>;
+            if (self) {
+                return std::optional<R>{std::invoke(std::forward<F>(f), std::forward<Self>(self))};
+            } else {
+                return std::optional<R>{};
+            }
+        }
+        template <typename Self, typename F>
+        [[nodiscard]] static auto and_then_impl(Self&& self, F&& f) {
+            using R = std::decay_t<std::invoke_result_t<F, Self>>;
+            static_assert(std::disjunction_v<
+                    std::is_same<R, std::decay_t<Self>>,
+                    util::is_optional<R>
+            >);
+            if (self) {
+                return std::invoke(std::forward<F>(f), std::forward<Self>(self));
+            } else {
+                return R{};
+            }
+        }
 
+    public:
         // Returns the result of invocation of f on an Element that does
         // contain a value. Otherwise, returns std::nullopt. f must return
         // Element or a specialisation of std::optional.
         template <typename F>
         [[nodiscard]] auto and_then(F&& f) const {
-            using R = std::remove_cv_t<std::remove_reference_t<std::invoke_result_t<F, const Element&>>>;
-            static_assert(std::disjunction_v<
-                    std::is_same<R, Element>,
-                    util::is_optional<R>
-            >);
-            if (*this) {
-                return std::invoke(std::forward<F>(f), *this);
-            } else {
-                if constexpr (std::is_same_v<R, Element>) {
-                    return Missing();
-                } else {
-                    return R{};
-                }
-            }
+            return and_then_impl(*this, std::forward<F>(f));
+        }
+        template <typename F>
+        [[nodiscard]] auto and_then(F&& f) {
+            return and_then_impl(*this, std::forward<F>(f));
         }
 
-        // Returns an std::optional containing the result of invoking f on
+        // Returns a std::optional containing the result of invoking f on
         // an Element that contains a value. Otherwise returns
         // std::nullopt.
         template <typename F>
         [[nodiscard]] auto transform(F&& f) const {
-            using R = std::remove_cv_t<std::remove_reference_t<std::invoke_result_t<F, const Element&>>>;
-            if (*this) {
-                return std::optional<R>{std::invoke(std::forward<F>(f), *this)};
-            } else {
-                return std::optional<R>{};
-            }
+            return transform_impl(*this, std::forward<F>(f));
+        }
+        template <typename F>
+        [[nodiscard]] auto transform(F&& f) {
+            return transform_impl(*this, std::forward<F>(f));
         }
 
 
@@ -316,7 +366,7 @@ namespace hemelb::io::xml
          * @param el
          * @param ans
          */
-        static void GetPathWorker(const tinyxml2::XMLElement* el, std::ostringstream& ans);
+        static void GetPathWorker(const tinyxml2::XMLElement* el, std::ostringstream& ans, bool full);
 
         // Get the document and use that to create an attribute stream with its factory.
         std::ostringstream MakeAttributeStream() const;
@@ -329,6 +379,56 @@ namespace hemelb::io::xml
          */
         friend bool operator==(const Element& left, const Element& right);
         friend bool operator!=(const Element& left, const Element& right);
+        friend class AttributeNameIterator;
+    };
+
+    // Element which deletes itself on destruction
+    // Not copyable obvs
+    class DyingElement {
+        Element elem;
+    public:
+        explicit DyingElement(Element e);
+        ~DyingElement();
+        DyingElement(DyingElement const&) = delete;
+        DyingElement& operator=(DyingElement const&) = delete;
+        DyingElement(DyingElement&&) = default;
+        DyingElement& operator=(DyingElement&&) = default;
+
+        Element& operator*();
+        Element* operator->();
+        //operator Element&();
+        operator bool() const;
+    };
+
+    struct AttributeNameIteratorSentinel {};
+
+    class AttributeNameIterator
+    {
+        Element element;
+        tinyxml2::XMLAttribute const* attr = nullptr;
+
+    public:
+        using difference_type = std::ptrdiff_t;
+        using value_type = char const*;
+        using reference = char const*&;
+        char const* operator*() const;
+        //char const** operator->() const;
+
+        AttributeNameIterator() = default;
+        AttributeNameIterator(Element const& e);
+
+        AttributeNameIterator& operator++();
+        AttributeNameIterator operator++(int);
+
+        friend bool operator==(const AttributeNameIterator& a, const AttributeNameIterator& b);
+        inline friend bool operator==(AttributeNameIterator const& it, AttributeNameIteratorSentinel) {
+            return it.attr == nullptr;
+        }
+    };
+    struct AttributeNameIterationRange {
+        Element parent;
+        [[nodiscard]] AttributeNameIterator begin() const;
+        [[nodiscard]] AttributeNameIteratorSentinel end() const;
     };
 
     // Represent Element::Missing()
@@ -370,7 +470,8 @@ namespace hemelb::io::xml
     };
 
     // Iterates over child elements with the given name.
-    class NamedChildIterator final : public ChildIterator {
+    class NamedChildIterator : public ChildIterator {
+    protected:
         std::string name;
     public:
         NamedChildIterator() = default;
@@ -381,19 +482,27 @@ namespace hemelb::io::xml
         friend bool operator==(const NamedChildIterator& a, const NamedChildIterator& b);
     };
 
+    class NamedChildPopIterator : public NamedChildIterator {
+    public:
+        using NamedChildIterator::NamedChildIterator;
+        NamedChildPopIterator& operator++();
+        // Note that after increment the old iterator is garbage as elem is deleted.
+        void operator++(int);
+    };
+
     /**
      * Equality comparable
      * @param
      * @return
      */
-    bool operator==(const ChildIterator& a, const ChildIterator& b);
+    //bool operator==(const ChildIterator& a, const ChildIterator& b);
 
     /**
      * Inequality
      * @param
      * @return
      */
-    bool operator!=(const ChildIterator& a, const ChildIterator& b);
+    //bool operator!=(const ChildIterator& a, const ChildIterator& b);
 
     struct NamedIterationRange {
         Element parent;
@@ -409,6 +518,13 @@ namespace hemelb::io::xml
         [[nodiscard]] ChildIteratorSentinel end() const;
     };
 
+    struct NamedPopIterationRange {
+        Element parent;
+        std::string name;
+
+        [[nodiscard]] NamedChildPopIterator begin() const;
+        [[nodiscard]] ChildIteratorSentinel end() const;
+    };
     /** an abstraction for an XML document
      *
      * this class localises the dependency on an external XML library
@@ -445,6 +561,9 @@ namespace hemelb::io::xml
         Document(Document const &) = delete;
         Document& operator=(Document const&) = delete;
 
+        // Deep copy the whole thing
+        Document DeepCopy() const;
+
         Element GetRoot() const;
 
         // Load some XML from a file
@@ -459,13 +578,29 @@ namespace hemelb::io::xml
         // Create a new element as a child of this one, returning it.
         Element AddChild(char const* name);
 
+        // Get the vector of errors recorded in the document
+        inline auto& GetErrors() const {
+            return error_list;
+        }
+
+        inline void ClearErrors() {
+            error_list.clear();
+        }
+
+        inline void AddError(std::string descr) {
+            error_list.emplace_back(std::move(descr));
+        }
+
     private:
+        friend Element;
+        friend class DyingElement;
+
         std::unique_ptr<tinyxml2::XMLDocument> xmlDoc;
         // Note that TinyXML-2 doesn't keep track of
         // the doc filename, so we have to do that.
-        friend Element;
         std::filesystem::path filename;
         std::function<std::ostringstream()> attr_stream_factory;
+        std::vector<std::string> error_list;
     };
 
     /**
@@ -666,6 +801,26 @@ namespace hemelb::io::xml
         T out;
         GetAttributeOrThrow(name, out);
         return out;
+    }
+
+    template <typename T>
+    std::optional<T> Element::PopAttributeMaybe(const char *name) {
+        auto ans = GetAttributeMaybe<T>(name);
+        if (ans)
+            DelAttribute(name);
+        return ans;
+    }
+    template <typename T>
+    T Element::PopAttributeOrThrow(const char *name) {
+        auto ans = GetAttributeOrThrow<T>(name);
+        DelAttribute(name);
+        return ans;
+    }
+
+    template<class T>
+    void Element::PopAttributeOrThrow(const char *name, T &out) {
+        GetAttributeOrThrow(name, out);
+        DelAttribute(name);
     }
 
     template <typename T>

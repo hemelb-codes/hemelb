@@ -30,7 +30,7 @@ namespace hemelb::tests
                 STENCIL
         >;
     protected:
-        static const char* xml_name;
+        static constexpr char const* xml_name = "large_cylinder_rbc.xml";
         static constexpr int argc = 3;
         static const char* argv[argc];
 
@@ -56,9 +56,9 @@ namespace hemelb::tests
             ModifyXMLInput(xml_name, { "inlets", "inlet", "condition", "mean", "value" }, 0);
             ModifyXMLInput(xml_name, { "simulation", "steps", "value" }, steps);
             ModifyXMLInput(xml_name, { "redbloodcells", "cell2Cell", "intensity", "value" }, cell);
-            ModifyXMLInput(xml_name, { "redbloodcells", "cell2Cell", "cutoff", "value" }, 2);
+            ModifyXMLInput(xml_name, { "redbloodcells", "cell2Cell", "cutoffdistance", "value" }, 1);
             ModifyXMLInput(xml_name, { "redbloodcells", "cell2Wall", "intensity", "value" }, wall);
-            ModifyXMLInput(xml_name, { "redbloodcells", "cell2Wall", "cutoff", "value" }, 2);
+            ModifyXMLInput(xml_name, { "redbloodcells", "cell2Wall", "cutoffdistance", "value" }, 1);
             auto options = std::make_shared<configuration::CommandLine>(argc, argv);
             auto const master = std::make_shared<SimulationMaster<TRAITS>>(*options, Comms());
             helpers::LatticeDataAccess(&master->GetFieldData()).ZeroOutForces();
@@ -100,8 +100,6 @@ namespace hemelb::tests
             };
         }
     };
-    template <typename STENCIL>
-    const char* NodeIntegrationTestsFixture<STENCIL>::xml_name = "large_cylinder_rbc.xml";
     template <typename STENCIL>
     const char* NodeIntegrationTestsFixture<STENCIL>::argv[NodeIntegrationTestsFixture<STENCIL>::argc] = {
             "hemelb", "-in", xml_name

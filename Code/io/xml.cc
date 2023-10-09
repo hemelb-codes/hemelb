@@ -10,8 +10,11 @@
 namespace hemelb::io::xml
 {
     // Concept checks for the iterators
+    static_assert(std::forward_iterator<AttributeNameIterator>);
     static_assert(std::forward_iterator<UnnamedChildIterator>);
     static_assert(std::forward_iterator<NamedChildIterator>);
+    static_assert(std::input_iterator<NamedChildPopIterator>);
+    static_assert(std::sentinel_for<AttributeNameIteratorSentinel, AttributeNameIterator>);
     static_assert(std::sentinel_for<ChildIteratorSentinel, NamedChildIterator>);
     static_assert(std::sentinel_for<ChildIteratorSentinel, UnnamedChildIterator>);
 
@@ -40,6 +43,14 @@ namespace hemelb::io::xml
     Document::~Document() = default;
     Document::Document(Document &&) = default;
     Document &Document::operator=(Document &&) = default;
+
+    Document Document::DeepCopy() const {
+        Document ans;
+        ans.filename = filename;
+        ans.attr_stream_factory = attr_stream_factory;
+        xmlDoc->DeepCopy(ans.xmlDoc.get());
+        return ans;
+    }
 
     Element Document::GetRoot() const
     {
@@ -124,6 +135,10 @@ namespace hemelb::io::xml
         return Element(ans);
     }
 
+    AttributeNameIterationRange Element::Attributes() const {
+        return {*this};
+    }
+
     NamedIterationRange Element::Children(char const* name) const {
         return {*this, std::string{name}};
     }
@@ -134,6 +149,14 @@ namespace hemelb::io::xml
 
     UnnamedIterationRange Element::Children() const {
         return {*this};
+    }
+
+    NamedPopIterationRange Element::PopChildren(std::string name) const {
+        return {*this, name};
+    }
+
+    NamedPopIterationRange Element::PopChildren(const char *name) const {
+        return {*this, name};
     }
 
     Element Element::NextSiblingOrNull() const
@@ -162,6 +185,10 @@ namespace hemelb::io::xml
         el->SetAttribute(name, value);
     }
 
+    void Element::DelAttribute(const char *name) {
+        el->DeleteAttribute(name);
+    }
+
     std::optional<std::string_view> Element::GetAttributeMaybe(char const* name) const
     {
         auto attr_p = el->Attribute(name);
@@ -179,6 +206,23 @@ namespace hemelb::io::xml
             throw AttributeError(*this, name);
 
         return {ans};
+    }
+
+    std::string Element::PopAttributeOrThrow(const char *name) {
+        std::string ans(GetAttributeOrThrow(name));
+        DelAttribute(name);
+        return ans;
+    }
+
+    std::optional<std::string> Element::PopAttributeMaybe(const char *name) {
+        auto txt = GetAttrOrNull(name);
+        if (txt) {
+            auto ans = std::make_optional<std::string>(txt);
+            DelAttribute(name);
+            return ans;
+        } else {
+            return std::nullopt;
+        }
     }
 
     Element Element::GetParentOrNull() const
@@ -202,21 +246,29 @@ namespace hemelb::io::xml
         return (left.el != right.el);
     }
 
+    std::string Element::GetFullPath() const
+    {
+        std::ostringstream ans;
+        GetPathWorker(el, ans, true);
+        return ans.str();
+    }
+
     std::string Element::GetPath() const
     {
         std::ostringstream ans;
-        GetPathWorker(el, ans);
+        GetPathWorker(el, ans, false);
         return ans.str();
     }
-    void Element::GetPathWorker(const XMLElement* el, std::ostringstream& ans)
+
+    void Element::GetPathWorker(const XMLElement* el, std::ostringstream& ans, bool full)
     {
         const XMLNode* parent = el->Parent();
         const XMLElement* parentEl = parent->ToElement();
         if (parentEl != nullptr)
         {
-            GetPathWorker(parentEl, ans);
+            GetPathWorker(parentEl, ans, full);
         }
-        else
+        else if (full)
         {
             // Documents owned by our Document class have a user data
             // pointer to the instance.
@@ -234,6 +286,11 @@ namespace hemelb::io::xml
         }
 
         ans << "/" << el->Value() << "(" << el->GetLineNum() << ")";
+    }
+
+    Document& Element::GetDocument() const {
+        auto doc = static_cast<Document*>(el->GetDocument()->GetUserData());
+        return *doc;
     }
 
     std::ostringstream Element::MakeAttributeStream() const {
@@ -260,6 +317,68 @@ namespace hemelb::io::xml
 
     void Element::Delete() {
         GetParentOrThrow().DeleteChild(*this);
+    }
+
+    DyingElement Element::PopChildOrNull(const char *name) {
+        return DyingElement{GetChildOrNull(name)};
+    }
+
+    DyingElement Element::PopChildOrThrow(const char *name) {
+        return DyingElement{GetChildOrThrow(name)};
+    }
+
+    DyingElement::DyingElement(Element e) : elem(e) {
+    }
+
+    DyingElement::~DyingElement() {
+        if (elem) {
+            auto& doc = elem.GetDocument();
+            for (char const* name: elem.Attributes()) {
+                doc.AddError(std::string("Unrecognised attribute: ") + elem.GetPath() + ": \""+ name + '"');
+            }
+            for (auto child: elem.Children()) {
+                doc.AddError(std::string("Unrecognised element: ") + elem.GetPath());
+            }
+            elem.Delete();
+        }
+    }
+
+    Element& DyingElement::operator*() {
+        return elem;
+    }
+
+    Element* DyingElement::operator->() {
+        return &elem;
+    }
+
+    DyingElement::operator bool() const {
+        return elem;
+    }
+
+    AttributeNameIterator::AttributeNameIterator(const Element &e) : element(e), attr(e.el->FirstAttribute()){
+    }
+
+    const char *AttributeNameIterator::operator*() const {
+        return attr ? attr->Name() : nullptr;
+    }
+
+    AttributeNameIterator &AttributeNameIterator::operator++() {
+        attr = attr->Next();
+        return *this;
+    }
+
+    AttributeNameIterator AttributeNameIterator::operator++(int) {
+        auto old = *this;
+        ++*this;
+        return old;
+    }
+
+    AttributeNameIterator AttributeNameIterationRange::begin() const {
+        return {parent};
+    }
+
+    AttributeNameIteratorSentinel AttributeNameIterationRange::end() const {
+        return {};
     }
 
     /**
@@ -389,6 +508,26 @@ namespace hemelb::io::xml
         return {};
     }
 
+    NamedChildPopIterator NamedPopIterationRange::begin() const {
+        return {parent, name};
+    }
+
+    ChildIteratorSentinel NamedPopIterationRange::end() const {
+        return {};
+    }
+
+    NamedChildPopIterator& NamedChildPopIterator::operator++() {
+        // Go to next child, deleting the current one.
+        auto old = current;
+        current = current.NextSiblingOrNull(name.c_str());
+        old.Delete();
+        return *this;
+    }
+
+    void NamedChildPopIterator::operator++(int) {
+        ++*this;
+    }
+
     // XML exception base class
     XmlError::XmlError()
     {
@@ -403,7 +542,7 @@ namespace hemelb::io::xml
     AttributeError::AttributeError(const Element& n, std::string_view attr) :
             XmlError()
     {
-        *this << "AttributeError: '" << n.GetPath() << "' has no attribute '" << attr << "'";
+        *this << "AttributeError: '" << n.GetFullPath() << "' has no attribute '" << attr << "'";
     }
 
     // Attribute parsing error
@@ -411,12 +550,12 @@ namespace hemelb::io::xml
                                                std::string_view attrVal) :
             XmlError()
     {
-        *this << "ParseError: '" << el.GetPath() << "' Cannot convert attribute '" << attrName << "=\""
+        *this << "ParseError: '" << el.GetFullPath() << "' Cannot convert attribute '" << attrName << "=\""
               << attrVal << "\"'";
     }
 
     ElementError::ElementError(const Element& el) :
-            XmlError(), elemPath(el.GetPath())
+            XmlError(), elemPath(el.GetFullPath())
     {
     }
     ChildError::ChildError(const Element& elem, std::string_view subElemName) :
