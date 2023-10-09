@@ -154,7 +154,9 @@ namespace hemelb::tests
 	auto addCell = [&current_cell](CellContainer::value_type const& cell) {
 	  current_cell = cell;
 	};
-	auto const inserter = readRBCInserters(doc.GetRoot().GetChildOrThrow("inlets"),
+    // Have to copy as doc is consumed by reading
+    auto doc1 = doc.DeepCopy();
+	auto const inserter = readRBCInserters(doc1.GetRoot().GetChildOrThrow("inlets"),
                                            cells);
 	REQUIRE(inserter);
 	inserter(addCell);
@@ -165,7 +167,8 @@ namespace hemelb::tests
 	helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "x", "value" }, 0.1);
 	helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "y", "units" }, "m");
 	helpers::ModifyXMLInput(doc, { "inlets", "inlet", "insertcell", "y", "value" }, 0.1);
-	auto const insertTranslated = readRBCInserters(doc.GetRoot().GetChildOrThrow("inlets"),
+    auto doc2 = doc.DeepCopy();
+	auto const insertTranslated = readRBCInserters(doc2.GetRoot().GetChildOrThrow("inlets"),
                                                    cells);
 	REQUIRE(insertTranslated);
 	insertTranslated(addCell);

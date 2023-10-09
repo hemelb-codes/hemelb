@@ -28,6 +28,10 @@ namespace hemelb::extraction {
 
 namespace hemelb::configuration {
 
+    void CheckNoAttributes(const io::xml::Element& elem);
+    void CheckNoChildren(const io::xml::Element& elem);
+    void CheckEmpty(const io::xml::Element& elem);
+
     // Note on specifying physical quantities.
     //
     // In the XML, these are encoded in attributes of an element (the name
@@ -48,47 +52,49 @@ namespace hemelb::configuration {
 
     //! Check the units of the quantity and decode the value into @param value
     template<typename T>
-    void GetDimensionalValue(const io::xml::Element& elem, std::string_view units, T& value)
+    void PopDimensionalValue(io::xml::Element& elem, std::string_view units, T& value)
     {
-        auto got = elem.GetAttributeOrThrow("units");
+        auto got = elem.PopAttributeOrThrow("units");
         check_unit_spec(elem, got, units);
-        elem.GetAttributeOrThrow("value", value);
+        elem.PopAttributeOrThrow("value", value);
+        CheckEmpty(elem);
     }
+
     //! Check the units of the quantity and return the value
     template<typename T>
-    T GetDimensionalValue(const io::xml::Element& elem, std::string_view units)
+    T PopDimensionalValue(io::xml::Element& elem, std::string_view units)
     {
-        auto got = elem.GetAttributeOrThrow("units");
+        auto got = elem.PopAttributeOrThrow("units");
         check_unit_spec(elem, got, units);
-
-        return elem.GetAttributeOrThrow<T>("value");
+        auto ans = elem.PopAttributeOrThrow<T>("value");
+        CheckEmpty(elem);
+        return ans;
     }
 
     //! Given an element (@param elem), check for a child with the given @param name.
     //! If it exists, return the unit-checked (against @param unit) value.
     //! If it doesn't exist, return @param default_value.
     template <typename T>
-    T GetDimensionalValueWithDefault(const io::xml::Element& elem,
+    T PopDimensionalValueWithDefault(io::xml::Element& el,
                                      char const* name, char const* unit, T default_value) {
-        using Element = io::xml::Element;
-        return elem
-                .and_then([&](const Element& _) { return _.GetChildOrNull(name); })
-                .transform([&](const Element& _) { return GetDimensionalValue<T>(_, unit); })
-                .value_or(default_value);
+        if (el)
+            if (auto qEl = el.PopChildOrNull(name))
+                return PopDimensionalValue<T>(*qEl, unit);
+        return default_value;
     }
 
     template <QuantityUnion QUnion, IsVariantAlternative<QUnion> DefaultQ>
-    QUnion GetDimensionalValueWithDefault(const io::xml::Element& elem, char const* name, DefaultQ const& default_q) {
+    QUnion PopDimensionalValueWithDefault(io::xml::Element& elem, char const* name, DefaultQ const& default_q) {
         using RepT = typename quantity_union_traits<QUnion>::representation_type;
         using io::xml::Element;
-        return elem
-                .and_then([&](Element const& _) { return _.GetChildOrNull(name); })
-                .transform([](Element const& _) {
-                    auto xml_units = _.GetAttributeOrThrow("units");
-                    auto xml_val = _.GetAttributeOrThrow<RepT>("value");
-                    return quantity_union_factory<QUnion>()(xml_val, xml_units);
-                })
-                .value_or(default_q);
+        if (elem)
+            if (auto qEl = elem.PopChildOrNull(name)) {
+                auto xml_units = qEl->PopAttributeOrThrow("units");
+                auto xml_val = qEl->PopAttributeOrThrow<RepT>("value");
+                CheckEmpty(*qEl);
+                return quantity_union_factory<QUnion>()(xml_val, xml_units);
+            }
+        return default_q;
     }
 
     class SimConfigReader {
@@ -114,31 +120,31 @@ namespace hemelb::configuration {
         virtual void CheckIoletMatchesCMake(const Element &ioletEl,
                                             std::string_view requiredBC) const;
 
-        [[nodiscard]] virtual SimConfig DoIO(const Element xmlNode) const;
+        [[nodiscard]] virtual SimConfig DoIO(Element xmlNode) const;
 
-        [[nodiscard]] virtual GlobalSimInfo DoIOForSimulation(const Element simEl) const;
+        [[nodiscard]] virtual GlobalSimInfo DoIOForSimulation(Element simEl) const;
 
-        [[nodiscard]] virtual path DoIOForGeometry(const Element geometryEl) const;
+        [[nodiscard]] virtual path DoIOForGeometry(Element geometryEl) const;
 
         [[nodiscard]] virtual std::vector <IoletConfig>
-        DoIOForInOutlets(GlobalSimInfo const &sim_info, const Element xmlNode) const;
+        DoIOForInOutlets(GlobalSimInfo const &sim_info, Element xmlNode) const;
 
         void
-        DoIOForBaseInOutlet(GlobalSimInfo const &sim_info, const Element &ioletEl, IoletConfigBase &ioletConf) const;
+        DoIOForBaseInOutlet(GlobalSimInfo const &sim_info, Element &ioletEl, IoletConfigBase &ioletConf) const;
 
-        [[nodiscard]] IoletConfig DoIOForPressureInOutlet(const Element &ioletEl) const;
+        [[nodiscard]] IoletConfig DoIOForPressureInOutlet(Element &ioletEl) const;
 
-        [[nodiscard]] IoletConfig DoIOForCosinePressureInOutlet(const Element &ioletEl) const;
+        [[nodiscard]] IoletConfig DoIOForCosinePressureInOutlet(Element &conditionEl) const;
 
-        [[nodiscard]] IoletConfig DoIOForFilePressureInOutlet(const Element &ioletEl) const;
+        [[nodiscard]] IoletConfig DoIOForFilePressureInOutlet(Element &conditionEl) const;
 
         [[nodiscard]] IoletConfig DoIOForMultiscalePressureInOutlet(
-                const Element &ioletEl) const;
+                Element &conditionEl) const;
 
-        [[nodiscard]] IoletConfig DoIOForVelocityInOutlet(const Element &ioletEl) const;
+        [[nodiscard]] IoletConfig DoIOForVelocityInOutlet(Element &ioletEl) const;
 
         [[nodiscard]] IoletConfig DoIOForParabolicVelocityInOutlet(
-                const Element &ioletEl) const;
+                Element &conditionEl) const;
 
         /**
          * Reads a Womersley velocity iolet definition from the XML config file and returns
@@ -147,7 +153,7 @@ namespace hemelb::configuration {
          * @param ioletEl in memory representation of <inlet> or <outlet> xml element
          * @return InOutLetWomersleyVelocity object
          */
-        [[nodiscard]] IoletConfig DoIOForWomersleyVelocityInOutlet(const Element &ioletEl) const;
+        [[nodiscard]] IoletConfig DoIOForWomersleyVelocityInOutlet(Element &conditionEl) const;
 
         /**
          * Reads a file velocity iolet definition from the XML config file and returns
@@ -156,23 +162,23 @@ namespace hemelb::configuration {
          * @param ioletEl in memory representation of <inlet> or <outlet> xml element
          * @return InOutLetFileVelocity object
          */
-        [[nodiscard]] IoletConfig DoIOForFileVelocityInOutlet(const Element &ioletEl) const;
+        [[nodiscard]] IoletConfig DoIOForFileVelocityInOutlet(Element &conditionEl) const;
 
         [[nodiscard]] virtual std::vector <extraction::PropertyOutputFile>
         DoIOForProperties(GlobalSimInfo const &sim_info, const Element &xmlNode) const;
 
         [[nodiscard]] virtual extraction::OutputField
-        DoIOForPropertyField(GlobalSimInfo const &sim_info, const Element &xmlNode) const;
+        DoIOForPropertyField(GlobalSimInfo const &sim_info, Element &xmlNode) const;
 
         [[nodiscard]] virtual extraction::PropertyOutputFile
-        DoIOForPropertyOutputFile(GlobalSimInfo const &sim_info, const Element &propertyoutputEl) const;
+        DoIOForPropertyOutputFile(GlobalSimInfo const &sim_info, Element &propertyoutputEl) const;
 
         [[nodiscard]] extraction::StraightLineGeometrySelector *DoIOForLineGeometry(
-                const Element &xmlNode) const;
+                Element &xmlNode) const;
 
-        [[nodiscard]] extraction::PlaneGeometrySelector *DoIOForPlaneGeometry(const Element &) const;
+        [[nodiscard]] extraction::PlaneGeometrySelector *DoIOForPlaneGeometry(Element &) const;
 
-        [[nodiscard]] extraction::SurfacePointSelector *DoIOForSurfacePoint(const Element &) const;
+        [[nodiscard]] extraction::SurfacePointSelector *DoIOForSurfacePoint(Element &) const;
 
         [[nodiscard]] virtual ICConfig DoIOForInitialConditions(Element parent) const;
         //virtual void DoIOForCheckpointFile(const Element& checkpointEl) const;
@@ -182,28 +188,28 @@ namespace hemelb::configuration {
          *
          * @param monEl in memory representation of <monitoring> xml element
          */
-        [[nodiscard]] virtual MonitoringConfig DoIOForMonitoring(const Element &monEl) const;
+        [[nodiscard]] virtual MonitoringConfig DoIOForMonitoring(Element &monEl) const;
 
         /**
          * Reads configuration of steady state flow convergence check from XML file
          *
          * @param convEl in memory representation of the <steady_flow_convergence> XML element
          */
-        void DoIOForSteadyFlowConvergence(const Element &convEl, MonitoringConfig &monitoringConfig) const;
+        void DoIOForSteadyFlowConvergence(Element &convEl, MonitoringConfig &monitoringConfig) const;
 
         /**
          * Reads the configuration of one of the possible several converge criteria provided
          *
          * @param criterionEl in memory representation of the <criterion> XML element
          */
-        void DoIOForConvergenceCriterion(const Element &criterionEl, MonitoringConfig &monitoringConfig) const;
+        void DoIOForConvergenceCriterion(Element &criterionEl, MonitoringConfig &monitoringConfig) const;
 
-        [[nodiscard]] virtual TemplateCellConfig readCell(const Element &cellNode) const;
+        [[nodiscard]] virtual TemplateCellConfig readCell(Element &cellNode) const;
 
         [[nodiscard]] virtual std::map <std::string, TemplateCellConfig>
-        readTemplateCells(Element const &cellsEl) const;
+        readTemplateCells(Element& cellsEl) const;
 
-        [[nodiscard]] virtual RBCConfig DoIOForRedBloodCells(SimConfig const &, const Element &rbcEl) const;
+        [[nodiscard]] virtual RBCConfig DoIOForRedBloodCells(SimConfig const &, Element &rbcEl) const;
 
     };
 }

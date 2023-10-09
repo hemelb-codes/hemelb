@@ -108,7 +108,8 @@ namespace hemelb::tests
             configuration::SimConfig conf;
             configuration::SimConfigReader reader("ignored.xml");
             configuration::CosinePressureIoletConfig iolet_conf;
-            reader.DoIOForBaseInOutlet(conf.GetSimInfo(), doc.FirstChildElement("inlet"), iolet_conf);
+            io::xml::Element inletEl = doc.FirstChildElement("inlet");
+            reader.DoIOForBaseInOutlet(conf.GetSimInfo(), inletEl, iolet_conf);
 
             auto fe_conf = iolet_conf.flow_extension;
             REQUIRE(fe_conf.has_value());

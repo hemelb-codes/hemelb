@@ -95,7 +95,8 @@ namespace hemelb::tests
         }
 
         SECTION("testReadCellModuli") {
-            auto cellConf = reader.readCell(doc.GetRoot().GetChildOrThrow("cell"));
+            auto cellEl = doc.GetRoot().GetChildOrThrow("cell");
+            auto cellConf = reader.readCell(cellEl);
             auto const moduli = cell_builder.build_cell_moduli(cellConf.moduli);
             REQUIRE(approx(1e0) == moduli.volume);
             REQUIRE(approx(2e0) == moduli.surface);
@@ -156,7 +157,8 @@ namespace hemelb::tests
             io::xml::Document document;
             document.LoadString(xml_text);
             auto root = document.GetRoot();
-            auto tc_conf = reader.readTemplateCells(root.GetChildOrThrow("redbloodcells").GetChildOrThrow("cells"));
+            auto cellsEl = root.GetChildOrThrow("redbloodcells").GetChildOrThrow("cells");
+            auto tc_conf = reader.readTemplateCells(cellsEl);
             configuration::GlobalSimInfo sim_info;
             auto in_conf = reader.DoIOForInOutlets(sim_info, root.GetChildOrThrow("inlets"));
             auto out_conf = reader.DoIOForInOutlets(sim_info, root.GetChildOrThrow("outlets"));
