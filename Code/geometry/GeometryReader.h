@@ -47,7 +47,7 @@ namespace hemelb::geometry
          * @param nBytes
          * @return
          */
-        std::vector<char> ReadOnAllTasks(unsigned nBytes);
+        std::vector<std::byte> ReadOnAllTasks(unsigned nBytes);
 
         GmyReadResult ReadPreamble();
 
@@ -93,7 +93,7 @@ namespace hemelb::geometry
          * @param sites
          * @return
          */
-        std::vector<char> DecompressBlockData(const std::vector<char>& compressed,
+        std::vector<std::byte> DecompressBlockData(const std::vector<std::byte>& compressed,
                                               const unsigned int uncompressedBytes);
 
         void ParseBlock(GmyReadResult& geometry, const site_t block,

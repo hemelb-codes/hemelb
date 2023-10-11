@@ -71,8 +71,7 @@ namespace hemelb::geometry
     }
 
     GeometryReader::~GeometryReader()
-    {
-    }
+    = default;
 
     GmyReadResult GeometryReader::LoadAndDecompose(const std::string& dataFilePath)
     {
@@ -99,7 +98,7 @@ namespace hemelb::geometry
         fflush(nullptr);
 
         // Set the view to the file.
-        file.SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);
+        file.SetView(0, MPI_BYTE, MPI_BYTE, "native", fileInfo);
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
         GmyReadResult geometry = ReadPreamble();
@@ -182,9 +181,9 @@ namespace hemelb::geometry
         return geometry;
     }
 
-    std::vector<char> GeometryReader::ReadOnAllTasks(unsigned nBytes)
+    std::vector<std::byte> GeometryReader::ReadOnAllTasks(unsigned nBytes)
     {
-      std::vector<char> buffer(nBytes);
+      std::vector<std::byte> buffer(nBytes);
       const net::MpiCommunicator& comm = file.GetCommunicator();
       if (comm.Rank() == HEADER_READING_RANK)
       {
@@ -199,7 +198,7 @@ namespace hemelb::geometry
      */
     GmyReadResult GeometryReader::ReadPreamble()
     {
-      std::vector<char> preambleBuffer = ReadOnAllTasks(gmy::PreambleLength);
+      auto preambleBuffer = ReadOnAllTasks(gmy::PreambleLength);
 
       // Create an Xdr translator based on the read-in data.
       auto preambleReader = io::XdrMemReader(preambleBuffer.data(),
@@ -267,10 +266,10 @@ namespace hemelb::geometry
     void GeometryReader::ReadHeader(site_t blockCount)
     {
       site_t headerByteCount = GetHeaderLength(blockCount);
-      std::vector<char> headerBuffer = ReadOnAllTasks(headerByteCount);
+      auto headerBuffer = ReadOnAllTasks(headerByteCount);
 
       // Create a Xdr translation object to translate from binary
-      auto preambleReader = hemelb::io::XdrMemReader(headerBuffer.data(),
+      auto preambleReader = io::XdrMemReader(headerBuffer.data(),
 								   headerByteCount);
 
       fluidSitesOnEachBlock.reserve(blockCount);
@@ -373,7 +372,7 @@ namespace hemelb::geometry
       {
         return;
       }
-      std::vector<char> compressedBlockData;
+      std::vector<std::byte> compressedBlockData;
       proc_t readingCore = GetReadingCoreForBlock(blockNumber);
 
       net::Net net = net::Net(computeComms);
@@ -392,7 +391,7 @@ namespace hemelb::geometry
           if (*receiver != computeComms.Rank())
           {
 
-            net.RequestSendV(std::span<const char>(compressedBlockData), *receiver);
+            net.RequestSendV(std::span<const std::byte>(compressedBlockData), *receiver);
           }
         }
         timings.readBlock().Stop();
@@ -401,7 +400,7 @@ namespace hemelb::geometry
       {
         compressedBlockData.resize(bytesPerCompressedBlock[blockNumber]);
 
-        net.RequestReceiveV(std::span<char>(compressedBlockData), readingCore);
+        net.RequestReceiveV(std::span<std::byte>(compressedBlockData), readingCore);
 
       }
       else
@@ -415,7 +414,7 @@ namespace hemelb::geometry
       if (neededOnThisRank)
       {
         // Create an Xdr interpreter.
-        std::vector<char> blockData = DecompressBlockData(compressedBlockData,
+        auto blockData = DecompressBlockData(compressedBlockData,
                                                           bytesPerUncompressedBlock[blockNumber]);
         io::XdrMemReader lReader(&blockData.front(), blockData.size());
 
@@ -450,7 +449,7 @@ namespace hemelb::geometry
       timings.readParse().Stop();
     }
 
-    std::vector<char> GeometryReader::DecompressBlockData(const std::vector<char>& compressed,
+    std::vector<std::byte> GeometryReader::DecompressBlockData(const std::vector<std::byte>& compressed,
                                                           const unsigned int uncompressedBytes)
     {
       timings.unzip().Start();
@@ -458,7 +457,7 @@ namespace hemelb::geometry
       int ret;
 
       // Set up the buffer for decompressed data. We know how long the the data is
-      std::vector<char> uncompressed(uncompressedBytes);
+      std::vector<std::byte> uncompressed(uncompressedBytes);
 
       // Set up the inflator
       z_stream stream;
@@ -466,14 +465,14 @@ namespace hemelb::geometry
       stream.zfree = Z_NULL;
       stream.opaque = Z_NULL;
       stream.avail_in = compressed.size();
-      stream.next_in = reinterpret_cast<unsigned char*>(const_cast<char*>(&compressed.front()));
+      stream.next_in = reinterpret_cast<unsigned char*>(const_cast<std::byte*>(compressed.data()));
 
       ret = inflateInit(&stream);
       if (ret != Z_OK)
         throw Exception() << "Decompression error for block";
 
       stream.avail_out = uncompressed.size();
-      stream.next_out = reinterpret_cast<unsigned char*>(&uncompressed.front());
+      stream.next_out = reinterpret_cast<unsigned char*>(uncompressed.data());
 
       ret = inflate(&stream, Z_FINISH);
       if (ret != Z_STREAM_END)

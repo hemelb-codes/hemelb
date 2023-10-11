@@ -50,7 +50,7 @@ namespace hemelb::io
 
   protected:
     // Get some bytes from the underlying storage
-    virtual const char* get_bytes(size_t n) = 0;
+    virtual const std::byte* get_bytes(size_t n) = 0;
   };
 
   // Specialisation for strings
@@ -60,7 +60,7 @@ namespace hemelb::io
     read(len);
     // p == padded
     uint32_t plen = 4 * ((len - 1)/4 + 1);
-    auto pstr = get_bytes(plen);
+    auto pstr = reinterpret_cast<const char*>(get_bytes(plen));
     val.assign(pstr, len);
     return true;
   }

@@ -62,7 +62,7 @@ namespace hemelb::extraction
       std::uint64_t CalcSiteWriteLen(std::vector<OutputField> const& fields) const;
 
       // Make the XTR header
-      std::vector<char> PrepareHeader() const;
+      std::vector<std::byte> PrepareHeader() const;
 
       // Open the file specified and write the header. Collective.
       void StartFile(std::string const& fn);
@@ -90,7 +90,7 @@ namespace hemelb::extraction
       // The length, in bytes, of the whole header
       std::uint64_t header_length;
       // The data that makes up the header (only used on rank 0)
-      std::vector<char> header_data;
+      std::vector<std::byte> header_data;
 
       // The length, in bytes, of the local/global data write for one timestep
       std::uint64_t local_data_write_length;
@@ -100,7 +100,7 @@ namespace hemelb::extraction
       std::uint64_t local_write_start;
 
       // Buffer to serialise into before writing to disk.
-      std::vector<char> buffer;
+      std::vector<std::byte> buffer;
 
       // The file to write the offsets into.
       std::string offset_file_name;

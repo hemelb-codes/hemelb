@@ -26,18 +26,18 @@ namespace hemelb::io::xdr {
 	  //  void xdr_serialise(const T& value, char* buffer);
 
 	  // Signed and unsigned integers of 32 bits or less
-	  template<typename T>
-	  typename std::enable_if< std::is_integral<T>::value && sizeof(T) <= 4, void >::type
-	  xdr_serialise(const T& val, char* dest_buf)
+	  template<std::integral T>
+      requires (sizeof(T) <= 4)
+	  void xdr_serialise(const T& val, std::byte* dest_buf)
 	  {
 	    auto out = reinterpret_cast<uint32_t*>(dest_buf);
 	    out[0] = htonl(val);
 	  }
 	    
 	  // Signed and unsigned 64 bit ints
-	  template<typename T>
-	  typename std::enable_if< std::is_integral<T>::value && sizeof(T) == 8 >::type
-	  xdr_serialise(const T& val, char* dest_buf)
+	  template<std::integral T>
+	  requires (sizeof(T) == 8)
+	  void xdr_serialise(const T& val, std::byte* dest_buf)
 	  {
 	    auto out = reinterpret_cast<uint32_t*>(dest_buf);
 	    auto msw = uint32_t(val >> 32);
@@ -47,14 +47,14 @@ namespace hemelb::io::xdr {
 	  }
 
 	  // 32 bit floats
-	  inline void xdr_serialise(const float& val, char* dest_buf)
+	  inline void xdr_serialise(const float& val, std::byte* dest_buf)
 	  {
 	    auto data = reinterpret_cast<const uint32_t*>(&val);
 	    auto out = reinterpret_cast<uint32_t*>(dest_buf);
 	    out[0] = htonl(*data);
 	  }
 	  // 64 bit doubles
-	  inline void xdr_serialise(const double& val, char* dest_buf)
+	  inline void xdr_serialise(const double& val, std::byte* dest_buf)
 	  {
 	    auto data = reinterpret_cast<const uint64_t*>(&val);
 	    xdr_serialise(*data, dest_buf);
@@ -65,18 +65,18 @@ namespace hemelb::io::xdr {
 	  // Basic signature is :
 	  //  void xdr_deserialise(T& dest, const char* buffer);
 	  // Signed and unsigned integers of 32 bits or less
-	  template<typename T>
-	  typename std::enable_if< std::is_integral<T>::value && sizeof(T) <= 4, void >::type
-	  xdr_deserialise(T& val, const char* src_buf)
+	  template<std::integral T>
+	  requires (sizeof(T) <= 4)
+	  void xdr_deserialise(T& val, const std::byte* src_buf)
 	  {
 	    auto in = reinterpret_cast<const uint32_t*>(src_buf);
 	    val = ntohl(*in);
 	  }
 	    
 	  // Signed and unsigned 64 bit ints
-	  template<typename T>
-	  typename std::enable_if< std::is_integral<T>::value && sizeof(T) == 8 >::type
-	  xdr_deserialise(T& val, const char* src_buf)
+	  template<std::integral T>
+	  requires (sizeof(T) == 8)
+	  void xdr_deserialise(T& val, const std::byte* src_buf)
 	  {
 	    auto in = reinterpret_cast<const uint32_t*>(src_buf);
 	    uint32_t msw = ntohl(in[0]);
@@ -85,7 +85,7 @@ namespace hemelb::io::xdr {
 	  }
 
 	  // 32 bit floats
-	  inline void xdr_deserialise(float& val, const char* src_buf)
+	  inline void xdr_deserialise(float& val, const std::byte* src_buf)
 	  {
 	    auto in = reinterpret_cast<const uint32_t*>(src_buf);
 	    auto out = reinterpret_cast<uint32_t*>(&val);
@@ -93,7 +93,7 @@ namespace hemelb::io::xdr {
 	  }
 
 	  // 64 bit doubles
-	  inline void xdr_deserialise(double& val, const char* src_buf)
+	  inline void xdr_deserialise(double& val, const std::byte* src_buf)
 	  {
 	    auto out = reinterpret_cast<uint64_t*>(&val);
 	    xdr_deserialise(*out, src_buf);
