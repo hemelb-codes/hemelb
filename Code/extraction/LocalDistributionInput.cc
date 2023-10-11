@@ -65,7 +65,7 @@ namespace hemelb::extraction {
 
       auto ReadTimeByIndex = [&](uint64_t iTS) {
 	uint64_t ans;
-	std::vector<char> tsbuf(8);
+	std::vector<std::byte> tsbuf(8);
 	inputFile.ReadAt(localStart + iTS*allCoresWriteLength, to_span(tsbuf));
 	io::XdrMemReader dataReader(tsbuf);
 	dataReader.read(ans);
@@ -108,7 +108,7 @@ namespace hemelb::extraction {
       const auto readLength = localStop - localStart;
       const auto timeStart = iTS * allCoresWriteLength;
 
-      std::vector<char> dataBuffer(readLength);
+      std::vector<std::byte> dataBuffer(readLength);
       inputFile.ReadAt(timeStart + localStart, to_span(dataBuffer));
       io::XdrMemReader dataReader(dataBuffer);
 
@@ -167,7 +167,7 @@ namespace hemelb::extraction {
       // The headers technically aren't needed (because of the offset
       // file), but we check that they are as expected.
       if (comms.OnIORank()) {
-	auto preambleBuf = std::vector<char>(fmt::extraction::MainHeaderLength);
+        auto preambleBuf = std::vector<std::byte>(fmt::extraction::MainHeaderLength);
 	inputFile.Read(to_span(preambleBuf));
 	auto preambleReader = io::XdrMemReader(preambleBuf);
 
@@ -227,7 +227,7 @@ namespace hemelb::extraction {
 			    << expectedFieldHeaderLength << " B long, but is "
 			    << lengthOfFieldHeader << " B";
 
-	auto fieldHeaderBuf = std::vector<char>(lengthOfFieldHeader);
+	auto fieldHeaderBuf = std::vector<std::byte>(lengthOfFieldHeader);
 	inputFile.Read(to_span(fieldHeaderBuf));
 	auto fieldHeaderReader = io::XdrMemReader(fieldHeaderBuf);
 

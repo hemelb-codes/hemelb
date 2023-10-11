@@ -47,7 +47,7 @@ namespace hemelb::tests
 	size_t expectedSize = 8 + 28 * siteCount;
 
 	// Attempt to read one extra byte, to make sure we aren't under-reading
-	auto contentsBuffer = std::make_unique<char[]>(expectedSize);
+	auto contentsBuffer = std::make_unique<std::byte[]>(expectedSize);
 	size_t nRead = file.read(contentsBuffer.get(), 1, expectedSize + 1);
 
 	REQUIRE(expectedSize == nRead);

@@ -74,8 +74,7 @@ namespace hemelb::geometry
     }
 
     GeometryReader::~GeometryReader()
-    {
-    }
+    = default;
 
     GmyReadResult GeometryReader::LoadAndDecompose(const std::string& dataFilePath)
     {
@@ -168,10 +167,10 @@ namespace hemelb::geometry
         return geometry;
     }
 
-    std::vector<char> GeometryReader::ReadAllProcesses(std::size_t start, unsigned nBytes)
+    std::vector<std::byte> GeometryReader::ReadAllProcesses(std::size_t start, unsigned nBytes)
     {
         // result
-        std::vector<char> buffer(nBytes);
+        std::vector<std::byte> buffer(nBytes);
         auto sp = to_span(buffer);
         if (computeComms.AmNodeLeader()) {
           // file is opened by the leaders comm only
@@ -187,7 +186,7 @@ namespace hemelb::geometry
      */
     GmyReadResult GeometryReader::ReadPreamble()
     {
-      std::vector<char> preambleBuffer = ReadAllProcesses(0, gmy::PreambleLength);
+      auto preambleBuffer = ReadAllProcesses(0, gmy::PreambleLength);
 
       // Create an Xdr translator based on the read-in data.
       auto preambleReader = io::XdrMemReader(preambleBuffer.data(),
@@ -255,7 +254,7 @@ namespace hemelb::geometry
     void GeometryReader::ReadHeader(site_t blockCount)
     {
       site_t headerByteCount = GetHeaderLength(blockCount);
-      std::vector<char> headerBuffer = ReadAllProcesses(gmy::PreambleLength, headerByteCount);
+      auto headerBuffer = ReadAllProcesses(gmy::PreambleLength, headerByteCount);
 
       // Create a Xdr translation object to translate from binary
       auto preambleReader = io::XdrMemReader(headerBuffer.data(),
@@ -340,7 +339,7 @@ namespace hemelb::geometry
         log::Logger::Log<log::Debug, log::Singleton>("Setup node level shared memory");
 
         MPI_Win win;
-        char* local_buf = nullptr;
+        std::byte* local_buf = nullptr;
 
         // Full size of buffer across node communicator
         auto total_buf_size = std::min(blockBoundsGmy[nBlocksGmy] - blockBoundsGmy[0],
@@ -355,7 +354,7 @@ namespace hemelb::geometry
             local_buf_size, 1, MPI_INFO_NULL, nodeComm, &local_buf, &win
         );
         // Get the whole thing's start address
-        char* buf = local_buf - nodeComm.Rank() * local_buf_size;
+        std::byte* buf = local_buf - nodeComm.Rank() * local_buf_size;
 
         // Open a passive access epoch to the shared buffer
         net::MpiCall{MPI_Win_lock_all}(MPI_MODE_NOCHECK, win);
@@ -375,7 +374,7 @@ namespace hemelb::geometry
 
           // Only read on node leader
           if (computeComms.AmNodeLeader()) {
-            auto sp = std::span<char>(buf, read_size);
+            auto sp = std::span<std::byte>(buf, read_size);
             // Collective on leaders comm
             file.ReadAtAll(*first_block_ptr, sp);
           }
@@ -468,7 +467,7 @@ namespace hemelb::geometry
     }
 
     void GeometryReader::DeserialiseBlock(
-        GmyReadResult& geometry, std::vector<char> const& compressedBlockData,
+        GmyReadResult& geometry, std::vector<std::byte> const& compressedBlockData,
         site_t block_gmy
     ) {
         timings.readParse().Start();
@@ -502,7 +501,7 @@ namespace hemelb::geometry
       timings.readParse().Stop();
     }
 
-    std::vector<char> GeometryReader::DecompressBlockData(const std::vector<char>& compressed,
+    std::vector<std::byte> GeometryReader::DecompressBlockData(const std::vector<std::byte>& compressed,
                                                           const unsigned int uncompressedBytes)
     {
       timings.unzip().Start();
@@ -510,7 +509,7 @@ namespace hemelb::geometry
       int ret;
 
       // Set up the buffer for decompressed data. We know how long the the data is
-      std::vector<char> uncompressed(uncompressedBytes);
+      std::vector<std::byte> uncompressed(uncompressedBytes);
 
       // Set up the inflator
       z_stream stream;
@@ -518,14 +517,14 @@ namespace hemelb::geometry
       stream.zfree = Z_NULL;
       stream.opaque = Z_NULL;
       stream.avail_in = compressed.size();
-      stream.next_in = reinterpret_cast<unsigned char*>(const_cast<char*>(&compressed.front()));
+      stream.next_in = reinterpret_cast<unsigned char*>(const_cast<std::byte*>(compressed.data()));
 
       ret = inflateInit(&stream);
       if (ret != Z_OK)
         throw Exception() << "Decompression error for block";
 
       stream.avail_out = uncompressed.size();
-      stream.next_out = reinterpret_cast<unsigned char*>(&uncompressed.front());
+      stream.next_out = reinterpret_cast<unsigned char*>(uncompressed.data());
 
       ret = inflate(&stream, Z_FINISH);
       if (ret != Z_STREAM_END)

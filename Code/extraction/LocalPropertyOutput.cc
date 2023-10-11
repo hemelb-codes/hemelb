@@ -34,7 +34,7 @@ namespace hemelb::extraction
 
         // XDR encode some values and return the result buffer
         template <typename... Ts>
-        std::vector<char> quick_encode(Ts... args) {
+        std::vector<std::byte> quick_encode(Ts... args) {
             io::XdrVectorWriter encoder;
             encode(encoder, args...);
             auto ans = encoder.GetBuf();
@@ -162,7 +162,7 @@ namespace hemelb::extraction
       );
     }
 
-    std::vector<char> LocalPropertyOutput::PrepareHeader() const {
+    std::vector<std::byte> LocalPropertyOutput::PrepareHeader() const {
 
       unsigned const field_header_len = CalcFieldHeaderLength(outputSpec.fields);
       unsigned const total_header_len = io::formats::extraction::MainHeaderLength + field_header_len;

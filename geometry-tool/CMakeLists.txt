@@ -59,6 +59,7 @@ set(hemelb_cpps
   io/writers/XdrMemWriter.cc
   io/writers/XdrWriter.cc
   io/writers/Writer.cc
+  io/FILE.cc
 )
 list(TRANSFORM hemelb_cpps PREPEND "${HEMELB_CODE_DIR}/")
 # While this is located in the extension source tree, in spirit it is

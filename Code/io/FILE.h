@@ -29,7 +29,7 @@ namespace hemelb::io {
         // Direct file read - calls std::fwrite on the underlying file handle
         std::size_t write(void const *buffer, std::size_t size, std::size_t count);
 
-        long tell();
+        long tell() const;
 
         int seek(long offset, long origin);
 
