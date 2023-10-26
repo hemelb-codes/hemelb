@@ -22,7 +22,6 @@ add_library(hemelb_io OBJECT
   writers/XdrVectorWriter.cc
   writers/NullWriter.cc
   writers/Writer.cc
-  formats/geometry.cc
   xml.cc
   Checkpointer.cc
   TimePattern.cc

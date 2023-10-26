@@ -54,7 +54,6 @@ set(generation_dir HlbGmyTool/Model/Generation)
 set(hemelb_cpps
   util/Vector3D.cc
   geometry/SiteDataBare.cc
-  io/formats/geometry.cc
   io/writers/XdrFileWriter.cc
   io/writers/XdrMemWriter.cc
   io/writers/XdrWriter.cc
