@@ -41,8 +41,8 @@ namespace hemelb::tests::helpers
                                                  const io::xml::Element xmlNode) const {
         if (xmlNode.GetName() == "inlets") {
             configuration::CosinePressureIoletConfig inlet;
-            inlet.amp_mmHg = 1.0;
-            inlet.mean_mmHg = 80.0;
+            inlet.amp_Pa = 1.0;
+            inlet.mean_Pa = 80.0;
             inlet.phase_rad = PI;
             inlet.period_s = 60.0 / 70.0;
             inlet.normal = util::Vector3D<Dimensionless>(-3, 4, -9);
@@ -50,8 +50,8 @@ namespace hemelb::tests::helpers
         }
         if (xmlNode.GetName() == "outlets") {
             configuration::CosinePressureIoletConfig outlet;
-            outlet.amp_mmHg = 0.0;
-            outlet.mean_mmHg = 80.0;
+            outlet.amp_Pa = 0.0;
+            outlet.mean_Pa = 80.0;
             outlet.phase_rad = 0.0;
             outlet.period_s = 60.0 / 70.0;
             outlet.normal = util::Vector3D<Dimensionless>(2, -1, 4);

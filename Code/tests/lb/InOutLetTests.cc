@@ -192,7 +192,7 @@ namespace hemelb::tests
 
             // Check the IOLET contains the values expected given the file.
             REQUIRE(10.0 == womersVel->GetRadius());
-            REQUIRE(Approx(mmHg_TO_PASCAL * 1e-6) == womersVel->GetPressureGradientAmplitude());
+            REQUIRE(Approx(1e-6) == womersVel->GetPressureGradientAmplitude());
             REQUIRE(5.0 == womersVel->GetPeriod());
             REQUIRE(2.0 == womersVel->GetWomersleyNumber());
             REQUIRE(ApproxVector<PhysicalPosition>{0, 0, -0.05} ==

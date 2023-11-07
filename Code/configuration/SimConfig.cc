@@ -14,10 +14,10 @@ namespace hemelb::configuration
     }
 
     // Uniform equilibrium IC
-    EquilibriumIC::EquilibriumIC(std::optional<LatticeTimeStep> t, PhysicalPressure p) : ICConfigBase(t), p_mmHg(p), v_ms(0.0) {
+    EquilibriumIC::EquilibriumIC(std::optional<LatticeTimeStep> t, PhysicalPressure p) : ICConfigBase(t), p_Pa(p), v_ms(0.0) {
     }
 
-    EquilibriumIC::EquilibriumIC(std::optional<LatticeTimeStep> t, PhysicalPressure p, const PhysicalVelocity& v) : ICConfigBase(t), p_mmHg(p), v_ms(v) {
+    EquilibriumIC::EquilibriumIC(std::optional<LatticeTimeStep> t, PhysicalPressure p, const PhysicalVelocity& v) : ICConfigBase(t), p_Pa(p), v_ms(v) {
     }
 
     // checkpoint IC

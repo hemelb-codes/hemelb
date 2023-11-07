@@ -11,7 +11,7 @@
   </geometry>
   <initialconditions>
     <pressure>
-      <uniform value="80.0" units="mmHg"/>
+      <uniform value="80.0" units="Pa"/>
     </pressure>
   </initialconditions>    
   <inlets>
@@ -27,8 +27,8 @@
   <outlets>
     <outlet>
       <condition type="pressure" subtype="cosine">
-        <amplitude value="0.0" units="mmHg" />
-        <mean value="0.0" units="mmHg" />
+        <amplitude value="0.0" units="Pa" />
+        <mean value="0.0" units="Pa" />
         <phase value="0.0" units="rad" />
         <period value="0.0" units="s" />
       </condition>

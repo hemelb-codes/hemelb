@@ -632,8 +632,8 @@ namespace hemelb::lb
             stressTensor *= 1 - 1 / (2 * tau);
 
             // Add the pressure component to the stress tensor. The reference pressure given
-            // by the REFERENCE_PRESSURE_mmHg constant is mapped to rho=1. Here we subtract 1
-            // and when the tensor is turned into physical units REFERENCE_PRESSURE_mmHg will
+            // by the REFERENCE_PRESSURE_Pa constant is mapped to rho=1. Here we subtract 1
+            // and when the tensor is turned into physical units REFERENCE_PRESSURE_Pa will
             // be added.
             LatticePressure pressure = (density - 1) * Cs2;
             stressTensor.addDiagonal(pressure);

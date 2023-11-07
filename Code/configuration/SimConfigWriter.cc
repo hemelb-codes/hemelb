@@ -134,9 +134,9 @@ namespace hemelb::configuration {
             AddChildDimensionalValue(outSimEl, "fluid_viscosity", "Pa.s", visc);
 
         // Optional element
-        // <reference_pressure value="float" units="mmHg" />
-        if (auto ref_p = sim_info.fluid.reference_pressure_mmHg; ref_p != 0.0)
-            AddChildDimensionalValue(outSimEl, "reference_pressure", "mmHg", ref_p);
+        // <reference_pressure value="float" units="Pa" />
+        if (auto ref_p = sim_info.fluid.reference_pressure_Pa; ref_p != 0.0)
+            AddChildDimensionalValue(outSimEl, "reference_pressure", "Pa", ref_p);
 
 
         if (sim_info.checkpoint.has_value()) {
@@ -212,8 +212,8 @@ namespace hemelb::configuration {
     void SimConfigWriter::DoIOForCosinePressureInOutlet(SimConfigWriter::Element& dest,
                                                         CosinePressureIoletConfig const& conf) const {
         auto condition = MakeCondition(dest, "pressure", "cosine");
-        AddChildDimensionalValue(condition, "amplitude", "mmHg", conf.amp_mmHg);
-        AddChildDimensionalValue(condition, "mean", "mmHg", conf.mean_mmHg);
+        AddChildDimensionalValue(condition, "amplitude", "Pa", conf.amp_Pa);
+        AddChildDimensionalValue(condition, "mean", "Pa", conf.mean_Pa);
         AddChildDimensionalValue(condition, "phase", "rad", conf.phase_rad);
         AddChildDimensionalValue(condition, "period", "s", conf.period_s);
     }
@@ -227,7 +227,7 @@ namespace hemelb::configuration {
     void SimConfigWriter::DoIOForMultiscalePressureInOutlet(SimConfigWriter::Element& dest,
                                                             MultiscalePressureIoletConfig const& conf) const {
         auto condition = MakeCondition(dest, "pressure", "multiscale");
-        AddChildDimensionalValue(condition, "pressure", "mmHg", conf.pressure_reference_mmHg);
+        AddChildDimensionalValue(condition, "pressure", "Pa", conf.pressure_reference_Pa);
         AddChildDimensionalValue(dest, "velocity", "m/s", conf.velocity_reference_ms);
         auto label = condition.AddChild("label");
         label.SetAttribute("value", conf.label);
@@ -244,7 +244,7 @@ namespace hemelb::configuration {
                                                            WomersleyVelocityIoletConfig const& conf) const {
         auto condition = MakeCondition(dest, "velocity", "womersley");
         AddChildDimensionalValue(dest, "radius", "m", conf.radius_m);
-        AddChildDimensionalValue(dest, "pressure_gradient_amplitude", "mmHg/m", conf.pgrad_amp_mmHgm);
+        AddChildDimensionalValue(dest, "pressure_gradient_amplitude", "Pa/m", conf.pgrad_amp_Pam);
         AddChildDimensionalValue(dest, "period", "s", conf.period_s);
         AddChildDimensionalValue(dest, "womersley_number", "dimensionless", conf.womersley);
     }
@@ -357,7 +357,7 @@ namespace hemelb::configuration {
                        [&](EquilibriumIC const& _) {
                            set_time_maybe(_);
                            auto p_el = ic_el.AddChild("pressure");
-                           AddChildDimensionalValue(p_el, "uniform", "mmHg", _.p_mmHg);
+                           AddChildDimensionalValue(p_el, "uniform", "Pa", _.p_Pa);
                        },
                        [&](CheckpointIC const& _) {
                            set_time_maybe(_);

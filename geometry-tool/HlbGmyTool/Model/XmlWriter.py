@@ -96,7 +96,7 @@ class XmlWriter(object):
     def DoInitialConditions(self, root):
         ic = SubElement(root, "initialconditions")
         pressure = SubElement(ic, "pressure")
-        self.QuantityElement(pressure, "uniform", 0.0, "mmHg")
+        self.QuantityElement(pressure, "uniform", 0.0, "Pa")
         return
 
     def DoProperties(self, root):
@@ -121,8 +121,8 @@ class XmlWriter(object):
             condition = SubElement(
                 iolet, "condition", type="pressure", subtype="cosine"
             )
-            self.QuantityElement(condition, "mean", io.Pressure.x, "mmHg")
-            self.QuantityElement(condition, "amplitude", io.Pressure.y, "mmHg")
+            self.QuantityElement(condition, "mean", io.Pressure.x, "Pa")
+            self.QuantityElement(condition, "amplitude", io.Pressure.y, "Pa")
             self.QuantityElement(condition, "phase", io.Pressure.z, "rad")
             self.QuantityElement(condition, "period", 1, "s")
 
