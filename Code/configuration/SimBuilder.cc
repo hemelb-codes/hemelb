@@ -22,7 +22,7 @@ namespace hemelb::configuration {
         return std::make_shared<util::UnitConverter>(
             info.time.step_s,
             info.space.step_m, info.space.geometry_origin_m,
-            info.fluid.density_kgm3, info.fluid.reference_pressure_mmHg
+            info.fluid.density_kgm3, info.fluid.reference_pressure_Pa
         );
     }
 
@@ -65,7 +65,7 @@ namespace hemelb::configuration {
         }
 
         result_type operator()(const configuration::EquilibriumIC& cfg) const {
-            auto rho = units.ConvertPressureToLatticeUnits(cfg.p_mmHg) / Cs2;
+            auto rho = units.ConvertPressureToLatticeUnits(cfg.p_Pa) / Cs2;
             return lb::EquilibriumInitialCondition{cfg.t0, rho};
         }
         result_type operator()(const configuration::CheckpointIC& cfg) const {
@@ -105,9 +105,9 @@ namespace hemelb::configuration {
         BuildBaseIolet(ic, ans.get());
 
         // Amplitude is a pressure DIFFERENCE (no use of REFERENCE_PRESSURE)
-        ans->SetPressureAmp(unit_converter->ConvertPressureDifferenceToLatticeUnits(ic.amp_mmHg));
+        ans->SetPressureAmp(unit_converter->ConvertPressureDifferenceToLatticeUnits(ic.amp_Pa));
         // Mean is an absolute pressure
-        ans->SetPressureMean(unit_converter->ConvertPressureToLatticeUnits(ic.mean_mmHg));
+        ans->SetPressureMean(unit_converter->ConvertPressureToLatticeUnits(ic.mean_Pa));
         ans->SetPhase(ic.phase_rad);
         ans->SetPeriod(unit_converter->ConvertTimeToLatticeUnits(ic.period_s));
         return ans;
@@ -123,7 +123,7 @@ namespace hemelb::configuration {
     auto SimBuilder::BuildMultiscalePressureIolet(const MultiscalePressureIoletConfig & ic) const -> IoletPtr {
         auto ans = util::make_clone_ptr<lb::InOutLetMultiscale>();
         BuildBaseIolet(ic, ans.get());
-        ans->GetPressureReference() = ic.pressure_reference_mmHg;
+        ans->GetPressureReference() = ic.pressure_reference_Pa;
         ans->GetVelocityReference() = ic.velocity_reference_ms;
         ans->GetLabel() = ic.label;
         return ans;
@@ -141,7 +141,7 @@ namespace hemelb::configuration {
         auto ans = util::make_clone_ptr<lb::InOutLetWomersleyVelocity>();
         BuildBaseIolet(ic, ans.get());
         ans->SetRadius(unit_converter->ConvertDistanceToLatticeUnits(ic.radius_m));
-        ans->SetPressureGradientAmplitude(unit_converter->ConvertPressureGradientToLatticeUnits(ic.pgrad_amp_mmHgm));
+        ans->SetPressureGradientAmplitude(unit_converter->ConvertPressureGradientToLatticeUnits(ic.pgrad_amp_Pam));
         ans->SetPeriod(unit_converter->ConvertTimeToLatticeUnits(ic.period_s));
         ans->SetWomersleyNumber(ic.womersley);
         return ans;

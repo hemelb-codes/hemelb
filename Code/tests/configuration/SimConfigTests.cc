@@ -25,7 +25,7 @@ namespace hemelb::tests
 	  return false;
 	}
 	bool operator()(const EquilibriumIC& eqIC) const {
-	  return 80.0 == eqIC.p_mmHg;
+	  return 80.0 == eqIC.p_Pa;
 	}
       };
     }

@@ -214,8 +214,8 @@ namespace hemelb::tests
             }
             // In advancing 100 time steps, at 0.2 s per time step, with a 0d model at 0.5s per time step
             // the 0d model with execute 100*2/5=40 times, plus one more step, the one where it communicates the previous step.
-            // Each time, the pressure difference will drop by 0.1*0.1=0.01 mmHg.
-            // So the final pressure will be 81.0-41*0.01=80.59 mmHg
+            // Each time, the pressure difference will drop by 0.1*0.1=0.01 Pa.
+            // So the final pressure will be 81.0-41*0.01=80.59 Pa
             REQUIRE(Approx(0.59) == zerod->GetOutletPressure());
             heme->Finalise();
             REQUIRE(heme->GetState().GetTime() == Approx(20.0));

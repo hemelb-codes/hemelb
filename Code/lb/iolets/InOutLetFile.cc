@@ -40,11 +40,11 @@ namespace hemelb::lb
 
             while (datafile.good())
             {
-                double t_s, p_mmHg;
-                datafile >> t_s >> p_mmHg;
-                log::Logger::Log<log::Trace, log::OnePerCore>("Time: %f s. Value: %f mmHg.", t_s, p_mmHg);
+                double t_s, p_Pa;
+                datafile >> t_s >> p_Pa;
+                log::Logger::Log<log::Trace, log::OnePerCore>("Time: %f s. Value: %f Pa.", t_s, p_Pa);
                 auto t_lat = unitConverter->ConvertTimeToLatticeUnits(t_s);
-                auto rho_lat = unitConverter->ConvertPressureToLatticeUnits(p_mmHg) / Cs2;
+                auto rho_lat = unitConverter->ConvertPressureToLatticeUnits(p_Pa) / Cs2;
                 if (file_data_lat.empty()) {
                     file_data_lat.emplace_back(t_lat, rho_lat);
                 } else {

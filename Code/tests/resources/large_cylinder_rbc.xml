@@ -12,8 +12,8 @@
   <inlets>
     <inlet>
       <condition type="pressure" subtype="cosine">
-        <amplitude value="0.0" units="mmHg" />
-        <mean value="0.1" units="mmHg" />
+        <amplitude value="0.0" units="Pa" />
+        <mean value="0.1" units="Pa" />
         <phase value="0" units="rad" />
         <period value="1" units="s" />
       </condition>
@@ -41,8 +41,8 @@
   <outlets>
     <outlet>
       <condition type="pressure" subtype="cosine">
-        <amplitude value="0." units="mmHg" />
-        <mean value="0.0" units="mmHg" />
+        <amplitude value="0." units="Pa" />
+        <mean value="0.0" units="Pa" />
         <phase value="0" units="rad" />
         <period value="1" units="s" />
       </condition>
@@ -106,7 +106,7 @@
   </redbloodcells>
   <initialconditions>
     <pressure>
-      <uniform units="mmHg" value="0.0" />
+      <uniform units="Pa" value="0.0" />
     </pressure>
   </initialconditions>
   <monitoring>

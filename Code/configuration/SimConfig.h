@@ -41,7 +41,7 @@ namespace hemelb::configuration
     struct EquilibriumIC : ICConfigBase {
       EquilibriumIC(std::optional<LatticeTimeStep> t, PhysicalPressure p);
       EquilibriumIC(std::optional<LatticeTimeStep> t, PhysicalPressure p, const PhysicalVelocity& v);
-      PhysicalPressure p_mmHg;
+      PhysicalPressure p_Pa;
       PhysicalVelocity v_ms;
     };
 
@@ -69,7 +69,7 @@ namespace hemelb::configuration
     struct FluidInfo {
         PhysicalDensity density_kgm3 = DEFAULT_FLUID_DENSITY_Kg_per_m3;
         PhysicalDynamicViscosity viscosity_Pas = DEFAULT_FLUID_VISCOSITY_Pas;
-        PhysicalPressure reference_pressure_mmHg = 0.0;
+        PhysicalPressure reference_pressure_Pa = 0.0;
     };
 
     struct CheckpointInfo {
@@ -123,9 +123,9 @@ namespace hemelb::configuration
 
     struct CosinePressureIoletConfig : PressureIoletConfig {
         // Note pressure difference
-        PhysicalPressure amp_mmHg;
+        PhysicalPressure amp_Pa;
         // Note absolute pressure
-        PhysicalPressure mean_mmHg;
+        PhysicalPressure mean_Pa;
         Angle phase_rad;
         PhysicalTime period_s;
     };
@@ -135,7 +135,7 @@ namespace hemelb::configuration
     };
 
     struct MultiscalePressureIoletConfig : PressureIoletConfig {
-        PhysicalPressure pressure_reference_mmHg;
+        PhysicalPressure pressure_reference_Pa;
         PhysicalVelocity velocity_reference_ms;
         std::string label;
     };
@@ -150,7 +150,7 @@ namespace hemelb::configuration
 
     struct WomersleyVelocityIoletConfig : VelocityIoletConfig {
         PhysicalDistance radius_m;
-        PhysicalPressureGradient pgrad_amp_mmHgm;
+        PhysicalPressureGradient pgrad_amp_Pam;
         PhysicalTime period_s;
         double womersley;
     };

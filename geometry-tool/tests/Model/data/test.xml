@@ -12,8 +12,8 @@
   <inlets>
     <inlet>
       <condition subtype="cosine" type="pressure">
-        <mean units="mmHg" value="80.0" />
-        <amplitude units="mmHg" value="0.0" />
+        <mean units="Pa" value="80.0" />
+        <amplitude units="Pa" value="0.0" />
         <phase units="rad" value="0.0" />
         <period units="s" value="1" />
       </condition>
@@ -24,8 +24,8 @@
   <outlets>
     <outlet>
       <condition subtype="cosine" type="pressure">
-        <mean units="mmHg" value="80.0" />
-        <amplitude units="mmHg" value="0.0" />
+        <mean units="Pa" value="80.0" />
+        <amplitude units="Pa" value="0.0" />
         <phase units="rad" value="0.0" />
         <period units="s" value="1" />
       </condition>
@@ -35,7 +35,7 @@
   </outlets>
   <initialconditions>
     <pressure>
-      <uniform units="mmHg" value="0.0" />
+      <uniform units="Pa" value="0.0" />
     </pressure>
   </initialconditions>
 </hemelbsettings>
