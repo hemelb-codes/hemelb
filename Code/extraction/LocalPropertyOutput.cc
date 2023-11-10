@@ -164,38 +164,82 @@ namespace hemelb::extraction
 
     std::vector<std::byte> LocalPropertyOutput::PrepareHeader() const {
 
-      unsigned const field_header_len = CalcFieldHeaderLength(outputSpec.fields);
-      unsigned const total_header_len = io::formats::extraction::MainHeaderLength + field_header_len;
-      io::XdrVectorWriter headerWriter;
+        unsigned const field_header_len = CalcFieldHeaderLength(outputSpec.fields);
+        unsigned const total_header_len = io::formats::extraction::MainHeaderLength + field_header_len;
+        io::XdrVectorWriter headerWriter;
 
-      // Encoder for ONLY the main header (note shorter length)
-      headerWriter << std::uint32_t(io::formats::HemeLbMagicNumber)
-		   << std::uint32_t(io::formats::extraction::MagicNumber)
-		   << std::uint32_t(io::formats::extraction::VersionNumber);
-      headerWriter << double(dataSource->GetVoxelSize());
-      const util::Vector3D<distribn_t> &origin = dataSource->GetOrigin();
-      headerWriter << double(origin[0]) << double(origin[1]) << double(origin[2]);
+        // Encoder for ONLY the main header (note shorter length)
+        headerWriter << std::uint32_t(io::formats::HemeLbMagicNumber)
+                     << std::uint32_t(io::formats::extraction::MagicNumber)
+                     << std::uint32_t(io::formats::extraction::VersionNumber);
 
-      // Write the total site count and number of fields
-      headerWriter << std::uint64_t(global_site_count) << std::uint32_t(outputSpec.fields.size())
-		   << std::uint32_t(field_header_len);
+        // Parameters to convert from lattice units to physical
+        auto dx = dataSource->GetVoxelSize();
+        auto dt = dataSource->GetTimeStep();
+        auto dm = dataSource->GetMassScale();
+        headerWriter << dx << dt <<dm;
 
-      // Main header now finished - do field headers
-      for (auto& field: outputSpec.fields) {
-	auto const len = GetFieldLength(field.src);
-	headerWriter << field.name
-		     << uint32_t(len)
-		     << uint32_t(code::type_to_enum(field.typecode))
-		     << field.noffsets;
-	std::visit([&](auto&& tag) {
-	    for(auto& offset: field.offset)
-	      headerWriter << (decltype(tag))offset;
-	  },
-	  field.typecode);
-      }
+        auto& origin = dataSource->GetOrigin();
+        headerWriter << origin[0] << origin[1] << origin[2];
+        headerWriter << dataSource->GetReferencePressure();
 
-      HASSERT(headerWriter.GetBuf().size() == total_header_len);
-      return headerWriter.GetBuf();
+        // Write the total site count and number of fields
+        headerWriter << std::uint64_t(global_site_count) << std::uint32_t(outputSpec.fields.size())
+                     << std::uint32_t(field_header_len);
+
+        auto dPressure = dm / (dt*dt * dx);
+
+        // Main header now finished - do field headers
+        for (auto& field: outputSpec.fields) {
+            auto const len = GetFieldLength(field.src);
+            headerWriter << field.name
+                         << uint32_t(len)
+                         << uint32_t(code::type_to_enum(field.typecode))
+                         << field.noffsets;
+
+            double scale = overload_visit(field.src,
+                                          [&](source::Pressure) {
+                                              return dPressure;
+                                          },
+                                          [&](source::Velocity) {
+                                              return dx / dt;
+                                          },
+                                          [&](source::ShearStress) {
+                                              return dPressure;
+                                          },
+                                          [&](source::VonMisesStress) {
+                                              return dPressure;
+                                          },
+                                          [&](source::ShearRate) {
+                                              return 1.0 / dt;
+                                          },
+                                          [&](source::StressTensor) {
+                                              return dPressure;
+                                          },
+                                          [&](source::Traction) {
+                                              return dPressure;
+                                          },
+                                          [&](source::TangentialProjectionTraction) {
+                                              return dPressure;
+                                          },
+                                          [](source::Distributions) {
+                                              return 0.0;
+                                          },
+                                          [](source::MpiRank) {
+                                              return 0.0;
+                                          }
+            );
+            std::visit([&](auto&& tag) {
+                           using T = decltype(tag);
+                           for(auto& offset: field.offset)
+                               headerWriter << T(offset);
+                           headerWriter << T(scale);
+                       },
+                       field.typecode);
+        }
+
+        HASSERT(headerWriter.GetBuf().size() == total_header_len);
+        return headerWriter.GetBuf();
     }
 
     bool LocalPropertyOutput::ShouldWrite(unsigned long timestepNumber) const
