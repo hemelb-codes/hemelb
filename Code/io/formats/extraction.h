@@ -14,18 +14,22 @@ namespace hemelb::io::formats
         static constexpr std::uint32_t MagicNumber = 0x78747204;
 
         // The version number of the file format.
-        static constexpr std::uint32_t VersionNumber = 5;
+        static constexpr std::uint32_t VersionNumber = 6;
 
         // The length of the main header. Made up of:
         // uint - HemeLbMagicNumber
         // uint - ExtractionMagicNumber
         // uint - Format version number
-        // double - Voxel size (metres)
+        // (Parameters for conversion to physical units)
+        // double - dx (metres)
+        // double - dt (seconds)
+        // double - dm (kg)
         // double x 3 - Origin x,y,z components (metres)
+        // double - reference pressure (Pa)
         // uhyper - Total number of sites
         // uint - Field count
         // uint - Length of the field header that follows
-        static constexpr std::size_t MainHeaderLength = 60;
+        static constexpr std::size_t MainHeaderLength = 84;
 
         // Each field header is:
         // string - name
@@ -33,6 +37,7 @@ namespace hemelb::io::formats
         // uint32 - type code
         // uint32 - number of offsets (valid values are {0, 1, n elem})
         // type[n offsets] - offsets (n offsets items of type implied above)
+        // type - scale lattice to physical units (0 => no scaling)
         enum class TypeCode : std::uint32_t {
             FLOAT,
             DOUBLE,
@@ -59,6 +64,7 @@ namespace hemelb::io::formats
             len += 4U;  // number of offsets
             std::size_t elemsize = (tc == TypeCode::FLOAT || tc == TypeCode::INT32 || tc == TypeCode::UINT32) ? 4U : 8U;
             len += elemsize * noff; // offsets
+            len += elemsize; // scale
             return len;
         }
     };
