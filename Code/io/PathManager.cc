@@ -59,26 +59,24 @@ namespace hemelb::io
         return cpDir;
     }
 
-    fs::path PathManager::GetRBCOutputPathWithSubdir(std::string const& subdirectoryName) const
+    fs::path PathManager::GetRBCOutputPathWithSubdir(std::string const& subdirectoryName, bool create, bool allow_existing) const
     {
-      auto rbcSubdir = rbcDir / subdirectoryName;
+        auto rbcSubdir = rbcDir / subdirectoryName;
+        if (doIo) {
+            bool does_exist = fs::exists(rbcSubdir);
+            if (create) {
+                if (does_exist && !allow_existing)
+                    throw Exception() << "Output directory '" << rbcSubdir << "' already exists.";
 
-      if (doIo)
-      {
-        if (fs::exists(rbcSubdir))
-          throw Exception() << "Output directory '" << rbcSubdir << "' already exists.";
-
-        std::error_code ec;
-        if (!fs::create_directory(rbcSubdir, rbcDir, ec))
-        if (ec)
-        {
-          throw Exception() << "Output directory '" << rbcSubdir << "' could not be created because: "
-                            << ec.message();
+                std::error_code ec;
+                if (!fs::create_directory(rbcSubdir, rbcDir, ec))
+                    if (ec) {
+                        throw Exception() << "Output directory '" << rbcSubdir << "' could not be created because: "
+                                          << ec.message();
+                    }
+            }
         }
-      }
-
-      return rbcSubdir;
+        return rbcSubdir;
     }
 
 }
-

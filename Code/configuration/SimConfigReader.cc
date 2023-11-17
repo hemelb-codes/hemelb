@@ -958,10 +958,19 @@ namespace hemelb::configuration {
             throw Exception() << "Box-size < cell-cell interaction size: "
                                  "cell-cell interactions cannot be all accounted for.";
 
-        ans.output_period = PopDimensionalValue<LatticeTimeStep>(
-                *rbcEl.PopChildOrThrow("output")->PopChildOrThrow("period"),
-                "lattice"
-        );
+        auto outEl = rbcEl.PopChildOrThrow("output");
+        if (auto vtkEl = outEl->PopChildOrNull("vtk")) {
+            ans.full_output = CellOutputConfig{
+                    .output_period = PopDimensionalValue<LatticeTimeStep>(*vtkEl->PopChildOrThrow("period"), "lattice"),
+                    .physical_units = PopDimensionalValue<bool>(*vtkEl->PopChildOrThrow("physical"), "bool")
+            };
+        }
+        if (auto summEl = outEl->PopChildOrNull("summary")) {
+            ans.summary_output = CellOutputConfig{
+                    .output_period = PopDimensionalValue<LatticeTimeStep>(*summEl->PopChildOrThrow("period"), "lattice"),
+                    .physical_units = PopDimensionalValue<bool>(*summEl->PopChildOrThrow("physical"), "bool")
+            };
+        }
 
         return ans;
     }

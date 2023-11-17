@@ -295,7 +295,7 @@ namespace hemelb::io::xml
 
     std::ostringstream Element::MakeAttributeStream() const {
         auto doc = static_cast<Document const*>(el->GetDocument()->GetUserData());
-        return doc->attr_stream_factory();
+        return doc->attr_stream_factory() << std::boolalpha;
     }
 
     Element::operator bool() const {

@@ -5,9 +5,8 @@
 
 #include "redblood/CellControllerBuilder.h"
 
-#include <boost/uuid/uuid_io.hpp>
-
 #include "io/PathManager.h"
+#include "redblood/CellIO.h"
 #include "redblood/FaderCell.h"
 #include "redblood/MeshIO.h"
 
@@ -348,53 +347,24 @@ namespace hemelb::redblood {
         return result;
     }
 
-    struct cell_outputter {
-        LatticeTimeStep period;
-        std::shared_ptr<util::UnitConverter const> unitConverter;
-        std::shared_ptr<lb::SimulationState const> simState;
-        std::shared_ptr<io::PathManager const> fileManager;
-        net::IOCommunicator ioComms;
-
-        void operator()(CellContainer const& cells) {
-            auto timestep = simState->GetTimeStep();
-            if ((timestep % period) != 0)
-                return;
-
-            log::Logger::Log<log::Info, log::OnePerCore>("printstep %d, num cells %d", timestep, cells.size());
-
-            // Create output directory for current writing step. Requires syncing to
-            // ensure no process goes ahead before directory is created.
-            auto rbcOutputDir = fileManager->GetRBCOutputPathWithSubdir(std::to_string(timestep));
-            ioComms.Barrier();
-
-            for (auto& cell : cells) {
-                // to_chars guarantees to write exactly 36 chars, also need .vtp\0
-                char name[41];
-                boost::uuids::to_chars(cell->GetTag(), name);
-                std::strncpy(name + 36, ".vtp", 5);
-                auto filename = rbcOutputDir / name;
-                std::shared_ptr<redblood::CellBase> cell_base = [&cell]() {
-                    if (auto fader = std::dynamic_pointer_cast<redblood::FaderCell>(cell)) {
-                        return fader->GetWrapeeCell();
-                    } else {
-                        return cell;
-                    }
-                }();
-
-                auto cell_cast = std::dynamic_pointer_cast<redblood::Cell>(cell_base);
-                assert(cell_cast);
-                auto meshio = redblood::VTKMeshIO{};
-                meshio.writeFile(filename.native(), *cell_cast, *unitConverter);
-            }
-        }
-    };
-
-    CellChangeListener CellControllerBuilder::build_cell_output(
-            LatticeTimeStep output_period,
+    CellChangeListener CellControllerBuilder::build_full_cell_output(
+            configuration::CellOutputConfig const& conf,
             std::shared_ptr<lb::SimulationState const> simState,
             std::shared_ptr<io::PathManager const> fileManager,
             net::IOCommunicator const& ioComms
     ) const {
-        return cell_outputter{output_period, unit_converter, simState, fileManager, ioComms};
+        auto conv = conf.physical_units ? unit_converter : nullptr;
+        return CellVtkOutput{conf.output_period, conv, simState, fileManager, ioComms};
     }
+
+    CellChangeListener CellControllerBuilder::build_summary_cell_output(
+            configuration::CellOutputConfig const& conf,
+            std::shared_ptr<lb::SimulationState const> simState,
+            std::shared_ptr<io::PathManager const> fileManager,
+            net::IOCommunicator const& ioComms
+    ) const {
+        auto conv = conf.physical_units ? unit_converter : nullptr;
+        return CellBarycentreOutput{conf.output_period, conv, simState, fileManager, ioComms};
+    }
+
 }
