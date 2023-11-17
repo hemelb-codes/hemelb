@@ -759,7 +759,8 @@ namespace hemelb::io::xml
         std::istringstream attrStream(s, std::ios_base::in);
 
         // Don't skip whitespace as that could indicate a malformed value
-        attrStream >> std::noskipws;
+        // Read bools as true/false
+        attrStream >> std::noskipws >> std::boolalpha;
 
         attrStream >> out;
         if (attrStream.fail())

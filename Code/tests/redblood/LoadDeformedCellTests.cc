@@ -83,8 +83,8 @@ namespace hemelb::tests
         *sadcell += converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
           - sadcell->GetBarycenter();
 
-        io.writeFile("ideal.vtp", *cell, converter);
-        io.writeFile("deformed.vtp", *sadcell, converter);
+        io.writeFile("ideal.vtp", *cell, &converter);
+        io.writeFile("deformed.vtp", *sadcell, &converter);
 
         sadcell->moduli.bending = 0.1;
         sadcell->moduli.strain = 0.1;
@@ -103,7 +103,7 @@ namespace hemelb::tests
               if(iter % 10 == 0) {
                 std::stringstream filename;
                 filename << cell->GetTag() << "_t_" << iter << ".vtp";
-                io.writeFile(filename.str(), *cell, converter);
+                io.writeFile(filename.str(), *cell, &converter);
               }
             }
             ++iter;
@@ -117,10 +117,10 @@ namespace hemelb::tests
         AssertPresent("results/report.xml");
 
         // Recentre simulated cell
-        io.writeFile("reformed.vtp", *sadcell, converter);
+        io.writeFile("reformed.vtp", *sadcell, &converter);
         *sadcell += converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
           - sadcell->GetBarycenter();
-        io.writeFile("reformed_centered.vtp", *sadcell, converter);
+        io.writeFile("reformed_centered.vtp", *sadcell, &converter);
 
 //            // TODO: Align both cells for comparison
 //            auto cell01 = cell->GetVertices()[350] - cell->GetVertices()[154];

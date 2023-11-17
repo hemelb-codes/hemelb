@@ -76,8 +76,8 @@ namespace hemelb::tests
 	  - sadcell->GetBarycenter();
 	*cell += converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
 	  - cell->GetBarycenter();
-	vtk_io.writeFile("/tmp/ideal.vtp", *cell, converter);
-	vtk_io.writeFile("/tmp/deformed.vtp", *sadcell, converter);
+	vtk_io.writeFile("/tmp/ideal.vtp", *cell, &converter);
+	vtk_io.writeFile("/tmp/deformed.vtp", *sadcell, &converter);
 	sadcell->moduli.bending = 0.0000375;
 	sadcell->moduli.surface = 1e0;
 	sadcell->moduli.volume = 1e0;
@@ -98,7 +98,7 @@ namespace hemelb::tests
 	      if(iter % 1000 == 0) {
 		std::stringstream filename;
 		filename << cell->GetTag() << "_t_" << iter << ".vtp";
-		vtk_io.writeFile(filename.str(), *cell, converter);
+		vtk_io.writeFile(filename.str(), *cell, &converter);
 	      }
 	    }
 	    ++iter;
@@ -106,11 +106,11 @@ namespace hemelb::tests
 
 	// run the simulation
 	master->RunSimulation();
-	vtk_io.writeFile("/tmp/reformed.vtp", *sadcell, converter);
+	vtk_io.writeFile("/tmp/reformed.vtp", *sadcell, &converter);
 
 	*sadcell += converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
 	  - sadcell->GetBarycenter();
-	vtk_io.writeFile("/tmp/reformed_centered.vtp", *sadcell, converter);
+	vtk_io.writeFile("/tmp/reformed_centered.vtp", *sadcell, &converter);
 
 	AssertPresent("results/report.txt");
 	AssertPresent("results/report.xml");

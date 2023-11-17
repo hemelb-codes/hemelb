@@ -6,12 +6,15 @@
 #include <catch2/catch.hpp>
 
 #include "io/xml.h"
+#include "configuration/CommandLine.h"
 #include "configuration/SimBuilder.h"
 #include "configuration/SimConfigReader.h"
 #include "redblood/CellControllerBuilder.h"
 #include "redblood/MeshIO.h"
+#include "redblood/CellIO.h"
 #include "redblood/FaderCell.h"
 
+#include "tests/helpers/ApproxVector.h"
 #include "tests/helpers/FolderTestFixture.h"
 #include "tests/helpers/SimConfBuildHelp.h"
 
@@ -31,6 +34,7 @@ auto dynamic_unique_cast(std::unique_ptr<From>&& src) {
 namespace hemelb::tests
 {
     using namespace redblood;
+    namespace fs = std::filesystem;
 
     TEST_CASE_METHOD(helpers::FolderTestFixture, "CellIOTests", "[redblood]") {
         //tinyxml2::XMLDocument doc;
@@ -62,7 +66,7 @@ namespace hemelb::tests
             scaleXML.SetAttribute("units", "m");
 
             auto moduli = cell.AddChild("moduli");
-            auto add_stuff = [&moduli](char const* name, char const* units, Dimensionless value) {
+            auto add_stuff = [&moduli](char const *name, char const *units, Dimensionless value) {
                 auto elem = moduli.AddChild(name);
                 elem.SetAttribute("value", value);
                 elem.SetAttribute("units", units);
@@ -81,7 +85,7 @@ namespace hemelb::tests
             cellEl.GetChildOrThrow("moduli").Delete();
 
             auto cellConf = reader.readCell(cellEl);
-            auto cell = dynamic_unique_cast<Cell const>(cell_builder.build_cell(cellConf));
+            auto cell = dynamic_unique_cast < Cell const>(cell_builder.build_cell(cellConf));
             REQUIRE(cell);
             auto const kruegerIO = redblood::KruegerMeshIO{};
             auto const data = kruegerIO.readFile("red_blood_cell.txt", true);
@@ -106,7 +110,7 @@ namespace hemelb::tests
         }
 
         SECTION("testReadMeshTemplates") {
-            const char* xml_text = "<parent>"
+            const char *xml_text = "<parent>"
                                    "  <inlets>"
                                    "   <inlet>"
                                    "     <condition type=\"pressure\" subtype=\"cosine\">"
@@ -171,8 +175,8 @@ namespace hemelb::tests
             REQUIRE(size_t(2) == cells->size());
             REQUIRE(size_t(1) == cells->count("default"));
             REQUIRE(size_t(1) == cells->count("joe"));
-            auto const default_ = std::static_pointer_cast<FaderCell>( (*cells)["default"]);
-            auto const joe = std::static_pointer_cast<FaderCell>( (*cells)["joe"]);
+            auto const default_ = std::static_pointer_cast<FaderCell>((*cells)["default"]);
+            auto const joe = std::static_pointer_cast<FaderCell>((*cells)["joe"]);
             REQUIRE(default_->GetTemplateName() == "default");
             REQUIRE(joe->GetTemplateName() == "joe");
             REQUIRE(Approx(converter->ConvertToLatticeUnits("m", 0.6)).margin(1e-8)
@@ -183,6 +187,54 @@ namespace hemelb::tests
             REQUIRE(static_cast<bool>(joe->GetIOlets()));
             REQUIRE(default_->GetIOlets() == joe->GetIOlets());
             REQUIRE(size_t(2) == joe->GetIOlets()->size());
+        }
+
+        // Reads cell with minimum stuff
+        SECTION("ReadWriteReadCell") {
+            // Remove moduli, so we get default behavior
+            auto cellEl = doc.GetRoot().GetChildOrThrow("cell");
+            cellEl.GetChildOrThrow("moduli").Delete();
+
+            auto cellConf = reader.readCell(cellEl);
+            auto cell = std::shared_ptr(cell_builder.build_cell(cellConf));
+            {
+                // Write the cell mesh and barycentre data
+                auto cells = CellContainer{};
+                cells.insert(cell);
+                auto outConf = configuration::CellOutputConfig{10, false};
+                configuration::CommandLine cmdline({"hemelb", "-in", "empty_for_relative_paths.xml"});
+                auto pathmgr = std::make_shared<io::PathManager>(cmdline, Comms().OnIORank(), Comms().Size());
+                auto simState = std::make_shared<lb::SimulationState>(0.1, 1000);
+                auto full_out = cell_builder.build_full_cell_output(outConf, simState, pathmgr, Comms());
+                auto summ_out = cell_builder.build_summary_cell_output(outConf, simState, pathmgr, Comms());
+
+                full_out(cells);
+                summ_out(cells);
+            }
+            {
+                // Check barycentre
+                auto bary_path = fs::path{"results/Cells/0/barycentres.rbc"};
+                REQUIRE(fs::exists(bary_path));
+                auto bci = CellBarycentreInput(bary_path);
+                auto ncells = bci.ReadHeader();
+                REQUIRE(ncells == 1);
+                auto cell_summary = bci.ReadRows(Comms(), 0, 1);
+                auto [uuid, bcpos] = cell_summary[0];
+                REQUIRE(uuid == cell->GetTag());
+                REQUIRE(bcpos == ApproxV(cell->GetBarycenter()));
+
+                // Check mesh
+                char tag[36+5];
+                to_chars(uuid, tag);
+                std::strncpy(tag + 36, ".vtp", 5);
+                auto mesh_path = fs::path{"results/Cells/0"} / tag;
+                REQUIRE(fs::exists(mesh_path));
+
+                auto mesh_reader = VTKMeshIO{};
+                auto actual_mesh = mesh_reader.readFile(mesh_path, false);
+                REQUIRE(cell->GetVertices() == actual_mesh->vertices);
+                REQUIRE(cell->GetFacets() == actual_mesh->facets);
+            }
         }
     }
 }

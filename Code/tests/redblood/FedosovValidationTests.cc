@@ -53,7 +53,7 @@ namespace hemelb::tests
 	    if(iter % 1000 == 0) {
 	      std::stringstream filename;
 	      filename << cell->GetTag() << "_t_" << iter << ".vtp";
-	      vtk_io.writeFile(filename.str(), *cell, converter);
+	      vtk_io.writeFile(filename.str(), *cell, &converter);
 	    }
 	    ++iter;
 	  });

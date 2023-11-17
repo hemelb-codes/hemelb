@@ -83,8 +83,14 @@ namespace hemelb::redblood {
                 CountedIoletView const& inlets,
                 CountedIoletView const& outlets
         ) const;
-        CellChangeListener build_cell_output(
-                LatticeTimeStep output_period,
+        CellChangeListener build_full_cell_output(
+                configuration::CellOutputConfig const& conf,
+                std::shared_ptr<lb::SimulationState const> simState,
+                std::shared_ptr<io::PathManager const> fileManager,
+                net::IOCommunicator const& ioComms
+        ) const;
+        CellChangeListener build_summary_cell_output(
+                configuration::CellOutputConfig const& conf,
                 std::shared_ptr<lb::SimulationState const> simState,
                 std::shared_ptr<io::PathManager const> fileManager,
                 net::IOCommunicator const& ioComms
@@ -119,14 +125,23 @@ namespace hemelb::redblood {
             controller->SetCellInsertion(build_cell_inserters(config.GetInlets(), inlets, *meshes));
 
             controller->SetOutlets(build_outlets(config.GetInlets(), inlets, outlets));
-//            cellController = std::static_pointer_cast<hemelb::net::IteratedAction>(controller);
 
-            controller->AddCellChangeListener(build_cell_output(
-                    rbcConfig.output_period,
-                    simState,
-                    fileManager,
-                    ioComms
-            ));
+            // Lambda to DRY
+            auto maybe_add_cell_output = [&](std::optional<configuration::CellOutputConfig> const& maybe_conf, auto factory) {
+                if (maybe_conf) {
+                    controller->AddCellChangeListener(factory(
+                            maybe_conf.value(),
+                            simState,
+                            fileManager,
+                            ioComms
+                    ));
+                }
+            };
+            maybe_add_cell_output(rbcConfig.full_output,
+                                  [this](auto... args){ return this->build_full_cell_output(args...); });
+            maybe_add_cell_output(rbcConfig.summary_output,
+                                  [this](auto... args){ return this->build_summary_cell_output(args...); });
+
             timings.cellInitialisation().Stop();
             return controller;
         }

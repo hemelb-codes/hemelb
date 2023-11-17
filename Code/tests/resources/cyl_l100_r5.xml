@@ -88,7 +88,10 @@
       </cell>
     </cells>
     <output>
-      <period units="lattice" value="500" />
+      <vtk>
+        <period units="lattice" value="500" />
+        <physical units="bool" value="true" />
+      </vtk>
     </output>
   </redbloodcells>
   <monitoring>

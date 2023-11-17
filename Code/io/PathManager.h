@@ -67,7 +67,7 @@ namespace hemelb::io
          * @param subdirectoryName Name of the subdirectory to be created
          * @return Path to the newly created subdirectory
          */
-        [[nodiscard]] path GetRBCOutputPathWithSubdir(std::string const& subdirectoryName) const;
+        [[nodiscard]] path GetRBCOutputPathWithSubdir(std::string const& subdirectoryName, bool create, bool allow_existing) const;
 
       private:
         path outputDir;

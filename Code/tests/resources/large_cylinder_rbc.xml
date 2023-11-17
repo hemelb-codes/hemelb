@@ -101,7 +101,10 @@
       </cell>
     </cells>
     <output>
-      <period units="lattice" value="100" />
+      <vtk>
+        <period units="lattice" value="100" />
+        <physical units="bool" value="true" />
+      </vtk>
     </output>
   </redbloodcells>
   <initialconditions>

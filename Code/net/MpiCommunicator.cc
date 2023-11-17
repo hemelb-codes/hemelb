@@ -91,6 +91,12 @@ namespace hemelb::net
         Broadcast(std::span<char>{val.data(), len}, root);
     }
 
+    MpiRequest MpiCommunicator::Ibarrier() const {
+        MpiRequest ans;
+        MpiCall{MPI_Ibarrier}(*commPtr, &ans.req);
+        return ans;
+    }
+
     MpiGroup MpiCommunicator::Group() const
     {
       MPI_Group grp;

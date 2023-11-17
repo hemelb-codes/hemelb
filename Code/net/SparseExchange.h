@@ -30,9 +30,9 @@ namespace hemelb::net
 
         MPI_Datatype dtype = MPI_DATATYPE_NULL;
         std::vector<MPI_Request> send_reqs;
-        MPI_Request barrier_req = MPI_REQUEST_NULL;
+        MpiRequest barrier_req;
         int my_sends_received = 0;
-        int all_sends_received = 0;
+        bool all_sends_received = false;
 
         // Specify communicator and a tag to use.
         sparse_exchange(MpiCommunicator c, int t) :
@@ -100,13 +100,13 @@ namespace hemelb::net
 		  MpiCall{MPI_Testall}(std::ssize(send_reqs), send_reqs.data(), &my_sends_received, MPI_STATUSES_IGNORE);
                     if (my_sends_received) {
                         // They have! Signal this to the rest of the communicator.
-		      MpiCall{MPI_Ibarrier}(comm, &barrier_req);
+                        barrier_req = comm.Ibarrier();
                         // This Testall/Ibarrier won't run again now, but this rank
                         // will keep checking for incoming messages until all processes
                         // have started the barrier.
                     }
                 } else {
-		  MpiCall{MPI_Test}(&barrier_req, &all_sends_received, MPI_STATUS_IGNORE);
+                    all_sends_received = barrier_req.Test();
                 }
             }
         }

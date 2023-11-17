@@ -198,12 +198,18 @@ namespace hemelb::configuration
         std::size_t exponent;
     };
 
+    struct CellOutputConfig {
+        LatticeTimeStep output_period;
+        bool physical_units = false;
+    };
+
     struct RBCConfig {
         LatticeDistance boxSize;
         std::map<std::string, TemplateCellConfig> meshes;
         NodeForceConfig cell2cell;
         NodeForceConfig cell2wall;
-        LatticeTimeStep output_period;
+        std::optional<CellOutputConfig> full_output;
+        std::optional<CellOutputConfig> summary_output;
     };
 
     class SimConfig

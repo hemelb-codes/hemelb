@@ -54,6 +54,14 @@ namespace hemelb::net
     }
 
     template<typename T>
+    MpiRequest MpiCommunicator::Iexscan(T const& val, T& dest, const MPI_Op &op) const
+    {
+        MpiRequest ans;
+        HEMELB_MPI_CALL(MPI_Iexscan, (&val, &dest, 1, MpiDataType<T>(), op, *this, &ans.req));
+        return ans;
+    }
+
+    template<typename T>
     T MpiCommunicator::Reduce(const T& val, const MPI_Op& op, const int root) const
     {
       T ans;
@@ -222,6 +230,21 @@ namespace hemelb::net
     {
       HEMELB_MPI_CALL(MPI_Send,
                       (vals.data(), vals.size(), MpiDataType<T>(), dest, tag, *this));
+    }
+
+    template <typename T>
+    MpiRequest MpiCommunicator::Issend(std::span<T const> vals, int dest, int tag) const {
+        MpiRequest ans;
+        HEMELB_MPI_CALL(MPI_Issend,
+                        (vals.data(), vals.size(), MpiDataType<T>(), dest, tag, *this, &ans.req));
+        return ans;
+    }
+    template <typename T>
+    MpiRequest MpiCommunicator::Issend(T const& val, int dest, int tag) const {
+        MpiRequest ans;
+        HEMELB_MPI_CALL(MPI_Issend,
+                        (&val, 1, MpiDataType<T>(), dest, tag, *this, &ans.req));
+        return ans;
     }
 
     template<typename T>
