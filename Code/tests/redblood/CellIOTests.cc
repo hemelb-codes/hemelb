@@ -221,7 +221,7 @@ namespace hemelb::tests
                 auto cell_summary = bci.ReadRows(Comms(), 0, 1);
                 auto [uuid, bcpos] = cell_summary[0];
                 REQUIRE(uuid == cell->GetTag());
-                REQUIRE(bcpos == ApproxV(cell->GetBarycenter()));
+                REQUIRE(bcpos == ApproxV(cell->GetBarycentre()));
 
                 // Check mesh
                 char tag[36+5];

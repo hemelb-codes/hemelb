@@ -79,9 +79,9 @@ namespace hemelb::tests
         *cell *= scale;
         *sadcell *= scale;
         *cell += converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
-          - cell->GetBarycenter();
+          - cell->GetBarycentre();
         *sadcell += converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
-          - sadcell->GetBarycenter();
+          - sadcell->GetBarycentre();
 
         io.writeFile("ideal.vtp", *cell, &converter);
         io.writeFile("deformed.vtp", *sadcell, &converter);
@@ -119,7 +119,7 @@ namespace hemelb::tests
         // Recentre simulated cell
         io.writeFile("reformed.vtp", *sadcell, &converter);
         *sadcell += converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
-          - sadcell->GetBarycenter();
+          - sadcell->GetBarycentre();
         io.writeFile("reformed_centered.vtp", *sadcell, &converter);
 
 //            // TODO: Align both cells for comparison

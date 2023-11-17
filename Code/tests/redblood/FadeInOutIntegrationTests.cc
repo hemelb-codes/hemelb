@@ -79,11 +79,11 @@ namespace hemelb::tests
 	  static LatticePosition first, current, tenth;
 	  static int iter = 0;
 	  if(iter == 0) {
-	    first = cell->GetBarycenter();
+	    first = cell->GetBarycentre();
 	    current = first;
 	    tenth = first;
 	  }
-	  auto const position = cell->GetBarycenter();
+	  auto const position = cell->GetBarycentre();
 	  REQUIRE(Approx(first.x()).margin(1e-8) == position.x());
 	  REQUIRE(Approx(first.y()).margin(1e-8) == position.y());
 	  REQUIRE(current.z() <= position.z());
@@ -116,7 +116,7 @@ namespace hemelb::tests
 	    }
 	    auto cell = *cells.begin();
 	    auto const tag = cell->GetTag();
-	    auto const b = cell->GetBarycenter();
+	    auto const b = cell->GetBarycentre();
 	    auto const v = cell->GetVolume();
 	    auto const e = (*cell)();
 	    HEMELB_CAPTURE5(iter, tag, b, v, e);

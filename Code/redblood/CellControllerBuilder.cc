@@ -55,10 +55,10 @@ namespace hemelb::redblood {
             cell *= rotation;
 
             // Figure out size of cell alongst cylinder axis
-            auto const barycenter = cell.GetBarycenter();
-            auto maxExtent = [barycenter, &flowExtension](LatticePosition const pos)
+            auto const barycentre = cell.GetBarycentre();
+            auto maxExtent = [barycentre, &flowExtension](LatticePosition const pos)
             {
-                return std::max(Dot(pos - barycenter, flowExtension.normal), 0e0);
+                return std::max(Dot(pos - barycentre, flowExtension.normal), 0e0);
             };
             auto const maxZ =
                     *std::max_element(cell.GetVertices().begin(),
@@ -69,7 +69,7 @@ namespace hemelb::redblood {
                                       });
             // Place cell as close as possible to 0 of fade length
             cell += flowExtension.origin
-                     + flowExtension.normal * (flowExtension.fadeLength - maxExtent(maxZ)) - barycenter
+                     + flowExtension.normal * (flowExtension.fadeLength - maxExtent(maxZ)) - barycentre
                      + rotateToFlow * translation;
 
             // fail if any node outside flow extension
