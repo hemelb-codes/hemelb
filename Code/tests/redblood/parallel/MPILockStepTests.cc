@@ -81,24 +81,24 @@ namespace hemelb::tests
 	    result });
     }
 
-    void checkBarycenter(net::MpiCommunicator const &world, CellContainer const &cells) {
+    void checkBarycentre(net::MpiCommunicator const &world, CellContainer const &cells) {
       std::vector<uint64_t> uuids;
-      std::vector<LatticePosition> barycenters;
+      std::vector<LatticePosition> barycentres;
       for(auto const &cell: cells) {
 	uuids.push_back(*static_cast<uint64_t const*>(static_cast<void const*>(&cell->GetTag())));
-	barycenters.push_back(cell->GetBarycenter());
+	barycentres.push_back(cell->GetBarycentre());
       }
       uuids = world.Gather(uuids, 0);
-      barycenters = world.Gather(barycenters, 0);
+      barycentres = world.Gather(barycentres, 0);
       if(world.Rank() == 0) {
 	REQUIRE(uuids.size() == 2 * cells.size());
 	std::map<uint64_t, LatticePosition> serial;
 	for(std::size_t i(0); i < cells.size(); ++i) {
-	  serial[uuids[i]] = barycenters[i];
+	  serial[uuids[i]] = barycentres[i];
 	}
 	for(std::size_t i(serial.size()); i < uuids.size(); ++i) {
 	  REQUIRE(std::size_t(1) == serial.count(uuids[i]));
-	  REQUIRE(ApproxV(barycenters[i]).Margin(1e-11) == serial[uuids[i]]);
+	  REQUIRE(ApproxV(barycentres[i]).Margin(1e-11) == serial[uuids[i]]);
 	}
       }
       world.Barrier();
@@ -180,7 +180,7 @@ namespace hemelb::tests
         );
         controller->AddCellChangeListener(
                 [&](CellContainer const& cells) {
-                    return checkBarycenter(world, cells);
+                    return checkBarycentre(world, cells);
                 });
 
         // run the simulation

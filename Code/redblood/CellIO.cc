@@ -104,7 +104,7 @@ namespace hemelb::redblood {
         for (auto [i, cell]: util::enumerate(cells)) {
             std::byte tag[UUID_STRING_LEN];
             boost::uuids::to_chars(cell->GetTag(), reinterpret_cast<char*>(tag));
-            xdrWriter << std::span<std::byte>(tag, UUID_STRING_LEN) << cell->GetBarycenter();
+            xdrWriter << std::span<std::byte>(tag, UUID_STRING_LEN) << cell->GetBarycentre();
         }
 
         auto bary_filename = rbcOutputDir / "barycentres.rbc";

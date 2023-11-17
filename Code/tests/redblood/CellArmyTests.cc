@@ -164,7 +164,7 @@ namespace hemelb::tests
         CellChangeListener callback =
             [&barycentre](const CellContainer & container)
             {
-              barycentre = (*(container.begin()))->GetBarycenter();
+              barycentre = (*(container.begin()))->GetBarycentre();
             };
 
         CellContainer intel;
@@ -173,7 +173,7 @@ namespace hemelb::tests
         army.AddCellChangeListener(callback);
 
         army.NotifyCellChangeListeners();
-	REQUIRE(barycentre == cell->GetBarycenter());
+	REQUIRE(barycentre == cell->GetBarycentre());
       }
 
       SECTION("testCellRemoval") {

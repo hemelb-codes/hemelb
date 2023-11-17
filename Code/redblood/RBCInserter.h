@@ -42,16 +42,16 @@ namespace hemelb::redblood
          * @param scale the scale of the cell to insert
          */
         RBCInserter(std::function<bool()> condition, std::unique_ptr<CellBase const> cell) :
-            condition(std::move(condition)), cell(std::move(cell)), barycenter(this->cell->GetBarycenter())
+            condition(std::move(condition)), cell(std::move(cell)), barycentre(this->cell->GetBarycentre())
         {
         }
         RBCInserter(RBCInserter &&c) :
             condition(std::move(c.condition)), cell(std::move(c.cell)),
-                barycenter(c.barycenter)
+                barycentre(c.barycentre)
         {
         }
         RBCInserter(RBCInserter const&c) :
-            condition(c.condition), cell(c.cell->clone()), barycenter(c.barycenter)
+            condition(c.condition), cell(c.cell->clone()), barycentre(c.barycentre)
         {
         }
         virtual ~RBCInserter() = default;
@@ -82,9 +82,9 @@ namespace hemelb::redblood
           if (condition())
           {
             log::Logger::Log<log::Debug, log::OnePerCore>("Dropping one cell at (%f, %f, %f)",
-                                                          barycenter.x(),
-                                                          barycenter.y(),
-                                                          barycenter.z());
+                                                          barycentre.x(),
+                                                          barycentre.y(),
+                                                          barycentre.z());
             insertFn(drop());
           }
         }
@@ -99,8 +99,8 @@ namespace hemelb::redblood
         std::function<bool()> condition;
         //! The shape of the cells to insert
         std::unique_ptr<CellBase const> cell;
-        //! barycenter -- for logging
-        LatticePosition barycenter;
+        //! barycentre -- for logging
+        LatticePosition barycentre;
     };
 
     //! Red blood cell inserter that adds random rotation and translation to each cell

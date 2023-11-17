@@ -74,21 +74,21 @@ namespace hemelb::tests
     auto& dom = fieldData.GetDomain();
 	auto const mid = LatticePosition(dom.GetGlobalSiteMaxes()
                                      + dom.GetGlobalSiteMins()) * 0.5;
-	(**cells.begin()) += mid - (*cells.begin())->GetBarycenter();
+	(**cells.begin()) += mid - (*cells.begin())->GetBarycentre();
 	(**cells.begin()) += LatticePosition(0, 0, 8 - mid.z());
 	(**cells.begin()) *= 5.0;
 	auto controller = std::make_shared<CellControll>(fieldData, cells, templates, timings);
-	auto const barycenter = (*cells.begin())->GetBarycenter();
+	auto const barycentre = (*cells.begin())->GetBarycentre();
 
 	// run
 	master->RegisterActor(*controller, 1);
 	master->RunSimulation();
 
 	// check position of cell has changed
-	auto const moved = (*cells.begin())->GetBarycenter();
-	REQUIRE(Approx(barycenter.x()).margin(1e-12) == moved.x());
-	REQUIRE(Approx(barycenter.y()).margin(1e-12) == moved.y());
-	REQUIRE(std::abs(barycenter.z() - moved.z()) > 1e-8);
+	auto const moved = (*cells.begin())->GetBarycentre();
+	REQUIRE(Approx(barycentre.x()).margin(1e-12) == moved.x());
+	REQUIRE(Approx(barycentre.y()).margin(1e-12) == moved.y());
+	REQUIRE(std::abs(barycentre.z() - moved.z()) > 1e-8);
 
 	// Check there is force on one of the lattice site near a
 	// node node position is guessed at from geometry. This

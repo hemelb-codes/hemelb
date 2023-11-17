@@ -73,9 +73,9 @@ namespace hemelb::tests
 	sadcell->SetScale(scale);
 	*sadcell *= 1e0 / converter.GetVoxelSize();
 	*sadcell += converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
-	  - sadcell->GetBarycenter();
+	  - sadcell->GetBarycentre();
 	*cell += converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
-	  - cell->GetBarycenter();
+	  - cell->GetBarycentre();
 	vtk_io.writeFile("/tmp/ideal.vtp", *cell, &converter);
 	vtk_io.writeFile("/tmp/deformed.vtp", *sadcell, &converter);
 	sadcell->moduli.bending = 0.0000375;
@@ -109,7 +109,7 @@ namespace hemelb::tests
 	vtk_io.writeFile("/tmp/reformed.vtp", *sadcell, &converter);
 
 	*sadcell += converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
-	  - sadcell->GetBarycenter();
+	  - sadcell->GetBarycentre();
 	vtk_io.writeFile("/tmp/reformed_centered.vtp", *sadcell, &converter);
 
 	AssertPresent("results/report.txt");

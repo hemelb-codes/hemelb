@@ -220,7 +220,7 @@ namespace hemelb
         {
           throw Exception() << "Process " << fieldData.GetDomain().GetCommunicator().Rank()
                             << " cannot determine the owner of cell " << cell->GetTag()
-                            << " with barycenter " << cell->GetBarycenter();
+                            << " with barycentre " << cell->GetBarycentre();
         }
         return owner;
       };
@@ -308,10 +308,10 @@ namespace hemelb
       auto const i_end = cells.cend();
       while (i_first != i_end)
       {
-        auto const barycenter = (*i_first)->GetBarycenter();
-        auto checkCell = [&barycenter](FlowExtension const &flow)
+        auto const barycentre = (*i_first)->GetBarycentre();
+        auto checkCell = [&barycentre](FlowExtension const &flow)
         {
-          return contains(flow, barycenter);
+          return contains(flow, barycentre);
         };
         // save current iterator and increment before potential removal.
         // removing the cell from the set should invalidate only the relevant iterator.
@@ -320,7 +320,7 @@ namespace hemelb
         if (std::find_if(outlets.begin(), outlets.end(), checkCell) != outlets.end())
         {
           std::stringstream message;
-          message << "Removing cell "<< (*i_current)->GetTag() << " at " << barycenter;
+          message << "Removing cell "<< (*i_current)->GetTag() << " at " << barycentre;
           log::Logger::Log<log::Info, log::OnePerCore>(message.str());
 
           cellDnC.remove(*i_current);
@@ -335,18 +335,18 @@ namespace hemelb
     template<class TRAITS>
     void CellArmy<TRAITS>::AddCell(CellContainer::value_type cell)
     {
-      auto const barycenter = cell->GetBarycenter();
+      auto const barycentre = cell->GetBarycentre();
 
       //! @todo: #623 AddCell should only be called if the subdomain contains the relevant RBC inlet
-      // TODO: #759 truncation of barycenter
-      auto const iter = globalCoordsToProcMap.find(Vec16{barycenter});
+      // TODO: #759 truncation of barycentre
+      auto const iter = globalCoordsToProcMap.find(Vec16{barycentre});
       bool insertAtThisRank = (iter != globalCoordsToProcMap.end()) && (iter->second == neighbourDependenciesGraph.Rank());
       if (insertAtThisRank)
       {
         log::Logger::Log<log::Info, log::OnePerCore>("Adding cell at (%f, %f, %f)",
-            barycenter.x(),
-            barycenter.y(),
-            barycenter.z());
+            barycentre.x(),
+            barycentre.y(),
+            barycentre.z());
         cellDnC.insert(cell);
         cells.insert(cell);
 
@@ -365,9 +365,9 @@ namespace hemelb
       if (numCellsAdded != 1)
       {
         log::Logger::Log<log::Info, log::OnePerCore>("Failed to add cell at (%f, %f, %f). It was added %d times.",
-            barycenter.x(),
-            barycenter.y(),
-            barycenter.z(),
+            barycentre.x(),
+            barycentre.y(),
+            barycentre.z(),
             numCellsAdded);
 
         hemelb::net::MpiEnvironment::Abort(-1);

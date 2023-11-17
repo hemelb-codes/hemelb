@@ -131,13 +131,13 @@ namespace hemelb::tests
 													0),
 					     LatticePosition(0, 4, 0));
 
-	auto const barycenter = cells["joe"]->GetBarycenter();
+	auto const barycentre = cells["joe"]->GetBarycentre();
 	for (size_t i(0); i < 500; ++i) {
 	  auto const cell = inserter.drop();
-	  auto const n = cell->GetBarycenter();
-	  REQUIRE(std::abs(n.x() - barycenter.x()) <= 2e0);
-	  REQUIRE(std::abs(n.y() - barycenter.y()) <= 4e0);
-	  REQUIRE(Approx(barycenter.z()).margin(1e-8) == n.z());
+	  auto const n = cell->GetBarycentre();
+	  REQUIRE(std::abs(n.x() - barycentre.x()) <= 2e0);
+	  REQUIRE(std::abs(n.y() - barycentre.y()) <= 4e0);
+	  REQUIRE(Approx(barycentre.z()).margin(1e-8) == n.z());
 	}
       }
 
@@ -173,7 +173,7 @@ namespace hemelb::tests
 	REQUIRE(insertTranslated);
 	insertTranslated(addCell);
 	REQUIRE(current_cell);
-	auto const trans = cell0->GetBarycenter() - current_cell->GetBarycenter();
+	auto const trans = cell0->GetBarycentre() - current_cell->GetBarycentre();
 	auto approx = Approx(0.0).margin(1e-8);
 	REQUIRE(approx(0) == Dot(trans, util::Vector3D{0, 1, 1}));
 	REQUIRE(approx(0.1 / 0.6 * 0.1 / 0.6 * 2e0) == trans.GetMagnitudeSquared());
@@ -185,7 +185,7 @@ namespace hemelb::tests
 	REQUIRE(insertWithZ);
 	insertWithZ(addCell);
 	REQUIRE(current_cell);
-	auto const transZ = cell0->GetBarycenter() - current_cell->GetBarycenter();
+	auto const transZ = cell0->GetBarycentre() - current_cell->GetBarycentre();
 	REQUIRE(approx(0.1 / 0.6 * std::sqrt(2)) == Dot(transZ, util::Vector3D{0, 1, 1}));
 	REQUIRE(approx(0.1 / 0.6 * 0.1 / 0.6 * 3e0) == transZ.GetMagnitudeSquared());
       }
