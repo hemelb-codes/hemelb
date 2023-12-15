@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <string>
+#include <string_view>
 #include <type_traits>
 
 namespace hemelb {
@@ -33,6 +34,9 @@ namespace hemelb {
         constexpr std::string str() const {
             return {str_, N};
         }
+        constexpr std::string_view view() const {
+            return {str_, N};
+        }
 
         constexpr char const *c_str() const {
             return str_;
@@ -45,12 +49,12 @@ namespace hemelb {
 
     template <std::size_t M, std::size_t N>
     constexpr auto operator==(const ct_string<M>& left, const ct_string<N>& right) {
-        return left.str() == right.str();
+        return left.view() == right.view();
     }
 
     template <std::size_t N>
     constexpr auto operator==(const ct_string<N>& left, const char* right) {
-        return left.str() == std::string{right};
+        return left.view() == std::string_view{right};
     }
     template <std::size_t N>
     constexpr auto operator==(const char* left, const ct_string<N> right) {
