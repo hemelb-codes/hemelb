@@ -1,0 +1,30 @@
+name: 'Set CC and CXX env vars for the configured compiler'
+
+inputs:
+  compiler:
+    description: 'Use $suite-$version'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set the env vars with some bash
+      shell: bash
+      run: |
+        set -ex
+        input=${{ inputs.compiler }}
+        split=(${input//-/ })
+        suite=${split[0]}
+        version=${split[1]}
+        case $suite in
+          gnu)
+            echo "CC=gcc-$version" >> $GITHUB_ENV
+            echo "CXX=g++-$version" >> $GITHUB_ENV
+            ;;
+          llvm)
+            echo "CC=clang-$version" >> $GITHUB_ENV
+            echo "CXX=clang++-$version" >> $GITHUB_ENV
+            echo "CXXFLAGS=-stdlib=libc++" >> $GITHUB_ENV
+            echo "LDFLAGS=-stdlib=libc++" >> $GITHUB_ENV
+            ;;
+        esac
