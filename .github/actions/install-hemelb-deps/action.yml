@@ -33,7 +33,7 @@ runs:
         libctemplate-dev
         ${{ inputs.extra_apt }}
 
-    - uses: actions/cache@v2
+    - uses: actions/cache@v3
       id: deps-cache
       with:
         path: ${{ env.deps_install_prefix }}
