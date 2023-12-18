@@ -43,6 +43,7 @@ jobs:
     name: Build in fluid-only mode
     runs-on: ubuntu-22.04
     strategy:
+      fail-fast: false
       matrix:
         compiler: [gnu-11, gnu-12, gnu-13]
     steps:
