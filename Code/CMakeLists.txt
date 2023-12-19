@@ -55,8 +55,11 @@ include(platform_checks)
 include(codesign)
 include(HemeLbDependency)
 
+# We do NOT want the removed MPI 2 C++ bindings
+# Requesting MPI 3 should be enough, but some configurations of
+# e.g. OpenMPI enable them for C++ by default to be "helpful".
 set(MPI_CXX_SKIP_MPICXX ON)
-find_package(MPI REQUIRED CXX)
+find_package(MPI 3 REQUIRED CXX)
 
 find_hemelb_dependency(Boost REQUIRED)
 find_hemelb_dependency(tinyxml2 REQUIRED)
