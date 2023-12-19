@@ -42,10 +42,12 @@ jobs:
   fluid_only_build:
     name: Build in fluid-only mode
     runs-on: ubuntu-22.04
+
     strategy:
       fail-fast: false
       matrix:
         compiler: [gnu-11, gnu-12, gnu-13]
+
     steps:
     - uses: actions/checkout@v3
 
@@ -132,8 +134,17 @@ jobs:
     name: Build in RBC mode
     runs-on: ubuntu-22.04
 
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gnu-11, gnu-12, gnu-13]
+
     steps:
     - uses: actions/checkout@v3
+
+    - uses: ./.github/actions/setup-compilers
+      with:
+        compiler: ${{ matrix.compiler }}
 
     - uses: ./.github/actions/install-hemelb-deps
       with:
