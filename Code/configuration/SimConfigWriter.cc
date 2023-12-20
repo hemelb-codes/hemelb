@@ -273,7 +273,7 @@ namespace hemelb::configuration {
                                        }
             );
             po_el.SetAttribute("timestep_mode", mode);
-            po_el.SetAttribute("file", po.filename);
+            po_el.SetAttribute("file", po.filename.c_str());
             po_el.SetAttribute("period", po.frequency);
 
             GeometrySelector* gmy = po.geometry.get();
