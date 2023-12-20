@@ -45,7 +45,7 @@ namespace hemelb::tests
                            { "redbloodcells", "controller", "stencil" },
                            "two");
             ModifyXMLInput("large_cylinder_rbc.xml", { "redbloodcells",
-                                                       "cells",
+                                                       "templates",
                                                        "cell",
                                                        "shape",
                                                        "mesh_path" },

@@ -146,7 +146,7 @@ namespace hemelb::tests
                                    "    </outlet>"
                                    "  </outlets>"
                                    "  <redbloodcells>"
-                                   "    <cells>"
+                                   "    <templates>"
                                    "      <cell>"
                                    "        <shape mesh_path=\"red_blood_cell.txt\" mesh_format=\"Krueger\" />"
                                    "        <scale units=\"m\" value=\"0.6\"/>"
@@ -155,13 +155,13 @@ namespace hemelb::tests
                                    "       <shape mesh_path=\"red_blood_cell.txt\" mesh_format=\"Krueger\" />"
                                    "       <scale units=\"m\" value=\"0.5\"/>"
                                    "     </cell>"
-                                   "   </cells>"
+                                   "   </templates>"
                                    "  </redbloodcells>"
                                    "</parent>";
             io::xml::Document document;
             document.LoadString(xml_text);
             auto root = document.GetRoot();
-            auto cellsEl = root.GetChildOrThrow("redbloodcells").GetChildOrThrow("cells");
+            auto cellsEl = root.GetChildOrThrow("redbloodcells").GetChildOrThrow("templates");
             auto tc_conf = reader.readTemplateCells(cellsEl);
             configuration::GlobalSimInfo sim_info;
             auto in_conf = reader.DoIOForInOutlets(sim_info, root.GetChildOrThrow("inlets"));

@@ -920,7 +920,7 @@ namespace hemelb::configuration {
         auto controllerNode = rbcEl.PopChildOrThrow("controller");
         ans.boxSize = PopDimensionalValue<LatticeDistance>(*controllerNode->PopChildOrThrow("boxsize"), "lattice");
 
-        if (auto cellsEl = rbcEl.PopChildOrNull("cells"))
+        if (auto cellsEl = rbcEl.PopChildOrNull("templates"))
             ans.meshes = readTemplateCells(*cellsEl);
 
         // Now we can check that the cell inserters only refer to templates that exist

@@ -84,7 +84,7 @@
       <cutoffdistance units="lattice" value="1.0" />
       <exponent value="2"/>
     </cell2Wall>
-    <cells>
+    <templates>
       <cell name="default">
         <moduli>
           <surface units="lattice" value="1" />
@@ -96,7 +96,7 @@
         <shape mesh_path="rbc_ico_1280.msh" mesh_format="Krueger" />
         <scale units="m" value="4.1e-06" />
       </cell>
-    </cells>
+    </templates>
     <output>
       <vtk>
         <period units="lattice" value="1000" />

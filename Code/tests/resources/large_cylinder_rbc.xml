@@ -76,7 +76,7 @@
       <cutoffdistance units="lattice" value="1.0" />
       <exponent value="2"/>
     </cell2Wall>
-    <cells>
+    <templates>
       <cell name="default">
         <moduli>
           <bending units="Nm" value="2e-19" />
@@ -99,7 +99,7 @@
         <shape mesh_path="red_blood_cell.txt" mesh_format="Krueger" />
         <scale units="m" value="8e-06" />
       </cell>
-    </cells>
+    </templates>
     <output>
       <vtk>
         <period units="lattice" value="100" />

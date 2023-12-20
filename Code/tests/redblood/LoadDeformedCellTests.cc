@@ -47,7 +47,7 @@ namespace hemelb::tests
       DeleteXMLInput("large_cylinder_rbc.xml", { "inlets", "inlet", "insertcell" });
       DeleteXMLInput("large_cylinder_rbc.xml", { "inlets", "inlet", "flowextension" });
       DeleteXMLInput("large_cylinder_rbc.xml", { "outlets", "outlet", "flowextension" });
-      DeleteXMLInput("large_cylinder_rbc.xml", { "redbloodcells", "cells" });
+      DeleteXMLInput("large_cylinder_rbc.xml", { "redbloodcells", "templates" });
 
       int constexpr argc = 3;
       char const * argv[argc] = {

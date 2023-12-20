@@ -35,7 +35,7 @@ namespace hemelb::tests
 
       ModifyXMLInput("large_cylinder_rbc.xml", { "simulation", "steps", "value" }, 10000);
       ModifyXMLInput("large_cylinder_rbc.xml", { "redbloodcells",
-	    "cells",
+	    "templates",
 	    "cell",
 	    "shape",
 	    "mesh_path" },
@@ -46,7 +46,7 @@ namespace hemelb::tests
 	    "mean",
 	    "value" },
 	0);
-      DeleteXMLInput("large_cylinder_rbc.xml", { "redbloodcells", "cells" });
+      DeleteXMLInput("large_cylinder_rbc.xml", { "redbloodcells", "templates" });
       DeleteXMLInput("large_cylinder_rbc.xml", { "inlets", "inlet", "flowextension" });
       DeleteXMLInput("large_cylinder_rbc.xml", { "outlets", "outlet", "flowextension" });
 
