@@ -3,7 +3,7 @@
 This file is the main input file for a HemeLB simulation. If you use
 the geometry tool to generate a .gmy file, it will also create a
 minimal XML file that contains the required geometry-related data,
-however it is currently (2021) not suitable to run immediately and
+however it is currently (2023) not suitable to run immediately and
 must be manually edited. Here we describe the file.
 
 All parameters that correspond to a property of the modelled system
@@ -42,6 +42,16 @@ It's child elements are:
 * Required: `<voxel_size value="float" units="m" />` - the voxel size in the gmy file
 * Required: `<origin value="(x,y,z)" units="m" />` - the location of lattice site (0,0,0) in world coordinates 
 * Optional: `<extra_warmup_steps value="int" units="lattice" />` - the length of the simulation's warmup period; units must be lattice
+* Optional: `<fluid_density value="float" units="kg/m3" />` - the
+  density of the working fluid (corresponds to 1 in lattice
+  units). Default is 1000 kg/m3.
+* Optional: `<fluid_viscosity value="float" units="Pa.s" />` - the
+  viscosity of the working fluid (corresponds to 1 in lattice
+  units). Default is 0.004 Pa.s.
+* Optional: `<reference_pressure value="float" units="mmHg" />` the
+  physical pressure that corresponds to a lattice density
+  of 1. Default is 0.
+
 
 ## Geometry
 The `<geometry>` element is required. It has one, required, child element:
