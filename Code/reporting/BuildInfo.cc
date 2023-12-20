@@ -15,7 +15,7 @@ namespace hemelb::reporting {
         build.SetValue("OPTIMISATION", build_info::OPTIMISATION);
         build.SetBoolValue("USE_SSE3", build_info::USE_SSE3);
         build.SetValue("TIME", build_info::BUILD_TIME);
-        build.SetValue("READING_GROUP_SIZE", build_info::READING_GROUP_SIZE);
+        build.SetIntValue("READING_GROUP_SIZE", build_info::READING_GROUP_SIZE);
         build.SetValue("LATTICE_TYPE", build_info::LATTICE);
         build.SetValue("KERNEL_TYPE", build_info::KERNEL);
         build.SetValue("WALL_BOUNDARY_CONDITION", build_info::WALL_BOUNDARY);

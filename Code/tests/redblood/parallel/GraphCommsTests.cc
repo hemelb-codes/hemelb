@@ -137,7 +137,7 @@ namespace hemelb::tests
         auto neighbourhoods =
                 ComputeProcessorNeighbourhood(comms,
                                               latticeData.GetDomain(),
-                                              2e-6 / master->GetSimConfig()->GetVoxelSize());
+                                              2e-6 / master->GetSimConfig().GetVoxelSize());
 
         // Parmetis divides the cylinder in four consecutive cylindrical
         // subdomains with interfaces roughly parallel to the iolets.
@@ -162,15 +162,15 @@ namespace hemelb::tests
         REQUIRE(master);
 
         auto simConf = master->GetSimConfig();
-        REQUIRE(simConf->HasRBCSection());
-        auto builder = configuration::SimBuilder(*simConf);
-        auto rbcConf = simConf->GetRBCConfig();
+        REQUIRE(simConf.HasRBCSection());
+        auto builder = configuration::SimBuilder(simConf);
+        auto rbcConf = simConf.GetRBCConfig();
 
         auto meshes = [&]() {
             using IoletPtr = util::clone_ptr<lb::InOutLet>;
             auto ccb = redblood::CellControllerBuilder(builder.GetUnitConverter());
-            auto inlets = builder.BuildIolets(simConf->GetInlets());
-            auto outlets = builder.BuildIolets(simConf->GetOutlets());
+            auto inlets = builder.BuildIolets(simConf.GetInlets());
+            auto outlets = builder.BuildIolets(simConf.GetOutlets());
             auto mk_view = [](std::vector<IoletPtr> const &iolets) {
                 return redblood::CountedIoletView(
                         [&iolets]() { return iolets.size(); },
@@ -183,7 +183,7 @@ namespace hemelb::tests
         // Biggest cell radius in lattice units times a tolerance
         REQUIRE(
                 Approx(
-                        parallel::MAXIMUM_SIZE_TO_RADIUS_RATIO * (8e-06 / simConf->GetVoxelSize())
+                        parallel::MAXIMUM_SIZE_TO_RADIUS_RATIO * (8e-06 / simConf.GetVoxelSize())
                 ).margin(1e-9) == ComputeCellsEffectiveSize(*meshes)
         );
     }
@@ -204,7 +204,7 @@ namespace hemelb::tests
         auto graphComm = comms.DistGraphAdjacent(
               ComputeProcessorNeighbourhood(comms,
                                             domain,
-                                            2e-6 / master->GetSimConfig()->GetVoxelSize())
+                                            2e-6 / master->GetSimConfig().GetVoxelSize())
         );
         auto const& globalCoordsToProcMap = ComputeGlobalCoordsToProcMap(graphComm, domain);
 

@@ -25,9 +25,9 @@ namespace hemelb::extraction
          * @param dataSource
          * @return
          */
-        PropertyActor(const lb::SimulationState& simulationState,
+        PropertyActor(std::shared_ptr<lb::SimulationState const> simulationState,
                       const std::vector<PropertyOutputFile>& propertyOutputs,
-                      IterableDataSource& dataSource, reporting::Timers& timers,
+                      std::shared_ptr<IterableDataSource> dataSource, reporting::Timers& timers,
                       const net::IOCommunicator& ioComms);
 
         ~PropertyActor() override;
@@ -44,7 +44,7 @@ namespace hemelb::extraction
         void EndIteration() override;
 
       private:
-        const lb::SimulationState& simulationState;
+        std::shared_ptr<lb::SimulationState const> simulationState;
         std::unique_ptr<PropertyWriter> propertyWriter;
         reporting::Timers& timers;
     };

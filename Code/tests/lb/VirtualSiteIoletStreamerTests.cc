@@ -14,7 +14,7 @@
 #include "lb/iolets/InOutLets.h"
 #include "lb/streamers/VirtualSiteIolet.h"
 #include "geometry/SiteData.h"
-#include "util/utilityFunctions.h"
+#include "util/numerical.h"
 
 #include "tests/helpers/ApproxVector.h"
 #include "tests/helpers/FourCubeBasedTestFixture.h"
@@ -144,7 +144,7 @@ namespace hemelb::tests
         // We have to make the outlet sane and consistent with the geometry now.
         inlet->SetNormal(util::Vector3D<Dimensionless>(0, 0, 1));
         PhysicalPosition inletCentre(2.5, 2.5, 0.5);
-        inletCentre *= simConfig->GetVoxelSize();
+        inletCentre *= simConfig.GetVoxelSize();
         inlet->SetPosition(unitConverter->ConvertPositionToLatticeUnits(inletCentre));
         // Want to set the density gradient to be 0.01 in lattice units,
         // starting at 1.0 at the outlet.
@@ -173,7 +173,7 @@ namespace hemelb::tests
         // We have to make the outlet sane and consistent with the geometry now.
         outlet->SetNormal(util::Vector3D<Dimensionless>(0, 0, -1));
         PhysicalPosition outletCentre(2.5, 2.5, 4.5);
-        outletCentre *= simConfig->GetVoxelSize();
+        outletCentre *= simConfig.GetVoxelSize();
         outlet->SetPosition(unitConverter->ConvertPositionToLatticeUnits(outletCentre));
         outlet->SetPressureAmp(0.);
         outlet->SetPressureMean(unitConverter->ConvertPressureToPhysicalUnits(1.0 * Cs2));
@@ -316,12 +316,8 @@ namespace hemelb::tests
                 site_t globalIdx = hvPtr.first;
                 LatticeVector pos;
                 dom->GetGlobalCoordsFromGlobalNoncontiguousSiteId(globalIdx, pos);
-                REQUIRE(hemelb::util::NumericalFunctions::IsInRange<LatticeCoordinate>(pos.x(),
-                                                                                       1,
-                                                                                       4));
-                REQUIRE(hemelb::util::NumericalFunctions::IsInRange<LatticeCoordinate>(pos.y(),
-                                                                                       1,
-                                                                                       4));
+                REQUIRE(util::IsInRange<LatticeCoordinate>(pos.x(), 1, 4));
+                REQUIRE(util::IsInRange<LatticeCoordinate>(pos.y(), 1, 4));
                 REQUIRE(LatticeCoordinate(4) == pos.z());
             }
         }
@@ -366,8 +362,8 @@ namespace hemelb::tests
                                             propertyCache);
 
             // Now every entry in the RSHV cache should have been updated
-            CheckAllHVUpdated(inletBoundary, 1);
-            CheckAllHVUpdated(outletBoundary, 1);
+            CheckAllHVUpdated(inletBoundary, 0);
+            CheckAllHVUpdated(outletBoundary, 0);
 
             // Stream and collide
             offset = 0;

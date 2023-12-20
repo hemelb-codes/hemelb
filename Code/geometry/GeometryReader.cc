@@ -18,7 +18,7 @@
 #include "net/net.h"
 #include "net/IOCommunicator.h"
 #include "log/Logger.h"
-#include "util/utilityFunctions.h"
+#include "util/numerical.h"
 #include "constants.h"
 
 namespace hemelb::geometry
@@ -71,13 +71,12 @@ namespace hemelb::geometry
     }
 
     GeometryReader::~GeometryReader()
-    {
-    }
+    = default;
 
     GmyReadResult GeometryReader::LoadAndDecompose(const std::string& dataFilePath)
     {
         log::Logger::Log<log::Debug, log::OnePerCore>("Starting file read timer");
-        timings[hemelb::reporting::Timers::fileRead].Start();
+        timings.fileRead().Start();
 
         // Create hints about how we'll read the file. See Chapter 13, page 400 of the MPI 2.2 spec.
         MPI_Info fileInfo;
@@ -99,7 +98,7 @@ namespace hemelb::geometry
         fflush(nullptr);
 
         // Set the view to the file.
-        file.SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);
+        file.SetView(0, MPI_BYTE, MPI_BYTE, "native", fileInfo);
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
         GmyReadResult geometry = ReadPreamble();
@@ -112,7 +111,7 @@ namespace hemelb::geometry
 
 
         {
-            timings[hemelb::reporting::Timers::initialDecomposition].Start();
+            timings.initialDecomposition().Start();
             principalProcForEachBlock.resize(geometry.GetBlockCount());
 
             log::Logger::Log<log::Info, log::Singleton>("Creating block-level octree");
@@ -139,7 +138,7 @@ namespace hemelb::geometry
                 basicDecomposer.Validate(principalProcForEachBlock);
             }
 
-            timings[hemelb::reporting::Timers::initialDecomposition].Stop();
+            timings.initialDecomposition().Stop();
         }
 
         // Perform the initial read-in.
@@ -156,10 +155,10 @@ namespace hemelb::geometry
             ValidateGeometry(geometry);
         }
 
-        timings[hemelb::reporting::Timers::fileRead].Stop();
+        timings.fileRead().Stop();
 
         hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Optimising the domain decomposition.");
-        timings[hemelb::reporting::Timers::domainDecomposition].Start();
+        timings.domainDecomposition().Start();
 
         // Having done an initial decomposition of the geometry, and read in the data, we optimise the
         // domain decomposition.
@@ -177,14 +176,14 @@ namespace hemelb::geometry
         // Finish up - close the file, set the timings, deallocate memory.
         HEMELB_MPI_CALL(MPI_Info_free, (&fileInfo));
 
-        timings[hemelb::reporting::Timers::domainDecomposition].Stop();
+        timings.domainDecomposition().Stop();
 
         return geometry;
     }
 
-    std::vector<char> GeometryReader::ReadOnAllTasks(unsigned nBytes)
+    std::vector<std::byte> GeometryReader::ReadOnAllTasks(unsigned nBytes)
     {
-      std::vector<char> buffer(nBytes);
+      std::vector<std::byte> buffer(nBytes);
       const net::MpiCommunicator& comm = file.GetCommunicator();
       if (comm.Rank() == HEADER_READING_RANK)
       {
@@ -199,7 +198,7 @@ namespace hemelb::geometry
      */
     GmyReadResult GeometryReader::ReadPreamble()
     {
-      std::vector<char> preambleBuffer = ReadOnAllTasks(gmy::PreambleLength);
+      auto preambleBuffer = ReadOnAllTasks(gmy::PreambleLength);
 
       // Create an Xdr translator based on the read-in data.
       auto preambleReader = io::XdrMemReader(preambleBuffer.data(),
@@ -267,10 +266,10 @@ namespace hemelb::geometry
     void GeometryReader::ReadHeader(site_t blockCount)
     {
       site_t headerByteCount = GetHeaderLength(blockCount);
-      std::vector<char> headerBuffer = ReadOnAllTasks(headerByteCount);
+      auto headerBuffer = ReadOnAllTasks(headerByteCount);
 
       // Create a Xdr translation object to translate from binary
-      auto preambleReader = hemelb::io::XdrMemReader(headerBuffer.data(),
+      auto preambleReader = io::XdrMemReader(headerBuffer.data(),
 								   headerByteCount);
 
       fluidSitesOnEachBlock.reserve(blockCount);
@@ -299,7 +298,7 @@ namespace hemelb::geometry
                                               const proc_t localRank)
     {
       // Create a list of which blocks to read in.
-      timings[hemelb::reporting::Timers::readBlocksPrelim].Start();
+      timings.readBlocksPrelim().Start();
 
       // Populate the list of blocks to read (including a halo one block wide around all
       // local blocks).
@@ -333,13 +332,13 @@ namespace hemelb::geometry
       net::Net net = net::Net(computeComms);
       Needs needs(geometry.GetBlockCount(),
                   readBlock,
-                  util::NumericalFunctions::min(READING_GROUP_SIZE, computeComms.Size()),
+                  std::min(READING_GROUP_SIZE, computeComms.Size()),
                   net,
                   ShouldValidate());
 
-      timings[hemelb::reporting::Timers::readBlocksPrelim].Stop();
+      timings.readBlocksPrelim().Stop();
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading blocks");
-      timings[hemelb::reporting::Timers::readBlocksAll].Start();
+      timings.readBlocksAll().Start();
 
       // Set the initial offset to the first block, which will be updated as we progress
       // through the blocks.
@@ -361,7 +360,7 @@ namespace hemelb::geometry
         offset += bytesPerCompressedBlock[nextBlockToRead];
       }
 
-      timings[hemelb::reporting::Timers::readBlocksAll].Stop();
+      timings.readBlocksAll().Stop();
     }
 
     void GeometryReader::ReadInBlock(MPI_Offset offsetSoFar, GmyReadResult& geometry,
@@ -373,14 +372,14 @@ namespace hemelb::geometry
       {
         return;
       }
-      std::vector<char> compressedBlockData;
+      std::vector<std::byte> compressedBlockData;
       proc_t readingCore = GetReadingCoreForBlock(blockNumber);
 
       net::Net net = net::Net(computeComms);
 
       if (readingCore == computeComms.Rank())
       {
-        timings[hemelb::reporting::Timers::readBlock].Start();
+        timings.readBlock().Start();
         // Read the data.
         compressedBlockData.resize(bytesPerCompressedBlock[blockNumber]);
         file.ReadAt(offsetSoFar, compressedBlockData);
@@ -392,30 +391,30 @@ namespace hemelb::geometry
           if (*receiver != computeComms.Rank())
           {
 
-            net.RequestSendV(std::span<const char>(compressedBlockData), *receiver);
+            net.RequestSendV(std::span<const std::byte>(compressedBlockData), *receiver);
           }
         }
-        timings[hemelb::reporting::Timers::readBlock].Stop();
+        timings.readBlock().Stop();
       }
       else if (neededOnThisRank)
       {
         compressedBlockData.resize(bytesPerCompressedBlock[blockNumber]);
 
-        net.RequestReceiveV(std::span<char>(compressedBlockData), readingCore);
+        net.RequestReceiveV(std::span<std::byte>(compressedBlockData), readingCore);
 
       }
       else
       {
         return;
       }
-      timings[hemelb::reporting::Timers::readNet].Start();
+      timings.readNet().Start();
       net.Dispatch();
-      timings[hemelb::reporting::Timers::readNet].Stop();
-      timings[hemelb::reporting::Timers::readParse].Start();
+      timings.readNet().Stop();
+      timings.readParse().Start();
       if (neededOnThisRank)
       {
         // Create an Xdr interpreter.
-        std::vector<char> blockData = DecompressBlockData(compressedBlockData,
+        auto blockData = DecompressBlockData(compressedBlockData,
                                                           bytesPerUncompressedBlock[blockNumber]);
         io::XdrMemReader lReader(&blockData.front(), blockData.size());
 
@@ -447,18 +446,18 @@ namespace hemelb::geometry
       {
         geometry.Blocks[blockNumber].Sites = std::vector<GeometrySite>(0, GeometrySite(false));
       }
-      timings[hemelb::reporting::Timers::readParse].Stop();
+      timings.readParse().Stop();
     }
 
-    std::vector<char> GeometryReader::DecompressBlockData(const std::vector<char>& compressed,
+    std::vector<std::byte> GeometryReader::DecompressBlockData(const std::vector<std::byte>& compressed,
                                                           const unsigned int uncompressedBytes)
     {
-      timings[hemelb::reporting::Timers::unzip].Start();
+      timings.unzip().Start();
       // For zlib return codes.
       int ret;
 
       // Set up the buffer for decompressed data. We know how long the the data is
-      std::vector<char> uncompressed(uncompressedBytes);
+      std::vector<std::byte> uncompressed(uncompressedBytes);
 
       // Set up the inflator
       z_stream stream;
@@ -466,14 +465,14 @@ namespace hemelb::geometry
       stream.zfree = Z_NULL;
       stream.opaque = Z_NULL;
       stream.avail_in = compressed.size();
-      stream.next_in = reinterpret_cast<unsigned char*>(const_cast<char*>(&compressed.front()));
+      stream.next_in = reinterpret_cast<unsigned char*>(const_cast<std::byte*>(compressed.data()));
 
       ret = inflateInit(&stream);
       if (ret != Z_OK)
         throw Exception() << "Decompression error for block";
 
       stream.avail_out = uncompressed.size();
-      stream.next_out = reinterpret_cast<unsigned char*>(&uncompressed.front());
+      stream.next_out = reinterpret_cast<unsigned char*>(uncompressed.data());
 
       ret = inflate(&stream, Z_FINISH);
       if (ret != Z_STREAM_END)
@@ -484,7 +483,7 @@ namespace hemelb::geometry
       if (ret != Z_OK)
         throw Exception() << "Decompression error for block";
 
-      timings[hemelb::reporting::Timers::unzip].Stop();
+      timings.unzip().Stop();
       return uncompressed;
     }
 
@@ -602,8 +601,7 @@ namespace hemelb::geometry
 
     proc_t GeometryReader::GetReadingCoreForBlock(site_t blockNumber)
     {
-      return proc_t(blockNumber
-          % util::NumericalFunctions::min(READING_GROUP_SIZE, computeComms.Size()));
+        return proc_t(blockNumber % std::min(READING_GROUP_SIZE, computeComms.Size()));
     }
 
     /**
@@ -776,23 +774,23 @@ namespace hemelb::geometry
                                                       procForEachBlock,
                                                       fluidSitesOnEachBlock);
 
-      timings[hemelb::reporting::Timers::reRead].Start();
+      timings.reRead().Start();
       log::Logger::Log<log::Debug, log::OnePerCore>("Rereading blocks");
       // Reread the blocks based on the ParMetis decomposition.
       RereadBlocks(geometry,
                    optimiser.GetMovesCountPerCore(),
                    optimiser.GetMovesList(),
                    procForEachBlock);
-      timings[hemelb::reporting::Timers::reRead].Stop();
+      timings.reRead().Stop();
 
-      timings[hemelb::reporting::Timers::moves].Start();
+      timings.moves().Start();
       // Implement the decomposition now that we have read the necessary data.
       log::Logger::Log<log::Debug, log::OnePerCore>("Implementing moves");
       ImplementMoves(geometry,
                      procForEachBlock,
                      optimiser.GetMovesCountPerCore(),
                      optimiser.GetMovesList());
-      timings[hemelb::reporting::Timers::moves].Stop();
+      timings.moves().Stop();
     }
 
     // The header section of the config file contains a number of records.
@@ -908,10 +906,6 @@ namespace hemelb::geometry
 
     bool GeometryReader::ShouldValidate() const
     {
-#ifdef HEMELB_VALIDATE_GEOMETRY
-      return true;
-#else
-      return false;
-#endif
+        return build_info::VALIDATE_GEOMETRY;
     }
 }

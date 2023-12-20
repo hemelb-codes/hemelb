@@ -8,21 +8,19 @@
 
 #include "net/MpiFile.h"
 
-namespace hemelb
+namespace hemelb::net
 {
-  namespace net
-  {
 
     template<typename T>
     void MpiFile::Read(std::vector<T>& buffer, MPI_Status* stat)
     {
-      HEMELB_MPI_CALL(MPI_File_read, (*filePtr, &buffer[0], buffer.size(), MpiDataType<T>(), stat));
+      HEMELB_MPI_CALL(MPI_File_read, (*filePtr, buffer.data(), buffer.size(), MpiDataType<T>(), stat));
     }
     template<typename T>
     void MpiFile::ReadAt(MPI_Offset offset, std::vector<T>& buffer, MPI_Status* stat)
     {
       HEMELB_MPI_CALL(MPI_File_read_at,
-                      (*filePtr, offset, &buffer[0], buffer.size(), MpiDataType<T>(), stat));
+                      (*filePtr, offset, buffer.data(), buffer.size(), MpiDataType<T>(), stat));
     }
 
     template<typename T>
@@ -39,7 +37,6 @@ namespace hemelb
 
     }
 
-  }
 }
 
 #endif

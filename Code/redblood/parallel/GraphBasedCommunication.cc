@@ -4,6 +4,7 @@
 // license in the file LICENSE.
 #include "redblood/parallel/GraphBasedCommunication.h"
 
+#include "log/Logger.h"
 #include "net/MpiCommunicator.h"
 #include "net/SparseExchange.h"
 #include "reporting/Timers.h"
@@ -193,14 +194,14 @@ namespace hemelb::redblood::parallel
                                          std::shared_ptr<TemplateCellContainer> const& cellTemplates,
                                          hemelb::reporting::Timers &timings)
     {
-        timings[hemelb::reporting::Timers::graphComm].Start();
+        timings.graphComm().Start();
         auto ranks_i_may_communicate_with = ComputeProcessorNeighbourhood(comm,
                                                                           domain,
                                                                           ComputeCellsEffectiveSize(*cellTemplates));
         check_neighbourhood_consistency(comm, ranks_i_may_communicate_with);
         log::Logger::Log<log::Info, log::Singleton>("Create the graph communicator");
         auto graphComm = comm.DistGraphAdjacent(ranks_i_may_communicate_with);
-        timings[hemelb::reporting::Timers::graphComm].Stop();
+        timings.graphComm().Stop();
 
         return graphComm;
     }

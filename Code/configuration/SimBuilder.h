@@ -9,6 +9,7 @@
 #include "configuration/SimConfig.h"
 #include "extraction/LbDataSourceIterator.h"
 #include "extraction/PropertyActor.h"
+#include "io/Checkpointer.h"
 #include "geometry/GmyReadResult.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "lb/InitialCondition.h"
@@ -27,6 +28,7 @@
 #endif
 
 namespace hemelb::extraction { class PropertyActor; }
+namespace hemelb::io { class Checkpointer; }
 namespace hemelb::lb {
     class InOutLet;
 }
@@ -54,14 +56,6 @@ namespace hemelb::configuration {
         virtual ~SimBuilder() = default;
 
         [[nodiscard]] std::shared_ptr<util::UnitConverter const> GetUnitConverter() const;
-
-        template<typename T>
-        void GetDimensionalValueInLatticeUnits(const io::xml::Element& elem,
-                                               const std::string& units, T& value)
-        {
-            GetDimensionalValue(elem, units, value);
-            value = unit_converter->ConvertToLatticeUnits(units, value);
-        }
 
         template<typename T>
         T ConvertToLatticeUnits(T const& val, std::string_view units)
@@ -100,11 +94,20 @@ namespace hemelb::configuration {
         [[nodiscard]] lb::InitialCondition BuildInitialCondition() const;
         [[nodiscard]] std::shared_ptr<extraction::PropertyActor> BuildPropertyExtraction(
                 std::filesystem::path const& xtr_path,
-                const lb::SimulationState& simState,
-                extraction::IterableDataSource& dataSource,
+                std::shared_ptr<lb::SimulationState const> simState,
+                std::shared_ptr<extraction::IterableDataSource> dataSource,
                 reporting::Timers& timings,
                 const net::IOCommunicator& ioComms
         ) const;
+
+        [[nodiscard]] std::shared_ptr<io::Checkpointer> BuildCheckpointer(
+                std::filesystem::path const& cp_path,
+                std::shared_ptr<lb::SimulationState const> simState,
+                std::shared_ptr<extraction::IterableDataSource> dataSource,
+                reporting::Timers& timings,
+                const net::IOCommunicator& ioComms
+        ) const;
+
         [[nodiscard]] std::shared_ptr<reporting::Reporter> BuildReporter(
                 io::PathManager const& fileManager,
                 std::vector<reporting::Reportable*> const & reps
@@ -115,11 +118,11 @@ namespace hemelb::configuration {
     template <typename T>
     void SimBuilder::operator()(T& control) const {
         using traitsType = typename T::Traits;
-        using latticeType = typename T::latticeType;
+        using LatticeType = typename T::LatticeType;
 
         auto& timings = control.timings;
         auto& ioComms = control.ioComms;
-        auto& lat_info = latticeType::GetLatticeInfo();
+        auto& lat_info = LatticeType::GetLatticeInfo();
 
         control.unitConverter = unit_converter;
 
@@ -130,12 +133,12 @@ namespace hemelb::configuration {
         });
 
         std::vector<std::pair<net::phased::Concern*, unsigned>> actors_to_register_for_phase;
-        auto maybe_register_actor = [&](std::shared_ptr<net::phased::Concern> const& p, unsigned i) {
+        auto maybe_register_actor = [&] <std::derived_from<net::phased::Concern> C> (std::shared_ptr<C> const& p, unsigned i) {
             if (p)
                 actors_to_register_for_phase.emplace_back(p.get(), i);
         };
 
-        timings[reporting::Timers::latDatInitialise].Start();
+        timings.latDatInitialise().Start();
         // Use a reader to read in the file.
         log::Logger::Log<log::Info, log::Singleton>("Loading and decomposing geometry file %s.", config.GetDataFilePath().c_str());
         auto readGeometryData = ReadGmy(lat_info, timings, ioComms);
@@ -147,7 +150,7 @@ namespace hemelb::configuration {
         log::Logger::Log<log::Info, log::Singleton>("Initialising field data.");
         control.fieldData = std::make_shared<geometry::FieldData>(control.domainData);
         things_to_report.push_back(control.domainData.get());
-        timings[reporting::Timers::latDatInitialise].Stop();
+        timings.latDatInitialise().Stop();
 
         log::Logger::Log<log::Info, log::Singleton>("Initialising neighbouring data manager.");
         auto ndm =
@@ -204,7 +207,7 @@ namespace hemelb::configuration {
         }
 
         // Always track stability
-        control.stabilityTester = std::make_shared<lb::StabilityTester<latticeType>>(
+        control.stabilityTester = std::make_shared<lb::StabilityTester<LatticeType>>(
                 control.fieldData,
                 &control.communicationNet,
                 &*control.simulationState,
@@ -244,12 +247,20 @@ namespace hemelb::configuration {
 
         control.propertyExtractor = BuildPropertyExtraction(
                 control.fileManager->GetDataExtractionPath(),
-                *control.simulationState,
-                *control.propertyDataSource,
+                control.simulationState,
+                control.propertyDataSource,
                 timings,
                 ioComms
         );
         maybe_register_actor(control.propertyExtractor, 1);
+
+        control.checkpointer = BuildCheckpointer(
+                control.fileManager->GetCheckpointPath(),
+                control.simulationState,
+                control.propertyDataSource,
+                timings,
+                ioComms
+        );
 
         control.netConcern = std::make_shared<net::phased::NetConcern>(
                 control.communicationNet

@@ -5,10 +5,8 @@
 
 #include "net/MpiDataType.h"
 
-namespace hemelb
+namespace hemelb::net
 {
-  namespace net
-  {
     // Specializations of the above getters for built in types.
     // These mappings are taken directly from the MPI standard version 2.2,
     // table 3.2 on page 28.
@@ -16,6 +14,11 @@ namespace hemelb
     MPI_Datatype MpiDataTypeTraits<char>::RegisterMpiDataType()
     {
       return MPI_CHAR;
+    }
+    template<>
+    MPI_Datatype MpiDataTypeTraits<std::byte>::RegisterMpiDataType()
+    {
+        return MPI_BYTE;
     }
     template<>
     MPI_Datatype MpiDataTypeTraits<int16_t>::RegisterMpiDataType()
@@ -84,5 +87,4 @@ namespace hemelb
     {
       return MPI_WCHAR;
     }
-  }
 }

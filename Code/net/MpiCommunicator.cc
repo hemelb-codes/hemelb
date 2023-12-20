@@ -81,6 +81,12 @@ namespace hemelb::net
       HEMELB_MPI_CALL(MPI_Barrier, (*commPtr));
     }
 
+    MpiRequest MpiCommunicator::Ibarrier() const {
+        MpiRequest ans;
+        HEMELB_MPI_CALL(MPI_Ibarrier, (*commPtr, &ans.req));
+        return ans;
+    }
+
     MpiGroup MpiCommunicator::Group() const
     {
       MPI_Group grp;

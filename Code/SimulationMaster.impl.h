@@ -17,7 +17,7 @@
 #include "extraction/PropertyActor.h"
 #include "extraction/LbDataSourceIterator.h"
 #include "io/writers/XdrFileWriter.h"
-#include "util/utilityFunctions.h"
+#include "util/numerical.h"
 #include "geometry/Domain.h"
 #include "log/Logger.h"
 #include "lb/HFunction.h"
@@ -42,11 +42,10 @@ namespace hemelb
     template<class TRAITS>
     SimulationMaster<TRAITS>::SimulationMaster(configuration::CommandLine & options,
                                                const net::IOCommunicator& ioComm) :
-            ioComms(ioComm.Duplicate()), timings(ioComms), build_info(),
-            communicationNet(ioComms)
+            build_info(), ioComms(ioComm.Duplicate()), communicationNet(ioComms)
     {
         // Start the main timer!
-        timings[reporting::Timers::total].Start();
+        timings.total().Start();
 
         fileManager = std::make_shared<io::PathManager>(options,
                                                                 IsCurrentProcTheIOProc(),
@@ -55,7 +54,7 @@ namespace hemelb
         // Convert XML to configuration
         simConfig = configuration::SimConfig::New(fileManager->GetInputFile());
         // Use it to initialise self
-        auto builder = configuration::SimBuilder(*simConfig);
+        auto builder = configuration::SimBuilder(simConfig);
         log::Logger::Log<log::Info, log::Singleton>("Beginning Initialisation.");
         builder(*this);
     }
@@ -65,9 +64,8 @@ namespace hemelb
    *
    * Deallocates dynamically allocated memory to contained classes.
    */
-  template<class TRAITS> SimulationMaster<TRAITS>::~SimulationMaster()
-  {
-  }
+  template<class TRAITS>
+  SimulationMaster<TRAITS>::~SimulationMaster() = default;
 
   /**
    * Returns true if the current processor is the dedicated I/O
@@ -99,17 +97,6 @@ namespace hemelb
   }
 
   template<class TRAITS>
-  unsigned int SimulationMaster<TRAITS>::OutputPeriod(unsigned int frequency)
-  {
-    if (frequency == 0)
-    {
-      return 1000000000;
-    }
-    unsigned long roundedPeriod = simulationState->GetTotalTimeSteps() / frequency;
-    return util::NumericalFunctions::max(1U, (unsigned int) roundedPeriod);
-  }
-
-  template<class TRAITS>
   void SimulationMaster<TRAITS>::HandleActors()
   {
     stepManager->CallActions();
@@ -132,26 +119,38 @@ namespace hemelb
   void SimulationMaster<TRAITS>::RunSimulation()
   {
     log::Logger::Log<log::Info, log::Singleton>("Beginning to run simulation.");
-    timings[reporting::Timers::simulation].Start();
+    timings.simulation().Start();
 
-    while (simulationState->GetTimeStep() <= simulationState->GetTotalTimeSteps())
+    auto cp = [&] () {
+        if (checkpointer && checkpointer->ShouldWrite()) {
+            timings.writeCheckpoint().Start();
+            checkpointer->Write(ToConfig());
+            timings.writeCheckpoint().Stop();
+        }
+    };
+
+    cp();
+    while (simulationState->GetTimeStep() < simulationState->GetEndTimeStep())
     {
       DoTimeStep();
+      cp();
+
       if (simulationState->IsTerminating())
       {
         break;
       }
     }
 
-    timings[reporting::Timers::simulation].Stop();
+    timings.simulation().Stop();
     Finalise();
   }
 
   template<class TRAITS>
   void SimulationMaster<TRAITS>::Finalise()
   {
-    timings[reporting::Timers::total].Stop();
-    timings.Reduce();
+    timings.total().Stop();
+    timings.Reduce(ioComms);
+
     if (IsCurrentProcTheIOProc())
     {
       reporter->FillDictionary();
@@ -280,6 +279,15 @@ namespace hemelb
   {
     return *unitConverter;
   }
+
+    template <class TRAITS>
+    configuration::SimConfig SimulationMaster<TRAITS>::ToConfig() const {
+        using namespace configuration;
+        SimConfig ans = simConfig;
+        if (simConfig.HasColloidSection())
+            throw (Exception() << "Checkpointing not implemented for colloids");
+        return ans;
+    }
 }
 
 #endif

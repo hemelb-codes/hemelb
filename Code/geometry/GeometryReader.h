@@ -47,7 +47,7 @@ namespace hemelb::geometry
          * @param nBytes
          * @return
          */
-        std::vector<char> ReadOnAllTasks(unsigned nBytes);
+        std::vector<std::byte> ReadOnAllTasks(unsigned nBytes);
 
         GmyReadResult ReadPreamble();
 
@@ -93,7 +93,7 @@ namespace hemelb::geometry
          * @param sites
          * @return
          */
-        std::vector<char> DecompressBlockData(const std::vector<char>& compressed,
+        std::vector<std::byte> DecompressBlockData(const std::vector<std::byte>& compressed,
                                               const unsigned int uncompressedBytes);
 
         void ParseBlock(GmyReadResult& geometry, const site_t block,
@@ -149,9 +149,9 @@ namespace hemelb::geometry
         bool ShouldValidate() const;
 
         //! The rank which reads in the header information.
-        static const proc_t HEADER_READING_RANK = 0;
+        static constexpr proc_t HEADER_READING_RANK = 0;
         //! The number of cores (0-READING_GROUP_SIZE-1) that read files in parallel
-        static const proc_t READING_GROUP_SIZE = HEMELB_READING_GROUP_SIZE;
+        static constexpr proc_t READING_GROUP_SIZE = build_info::READING_GROUP_SIZE;
 
         //! Info about the connectivity of the lattice.
         const lb::LatticeInfo& latticeInfo;

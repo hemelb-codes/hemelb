@@ -130,6 +130,8 @@ namespace hemelb
     template<>
     MPI_Datatype MpiDataTypeTraits<char>::RegisterMpiDataType();
     template<>
+    MPI_Datatype MpiDataTypeTraits<std::byte>::RegisterMpiDataType();
+    template<>
     MPI_Datatype MpiDataTypeTraits<int16_t>::RegisterMpiDataType();
     template<>
     MPI_Datatype MpiDataTypeTraits<int32_t>::RegisterMpiDataType();
