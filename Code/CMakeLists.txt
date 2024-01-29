@@ -79,6 +79,12 @@ find_hemelb_dependency(ParMETIS REQUIRED)
 find_hemelb_dependency(CTemplate REQUIRED)
 find_hemelb_dependency(ZLIB REQUIRED)
 
+# MPI and boost should always be available
+# Note this is NOT the C++ bindings, this is the C bindings from C++
+# (ensures helpful MPI implementations do not sneak the MPI 2 C++ bindings back in)
+link_libraries(MPI::MPI_CXX)
+link_libraries(Boost::headers)
+
 if(HEMELB_BUILD_RBC)
   # Work around some installs of HDF5 having proper targets and others
   # not...
@@ -162,14 +168,12 @@ endforeach()
 add_subdirectory(resources)
 target_link_libraries(${HEMELB_EXECUTABLE} 
   ${heme_libraries} ${heme_libraries}
-  ${MPI_LIBRARIES}
   )
 
 # Config XML checker (confcheck)
 add_executable(${HEMELB_EXECUTABLE}-confcheck confcheck.cc)
 target_link_libraries(${HEMELB_EXECUTABLE}-confcheck
   ${heme_libraries} ${heme_libraries}
-  ${MPI_LIBRARIES}
   )
 
 INSTALL(TARGETS ${HEMELB_EXECUTABLE} ${HEMELB_EXECUTABLE}-confcheck RUNTIME DESTINATION bin)
@@ -193,7 +197,7 @@ if (HEMELB_BUILD_MULTISCALE)
 
   add_subdirectory(multiscale)
   target_link_libraries(multiscale_hemelb
-    PRIVATE ${heme_libraries} hemelb_multiscale ${MPI_LIBRARIES}
+    PRIVATE ${heme_libraries} hemelb_multiscale
     )
   INSTALL(TARGETS multiscale_hemelb RUNTIME DESTINATION bin)
   add_to_resources(resources/report.txt.ctp resources/report.xml.ctp)

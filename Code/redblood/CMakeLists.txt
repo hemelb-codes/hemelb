@@ -55,13 +55,10 @@ if (HEMELB_BUILD_RBC)
 
   target_link_libraries(hemelb_redblood PRIVATE
     hdf5::hdf5_hl
-    VTK::CommonCore VTK::CommonDataModel VTK::IOXML VTK::FiltersCore
-    Boost::boost)
+    VTK::CommonCore VTK::CommonDataModel VTK::IOXML VTK::FiltersCore)
 else()
   # Build minimal interface
   add_library(hemelb_redblood OBJECT
     FlowExtension.cc
     )
-  target_link_libraries(hemelb_redblood PRIVATE
-    Boost::boost)
 endif()
