@@ -283,15 +283,7 @@ namespace hemelb::tests
         SECTION("TestStreamerInitialisation") {
             initParams.boundaryObject = &outletBoundary;
             // Set up the ranges to cover Mid 3 (pure outlet) and Mid 5 (outlet/wall)
-            initParams.siteRanges.resize(2);
-            initParams.siteRanges[0].first = dom->GetMidDomainCollisionCount(0)
-                                             + dom->GetMidDomainCollisionCount(1) + dom->GetMidDomainCollisionCount(2);
-            initParams.siteRanges[0].second = initParams.siteRanges[0].first
-                                              + dom->GetMidDomainCollisionCount(3);
-            initParams.siteRanges[1].first = initParams.siteRanges[0].second
-                                             + dom->GetMidDomainCollisionCount(4);
-            initParams.siteRanges[1].second = initParams.siteRanges[1].first
-                                              + dom->GetMidDomainCollisionCount(5);
+            initParams.siteRanges = {dom->GetMidDomainSiteRange(3), dom->GetMidDomainSiteRange(5)};
             lb::VirtualSiteIolet<Collision> outletStreamer(initParams);
 
             // All the sites at the outlet plane (x, y, 3) should be in the cache.
@@ -331,32 +323,26 @@ namespace hemelb::tests
             InitialiseGradientHydroVars();
 
             // Stream and collide
-            site_t offset = 0;
-            offset += dom->GetMidDomainCollisionCount(0);
-            offset += dom->GetMidDomainCollisionCount(1);
-            inletStreamer.StreamAndCollide(offset,
-                                             dom->GetMidDomainCollisionCount(2),
-                                             &lbmParams,
-                                             *latDat ,
-                                             propertyCache);
-            offset += dom->GetMidDomainCollisionCount(2);
+            inletStreamer.StreamAndCollide(dom->GetMidDomainSiteRange(2).first,
+                                           dom->GetMidDomainSiteRange(2).second,
+                                           &lbmParams,
+                                           *latDat ,
+                                           propertyCache);
 
-            outletStreamer.StreamAndCollide(offset,
-                                            dom->GetMidDomainCollisionCount(3),
+            outletStreamer.StreamAndCollide(dom->GetMidDomainSiteRange(3).first,
+                                            dom->GetMidDomainSiteRange(3).second,
                                             &lbmParams,
                                             *latDat,
                                             propertyCache);
-            offset += dom->GetMidDomainCollisionCount(3);
 
-            inletStreamer.StreamAndCollide(offset,
-                                           dom->GetMidDomainCollisionCount(4),
+            inletStreamer.StreamAndCollide(dom->GetMidDomainSiteRange(4).first,
+                                           dom->GetMidDomainSiteRange(4).second,
                                            &lbmParams,
                                            *latDat,
                                            propertyCache);
-            offset += dom->GetMidDomainCollisionCount(4);
 
-            outletStreamer.StreamAndCollide(offset,
-                                            dom->GetMidDomainCollisionCount(5),
+            outletStreamer.StreamAndCollide(dom->GetMidDomainSiteRange(5).first,
+                                            dom->GetMidDomainSiteRange(5).second,
                                             &lbmParams,
                                             *latDat,
                                             propertyCache);
@@ -366,32 +352,26 @@ namespace hemelb::tests
             CheckAllHVUpdated(outletBoundary, 0);
 
             // Stream and collide
-            offset = 0;
-            offset += dom->GetMidDomainCollisionCount(0);
-            offset += dom->GetMidDomainCollisionCount(1);
-            inletStreamer.PostStep(offset,
-                                     dom->GetMidDomainCollisionCount(2),
-                                     &lbmParams,
-                                     latDat.get(),
-                                     propertyCache);
-            offset += dom->GetMidDomainCollisionCount(2);
+            inletStreamer.PostStep(dom->GetMidDomainSiteRange(2).first,
+                                   dom->GetMidDomainSiteRange(2).second,
+                                   &lbmParams,
+                                   latDat.get(),
+                                   propertyCache);
 
-            outletStreamer.PostStep(offset,
-                                      dom->GetMidDomainCollisionCount(3),
+            outletStreamer.PostStep(dom->GetMidDomainSiteRange(3).first,
+                                    dom->GetMidDomainSiteRange(3).second,
                                       &lbmParams,
                                       latDat.get(),
                                       propertyCache);
-            offset += dom->GetMidDomainCollisionCount(3);
 
-            inletStreamer.PostStep(offset,
-                                     dom->GetMidDomainCollisionCount(4),
+            inletStreamer.PostStep(dom->GetMidDomainSiteRange(4).first,
+                                   dom->GetMidDomainSiteRange(4).second,
                                      &lbmParams,
                                      latDat.get(),
                                      propertyCache);
-            offset += dom->GetMidDomainCollisionCount(4);
 
-            outletStreamer.PostStep(offset,
-                                      dom->GetMidDomainCollisionCount(5),
+            outletStreamer.PostStep(dom->GetMidDomainSiteRange(5).first,
+                                    dom->GetMidDomainSiteRange(5).second,
                                       &lbmParams,
                                       latDat.get(),
                                       propertyCache);

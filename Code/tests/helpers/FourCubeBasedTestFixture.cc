@@ -27,7 +27,6 @@ namespace hemelb::tests::helpers
         unitConverter = simBuilder->GetUnitConverter();
 
         initParams.latDat = &latDat->GetDomain();
-        initParams.siteCount = initParams.latDat->GetLocalFluidSiteCount();
         initParams.lbmParams = &lbmParams;
         numSites = initParams.latDat->GetLocalFluidSiteCount();
     }

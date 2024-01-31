@@ -132,9 +132,6 @@ namespace hemelb::lb
         // Assume the first site to be used in the kernel is the first site in the core, unless otherwise specified
         InitParams() = default;
 
-        // The number of sites using this kernel instance.
-        site_t siteCount;
-
         // Each streamer is responsible for updating certain types of sites. These are arranged such they are largely
         // contiguous in memory (the local contiguous site id). This data structure refers to which of those are handled
         // by the current streamer. These are given as a collection of contiguous site ids, running from e.g.
