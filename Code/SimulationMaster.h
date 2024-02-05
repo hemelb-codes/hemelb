@@ -8,7 +8,7 @@
 #include <memory>
 
 #include "lb/Lattices.h"
-#include "lb/lb.hpp"
+#include "lb/lb.h"
 #include "lb/StabilityTester.h"
 #include "net/net.h"
 #include "lb/EntropyTester.h"
@@ -32,13 +32,10 @@ namespace hemelb
     namespace extraction { class PropertyActor; }
     namespace io { class Checkpointer; }
 
-    template<class TRAITS = Traits<>>
     class SimulationMaster
     {
     public:
         friend class configuration::SimBuilder;
-        using Traits = TRAITS;
-        using LatticeType = typename Traits::Lattice;
 
     protected:
         reporting::BuildInfo build_info;
@@ -53,7 +50,7 @@ namespace hemelb
         /* The next quantities are protected because they are used by MultiscaleSimulationMaster */
         std::shared_ptr<geometry::Domain> domainData;
         std::shared_ptr<geometry::FieldData> fieldData;
-        std::shared_ptr<lb::LBM<Traits>> latticeBoltzmannModel;
+        std::shared_ptr<lb::LBMBase> latticeBoltzmannModel;
         std::shared_ptr<geometry::neighbouring::NeighbouringDataManager> neighbouringDataManager;
 
         std::shared_ptr<io::PathManager> fileManager;
@@ -62,8 +59,8 @@ namespace hemelb
         std::shared_ptr<lb::SimulationState> simulationState;
 
         /** Struct containing the configuration of various checkers/testers */
-        std::shared_ptr<lb::StabilityTester<LatticeType>> stabilityTester;
-        std::shared_ptr<lb::EntropyTester<LatticeType>> entropyTester;
+        std::shared_ptr<lb::StabilityTester> stabilityTester;
+        // std::shared_ptr<lb::EntropyTester<LatticeType>> entropyTester;
         /** Actor in charge of checking the maximum density difference across the domain */
         using ICC = lb::IncompressibilityChecker<net::PhasedBroadcastRegular<>>;
         std::shared_ptr<ICC> incompressibilityChecker;
@@ -87,7 +84,10 @@ namespace hemelb
 
       void Abort();
 
-      bool IsCurrentProcTheIOProc();
+      /// Returns true if the current processor is the dedicated I/O processor.
+      inline bool IsCurrentProcTheIOProc() {
+          return ioComms.OnIORank();
+      }
 
       int GetProcessorCount();
 
@@ -143,5 +143,4 @@ namespace hemelb
   };
 }
 
-#include "SimulationMaster.impl.h"
 #endif /* HEMELB_SIMULATIONMASTER_H */

@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
       debug::Init(options.GetDebug(), argv[0], commWorld);
 
       // Prepare main simulation object...
-      SimulationMaster<> master(options, hemelbCommunicator);
+      SimulationMaster master(options, hemelbCommunicator);
 
       // ..and run it.
       master.RunSimulation();

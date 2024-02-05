@@ -12,10 +12,8 @@
 #include "tests/helpers/LaddFail.h"
 
 namespace fs = std::filesystem;
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
 
     TEST_CASE_METHOD(helpers::FolderTestFixture, "SimulationMaster") {
       const int argc = 3;
@@ -29,7 +27,7 @@ namespace hemelb
       CopyResourceToTempdir("four_cube.gmy");
 
       auto options = std::make_unique<hemelb::configuration::CommandLine>(argc, argv);
-      auto master = std::make_unique<SimulationMaster<>>(*options, Comms());
+      auto master = std::make_unique<SimulationMaster>(*options, Comms());
 
       SECTION("Running a simulation creates outputs") {
 	// TODO: This test is fatal if run with LADDIOLET. See ticket #605.
@@ -47,6 +45,4 @@ namespace hemelb
     }
       }
     }
-
-  }
 }

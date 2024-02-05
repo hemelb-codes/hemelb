@@ -6,12 +6,14 @@
 #ifndef HEMELB_CONFIGURATION_SIMBUILDER_H
 #define HEMELB_CONFIGURATION_SIMBUILDER_H
 
+#include "SimulationMaster.h"
 #include "configuration/SimConfig.h"
 #include "extraction/LbDataSourceIterator.h"
 #include "extraction/PropertyActor.h"
 #include "io/Checkpointer.h"
 #include "geometry/GmyReadResult.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
+#include "lb/lb.hpp"
 #include "lb/InitialCondition.h"
 #include "lb/StabilityTester.h"
 #include "lb/IncompressibilityChecker.hpp"
@@ -64,8 +66,8 @@ namespace hemelb::configuration {
         }
 
         // Fully build the T = SimulationMaster<Traits> from the configuration.
-        template <typename T>
-        void operator()(T & control) const;
+        template <typename TRAITS = hemelb::Traits<>>
+        void build(SimulationMaster& control) const;
 
         // The below could probably be protected/private, but handy for testing.
         [[nodiscard]] std::shared_ptr<lb::SimulationState> BuildSimulationState() const;
@@ -89,8 +91,8 @@ namespace hemelb::configuration {
         [[nodiscard]] std::shared_ptr<redblood::FlowExtension> BuildFlowExtension(FlowExtensionConfig const& conf) const;
 
         [[nodiscard]] std::shared_ptr<net::IteratedAction> BuildColloidController() const;
-        template <typename T>
-        [[nodiscard]] std::shared_ptr<net::IteratedAction> BuildCellController(T const& control, reporting::Timers& timings) const;
+        template <typename traitsType>
+        [[nodiscard]] std::shared_ptr<net::IteratedAction> BuildCellController(SimulationMaster const& control, reporting::Timers& timings) const;
         [[nodiscard]] lb::InitialCondition BuildInitialCondition() const;
         [[nodiscard]] std::shared_ptr<extraction::PropertyActor> BuildPropertyExtraction(
                 std::filesystem::path const& xtr_path,
@@ -115,10 +117,9 @@ namespace hemelb::configuration {
     };
 
 
-    template <typename T>
-    void SimBuilder::operator()(T& control) const {
-        using traitsType = typename T::Traits;
-        using LatticeType = typename T::LatticeType;
+    template <typename traitsType>
+    void SimBuilder::build(SimulationMaster& control) const {
+        using LatticeType = typename traitsType::Lattice;
 
         auto& timings = control.timings;
         auto& ioComms = control.ioComms;
@@ -198,7 +199,7 @@ namespace hemelb::configuration {
         );
         maybe_register_actor(control.outletValues, 1);
 
-        maybe_register_actor(control.cellController = BuildCellController<T>(control, timings), 1);
+        maybe_register_actor(control.cellController = BuildCellController<traitsType>(control, timings), 1);
 
         // Copy cos about to scale to lattice units.
         auto mon_conf = config.GetMonitoringConfiguration();
@@ -207,7 +208,7 @@ namespace hemelb::configuration {
         }
 
         // Always track stability
-        control.stabilityTester = std::make_shared<lb::StabilityTester<LatticeType>>(
+        control.stabilityTester = std::make_shared<lb::StabilityTesterImpl<LatticeType>>(
                 control.fieldData,
                 &control.communicationNet,
                 &*control.simulationState,
@@ -294,8 +295,8 @@ namespace hemelb::configuration {
     }
 #endif
 
-    template <typename T>
-    [[nodiscard]] std::shared_ptr<net::IteratedAction> SimBuilder::BuildCellController(T const& control, reporting::Timers& timings) const {
+    template <typename traitsType>
+    [[nodiscard]] std::shared_ptr<net::IteratedAction> SimBuilder::BuildCellController(SimulationMaster const& control, reporting::Timers& timings) const {
         if (config.HasRBCSection()) {
 #ifdef HEMELB_BUILD_RBC
             using traitsType = typename T::Traits;

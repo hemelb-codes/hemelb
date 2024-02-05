@@ -19,13 +19,13 @@ namespace hemelb::multiscale
      * so the main code can be read without thinking about multiscale.
      */
     template<class Intercommunicator>
-    class MultiscaleSimulationMaster : public SimulationMaster<>
+    class MultiscaleSimulationMaster : public SimulationMaster
     {
     public:
         MultiscaleSimulationMaster(configuration::CommandLine &options,
                                    const net::IOCommunicator& ioComm,
                                    Intercommunicator & aintercomms) :
-            SimulationMaster<>(options, ioComm), intercomms(aintercomms),
+            SimulationMaster(options, ioComm), intercomms(aintercomms),
                 multiscaleIoletType("inoutlet")
         {
           // We only have one shared object type so far, an iolet.

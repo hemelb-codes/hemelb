@@ -2,8 +2,6 @@
 // the HemeLB team and/or their institutions, as detailed in the
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
-#ifndef HEMELB_SIMULATIONMASTER_IMPL_H
-#define HEMELB_SIMULATIONMASTER_IMPL_H
 
 #include "SimulationMaster.h"
 
@@ -39,8 +37,7 @@ namespace hemelb
      * Initialises member variables including the network topology
      * object.
      */
-    template<class TRAITS>
-    SimulationMaster<TRAITS>::SimulationMaster(configuration::CommandLine & options,
+    SimulationMaster::SimulationMaster(configuration::CommandLine & options,
                                                const net::IOCommunicator& ioComm) :
             build_info(), ioComms(ioComm.Duplicate()), communicationNet(ioComms)
     {
@@ -56,32 +53,16 @@ namespace hemelb
         // Use it to initialise self
         auto builder = configuration::SimBuilder(simConfig);
         log::Logger::Log<log::Info, log::Singleton>("Beginning Initialisation.");
-        builder(*this);
+        builder.build<>(*this);
     }
 
-  /**
-   * Destructor for the SimulationMaster class.
-   *
-   * Deallocates dynamically allocated memory to contained classes.
-   */
-  template<class TRAITS>
-  SimulationMaster<TRAITS>::~SimulationMaster() = default;
-
-  /**
-   * Returns true if the current processor is the dedicated I/O
-   * processor.
-   */
-  template<class TRAITS>
-  bool SimulationMaster<TRAITS>::IsCurrentProcTheIOProc()
-  {
-    return ioComms.OnIORank();
-  }
+  /// Destructor for the SimulationMaster class.
+  SimulationMaster::~SimulationMaster() = default;
 
   /**
    * Returns the number of processors involved in the simulation.
    */
-  template<class TRAITS>
-  int SimulationMaster<TRAITS>::GetProcessorCount()
+  int SimulationMaster::GetProcessorCount()
   {
     return ioComms.Size();
   }
@@ -90,20 +71,17 @@ namespace hemelb
    * Initialises various elements of the simulation if necessary:
    * domain decomposition, LBM and visualisation.
    */
-  template<class TRAITS>
-  void SimulationMaster<TRAITS>::Initialise()
+  void SimulationMaster::Initialise()
   {
 
   }
 
-  template<class TRAITS>
-  void SimulationMaster<TRAITS>::HandleActors()
+  void SimulationMaster::HandleActors()
   {
     stepManager->CallActions();
   }
 
-  template<class TRAITS>
-  void SimulationMaster<TRAITS>::OnUnstableSimulation()
+  void SimulationMaster::OnUnstableSimulation()
   {
     LogStabilityReport();
     log::Logger::Log<log::Warning, log::Singleton>("Aborting: time step length: %f\n",
@@ -115,8 +93,7 @@ namespace hemelb
   /**
    * Begin the simulation.
    */
-  template<class TRAITS>
-  void SimulationMaster<TRAITS>::RunSimulation()
+  void SimulationMaster::RunSimulation()
   {
     log::Logger::Log<log::Info, log::Singleton>("Beginning to run simulation.");
     timings.simulation().Start();
@@ -145,8 +122,7 @@ namespace hemelb
     Finalise();
   }
 
-  template<class TRAITS>
-  void SimulationMaster<TRAITS>::Finalise()
+  void SimulationMaster::Finalise()
   {
     timings.total().Stop();
     timings.Reduce(ioComms);
@@ -164,8 +140,7 @@ namespace hemelb
     log::Logger::Log<log::Info, log::Singleton>("Finish running simulation.");
   }
 
-  template<class TRAITS>
-  void SimulationMaster<TRAITS>::DoTimeStep()
+  void SimulationMaster::DoTimeStep()
   {
     log::Logger::Log<log::Debug, log::OnePerCore>("Current LB time: %e",
                                                   simulationState->GetTime());
@@ -218,8 +193,7 @@ namespace hemelb
     simulationState->Increment();
   }
 
-  template<class TRAITS>
-  void SimulationMaster<TRAITS>::RecalculatePropertyRequirements()
+  void SimulationMaster::RecalculatePropertyRequirements()
   {
     // Get the property cache & reset its list of properties to get.
     lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
@@ -242,8 +216,7 @@ namespace hemelb
   /**
    * Called on error to abort the simulation and pull-down the MPI environment.
    */
-  template<class TRAITS>
-  void SimulationMaster<TRAITS>::Abort()
+  void SimulationMaster::Abort()
   {
     // This gives us something to work from when we have an error - we get the rank
     // that calls abort, and we get a stack-trace from the exception having been thrown.
@@ -253,8 +226,7 @@ namespace hemelb
     exit(1);
   }
 
-  template<class TRAITS>
-  void SimulationMaster<TRAITS>::LogStabilityReport()
+  void SimulationMaster::LogStabilityReport()
   {
     if (incompressibilityChecker && incompressibilityChecker->AreDensitiesAvailable())
     {
@@ -274,14 +246,12 @@ namespace hemelb
     }
   }
 
-  template<class TRAITS>
-  const util::UnitConverter& SimulationMaster<TRAITS>::GetUnitConverter() const
+  const util::UnitConverter& SimulationMaster::GetUnitConverter() const
   {
     return *unitConverter;
   }
 
-    template <class TRAITS>
-    configuration::SimConfig SimulationMaster<TRAITS>::ToConfig() const {
+    configuration::SimConfig SimulationMaster::ToConfig() const {
         using namespace configuration;
         SimConfig ans = simConfig;
         if (simConfig.HasColloidSection())
@@ -289,5 +259,3 @@ namespace hemelb
         return ans;
     }
 }
-
-#endif
