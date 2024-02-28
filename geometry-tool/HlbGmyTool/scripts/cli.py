@@ -20,13 +20,6 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--stl",
-    default=None,
-    dest="StlFile",
-    help="The STL file to use as input",
-    metavar="PATH",
-)
-parser.add_argument(
     "--geometry",
     default=None,
     dest="OutputGeometryFile",
