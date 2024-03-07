@@ -9,7 +9,7 @@ add_library(hemelb_geometry OBJECT
   GeometryReader.cc needs/Needs.cc
   LookupTree.cc
   Domain.cc FieldData.cc
-  SiteDataBare.cc SiteData.cc
+  SiteDataBare.cc
   SiteTraverser.cc VolumeTraverser.cc Block.cc
   decomposition/BasicDecomposition.cc
   decomposition/OptimisedDecomposition.cc

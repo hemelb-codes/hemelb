@@ -10,11 +10,8 @@
 #include "geometry/GeometrySite.h"
 #include "geometry/SiteType.h"
 
-namespace hemelb
+namespace hemelb::geometry
 {
-
-  namespace geometry
-  {
     class SiteData
     {
       public:
@@ -76,7 +73,6 @@ namespace hemelb
         SiteType type;
         int ioletId;
     };
-  }
 }
 
 #endif /* HEMELB_GEOMETRY_SITEDATABARE_H */

@@ -36,14 +36,13 @@ namespace hemelb::net
         // Specify communicator and a tag to use.
         sparse_exchange(MpiCommunicator const &c, int t) :
                 comm(c), tag(t),
-                dtype(MpiDataTypeTraits<T>::GetMpiDataType()) {
+                dtype(MpiDataType<T>()) {
         }
 
         // Send a single value, if allowed
         void send(T const &val, int to_rank) requires (MSG_SIZE == 1 || MSG_SIZE == std::dynamic_extent) {
             MPI_Request r;
-            HEMELB_MPI_CALL(MPI_Issend,
-                            (&val, 1, dtype, to_rank, tag, comm, &r));
+            MpiCall{MPI_Issend}(&val, 1, dtype, to_rank, tag, comm, &r);
             send_reqs.push_back(r);
         }
 
@@ -60,8 +59,7 @@ namespace hemelb::net
             }
 
             MPI_Request r;
-            HEMELB_MPI_CALL(MPI_Issend,
-                            (&data.data(), std::ssize(data), dtype, to_rank, tag, comm, &r));
+            MpiCall{MPI_Issend}(data.data(), std::ssize(data), dtype, to_rank, tag, comm, &r);
             send_reqs.push_back(r);
         }
 
@@ -82,38 +80,32 @@ namespace hemelb::net
                 // Check for arriving messages
                 MPI_Status status;
                 int msg_available;
-                HEMELB_MPI_CALL(MPI_Iprobe,
-                                (MPI_ANY_SOURCE, tag, comm, &msg_available, &status));
+                MpiCall{MPI_Iprobe}(MPI_ANY_SOURCE, tag, comm, &msg_available, &status);
                 if (msg_available) {
                     // We have one - check it's correct and push data onto vec
                     int nrecv;
-                    HEMELB_MPI_CALL(MPI_Get_count,
-                                    (&status, dtype, &nrecv));
+                    MpiCall{MPI_Get_count}(&status, dtype, &nrecv);
                     if constexpr (MSG_SIZE != std::dynamic_extent) {
                         if (nrecv != MSG_SIZE)
                             throw (Exception() << "Wrong message size!");
                     }
                     T *buf = sizeHandler(status.MPI_SOURCE, nrecv);
-                    HEMELB_MPI_CALL(MPI_Recv,
-                                    (buf, nrecv, dtype, status.MPI_SOURCE, tag, comm, MPI_STATUS_IGNORE));
+                    MpiCall{MPI_Recv}(buf, nrecv, dtype, status.MPI_SOURCE, tag, comm, MPI_STATUS_IGNORE);
                     recvHandler(status.MPI_SOURCE, buf);
                 }
 
                 if (!my_sends_received) {
                     // check to see if all this rank's sends have been received
-                    HEMELB_MPI_CALL(MPI_Testall,
-                                    (std::ssize(send_reqs), send_reqs.data(), &my_sends_received, MPI_STATUSES_IGNORE));
+		  MpiCall{MPI_Testall}(std::ssize(send_reqs), send_reqs.data(), &my_sends_received, MPI_STATUSES_IGNORE);
                     if (my_sends_received) {
                         // They have! Signal this to the rest of the communicator.
-                        HEMELB_MPI_CALL(MPI_Ibarrier,
-                                        (comm, &barrier_req));
+		      MpiCall{MPI_Ibarrier}(comm, &barrier_req);
                         // This Testall/Ibarrier won't run again now, but this rank
                         // will keep checking for incoming messages until all processes
                         // have started the barrier.
                     }
                 } else {
-                    HEMELB_MPI_CALL(MPI_Test,
-                                    (&barrier_req, &all_sends_received, MPI_STATUS_IGNORE));
+		  MpiCall{MPI_Test}(&barrier_req, &all_sends_received, MPI_STATUS_IGNORE);
                 }
             }
         }

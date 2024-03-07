@@ -8,55 +8,12 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <array>
 #include <mpi.h>
+#include "net/MpiError.h"
 
-#define HEMELB_MPI_TYPE_BEGIN(outType, Type, n) \
-  MPI_Datatype outType = MPI_DATATYPE_NULL; \
-  { \
-  Type typeInstances[2]; \
-  MPI_Aint instanceAddr; \
-  HEMELB_MPI_CALL(MPI_Get_address, (typeInstances, &instanceAddr)); \
-  const unsigned elementCount = n; \
-  unsigned elementCounter = 0; \
-  int elementBlockLengths[elementCount]; \
-  MPI_Aint elementDisplacements[elementCount]; \
-  MPI_Datatype elementTypes[elementCount]
-
-#define HEMELB_MPI_TYPE_ADD_MEMBER_N(name, count) \
-  if (elementCounter >= elementCount) throw ::hemelb::Exception() \
-    << "Attempting to define more members than specified"; \
-  elementBlockLengths[elementCounter] = count; \
-  HEMELB_MPI_CALL(MPI_Get_address, \
-		  (&(typeInstances->name), elementDisplacements + elementCounter) \
-		  ); \
-  elementDisplacements[elementCounter] -= instanceAddr; \
-  elementTypes[elementCounter] = ::hemelb::net::MpiDataType(typeInstances->name); \
-  ++elementCounter
-
-#define HEMELB_MPI_TYPE_ADD_MEMBER(name) HEMELB_MPI_TYPE_ADD_MEMBER_N(name, 1)
-
-#define HEMELB_MPI_TYPE_END(outType, Type) \
-  if (elementCounter != elementCount) throw ::hemelb::Exception() \
-    << "Error in type definition: only " << elementCounter << " elements added but specified " << elementCount; \
-  MPI_Datatype tmp_type; \
-  HEMELB_MPI_CALL(MPI_Type_create_struct, \
-                  (elementCount, elementBlockLengths, elementDisplacements, elementTypes, &tmp_type) \
-                  ); \
-  MPI_Aint instanceSize; \
-  HEMELB_MPI_CALL(MPI_Get_address, (&typeInstances[1], &instanceSize)); \
-  instanceSize -= instanceAddr; \
-  HEMELB_MPI_CALL(MPI_Type_create_resized, \
-                  (tmp_type, 0, instanceSize, &outType) \
-                  ); \
-  HEMELB_MPI_CALL(MPI_Type_free, \
-                  (&tmp_type) \
-                  ); \
-  }
-
-namespace hemelb
+namespace hemelb::net
 {
-  namespace net
-  {
     /*
      * There are templated functions for getting the MPI_Datatype
      * corresponding to a type or variable below. Use as:
@@ -71,32 +28,24 @@ namespace hemelb
      *     template<>
      *     MPI_Datatype hemelb::net::MpiDataTypeTraits<Foo>::RegisterMpiDataType()
      *     {
+     *       MPI_Datatype type;
      *       // Create the type
-     *       MPI_Type_commit(&type);
+     *       MpiCall{MPI_Type_commit}(&type);
      *       return type;
      *     }
      *
-     * Built-in MPI types have specializations defined in the implementation.
+     * Built-in MPI types have specializations defined which are also constexpr.
+     * Below is a partial specialisation for std::array<T, N>.
      *
-     * Important note: to ensure C++ standard compliance, you MUST declare your
-     * specialisations before use and you MUST ensure that the definition
-     * is compiled exactly once (standard ODR). These MUST both be in the
-     * namespace hemelb::net.
-     *
-     * Declaration is best done in the relevant header file. These templates are
-     * only used by MpiCommunicator's templated communication methods so the
-     * relevant #include must be before you call comm->Send() etc.
-     *
-     * Definition is best done in a .cc file.
-     *
+     * Primary template
      */
-
     template<typename T>
     class MpiDataTypeTraits
     {
       public:
-        inline static const MPI_Datatype& GetMpiDataType()
+        static const MPI_Datatype& GetMpiDataType()
         {
+	  static_assert(!std::same_as<T, std::vector<unsigned>>);
           if (mpiType == MPI_DATATYPE_NULL)
           {
             mpiType = RegisterMpiDataType();
@@ -115,47 +64,71 @@ namespace hemelb
 
     // Generic getters of data type info
     template<typename T>
-    inline const MPI_Datatype& MpiDataType()
+    auto&& MpiDataType()
     {
       return MpiDataTypeTraits<T>::GetMpiDataType();
     }
     template<typename T>
-    inline const MPI_Datatype& MpiDataType(const T&)
+    auto&& MpiDataType(const T&)
     {
       return MpiDataTypeTraits<T>::GetMpiDataType();
     }
 
-    // Declare specialisations for MPI built in types
-    // See ticket #600 for discussion around why this is required.
-    template<>
-    MPI_Datatype MpiDataTypeTraits<char>::RegisterMpiDataType();
-    template<>
-    MPI_Datatype MpiDataTypeTraits<int16_t>::RegisterMpiDataType();
-    template<>
-    MPI_Datatype MpiDataTypeTraits<int32_t>::RegisterMpiDataType();
-    template<>
-    MPI_Datatype MpiDataTypeTraits<int64_t>::RegisterMpiDataType();
-    template<>
-    MPI_Datatype MpiDataTypeTraits<size_t>::RegisterMpiDataType();
-    template<>
-    MPI_Datatype MpiDataTypeTraits<signed char>::RegisterMpiDataType();
-    template<>
-    MPI_Datatype MpiDataTypeTraits<unsigned char>::RegisterMpiDataType();
-    template<>
-    MPI_Datatype MpiDataTypeTraits<uint16_t>::RegisterMpiDataType();
-    template<>
-    MPI_Datatype MpiDataTypeTraits<uint32_t>::RegisterMpiDataType();
-    template<>
-    MPI_Datatype MpiDataTypeTraits<uint64_t>::RegisterMpiDataType();
-    template<>
-    MPI_Datatype MpiDataTypeTraits<float>::RegisterMpiDataType();
-    template<>
-    MPI_Datatype MpiDataTypeTraits<double>::RegisterMpiDataType();
-    template<>
-    MPI_Datatype MpiDataTypeTraits<long double>::RegisterMpiDataType();
-    template<>
-    MPI_Datatype MpiDataTypeTraits<wchar_t>::RegisterMpiDataType();
+    // Declare a constexpr specialisation for MPI built in types.
+    #define HEMELB_MPI_BUILTIN_TYPE(T, MPI)                     \
+    template<>                                                  \
+    class MpiDataTypeTraits<T> {                                \
+    public:                                                     \
+        static constexpr MPI_Datatype const& GetMpiDataType() { \
+            return mpiType;                                     \
+        }                                                       \
+    private:                                                    \
+        static constexpr MPI_Datatype mpiType = MPI;            \
+        template<class U> friend class MpiDataTypeTraits;       \
+    }
 
-  }
+    HEMELB_MPI_BUILTIN_TYPE(char, MPI_CHAR);
+    HEMELB_MPI_BUILTIN_TYPE(signed char, MPI_SIGNED_CHAR);
+    HEMELB_MPI_BUILTIN_TYPE(std::int16_t, MPI_SHORT);
+    HEMELB_MPI_BUILTIN_TYPE(std::int32_t, MPI_INT);
+    HEMELB_MPI_BUILTIN_TYPE(std::int64_t, MPI_LONG_LONG);
+    // HEMELB_MPI_BUILTIN_TYPE(std::size_t, MPI_UNSIGNED_LONG);
+    HEMELB_MPI_BUILTIN_TYPE(unsigned char, MPI_UNSIGNED_CHAR);
+    HEMELB_MPI_BUILTIN_TYPE(std::uint16_t, MPI_UNSIGNED_SHORT);
+    HEMELB_MPI_BUILTIN_TYPE(std::uint32_t, MPI_UNSIGNED);
+    HEMELB_MPI_BUILTIN_TYPE(std::uint64_t, MPI_UNSIGNED_LONG_LONG);
+    HEMELB_MPI_BUILTIN_TYPE(float, MPI_FLOAT);
+    HEMELB_MPI_BUILTIN_TYPE(double, MPI_DOUBLE);
+
+    // Specialisation for statically size arrays
+    template <typename T, std::size_t N>
+    class MpiDataTypeTraits<std::array<T, N>>
+    {
+    public:
+        static const MPI_Datatype& GetMpiDataType() {
+          if (mpiType == MPI_DATATYPE_NULL)
+          {
+            mpiType = RegisterMpiDataType();
+          }
+          return mpiType;
+        }
+    private:
+        static MPI_Datatype mpiType;
+        static MPI_Datatype RegisterMpiDataType() {
+	  int blocklengths[1] = { N };
+	  MPI_Datatype types[1] = { MpiDataType<T>() };
+	  MPI_Aint displacements[1] = { 0 };
+	  MPI_Datatype ret;
+	  MpiCall{MPI_Type_create_struct}(1, blocklengths, displacements, types, &ret);
+	  MpiCall{MPI_Type_commit}(&ret);
+	  return ret;
+	}
+
+        template<class U> friend class MpiDataTypeTraits;
+    };
+
+    template <typename T, std::size_t N>
+    MPI_Datatype MpiDataTypeTraits<std::array<T, N>>::mpiType = MPI_DATATYPE_NULL;
+
 }
 #endif // HEMELB_NET_MPIDATATYPE_H
