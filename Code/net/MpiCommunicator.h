@@ -239,6 +239,8 @@ namespace hemelb::net
           return Split(color, Rank());
         }
 
+        MpiCommunicator SplitType(int type = MPI_COMM_TYPE_SHARED) const;
+
         void Barrier() const;
 
       protected:

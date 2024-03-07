@@ -6,27 +6,46 @@
 #ifndef HEMELB_NET_IOCOMMUNICATOR_H
 #define HEMELB_NET_IOCOMMUNICATOR_H
 
-//#include <vector>
-//#include <cstdio>
-//
-//#include "constants.h"
 #include "net/MpiCommunicator.h"
 
-namespace hemelb
-{
-  namespace net
-  {
+namespace hemelb::net {
     /**
-     * An MPI communicator with a special I/O rank.
+     * An MPI communicator, which has two special sub communicators:
+     *
+     * - one for each MPI shared mem region (i.e. per node)
+     *
+     * - one made up of all the node-rank-zero processes (i.e. size of
+     * number of nodes, one member per node)
+     *
+     * The top level communicator also has a special IO rank.
      */
     class IOCommunicator : public MpiCommunicator
     {
-      public:
-        IOCommunicator(const MpiCommunicator& comm);
-        bool OnIORank() const;
-        int GetIORank() const;
+        MpiCommunicator nodeComm;
+        bool amNodeLeader;
+        MpiCommunicator leadersComm;
+    public:
+        static constexpr int IO_RANK = 0;
+
+        explicit IOCommunicator(const MpiCommunicator& comm);
+
+        inline bool OnIORank() const {
+            return Rank() == IO_RANK;
+        }
+        constexpr int GetIORank() const {
+            return IO_RANK;
+        }
+
+        inline MpiCommunicator const& GetNodeComm() const {
+            return nodeComm;
+        }
+        inline bool AmNodeLeader() const {
+            return amNodeLeader;
+        }
+        inline MpiCommunicator const& GetLeadersComm() const {
+            return leadersComm;
+        }
     };
-  }
 }
 
 #endif /* HEMELB_NET_IOCOMMUNICATOR_H */

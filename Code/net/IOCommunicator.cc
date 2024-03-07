@@ -6,24 +6,14 @@
 #include "net/IOCommunicator.h"
 #include "net/mpi.h"
 
-namespace hemelb
+namespace hemelb::net
 {
-  namespace net
-  {
     IOCommunicator::IOCommunicator(const MpiCommunicator& comm) :
-        MpiCommunicator(comm)
+        MpiCommunicator(comm),
+        nodeComm(comm.SplitType()),
+        amNodeLeader(nodeComm.Rank() == IO_RANK),
+        leadersComm(comm.Split(amNodeLeader))
     {
     }
 
-    bool IOCommunicator::OnIORank() const
-    {
-      return Rank() == GetIORank();
-    }
-
-    int IOCommunicator::GetIORank() const
-    {
-      return 0;
-    }
-
-  }
 }

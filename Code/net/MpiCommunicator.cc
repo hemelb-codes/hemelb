@@ -163,6 +163,13 @@ namespace hemelb::net
       return {newComm, true};
     }
 
+    MpiCommunicator MpiCommunicator::SplitType(int type) const
+    {
+      MPI_Comm newComm;
+      HEMELB_MPI_CALL(MPI_Comm_split_type, (*commPtr, type, Rank(), MPI_INFO_NULL, &newComm));
+      return {newComm, true};
+    }
+
     std::map<int, int> MpiCommunicator::RankMap(MpiCommunicator const &valueComm) const
     {
       MPI_Group keyGroup, valueGroup;
