@@ -17,7 +17,6 @@ namespace hemelb::net
     class WinData {
         using value_type = T;
         using span = std::span<T, EXTENT == DYNAMIC_EXTENT ? std::dynamic_extent : EXTENT>;
-        using traits = net::MpiDataTypeTraits<value_type>;
 
         // We own the window (and data) so invoke rule of five
         MPI_Win window = MPI_WIN_NULL;
@@ -118,8 +117,8 @@ namespace hemelb::net
                 );
                 T ans;
                 HEMELB_MPI_CALL(MPI_Get, (
-                        &ans, 1, traits::GetMpiDataType(),
-                                trank, tdisp, 1, traits::GetMpiDataType(),
+                        &ans, 1, MpiDataType<T>(),
+                                trank, tdisp, 1, MpiDataType<T>(),
                                 win->window
                 ));
                 HEMELB_MPI_CALL(MPI_Win_unlock,
@@ -133,8 +132,8 @@ namespace hemelb::net
             // Up to the caller to deal with synchronisation!
             reference operator=(value_type const& val) {
                 HEMELB_MPI_CALL(MPI_Put, (
-                        &val, 1, traits::GetMpiDataType(),
-                                this->trank, this->tdisp, 1, traits::GetMpiDataType(),
+                        &val, 1, MpiDataType<T>(),
+                                this->trank, this->tdisp, 1, MpiDataType<T>(),
                                 this->win->window
                 ));
                 return *this;
@@ -197,8 +196,8 @@ namespace hemelb::net
                             (MPI_LOCK_SHARED, rank, MPI_MODE_NOCHECK, window)
             );
             HEMELB_MPI_CALL(MPI_Get, (
-                    dest.data(), dest.size(), traits::GetMpiDataType(),
-                            rank, i, dest.size(), traits::GetMpiDataType(),
+                    dest.data(), dest.size(), MpiDataType<T>(),
+                            rank, i, dest.size(), MpiDataType<T>(),
                             window
             ));
             HEMELB_MPI_CALL(MPI_Win_unlock,
@@ -227,8 +226,8 @@ namespace hemelb::net
                             (MPI_LOCK_SHARED, rank, MPI_MODE_NOCHECK, window)
             );
             HEMELB_MPI_CALL(MPI_Get, (
-                    dest.data(), dest.size(), traits::GetMpiDataType(),
-                            rank, 0, dest.size(), traits::GetMpiDataType(),
+                    dest.data(), dest.size(), MpiDataType<T>(),
+                            rank, 0, dest.size(), MpiDataType<T>(),
                             window
             ));
             HEMELB_MPI_CALL(MPI_Win_unlock,

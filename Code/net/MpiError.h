@@ -6,13 +6,15 @@
 #ifndef HEMELB_NET_MPIERROR_H
 #define HEMELB_NET_MPIERROR_H
 
+#include <functional>
+#include <source_location>
+
 #include <mpi.h>
+
 #include "Exception.h"
 
-namespace hemelb
+namespace hemelb::net
 {
-  namespace net
-  {
     /**
      * Indicate an error to do with MPI.
      *
@@ -31,9 +33,34 @@ namespace hemelb
         const char* fileName;
         const int lineNo;
     };
-  }
+
+    /**
+     * This helper will call the MPI_* function and check the return
+     * code, ensuring that errors are handled.
+     *
+     * Use:
+     * MpiCall{MPI_Bcast}(buffer, count, dtype, root, comm):
+     */
+    template <typename FuncT>
+    struct MpiCall {
+        FuncT* func;
+        std::source_location loc;
+
+        MpiCall(FuncT* f, std::source_location l = std::source_location::current())
+            : func(std::move(f)), loc(l) {
+        }
+
+        template <typename... ArgTs>
+        requires std::invocable<FuncT, ArgTs...>
+        void operator()(ArgTs&&... args) {
+            int res = std::invoke(func, std::forward<ArgTs>(args)...);
+            if (res != MPI_SUCCESS)
+              throw MpiError(loc.function_name(), res, loc.file_name(), loc.line());
+        }
+    };
 }
 
+// Macro version of the above - deprecated
 #define HEMELB_MPI_CALL( mpiFunc, args ) \
 { \
   int _check_result = mpiFunc args; \

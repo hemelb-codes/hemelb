@@ -24,10 +24,10 @@
 #include "io/xml.h"
 #include "net/BuildInfo.h"
 #include "net/IOCommunicator.h"
-#include "colloids/BodyForces.h"
-#include "colloids/BoundaryConditions.h"
 
 #ifdef HEMELB_BUILD_COLLOIDS
+#  include "colloids/BodyForces.h"
+#  include "colloids/BoundaryConditions.h"
 #  include "colloids/ColloidController.h"
 #endif
 

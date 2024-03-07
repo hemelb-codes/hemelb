@@ -9,13 +9,5 @@
 #include "geometry/SiteDataBare.h"
 #include "net/MpiDataType.h"
 
-namespace hemelb
-{
-  namespace net
-  {
-    template<>
-    MPI_Datatype MpiDataTypeTraits<geometry::SiteType>::RegisterMpiDataType();
-  }
-}
 
 #endif /* HEMELB_GEOMETRY_SITEDATA_H */

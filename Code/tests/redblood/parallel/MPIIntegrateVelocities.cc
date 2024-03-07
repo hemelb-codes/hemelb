@@ -13,6 +13,7 @@
 #include "redblood/parallel/CellParallelization.h"
 #include "configuration/CommandLine.h"
 #include "SimulationMaster.h"
+#include "util/span.h"
 #include "tests/redblood/Fixtures.h"
 #include "tests/helpers/LatticeDataAccess.h"
 #include "tests/helpers/FolderTestFixture.h"
@@ -164,7 +165,7 @@ namespace hemelb::tests
 	Positions positions = world.Rank() == 0 ?
 	  cell->GetVertices() :
 	  Positions(cell->GetNumberOfNodes(), LatticePosition::Zero());
-	world.Broadcast(positions, 0);
+	world.Broadcast(to_span(positions), 0);
 	if (world.Rank() != 0 and owned.find(cell) != owned.end()) {
 	  for (auto const item : util::zip(cell->GetVertices(), positions)) {
 	    REQUIRE(ApproxV(std::get<1>(item)).Margin(1e-8) == std::get<0>(item));

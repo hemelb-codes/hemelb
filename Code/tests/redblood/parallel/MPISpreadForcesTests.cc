@@ -12,6 +12,7 @@
 #include "redblood/parallel/SpreadForces.h"
 #include "configuration/CommandLine.h"
 #include "SimulationMaster.h"
+#include "util/span.h"
 #include "tests/redblood/Fixtures.h"
 #include "tests/helpers/LatticeDataAccess.h"
 #include "tests/helpers/FolderTestFixture.h"
@@ -136,7 +137,7 @@ namespace hemelb::tests
       world.Broadcast(nIndices, 0);
       REQUIRE(nIndices > 0);
       indices.resize(nIndices);
-      world.Broadcast(indices, 0);
+      world.Broadcast(to_span(indices), 0);
 
       if (not color)
         {

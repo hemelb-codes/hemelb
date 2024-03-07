@@ -24,12 +24,12 @@ namespace hemelb
 
     struct MPIRuntimeType
     {
-      typedef MPI_Datatype RuntimeType;
+      using RuntimeType = MPI_Datatype;
 
       template<class T>
       static RuntimeType GetType()
       {
-	return net::MpiDataTypeTraits<T>::GetMpiDataType();
+	return net::MpiDataType<T>();
       }
     };
 

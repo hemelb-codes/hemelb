@@ -8,20 +8,6 @@
 #include "hassert.h"
 #include "constants.h"
 
-namespace hemelb::net {
-    template<>
-    MPI_Datatype MpiDataTypeTraits<std::array<int, 2>>::RegisterMpiDataType() {
-        const int typeCount = 1;
-        int blocklengths[typeCount] = {2};
-        MPI_Datatype types[typeCount] = { net::MpiDataType<int>() };
-        MPI_Aint displacements[typeCount] = { 0 };
-        MPI_Datatype ret;
-        HEMELB_MPI_CALL(MPI_Type_create_struct, (typeCount, blocklengths, displacements, types, &ret));
-        HEMELB_MPI_CALL(MPI_Type_commit, (&ret));
-        return ret;
-    }
-}
-
 namespace hemelb::geometry::octree {
 
     LookupTree::LookupTree(U16 N) : levels(N+1), n_levels(N) {

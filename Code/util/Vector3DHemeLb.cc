@@ -7,48 +7,6 @@
 #include "net/mpi.h"
 #include "Exception.h"
 
-namespace hemelb::net
-{
-    template<typename vectorType>
-    MPI_Datatype GenerateTypeForVector()
-    {
-      const int typeCount = 1;
-      int blocklengths[typeCount] = { 3 };
-
-      MPI_Datatype types[typeCount] = { net::MpiDataType<vectorType>() };
-
-      MPI_Aint displacements[typeCount] = { 0 };
-
-      MPI_Datatype ret;
-
-      HEMELB_MPI_CALL(MPI_Type_create_struct, (typeCount, blocklengths, displacements, types, &ret));
-
-      HEMELB_MPI_CALL(MPI_Type_commit, (&ret));
-      return ret;
-    }
-    template<>
-    MPI_Datatype MpiDataTypeTraits<util::Vector3D<float> >::RegisterMpiDataType()
-    {
-      return GenerateTypeForVector<float>();
-    }
-
-    template<>
-    MPI_Datatype MpiDataTypeTraits<util::Vector3D<site_t> >::RegisterMpiDataType()
-    {
-      return GenerateTypeForVector<site_t>();
-    }
-    template<>
-    MPI_Datatype MpiDataTypeTraits<util::Vector3D<U16> >::RegisterMpiDataType()
-    {
-        return GenerateTypeForVector<U16>();
-    }
-
-    template<>
-    MPI_Datatype MpiDataTypeTraits<util::Vector3D<distribn_t> >::RegisterMpiDataType()
-    {
-      return GenerateTypeForVector<distribn_t>();
-    }
-}
 namespace hemelb::util
 {
     namespace

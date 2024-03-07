@@ -15,6 +15,10 @@
 #include <limits>
 #include "util/utilityFunctions.h"
 
+#ifdef HEMELB_CODE
+#include "net/MpiDataType.h"
+#endif
+
 namespace hemelb::util
 {
     /**
@@ -615,22 +619,15 @@ namespace hemelb::util
       return i;
     }
 
-}
-
 #ifdef HEMELB_CODE
-#include "net/MpiDataType.h"
-
-namespace hemelb::net
-{
-    template<>
-    MPI_Datatype MpiDataTypeTraits<util::Vector3D<float> >::RegisterMpiDataType();
-    template<>
-    MPI_Datatype MpiDataTypeTraits<util::Vector3D<std::int64_t> >::RegisterMpiDataType();
-    template<>
-    MPI_Datatype MpiDataTypeTraits<util::Vector3D<std::uint16_t> >::RegisterMpiDataType();
-    template<>
-    MPI_Datatype MpiDataTypeTraits<util::Vector3D<double> >::RegisterMpiDataType();
-}
+    // If we are in the main application, let MPI use the underlying array
+    // for communications.
+    template<typename T>
+    MPI_Datatype MpiDataType(util::Vector3D<T> const& v) {
+        return net::MpiDataType<std::array<T, 3>>();
+    }
 #endif
+
+}
 
 #endif // HEMELB_UTIL_VECTOR3D_H

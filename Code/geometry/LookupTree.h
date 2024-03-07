@@ -335,9 +335,5 @@ namespace hemelb::geometry::octree
     };
 
 }
-namespace hemelb::net {
-    template<>
-    MPI_Datatype MpiDataTypeTraits<geometry::SiteRankIndex>::RegisterMpiDataType();
-}
 
 #endif
