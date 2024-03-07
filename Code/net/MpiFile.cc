@@ -7,15 +7,13 @@
 
 #include "net/MpiCommunicator.h"
 
-namespace hemelb
+namespace hemelb::net
 {
-  namespace net
-  {
     namespace
     {
       void Deleter(MPI_File* fh)
       {
-        HEMELB_MPI_CALL(MPI_File_close, (fh));
+        MpiCall{MPI_File_close}(fh);
         delete fh;
       }
     }
@@ -35,7 +33,7 @@ namespace hemelb
                           const MPI_Info info)
     {
       MPI_File ans;
-      HEMELB_MPI_CALL(MPI_File_open, (comm, filename.c_str(), mode, info, &ans));
+      MpiCall{MPI_File_open}(comm, filename.c_str(), mode, info, &ans);
       return MpiFile(comm, ans);
     }
 
@@ -54,10 +52,7 @@ namespace hemelb
 
     MPI_Offset MpiFile::GetSize() const {
       MPI_Offset ans;
-      HEMELB_MPI_CALL(
-		      MPI_File_get_size,
-		      (*filePtr, &ans)
-		      );
+      MpiCall{MPI_File_get_size}(*filePtr, &ans);
       return ans;
     }
 
@@ -69,9 +64,7 @@ namespace hemelb
     void MpiFile::SetView(MPI_Offset disp, MPI_Datatype etype, MPI_Datatype filetype,
                           const std::string& datarep, MPI_Info info)
     {
-      HEMELB_MPI_CALL(MPI_File_set_view,
-                      (*filePtr, disp, etype, filetype, datarep.c_str(), info));
+      MpiCall{MPI_File_set_view}(*filePtr, disp, etype, filetype, datarep.c_str(), info);
     }
-  }
 }
 

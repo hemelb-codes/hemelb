@@ -11,6 +11,7 @@
 #include "io/writers/XdrMemWriter.h"
 #include "io/writers/XdrVectorWriter.h"
 #include "net/IOCommunicator.h"
+#include "util/span.h"
 #include "constants.h"
 #include "units.h"
 
@@ -232,7 +233,7 @@ namespace hemelb::extraction
       if (comms.OnIORank())
       {
         // Write from the buffer
-        outputFile.WriteAt(0, header_data);
+        outputFile.WriteAt(0, to_const_span(header_data));
       }
     }
 
@@ -347,7 +348,7 @@ namespace hemelb::extraction
 	}
 
 	// Actually do the MPI writing.
-	outputFile.WriteAt(local_write_start, buffer);
+	outputFile.WriteAt(local_write_start, to_const_span(buffer));
       }
 
       overload_visit(
@@ -380,17 +381,17 @@ namespace hemelb::extraction
 				int32_t(comms.Size())
 				);
 	HASSERT(buf.size() == fmt::offset::HeaderLength);
-	offsetFile.WriteAt(0, buf);
+	offsetFile.WriteAt(0, to_const_span(buf));
       }
       // Every rank writes its offset
       uint64_t offsetForOffset = comms.Rank() * sizeof(local_write_start)
 	+ fmt::offset::HeaderLength;
-      offsetFile.WriteAt(offsetForOffset, quick_encode(local_write_start));
+      offsetFile.WriteAt(offsetForOffset, to_const_span(quick_encode(local_write_start)));
 
       // Last process writes total
       if (comms.Rank() == (comms.Size()-1)) {
 	offsetFile.WriteAt(offsetForOffset + sizeof(local_write_start),
-			   quick_encode(local_write_start + local_data_write_length));
+			   to_const_span(quick_encode(local_write_start + local_data_write_length)));
       }
     }
 

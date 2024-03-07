@@ -142,12 +142,17 @@ namespace hemelb::net
          */
         MpiCommunicator Duplicate() const;
 
+        // Broadcast overloads - all are collective as use MPI_Bcast
+        //
+        // Scalar
         template<typename T>
-        void Broadcast(T& val, const int root) const;
-        template<typename T>
-        void Broadcast(std::vector<T>& vals, const int root) const;
-	template<typename T>
-	void Broadcast(std::basic_string<T>& val, const int root) const;
+        void Broadcast(T& val, int root) const;
+        // Array of scalar (N can be dynamic_extent)
+        // Note that non-root processes must have the same size span!!
+        template<typename T, std::size_t N>
+        void Broadcast(std::span<T, N> vals, int root) const;
+        // Special case for string that does length then data.
+        void Broadcast(std::string& val, const int root) const;
 
         template<typename T>
         T AllReduce(const T& val, const MPI_Op& op) const;

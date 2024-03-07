@@ -12,6 +12,7 @@
 #include "io/readers/XdrFileReader.h"
 #include "io/readers/XdrMemReader.h"
 #include "log/Logger.h"
+#include "util/span.h"
 
 namespace hemelb::extraction {
   namespace fmt = hemelb::io::formats;
@@ -65,7 +66,7 @@ namespace hemelb::extraction {
       auto ReadTimeByIndex = [&](uint64_t iTS) {
 	uint64_t ans;
 	std::vector<char> tsbuf(8);
-	inputFile.ReadAt(localStart + iTS*allCoresWriteLength, tsbuf);
+	inputFile.ReadAt(localStart + iTS*allCoresWriteLength, to_span(tsbuf));
 	io::XdrMemReader dataReader(tsbuf);
 	dataReader.read(ans);
 	return ans;
@@ -108,7 +109,7 @@ namespace hemelb::extraction {
       const auto timeStart = iTS * allCoresWriteLength;
 
       std::vector<char> dataBuffer(readLength);
-      inputFile.ReadAt(timeStart + localStart, dataBuffer);
+      inputFile.ReadAt(timeStart + localStart, to_span(dataBuffer));
       io::XdrMemReader dataReader(dataBuffer);
 
       // Read the timestep
@@ -167,7 +168,7 @@ namespace hemelb::extraction {
       // file), but we check that they are as expected.
       if (comms.OnIORank()) {
 	auto preambleBuf = std::vector<char>(fmt::extraction::MainHeaderLength);
-	inputFile.Read(preambleBuf);
+	inputFile.Read(to_span(preambleBuf));
 	auto preambleReader = io::XdrMemReader(preambleBuf);
 
 	// Read the magic numbers.
@@ -227,7 +228,7 @@ namespace hemelb::extraction {
 			    << lengthOfFieldHeader << " B";
 
 	auto fieldHeaderBuf = std::vector<char>(lengthOfFieldHeader);
-	inputFile.Read(fieldHeaderBuf);
+	inputFile.Read(to_span(fieldHeaderBuf));
 	auto fieldHeaderReader = io::XdrMemReader(fieldHeaderBuf);
 
 	fieldHeaderReader.read(distField.name);

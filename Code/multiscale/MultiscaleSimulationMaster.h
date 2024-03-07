@@ -8,6 +8,7 @@
 #include <vector>
 #include "multiscale/Intercommunicator.h"
 #include "SimulationMaster.h"
+#include "util/span.h"
 
 namespace hemelb::multiscale
 {
@@ -67,7 +68,7 @@ namespace hemelb::multiscale
           std::vector<unsigned> GlobalIoletCount;
           GlobalIoletCount.push_back(inletValues->GetLocalIoletCount());
           GlobalIoletCount.push_back(outletValues->GetLocalIoletCount());
-          ioComms.Broadcast(GlobalIoletCount, 0);
+          ioComms.Broadcast(to_span(GlobalIoletCount), 0);
 
           std::vector<std::vector<site_t> > invertedInletBoundaryList(GlobalIoletCount[0]);
           std::vector<std::vector<site_t> > invertedOutletBoundaryList(GlobalIoletCount[1]);

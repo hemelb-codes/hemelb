@@ -8,38 +8,36 @@
 
 #include "net/MpiFile.h"
 
-namespace hemelb
+namespace hemelb::net
 {
-  namespace net
-  {
 
-    template<typename T>
-    void MpiFile::Read(std::vector<T>& buffer, MPI_Status* stat)
+    template<typename T, std::size_t N>
+    void MpiFile::Read(std::span<T, N> buffer, MPI_Status* stat)
     {
-      HEMELB_MPI_CALL(MPI_File_read, (*filePtr, &buffer[0], buffer.size(), MpiDataType<T>(), stat));
+      MpiCall{MPI_File_read}(*filePtr, &buffer[0], buffer.size(), MpiDataType<T>(), stat);
     }
-    template<typename T>
-    void MpiFile::ReadAt(MPI_Offset offset, std::vector<T>& buffer, MPI_Status* stat)
+    template<typename T, std::size_t N>
+    void MpiFile::ReadAt(MPI_Offset offset, std::span<T, N> buffer, MPI_Status* stat)
     {
-      HEMELB_MPI_CALL(MPI_File_read_at,
-                      (*filePtr, offset, &buffer[0], buffer.size(), MpiDataType<T>(), stat));
+      MpiCall{MPI_File_read_at}(*filePtr, offset, &buffer[0], buffer.size(), MpiDataType<T>(), stat);
     }
-
-    template<typename T>
-    void MpiFile::Write(const std::vector<T>& buffer, MPI_Status* stat)
+    template<typename T, std::size_t N>
+    void MpiFile::ReadAtAll(MPI_Offset offset, std::span<T, N> buffer, MPI_Status* stat)
     {
-      HEMELB_MPI_CALL(MPI_File_write,
-                      (*filePtr, buffer.data(), buffer.size(), MpiDataType<T>(), stat));
-    }
-    template<typename T>
-    void MpiFile::WriteAt(MPI_Offset offset, const std::vector<T>& buffer, MPI_Status* stat)
-    {
-      HEMELB_MPI_CALL(MPI_File_write_at,
-                      (*filePtr, offset, buffer.data(), buffer.size(), MpiDataType<T>(), stat));
+      MpiCall{MPI_File_read_at_all}(*filePtr, offset, buffer.data(), buffer.size(), MpiDataType<T>(), stat);
 
     }
 
-  }
+    template<typename T, std::size_t N>
+    void MpiFile::Write(std::span<T const, N> buffer, MPI_Status* stat)
+    {
+      MpiCall{MPI_File_write}(*filePtr, buffer.data(), buffer.size(), MpiDataType<T>(), stat);
+    }
+    template<typename T, std::size_t N>
+    void MpiFile::WriteAt(MPI_Offset offset, std::span<T const, N> buffer, MPI_Status* stat)
+    {
+      MpiCall{MPI_File_write_at}(*filePtr, offset, buffer.data(), buffer.size(), MpiDataType<T>(), stat);
+    }
 }
 
 #endif

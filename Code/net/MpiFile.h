@@ -8,16 +8,16 @@
 
 #include <filesystem>
 #include <memory>
+#include <span>
+
 #include "net/MpiError.h"
 #include "net/MpiCommunicator.h"
 
-namespace hemelb
+namespace hemelb::net
 {
-  namespace net
-  {
     class MpiFile
     {
-      public:
+    public:
         MpiFile();
 
         /**
@@ -50,25 +50,27 @@ namespace hemelb
 
         const MpiCommunicator& GetCommunicator() const;
 
-        template<typename T>
-        void Read(std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
-        template<typename T>
-        void ReadAt(MPI_Offset offset, std::vector<T>& buffer,
+        template<typename T, std::size_t N>
+        void Read(std::span<T, N> buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
+        template<typename T, std::size_t N>
+        void ReadAt(MPI_Offset offset, std::span<T, N> buffer,
                     MPI_Status* stat = MPI_STATUS_IGNORE);
+        template<typename T, std::size_t N>
+        void ReadAtAll(MPI_Offset offset, std::span<T, N> buffer,
+                       MPI_Status* stat = MPI_STATUS_IGNORE);
 
-        template<typename T>
-        void Write(const std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
-        template<typename T>
-        void WriteAt(MPI_Offset offset, const std::vector<T>& buffer, MPI_Status* stat =
+        template<typename T, std::size_t N>
+        void Write(std::span<T const, N> buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
+        template<typename T, std::size_t N>
+        void WriteAt(MPI_Offset offset, std::span<T const, N> buffer, MPI_Status* stat =
                          MPI_STATUS_IGNORE);
-      protected:
+    protected:
         MpiFile(const MpiCommunicator& parentComm, MPI_File fh);
 
         const MpiCommunicator* comm;
         std::shared_ptr<MPI_File> filePtr;
     };
 
-  }
 }
 
 #include "net/MpiFile.hpp"

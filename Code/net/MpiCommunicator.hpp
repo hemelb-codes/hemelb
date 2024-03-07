@@ -13,22 +13,12 @@ namespace hemelb::net
     template<typename T>
     void MpiCommunicator::Broadcast(T& val, const int root) const
     {
-      HEMELB_MPI_CALL(MPI_Bcast, (&val, 1, MpiDataType<T>(), root, *this));
+      MpiCall{MPI_Bcast}(&val, 1, MpiDataType<T>(), root, *this);
     }
-    template<typename T>
-    void MpiCommunicator::Broadcast(std::vector<T>& vals, const int root) const
+    template<typename T, std::size_t N>
+    void MpiCommunicator::Broadcast(std::span<T, N> vals, const int root) const
     {
-      HEMELB_MPI_CALL(MPI_Bcast, (vals.data(), vals.size(), MpiDataType<T>(), root, *this));
-    }
-    template<typename T>
-    void MpiCommunicator::Broadcast(std::basic_string<T>& val, const int root) const
-    {
-      auto len = val.size();
-      Broadcast(len, root);
-      if (Rank() != root) {
-	val.resize(len);
-      }
-      HEMELB_MPI_CALL(MPI_Bcast, (val.data(), len, MpiDataType<T>(), root, *this));
+      MpiCall{MPI_Bcast}(vals.data(), vals.size(), MpiDataType<T>(), root, *this);
     }
 
     template<typename T>

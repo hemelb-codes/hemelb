@@ -81,6 +81,16 @@ namespace hemelb::net
       HEMELB_MPI_CALL(MPI_Barrier, (*commPtr));
     }
 
+    void MpiCommunicator::Broadcast(std::string& val, const int root) const
+    {
+        auto len = val.size();
+        Broadcast(len, root);
+        if (Rank() != root) {
+            val.resize(len);
+        }
+        Broadcast(std::span<char>{val.data(), len}, root);
+    }
+
     MpiGroup MpiCommunicator::Group() const
     {
       MPI_Group grp;
