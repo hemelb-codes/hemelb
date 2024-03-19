@@ -91,9 +91,10 @@ namespace hemelb::tests
       // The 3 here is essentially a seed that relates to the magnitude of the density.
       LbTestsHelper::InitialiseAnisotropicTestData<LatticeType>(3, f_data);
 
-      distribn_t density, momentum[3], expectedDensity;
+      distribn_t density, expectedDensity;
+      util::Vector3D<double> momentum;
       util::Vector3D<distribn_t> expectedMomentum;
-      LatticeType::CalculateDensityAndMomentum(f_data, density, momentum[0], momentum[1], momentum[2]);
+      LatticeType::CalculateDensityAndMomentum(f_data, density, momentum);
 
       LbTestsHelper::CalculateRhoMomentum<LatticeType>(f_data, expectedDensity, expectedMomentum);
             
@@ -151,27 +152,20 @@ namespace hemelb::tests
       /*
        * It's also the case that these should be invertible (i.e. the density and velocity should be what we started with).
        */
-      distribn_t entropicCalculatedDensityAnsumali, entropicCalculatedMomentumAnsumali[3],
-	entropicCalculatedDensityChikatamarla, entropicCalculatedMomentumChikatamarla[3], calculatedDensity,
-	calculatedMomentum[3];
+      distribn_t entropicCalculatedDensityAnsumali, entropicCalculatedDensityChikatamarla, calculatedDensity;
+      util::Vector3D<double> entropicCalculatedMomentumAnsumali, entropicCalculatedMomentumChikatamarla, calculatedMomentum;
 
       LatticeType::CalculateDensityAndMomentum(equilibriumF,
 					       calculatedDensity,
-					       calculatedMomentum[0],
-					       calculatedMomentum[1],
-					       calculatedMomentum[2]);
+					       calculatedMomentum);
 
       LatticeType::CalculateDensityAndMomentum(equilibriumEntropicFAnsumali,
 					       entropicCalculatedDensityAnsumali,
-					       entropicCalculatedMomentumAnsumali[0],
-					       entropicCalculatedMomentumAnsumali[1],
-					       entropicCalculatedMomentumAnsumali[2]);
+					       entropicCalculatedMomentumAnsumali);
 
       LatticeType::CalculateDensityAndMomentum(equilibriumEntropicFChikatamarla,
 					       entropicCalculatedDensityChikatamarla,
-					       entropicCalculatedMomentumChikatamarla[0],
-					       entropicCalculatedMomentumChikatamarla[1],
-					       entropicCalculatedMomentumChikatamarla[2]);
+					       entropicCalculatedMomentumChikatamarla);
 
       REQUIRE(apprx(calculatedDensity) == targetDensity);
       REQUIRE(apprx(entropicCalculatedDensityAnsumali) == targetDensity);

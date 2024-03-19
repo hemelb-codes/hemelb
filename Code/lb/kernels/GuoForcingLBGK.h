@@ -94,7 +94,7 @@ namespace hemelb::lb
         LatticeType::CalculateForceDistribution(lbmParams->GetTau(),
                                                 hydroVars.velocity,
                                                 hydroVars.force,
-                                                hydroVars.forceDist);
+                                                hydroVars.forceDist.data());
 
         for (Direction dir = 0; dir < LatticeType::NUMVECTORS; ++dir)
             hydroVars.SetFPostCollision(dir,
