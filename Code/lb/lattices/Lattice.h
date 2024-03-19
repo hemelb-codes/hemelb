@@ -443,6 +443,17 @@ namespace hemelb::lb
           }
 #else
 
+        inline static void CalculateForceDistribution(const distribn_t &tau,
+                                                      const LatticeVelocity& velocity,
+                                                      const LatticeForceVector& force,
+                                                      distribn_t forceDist[])
+        {
+            CalculateForceDistribution(tau,
+                                       velocity.x(), velocity.y(), velocity.z(),
+                                       force.x(), force.y(), force.z(),
+                                       forceDist);
+        }
+
           /**
            * Calculate Force
            * @param tau
