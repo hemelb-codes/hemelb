@@ -12,8 +12,8 @@ namespace hemelb::geometry::decomposition
 {
 
     BasicDecomposition::BasicDecomposition(const GmyReadResult& geometry,
-                                           const net::MpiCommunicator& communicator) :
-            geometry(geometry), communicator(communicator)
+                                           int s) :
+            geometry(geometry), comm_size(s)
     {
     }
 
@@ -54,7 +54,7 @@ namespace hemelb::geometry::decomposition
     }
 
     std::vector<int> BasicDecomposition::Decompose(octree::LookupTree const& tree,
-                                                   std::vector<proc_t>& procAssignedToEachBlock)
+                                                   std::vector<proc_t>& procAssignedToEachBlock) const
     {
         // Root node of tree holds total fluid sites
         auto total_sites = tree.levels[0].sites_per_node[0];
@@ -63,7 +63,7 @@ namespace hemelb::geometry::decomposition
         auto& nonsolid_block_fluid_site_counts = tree.levels[tree.n_levels].sites_per_node;
         auto const n_nonsolid = nonsolid_block_fluid_site_counts.size();
 
-        if (n_nonsolid < communicator.Size())
+        if (n_nonsolid < comm_size)
             throw (Exception() << "More MPI processes than blocks - ParMETIS will be unhappy.");
         std::vector<U64> cumulative_fluid_sites(n_nonsolid + 1);
         cumulative_fluid_sites[0] = 0;
@@ -76,7 +76,7 @@ namespace hemelb::geometry::decomposition
         // Going to divide the blocks amongst the ranks. Start with them all assigned to rank 0
         std::vector<int> rank_for_block(n_nonsolid, 0);
         assign_range(cumulative_fluid_sites.begin(), --cumulative_fluid_sites.end(),
-                     rank_for_block.begin(), rank_for_block.end(), communicator.Size());
+                     rank_for_block.begin(), rank_for_block.end(), comm_size);
 
         // We need to return data organised in GMY file order
         // Initialise output to -1 => SOLID, we will overwrite the non-solid below
@@ -95,7 +95,7 @@ namespace hemelb::geometry::decomposition
         return rank_for_block;
     }
 
-    void BasicDecomposition::Validate(std::vector<proc_t>& procAssignedToEachBlock)
+  void BasicDecomposition::Validate(std::vector<proc_t>& procAssignedToEachBlock, net::MpiCommunicator const& communicator) const
     {
         log::Logger::Log<log::Debug, log::OnePerCore>("Validating procForEachBlock");
 

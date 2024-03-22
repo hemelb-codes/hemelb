@@ -28,11 +28,11 @@ namespace hemelb {
              * contiguous blocks together, and to skip blocks with no fluid sites.
              *
              * @param geometry
-             * @param communicator
+             * @param comm_size
              * @param fluidSitesOnEachBlock
              */
             BasicDecomposition(const GmyReadResult &geometry,
-                               const net::MpiCommunicator &communicator);
+                               int comm_size);
 
             /**
              * Does a basic decomposition of the geometry without requiring any communication;
@@ -45,7 +45,7 @@ namespace hemelb {
              * @return a vector of the rank assigned to each non-solid block (i.e. leaf nodes on the tree).
              */
             std::vector<int>
-            Decompose(octree::LookupTree const &blockTree, std::vector<proc_t> &procAssignedToEachBlock);
+            Decompose(octree::LookupTree const &blockTree, std::vector<proc_t> &procAssignedToEachBlock) const;
 
             /**
              * Validates that all cores have the same beliefs about which proc is to be assigned
@@ -53,12 +53,11 @@ namespace hemelb {
              *
              * @param procAssignedToEachBlock This core's decomposition result.
              */
-            void Validate(std::vector<proc_t> &procAssignedToEachBlock);
+            void Validate(std::vector<proc_t> &procAssignedToEachBlock, net::MpiCommunicator const& comm) const;
 
         private:
-
             const GmyReadResult &geometry; //! The geometry being decomposed.
-            const net::MpiCommunicator &communicator; //! The communicator object being decomposed over.
+	    int comm_size;
         };
     }
 }
