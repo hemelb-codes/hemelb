@@ -261,6 +261,16 @@ namespace hemelb::util
             }
         }
 
+        // Getters through tuple interface to support structured binding.
+        template <std::size_t I>
+        constexpr auto get() {
+            return at(I);
+        }
+        template <std::size_t I>
+        constexpr auto get() const {
+            return at(I);
+        }
+
         /**
          * Get a component by index without bounds check in release builds
          * @param index
@@ -627,7 +637,20 @@ namespace hemelb::util
         return net::MpiDataType<std::array<T, 3>>();
     }
 #endif
+}
 
+// Specialisations to support structured binding (officially sanctioned in the standard)
+namespace std {
+    template <class T>
+    struct tuple_size< hemelb::util::Vector3D<T> >
+      : std::integral_constant<std::size_t, 3>
+    {};
+
+    template <std::size_t I, class T>
+    struct tuple_element<I, hemelb::util::Vector3D<T> >
+    {
+        using type = T;
+    };
 }
 
 #endif // HEMELB_UTIL_VECTOR3D_H
