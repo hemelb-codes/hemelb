@@ -12,10 +12,8 @@
 #include "geometry/GeometrySiteLink.h"
 #include "util/Vector3D.h"
 
-namespace hemelb
+namespace hemelb::geometry
 {
-  namespace geometry
-  {
     /***
      * Model of the data for a site, as contained within a geometry file.
      * this data will be broken up and placed in various arrays in hemelb::GmyReadResult::domain_type
@@ -25,11 +23,11 @@ namespace hemelb
      */
     struct GeometrySite
     {
-      public:
+    public:
         //! Basic constructor for solid and fluid sites.
         GeometrySite(bool siteIsFluid) :
             targetProcessor(siteIsFluid ?
-              -1 :
+              UNKNOWN_PROCESS :
               SITE_OR_BLOCK_SOLID), isFluid(siteIsFluid), wallNormalAvailable(false)
         {
         }
@@ -51,7 +49,6 @@ namespace hemelb
         //! Wall normal approximation at the current fluid site.
         util::Vector3D<float> wallNormal;
     };
-  }
 }
 
 #endif /* HEMELB_GEOMETRY_SITEREADRESULT_H */

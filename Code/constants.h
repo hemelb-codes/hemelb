@@ -45,7 +45,9 @@ namespace hemelb
 
   // TODO almost certainly filth.
   constexpr distribn_t NO_VALUE = std::numeric_limits<distribn_t>::max();
-  constexpr int SITE_OR_BLOCK_SOLID = std::numeric_limits<int>::max();
+  constexpr int SITE_OR_BLOCK_SOLID = std::numeric_limits<int>::min();
+  constexpr int UNKNOWN_PROCESS = SITE_OR_BLOCK_SOLID + 1;
+
 }
 
 #endif //HEMELB_CONSTANTS_H
