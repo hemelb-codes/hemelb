@@ -80,6 +80,13 @@ namespace hemelb::util
     }
 
     //! Ranged-for loops with enumeration
+    template<class CounterT, class C>
+    auto enumerate_with(C&& c) -> Enumerate<decltype(begin(std::forward<C>(c))), CounterT>
+    {
+      return {begin(std::forward<C>(c)), end(std::forward<C>(c))};
+    }
+
+    //! Ranged-for loops with enumeration
     template<class CONTAINER>
     auto cenumerate(CONTAINER const &x) -> Enumerate<decltype(begin(x))>
     {
