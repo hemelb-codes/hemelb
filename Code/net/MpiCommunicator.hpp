@@ -227,7 +227,7 @@ namespace hemelb::net
     template<typename T>
     void MpiCommunicator::Receive(std::vector<T>& vals, int src, int tag, MPI_Status* stat) const
     {
-      HEMELB_MPI_CALL(MPI_Recv, (&vals, vals.size(), MpiDataType<T>(), src, tag, *this, stat));
+      HEMELB_MPI_CALL(MPI_Recv, (vals.data(), vals.size(), MpiDataType<T>(), src, tag, *this, stat));
     }
 
 }
