@@ -66,206 +66,224 @@ namespace hemelb::geometry
             blockCount = blockCounts.x() * blockCounts.y() * blockCounts.z();
         }
 
-        void Domain::ProcessReadSites(const GmyReadResult & readResult)
-        {
-            log::Logger::Log<log::Info, log::Singleton>("Processing sites assigned to each MPI process");
-            const auto max_site_index = sites - util::Vector3D<site_t>::Ones();
-            blocks.resize(rank_for_site_store->GetBlockCount());
+    void Domain::ProcessReadSites(const GmyReadResult & readResult)
+    {
+        log::Logger::Log<log::Info, log::Singleton>("Processing sites assigned to each MPI process");
+        const auto max_site_index = sites - util::Vector3D<site_t>::Ones();
+        blocks.resize(rank_for_site_store->GetBlockCount());
 
-            totalSharedFs = 0;
+        totalSharedFs = 0;
 
-            std::vector<SiteData> domainEdgeSiteData[COLLISION_TYPES];
-            std::vector<SiteData> midDomainSiteData[COLLISION_TYPES];
-            std::vector<site_t> domainEdgeBlockNumber[COLLISION_TYPES];
-            std::vector<site_t> midDomainBlockNumber[COLLISION_TYPES];
-            std::vector<site_t> domainEdgeSiteNumber[COLLISION_TYPES];
-            std::vector<site_t> midDomainSiteNumber[COLLISION_TYPES];
-            std::vector<util::Vector3D<float> > domainEdgeWallNormals[COLLISION_TYPES];
-            std::vector<util::Vector3D<float> > midDomainWallNormals[COLLISION_TYPES];
-            std::vector<float> domainEdgeWallDistance[COLLISION_TYPES];
-            std::vector<float> midDomainWallDistance[COLLISION_TYPES];
+        std::vector<SiteData> domainEdgeSiteData[COLLISION_TYPES];
+        std::vector<SiteData> midDomainSiteData[COLLISION_TYPES];
+        std::vector<site_t> domainEdgeBlockNumber[COLLISION_TYPES];
+        std::vector<site_t> midDomainBlockNumber[COLLISION_TYPES];
+        std::vector<site_t> domainEdgeSiteNumber[COLLISION_TYPES];
+        std::vector<site_t> midDomainSiteNumber[COLLISION_TYPES];
+        std::vector<util::Vector3D<float> > domainEdgeWallNormals[COLLISION_TYPES];
+        std::vector<util::Vector3D<float> > midDomainWallNormals[COLLISION_TYPES];
+        std::vector<float> domainEdgeWallDistance[COLLISION_TYPES];
+        std::vector<float> midDomainWallDistance[COLLISION_TYPES];
 
-            proc_t localRank = comms.Rank();
+        proc_t localRank = comms.Rank();
 
-            // Iterate over all blocks in site units
-            for (auto leaf: rank_for_site_store->GetTree().IterLeaves())
-            {
-                auto block_ijk = leaf.coords();
-                site_t blockGmyIdx = GetBlockGmyIdxFromBlockCoords(block_ijk);
-                auto const& blockReadIn = readResult.Blocks[blockGmyIdx];
+        // We need to know the coordinates of all the domain edge
+        // sites below so we can loop over them to figure out which
+        // processes they live on once the RMA data structures are
+        // initialised.
+        std::vector<util::Vector3D<site_t>> edge_sites;
 
-                if (blockReadIn.Sites.empty())
+        // This closure returns which rank a site (given by global
+        // 3D coordinate) lives on, according to the
+        // GmyReadResult. Since that is only guaranteed to know
+        // the rank of sites which are assigned to this rank, it
+        // may well return UNKNOWN_PROCESS
+        auto read_result_rank_for_site = [this, &max_site_index, &readResult](
+            util::Vector3D<site_t> const& global_site_coords,
+            Vec16& block_coords, site_t& site_gmy_idx
+        ) {
+            // If outside the bounding box it is definitely non-fluid
+            if (!global_site_coords.IsInRange(
+                util::Vector3D<site_t>::Zero(),
+                max_site_index
+            ))
+                return SITE_OR_BLOCK_SOLID;
+
+          // ... (that is actually being simulated and not a solid)...
+          block_coords = (global_site_coords / readResult.GetBlockSize()).as<U16>();
+          site_t block_gmy_idx = readResult.GetBlockIdFromBlockCoordinates(block_coords.x(),
+                                                                           block_coords.y(),
+                                                                           block_coords.z());
+
+          // Move on if the neighbour is in a block of solids
+          // in which case the block will contain zero sites
+          // Or on if the neighbour site is solid
+          // in which case the targetProcessor is SITE_OR_BLOCK_SOLID
+          // Or the neighbour is also on this processor
+          // in which case the targetProcessor is localRank
+          if (readResult.Blocks[block_gmy_idx].Sites.empty())
+              return SITE_OR_BLOCK_SOLID;
+
+          auto site_local_coords = global_site_coords % readResult.GetBlockSize();
+          site_gmy_idx = readResult.GetSiteIdFromSiteCoordinates(site_local_coords.x(),
+                                                                 site_local_coords.y(),
+                                                                 site_local_coords.z());
+          return readResult.Blocks[block_gmy_idx].Sites[site_gmy_idx].targetProcessor;
+        };
+
+        for (auto leaf: rank_for_site_store->GetTree().IterLeaves()) {
+            auto block_ijk = leaf.coords();
+            site_t blockGmyIdx = GetBlockGmyIdxFromBlockCoords(block_ijk);
+            auto const& blockReadIn = readResult.Blocks[blockGmyIdx];
+
+            if (blockReadIn.Sites.empty())
+                continue;
+
+            auto blockOctIdx = leaf.index();
+            auto lowest_site_in_block = block_ijk.as<site_t>() * GetBlockSize();
+
+            // Iterate over all sites within the current block.
+            for (
+                auto siteTraverser = SiteTraverser(*this);
+                siteTraverser.CurrentLocationValid();
+                siteTraverser.TraverseOne()
+             ) {
+                site_t localSiteId = siteTraverser.GetCurrentIndex();
+                // Create block if required
+                if (blocks[blockOctIdx].IsEmpty())
+                    blocks[blockOctIdx] = Block(GetSitesPerBlockVolumeUnit());
+
+                auto assignedRank = blockReadIn.Sites[localSiteId].targetProcessor;
+                blocks[blockOctIdx].SetProcessorRankForSite(localSiteId, assignedRank);
+
+                // If the site is not on this processor, continue.
+                if (assignedRank != localRank)
                     continue;
 
-                auto blockOctIdx = leaf.index();
-                auto lowest_site_in_block = block_ijk.as<site_t>() * GetBlockSize();
-
-                // Iterate over all sites within the current block.
-                for (auto siteTraverser = SiteTraverser(*this);
-                     siteTraverser.CurrentLocationValid(); siteTraverser.TraverseOne())
-                {
-                    site_t localSiteId = siteTraverser.GetCurrentIndex();
-                    // Create block if required
-                    if (blocks[blockOctIdx].IsEmpty())
-                        blocks[blockOctIdx] = Block(GetSitesPerBlockVolumeUnit());
-
-                    auto assignedRank = blockReadIn.Sites[localSiteId].targetProcessor;
-                    blocks[blockOctIdx].SetProcessorRankForSite(localSiteId, assignedRank);
-
-                    // If the site is not on this processor, continue.
-                    if (assignedRank != localRank)
+                bool isMidDomainSite = true;
+                util::Vector3D<site_t> siteGlobalCoords = lowest_site_in_block + siteTraverser.GetCurrentLocation();
+                // Iterate over all non-zero direction vectors.
+                for (unsigned int l = 1; l < latticeInfo.GetNumVectors(); l++) {
+                    // Find the neighbour site co-ords in this direction.
+                    util::Vector3D<site_t> neighbourGlobalCoords = siteGlobalCoords
+                      + latticeInfo.GetVector(l).as<site_t>();
+                    Vec16 neighbourBlock;
+                    site_t neighbourSiteId;
+                    site_t neighbourProc = read_result_rank_for_site(
+                        neighbourGlobalCoords, neighbourBlock, neighbourSiteId
+                    );
+                    if (neighbourProc == SITE_OR_BLOCK_SOLID || localRank == neighbourProc)
                         continue;
-
-                    bool isMidDomainSite = true;
-                    // Iterate over all non-zero direction vectors.
-                    for (unsigned int l = 1; l < latticeInfo.GetNumVectors(); l++)
-                    {
-                        // Find the neighbour site co-ords in this direction.
-                        util::Vector3D<site_t> neighbourGlobalCoords =
-                                lowest_site_in_block
-                                + siteTraverser.GetCurrentLocation()
-                                + latticeInfo.GetVector(l).as<site_t>();
-
-                        // If outside the bounding box it is definitely non-fluid
-                        if (!neighbourGlobalCoords.IsInRange(
-                                util::Vector3D<site_t>::Zero(),
-                                max_site_index
-                                ))
-                            continue;
-
-
-                        // ... (that is actually being simulated and not a solid)...
-                        auto neighbourBlock = neighbourGlobalCoords / readResult.GetBlockSize();
-                        auto neighbourSite = neighbourGlobalCoords % readResult.GetBlockSize();
-                        site_t neighBlockGmyIdx = readResult.GetBlockIdFromBlockCoordinates(neighbourBlock.x(),
-                                                                                            neighbourBlock.y(),
-                                                                                            neighbourBlock.z());
-
-                        // Move on if the neighbour is in a block of solids
-                        // in which case the block will contain zero sites
-                        // Or on if the neighbour site is solid
-                        // in which case the targetProcessor is SITE_OR_BLOCK_SOLID
-                        // Or the neighbour is also on this processor
-                        // in which case the targetProcessor is localRank
-                        if (readResult.Blocks[neighBlockGmyIdx].Sites.empty())
-                            continue;
-
-                        site_t neighbourSiteId = readResult.GetSiteIdFromSiteCoordinates(neighbourSite.x(),
-                                                                                         neighbourSite.y(),
-                                                                                         neighbourSite.z());
-
-                        proc_t neighbourProc = readResult.Blocks[neighBlockGmyIdx].Sites[neighbourSiteId].targetProcessor;
-                        if (neighbourProc == SITE_OR_BLOCK_SOLID || localRank == neighbourProc)
-                            continue;
-
-                        isMidDomainSite = false;
-                        totalSharedFs++;
-
-                        // Iterate over neighbouring processors until we find the one with the
-                        // neighbouring site on it.
-                        auto neighProcWithSite = std::find_if(
-                                neighbouringProcs.begin(), neighbouringProcs.end(),
-                                [&](NeighbouringProcessor const& np) {
-                                    return np.Rank == neighbourProc;
-                                });
-                        if (neighProcWithSite == neighbouringProcs.end()) {
-                            // We didn't find a neighbour-proc with the
-                            // neighbour-site on it, so we need a new
-                            // neighbouring processor.
-
-                            // Store rank of neighbour in >neigh_proc[neigh_procs]
-                            NeighbouringProcessor lNewNeighbour;
-                            lNewNeighbour.SharedDistributionCount = 1;
-                            lNewNeighbour.Rank = neighbourProc;
-                            neighbouringProcs.push_back(lNewNeighbour);
-
-                            // if debugging then output decisions with reasoning for all neighbour processors
-                            log::Logger::Log<log::Trace, log::OnePerCore>("domain_type: added %i as neighbour for %i because site %i in block %i is neighbour to site %i in block %i in direction (%i,%i,%i)\n",
-                                                                          (int) neighbourProc,
-                                                                          (int) localRank,
-                                                                          (int) neighbourSiteId,
-                                                                          (int) neighBlockGmyIdx,
-                                                                          (int) localSiteId,
-                                                                          (int) blockGmyIdx,
-                                                                          latticeInfo.GetVector(l).x(),
-                                                                          latticeInfo.GetVector(l).y(),
-                                                                          latticeInfo.GetVector(l).z());
-                        } else {
-                            // Did find it, increment the shared count
-                            ++neighProcWithSite->SharedDistributionCount;
-                        }
-                    }
-
-                    // Set the collision type data. map_block site data is renumbered according to
-                    // fluid site numbers within a particular collision type.
-                    SiteData siteData(blockReadIn.Sites[localSiteId]);
-                    int l = -1;
-                    switch (siteData.GetCollisionType())
-                    {
-                        case FLUID:
-                            l = 0;
-                            break;
-                        case WALL:
-                            l = 1;
-                            break;
-                        case INLET:
-                            l = 2;
-                            break;
-                        case OUTLET:
-                            l = 3;
-                            break;
-                        case (INLET | WALL):
-                            l = 4;
-                            break;
-                        case (OUTLET | WALL):
-                            l = 5;
-                            break;
-                    }
-
-                    const util::Vector3D<float>& normal = blockReadIn.Sites[localSiteId].wallNormalAvailable ?
-                                                          blockReadIn.Sites[localSiteId].wallNormal :
-                                                          util::Vector3D<float>(NO_VALUE);
-
-                    //SiteData siteData(blockReadIn.Sites[localSiteId]);
-
-                    if (isMidDomainSite)
-                    {
-                        midDomainBlockNumber[l].push_back(blockOctIdx);
-                        midDomainSiteNumber[l].push_back(localSiteId);
-                        midDomainSiteData[l].push_back(siteData);
-                        midDomainWallNormals[l].push_back(normal);
-                        for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); direction++)
-                        {
-                            midDomainWallDistance[l].push_back(blockReadIn.Sites[localSiteId].links[direction - 1].distanceToIntersection);
-                        }
-                    }
-                    else
-                    {
-                        domainEdgeBlockNumber[l].push_back(blockOctIdx);
-                        domainEdgeSiteNumber[l].push_back(localSiteId);
-                        domainEdgeSiteData[l].push_back(siteData);
-                        domainEdgeWallNormals[l].push_back(normal);
-                        for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); direction++)
-                        {
-                            domainEdgeWallDistance[l].push_back(blockReadIn.Sites[localSiteId].links[direction - 1].distanceToIntersection);
-                        }
-                    }
-
+                    isMidDomainSite = false;
+                    totalSharedFs++;
                 }
 
-            }
+                if (!isMidDomainSite)
+                    edge_sites.push_back(siteGlobalCoords);
 
-            PopulateWithReadData(midDomainBlockNumber,
-                                 midDomainSiteNumber,
-                                 midDomainSiteData,
-                                 midDomainWallNormals,
-                                 midDomainWallDistance,
-                                 domainEdgeBlockNumber,
-                                 domainEdgeSiteNumber,
-                                 domainEdgeSiteData,
-                                 domainEdgeWallNormals,
-                                 domainEdgeWallDistance);
+                // Set the collision type data. map_block site data is renumbered according to
+                // fluid site numbers within a particular collision type.
+                SiteData siteData(blockReadIn.Sites[localSiteId]);
+                int l = -1;
+                switch (siteData.GetCollisionType()) {
+                case FLUID:
+                    l = 0;
+                    break;
+                case WALL:
+                    l = 1;
+                    break;
+                case INLET:
+                    l = 2;
+                    break;
+                case OUTLET:
+                    l = 3;
+                    break;
+                case (INLET | WALL):
+                    l = 4;
+                    break;
+                case (OUTLET | WALL):
+                    l = 5;
+                    break;
+                }
+
+                const util::Vector3D<float>& normal = blockReadIn.Sites[localSiteId].wallNormalAvailable ?
+                  blockReadIn.Sites[localSiteId].wallNormal :
+                  util::Vector3D<float>(NO_VALUE);
+
+                if (isMidDomainSite) {
+                    midDomainBlockNumber[l].push_back(blockOctIdx);
+                    midDomainSiteNumber[l].push_back(localSiteId);
+                    midDomainSiteData[l].push_back(siteData);
+                    midDomainWallNormals[l].push_back(normal);
+                    for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); direction++) {
+                        midDomainWallDistance[l].push_back(blockReadIn.Sites[localSiteId].links[direction - 1].distanceToIntersection);
+                    }
+                } else {
+                    domainEdgeBlockNumber[l].push_back(blockOctIdx);
+                    domainEdgeSiteNumber[l].push_back(localSiteId);
+                    domainEdgeSiteData[l].push_back(siteData);
+                    domainEdgeWallNormals[l].push_back(normal);
+                    for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); direction++) {
+                        domainEdgeWallDistance[l].push_back(blockReadIn.Sites[localSiteId].links[direction - 1].distanceToIntersection);
+                    }
+                }
+            }
         }
+
+        PopulateWithReadData(midDomainBlockNumber,
+                             midDomainSiteNumber,
+                             midDomainSiteData,
+                             midDomainWallNormals,
+                             midDomainWallDistance,
+                             domainEdgeBlockNumber,
+                             domainEdgeSiteNumber,
+                             domainEdgeSiteData,
+                             domainEdgeWallNormals,
+                             domainEdgeWallDistance);
+
+        // We now have the distributed store setup, so can find which
+        // process any site lives one. Set up the neighbouring
+        // processes for the edge sites.
+        for (auto const& site_global_coords: edge_sites) {
+            for (unsigned int l = 1; l < latticeInfo.GetNumVectors(); l++) {
+                // Find the neighbour site co-ords in this direction.
+                util::Vector3D<site_t> neigh_global_coords = site_global_coords + latticeInfo.GetVector(l).as<site_t>();
+                Vec16 neigh_block;
+                site_t neigh_site_id;
+                site_t rrProc = read_result_rank_for_site(
+                    neigh_global_coords, neigh_block, neigh_site_id
+                );
+
+                if (rrProc == SITE_OR_BLOCK_SOLID || rrProc == localRank)
+                    continue;
+
+                auto [neighbourProc, remoteSiteIdx] = rank_for_site_store->GetSiteData(
+                    neigh_block, neigh_site_id
+                );
+                auto neighProcWithSite = std::find_if(
+                    neighbouringProcs.begin(), neighbouringProcs.end(),
+                    [&](NeighbouringProcessor const& np) {
+                      return np.Rank == neighbourProc;
+                    }
+                );
+
+                if (neighProcWithSite == neighbouringProcs.end()) {
+                    // We didn't find a neighbour-proc with the
+                    // neighbour-site on it, so we need a new
+                    // neighbouring processor.
+
+                    // Store rank of neighbour in >neigh_proc[neigh_procs]
+                    NeighbouringProcessor lNewNeighbour;
+                    lNewNeighbour.SharedDistributionCount = 1;
+                    lNewNeighbour.Rank = neighbourProc;
+                    neighbouringProcs.push_back(lNewNeighbour);
+                } else {
+                    // Did find it, increment the shared count
+                    ++neighProcWithSite->SharedDistributionCount;
+                }
+            }
+        }
+    }
 
         void Domain::PopulateWithReadData(
                 const std::vector<site_t> midDomainBlockNumbers[COLLISION_TYPES],

@@ -79,8 +79,8 @@ namespace hemelb::geometry::decomposition
                      rank_for_block.begin(), rank_for_block.end(), comm_size);
 
         // We need to return data organised in GMY file order
-        // Initialise output to -1 => SOLID, we will overwrite the non-solid below
-        std::fill(procAssignedToEachBlock.begin(), procAssignedToEachBlock.end(), -1);
+        // Initialise output to SOLID, we will overwrite the non-solid below
+        std::fill(procAssignedToEachBlock.begin(), procAssignedToEachBlock.end(), SITE_OR_BLOCK_SOLID);
 
         // We need to know the octree ID to map to 3D coords.
         auto& block_oct_ids = tree.levels[tree.n_levels].node_ids;
@@ -95,7 +95,7 @@ namespace hemelb::geometry::decomposition
         return rank_for_block;
     }
 
-  void BasicDecomposition::Validate(std::vector<proc_t>& procAssignedToEachBlock, net::MpiCommunicator const& communicator) const
+    void BasicDecomposition::Validate(std::vector<proc_t>& procAssignedToEachBlock, net::MpiCommunicator const& communicator) const
     {
         log::Logger::Log<log::Debug, log::OnePerCore>("Validating procForEachBlock");
 

@@ -7,6 +7,7 @@
 #define HEMELB_GEOMETRY_GMYREADRESULT_H
 
 #include <memory>
+#include <map>
 #include <vector>
 
 #include "units.h"
@@ -18,6 +19,15 @@
 namespace hemelb::geometry
 {
     namespace octree { class DistributedStore; }
+
+    // A site description is the block's OCT index (hence U64 to
+    // match the tree's choice) and the index of the site within
+    // the block (could be U16, but use 64 as padding will force
+    // that anyway).
+    using SiteDesc = std::array<U64,2>;
+    using SiteVec = std::vector<SiteDesc>;
+    using MovesMap = std::map<int, SiteVec>;
+
     /***
      * Model of the information in a geometry file
      */
@@ -59,6 +69,11 @@ namespace hemelb::geometry
         inline site_t GetBlockIdFromBlockCoordinates(U16 blockI, U16 blockJ, U16 blockK) const
         {
           return (blockI * dimensionsInBlocks.y() + blockJ) * dimensionsInBlocks.z() + blockK;
+        }
+
+        inline U64 GetBlockIdFromBlockCoordinates(Vec16 ijk) const {
+            auto IJK = ijk.as<U64>();
+            return (IJK[0] * dimensionsInBlocks[1] + IJK[1]) * dimensionsInBlocks[2] + IJK[2];
         }
 
         /***
@@ -136,5 +151,53 @@ namespace hemelb::geometry
         std::unique_ptr<octree::DistributedStore> block_store;
     };
 
+    // This iterator will move through the sites that make up a
+    // block. On dereference it returns a pair of the current 3D
+    // position and the 1D index in geometry file order.
+    struct BlockSiteIterator {
+        GmyReadResult const* gmy;
+        Vec16 pos;
+        site_t idx;
+
+        using value_type = std::pair<Vec16, site_t>;
+        inline value_type operator*() const {
+            return {pos, idx};
+        }
+
+        inline BlockSiteIterator& operator++() {
+            auto B = gmy->GetBlockSize();
+            idx++;
+            if (++pos[2] == B) {
+                pos[2] = 0;
+                if (++pos[1] == B) {
+                    pos[1] = 0;
+                    ++pos[0];
+                }
+            }
+            return *this;
+        }
+
+        inline friend bool operator==(BlockSiteIterator const& l, BlockSiteIterator const& r) {
+          return l.idx == r.idx;
+        }
+    };
+
+    // Represent the range of valid sites in a block that belongs to
+    // the GmyReadResult.
+    struct BlockSiteRange {
+        GmyReadResult const* gmy;
+        auto begin() const {
+            return BlockSiteIterator{gmy, {0,0,0}, 0};
+        }
+        auto end() const {
+            auto B = gmy->GetBlockSize();
+            return BlockSiteIterator{gmy, {B, B, B}, B*B*B};
+        }
+    };
+
+    // Helper for the above.
+    inline auto IterSitesInBlock(GmyReadResult const& gmy) {
+        return BlockSiteRange{&gmy};
+    }
 }
 #endif // HEMELB_GEOMETRY_GMYREADRESULT_H

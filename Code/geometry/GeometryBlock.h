@@ -9,20 +9,16 @@
 #include <vector>
 #include "geometry/GeometrySite.h"
 
-namespace hemelb
+namespace hemelb::geometry
 {
-  namespace geometry
-  {
     /***
      * Model of the information stored for a block in a geometry file.
      * Just gives the array of sites
      */
     struct BlockReadResult
     {
-      public:
         std::vector<GeometrySite> Sites;
     };
-  }
 }
 
 #endif /* HEMELB_GEOMETRY_GEOMETRYBLOCK_H */

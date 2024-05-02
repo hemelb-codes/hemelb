@@ -8,6 +8,7 @@
 
 #include <catch2/catch.hpp>
 
+#include "util/span.h"
 #include "redblood/parallel/NodeCharacterizer.h"
 #include "configuration/CommandLine.h"
 #include "tests/redblood/Fixtures.h"
@@ -41,7 +42,7 @@ namespace hemelb::tests
 
         //! Creates a master simulation
         template<class STENCIL>
-        auto CreateMasterSim(net::MpiCommunicator const &comm) const
+        auto CreateMasterSim(net::IOCommunicator const &comm) const
         {
             return std::make_shared<MasterSim<STENCIL>>(*options, comm);
         }
@@ -109,7 +110,7 @@ namespace hemelb::tests
 	    {
 	      std::copy(procs.begin(), procs.end(), expected.begin());
 	    }
-          world.Broadcast(expected, positions_are_from_this_proc);
+          world.Broadcast(to_span(expected), positions_are_from_this_proc);
 
           std::set<proc_t> expected_set(expected.begin(), expected.end());
 

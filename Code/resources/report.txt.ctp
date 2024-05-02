@@ -30,7 +30,6 @@ Build type: {{TYPE}}
 Optimisation level: {{OPTIMISATION}}
 Use SSE3: {{USE_SSE3}}
 Built at: {{TIME}}
-Reading group size: {{READING_GROUP_SIZE}}
 Lattice: {{LATTICE_TYPE}}
 Kernel: {{KERNEL_TYPE}}
 Wall boundary condition: {{WALL_BOUNDARY_CONDITION}}

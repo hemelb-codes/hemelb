@@ -39,20 +39,11 @@ namespace hemelb::geometry {
 
     site_t GmyReadResult::FindFluidSiteIndexInBlock(site_t fluidSiteBlock, site_t neighbourSiteId) const
     {
-        site_t SiteId = 0;
-        // Calculate the site's id over the whole geometry,
-        for (site_t neighSite = 0; neighSite < GetSitesPerBlock(); neighSite++)
-        {
-            if (neighSite == neighbourSiteId)
-            {
-                break;
+        auto& sites = Blocks[fluidSiteBlock].Sites;
+        return std::count_if(
+            &sites[0], &sites[neighbourSiteId], [](GeometrySite const& s) {
+                return s.isFluid;
             }
-            else if (Blocks[fluidSiteBlock].Sites[neighSite].targetProcessor != SITE_OR_BLOCK_SOLID)
-            {
-                SiteId++;
-            }
-        }
-
-        return SiteId;
+        );
     }
 }

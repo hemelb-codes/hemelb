@@ -60,7 +60,7 @@ namespace hemelb::tests
 
         //! Creates a master simulation
         template<class STENCIL>
-        auto CreateMasterSim(net::MpiCommunicator const &comm) const
+        auto CreateMasterSim(net::IOCommunicator const &comm) const
         {
             return std::make_shared<MasterSim<STENCIL>>(*options, comm);
         }
@@ -102,7 +102,7 @@ namespace hemelb::tests
 
       auto const world = net::MpiCommunicator::World();
       auto const color = world.Rank() == 0;
-      auto const split = world.Split(color);
+      auto const split = net::IOCommunicator(world.Split(color));
       auto master = CreateMasterSim<STENCIL>(split);
       auto& fieldData = master->GetFieldData();
       auto& dom = fieldData.GetDomain();

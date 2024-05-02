@@ -297,6 +297,10 @@ namespace hemelb::geometry::octree
             return storage_rank.size();
         }
 
+        [[nodiscard]] inline auto& GetBlockOwnerRank() const {
+            return storage_rank;
+        }
+
         // Allow many writes to the same block, wherever it is.
         // Constructed by a WriteSession below
         struct BlockWriteChunk {

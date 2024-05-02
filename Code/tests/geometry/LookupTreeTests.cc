@@ -179,7 +179,7 @@ namespace hemelb::tests
     template <typename T>
     void check_vec(std::vector<T> const& actual, std::vector<T> const& expected) {
         REQUIRE(actual.size() == expected.size());
-        for (int i = 0; i < actual.size(); ++i) {
+        for (int i = 0; i < std::ssize(actual); ++i) {
             REQUIRE(actual[i] == expected[i]);
         }
     }
@@ -271,10 +271,10 @@ namespace hemelb::tests
         REQUIRE(b334.path[3] == Level::NC);
 
         // fluid sites per block, ordered by GMY index
-        auto spb = std::vector<int>{
+        auto spb = std::vector<U64>{
             287, 328, 328, 328, 123, 287, 328, 328, 328, 123, 287, 328, 328, 328, 123, 287, 328, 328, 328, 123
         };
-        std::map<U64, int> oct2spb;
+        std::map<U64, U64> oct2spb;
         for (U64 block = 0U; block < 20; ++block) {
             auto b_ijk = Vec16(block / 10U, (block / 5U) % 2U, block % 5U);
             auto oct = ijk_to_oct(b_ijk);

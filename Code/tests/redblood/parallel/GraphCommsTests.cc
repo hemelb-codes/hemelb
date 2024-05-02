@@ -38,7 +38,7 @@ namespace hemelb::tests
 
         //! Creates a master simulation
         template<class STENCIL = stencil::FourPoint>
-        [[nodiscard]] auto CreateMasterSim(net::MpiCommunicator const &comm) const
+        [[nodiscard]] auto CreateMasterSim(net::IOCommunicator const &comm) const
         {
             return std::make_shared<MasterSim<STENCIL>>(*options, comm);
         }
