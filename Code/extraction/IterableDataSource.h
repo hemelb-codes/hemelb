@@ -10,16 +10,14 @@
 #include "units.h"
 #include "util/Matrix3D.h"
 
-namespace hemelb
+namespace hemelb::extraction
 {
-  namespace extraction
-  {
 
     using FloatingType = float;
 
     class IterableDataSource
     {
-      public:
+    public:
         /**
          * Virtual destructor. We could declare this as pure virtual but that will cause a fail at
          * link-time (at least with GCC). GCC needs an object file to put the vtable in; by defining
@@ -144,7 +142,6 @@ namespace hemelb
          */
         virtual unsigned GetNumVectors() const = 0;
     };
-  }
 }
 
 #endif /* HEMELB_EXTRACTION_ITERABLEDATASOURCE_H */
