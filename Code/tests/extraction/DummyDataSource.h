@@ -14,13 +14,11 @@
 
 #include "tests/helpers/RandomSource.h"
 
-namespace hemelb
+namespace hemelb::tests
 {
-  namespace tests
-  {
     class DummyDataSource : public extraction::IterableDataSource
     {
-        public:
+    public:
           DummyDataSource() :
               randomNumberGenerator(1358), siteCount(64), location(0), gridPositions(siteCount),
                   pressures(siteCount), velocities(siteCount), voxelSize(0.3e-3),
@@ -73,75 +71,75 @@ namespace hemelb
             return gridPositions[location];
           }
 
-          distribn_t GetVoxelSize() const
+          distribn_t GetVoxelSize() const override
           {
             return voxelSize;
           }
 
-          const util::Vector3D<distribn_t>& GetOrigin() const
+          const util::Vector3D<distribn_t>& GetOrigin() const override
           {
             return origin;
           }
-          hemelb::extraction::FloatingType GetPressure() const
+          hemelb::extraction::FloatingType GetPressure() const override
           {
             return pressures[location];
           }
-          hemelb::util::Vector3D<hemelb::extraction::FloatingType> GetVelocity() const
+          hemelb::util::Vector3D<hemelb::extraction::FloatingType> GetVelocity() const override
           {
             return velocities[location];
           }
-          hemelb::extraction::FloatingType GetShearStress() const
+          hemelb::extraction::FloatingType GetShearStress() const override
           {
             return 0.f;
           }
-          hemelb::extraction::FloatingType GetVonMisesStress() const
+          hemelb::extraction::FloatingType GetVonMisesStress() const override
           {
             return 0.f;
           }
-          hemelb::extraction::FloatingType GetShearRate() const
+          hemelb::extraction::FloatingType GetShearRate() const override
           {
             return 0.f;
           }
-          util::Matrix3D GetStressTensor() const
+          util::Matrix3D GetStressTensor() const override
           {
             //! @todo: #177 add constructor with initialisation to Matrix3D
             util::Matrix3D retValue;
             return retValue;
           }
 
-          util::Vector3D<PhysicalStress> GetTraction() const
+          util::Vector3D<PhysicalStress> GetTraction() const override
           {
             util::Vector3D<PhysicalStress> retValue(0);
             return retValue;
           }
 
-          util::Vector3D<PhysicalStress> GetTangentialProjectionTraction() const
+          util::Vector3D<PhysicalStress> GetTangentialProjectionTraction() const override
           {
             util::Vector3D<PhysicalStress> retValue(0);
             return retValue;
           }
 
-          distribn_t* GetDistribution() const
+          distribn_t const* GetDistribution() const override
           {
             double fval = 1.0;
             double *p_fval = &fval;
             return p_fval;
           }
 
-	  unsigned GetNumVectors() const
+	  unsigned GetNumVectors() const override
 	  {
 	    return 15;
 	  }
 
-          bool IsValidLatticeSite(const hemelb::util::Vector3D<site_t>&) const
+          bool IsValidLatticeSite(const hemelb::util::Vector3D<site_t>&) const override
           {
             return true;
           }
-          bool IsAvailable(const hemelb::util::Vector3D<site_t>&) const
+          bool IsAvailable(const hemelb::util::Vector3D<site_t>&) const override
           {
             return true;
           }
-          bool IsWallSite(const util::Vector3D<site_t>& location) const
+          bool IsWallSite(const util::Vector3D<site_t>& location) const override
           {
             /// @todo: #375 This method is not covered by any test. I'm leaving it unimplemented.
             assert(false);
@@ -149,7 +147,7 @@ namespace hemelb
             return false;
           }
 
-        private:
+    private:
           helpers::RandomSource randomNumberGenerator;
           const site_t siteCount;
           site_t location;
@@ -158,8 +156,7 @@ namespace hemelb
           std::vector<hemelb::util::Vector3D<hemelb::extraction::FloatingType> > velocities;
           distribn_t voxelSize;
           hemelb::util::Vector3D<distribn_t> origin;
-      };
+    };
 
-  }
 }
 #endif // HEMELB_TESTS_EXTRACTION_DUMMYDATASOURCE_H
