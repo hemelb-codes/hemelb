@@ -23,8 +23,15 @@ pass_option(HEMELB HEMELB_BUILD_COLLOIDS "Build the colloids option" OFF)
 pass_option(HEMELB HEMELB_VALIDATE_GEOMETRY "Validate geometry" OFF)
 pass_option(HEMELB HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 pass_option(HEMELB HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
-pass_option(HEMELB HEMELB_USE_SSE3 "Use SSE3 intrinsics" ON)
+
+if (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+  set(_default_sse3_flag ON)
+else()
+  set(_default_sse3_flag OFF)
+endif()
+pass_option(HEMELB HEMELB_USE_SSE3 "Use SSE3 intrinsics" ${_default_sse3_flag})
 pass_option(HEMELB HEMELB_USE_VELOCITY_WEIGHTS_FILE "Use Velocity weights file" OFF)
+
 pass_option(HEMELB HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
 
 if (HEMELB_BUILD_RBC)

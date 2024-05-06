@@ -166,7 +166,7 @@ namespace hemelb::tests
         void testForceDistributionBadTau()
         {
             distribn_t Fi[LatticeType::NUMVECTORS];
-            LatticeType::CalculateForceDistribution(0.5, 1.0, 10.0, 100.0, 1, 1, 1, Fi);
+            LatticeType::CalculateForceDistribution(0.5, {1.0, 10.0, 100.0}, {1, 1, 1}, Fi);
             for (size_t i(0); i < LatticeType::NUMVECTORS; ++i)
                 REQUIRE(Fi[i] == apprx(0));
         }
@@ -178,7 +178,7 @@ namespace hemelb::tests
             distribn_t Fi[LatticeType::NUMVECTORS];
             for (size_t i(0); i < LatticeType::NUMVECTORS; ++i) {
                 LatticeVelocity const ei(LatticeType::CX[i], LatticeType::CY[i], LatticeType::CZ[i]);
-                LatticeType::CalculateForceDistribution(0.25, ei[0], ei[1], ei[2], ei[0], ei[1], ei[2], Fi);
+                LatticeType::CalculateForceDistribution(0.25, ei, ei, Fi);
                 distribn_t ei_norm(Dot(ei, ei));
                 distribn_t const expected = (1. - 0.5 / 0.25) * LatticeType::EQMWEIGHTS[i]
                                             * (ei_norm * ei_norm * 9.0);
@@ -192,7 +192,7 @@ namespace hemelb::tests
             distribn_t Fi[LatticeType::NUMVECTORS];
             for (size_t i(0); i < LatticeType::NUMVECTORS; ++i) {
                 LatticeVelocity const ei(LatticeType::CX[i], LatticeType::CY[i], LatticeType::CZ[i]);
-                LatticeType::CalculateForceDistribution(0.25, 0, 0, 0, ei[0], ei[1], ei[2], Fi);
+                LatticeType::CalculateForceDistribution(0.25, LatticeVelocity::Zero(), ei, Fi);
                 distribn_t ei_norm(Dot(ei, ei));
                 distribn_t const expected = (1. - 0.5 / 0.25) * LatticeType::EQMWEIGHTS[i] * (ei_norm * 3.0);
                 REQUIRE(Fi[i] == apprx(expected));
@@ -208,7 +208,7 @@ namespace hemelb::tests
 
             distribn_t Fi[LatticeType::NUMVECTORS];
             for(size_t i = 0; i < N; ++i) {
-                LatticeType::CalculateForceDistribution(1e0, rdm(e1), rdm(e1), rdm(e1), 0e0, 0e0, 0e0, Fi);
+	      LatticeType::CalculateForceDistribution(1e0, {rdm(e1), rdm(e1), rdm(e1)}, LatticeForceVector::Zero(), Fi);
                 for(size_t j(0); j < LatticeType::NUMVECTORS; ++j) {
                     REQUIRE(Fi[j] == Approx(0).margin(1e-12));
                 }
@@ -226,18 +226,20 @@ namespace hemelb::tests
             // No velocity
             for (size_t i = 0; i < N; ++i) {
                 LatticeType::CalculateForceDistribution(
-                        1e0, 0e0, 0e0, 0e0, rdm(e1), rdm(e1), rdm(e1), Fi);
+		    1e0, LatticeVelocity::Zero(),
+		    {rdm(e1), rdm(e1), rdm(e1)},
+		    Fi);
                 auto const moment = std::accumulate(Fi, Fi+LatticeType::NUMVECTORS, 0e0);
                 REQUIRE(moment == apprx(0.0));
             }
             // Force and Velocity are perpendicular
             for(size_t i = 0; i < N; ++i) {
                 auto const a = rdm(e1), b = rdm(e1);
-                LatticeType::CalculateForceDistribution(1e0, rdm(e1), a, b, 0, -b, a, Fi);
+                LatticeType::CalculateForceDistribution(1e0, {rdm(e1), a, b}, {0, -b, a}, Fi);
                 auto const moment0 = std::accumulate(Fi, Fi+LatticeType::NUMVECTORS, 0e0);
                 REQUIRE(moment0 == apprx(0.0));
 
-                LatticeType::CalculateForceDistribution(1e0, 0, a, b, rdm(e1), -b, a, Fi);
+                LatticeType::CalculateForceDistribution(1e0, {0, a, b}, {rdm(e1), -b, a}, Fi);
                 auto const moment1 = std::accumulate(Fi, Fi+LatticeType::NUMVECTORS, 0e0);
                 REQUIRE(moment1 == apprx(0.0));
             }
