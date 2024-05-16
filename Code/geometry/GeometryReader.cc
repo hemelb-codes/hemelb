@@ -88,10 +88,6 @@ namespace hemelb::geometry
             );
         }
 
-        log::Logger::Log<log::Info, log::Singleton>("Opened geometry file %s", dataFilePath.c_str());
-        // TODO: Why is there this fflush?
-        fflush(nullptr);
-
         log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
         GmyReadResult geometry = ReadPreamble();
 
@@ -320,7 +316,7 @@ namespace hemelb::geometry
         constexpr auto MiB = std::size_t(1) << 20;
         constexpr std::size_t MAX_GMY_BUFFER_SIZE = 64U * MiB;
 
-        log::Logger::Log<log::Info, log::Singleton>("Buffering compressed site data onto owning processes.");
+        log::Logger::Log<log::Info, log::Singleton>("Streaming geometry data and caching required blocks.");
         log::Logger::Log<log::Debug, log::Singleton>("Maximum buffer size %lu B", MAX_GMY_BUFFER_SIZE);
 
         block_cache ans;

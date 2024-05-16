@@ -23,10 +23,16 @@ int main(int argc, char *argv[])
     net::MpiCommunicator commWorld = net::MpiCommunicator::World();
 
     net::IOCommunicator hemelbCommunicator(commWorld);
-    try
-    {
+    log::Logger::Log<log::Info, log::Singleton>(
+      "Initialised MPI: %d nodes x %d processes per node = %d total",
+      hemelbCommunicator.GetLeadersComm().Size(),
+      hemelbCommunicator.GetNodeComm().Size(),
+      hemelbCommunicator.Size()
+    );
+
+    try {
       // Parse command line
-      configuration::CommandLine options = configuration::CommandLine(argc, argv);
+      auto options = configuration::CommandLine(argc, argv);
 
       // Start the debugger (if requested)
       debug::Init(options.GetDebug(), argv[0], commWorld);
