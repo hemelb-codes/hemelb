@@ -20,13 +20,16 @@ runs:
   steps:
     - name: Apt update
       shell: bash
-      run: sudo apt-get update
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+        sudo apt-get update
 
     - name: Install Ubuntu-provided dependencies
       shell: bash
       run: >-
         sudo
         apt-get install -y
+        g++-13
         libopenmpi-dev
         libtinyxml-dev
         libparmetis-dev
