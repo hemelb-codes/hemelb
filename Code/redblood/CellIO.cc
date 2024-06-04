@@ -9,8 +9,8 @@
 #include <cstring>
 #include <boost/uuid/uuid_io.hpp>
 
+#include "configuration/PathManager.h"
 #include "io/formats/rbc.h"
-#include "io/PathManager.h"
 #include "io/writers/XdrWriter.h"
 #include "io/readers/XdrFileReader.h"
 #include "io/readers/XdrMemReader.h"
@@ -21,6 +21,7 @@
 #include "redblood/FaderCell.h"
 #include "redblood/MeshIO.h"
 #include "util/Iterator.h"
+#include "util/span.h"
 
 namespace hemelb::redblood {
 
@@ -74,7 +75,7 @@ namespace hemelb::redblood {
     CellBarycentreOutput::CellBarycentreOutput(hemelb::LatticeTimeStep period,
                                                std::shared_ptr<const util::UnitConverter> unitConverter,
                                                std::shared_ptr<const lb::SimulationState> simState,
-                                               std::shared_ptr<const io::PathManager> fileManager,
+                                               std::shared_ptr<const configuration::PathManager> fileManager,
                                                net::IOCommunicator comms) :
             CellOutputBase{
                     period, std::move(unitConverter), std::move(simState), std::move(fileManager), comms
@@ -134,7 +135,7 @@ namespace hemelb::redblood {
         const std::size_t local_write_start = ioComms.OnIORank() ? 0 : (fmt::rbc::header_size + n_cells_before_me * fmt::rbc::row_size);
 
         auto bary_file = net::MpiFile::Open(ioComms, bary_filename, MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL);
-        bary_file.WriteAt(local_write_start, buffer);
+        bary_file.WriteAt(local_write_start, to_const_span(buffer));
         bary_file.Close();
     }
 
@@ -172,7 +173,7 @@ namespace hemelb::redblood {
         auto read_size = n * fmt::rbc::row_size;
 
         std::vector<std::byte> read_buf(read_size);
-        inputFile.ReadAt(read_start, read_buf);
+        inputFile.ReadAt(read_start, to_span(read_buf));
         auto reader = io::XdrMemReader(read_buf);
         std::vector<row> ans(n);
         boost::uuids::string_generator gen;

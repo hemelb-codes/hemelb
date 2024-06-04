@@ -15,7 +15,7 @@
 #include "net/IOCommunicator.h"
 #include "redblood/types_fwd.h"
 
-namespace hemelb::io { class PathManager; }
+namespace hemelb::configuration { class PathManager; }
 namespace hemelb::lb { class SimulationState; }
 namespace hemelb::util { class UnitConverter; }
 
@@ -30,7 +30,7 @@ namespace hemelb::redblood {
         // nullptr => use lattice units
         std::shared_ptr<util::UnitConverter const> unitConverter;
         std::shared_ptr<lb::SimulationState const> simState;
-        std::shared_ptr<io::PathManager const> fileManager;
+        std::shared_ptr<configuration::PathManager const> fileManager;
         net::IOCommunicator ioComms;
     };
 
@@ -46,7 +46,7 @@ namespace hemelb::redblood {
                 LatticeTimeStep period,
                 std::shared_ptr<util::UnitConverter const> unitConverter,
                 std::shared_ptr<lb::SimulationState const> simState,
-                std::shared_ptr<io::PathManager const> fileManager,
+                std::shared_ptr<configuration::PathManager const> fileManager,
                 net::IOCommunicator comms
         );
 

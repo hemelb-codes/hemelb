@@ -7,7 +7,6 @@
 #define HEMELB_EXTRACTION_PROPERTYACTOR_H
 
 #include "extraction/PropertyWriter.h"
-#include "io/PathManager.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "lb/SimulationState.h"
 #include "net/IteratedAction.h"

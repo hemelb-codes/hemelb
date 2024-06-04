@@ -8,6 +8,7 @@
 #include <catch2/catch.hpp>
 
 #include "SimulationMaster.h"
+#include "configuration/SimBuilder.h"
 #include "lb/lattices/D3Q19.h"
 #include "Traits.h"
 #include "redblood/Mesh.h"
@@ -22,12 +23,11 @@ namespace hemelb::tests
 
     TEST_CASE_METHOD(helpers::FolderTestFixture,
 		     "SadCellIntegrationTests", "[redblood][.long]") {
-      using Traits = Traits<lb::D3Q19, hemelb::lb::GuoForcingLBGK>;
-      using CellControl = hemelb::redblood::CellController<Traits>;
-      using MasterSim = SimulationMaster<Traits>;
+      using Traits = Traits<lb::D3Q19, lb::GuoForcingLBGK>;
+      using CellControl = CellController<Traits>;
 
-      redblood::KruegerMeshIO msh_io = {};
-      redblood::VTKMeshIO vtk_io = {};
+      KruegerMeshIO msh_io = {};
+      VTKMeshIO vtk_io = {};
 
       CopyResourceToTempdir("large_cylinder_rbc.xml");
       CopyResourceToTempdir("large_cylinder.gmy");
@@ -56,9 +56,9 @@ namespace hemelb::tests
 	"-in",
 	"large_cylinder_rbc.xml",
       };
-      hemelb::configuration::CommandLine options(argc, argv);
+      configuration::CommandLine options(argc, argv);
 
-      auto master = std::make_shared<MasterSim>(options, Comms());
+      auto master = configuration::SimBuilder::CreateSim<Traits>(options, Comms());
 
       SECTION("integration test") {
 	auto const normal = msh_io.readFile(resources::Resource("rbc_ico_1280.msh").Path(), true);

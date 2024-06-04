@@ -199,7 +199,7 @@ namespace hemelb::multiscale
           }
         }
 
-        void DoTimeStep()
+        void DoTimeStep() override
         {
           bool advance = intercomms.DoMultiscale(GetState().GetTime());
           log::Logger::Log<log::Info, log::Singleton>("At time step %i, should advance %i, time %f",

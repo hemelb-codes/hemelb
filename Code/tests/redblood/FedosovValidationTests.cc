@@ -8,6 +8,7 @@
 #include <catch2/catch.hpp>
 
 #include "SimulationMaster.h"
+#include "configuration/SimBuilder.h"
 #include "lb/lattices/D3Q19.h"
 #include "Traits.h"
 #include "redblood/MeshIO.h"
@@ -22,8 +23,7 @@ namespace hemelb::tests
     TEST_CASE_METHOD(helpers::FolderTestFixture, "Fedosov validation tests", "[redblood][.long]") {
 
       using Traits = Traits<lb::D3Q19, lb::GuoForcingLBGK>;
-      using CellControl = hemelb::redblood::CellController<Traits>;
-      using MasterSim = SimulationMaster<Traits>;
+      using CellControl = CellController<Traits>;
 
       CopyResourceToTempdir("fedosov1c.xml");
       CopyResourceToTempdir("fedosov1c.gmy");
@@ -36,7 +36,7 @@ namespace hemelb::tests
       argv[2] = "fedosov1c.xml";
 
       configuration::CommandLine options(argc, argv);
-      auto master = std::make_shared<MasterSim>(options, Comms());
+      auto master = configuration::SimBuilder::CreateSim<Traits>(options, Comms());
       redblood::VTKMeshIO vtk_io = {};
 
       SECTION("Integration test") {
@@ -44,7 +44,7 @@ namespace hemelb::tests
 	auto const & converter = master->GetUnitConverter();
 	auto controller = std::static_pointer_cast<CellControl>(master->GetCellController());
 	REQUIRE(controller);
-	controller->AddCellChangeListener([vtk_io, &converter](const hemelb::redblood::CellContainer &cells) {
+	controller->AddCellChangeListener([vtk_io, &converter](const CellContainer &cells) {
 	    static int iter = 0;
 	    if(cells.empty()) {
 	      return;

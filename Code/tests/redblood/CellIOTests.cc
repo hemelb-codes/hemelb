@@ -203,7 +203,7 @@ namespace hemelb::tests
                 cells.insert(cell);
                 auto outConf = configuration::CellOutputConfig{10, false};
                 configuration::CommandLine cmdline({"hemelb", "-in", "empty_for_relative_paths.xml"});
-                auto pathmgr = std::make_shared<io::PathManager>(cmdline, Comms().OnIORank(), Comms().Size());
+                auto pathmgr = std::make_shared<configuration::PathManager>(cmdline, Comms().OnIORank(), Comms().Size());
                 auto simState = std::make_shared<lb::SimulationState>(0.1, 1000);
                 auto full_out = cell_builder.build_full_cell_output(outConf, simState, pathmgr, Comms());
                 auto summ_out = cell_builder.build_summary_cell_output(outConf, simState, pathmgr, Comms());
@@ -215,7 +215,7 @@ namespace hemelb::tests
                 // Check barycentre
                 auto bary_path = fs::path{"results/Cells/0/barycentres.rbc"};
                 REQUIRE(fs::exists(bary_path));
-                auto bci = CellBarycentreInput(bary_path);
+                auto bci = CellBarycentreInput{bary_path};
                 auto ncells = bci.ReadHeader();
                 REQUIRE(ncells == 1);
                 auto cell_summary = bci.ReadRows(Comms(), 0, 1);

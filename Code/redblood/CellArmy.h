@@ -324,8 +324,8 @@ namespace hemelb
           log::Logger::Log<log::Info, log::OnePerCore>(message.str());
 
           cellDnC.remove(*i_current);
-          cells.erase(i_current);
           auto const numErased = nodeDistributions.erase((*i_current)->GetTag());
+          cells.erase(i_current);
           assert(numErased == 1);
         }
       }

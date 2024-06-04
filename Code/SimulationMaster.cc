@@ -37,23 +37,9 @@ namespace hemelb
      * Initialises member variables including the network topology
      * object.
      */
-    SimulationMaster::SimulationMaster(configuration::CommandLine & options,
-                                               const net::IOCommunicator& ioComm) :
+    SimulationMaster::SimulationMaster(const net::IOCommunicator& ioComm) :
             build_info(), ioComms(ioComm.Duplicate()), communicationNet(ioComms)
     {
-        // Start the main timer!
-        timings.total().Start();
-
-        fileManager = std::make_shared<io::PathManager>(options,
-                                                                IsCurrentProcTheIOProc(),
-                                                                GetProcessorCount());
-        log::Logger::Log<log::Info, log::Singleton>("Reading configuration from %s", fileManager->GetInputFile().c_str());
-        // Convert XML to configuration
-        simConfig = configuration::SimConfig::New(fileManager->GetInputFile());
-        // Use it to initialise self
-        auto builder = configuration::SimBuilder(simConfig);
-        log::Logger::Log<log::Info, log::Singleton>("Beginning Initialisation.");
-        builder.build<>(*this);
     }
 
   /// Destructor for the SimulationMaster class.

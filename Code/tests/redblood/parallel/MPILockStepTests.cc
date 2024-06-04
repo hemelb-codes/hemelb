@@ -24,7 +24,7 @@ namespace hemelb::tests
 {
     using namespace redblood;
     //! Parallel and Sequential move in lock step
-    class MPILockStepTests : public helpers::FolderTestFixture
+    class MPILockStepTests : public OpenSimFixture
     {
     public:
         MPILockStepTests();
@@ -35,28 +35,12 @@ namespace hemelb::tests
         }
 
     protected:
-        std::shared_ptr<configuration::CommandLine> options;
-
-        //! Meta-function to create simulation type
-        template<class STENCIL>
-        using MasterSim = OpenedSimulationMaster<Traits<
-                lb::DefaultLattice, lb::GuoForcingLBGK, lb::Normal,
-                lb::DefaultStreamer, lb::DefaultWallStreamer, lb::DefaultInletStreamer, lb::DefaultOutletStreamer,
-                STENCIL
-        >>;
-
-        //! Creates a master simulation
-        template<class STENCIL>
-        [[nodiscard]] auto CreateMasterSim(net::IOCommunicator const &comm) const
-        {
-            return std::make_shared<MasterSim<STENCIL>>(*options, comm);
-        }
 
         template<class STENCIL> void Check();
     };
 
 
-    MPILockStepTests::MPILockStepTests(): FolderTestFixture() {
+    MPILockStepTests::MPILockStepTests(): OpenSimFixture() {
       // Have everything ready to creates simulations
       if (Comms().Rank() == 0) {
 	CopyResourceToTempdir("cyl_l100_r5.xml");
@@ -144,7 +128,7 @@ namespace hemelb::tests
     template<class STENCIL>
     void MPILockStepTests::Check()
     {
-        using Traits = typename MasterSim<STENCIL>::Traits;
+        using Traits = MyTraits<STENCIL>;
 
         auto const world = Comms();
         auto const color = world.Rank() == 0;

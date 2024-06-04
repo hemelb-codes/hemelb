@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_IO_PATHMANAGER_H
-#define HEMELB_IO_PATHMANAGER_H
+#ifndef HEMELB_CONFIGURATION_PATHMANAGER_H
+#define HEMELB_CONFIGURATION_PATHMANAGER_H
 
 #include <filesystem>
 #include <string>
@@ -14,12 +14,6 @@ namespace hemelb::configuration
 {
     class CommandLine;
     class SimConfig;
-}
-
-namespace hemelb::io
-{
-    // Forward declare the Writer
-    namespace writers { class Writer; }
 
     /**
      * Manage the input and output file system locations for HemeLB reports, extracted data, and input xml.
@@ -82,4 +76,4 @@ namespace hemelb::io
 
 }
 
-#endif //HEMELB_IO_PATHMANAGER_H
+#endif //HEMELB_CONFIGURATION_PATHMANAGER_H

@@ -17,7 +17,7 @@
 #include "redblood/CellController.h"
 #include "redblood/RBCInserter.h"
 
-namespace hemelb::io { class PathManager; }
+namespace hemelb::configuration { class PathManager; }
 
 namespace hemelb::redblood {
 
@@ -86,13 +86,13 @@ namespace hemelb::redblood {
         CellChangeListener build_full_cell_output(
                 configuration::CellOutputConfig const& conf,
                 std::shared_ptr<lb::SimulationState const> simState,
-                std::shared_ptr<io::PathManager const> fileManager,
+                std::shared_ptr<configuration::PathManager const> fileManager,
                 net::IOCommunicator const& ioComms
         ) const;
         CellChangeListener build_summary_cell_output(
                 configuration::CellOutputConfig const& conf,
                 std::shared_ptr<lb::SimulationState const> simState,
-                std::shared_ptr<io::PathManager const> fileManager,
+                std::shared_ptr<configuration::PathManager const> fileManager,
                 net::IOCommunicator const& ioComms
         ) const;
 
@@ -104,7 +104,7 @@ namespace hemelb::redblood {
                                                    CountedIoletView const& inlets,
                                                    CountedIoletView const& outlets,
                                                    std::shared_ptr<lb::SimulationState const> simState,
-                                                   std::shared_ptr<io::PathManager const> fileManager
+                                                   std::shared_ptr<configuration::PathManager const> fileManager
         ) {
             log::Logger::Log<log::Info, log::Singleton>("Initialising RBCs.");
             timings.cellInitialisation().Start();

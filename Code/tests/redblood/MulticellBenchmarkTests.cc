@@ -7,7 +7,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <catch2/catch.hpp>
 
-#include "SimulationMaster.h"
+#include "configuration/SimBuilder.h"
 #include "Traits.h"
 #include "redblood/Mesh.h"
 #include "redblood/MeshIO.h"
@@ -26,9 +26,8 @@ namespace hemelb::tests
     {
         using MyTraits = Traits<lb::DefaultLattice, lb::GuoForcingLBGK>;
         using CellControl = hemelb::redblood::CellController<MyTraits>;
-        using MasterSim = SimulationMaster<MyTraits>;
 
-        std::shared_ptr<MasterSim> master;
+        std::unique_ptr<SimulationMaster> master;
 
         static constexpr auto argv = std::array{"hemelb", "-in", "large_cylinder_rbc.xml"};
         configuration::CommandLine options = {argv.size(), argv.data()};
@@ -69,14 +68,14 @@ namespace hemelb::tests
                                                        "value" },
                            3e-6);
 
-            master = std::make_shared<MasterSim>(options, Comms());
+            master = configuration::SimBuilder::CreateSim<MyTraits>(options, Comms());
         }
 
         void testBenchmark()
         {
             unsigned timestep = 0;
             auto output_callback =
-                    [this, &timestep](const hemelb::redblood::CellContainer & cells) {
+                    [this, &timestep](const redblood::CellContainer & cells) {
                         if ((timestep % 100) == 0) {
                             for (auto& cell: cells) {
                                 std::stringstream filename;

@@ -291,7 +291,7 @@ namespace hemelb::configuration {
     }
 
     std::shared_ptr<reporting::Reporter> SimBuilder::BuildReporter(
-            io::PathManager const& fileManager,
+            PathManager const& fileManager,
             std::vector<reporting::Reportable*>const& reps
     ) const {
         auto reporter = std::make_shared<reporting::Reporter>(fileManager.GetReportPath(),

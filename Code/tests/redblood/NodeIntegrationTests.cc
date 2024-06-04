@@ -9,7 +9,7 @@
 #include <catch2/catch.hpp>
 
 #include "Traits.h"
-#include "SimulationMaster.h"
+#include "configuration/SimBuilder.h"
 #include "redblood/Cell.h"
 #include "redblood/CellController.h"
 #include "tests/redblood/Fixtures.h"
@@ -41,7 +41,7 @@ namespace hemelb::tests
         }
 
         //! Creates a simulation. Does not run it.
-        std::shared_ptr<SimulationMaster<TRAITS>> simulationMaster(size_t steps,
+        auto simulationMaster(size_t steps,
                                                                    Dimensionless cell,
                                                                    Dimensionless wall) const {
             CopyResourceToTempdir(xml_name);
@@ -60,7 +60,7 @@ namespace hemelb::tests
             ModifyXMLInput(xml_name, { "redbloodcells", "cell2Wall", "intensity", "value" }, wall);
             ModifyXMLInput(xml_name, { "redbloodcells", "cell2Wall", "cutoffdistance", "value" }, 1);
             auto options = std::make_shared<configuration::CommandLine>(argc, argv);
-            auto const master = std::make_shared<SimulationMaster<TRAITS>>(*options, Comms());
+            auto master = configuration::SimBuilder::CreateSim<TRAITS>(*options, Comms());
             helpers::LatticeDataAccess(&master->GetFieldData()).ZeroOutForces();
             return master;
         }

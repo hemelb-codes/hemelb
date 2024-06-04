@@ -5,6 +5,7 @@
 
 add_library(hemelb_configuration OBJECT
         CommandLine.cc
+        PathManager.cc
         SimConfig.cc
         SimBuilder.cc
         SimConfigReader.cc

@@ -16,11 +16,11 @@
 namespace hemelb::tests
 {
     //! Mock cell for ease of use
-    class FakeCell : public hemelb::redblood::Cell
+    class FakeCell : public redblood::Cell
     {
     public:
         mutable size_t nbcalls = 0;
-        using hemelb::redblood::Cell::Cell;
+        using redblood::Cell::Cell;
         //! Facet bending energy
         LatticeEnergy operator()() const override
         {
@@ -38,7 +38,7 @@ namespace hemelb::tests
       using namespace redblood;
 
       LatticeDistance const cutoff = 5.0;
-        using Traits = hemelb::Traits<lb::D3Q15, lb::GuoForcingLBGK, lb::Normal,
+        using Traits = Traits<lb::D3Q15, lb::GuoForcingLBGK, lb::Normal,
                 lb::DefaultStreamer, lb::DefaultWallStreamer, lb::DefaultInletStreamer, lb::DefaultOutletStreamer,
                 stencil::FourPoint>;
 

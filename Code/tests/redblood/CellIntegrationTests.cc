@@ -8,9 +8,9 @@
 
 #include "Traits.h"
 #include "SimulationMaster.h"
+#include "configuration/SimBuilder.h"
 #include "redblood/Cell.h"
 #include "redblood/CellController.h"
-#include "tests/redblood/Fixtures.h"
 #include "tests/helpers/LatticeDataAccess.h"
 #include "tests/helpers/FolderTestFixture.h"
 
@@ -21,7 +21,6 @@ namespace hemelb::tests
     {
       using MyTraits = Traits<lb::DefaultLattice, lb::GuoForcingLBGK>;
       using CellControll = CellController<MyTraits>;
-      using MasterSim = SimulationMaster<MyTraits>;
 
     public:
       CellIntegrationTests() : FolderTestFixture(), timings() {
@@ -31,16 +30,16 @@ namespace hemelb::tests
 	CopyResourceToTempdir("large_cylinder.xml");
     ModifyXMLInput("large_cylinder.xml", {"simulation", "steps", "value"}, 8);
 	CopyResourceToTempdir("large_cylinder.gmy");
-	options = std::make_shared<hemelb::configuration::CommandLine>(argc, argv);
+	options = std::make_unique<configuration::CommandLine>(argc, argv);
 
 	auto cell = std::make_shared<Cell>(icoSphere(4));
-	templates = std::make_shared<TemplateCellContainer>();
+	templates = std::make_unique<TemplateCellContainer>();
 	(*templates)["icosphere"] = cell;
 	cell->moduli = Cell::Moduli(1e-6, 1e-6, 1e-6, 1e-6);
 	cells.insert(cell);
 
 	//timings = std::make_unique<reporting::Timers>(Comms());
-	master = std::make_shared<MasterSim>(*options, Comms());
+	master = configuration::SimBuilder::CreateSim<MyTraits>(*options, Comms());
 	helpers::LatticeDataAccess(&master->GetFieldData()).ZeroOutForces();
       }
 
@@ -120,8 +119,8 @@ namespace hemelb::tests
       }
 
     private:
-      std::shared_ptr<MasterSim> master;
-      std::shared_ptr<configuration::CommandLine> options;
+      std::unique_ptr<SimulationMaster> master;
+      std::unique_ptr<configuration::CommandLine> options;
       CellContainer cells;
       std::shared_ptr<TemplateCellContainer> templates;
       reporting::Timers timings;

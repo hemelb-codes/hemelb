@@ -54,6 +54,31 @@ namespace hemelb::configuration {
         std::shared_ptr<util::UnitConverter> unit_converter;
 
     public:
+        template <typename TraitsT>
+        static std::unique_ptr<SimulationMaster> CreateSim(
+                CommandLine const& options,
+                net::IOCommunicator const& ioComms
+        ) {
+            auto ans = std::unique_ptr<SimulationMaster>(new SimulationMaster(ioComms));
+            // Start the main timer!
+            ans->timings.total().Start();
+
+            ans->fileManager = std::make_shared<configuration::PathManager>(
+                    options,
+                    ioComms.OnIORank(),
+                    ioComms.Size()
+            );
+            auto&& infile = ans->fileManager->GetInputFile();
+            log::Logger::Log<log::Info, log::Singleton>("Reading configuration from %s", infile.c_str());
+            // Convert XML to configuration
+            ans->simConfig = configuration::SimConfig::New(infile);
+            // Use it to initialise self
+            auto builder = configuration::SimBuilder(ans->simConfig);
+            log::Logger::Log<log::Info, log::Singleton>("Beginning Initialisation.");
+            builder.build<TraitsT>(*ans);
+            return ans;
+        }
+
         explicit SimBuilder(SimConfig const& conf, bool construct_unit_converter = true);
         virtual ~SimBuilder() = default;
 
@@ -111,7 +136,7 @@ namespace hemelb::configuration {
         ) const;
 
         [[nodiscard]] std::shared_ptr<reporting::Reporter> BuildReporter(
-                io::PathManager const& fileManager,
+                PathManager const& fileManager,
                 std::vector<reporting::Reportable*> const & reps
         ) const;
     };
@@ -299,8 +324,6 @@ namespace hemelb::configuration {
     [[nodiscard]] std::shared_ptr<net::IteratedAction> SimBuilder::BuildCellController(SimulationMaster const& control, reporting::Timers& timings) const {
         if (config.HasRBCSection()) {
 #ifdef HEMELB_BUILD_RBC
-            using traitsType = typename T::Traits;
-
             auto ccb = redblood::CellControllerBuilder(unit_converter);
 
             auto& ioComms = control.ioComms;

@@ -8,7 +8,7 @@
 #include <catch2/catch.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
-#include "SimulationMaster.h"
+#include "configuration/SimBuilder.h"
 #include "lb/lattices/D3Q19.h"
 #include "Traits.h"
 #include "redblood/Mesh.h"
@@ -25,7 +25,6 @@ namespace hemelb::tests
 
       using Traits = Traits<lb::D3Q19, lb::GuoForcingLBGK>;
       using CellControl = hemelb::redblood::CellController<Traits>;
-      using MasterSim = SimulationMaster<Traits>;
 
       redblood::VTKMeshIO io = {};
 
@@ -54,7 +53,7 @@ namespace hemelb::tests
         "hemelb", "-in", "large_cylinder_rbc.xml",
       };
       auto options = std::make_shared<configuration::CommandLine>(argc, argv);
-      auto master = std::make_shared<MasterSim>(*options, Comms());
+      auto master = configuration::SimBuilder::CreateSim<Traits>(*options, Comms());
 
       SECTION("testIntegration") {
         // Read meshes from disc

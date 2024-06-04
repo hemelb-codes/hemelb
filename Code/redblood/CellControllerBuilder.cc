@@ -5,7 +5,7 @@
 
 #include "redblood/CellControllerBuilder.h"
 
-#include "io/PathManager.h"
+#include "configuration/PathManager.h"
 #include "redblood/CellIO.h"
 #include "redblood/FaderCell.h"
 #include "redblood/MeshIO.h"
@@ -350,7 +350,7 @@ namespace hemelb::redblood {
     CellChangeListener CellControllerBuilder::build_full_cell_output(
             configuration::CellOutputConfig const& conf,
             std::shared_ptr<lb::SimulationState const> simState,
-            std::shared_ptr<io::PathManager const> fileManager,
+            std::shared_ptr<configuration::PathManager const> fileManager,
             net::IOCommunicator const& ioComms
     ) const {
         auto conv = conf.physical_units ? unit_converter : nullptr;
@@ -360,7 +360,7 @@ namespace hemelb::redblood {
     CellChangeListener CellControllerBuilder::build_summary_cell_output(
             configuration::CellOutputConfig const& conf,
             std::shared_ptr<lb::SimulationState const> simState,
-            std::shared_ptr<io::PathManager const> fileManager,
+            std::shared_ptr<configuration::PathManager const> fileManager,
             net::IOCommunicator const& ioComms
     ) const {
         auto conv = conf.physical_units ? unit_converter : nullptr;

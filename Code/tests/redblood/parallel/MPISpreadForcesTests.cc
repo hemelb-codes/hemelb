@@ -21,7 +21,7 @@
 
 namespace hemelb::tests
 {
-    class MPISpreadForcesTests : public helpers::FolderTestFixture
+    class MPISpreadForcesTests : public OpenSimFixture
     {
     public:
         MPISpreadForcesTests();
@@ -40,29 +40,10 @@ namespace hemelb::tests
         }
 
     protected:
-        std::shared_ptr<hemelb::configuration::CommandLine> options;
-
-        //! Meta-function to create simulation type
-        template<class STENCIL>
-        using MasterSim = OpenedSimulationMaster<
-                Traits<
-                        lb::DefaultLattice, lb::GuoForcingLBGK, lb::Normal,
-                        lb::DefaultStreamer, lb::DefaultWallStreamer, lb::DefaultInletStreamer, lb::DefaultOutletStreamer,
-                        STENCIL
-                >
-        >;
-
-        //! Creates a master simulation
-        template<class STENCIL>
-        auto CreateMasterSim(net::IOCommunicator const &comm) const
-        {
-            return std::make_shared<MasterSim<STENCIL>>(*options, comm);
-        }
-
         template<class STENCIL> void Check(size_t mid, size_t edges, size_t nCells);
     };
 
-    MPISpreadForcesTests::MPISpreadForcesTests() : FolderTestFixture::FolderTestFixture()
+    MPISpreadForcesTests::MPISpreadForcesTests() : OpenSimFixture()
     {
       using hemelb::configuration::CommandLine;
 
@@ -117,8 +98,8 @@ namespace hemelb::tests
       mpi_spreader.PostMessageLength(distributions, owned);
       mpi_spreader.ComputeForces(owned);
       mpi_spreader.PostForcesAndNodes(distributions, owned);
-      mpi_spreader.SpreadLocalForces<typename MasterSim<STENCIL>::Traits>(fieldData, owned);
-      mpi_spreader.SpreadNonLocalForces<typename MasterSim<STENCIL>::Traits>(fieldData);
+      mpi_spreader.SpreadLocalForces<MyTraits<STENCIL>>(fieldData, owned);
+      mpi_spreader.SpreadNonLocalForces<MyTraits<STENCIL>>(fieldData);
 
       std::vector<LatticeVector> indices;
       std::vector<LatticeForceVector> forces;

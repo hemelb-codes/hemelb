@@ -83,8 +83,7 @@ namespace hemelb::redblood::parallel
         auto rank = comm.Rank();
 
         // Loop over this process's edge
-        auto first_edge_site_i = domain.GetMidDomainSiteCount();
-        auto last_edge_site_i = first_edge_site_i + domain.GetDomainEdgeSiteCount();
+        auto [first_edge_site_i, last_edge_site_i] = domain.GetAllDomainEdgeSiteRange();
         for (auto siteIndex = first_edge_site_i;
              siteIndex < last_edge_site_i;
              ++siteIndex) {

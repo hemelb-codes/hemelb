@@ -16,7 +16,7 @@
 #include "util/UnitConverter.h"
 #include "configuration/SimConfig.h"
 #include "configuration/CommandLine.h"
-#include "io/PathManager.h"
+#include "configuration/PathManager.h"
 #include "reporting/Reporter.h"
 #include "reporting/Timers.h"
 #include "reporting/BuildInfo.h"
@@ -53,7 +53,7 @@ namespace hemelb
         std::shared_ptr<lb::LBMBase> latticeBoltzmannModel;
         std::shared_ptr<geometry::neighbouring::NeighbouringDataManager> neighbouringDataManager;
 
-        std::shared_ptr<io::PathManager> fileManager;
+        std::shared_ptr<configuration::PathManager> fileManager;
         std::shared_ptr<reporting::Reporter> reporter;
 
         std::shared_ptr<lb::SimulationState> simulationState;
@@ -77,9 +77,8 @@ namespace hemelb
         std::shared_ptr<net::phased::StepManager> stepManager;
         std::shared_ptr<net::phased::NetConcern> netConcern;
 
+        SimulationMaster(const net::IOCommunicator& ioComm);
     public:
-      SimulationMaster(configuration::CommandLine &options,
-                       const net::IOCommunicator& ioComms);
       virtual ~SimulationMaster();
 
       void Abort();

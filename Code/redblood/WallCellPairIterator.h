@@ -110,7 +110,8 @@ namespace hemelb::redblood
         pointer operator->() const
         {
             HASSERT(static_cast<bool>(*this));
-            return std::make_unique<value_type>(*firstCellNode, firstWallNode->second.node);
+            value_type tmp{*firstCellNode, firstWallNode->second.node};
+            return std::make_unique<value_type>(tmp);
         }
 
         bool operator++();

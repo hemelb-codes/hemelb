@@ -3,13 +3,13 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "io/PathManager.h"
+#include "configuration/PathManager.h"
 
 #include "Exception.h"
 #include "configuration/CommandLine.h"
 
 namespace fs = std::filesystem;
-namespace hemelb::io
+namespace hemelb::configuration
 {
 
     PathManager::PathManager(const configuration::CommandLine & commandLine, const bool & io,

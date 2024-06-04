@@ -123,7 +123,9 @@ if (HEMELB_USE_DEBUGGER)
   set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-add_executable(${HEMELB_EXECUTABLE} SimulationMaster.cc main.cc)
+add_library(hemelb_sim OBJECT SimulationMaster.cc)
+list(APPEND heme_libraries hemelb_sim)
+add_executable(${HEMELB_EXECUTABLE} main.cc)
 codesign(${HEMELB_EXECUTABLE})
 
 include_directories(${PROJECT_SOURCE_DIR})

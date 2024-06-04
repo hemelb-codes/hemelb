@@ -24,7 +24,7 @@ namespace hemelb::tests
 {
     using namespace redblood;
 
-    class MPIIntegrateVelocitiesTests : public helpers::FolderTestFixture
+    class MPIIntegrateVelocitiesTests : public OpenSimFixture
     {
     public:
         MPIIntegrateVelocitiesTests();
@@ -46,30 +46,11 @@ namespace hemelb::tests
         }
 
     protected:
-        std::shared_ptr<configuration::CommandLine> options;
-
-        //! Meta-function to create simulation type
-        template<class STENCIL>
-        using MasterSim = OpenedSimulationMaster<
-                Traits<
-                        lb::DefaultLattice, lb::GuoForcingLBGK, lb::Normal,
-                        lb::DefaultStreamer, lb::DefaultWallStreamer, lb::DefaultInletStreamer, lb::DefaultOutletStreamer,
-                        STENCIL
-                >
-        >;
-
-        //! Creates a master simulation
-        template<class STENCIL>
-        auto CreateMasterSim(net::IOCommunicator const &comm) const
-        {
-            return std::make_shared<MasterSim<STENCIL>>(*options, comm);
-        }
-
         template<class STENCIL>
         void Check(size_t mid, size_t edges, size_t nCells);
     };
 
-    MPIIntegrateVelocitiesTests::MPIIntegrateVelocitiesTests() : FolderTestFixture()
+    MPIIntegrateVelocitiesTests::MPIIntegrateVelocitiesTests() : OpenSimFixture()
     {
       using hemelb::configuration::CommandLine;
 
@@ -99,7 +80,7 @@ namespace hemelb::tests
     {
       using hemelb::redblood::CellContainer;
       using hemelb::redblood::TemplateCellContainer;
-      using Traits = typename MasterSim<STENCIL>::Traits;
+      using Traits = MyTraits<STENCIL>;
 
       auto const world = net::MpiCommunicator::World();
       auto const color = world.Rank() == 0;

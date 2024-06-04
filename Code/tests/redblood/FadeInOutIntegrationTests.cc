@@ -4,10 +4,10 @@
 // license in the file LICENSE.
 
 #include <memory>
-#include <boost/uuid/uuid_io.hpp>
 #include <catch2/catch.hpp>
 
 #include "SimulationMaster.h"
+#include "configuration/SimBuilder.h"
 #include "lb/lattices/D3Q19.h"
 #include "Traits.h"
 #include "redblood/Mesh.h"
@@ -23,7 +23,6 @@ namespace hemelb::tests
                      "[redblood][.long]") {
         using Traits = Traits<lb::D3Q19, lb::GuoForcingLBGK>;
         using CellControl = CellController<Traits>;
-        using MasterSim = SimulationMaster<Traits>;
 
       CopyResourceToTempdir("large_cylinder_rbc.xml");
       CopyResourceToTempdir("large_cylinder.gmy");
@@ -45,15 +44,15 @@ namespace hemelb::tests
 	"hemelb", "-in", "large_cylinder_rbc.xml",
       };
 
-      auto options = hemelb::configuration::CommandLine{argc, argv};
-      auto master = std::make_shared<MasterSim>(options, Comms());
+      auto options = configuration::CommandLine{argc, argv};
+      auto master = configuration::SimBuilder::CreateSim<Traits>(options, Comms());
      
       SECTION("testIntegration") {
 	auto const & converter = master->GetUnitConverter();
 	auto const volumeFactor = std::pow(converter.ConvertToLatticeUnits("m", 1e0), -3)
 	  * 1e12;
 	bool didDropCell = false;
-	auto checkDidDropCell = [&didDropCell](const hemelb::redblood::CellContainer & cells)
+	auto checkDidDropCell = [&didDropCell](const CellContainer & cells)
 	  {
 	    didDropCell |= not cells.empty();
 	  };
@@ -149,7 +148,7 @@ namespace hemelb::tests
 	AssertPresent("results/report.xml");
 	REQUIRE(iter > 0);
 	REQUIRE(didDropCell);
-	REQUIRE(0ul == controller->GetCells().size());
+	REQUIRE(controller->GetCells().empty());
       }
     }
 

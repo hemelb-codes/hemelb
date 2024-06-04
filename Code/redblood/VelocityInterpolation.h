@@ -83,7 +83,7 @@ namespace hemelb::redblood
                   // Follows approach in Timm's code
                   return latticeData.GetFNew<LatticeType>(index);
               } else {
-                  return site.GetFOld<LatticeType>();
+                  return site.template GetFOld<LatticeType>();
               }
         }();
         LatticeType::CalculateDensityAndMomentum(fDistribution,

@@ -9,7 +9,7 @@
 #include <filesystem>
 #include <memory>
 
-#include "io/PathManager.h"
+#include "configuration/SimConfig.h"
 #include "io/TimePattern.h"
 #include "lb/SimulationState.h"
 #include "net/IteratedAction.h"

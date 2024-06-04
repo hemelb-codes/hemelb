@@ -6,9 +6,9 @@
 #include "net/mpi.h"
 #include "net/IOCommunicator.h"
 #include "configuration/CommandLine.h"
+#include "configuration/SimBuilder.h"
 #include "io/ensure_hexfloat.h"
 #include "debug.h"
-#include "SimulationMaster.h"
 
 int main(int argc, char *argv[])
 {
@@ -40,10 +40,10 @@ int main(int argc, char *argv[])
       debug::Init(options.GetDebug(), argv[0], commWorld);
 
       // Prepare main simulation object...
-      SimulationMaster master(options, hemelbCommunicator);
+      auto master = configuration::SimBuilder::CreateSim<Traits<>>(options, hemelbCommunicator);
 
       // ..and run it.
-      master.RunSimulation();
+      master->RunSimulation();
     }
 
     // Interpose this catch to print usage before propagating the error.

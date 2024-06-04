@@ -3,7 +3,6 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "tests/helpers/FolderTestFixture.h"
 #include "tests/redblood/Fixtures.h"
 #include "tests/redblood/parallel/ParallelFixtures.h"
 #include "lb/iolets/InOutLet.h"
@@ -12,7 +11,7 @@ namespace hemelb::tests
 {
     using namespace redblood;
 
-    class GraphCommsTests : public helpers::FolderTestFixture
+    class GraphCommsTests : public OpenSimFixture
     {
     public:
         GraphCommsTests();
@@ -24,28 +23,28 @@ namespace hemelb::tests
         void testComputeGlobalCoordsToProcMap();
 
     protected:
-        std::shared_ptr<configuration::CommandLine> options;
-
-        //! Meta-function to create simulation type
-        template<class STENCIL>
-        using MasterSim = OpenedSimulationMaster<
-                Traits<
-                        lb::DefaultLattice, lb::GuoForcingLBGK, lb::Normal,
-                        lb::DefaultStreamer, lb::DefaultWallStreamer, lb::DefaultInletStreamer, lb::DefaultOutletStreamer,
-                        STENCIL
-                >
-        >;
-
-        //! Creates a master simulation
-        template<class STENCIL = stencil::FourPoint>
-        [[nodiscard]] auto CreateMasterSim(net::IOCommunicator const &comm) const
-        {
-            return std::make_shared<MasterSim<STENCIL>>(*options, comm);
-        }
+//        std::shared_ptr<configuration::CommandLine> options;
+//
+//        //! Meta-function to create simulation type
+//        template<class STENCIL>
+//        using MasterSim = OpenedSimulationMaster<
+//                Traits<
+//                        lb::DefaultLattice, lb::GuoForcingLBGK, lb::Normal,
+//                        lb::DefaultStreamer, lb::DefaultWallStreamer, lb::DefaultInletStreamer, lb::DefaultOutletStreamer,
+//                        STENCIL
+//                >
+//        >;
+//
+//        //! Creates a master simulation
+//        template<class STENCIL = stencil::FourPoint>
+//        [[nodiscard]] auto CreateMasterSim(net::IOCommunicator const &comm) const
+//        {
+//            return std::make_shared<MasterSim<STENCIL>>(*options, comm);
+//        }
 
     };
 
-    GraphCommsTests::GraphCommsTests() : FolderTestFixture() {
+    GraphCommsTests::GraphCommsTests() : OpenSimFixture() {
       // Have everything ready to creates simulations
       if (Comms().Rank() == 0) {
 	CopyResourceToTempdir("large_cylinder_rbc.xml");
@@ -127,7 +126,7 @@ namespace hemelb::tests
         REQUIRE(4 == comms.Size());
 
         // Setup simulation with cylinder
-        auto master = CreateMasterSim(comms);
+        auto master = CreateMasterSim<stencil::FourPoint>(comms);
         REQUIRE(master);
         auto &latticeData = master->GetFieldData();
 
@@ -158,7 +157,7 @@ namespace hemelb::tests
 
         // Setup simulation with cylinder
         auto comms = Comms();
-        auto master = CreateMasterSim(comms);
+        auto master = CreateMasterSim<stencil::FourPoint>(comms);
         REQUIRE(master);
 
         auto simConf = master->GetSimConfig();
@@ -198,7 +197,7 @@ namespace hemelb::tests
         REQUIRE(4 == comms.Size());
 
         // Setup simulation with cylinder
-        auto master = CreateMasterSim(comms);
+        auto master = CreateMasterSim<stencil::FourPoint>(comms);
         REQUIRE(master);
         auto &domain = master->GetFieldData().GetDomain();
         auto graphComm = comms.DistGraphAdjacent(

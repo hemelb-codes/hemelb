@@ -22,7 +22,7 @@ namespace hemelb::tests
 {
     using namespace redblood;
 
-    class MPIParallelIntegrationTests : public helpers::FolderTestFixture
+    class MPIParallelIntegrationTests : public OpenSimFixture
     {
     public:
         MPIParallelIntegrationTests();
@@ -33,29 +33,10 @@ namespace hemelb::tests
         }
 
     protected:
-        std::shared_ptr<hemelb::configuration::CommandLine> options;
-
-        //! Meta-function to create simulation type
-        template<class STENCIL>
-        using MasterSim = OpenedSimulationMaster<
-                Traits<
-                        lb::DefaultLattice, lb::GuoForcingLBGK, lb::Normal,
-                        lb::DefaultStreamer, lb::DefaultWallStreamer, lb::DefaultInletStreamer, lb::DefaultOutletStreamer,
-                        STENCIL
-                >
-        >;
-
-        //! Creates a master simulation
-        template<class STENCIL>
-        [[nodiscard]] auto CreateMasterSim(net::IOCommunicator const &comm) const
-        {
-            return std::make_shared<MasterSim<STENCIL>>(*options, comm);
-        }
-
         template<class STENCIL> void Check();
     };
 
-    MPIParallelIntegrationTests::MPIParallelIntegrationTests() : FolderTestFixture()
+    MPIParallelIntegrationTests::MPIParallelIntegrationTests() : OpenSimFixture()
     {
       // Have everything ready to creates simulations
       if (net::MpiCommunicator::World().Rank() == 0) {
@@ -91,7 +72,7 @@ namespace hemelb::tests
     void MPIParallelIntegrationTests::Check() {
       using hemelb::redblood::CellContainer;
       using hemelb::redblood::TemplateCellContainer;
-      using Traits = typename MasterSim<STENCIL>::Traits;
+      using T = MyTraits<STENCIL>;
 
       auto const world = net::MpiCommunicator::World();
       auto const color = world.Rank() == 0;
@@ -101,11 +82,11 @@ namespace hemelb::tests
       REQUIRE(master);
 
       unsigned num_cells;
-      auto checkNumCells = [&num_cells]( const hemelb::redblood::CellContainer & cells) {
+      auto checkNumCells = [&num_cells]( const CellContainer & cells) {
 	num_cells = cells.size();
       };
 
-      auto controller = std::static_pointer_cast<hemelb::redblood::CellController<Traits>>(master->GetCellController());
+      auto controller = std::static_pointer_cast<CellController<T>>(master->GetCellController());
       REQUIRE(controller);
       controller->AddCellChangeListener(checkNumCells);
 
