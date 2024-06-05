@@ -103,12 +103,15 @@ namespace hemelb::net
         inline void Wait() {
             HEMELB_MPI_CALL(MPI_Wait, (&req, MPI_STATUS_IGNORE));
         }
+        static void Waitall(std::span<MpiRequest> reqs);
+
         [[nodiscard]] inline bool Test() {
             int done = 0;
             HEMELB_MPI_CALL(MPI_Test, (&req, &done, MPI_STATUS_IGNORE));
             return done;
         }
     };
+
 
     // Holds an MPI communicator and exposes communication functions
     // via members. It will own the underlying MPI_Comm (i.e. it will
@@ -280,6 +283,11 @@ namespace hemelb::net
         template<typename T>
         void Receive(std::vector<T>& val, int src, int tag = 0,
                      MPI_Status* stat = MPI_STATUS_IGNORE) const;
+
+        template <typename T>
+        [[nodiscard]] MpiRequest Irecv(std::span<T> dest, int src, int tag = 0) const;
+        template <typename T>
+        [[nodiscard]] MpiRequest Irecv(T& dest, int src, int tag = 0) const;
 
         //! \brief Create a distributed graph communicator assuming unweighted and bidirectional communication.
         [[nodiscard]] MpiCommunicator DistGraphAdjacent(std::vector<int> my_neighbours, bool reorder = true) const;

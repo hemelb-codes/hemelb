@@ -91,7 +91,7 @@ namespace hemelb::geometry
         // GmyReadResult. Since that is only guaranteed to know
         // the rank of sites which are assigned to this rank, it
         // may well return UNKNOWN_PROCESS
-        auto read_result_rank_for_site = [this, &max_site_index, &readResult](
+        auto read_result_rank_for_site = [&max_site_index, &readResult](
             util::Vector3D<site_t> const& global_site_coords,
             Vec16& block_coords, site_t& site_gmy_idx
         ) {
@@ -469,35 +469,36 @@ namespace hemelb::geometry
             // propagate to different partitions is avoided (only their values
             // will be communicated). It's here!
             // Allocate the request variable.
-            net::Net tempNet(comms);
+            std::vector<net::MpiRequest> reqs(neighbouringProcs.size());
+            int i_req = 0;
             for (auto& neighbouringProc : neighbouringProcs)
             {
-                // We know that the elements are contiguous from asserts
-                auto flatten_vec_of_pairs = [] (auto&& vop) {
-                    auto& [loc, d] = vop.front();
-                    return std::span{&loc[0], vop.size() * 4};
-                };
-
                 // One way send receive.  The lower numbered netTop->ProcessorCount send and the higher numbered ones receive.
                 // It seems that, for each pair of processors, the lower numbered one ends up with its own
                 // edge sites and directions stored and the higher numbered one ends up with those on the
                 // other processor.
                 if (neighbouringProc.Rank > localRank)
                 {
-                    tempNet.RequestSendV<site_t>(
-                            flatten_vec_of_pairs(sharedFLocationForEachProc.at(neighbouringProc.Rank)),
-                            neighbouringProc.Rank);
-                }
-                else
-                {
+                    // We know that the elements are contiguous from asserts
+                    // in Domain.h about size and alignment of point_direction.
+                    // Using a template as want the const/mutable variants.
+                    auto const& to_send = sharedFLocationForEachProc.at(neighbouringProc.Rank);
+
+                    reqs[i_req] = comms.Issend(
+                            std::span<site_t const>(&to_send[0].first[0], to_send.size() * 4),
+                            neighbouringProc.Rank
+                            );
+                } else {
                     auto& dest = sharedFLocationForEachProc[neighbouringProc.Rank];
                     dest.resize(neighbouringProc.SharedDistributionCount);
-                    tempNet.RequestReceiveV(flatten_vec_of_pairs(dest),
-                                            neighbouringProc.Rank);
+                    reqs[i_req] = comms.Irecv(
+                            std::span<site_t>(&dest[0].first[0], 4*dest.size()),
+                            neighbouringProc.Rank
+                    );
                 }
+                i_req += 1;
             }
-
-            tempNet.Dispatch();
+            net::MpiRequest::Waitall(reqs);
         }
 
         void Domain::InitialiseReceiveLookup(proc2neighdata const& sharedFLocationForEachProc)
