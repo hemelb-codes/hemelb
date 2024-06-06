@@ -21,27 +21,6 @@ namespace hemelb::tests
         void testGraphCommunicator();
         void testComputeCellsEffectiveSize();
         void testComputeGlobalCoordsToProcMap();
-
-    protected:
-//        std::shared_ptr<configuration::CommandLine> options;
-//
-//        //! Meta-function to create simulation type
-//        template<class STENCIL>
-//        using MasterSim = OpenedSimulationMaster<
-//                Traits<
-//                        lb::DefaultLattice, lb::GuoForcingLBGK, lb::Normal,
-//                        lb::DefaultStreamer, lb::DefaultWallStreamer, lb::DefaultInletStreamer, lb::DefaultOutletStreamer,
-//                        STENCIL
-//                >
-//        >;
-//
-//        //! Creates a master simulation
-//        template<class STENCIL = stencil::FourPoint>
-//        [[nodiscard]] auto CreateMasterSim(net::IOCommunicator const &comm) const
-//        {
-//            return std::make_shared<MasterSim<STENCIL>>(*options, comm);
-//        }
-
     };
 
     GraphCommsTests::GraphCommsTests() : OpenSimFixture() {
@@ -126,9 +105,9 @@ namespace hemelb::tests
         REQUIRE(4 == comms.Size());
 
         // Setup simulation with cylinder
-        auto master = CreateMasterSim<stencil::FourPoint>(comms);
-        REQUIRE(master);
-        auto &latticeData = master->GetFieldData();
+        auto sim = CreateSim<stencil::FourPoint>(comms);
+        REQUIRE(sim);
+        auto &latticeData = sim->GetFieldData();
 
         // Compute neighbourhoods (cylinder is 4.8e-5 long, a cell
         // effective size of 2e-6 won't let cells span across more than
@@ -136,7 +115,7 @@ namespace hemelb::tests
         auto neighbourhoods =
                 ComputeProcessorNeighbourhood(comms,
                                               latticeData.GetDomain(),
-                                              2e-6 / master->GetSimConfig().GetVoxelSize());
+                                              2e-6 / sim->GetSimConfig().GetVoxelSize());
 
         // Parmetis divides the cylinder in four consecutive cylindrical
         // subdomains with interfaces roughly parallel to the iolets.
@@ -157,10 +136,10 @@ namespace hemelb::tests
 
         // Setup simulation with cylinder
         auto comms = Comms();
-        auto master = CreateMasterSim<stencil::FourPoint>(comms);
-        REQUIRE(master);
+        auto sim = CreateSim<stencil::FourPoint>(comms);
+        REQUIRE(sim);
 
-        auto simConf = master->GetSimConfig();
+        auto simConf = sim->GetSimConfig();
         REQUIRE(simConf.HasRBCSection());
         auto builder = configuration::SimBuilder(simConf);
         auto rbcConf = simConf.GetRBCConfig();
@@ -197,13 +176,13 @@ namespace hemelb::tests
         REQUIRE(4 == comms.Size());
 
         // Setup simulation with cylinder
-        auto master = CreateMasterSim<stencil::FourPoint>(comms);
-        REQUIRE(master);
-        auto &domain = master->GetFieldData().GetDomain();
+        auto sim = CreateSim<stencil::FourPoint>(comms);
+        REQUIRE(sim);
+        auto &domain = sim->GetFieldData().GetDomain();
         auto graphComm = comms.DistGraphAdjacent(
               ComputeProcessorNeighbourhood(comms,
                                             domain,
-                                            2e-6 / master->GetSimConfig().GetVoxelSize())
+                                            2e-6 / sim->GetSimConfig().GetVoxelSize())
         );
         auto const& globalCoordsToProcMap = ComputeGlobalCoordsToProcMap(graphComm, domain);
 

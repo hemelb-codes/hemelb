@@ -3,7 +3,7 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "SimulationMaster.h"
+#include "SimulationController.h"
 
 #include <map>
 #include <limits>
@@ -32,23 +32,23 @@
 namespace hemelb
 {
     /**
-     * Constructor for the SimulationMaster class
+     * Constructor for the SimulationController class
      *
      * Initialises member variables including the network topology
      * object.
      */
-    SimulationMaster::SimulationMaster(const net::IOCommunicator& ioComm) :
+    SimulationController::SimulationController(const net::IOCommunicator& ioComm) :
             build_info(), ioComms(ioComm.Duplicate()), communicationNet(ioComms)
     {
     }
 
-  /// Destructor for the SimulationMaster class.
-  SimulationMaster::~SimulationMaster() = default;
+  /// Destructor for the SimulationController class.
+  SimulationController::~SimulationController() = default;
 
   /**
    * Returns the number of processors involved in the simulation.
    */
-  int SimulationMaster::GetProcessorCount()
+  int SimulationController::GetProcessorCount()
   {
     return ioComms.Size();
   }
@@ -57,17 +57,17 @@ namespace hemelb
    * Initialises various elements of the simulation if necessary:
    * domain decomposition, LBM and visualisation.
    */
-  void SimulationMaster::Initialise()
+  void SimulationController::Initialise()
   {
 
   }
 
-  void SimulationMaster::HandleActors()
+  void SimulationController::HandleActors()
   {
     stepManager->CallActions();
   }
 
-  void SimulationMaster::OnUnstableSimulation()
+  void SimulationController::OnUnstableSimulation()
   {
     LogStabilityReport();
     log::Logger::Log<log::Warning, log::Singleton>("Aborting: time step length: %f\n",
@@ -79,7 +79,7 @@ namespace hemelb
   /**
    * Begin the simulation.
    */
-  void SimulationMaster::RunSimulation()
+  void SimulationController::RunSimulation()
   {
     log::Logger::Log<log::Info, log::Singleton>("Beginning to run simulation.");
     timings.simulation().Start();
@@ -108,7 +108,7 @@ namespace hemelb
     Finalise();
   }
 
-  void SimulationMaster::Finalise()
+  void SimulationController::Finalise()
   {
     timings.total().Stop();
     timings.Reduce(ioComms);
@@ -126,7 +126,7 @@ namespace hemelb
     log::Logger::Log<log::Info, log::Singleton>("Finish running simulation.");
   }
 
-  void SimulationMaster::DoTimeStep()
+  void SimulationController::DoTimeStep()
   {
     log::Logger::Log<log::Debug, log::OnePerCore>("Current LB time: %e",
                                                   simulationState->GetTime());
@@ -179,7 +179,7 @@ namespace hemelb
     simulationState->Increment();
   }
 
-  void SimulationMaster::RecalculatePropertyRequirements()
+  void SimulationController::RecalculatePropertyRequirements()
   {
     // Get the property cache & reset its list of properties to get.
     lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
@@ -202,7 +202,7 @@ namespace hemelb
   /**
    * Called on error to abort the simulation and pull-down the MPI environment.
    */
-  void SimulationMaster::Abort()
+  void SimulationController::Abort()
   {
     // This gives us something to work from when we have an error - we get the rank
     // that calls abort, and we get a stack-trace from the exception having been thrown.
@@ -212,7 +212,7 @@ namespace hemelb
     exit(1);
   }
 
-  void SimulationMaster::LogStabilityReport()
+  void SimulationController::LogStabilityReport()
   {
     if (incompressibilityChecker && incompressibilityChecker->AreDensitiesAvailable())
     {
@@ -232,12 +232,12 @@ namespace hemelb
     }
   }
 
-  const util::UnitConverter& SimulationMaster::GetUnitConverter() const
+  const util::UnitConverter& SimulationController::GetUnitConverter() const
   {
     return *unitConverter;
   }
 
-    configuration::SimConfig SimulationMaster::ToConfig() const {
+    configuration::SimConfig SimulationController::ToConfig() const {
         using namespace configuration;
         SimConfig ans = simConfig;
         if (simConfig.HasColloidSection())

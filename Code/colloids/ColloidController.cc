@@ -30,7 +30,7 @@ namespace hemelb
       delete particleSet;
     }
 
-    // constructor - called by SimulationMaster::Initialise()
+    // constructor - called by SimulationController::Initialise()
     ColloidController::ColloidController(const geometry::Domain& latDatLBM,
                                          const lb::SimulationState& simulationState,
                                          const geometry::GmyReadResult& gmyResult,

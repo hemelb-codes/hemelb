@@ -43,7 +43,7 @@ add_to_resources(resources/four_cube.gmy resources/four_cube.xml resources/four_
 )
 
 
-add_test_executable(hemelb-tests main.cc SimulationMasterTests.cc)
+add_test_executable(hemelb-tests main.cc SimulationControllerTests.cc)
 
 add_subdirectory(helpers)
 

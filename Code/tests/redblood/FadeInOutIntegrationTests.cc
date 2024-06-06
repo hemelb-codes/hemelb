@@ -6,7 +6,7 @@
 #include <memory>
 #include <catch2/catch.hpp>
 
-#include "SimulationMaster.h"
+#include "SimulationController.h"
 #include "configuration/SimBuilder.h"
 #include "lb/lattices/D3Q19.h"
 #include "Traits.h"
@@ -45,10 +45,10 @@ namespace hemelb::tests
       };
 
       auto options = configuration::CommandLine{argc, argv};
-      auto master = configuration::SimBuilder::CreateSim<Traits>(options, Comms());
+      auto sim = configuration::SimBuilder::CreateSim<Traits>(options, Comms());
      
       SECTION("testIntegration") {
-	auto const & converter = master->GetUnitConverter();
+	auto const & converter = sim->GetUnitConverter();
 	auto const volumeFactor = std::pow(converter.ConvertToLatticeUnits("m", 1e0), -3)
 	  * 1e12;
 	bool didDropCell = false;
@@ -98,8 +98,8 @@ namespace hemelb::tests
 	  ++iter;
 	};
 
-	REQUIRE(master);
-	auto controller = std::static_pointer_cast<CellControl>(master->GetCellController());
+	REQUIRE(sim);
+	auto controller = std::static_pointer_cast<CellControl>(sim->GetCellController());
 	REQUIRE(controller);
 	controller->AddCellChangeListener(checkVolume);
 	controller->AddCellChangeListener(checkPosition);
@@ -141,8 +141,8 @@ namespace hemelb::tests
 	// );
 
 	// run the simulation
-	master->RunSimulation();
-	master->Finalise();
+	sim->RunSimulation();
+	sim->Finalise();
 
 	AssertPresent("results/report.txt");
 	AssertPresent("results/report.xml");

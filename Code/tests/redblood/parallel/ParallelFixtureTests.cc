@@ -61,10 +61,10 @@ namespace hemelb::tests
           return;
         }
 
-      auto master = CreateMasterSim<Stencil>(world);
-      REQUIRE(master);
+      auto sim = CreateSim<Stencil>(world);
+      REQUIRE(sim);
 
-      auto& fd = master->GetFieldData();
+      auto& fd = sim->GetFieldData();
       auto& dom = fd.GetDomain();
       helpers::ZeroOutForces(fd);
       auto const nmid = 20;
@@ -74,7 +74,7 @@ namespace hemelb::tests
       auto graphComm =
 	world.DistGraphAdjacent(parallel::ComputeProcessorNeighbourhood(world,
                                                                           dom,
-									      2e-6 / master->GetSimConfig().GetVoxelSize()));
+									      2e-6 / sim->GetSimConfig().GetVoxelSize()));
 
       auto const& globalCoordsToProcMap = parallel::ComputeGlobalCoordsToProcMap(graphComm, dom);
 

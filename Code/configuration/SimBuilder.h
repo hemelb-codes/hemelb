@@ -6,7 +6,7 @@
 #ifndef HEMELB_CONFIGURATION_SIMBUILDER_H
 #define HEMELB_CONFIGURATION_SIMBUILDER_H
 
-#include "SimulationMaster.h"
+#include "SimulationController.h"
 #include "configuration/SimConfig.h"
 #include "extraction/LbDataSourceIterator.h"
 #include "extraction/PropertyActor.h"
@@ -55,11 +55,11 @@ namespace hemelb::configuration {
 
     public:
         template <typename TraitsT>
-        static std::unique_ptr<SimulationMaster> CreateSim(
+        static std::unique_ptr<SimulationController> CreateSim(
                 CommandLine const& options,
                 net::IOCommunicator const& ioComms
         ) {
-            auto ans = std::unique_ptr<SimulationMaster>(new SimulationMaster(ioComms));
+            auto ans = std::unique_ptr<SimulationController>(new SimulationController(ioComms));
             // Start the main timer!
             ans->timings.total().Start();
 
@@ -90,9 +90,9 @@ namespace hemelb::configuration {
             return unit_converter->template ConvertToLatticeUnits(units, val);
         }
 
-        // Fully build the T = SimulationMaster<Traits> from the configuration.
+        // Fully build the T = SimulationController<Traits> from the configuration.
         template <typename TRAITS = hemelb::Traits<>>
-        void build(SimulationMaster& control) const;
+        void build(SimulationController& control) const;
 
         // The below could probably be protected/private, but handy for testing.
         [[nodiscard]] std::shared_ptr<lb::SimulationState> BuildSimulationState() const;
@@ -117,7 +117,7 @@ namespace hemelb::configuration {
 
         [[nodiscard]] std::shared_ptr<net::IteratedAction> BuildColloidController() const;
         template <typename traitsType>
-        [[nodiscard]] std::shared_ptr<net::IteratedAction> BuildCellController(SimulationMaster const& control, reporting::Timers& timings) const;
+        [[nodiscard]] std::shared_ptr<net::IteratedAction> BuildCellController(SimulationController const& control, reporting::Timers& timings) const;
         [[nodiscard]] lb::InitialCondition BuildInitialCondition() const;
         [[nodiscard]] std::shared_ptr<extraction::PropertyActor> BuildPropertyExtraction(
                 std::filesystem::path const& xtr_path,
@@ -143,7 +143,7 @@ namespace hemelb::configuration {
 
 
     template <typename traitsType>
-    void SimBuilder::build(SimulationMaster& control) const {
+    void SimBuilder::build(SimulationController& control) const {
         using LatticeType = typename traitsType::Lattice;
 
         auto& timings = control.timings;
@@ -321,7 +321,7 @@ namespace hemelb::configuration {
 #endif
 
     template <typename traitsType>
-    [[nodiscard]] std::shared_ptr<net::IteratedAction> SimBuilder::BuildCellController(SimulationMaster const& control, reporting::Timers& timings) const {
+    [[nodiscard]] std::shared_ptr<net::IteratedAction> SimBuilder::BuildCellController(SimulationController const& control, reporting::Timers& timings) const {
         if (config.HasRBCSection()) {
 #ifdef HEMELB_BUILD_RBC
             auto ccb = redblood::CellControllerBuilder(unit_converter);

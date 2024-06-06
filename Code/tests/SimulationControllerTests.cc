@@ -15,7 +15,7 @@ namespace fs = std::filesystem;
 namespace hemelb::tests
 {
 
-    TEST_CASE_METHOD(helpers::FolderTestFixture, "SimulationMaster") {
+    TEST_CASE_METHOD(helpers::FolderTestFixture, "SimulationController") {
       const int argc = 3;
       const char* argv[] = {
 	"hemelb",
@@ -27,12 +27,12 @@ namespace hemelb::tests
       CopyResourceToTempdir("four_cube.gmy");
 
       auto options = std::make_unique<hemelb::configuration::CommandLine>(argc, argv);
-      auto master = configuration::SimBuilder::CreateSim<Traits<>>(*options, Comms());
+      auto controller = configuration::SimBuilder::CreateSim<Traits<>>(*options, Comms());
 
       SECTION("Running a simulation creates outputs") {
 	// TODO: This test is fatal if run with LADDIOLET. See ticket #605.
 	LADD_FAIL();
-	master->RunSimulation();
+	controller->RunSimulation();
     for (auto&& p: {"results/report.txt",
                     "results/report.xml",
                     "results/Extracted/wholegeometryvelocityandstress.dat",

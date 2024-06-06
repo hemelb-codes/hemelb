@@ -27,7 +27,7 @@ namespace hemelb::tests
         using MyTraits = Traits<lb::DefaultLattice, lb::GuoForcingLBGK>;
         using CellControl = hemelb::redblood::CellController<MyTraits>;
 
-        std::unique_ptr<SimulationMaster> master;
+        std::unique_ptr<SimulationController> sim;
 
         static constexpr auto argv = std::array{"hemelb", "-in", "large_cylinder_rbc.xml"};
         configuration::CommandLine options = {argv.size(), argv.data()};
@@ -68,7 +68,7 @@ namespace hemelb::tests
                                                        "value" },
                            3e-6);
 
-            master = configuration::SimBuilder::CreateSim<MyTraits>(options, Comms());
+            sim = configuration::SimBuilder::CreateSim<MyTraits>(options, Comms());
         }
 
         void testBenchmark()
@@ -80,7 +80,7 @@ namespace hemelb::tests
                             for (auto& cell: cells) {
                                 std::stringstream filename;
                                 filename << cell->GetTag() << "_t_" << timestep << ".vtp";
-                                vtk_io.writeFile(filename.str(), *cell, &this->master->GetUnitConverter());
+                                vtk_io.writeFile(filename.str(), *cell, &this->sim->GetUnitConverter());
                             }
                         }
                         timestep++;
@@ -106,8 +106,8 @@ namespace hemelb::tests
                     };
 #endif
 
-            REQUIRE(master);
-            auto controller = std::static_pointer_cast<CellControl>(master->GetCellController());
+            REQUIRE(sim);
+            auto controller = std::static_pointer_cast<CellControl>(sim->GetCellController());
             REQUIRE(controller);
             controller->AddCellChangeListener(output_callback);
 #ifdef HEMELB_CALLGRIND
@@ -115,8 +115,8 @@ namespace hemelb::tests
 #endif
 
             // run the simulation
-            master->RunSimulation();
-            master->Finalise();
+            sim->RunSimulation();
+            sim->Finalise();
 
             AssertPresent("results/report.txt");
             AssertPresent("results/report.xml");

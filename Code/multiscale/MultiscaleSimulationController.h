@@ -3,29 +3,29 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_MULTISCALE_MULTISCALESIMULATIONMASTER_H
-#define HEMELB_MULTISCALE_MULTISCALESIMULATIONMASTER_H
+#ifndef HEMELB_MULTISCALE_MULTISCALESIMULATIONCONTROLLER_H
+#define HEMELB_MULTISCALE_MULTISCALESIMULATIONCONTROLLER_H
 
 #include <vector>
 #include "lb/iolets/InOutLetMultiscale.h"
 #include "multiscale/Intercommunicator.h"
-#include "SimulationMaster.h"
+#include "SimulationController.h"
 #include "util/span.h"
 
 namespace hemelb::multiscale
 {
     /***
-     * Instead of adding multiscale functionality to the standard simulation master, we keep this here,
+     * Instead of adding multiscale functionality to the standard simulation controller, we keep this here,
      * so the main code can be read without thinking about multiscale.
      */
     template<class Intercommunicator>
-    class MultiscaleSimulationMaster : public SimulationMaster
+    class MultiscaleSimulationController : public SimulationController
     {
     public:
-        MultiscaleSimulationMaster(configuration::CommandLine &options,
+        MultiscaleSimulationController(configuration::CommandLine &options,
                                    const net::IOCommunicator& ioComm,
                                    Intercommunicator & aintercomms) :
-            SimulationMaster(options, ioComm), intercomms(aintercomms),
+            SimulationController(options, ioComm), intercomms(aintercomms),
                 multiscaleIoletType("inoutlet")
         {
           // We only have one shared object type so far, an iolet.
@@ -179,9 +179,9 @@ namespace hemelb::multiscale
             }
           }
 
-          log::Logger::Log<log::Debug, log::OnePerCore>("MSMaster ShareICs started...");
+          log::Logger::Log<log::Debug, log::OnePerCore>("MSController ShareICs started...");
           intercomms.ShareInitialConditions();
-          log::Logger::Log<log::Debug, log::OnePerCore>("MSMaster Init finished!");
+          log::Logger::Log<log::Debug, log::OnePerCore>("MSController Init finished!");
         }
 
         void PrintVectorList(std::vector<std::vector<site_t> > v)
@@ -257,7 +257,7 @@ namespace hemelb::multiscale
             //{
             log::Logger::Log<log::Debug, log::Singleton>("Step: HemeLB advanced to time %f.",
                                                                                  GetState().GetTime());
-            SimulationMaster::DoTimeStep();
+            SimulationController::DoTimeStep();
             //}
           }
           else
@@ -308,7 +308,7 @@ namespace hemelb::multiscale
 
                 /* 2. Grow the list to an appropriate size if needed. */
                 while (std::ssize(invertedBoundaryList) <= boundaryID) {
-              log::Logger::Log<log::Warning, log::OnePerCore>("WARNING: Growing the invertedBoundaryList, because we created in wrongly in MultiscaleSimulation Master.");
+              log::Logger::Log<log::Warning, log::OnePerCore>("WARNING: Growing the invertedBoundaryList, because we created in wrongly in MultiscaleSimulation Controller.");
               std::vector<site_t> a(0);
               invertedBoundaryList.push_back(a);
               if (invertedBoundaryList.size() > 100000)
@@ -382,4 +382,4 @@ namespace hemelb::multiscale
 
 }
 
-#endif // HEMELB_MULTISCALE_MULTISCALESIMULATIONMASTER_H
+#endif // HEMELB_MULTISCALE_MULTISCALESIMULATIONCONTROLLER_H

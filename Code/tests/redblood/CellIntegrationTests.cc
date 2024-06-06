@@ -7,7 +7,7 @@
 #include <tinyxml2.h>
 
 #include "Traits.h"
-#include "SimulationMaster.h"
+#include "SimulationController.h"
 #include "configuration/SimBuilder.h"
 #include "redblood/Cell.h"
 #include "redblood/CellController.h"
@@ -39,18 +39,18 @@ namespace hemelb::tests
 	cells.insert(cell);
 
 	//timings = std::make_unique<reporting::Timers>(Comms());
-	master = configuration::SimBuilder::CreateSim<MyTraits>(*options, Comms());
-	helpers::LatticeDataAccess(&master->GetFieldData()).ZeroOutForces();
+	simController = configuration::SimBuilder::CreateSim<MyTraits>(*options, Comms());
+	helpers::LatticeDataAccess(&simController->GetFieldData()).ZeroOutForces();
       }
 
       ~CellIntegrationTests() {
-	master->Finalise();
+	simController->Finalise();
       }
 
       // No errors when interpolation/spreading hits nodes out of bounds
       void testCellOutOfBounds()
       {
-          auto& fd = master->GetFieldData();
+          auto& fd = simController->GetFieldData();
           auto& dom = fd.GetDomain();
 	(*cells.begin())->operator+=(dom.GetGlobalSiteMins() * 2.0);
 	auto controller = std::make_shared<CellControll>(
@@ -59,8 +59,8 @@ namespace hemelb::tests
 							 templates,
 							 timings
 							 );
-	master->RegisterActor(*controller, 1);
-	master->RunSimulation();
+	simController->RegisterActor(*controller, 1);
+	simController->RunSimulation();
 	AssertPresent("results/report.txt");
 	AssertPresent("results/report.xml");
       }
@@ -69,7 +69,7 @@ namespace hemelb::tests
       void testIntegration()
       {
 	// setup cell position
-	auto& fieldData = master->GetFieldData();
+	auto& fieldData = simController->GetFieldData();
     auto& dom = fieldData.GetDomain();
 	auto const mid = LatticePosition(dom.GetGlobalSiteMaxes()
                                      + dom.GetGlobalSiteMins()) * 0.5;
@@ -80,8 +80,8 @@ namespace hemelb::tests
 	auto const barycentre = (*cells.begin())->GetBarycentre();
 
 	// run
-	master->RegisterActor(*controller, 1);
-	master->RunSimulation();
+	simController->RegisterActor(*controller, 1);
+	simController->RunSimulation();
 
 	// check position of cell has changed
 	auto const moved = (*cells.begin())->GetBarycentre();
@@ -107,19 +107,19 @@ namespace hemelb::tests
 	CellContainer empty;
 	auto empty_tmpl = std::make_shared<TemplateCellContainer>();
 	auto controller = std::make_shared<CellControll>(
-							 master->GetFieldData(),
-							 empty, empty_tmpl, timings);
+            simController->GetFieldData(),
+            empty, empty_tmpl, timings);
 
 	// run
-	master->RegisterActor(*controller, 1);
-	master->RunSimulation();
+	simController->RegisterActor(*controller, 1);
+	simController->RunSimulation();
 
 	AssertPresent("results/report.txt");
 	AssertPresent("results/report.xml");
       }
 
     private:
-      std::unique_ptr<SimulationMaster> master;
+      std::unique_ptr<SimulationController> simController;
       std::unique_ptr<configuration::CommandLine> options;
       CellContainer cells;
       std::shared_ptr<TemplateCellContainer> templates;

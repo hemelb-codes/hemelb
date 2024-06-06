@@ -53,7 +53,7 @@ namespace hemelb::tests
         "hemelb", "-in", "large_cylinder_rbc.xml",
       };
       auto options = std::make_shared<configuration::CommandLine>(argc, argv);
-      auto master = configuration::SimBuilder::CreateSim<Traits>(*options, Comms());
+      auto sim = configuration::SimBuilder::CreateSim<Traits>(*options, Comms());
 
       SECTION("testIntegration") {
         // Read meshes from disc
@@ -65,7 +65,7 @@ namespace hemelb::tests
         REQUIRE(volume(*normal) > 0.0);
         REQUIRE(volume(deformed->vertices, normal->facets) > 0.0);
 
-        auto const& converter = master->GetUnitConverter();
+        auto const& converter = sim->GetUnitConverter();
         auto const scale = converter.ConvertToLatticeUnits("m", 4e-6);
         auto const cell = std::make_shared<redblood::Cell>(normal->vertices,
                                                            Mesh(normal),
@@ -91,7 +91,7 @@ namespace hemelb::tests
         sadcell->moduli.volume = 1e0;
         sadcell->moduli.dilation = 0.75;
 
-        auto controller = std::static_pointer_cast<CellControl>(master->GetCellController());
+        auto controller = std::static_pointer_cast<CellControl>(sim->GetCellController());
         controller->AddCell(sadcell);
 
         controller->AddCellChangeListener(
@@ -109,7 +109,7 @@ namespace hemelb::tests
           });
 
         // run the simulation
-        master->RunSimulation();
+        sim->RunSimulation();
 
         // Check simulation ran until the end
         AssertPresent("results/report.txt");

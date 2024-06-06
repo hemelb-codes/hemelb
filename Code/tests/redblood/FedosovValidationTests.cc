@@ -7,7 +7,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <catch2/catch.hpp>
 
-#include "SimulationMaster.h"
+#include "SimulationController.h"
 #include "configuration/SimBuilder.h"
 #include "lb/lattices/D3Q19.h"
 #include "Traits.h"
@@ -36,13 +36,13 @@ namespace hemelb::tests
       argv[2] = "fedosov1c.xml";
 
       configuration::CommandLine options(argc, argv);
-      auto master = configuration::SimBuilder::CreateSim<Traits>(options, Comms());
+      auto sim = configuration::SimBuilder::CreateSim<Traits>(options, Comms());
       redblood::VTKMeshIO vtk_io = {};
 
       SECTION("Integration test") {
-	REQUIRE(master);
-	auto const & converter = master->GetUnitConverter();
-	auto controller = std::static_pointer_cast<CellControl>(master->GetCellController());
+	REQUIRE(sim);
+	auto const & converter = sim->GetUnitConverter();
+	auto controller = std::static_pointer_cast<CellControl>(sim->GetCellController());
 	REQUIRE(controller);
 	controller->AddCellChangeListener([vtk_io, &converter](const CellContainer &cells) {
 	    static int iter = 0;
@@ -59,8 +59,8 @@ namespace hemelb::tests
 	  });
 
 	// run the simulation
-	master->RunSimulation();
-	master->Finalise();
+	sim->RunSimulation();
+	sim->Finalise();
 
 	AssertPresent("results/report.txt");
 	AssertPresent("results/report.xml");

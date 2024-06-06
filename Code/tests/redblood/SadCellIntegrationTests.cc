@@ -7,7 +7,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <catch2/catch.hpp>
 
-#include "SimulationMaster.h"
+#include "SimulationController.h"
 #include "configuration/SimBuilder.h"
 #include "lb/lattices/D3Q19.h"
 #include "Traits.h"
@@ -58,12 +58,12 @@ namespace hemelb::tests
       };
       configuration::CommandLine options(argc, argv);
 
-      auto master = configuration::SimBuilder::CreateSim<Traits>(options, Comms());
+      auto sim = configuration::SimBuilder::CreateSim<Traits>(options, Comms());
 
       SECTION("integration test") {
 	auto const normal = msh_io.readFile(resources::Resource("rbc_ico_1280.msh").Path(), true);
 	auto const cell = std::make_shared<redblood::Cell>(normal->vertices, normal);
-	auto const & converter = master->GetUnitConverter();
+	auto const & converter = sim->GetUnitConverter();
 	auto const deformed = msh_io.readFile(resources::Resource("sad.msh").Path(), true);
 	auto const sadcell = std::make_shared<redblood::Cell>(deformed->vertices, normal);
 	auto const scale = converter.ConvertToLatticeUnits("m", 4e-6);
@@ -84,7 +84,7 @@ namespace hemelb::tests
 	sadcell->moduli.dilation = 0.5;
 	sadcell->moduli.strain = 0.0006;
 
-	auto controller = std::static_pointer_cast<CellControl>(master->GetCellController());
+	auto controller = std::static_pointer_cast<CellControl>(sim->GetCellController());
 	controller->AddCell(sadcell);
 	std::vector<PhysicalEnergy> energies;
 	energies.push_back( (*sadcell)());
@@ -105,7 +105,7 @@ namespace hemelb::tests
 	  });
 
 	// run the simulation
-	master->RunSimulation();
+	sim->RunSimulation();
 	vtk_io.writeFile("/tmp/reformed.vtp", *sadcell, &converter);
 
 	*sadcell += converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))

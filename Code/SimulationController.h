@@ -3,8 +3,8 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#ifndef HEMELB_SIMULATIONMASTER_H
-#define HEMELB_SIMULATIONMASTER_H
+#ifndef HEMELB_SIMULATIONCONTROLLER_H
+#define HEMELB_SIMULATIONCONTROLLER_H
 #include <memory>
 
 #include "lb/Lattices.h"
@@ -32,7 +32,7 @@ namespace hemelb
     namespace extraction { class PropertyActor; }
     namespace io { class Checkpointer; }
 
-    class SimulationMaster
+    class SimulationController
     {
     public:
         friend class configuration::SimBuilder;
@@ -47,7 +47,7 @@ namespace hemelb
 
         std::shared_ptr<lb::BoundaryValues> inletValues;
         std::shared_ptr<lb::BoundaryValues> outletValues;
-        /* The next quantities are protected because they are used by MultiscaleSimulationMaster */
+        /* The next quantities are protected because they are used by MultiscaleSimulationController */
         std::shared_ptr<geometry::Domain> domainData;
         std::shared_ptr<geometry::FieldData> fieldData;
         std::shared_ptr<lb::LBMBase> latticeBoltzmannModel;
@@ -77,9 +77,9 @@ namespace hemelb
         std::shared_ptr<net::phased::StepManager> stepManager;
         std::shared_ptr<net::phased::NetConcern> netConcern;
 
-        SimulationMaster(const net::IOCommunicator& ioComm);
+        SimulationController(const net::IOCommunicator& ioComm);
     public:
-      virtual ~SimulationMaster();
+      virtual ~SimulationController();
 
       void Abort();
 
@@ -142,4 +142,4 @@ namespace hemelb
   };
 }
 
-#endif /* HEMELB_SIMULATIONMASTER_H */
+#endif /* HEMELB_SIMULATIONCONTROLLER_H */

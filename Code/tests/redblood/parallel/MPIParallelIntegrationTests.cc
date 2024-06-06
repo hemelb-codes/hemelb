@@ -78,21 +78,21 @@ namespace hemelb::tests
       auto const color = world.Rank() == 0;
       auto const split = net::IOCommunicator(world.Split(color));
 
-      auto master = CreateMasterSim<STENCIL>(split);
-      REQUIRE(master);
+      auto sim = CreateSim<STENCIL>(split);
+      REQUIRE(sim);
 
       unsigned num_cells;
       auto checkNumCells = [&num_cells]( const CellContainer & cells) {
 	num_cells = cells.size();
       };
 
-      auto controller = std::static_pointer_cast<CellController<T>>(master->GetCellController());
+      auto controller = std::static_pointer_cast<CellController<T>>(sim->GetCellController());
       REQUIRE(controller);
       controller->AddCellChangeListener(checkNumCells);
 
       // run the simulation
-      master->RunSimulation();
-      master->Finalise();
+      sim->RunSimulation();
+      sim->Finalise();
 
       // check that both simulations have one cell in the domain
       unsigned num_cells_sequential;

@@ -13,7 +13,7 @@
 #include "redblood/CellController.h"
 #include "redblood/parallel/CellParallelization.h"
 #include "configuration/CommandLine.h"
-#include "SimulationMaster.h"
+#include "SimulationController.h"
 #include "tests/redblood/Fixtures.h"
 #include "tests/helpers/LatticeDataAccess.h"
 #include "tests/helpers/FolderTestFixture.h"
@@ -139,10 +139,10 @@ namespace hemelb::tests
             return;
         }
 
-        auto master = CreateMasterSim<STENCIL>(split);
-        REQUIRE(master);
+        auto sim = CreateSim<STENCIL>(split);
+        REQUIRE(sim);
 
-        auto controller = std::static_pointer_cast<CellController<Traits>>(master->GetCellController());
+        auto controller = std::static_pointer_cast<CellController<Traits>>(sim->GetCellController());
         auto const originalCellInserter = controller->GetCellInsertion();
         auto rank = world.Rank();
         auto cellInserter = [&originalCellInserter, rank](CellInserter const &adder) {
@@ -160,7 +160,7 @@ namespace hemelb::tests
         std::size_t nbtests = 0;
         controller->AddCellChangeListener(
                 [&] (CellContainer const& cells) {
-                    return checkNonZeroForceSites(world, master->GetFieldData(), nbtests, cells); }
+                    return checkNonZeroForceSites(world, sim->GetFieldData(), nbtests, cells); }
         );
         controller->AddCellChangeListener(
                 [&](CellContainer const& cells) {
@@ -168,8 +168,8 @@ namespace hemelb::tests
                 });
 
         // run the simulation
-        master->RunSimulation();
-        master->Finalise();
+        sim->RunSimulation();
+        sim->Finalise();
         REQUIRE((nbtests > 0 or world.Rank() != 0));
     }
 

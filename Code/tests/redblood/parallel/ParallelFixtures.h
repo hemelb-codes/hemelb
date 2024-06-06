@@ -9,7 +9,7 @@
 #include "redblood/Cell.h"
 #include "tests/redblood/Fixtures.h"
 #include "tests/helpers/FolderTestFixture.h"
-#include "SimulationMaster.h"
+#include "SimulationController.h"
 #include "configuration/SimBuilder.h"
 
 namespace hemelb::tests
@@ -22,17 +22,17 @@ namespace hemelb::tests
 						      net::MpiCommunicator const &c);
 
     //! Make some functionality available
-    class OpenedSimulationMaster : public SimulationMaster
+    class OpenedSimulationController : public SimulationController
     {
     public:
-        //using SimulationMaster::SimulationMaster;
-        using SimulationMaster::Finalise;
-        OpenedSimulationMaster(SimulationMaster&& src) : SimulationMaster(src) {
+        //using SimulationController::SimulationController;
+        using SimulationController::Finalise;
+        OpenedSimulationController(SimulationController&& src) : SimulationController(src) {
         }
 
         void DoTimeStep()
         {
-            SimulationMaster::DoTimeStep();
+            SimulationController::DoTimeStep();
         }
 
         configuration::SimConfig const& GetSimConfig()
@@ -52,12 +52,12 @@ namespace hemelb::tests
 
         std::shared_ptr<configuration::CommandLine> options;
         template<class STENCIL>
-        [[nodiscard]] auto CreateMasterSim(net::IOCommunicator const &comm) const {
+        [[nodiscard]] auto CreateSim(net::IOCommunicator const &comm) const {
             using T = MyTraits<STENCIL>;
             auto tmp =  configuration::SimBuilder::CreateSim<T>(
                     *options, comm
             );
-            return std::unique_ptr<OpenedSimulationMaster>(new OpenedSimulationMaster(std::move(*tmp)));
+            return std::unique_ptr<OpenedSimulationController>(new OpenedSimulationController(std::move(*tmp)));
         }
     };
 

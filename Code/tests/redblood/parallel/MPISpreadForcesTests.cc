@@ -11,7 +11,7 @@
 
 #include "redblood/parallel/SpreadForces.h"
 #include "configuration/CommandLine.h"
-#include "SimulationMaster.h"
+#include "SimulationController.h"
 #include "util/span.h"
 #include "tests/redblood/Fixtures.h"
 #include "tests/helpers/LatticeDataAccess.h"
@@ -79,8 +79,8 @@ namespace hemelb::tests
         }
       auto const color = world.Rank() == 0;
       auto const split = net::IOCommunicator(world.Split(color));
-      auto master = CreateMasterSim<STENCIL>(split);
-      auto& fieldData = master->GetFieldData();
+      auto sim = CreateSim<STENCIL>(split);
+      auto& fieldData = sim->GetFieldData();
       auto& dom = fieldData.GetDomain();
       helpers::ZeroOutForces(fieldData);
 

@@ -40,10 +40,10 @@ int main(int argc, char *argv[])
       debug::Init(options.GetDebug(), argv[0], commWorld);
 
       // Prepare main simulation object...
-      auto master = configuration::SimBuilder::CreateSim<Traits<>>(options, hemelbCommunicator);
+      auto controller = configuration::SimBuilder::CreateSim<Traits<>>(options, hemelbCommunicator);
 
       // ..and run it.
-      master->RunSimulation();
+      controller->RunSimulation();
     }
 
     // Interpose this catch to print usage before propagating the error.

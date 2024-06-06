@@ -41,7 +41,7 @@ namespace hemelb::tests
         }
 
         //! Creates a simulation. Does not run it.
-        auto simulationMaster(size_t steps,
+        auto createSim(size_t steps,
                                                                    Dimensionless cell,
                                                                    Dimensionless wall) const {
             CopyResourceToTempdir(xml_name);
@@ -60,9 +60,9 @@ namespace hemelb::tests
             ModifyXMLInput(xml_name, { "redbloodcells", "cell2Wall", "intensity", "value" }, wall);
             ModifyXMLInput(xml_name, { "redbloodcells", "cell2Wall", "cutoffdistance", "value" }, 1);
             auto options = std::make_shared<configuration::CommandLine>(argc, argv);
-            auto master = configuration::SimBuilder::CreateSim<TRAITS>(*options, Comms());
-            helpers::LatticeDataAccess(&master->GetFieldData()).ZeroOutForces();
-            return master;
+            auto sim = configuration::SimBuilder::CreateSim<TRAITS>(*options, Comms());
+            helpers::LatticeDataAccess(&sim->GetFieldData()).ZeroOutForces();
+            return sim;
         }
 
         //! Runs simulation with a single node
@@ -70,12 +70,12 @@ namespace hemelb::tests
 
             using CellController = CellController<TRAITS>;
 
-            auto const master = this->simulationMaster(1, 0, intensity);
-            auto controller = std::static_pointer_cast<CellController>(master->GetCellController());
+            auto const sim = this->createSim(1, 0, intensity);
+            auto controller = std::static_pointer_cast<CellController>(sim->GetCellController());
             REQUIRE(controller); // XML file contains RBC problem definition, therefore a CellController should exist already
             controller->AddCell(std::make_shared<NodeCell>(where));
 
-            master->RunSimulation();
+            sim->RunSimulation();
             return (*controller->GetCells().begin())->GetVertices().front();
         }
 
@@ -85,15 +85,15 @@ namespace hemelb::tests
         ) {
             using CellController = hemelb::redblood::CellController<TRAITS>;
 
-            auto const master = this->simulationMaster(3, intensity, 0);
-            auto controller = std::static_pointer_cast<CellController>(master->GetCellController());
+            auto const sim = this->createSim(3, intensity, 0);
+            auto controller = std::static_pointer_cast<CellController>(sim->GetCellController());
             REQUIRE(controller); // XML file contains RBC problem definition, therefore a CellController should exist already
             auto const firstCell = std::make_shared<NodeCell>(n0);
             auto const secondCell = std::make_shared<NodeCell>(n1);
             controller->AddCell(firstCell);
             controller->AddCell(secondCell);
 
-            master->RunSimulation();
+            sim->RunSimulation();
             return {
                     firstCell->GetVertices().front(),
                     secondCell->GetVertices().front()
