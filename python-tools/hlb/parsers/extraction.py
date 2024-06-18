@@ -289,7 +289,7 @@ class ExtractedProperty:
             times[iT] = xdrlib.Unpacker(timeBuf).unpack_uhyper()
             continue
 
-        assert np.alltrue(
+        assert np.all(
             np.argsort(times) == np.arange(len(times))
         ), "Times in extraction file are not monotonically increasing!"
         self.times = times

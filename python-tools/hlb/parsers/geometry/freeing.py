@@ -102,7 +102,7 @@ class FreeingConfigLoader(ConfigLoader):
                     self.OnBlockNeighboursProcessed(nIdx)
                     pass
                 continue
-            if np.alltrue(self.IsBlockDone):
+            if np.all(self.IsBlockDone):
                 self.OnAllBlocksProcessed()
 
         return

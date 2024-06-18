@@ -118,7 +118,7 @@ class ExtractedPropertyUnstructuredGridReader(VTKPythonAlgorithmBase):
         selectors.AddNode(selector)
 
         # Perform the selection
-        extractSelection = vtk.vtkExtractSelectedIds()
+        extractSelection = vtk.vtkExtractSelection()
         extractSelection.SetInputData(0, input_ug)
         extractSelection.SetInputData(1, selectors)
         extractSelection.Update()

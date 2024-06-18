@@ -28,7 +28,7 @@ cdef public enum:
     WALL_NORMAL_AVAILABLE = 1
 
 cdef class BaseSite:
-    def __init__(self, block, np.ndarray[np.int_t] sgIdx):
+    def __init__(self, block, np.ndarray[np.int64_t] sgIdx):
         self.GetBlock = weakref.ref(block)
         self.Index = sgIdx
         self.IntersectionType = None

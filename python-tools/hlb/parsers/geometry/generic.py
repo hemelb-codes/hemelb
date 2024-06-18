@@ -21,7 +21,7 @@ class NdIndexConverter(object):
         """shape is the number of elements along each dimension of the
         array."""
 
-        self.shape = np.array(shape).squeeze()
+        self.shape = np.array(shape, dtype=int).squeeze()
         self.ndim = len(self.shape)
         self._conv = np.array(
             [np.prod(self.shape[i:]) for i in range(1, self.ndim + 1)], dtype=int
