@@ -102,7 +102,7 @@ jobs:
 
       - name: Store VMTK dir on error
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: failed-vmtk-tree
           path: ${{ env.VMTK_DIR }}
@@ -113,7 +113,7 @@ jobs:
 
       - name: Store build tree on error
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: failed-build-tree
           path: geometry-tool/_skbuild
@@ -132,7 +132,7 @@ jobs:
 
       - name: Store failed install
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: failed-python-${{ matrix.python-version }}
           path: fail-${{ matrix.python-version }}.tar.gz
