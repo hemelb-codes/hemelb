@@ -10,7 +10,7 @@ find_file(BOOST_TARBALL boost_1_77_0.tar.gz
   )
 if(NOT BOOST_TARBALL)
   message("No boost source found, will download.")
-  set(BOOST_TARBALL https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.tar.gz
+  set(BOOST_TARBALL https://archives.boost.io/release/1.77.0/source/boost_1_77_0.tar.gz
     CACHE STRING "Path to download BOOST (can be local file://)" FORCE)
 endif()
 ExternalProject_Add(
