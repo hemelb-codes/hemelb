@@ -45,6 +45,7 @@ setup(
     python_requires=">=3.6",
     install_requires=[
         "pyyaml",
+        # Numpy >= 1.20 requires python 3.7; VMTK conda binaries are 3.6 only
         "numpy < 1.20; python_version < '3.7'",
         "numpy; python_version >= '3.7'",
         "vtk ~= 9.0",

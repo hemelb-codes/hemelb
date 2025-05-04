@@ -75,7 +75,7 @@ by setting these options.
   `HEMELB_INLET_BOUNDARY` and `HEMELB_OUTLET_BOUNDARY` respectively from
   NASHZEROTHORDERPRESSUREIOLET (default), LADDIOLET. It is *very
   important* that you also select `HEMELB_WALL_INLET_BOUNDARY` and
-  `HEMELB_WALL_INLET_BOUNDARY` to match the combination of your
+  `HEMELB_WALL_OUTLET_BOUNDARY` to match the combination of your
   selected wall and in/outlet boundaries. (Options are:
   NASHZEROTHORDERPRESSURESBB, NASHZEROTHORDERPRESSUREBFL, LADDIOLETSBB,
   LADDIOLETBFL)
