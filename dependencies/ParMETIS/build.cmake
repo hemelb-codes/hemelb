@@ -4,16 +4,16 @@
 # license in the file LICENSE.
 include_guard()
 
-find_file(ParMETIS_TARBALL parmetis-4.0.2.tar.gz 
+find_file(ParMETIS_TARBALL parmetis-4.0.2.tar.gz
   DOC "Path to download ParMETIS (can be url http://)"
   PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
   )
 if(NOT ParMETIS_TARBALL)
   message("No ParMETIS source found, will download.")
-  set(ParMETIS_TARBALL http://glaros.dtc.umn.edu/gkhome/fetch/sw/parmetis/parmetis-4.0.2.tar.gz 
+  set(ParMETIS_TARBALL https://karypis.github.io/glaros/files/sw/parmetis/parmetis-4.0.2.tar.gz
     CACHE STRING "Path to download ParMETIS (can be local file://)" FORCE)
 endif()
-  
+
 set(ParMETIS_CC ${MPI_C_COMPILER} CACHE STRING "MPI Compiler to use for ParMETIS, leave blank to let ParMETIS guess")
 set(ParMETIS_CXX ${MPI_CXX_COMPILER} CACHE STRING "MPI Compiler to use for ParMETIS, leave blank to let ParMETIS guess")
 if(ParMETIS_CC)

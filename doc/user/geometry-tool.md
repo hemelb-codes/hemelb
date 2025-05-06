@@ -26,7 +26,7 @@ Build dependencies:
 
 Runtime dependencies:
 - Python
-- Numpy
+- NumPy
 - PyYAML
 - VTK
 - VMTK
@@ -34,14 +34,12 @@ Runtime dependencies:
 
 Test dependencies:
 - pytest
-- hlb (NB: this must be compiled with the same version of numpy as
-  used above)
+- hlb (Note: this must be compiled with the same version of numpy as used above)
 
 
 ## Conda install
 
-VMTK is hard to build yourself but is easily installed via Conda, so
-we present this process here.
+VMTK is hard to build yourself but is easily installed via Conda. So we present this process here.
 
 ### Virtual enviroment setup
 
@@ -57,8 +55,7 @@ conda env create --file conda-environment.yml
 ```
 
 By default this will use `gmy-tool` as the name, but you can use
-anything you wish by adding `--name PREFERED_NAME` to the command
-above.
+anything you wish by adding `--name PREFERED_NAME` to the command above.
 
 
 You then need to activate this for your shell session:
@@ -77,8 +74,7 @@ pip install '.[gui]'
 
 (If your pip version is less than 21.3, add the extra flag `--use-feature=in-tree-build`)
 
-If you don't want the GUI, you can drop the `[gui]` extra
-specification.
+If you don't want the GUI, you can drop the `[gui]` extra specification.
 
 **Note for macOS**: On macOS GUI applications have to be linked
 against some special framework. If you don't fix this up you will get
@@ -106,20 +102,15 @@ python macos-fix-gui-launcher.py
 
 ## Install with custom VMTK
 
-The hemelb-codes organisation on GitHub includes a project to build
-VMTK  for Ubuntu: https://github.com/hemelb-codes/vmtk-build/
+The hemelb-codes organisation on GitHub includes a project to build VMTK  for Ubuntu: https://github.com/hemelb-codes/vmtk-build/
 
-That will hopefully give you an idea for how to proceed. If you are
-lucky you can just download the tarball. (Some Ubuntu packages will
-have to be installed - see that repo)
+That will hopefully give you an idea for how to proceed. If you are lucky you can just download the tarball. (Some Ubuntu packages will have to be installed - see that repo)
 
 ## Test
 
 Install pytest the usual way via `pip install pytest`.
 
-The Conda VMTK package forces you to use an old version of numpy. To
-ensure that the `hlb` package in `python-tools` is built with the same
-one, you need to change to that directory, install Cython (`pip
+The Conda VMTK package forces you to use an old version of numpy. To ensure that the `hlb` package in `python-tools` is built with the same one, you need to change to that directory, install Cython (`pip
 install cython`) and then install the package with:
 
 ```
@@ -131,15 +122,14 @@ Run the tests by invoking `py.test` in this directory.
 
 ## Run GUI
 
-Ensure your environment is activated then run `hlb-gmy-gui`. There is
-basic command line help available:
+Ensure your environment is activated then run `hlb-gmy-gui`. There is basic command line help available:
 
 ```
 $ hlb-gmy-gui --help
 usage: hlb-gmy-gui [-h] [--profile PATH] [--stl PATH] [--geometry PATH]
                    [--xml PATH]
 
-Process an input STL file intosuitable input for HemeLB.
+Process an input STL file into suitable input for HemeLB.
 
 optional arguments:
   -h, --help       show this help message and exit
@@ -150,20 +140,38 @@ optional arguments:
   --xml PATH       XML output file
 ```
 
-The terminal will produced a few errors that can ignore, like:
-`vtkSTLReader (0x7fdaa773bf10): A FileName must be specified.`. (This
-is just VTK trying to display the mesh before the source file is
-specified.)
+The terminal will produce a few errors that can ignore, like: `vtkSTLReader (0x7fdaa773bf10): A FileName must be specified.` (This is just VTK trying to display the mesh before the source file is specified.) and `vtkCompositeDataPipeline (0x2fb7b9a0): UpdateInformation invoked during another request.  Returning failure to algorithm vtkSTLReader(0x2f740e60).` (This is just vtkSTLReader was called during another operation, but rendering works as the STL gets loaded and cached beforehand).
 
+## Profile (.pr2) file
 
-## Profile (.pr2) files
+The geometry tool can save inlet, outlet, and seed point data used to generate a .gmy geometry file, using this Profile file. **(Saving this is highly recommended for reproducibility)**
 
-The geometry tool can store the the data it will use to generate a
-geometry file. Saving this is highly recommended for reproducibility!
-
-It's a YAML file which can be edited manually. Floating point values
-are stored by default in hexadecimal to avoid precision loss
-(https://docs.python.org/3/library/stdtypes.html#float.hex) but can be
-set in decimal if more convenient.
+It is a YAML file which can be edited manually. Floating point values are stored by default in hexadecimal to avoid precision loss (https://docs.python.org/3/library/stdtypes.html#float.hex) but can be set in decimal if more convenient.
 
 Paths are relative to the geometry file's location.
+
+## Run CLI
+
+There is a command line version of Geometry Setup Tool, where you can use the .pr2 file to generate the geometry file. 
+Ensure your environment is activated then run `hlb-gmy-cli`. There is basic command line help available:
+
+```
+$ hlb-gmy-cli --help
+
+usage: hlb-gmy-cli [-h] [--geometry PATH] [--xml PATH] [--voxel FLOAT] PATH
+
+Generate the config file described by a profile file
+
+positional arguments:
+  PATH             The profile to use. Other options given override those in
+                   the profile file.
+
+optional arguments:
+  -h, --help       show this help message and exit
+  --geometry PATH  Config output file
+  --xml PATH       XML output file
+  --voxel FLOAT    The voxel size in metres
+
+```
+
+You need to add the path to the directory of the .pr2 file. Example command: `hlb-gmy-cli /path-to-your-profile.pr2`. *Note: The .stl file related to the .pr2 file needs to be in the same directory alongwith it.*
