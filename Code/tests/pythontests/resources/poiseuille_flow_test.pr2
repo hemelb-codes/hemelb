@@ -1,0 +1,42 @@
+DurationSeconds: 0x1.4000000000000p+2
+Iolets:
+- Centre:
+    x: 0x0.0p+0
+    y: 0x0.0p+0
+    z: -0x1.e000000000000p+4
+  Name: Inlet1
+  Normal:
+    x: 0x0.0p+0
+    y: 0x0.0p+0
+    z: 0x1.0000000000000p+0
+  Pressure:
+    x: 0x1.0000000000000p+4
+    y: 0x0.0p+0
+    z: 0x0.0p+0
+  Radius: 0x1.8000000000000p-1
+  Type: Inlet
+- Centre:
+    x: 0x0.0p+0
+    y: 0x0.0p+0
+    z: 0x1.e000000000000p+4
+  Name: Outlet1
+  Normal:
+    x: 0x0.0p+0
+    y: 0x0.0p+0
+    z: -0x1.0000000000000p+0
+  Pressure:
+    x: 0x0.0p+0
+    y: 0x0.0p+0
+    z: 0x0.0p+0
+  Radius: 0x1.8000000000000p-1
+  Type: Outlet
+OutputGeometryFile: poiseuille_flow_test.gmy
+OutputXmlFile: poiseuille_flow_test.xml
+SeedPoint:
+  x: -0x1.00da93eaa8180p-1
+  y: -0x1.156ab416a2440p-6
+  z: -0x1.f88444ad1efccp+3
+StlFile: poiseuille_flow_test.stl
+StlFileUnitId: 1
+TimeStepSeconds: 0x1.a36e2eb1c432dp-14
+VoxelSize: 0x1.568f2c0000000p-3
