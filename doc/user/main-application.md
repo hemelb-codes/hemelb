@@ -20,10 +20,9 @@ The main HemeLB application requires:
 
 If using resolved blood cells, you also require:
 - HDF5*
-- VTK* version 9 (for RBC mode)
+- VTK*>=9 (for RBC mode)
 
-The dependencies marked with * can be built automatically by the build
-system.
+The dependencies marked with * can be built automatically by the build system.
 
 ## Download
 

@@ -1,22 +1,15 @@
 # The HemeLB XML configuration file
 
-This file is the main input file for a HemeLB simulation. If you use
-the geometry tool to generate a .gmy file, it will also create a
-minimal XML file that contains the required geometry-related data,
-however it is currently (2023) not suitable to run immediately and
-must be manually edited. Here we describe the file.
+This file is the main input file for a HemeLB simulation. If you use the geometry tool to generate a .gmy file, it will also create a minimal XML file that contains the required geometry-related data, however, it is currently (2025) not suitable to run immediately, and must be manually edited. Here we describe the file.
 
-All parameters that correspond to a property of the modelled system
-should be given as follows:
+All parameters that correspond to a property of the modelled system should be given as follows:
 
     <$NAME value="$VALUE" unit="$UNITS" />
 where:
  * `$NAME` is a descriptive (considering the context of containing
    elements) name for the physical quantity;
- * `$UNITS` is a string specifying the units in which the value is
-   given; and,
- * `$VALUE` is a string which can be converted to the C++ type of the
-   quantity (`T`) by `operator>>(stream&, T&)`. For example:
+ * `$UNITS` is a string specifying the units in which the value is given; and,
+ * `$VALUE` is a string which can be converted to the C++ type of the quantity (`T`) by `operator>>(stream&, T&)`. For example:
 ```xml
 <step_length value="0.0001" units="s" />
 ```
@@ -28,12 +21,10 @@ or:
    a `util::Vector3D<float>`).
 
 At the top level there must be the root element: `<hemelbsettings
-version="int">`. It MUST have a version attribute, an integer. This is
-currently 5.
+version="int">`. It MUST have a version attribute, an integer. This is currently **5**.
 
 ## Simulation
-The `<simulation>` is required and specifies some global properties of
-the simulation, mainly time-related.
+The `<simulation>` is required and specifies some global properties of the simulation, mainly time-related.
 
 It's child elements are:
 * Required: `<stresstype value="int">` - the type of stresses to calculate. Must correspond to the `enum hemelb::lb::StressTypes`
@@ -55,25 +46,15 @@ It's child elements are:
 
 ## Geometry
 The `<geometry>` element is required. It has one, required, child element:
-* `<datafile path="relative path to geometry file" />` - the path
-  (relative to the XML file) of the GMY file.
+* `<datafile path="relative path to geometry file" />` - the path (relative to the XML file) of the GMY file.
   
 ## Inlets
 `<inlets>` - the element contains zero or more `<inlet>` subelements
 
-* `<inlet>` - describes the position and orientation of an inlet plane
-  as well as the boundary conditions to impose upon it. Inlets always
-  have the following two sub elements
-  * `<position value="(x,y,z)" units="m" />` - the location of a point
-    on the inlet plane (should be the centre if that makes
-    sense). Must have three attributes (x,y,z) which give the location
-    in metres in the input coordinate system
-  * `<normal value="(x,y,z)" units="dimensionless" />` - a vector
-    normal to the plane. Must have x,y,z attributes. Does not *have*
-    to be normalised but for good practice should be.
-  * `<condition type="" subtype="">` - Gives the BC. There are several
-    types available, in two classes, pressure-based and
-    velocity-based.
+* `<inlet>` - describes the position and orientation of an inlet plane as well as the boundary conditions to impose upon it. Inlets always have the following two sub elements
+  * `<position value="(x,y,z)" units="m" />` - the location of a point on the inlet plane (should be the centre if that makes sense). Must have three attributes (x,y,z) which give the location in metres in the input coordinate system
+  * `<normal value="(x,y,z)" units="dimensionless" />` - a vector normal to the plane. Must have x,y,z attributes. Does not *have* to be normalised but for good practice should be.
+  * `<condition type="" subtype="">` - Gives the BC. There are several types available, in two classes, pressure-based and velocity-based.
     * `type="pressure"`
       * `subtype="cosine"` - all subelements required
 	    * `<amplitude value="float" units="mmHg" />`
@@ -87,54 +68,41 @@ The `<geometry>` element is required. It has one, required, child element:
         * `<velocity value="velocity" units="m/s" />`
         * `<label value="multiscale_label_string" />`
     * `type="velocity"`
-      * `subtype="parabolic"` - Poiseuille flow in a cylinder, i.e. parabolic
-		* `<radius value="float" units="lattice" />` -  radius of tube (in lattice units)
-		* `<maximum value="float" units="lattice">` -  maximum velocity (in lattice units)
+      * `subtype="parabolic"` - Poiseuille flow in a cylinder, i.e. parabolic. **Note:** When using this, HemeLB must be compiled with the flag `HEMELB_INLET_BOUNDARY=LADDIOLET`. Otherwise, the simulation will result in a runtime error.
+		* `<radius value="float" units="m" />` -  radius of tube 
+		* `<maximum value="float" units="m/s">` -  maximum velocity 
 	  * `subtype="womersley"`
 		* `<womersley_velocity>` - a Womersley flow in a cylinder
 		* `<pressure_gradient_amplitude value="float" units="lattice"/>`
         * `<period value="float" units="lattice"/>`
         * `<womersley_number value="float" units="dimensionless"/>`
         * `<radius value="float" units="lattice"/>`
-    * `subtype="file"` - all subelements required
-        * `<path value="relative/path/to/velocity/data/file" />`
-        * `<radius value="float" units="lattice"/>` or `<radius value="float" units="m"/>`
+      * `subtype="file"` - all subelements required
+          * `<path value="relative/path/to/velocity/data/file" />`
+          * `<radius value="float" units="lattice"/>` or `<radius value="float" units="m"/>`
 
 ## Outlets
-As for "inlets" but with `s/inlet/outlet/`
+Similar to the parameters of "inlets" but substitute with outlet or do the command `s/inlet/outlet/`.
 
 ## Initial Conditions
 `<initialconditions>` - describe initial conditions. Child elements:
 
-* `<pressure>` - start at rest and equilibrium at the given pressure
-  field
-  * `<uniform value="float" units="mmHg">` - a uniform pressure at all
-    sites. Value must be in mmHg.
+* `<pressure>` - start at rest and equilibrium at the given pressure field
+  * `<uniform value="float" units="mmHg">` - a uniform pressure at all sites. Value must be in mmHg.
 
 * `<checkpoint file="rel/path/to/file" offset="rel/path">` - restart from a
-  checkpoint + offset file. Attribute `file` is required and gives
-  path to the checkpoint. The offset file is optional - if given it
-  must be a relative path to the file, else must have the same path with
-  the extension replaced by ".off".
+  checkpoint + offset file. Attribute `file` is required and gives path to the checkpoint. The offset file is optional - if given it must be a relative path to the file, else must have the same path with the extension replaced by `.off`.
 
 ## (Extracted) Properties
 Describe what data to extract under the `<properties>` element. Child elements:
 
 * `<propertyoutput file="path.xtr" period="int"
-  timestep_mode="[multi|single]">` - specify the file (under the
-  `results/Extraction` directory) and the output period (in time
-  steps). The way that multiple timesteps of data will be handled is
-  set by the `timestep_mode` attribute. Valid values are `multi` (the
-  default if the attribute is not present) or `single`. For `multi`,
-  each subsequent timestep's data will be appended to the same
-  file. For `single`, only a single timestep will be written to each
-  file; in this case the `file` attribute must contain exactly one
-  `%d` which will be replaced with the timestep number.
+  timestep_mode="[multi|single]">` - specify the file (under the `results/Extraction` directory) and the output period (in time steps). The way that multiple timesteps of data will be handled is set by the `timestep_mode` attribute. Valid values are `multi` (the default if the attribute is not present) or `single`. 
+  For `multi`, each subsequent timestep's data will be appended to the same file. For `single`, only a single timestep will be written to each file; in this case the `file` attribute must contain exactly one `%d` which will be replaced with the timestep number.
   - `<geometry type="type">` - the type string must be one of the following:
     + `type="whole"` - all lattice points - no subelements needed
 	+ `type="surface"` - all lattice points with one or more links
-      (defined by the active velocity set) intersecting a wall (not
-      inlet/outlet) - no sublements needed
+      (defined by the active velocity set) intersecting a wall (not inlet/outlet) - no sublements needed
     + `type="plane"` - all lattice points within sqrt(3)*voxel size of the specified plane
       * Required: `<point value="(x,y,z)" units="m" />`
       * Required: `<normal value="(x,y,z)" units="dimensionless" />`
@@ -154,8 +122,7 @@ Describe what data to extract under the `<properties>` element. Child elements:
     + `type="tangentialprojectiontraction"`
     + `type="mpirank"`
 
-* `<checkpoint file="path" period="int">` - save a checkpoint file to
-  the given path at the given interval (in timesteps).
+* `<checkpoint file="path" period="int">` - save a checkpoint file to the given path at the given interval (in timesteps).
 
 ## Changes
 

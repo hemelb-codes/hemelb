@@ -15,7 +15,49 @@ from vtk import vtkSTLReader
 from ..Util.Observer import Observable
 from .SideLengthCalculator import AverageSideLengthCalculator
 from .Vector import Vector
-from .Iolets import ObservableListOfIolets, IoletLoader
+# from .Iolets import ObservableListOfIolets, IoletLoader
+from .Iolets import ObservableListOfIolets, IoletLoader, Inlet, Outlet  # ← added Inlet, Outlet
+
+import types  # required for dynamic module creation
+
+class FakeUnpickler(pickle.Unpickler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._HST = types.ModuleType("HemeLbSetupTool")
+        self._classes = {}
+
+    def _get_or_make_mod(self, moduleName):
+        parts = moduleName.split(".")
+        hst = parts.pop(0)
+        assert hst == "HemeLbSetupTool"
+        full = hst
+        cur = self._HST
+        while parts:
+            name = parts.pop(0)
+            if not hasattr(cur, name):
+                mod = types.ModuleType(f"{full}.{name}")
+                mod.__package__ = full
+                full = mod.__name__
+                setattr(cur, name, mod)
+            cur = getattr(cur, name)
+        return cur
+
+    def _get_or_make_class(self, mod, className):
+        try:
+            return getattr(mod, className)
+        except AttributeError:
+            def __up__(this):
+                return this  # no-op upgrade
+            fake = type(className, (object,), {"__module__": mod.__name__, "__up__": __up__})
+            setattr(mod, className, fake)
+            return fake
+
+    def find_class(self, moduleName, className):
+        if moduleName.startswith("HemeLbSetupTool"):
+            mod = self._get_or_make_mod(moduleName)
+            return self._get_or_make_class(mod, className)
+        return super().find_class(moduleName, className)
+
 
 
 class LengthUnit(Observable):
@@ -205,9 +247,45 @@ class Profile(Observable):
 
     def LoadProfileV1(self, filename):
         with open(filename, "rb") as f:
-            restored = pickle.Unpickler(f, fix_imports=True).load()
-        restored._ResetPaths(filename)
-        self.CloneFrom(restored)
+            # restored = pickle.Unpickler(f, fix_imports=True).load()
+            restored_fake = FakeUnpickler(f).load()
+            halfway = restored_fake.__up__()  # convert fake object to a dict-like profile object
+        
+        # Manually assign fields instead of using CloneFrom(), to avoid constructor issues
+        for attr in Profile._Args:
+            val = getattr(halfway, attr, None)
+
+            if attr == 'SeedPoint' and val is not None:
+                # Upgrade legacy vector to real Vector instance
+                self.SeedPoint = Vector(val.x, val.y, val.z)
+
+            elif attr == 'Iolets' and val is not None:
+                # Upgrade list of fake Inlet/Outlet objects to real ones
+                real_iolets = ObservableListOfIolets()
+                for io in val:
+                    # Choose correct type (Inlet or Outlet)
+                    inlet_or_outlet = Inlet() if getattr(io, 'Name', '').startswith("Inlet") else Outlet()
+
+                    # Set required fields
+                    inlet_or_outlet.Name = getattr(io, 'Name', None)
+                    inlet_or_outlet.Radius = getattr(io, 'Radius', None)
+                    inlet_or_outlet.Centre = Vector(io.Centre.x, io.Centre.y, io.Centre.z)
+                    inlet_or_outlet.Normal = Vector(io.Normal.x, io.Normal.y, io.Normal.z)
+                    inlet_or_outlet.Pressure = Vector(io.Pressure.x, io.Pressure.y, io.Pressure.z)
+
+                    real_iolets.append(inlet_or_outlet)
+
+                self.Iolets = real_iolets
+
+            elif val is not None:
+                # Default assignment for all other attributes
+                setattr(self, attr, val)
+
+        # Adjust file paths to be relative to the profile file
+        self._ResetPaths(filename)
+
+        # restored._ResetPaths(filename)
+        # self.CloneFrom(restored)
         return
 
     def _ResetPaths(self, filename):

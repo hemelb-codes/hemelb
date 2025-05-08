@@ -28,4 +28,4 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y \
 # Allow non-root to run GUI
 echo "allowed_users=anybody" > /etc/X11/Xwrapper.config
 # NOTE: VM requires reboot before running GUI
-echo "Before using the GUI run `vagrant reload gmy`
+echo "Before using the GUI run \`vagrant reload gmy\`"
