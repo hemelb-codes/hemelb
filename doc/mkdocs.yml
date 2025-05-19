@@ -1,0 +1,69 @@
+site_name: HemeLB Documentation
+repo_url: https://github.com/hemelb-codes/hemelb
+repo_name: hemelb-codes/hemelb
+docs_dir: .  # Current directory (doc/) 
+nav:
+  - Home: README.md
+
+  - Dev:
+      - File Formats:
+          - Extraction: dev/file-formats/extraction.md
+          - Geometry: dev/file-formats/geometry.md
+          - Offset: dev/file-formats/offset.md
+          - Old Geometry: dev/file-formats/old-geometry.md
+
+      - Formats:
+          - Geometry: dev/formats/Geometry.md   
+
+  - User:
+      - Main Application: user/main-application.md
+      - CMake Options: user/CMakeOptions.md
+      - Geometry Tool: user/geometry-tool.md
+      - Non-Cylindrical Inlets: user/non-cylindrical-velocity-inlets.md
+      - Python Tools: user/python-tools.md
+      - XML Configuration: user/XmlConfiguration.md
+      - Machine-Specific Build Notes:
+          - ARCHER2: user/machine-specific-build-notes/archer2.md
+
+
+theme:
+  # name: readthedocs  # Default styling
+  logo: https://github.com/lepotatoguy/lepotatoguy.github.io/blob/main/hemelb/images/hemelb.png?raw=true
+  favicon: https://github.com/lepotatoguy/lepotatoguy.github.io/blob/main/hemelb/images/hemelb.png?raw=true
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - content.code.annotate
+    - content.code.copy  
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+
+plugins:
+    - search
+    - git-revision-date-localized
+
+markdown_extensions:
+    - admonition
+    - attr_list
+    - toc:
+        permalink: true
+    - pymdownx.superfences
+    - pymdownx.highlight
+    - pymdownx.inlinehilite
+    - pymdownx.details
+    - pymdownx.mark
+    - pymdownx.emoji
+    - pymdownx.tabbed
+    - pymdownx.tasklist
