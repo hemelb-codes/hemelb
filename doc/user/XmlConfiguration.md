@@ -101,7 +101,7 @@ The `<geometry>` element is required. It has one, required, child element:
         * `<radius value="float" units="lattice"/>` or `<radius value="float" units="m"/>`
 
 ## Outlets
-As for "inlets" but with `s/inlet/outlet/`
+Similar to the parameters of "inlets" but substitute with outlet or use the command `s/inlet/outlet/`.
 
 ## Initial Conditions
 `<initialconditions>` - describe initial conditions. Child elements:
