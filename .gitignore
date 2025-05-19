@@ -42,3 +42,9 @@ Tools/GenerateStl
 _skbuild
 dist
 .vagrant
+
+hemelb-experiments/*
+hemelb-scripts/*
+papers/*
+outputs/*
+.cache

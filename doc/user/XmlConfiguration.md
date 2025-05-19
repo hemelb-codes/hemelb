@@ -87,9 +87,9 @@ The `<geometry>` element is required. It has one, required, child element:
         * `<velocity value="velocity" units="m/s" />`
         * `<label value="multiscale_label_string" />`
     * `type="velocity"`
-      * `subtype="parabolic"` - Poiseuille flow in a cylinder, i.e. parabolic
-		* `<radius value="float" units="lattice" />` -  radius of tube (in lattice units)
-		* `<maximum value="float" units="lattice">` -  maximum velocity (in lattice units)
+      * `subtype="parabolic"` - Poiseuille flow in a cylinder, i.e. parabolic. **Note:** When using this, HemeLB needs be compiled with proper flag (i.e. `HEMELB_INLET_BOUNDARY=LADDIOLET`). Otherwise, the simulation will result in a runtime error.
+		* `<radius value="float" units="m" />` -  radius of tube
+		* `<maximum value="m/s" units="lattice">` -  maximum velocity
 	  * `subtype="womersley"`
 		* `<womersley_velocity>` - a Womersley flow in a cylinder
 		* `<pressure_gradient_amplitude value="float" units="lattice"/>`
@@ -101,7 +101,7 @@ The `<geometry>` element is required. It has one, required, child element:
         * `<radius value="float" units="lattice"/>` or `<radius value="float" units="m"/>`
 
 ## Outlets
-As for "inlets" but with `s/inlet/outlet/`
+Similar to the parameters of "inlets" but substitute with outlet or use the command `s/inlet/outlet/`.
 
 ## Initial Conditions
 `<initialconditions>` - describe initial conditions. Child elements:

@@ -107,7 +107,7 @@ python macos-fix-gui-launcher.py
 ## Install with custom VMTK
 
 The hemelb-codes organisation on GitHub includes a project to build
-VMTK  for Ubuntu: https://github.com/hemelb-codes/vmtk-build/
+VMTK for Ubuntu: https://github.com/hemelb-codes/vmtk-build/
 
 That will hopefully give you an idea for how to proceed. If you are
 lucky you can just download the tarball. (Some Ubuntu packages will
@@ -139,7 +139,7 @@ $ hlb-gmy-gui --help
 usage: hlb-gmy-gui [-h] [--profile PATH] [--stl PATH] [--geometry PATH]
                    [--xml PATH]
 
-Process an input STL file intosuitable input for HemeLB.
+Process an input STL file into suitable input for HemeLB.
 
 optional arguments:
   -h, --help       show this help message and exit
@@ -150,16 +150,33 @@ optional arguments:
   --xml PATH       XML output file
 ```
 
-The terminal will produced a few errors that can ignore, like:
-`vtkSTLReader (0x7fdaa773bf10): A FileName must be specified.`. (This
-is just VTK trying to display the mesh before the source file is
-specified.)
+The terminal will produce a few errors that can ignore, like: `vtkSTLReader (0x7fdaa773bf10): A FileName must be specified.` (This is just VTK trying to display the mesh before the source file is specified.) and `vtkCompositeDataPipeline (0x2fb7b9a0): UpdateInformation invoked during another request.  Returning failure to algorithm vtkSTLReader(0x2f740e60).` (This is just vtkSTLReader was called during another operation, but rendering works as the STL gets loaded and cached beforehand).
+
+## Run CLI
+
+There is a command line version of Geometry Setup Tool, where you can use the .pr2 file to generate the geometry file. 
+Ensure your environment is activated then run `hlb-gmy-cli`. There is basic command line help available:
+
+```
+$ hlb-gmy-cli --help
+usage: hlb-gmy-cli [-h] [--geometry PATH] [--xml PATH] [--voxel FLOAT] PATH
+Generate the config file described by a profile file
+positional arguments:
+  PATH             The profile to use. Other options given override those in
+                   the profile file.
+optional arguments:
+  -h, --help       show this help message and exit
+  --geometry PATH  Config output file
+  --xml PATH       XML output file
+  --voxel FLOAT    The voxel size in metres
+```
+
+You need to add the path to the directory of the .pr2 file. Example command: `hlb-gmy-cli /path-to-your-profile.pr2`. *Note: The .stl file related to the .pr2 file needs to be in the same directory alongwith it.*
 
 
 ## Profile (.pr2) files
 
-The geometry tool can store the the data it will use to generate a
-geometry file. Saving this is highly recommended for reproducibility!
+The geometry tool can save inlet, outlet, and seed point data used to generate a .gmy geometry file, using this Profile file. **(Saving this is highly recommended for reproducibility)**
 
 It's a YAML file which can be edited manually. Floating point values
 are stored by default in hexadecimal to avoid precision loss
