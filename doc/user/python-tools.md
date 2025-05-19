@@ -32,7 +32,7 @@ Available command line tools:
 
 - `hlb-gmy-compress`: compress an uncompressed geometry file.
 
-- `hlb-dump-extracted-properties`: convert an extraction file to CSV.
+- `hlb-dump-extracted-properties`: convert an extraction file (.xtr) to CSV. (Note: You may find another library HemeXtract, to be mentioned online for this, however, please note that it was developed for a fork of HemeLB and is not compatible with this version. So, instead of that, please use this to convert extraction files to CSV.)
 
 - `hlb-gmy-selfconsistent`: check if a geometry file is self-consistent.
 
