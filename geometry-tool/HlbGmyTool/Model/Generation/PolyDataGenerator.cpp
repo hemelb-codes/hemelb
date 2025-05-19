@@ -184,7 +184,7 @@ void PolyDataGenerator::CreateCGALPolygon(void) {
     throw GenerationErrorMessage(
         "Created surface is not valid, cannot voxelize.");
   } else {
-    cout << "Succesfully created closed polygon from input" << endl;
+    cout << "Successfully created closed polygon from input" << endl;
     cout << "The polyhedron has " << ClippedCGALSurface->size_of_facets()
          << " facets " << ClippedCGALSurface->size_of_halfedges()
          << " halfedges " << ClippedCGALSurface->size_of_border_halfedges()
