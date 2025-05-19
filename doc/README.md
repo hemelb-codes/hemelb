@@ -18,6 +18,7 @@ A typical workflow with HemeLB consists of four steps:
 4. Post processing the results, using the Python packages in the
    [python-tools](../python-tools) directory. [Documentation](./user/python-tools.md)
 
+You can get started following our [quick-start tutorial](./user/quick-start.md).
 
 [Developer documentation](./dev)
 

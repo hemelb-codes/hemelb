@@ -16,6 +16,7 @@ nav:
           - Geometry: dev/formats/Geometry.md   
 
   - User:
+      - Quick Start: user/quick-start.md
       - Main Application: user/main-application.md
       - CMake Options: user/CMakeOptions.md
       - Geometry Tool: user/geometry-tool.md
