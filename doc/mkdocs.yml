@@ -24,6 +24,7 @@ nav:
       - XML Configuration: user/XmlConfiguration.md
       - Machine-Specific Build Notes:
           - ARCHER2: user/machine-specific-build-notes/archer2.md
+          - DARWIN: user/machine-specific-build-notes/darwin.md
 
 
 theme:
