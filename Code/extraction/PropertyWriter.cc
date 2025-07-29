@@ -4,6 +4,8 @@
 // license in the file LICENSE.
 
 #include "extraction/PropertyWriter.h"
+#include "extraction/XdrPropertyOutput.h"
+#include "extraction/LocalPropertyHdf5Output.h"
 
 namespace hemelb
 {
@@ -15,9 +17,33 @@ namespace hemelb
     {
       for (unsigned outputNumber = 0; outputNumber < propertyOutputs.size(); ++outputNumber)
       {
-        localPropertyOutputs.push_back(new LocalPropertyOutput(dataSource,
-                                                               propertyOutputs[outputNumber],
+        // Get the current format specification
+        const auto& currentOutputSpec = propertyOutputs[outputNumber];
+        const std::string& format = currentOutputSpec.format;
+        // Create the appropriate output type based on the format.
+        if (format == "hdf5")
+        {
+          #ifdef USE_HDF5
+          //create HDF5 output
+          localPropertyOutputs.push_back(new LocalPropertyHdf5Output(dataSource,
+                                                                     currentOutputSpec,
+                                                                     ioComms));
+          #else
+          throw Exception() << "HDF5 output was requested in the XML configuration, but HDF5 support is not enabled in this build."
+                            << "Please recompile with -DUSE_HDF5=ON.";
+          #endif
+        }
+        else if(format == "xdr")
+        {
+          //create XDR output
+          localPropertyOutputs.push_back(new XdrPropertyOutput(dataSource,
+                                                               currentOutputSpec,
                                                                ioComms));
+        }
+        else
+        {
+          throw Exception() << "Unknown property output format '" << format << "'";
+        }
       }
     }
 

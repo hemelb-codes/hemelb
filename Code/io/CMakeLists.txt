@@ -24,6 +24,7 @@ add_library(hemelb_io OBJECT
   writers/Writer.cc
   formats/geometry.cc
   xml.cc
+  # $<$<BOOL:${USE_HDF5}>:${CMAKE_CURRENT_SOURCE_DIR}/writers/LocalPropertyHdf5Output.cc>
   )
 
 target_link_libraries(hemelb_io PUBLIC
@@ -31,4 +32,5 @@ target_link_libraries(hemelb_io PUBLIC
   )
 target_link_libraries(hemelb_io PRIVATE
   TinyXML::TinyXML
+  $<$<BOOL:${USE_HDF5}>:HDF5::HDF5> 
   )

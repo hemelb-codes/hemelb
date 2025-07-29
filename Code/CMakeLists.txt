@@ -5,7 +5,8 @@
 cmake_minimum_required (VERSION 3.13)
 
 project(HemeLB)
-
+option(USE_HDF5 "Enable HDF5 support" ON)
+message(STATUS "USE_HDF5 = ${USE_HDF5}")
 set(HEMELB_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 list(INSERT CMAKE_MODULE_PATH 0 "${HEMELB_ROOT_DIR}/CMake")
@@ -84,10 +85,18 @@ find_hemelb_dependency(ZLIB REQUIRED)
 link_libraries(MPI::MPI_CXX)
 link_libraries(Boost::headers)
 
-if(HEMELB_BUILD_RBC)
-  # Work around some installs of HDF5 having proper targets and others
-  # not...
+# if(HEMELB_BUILD_RBC)
+#   # Work around some installs of HDF5 having proper targets and others
+#   # not...
+#   include(UseHDF5)
+#   find_hemelb_dependency(VTK REQUIRED)
+# endif()
+if(USE_HDF5)
   include(UseHDF5)
+  add_definitions(-DUSE_HDF5)
+endif()
+
+if(HEMELB_BUILD_RBC)
   find_hemelb_dependency(VTK REQUIRED)
 endif()
 

@@ -358,7 +358,11 @@ namespace hemelb::configuration
       }
 
       propertyoutputEl.GetAttributeOrThrow("period", file.frequency);
-
+      // attend to find property "format", if exists, read it
+      // otherwise default to "xdr"
+      file.format = propertyoutputEl.GetAttributeMaybe("format").value_or("xdr");
+    
+      
       io::xml::Element geometryEl = propertyoutputEl.GetChildOrThrow("geometry");
       auto type = geometryEl.GetAttributeOrThrow("type");
 

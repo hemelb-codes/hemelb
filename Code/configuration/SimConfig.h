@@ -155,11 +155,11 @@ namespace hemelb::configuration
     };
 
     struct IoletConfigBase {
-        PhysicalPosition position;
-        util::Vector3D<double> normal;
-        std::optional<std::uint64_t> warmup_steps;
-        std::optional<FlowExtensionConfig> flow_extension;
-        std::vector<CellInserterConfig> cell_inserters;
+        PhysicalPosition position{}; // make sure position is initialized to zero
+        util::Vector3D<double> normal{}; 
+        std::optional<std::uint64_t> warmup_steps = std::nullopt; // initialized to no warmup steps
+        std::optional<FlowExtensionConfig> flow_extension = std::nullopt; // initialized to no flow extension
+        std::vector<CellInserterConfig> cell_inserters; 
     };
 
     // Consider removing

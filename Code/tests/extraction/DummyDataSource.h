@@ -19,10 +19,10 @@ namespace hemelb::tests
     class DummyDataSource : public extraction::IterableDataSource
     {
     public:
-          DummyDataSource() :
-              randomNumberGenerator(1358), siteCount(64), location(0), gridPositions(siteCount),
-                  pressures(siteCount), velocities(siteCount), voxelSize(0.3e-3),
-                  origin(0.034, 0.001, 0.074)
+          DummyDataSource(int seed = 1358) : // Default seed remains the same
+          randomNumberGenerator(seed), siteCount(64), location(0), gridPositions(siteCount),
+              pressures(siteCount), velocities(siteCount), voxelSize(0.3e-3),
+              origin(0.034, 0.001, 0.074)
           {
             unsigned ijk = 0;
 
@@ -38,7 +38,10 @@ namespace hemelb::tests
                 }
               }
             }
-
+          }
+          site_t GetSiteCount() const
+          {
+              return siteCount;
           }
 
           void FillFields()
