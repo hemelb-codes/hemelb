@@ -69,6 +69,7 @@ namespace hemelb::lb
                               geometry::FieldData& latDat,
                               lb::MacroscopicPropertyCache& propertyCache)
         {
+#pragma omp parallel for
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
                 geometry::Site<geometry::FieldData> site = latDat.GetSite(siteIndex);

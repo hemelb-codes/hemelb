@@ -39,6 +39,11 @@ if (HEMELB_USE_SSE3)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
 endif()
 
+if (HEMELB_USE_OPENMP)
+  add_definitions(-DHEMELB_USE_OPENMP)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+endif()
+
 if (HEMELB_BUILD_RBC)
   add_definitions(-DHEMELB_BUILD_RBC)
 endif()

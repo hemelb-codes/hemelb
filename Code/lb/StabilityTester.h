@@ -97,6 +97,47 @@ namespace hemelb::lb
           if (mUpwardsStability != Unstable)
           {
             bool unconvergedSitePresent = false;
+#ifdef HEMELB_USE_OPENMP
+            bool stop = false;
+
+#pragma omp parallel for shared(stop, unconvergedSitePresent)
+            for (site_t i = 0; i < mLatDat->GetDomain().GetLocalFluidSiteCount(); i++)
+            {
+              if (stop)
+                continue;
+
+              for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
+              {
+                distribn_t value = *mLatDat->GetFNew(i * LatticeType::NUMVECTORS + l);
+
+                if (! (value > 0.0))
+                {
+#pragma omp critical
+                  {
+                    mUpwardsStability = Unstable;
+                    stop = true;
+                  }
+                  break;
+                }
+              }
+
+              if (stop)
+                continue;
+
+              if (testerConfig.doConvergenceCheck)
+              {
+                distribn_t relativeDifference =
+                    ComputeRelativeDifference(mLatDat->GetFNew<LatticeType>(i),
+                                              mLatDat->GetSite(i).GetFOld<LatticeType>());
+
+                if (relativeDifference > testerConfig.convergenceRelativeTolerance)
+                {
+#pragma omp atomic write
+                  unconvergedSitePresent = true;
+                }
+              }
+            }
+#else
 
             for (site_t i = 0; i < mLatDat->GetDomain().GetLocalFluidSiteCount(); i++)
             {
@@ -130,6 +171,7 @@ namespace hemelb::lb
                 }
               }
             }
+#endif
 
             switch (mUpwardsStability)
             {

@@ -95,6 +95,7 @@ by setting these options.
 - `HEMELB_USE_SSE3`: this is on by default and enables use of SSE3
   intrinsics. This may not work on your architecture (e.g. ARM)
 
+- `HEMELB_USE_OPENMP`: enables use of OpenMP, this is off by default
 
 ## Developer
 

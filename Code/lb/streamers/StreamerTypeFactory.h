@@ -50,6 +50,7 @@ namespace hemelb::lb
                               geometry::FieldData& latDat,
                               lb::MacroscopicPropertyCache& propertyCache)
         {
+#pragma omp parallel for
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
                 geometry::Site<geometry::FieldData> site = latDat.GetSite(siteIndex);
@@ -89,6 +90,7 @@ namespace hemelb::lb
                       const LbmParameters* lbmParams, geometry::FieldData& latticeData,
                       lb::MacroscopicPropertyCache& propertyCache)
         {
+#pragma omp parallel for
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
                 geometry::Site<geometry::FieldData> site = latticeData.GetSite(siteIndex);
