@@ -34,9 +34,19 @@ if(HEMELB_VALIDATE_GEOMETRY)
   add_definitions(-DHEMELB_VALIDATE_GEOMETRY)
 endif()
 
+if (HEMELB_USE_AVX)
+  add_definitions(-DHEMELB_USE_AVX)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx -mfma")
+endif()
+
 if (HEMELB_USE_SSE3)
   add_definitions(-DHEMELB_USE_SSE3)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
+endif()
+
+if (HEMELB_USE_OPENMP_SIMD)
+  add_definitions(-DHEMELB_USE_OPENMP_SIMD)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 endif()
 
 if (HEMELB_BUILD_RBC)

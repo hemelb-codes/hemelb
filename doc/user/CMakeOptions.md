@@ -92,9 +92,13 @@ by setting these options.
   dies mysteriously, especially with internal compiler errors, set
   this to a small number, e.g. 4)
 
+- `HEMELB_USE_AVX`: this is off by default and enables use of AVX
+  intrinsics. This may not work on your architecture (e.g. ARM)
+
 - `HEMELB_USE_SSE3`: this is on by default and enables use of SSE3
   intrinsics. This may not work on your architecture (e.g. ARM)
 
+- `HEMELB_USE_OPENMP_SIMD`: enables use of OpenMP SIMD, this is off by default
 
 ## Developer
 
